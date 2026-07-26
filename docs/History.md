@@ -22,6 +22,7 @@ MPX-GLOBAL/
   docs/                      scope-of-work.md, Note.md (guards), History.md (this), build/quote
   M1-01-backend-steps.md     step-by-step backend prompts
   MPX-BACKEND-FULL-SAAS/     the backend (src/, tests/, package.json, .env[gitignored])
+  web/                       web frontend (Vite+React+Tailwind); structure scaffolded (see changelog)
 ```
 
 ## 3. How to run (local)
@@ -106,7 +107,10 @@ Routes: `POST /auth/buyer/signup`, `/auth/exporter/signup`, `/auth/login` (→ O
 
 ## 8. Rules in `.claude/rules/` (auto-loaded)
 `security-baseline.md`, `secrets-and-hygiene.md`, `auth-sessions.md`, `api-endpoints.md`,
-`payments-escrow.md`, `contracts-esign.md`, `mobile-app.md`, `remind.md` (deferred/scope guard),
+`payments-escrow.md`, `contracts-esign.md`, `mobile-app.md`, `web-frontend.md` (React web:
+trust boundary, token storage, XSS, state mgmt, clean-code), `web-design.md` (design system,
+responsive, a11y, SEO, trust signals), `web-ui-notes.md` (STRICT: log every non-operational
+button/link/control to `docs/UiWebNotes.md`), `remind.md` (deferred/scope guard),
 `history-log.md` (this file's update rule).
 
 ## 9. Tests
@@ -124,6 +128,31 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-26** — Scaffolded the **web frontend** at `web/` (Vite 5 + React 18 + Tailwind 3,
+  ESM). Structure only, no logic: `src/{api,components,layouts,pages/{auth,buyer,exporter,
+  employee,admin},hooks,context,utils,config}`. Central axios `apiClient` (baseURL from
+  `VITE_API_BASE_URL`, `withCredentials`, interceptors TODO), placeholder `endpoints.js`.
+  Router = public/protected split with `ProtectedRoute` (UX-only gate, no auth logic yet) and
+  one `Placeholder` route each side. **Colour tokens defined in `tailwind.config.js` theme**
+  (primary/ink/surface + semantic success/warning/danger/muted — starter values, confirm brand
+  with owner). Vite **dev proxy** `/api` → backend `:3000` with prefix-strip (backend mounts at
+  root, no `/api` prefix). `.env.example` (VITE_API_BASE_URL only), own `.gitignore`
+  (node_modules/.env/dist). No component library, no Redux (Context only) per instruction.
+  `npm install` + `npm run build` both pass. Deps: react, react-dom, react-router-dom, axios,
+  vite, @vitejs/plugin-react, tailwindcss, postcss, autoprefixer.
+- **2026-07-26** — Added STRICT rule `.claude/rules/web-ui-notes.md` + seeded ledger
+  `docs/UiWebNotes.md`: **every** rendered web button/link/form/control not yet wired to real
+  behaviour must be logged (path, label, expected behaviour, status) in the same change, and
+  shown as `disabled`/"coming soon" so nothing silently no-ops. Update Status→Done when wired.
+- **2026-07-26** — Added two web rules: `.claude/rules/web-frontend.md` (React web coding
+  standards — client-never-decides/A5, access token in memory + refresh in httpOnly cookie/A2,
+  `dangerouslySetInnerHTML` banned + DOMPurify, no secrets/OpenAI key in bundle, central API
+  client + TanStack Query, deliberate state mgmt with server-vs-client split, money never as
+  float, Socket.io handshake auth, always-production-grade clean-code) and
+  `.claude/rules/web-design.md` (Tailwind-token design system, shared primitives, responsive
+  desktop/tablet/mobile, WCAG AA, SEO/SSR for public pages, verified-tick-not-badge, designed
+  loading/empty/error states). No web frontend code exists yet — these guide it when built.
+  New web-specific XSS control has no tracker ID yet (flag to owner to record).
 - **2026-07-26** — `.env` now **tracked** in git at owner's request (values are test-only:
   throwaway Atlas, dev JWT secrets, dev admin password). Standing rule added: **alert before
   every commit/push that includes `.env`**; untrack + rotate the moment it holds a real secret.
