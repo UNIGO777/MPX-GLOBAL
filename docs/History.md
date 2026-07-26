@@ -29,8 +29,9 @@ MPX-GLOBAL/
   - Docker: `docker run -d -p 27017:27017 --name mpx-mongo mongo:7` and
     `docker run -d -p 6379:6379 --name mpx-redis redis:7`.
 - `cd MPX-BACKEND-FULL-SAAS && npm install`
-- Copy `.env.example` → `.env`, fill values. **`.env` is gitignored — never commit it.**
-  Get real secret values from the team via a secure channel (not git).
+- A committed `.env` with **test-only** values is included (owner's call). **Do not put
+  real/production secrets in it** — the moment it needs a real secret, untrack it
+  (`git rm --cached`) and share via a secure channel. See `.claude/rules/secrets-and-hygiene.md`.
 - Scripts: `npm run dev` (nodemon) · `npm start` · `npm test` (vitest) · `npm run lint`
   (eslint) · `npm run seed` (create superadmin from `SEED_SUPERADMIN_*` in `.env`).
 - **Current `MONGODB_URI` points at a test-only Atlas cluster** (`mongodb+srv://…`). Tests
@@ -123,6 +124,9 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-26** — `.env` now **tracked** in git at owner's request (values are test-only:
+  throwaway Atlas, dev JWT secrets, dev admin password). Standing rule added: **alert before
+  every commit/push that includes `.env`**; untrack + rotate the moment it holds a real secret.
 - **2026-07-26** — History.md created; git repo initialised at root; `history-log.md` rule
   added (update this file every step). Superadmin seeded on the test Atlas; OTP-terminal login
   verified for all roles incl. superadmin. Startup route-guard (A5) added. `.env` deliberately

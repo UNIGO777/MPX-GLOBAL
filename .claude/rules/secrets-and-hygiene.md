@@ -5,10 +5,19 @@ project. Complements (does not replace) `security-baseline.md`.
 
 ## Secrets live only in `.env`
 - A secret — password, token, API key, connection string, OTP, private key — goes **only** in
-  `.env` (gitignored). **Never** in source, tests, comments, commits, logs, or chat.
+  `.env`. **Never** in source, tests, comments, logs, or chat.
 - `.env.example` holds variable **names** with blank values — no real values, ever.
 - If the user pastes a secret in chat, use it but write it **only** to `.env`, never into code,
   and don't echo it back in output.
+
+## 🔴 Before committing/pushing `.env` — ALWAYS alert first
+`.env` is currently **tracked in git at the owner's request** — the present values are
+**test-only** (a throwaway Atlas cluster, dev JWT secrets, a dev superadmin password). Because
+it is tracked:
+- **Before any commit or push that includes `.env`, alert the owner** — list exactly what the
+  file currently holds (especially connection strings / credentials) and proceed only on their OK.
+- The moment `.env` gains a **real** secret (production DB, live API key, real password): **STOP**,
+  untrack it (`git rm --cached`), re-ignore it, and rotate anything already committed.
 
 ## Exposure = compromise → rotate
 - If any secret shows up somewhere non-secret — chat, a log, a screenshot, a commit, a ticket
