@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# environment — NEVER commit secrets (.env holds Atlas creds, JWT secrets, passwords)
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# logs / coverage / build
+logs/
+*.log
+**/logs/
+coverage/
+**/coverage/
+dist/
+**/dist/
+.expo/
+
+# OS / editor
+.DS_Store

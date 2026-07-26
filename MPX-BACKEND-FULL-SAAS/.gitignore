@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# environment — never commit secrets
+.env
+.env.*
+!.env.example
+
+# logs
+logs/
+*.log
+npm-debug.log*
+
+# test coverage
+coverage/
+
+# build output
+dist/
+
+# OS / editor
+.DS_Store
