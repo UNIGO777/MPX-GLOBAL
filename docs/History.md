@@ -110,8 +110,9 @@ Routes: `POST /auth/buyer/signup`, `/auth/exporter/signup`, `/auth/login` (→ O
 `payments-escrow.md`, `contracts-esign.md`, `mobile-app.md`, `web-frontend.md` (React web:
 trust boundary, token storage, XSS, state mgmt, clean-code), `web-design.md` (design system,
 responsive, a11y, SEO, trust signals), `web-ui-notes.md` (STRICT: log every non-operational
-button/link/control to `docs/UiWebNotes.md`), `remind.md` (deferred/scope guard),
-`history-log.md` (this file's update rule).
+button/link/control to `docs/UiWebNotes.md`), `remind.md` (D-item / out-of-scope guard),
+`scope-guard.md` (HIGH-PRIORITY: month-1 + out-of-scope 🔴 red-alert guard, backs
+`docs/month1-not-doing.md`), `history-log.md` (this file's update rule).
 
 ## 9. Tests
 24 tests across `validate`, `auth`, `verification`, `routeGuard`. `npm test` (needs a reachable
@@ -128,6 +129,15 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-27** — Added the **month-1 / first-draft scope boundary**: new ledger
+  `docs/month1-not-doing.md` (Bucket A = Phase-1-but-after-month-1: Quotation/Module 4,
+  employee-only pieces of Module 6, Notifications/Module 8; Bucket B = Phase 2 + the 12
+  skeleton models to never touch) and a HIGH-PRIORITY STRICT rule `.claude/rules/scope-guard.md`
+  (always loaded): before writing ANY code, if a task is out of `scope-of-work.md` OR hits
+  Bucket A/B OR a `Note.md` D-item → STOP, 🔴 RED ALERT naming the exact item+bucket, explicit
+  owner confirmation required. Works alongside `remind.md` (cross-referenced both ways).
+  Ticket/query handling flagged **DECISION PENDING** (deferred until owner decides). No code
+  changed — guard + ledger only.
 - **2026-07-26** — Scaffolded the **web frontend** at `web/` (Vite 5 + React 18 + Tailwind 3,
   ESM). Structure only, no logic: `src/{api,components,layouts,pages/{auth,buyer,exporter,
   employee,admin},hooks,context,utils,config}`. Central axios `apiClient` (baseURL from

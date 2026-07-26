@@ -8,6 +8,11 @@ work the owner has **parked for later** is never built silently or prematurely.
 `docs/Note.md` lists items that are **intentionally deferred** out of the current phase.
 Treat that file as authoritative and re-read it whenever a task might touch a listed item.
 
+> **Companion guard:** month-1 / first-draft deferrals (Quotation · employee-only pieces ·
+> Notifications · all of Phase 2) are tracked in **`docs/month1-not-doing.md`** and enforced by
+> **`.claude/rules/scope-guard.md`**. That rule and this one work together — a Bucket-A/B item or
+> an out-of-scope request triggers the same STOP + 🔴 RED ALERT + explicit-confirmation flow.
+
 ## Authoritative scope — red-alert if a request goes outside it
 
 The Phase-1 scope of work is **`docs/scope-of-work.md`**. If a request asks for something

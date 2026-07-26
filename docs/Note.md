@@ -2,7 +2,10 @@
 
 Authoritative Phase-1 scope: **`docs/scope-of-work.md`**. This file tracks (a) confirmed
 behaviour, (b) work that must NOT be built without an override, (c) build-time reminders,
-(d) on-hold work. Enforcement rule: `.claude/rules/remind.md`.
+(d) on-hold work. Enforcement rules: `.claude/rules/remind.md` + `.claude/rules/scope-guard.md`.
+
+**Month-1 / first-draft deferrals** (Phase-1-but-later + Phase-2) live in a separate ledger:
+**`docs/month1-not-doing.md`** — guarded by `.claude/rules/scope-guard.md`.
 
 **If a task touches a 🔴-guarded item below, OR goes outside `docs/scope-of-work.md`, STOP,
 show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writing code.**
