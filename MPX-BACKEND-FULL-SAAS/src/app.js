@@ -19,16 +19,23 @@ export function createApp() {
 
   app.disable('x-powered-by');
 
+  // Behind a reverse proxy/load balancer, trust the configured number of hops so
+  // req.ip is the real client (correct rate-limit keys) and TLS is detected.
+  if (env.TRUST_PROXY !== undefined) app.set('trust proxy', env.TRUST_PROXY);
+
   // qs-style parsing so nested query filters (e.g. product search) work. Any
   // request carrying a Mongo operator is rejected outright by
   // rejectMongoOperators below — not silently stripped.
   app.set('query parser', 'extended');
 
   // Assign a request id first so every downstream log line and error response
-  // can be correlated. Honour an inbound id from a trusted proxy if present.
+  // can be correlated. Only honour an inbound id when we sit behind a trusted
+  // proxy (TRUST_PROXY set), and only if it's a sane token — otherwise any client
+  // could spoof correlation ids. Generate one by default.
   app.use((req, res, next) => {
-    const inbound = req.headers['x-request-id'];
-    req.id = (typeof inbound === 'string' && inbound.trim()) || randomUUID();
+    const inbound = env.TRUST_PROXY !== undefined ? req.headers['x-request-id'] : undefined;
+    const clean = typeof inbound === 'string' ? inbound.trim() : '';
+    req.id = /^[A-Za-z0-9._-]{1,128}$/.test(clean) ? clean : randomUUID();
     res.setHeader('X-Request-Id', req.id);
     next();
   });

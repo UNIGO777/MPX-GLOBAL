@@ -16,7 +16,7 @@ export async function authenticate(req, _res, next) {
 
     const payload = verifyAccessToken(token);
     const user = await User.findOne({ _id: payload.sub, isActive: true }).select(
-      'role permissions orgId tokenVersion',
+      'role permissions orgId tokenVersion mustChangePassword',
     );
     if (!user) throw AppError.unauthorized('user not found', 'Not authenticated.');
     if (user.tokenVersion !== payload.tv) {
@@ -28,6 +28,7 @@ export async function authenticate(req, _res, next) {
       orgId: user.orgId ? String(user.orgId) : null,
       role: user.role,
       permissions: user.permissions ?? [],
+      mustChangePassword: Boolean(user.mustChangePassword),
     };
     next();
   } catch (err) {

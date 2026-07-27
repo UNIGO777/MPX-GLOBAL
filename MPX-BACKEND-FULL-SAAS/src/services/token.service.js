@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
 import { RefreshToken } from '../models/RefreshToken.js';
+import { User } from '../models/User.js';
 
 const ACCESS_TYP = 'access';
 const LOGIN_PENDING_TYP = 'login_pending';
@@ -110,6 +111,15 @@ export async function rotateRefreshToken({ presentedRaw, ip, userAgent }) {
     throw AppError.unauthorized('refresh token expired', 'Session expired. Please sign in again.');
   }
 
+  // Validate the user is still active BEFORE issuing a new token — otherwise a
+  // deactivated/deleted user would leave an orphan live token. If they're gone,
+  // revoke the whole family.
+  const user = await User.findOne({ _id: current.userId, isActive: true });
+  if (!user) {
+    await revokeFamily(current.familyId);
+    throw AppError.unauthorized('user gone/inactive', 'Session invalid. Please sign in again.');
+  }
+
   // Absolute family lifetime — inherit the original expiry, do not extend.
   const { raw, doc } = await issue({
     userId: current.userId,
@@ -123,7 +133,7 @@ export async function rotateRefreshToken({ presentedRaw, ip, userAgent }) {
   current.replacedByTokenId = doc._id;
   await current.save();
 
-  return { userId: current.userId, raw };
+  return { user, raw };
 }
 
 export async function revokeRefreshToken(presentedRaw) {

@@ -84,3 +84,10 @@ export const resetPassword = {
     newPassword: password,
   }),
 };
+
+export const changePassword = {
+  body: z.object({
+    currentPassword: zString({ min: 1, max: 200 }),
+    newPassword: password,
+  }),
+};

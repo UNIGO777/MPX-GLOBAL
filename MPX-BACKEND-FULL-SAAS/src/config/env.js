@@ -39,6 +39,9 @@ const envSchema = z.object({
   // Shared store for rate limiting so limits survive restarts and hold across
   // processes. Required in production (enforced in rateLimit.js).
   REDIS_URL: z.string().url().optional(),
+  // Number of trusted proxy hops in front of the app (e.g. 1 behind nginx/ELB).
+  // Set in production so req.ip is the real client and rate limiting works.
+  TRUST_PROXY: z.coerce.number().int().nonnegative().optional(),
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),

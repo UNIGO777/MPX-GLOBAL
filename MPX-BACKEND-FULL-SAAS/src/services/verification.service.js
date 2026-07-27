@@ -9,8 +9,10 @@ import { recordAudit } from './audit.service.js';
 async function reviewOrg({ orgId, expectType, toStatus, reason, actor, action, meta }) {
   const org = await Organisation.findOne({ _id: orgId, type: expectType });
   if (!org) throw AppError.notFound('organisation not found', 'Not found.');
-  if (org.kycStatus !== 'pending') {
-    throw AppError.conflict('not pending', 'This account is not awaiting review.');
+  // Reviewable from 'pending' or 'submitted' (once the KYC-upload flow lands).
+  // Full resubmit-after-rejection (rejected → pending) is Module C, not built yet.
+  if (!['pending', 'submitted'].includes(org.kycStatus)) {
+    throw AppError.conflict('not reviewable', 'This account is not awaiting review.');
   }
 
   const before = { kycStatus: org.kycStatus };

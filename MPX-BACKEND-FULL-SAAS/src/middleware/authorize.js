@@ -5,10 +5,21 @@ import { AppError } from '../utils/AppError.js';
 // middleware is tagged `__rbac` so the startup route-guard recognises it as an
 // access-control declaration.
 
+// A staff account created with a generated password must change it before doing
+// anything privileged (POST /auth/change-password only needs authenticate).
+function blockIfMustChangePassword(req) {
+  if (req.user.mustChangePassword) {
+    return AppError.forbidden('must change password', 'Please change your password before continuing.');
+  }
+  return null;
+}
+
 export function requireRole(...roles) {
   const allowed = new Set(roles);
   const mw = (req, _res, next) => {
     if (!req.user) return next(AppError.unauthorized('no auth', 'Not authenticated.'));
+    const blocked = blockIfMustChangePassword(req);
+    if (blocked) return next(blocked);
     if (req.user.role === 'superadmin' || allowed.has(req.user.role)) return next();
     return next(AppError.forbidden('role not allowed', 'Not allowed.'));
   };
@@ -19,6 +30,8 @@ export function requireRole(...roles) {
 export function requirePermissions(...perms) {
   const mw = (req, _res, next) => {
     if (!req.user) return next(AppError.unauthorized('no auth', 'Not authenticated.'));
+    const blocked = blockIfMustChangePassword(req);
+    if (blocked) return next(blocked);
     if (req.user.role === 'superadmin') return next();
     const held = new Set(req.user.permissions ?? []);
     if (perms.every((p) => held.has(p))) return next();

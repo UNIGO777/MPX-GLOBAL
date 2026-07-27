@@ -129,6 +129,18 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-27** — **Fixed all actionable auth bugs** from `Bug.supporter.md` (BUG-1…9): durable
+  OTP lock; `trust proxy` (env `TRUST_PROXY`); login by mobile digits; active-only
+  reset/forgot; `mustChangePassword` enforced via authorize + new `POST /auth/change-password`;
+  auth-event audit logging (login/employee-create/reset/change); refresh validates active user
+  before issuing (no orphan token); `X-Request-Id` trusted only behind a proxy; verification
+  accepts `pending`/`submitted`. BUG-10 (no tokenVersion bump on reuse) + BUG-11 (enumeration)
+  left per decision/inherent. +6 regression tests → **30/30 green**, lint clean, boots.
+- **2026-07-27** — Auth backend bug review → **`Bug.supporter.md`** (root). 11 findings, **0
+  critical/high**; 2 medium (BUG-1 OTP attempt-lock resets on every new OTP request; BUG-2 no
+  `trust proxy` → prod rate-limit/IP wrong), rest low/info. Several (mustChangePassword, auth
+  audit, resubmit, OTP delivery) already planned in `build-plans/m1/backend-plan.md`. 24/24
+  tests green. Not yet fixed.
 - **2026-07-27** — Wrote **`build-plans/m1/backend-plan.md`** — full M1 (Identity & Access)
   backend build plan, broken into 9 sub-modules (A KYC model · B upload · C review-align +
   resubmit + tick · D KYC view · E user mgmt · F permission-assign · G mustChangePassword ·

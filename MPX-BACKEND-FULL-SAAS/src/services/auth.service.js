@@ -13,6 +13,7 @@ import {
 } from './token.service.js';
 import { requestOtp, verifyOtp } from './otp.service.js';
 import { verifyTotp } from './twofactor.service.js';
+import { recordAudit } from './audit.service.js';
 
 // --- helpers ------------------------------------------------------------------
 
@@ -22,9 +23,15 @@ function normalizeMobile({ countryCode, number }) {
   return { countryCode: `+${cc}`, number: num, e164: `+${cc}${num}` };
 }
 
+// Match by email, exact e164, or an e164 derived from the input's digits (so
+// "+919…" and "919…" both work). A bare local number without a country code is
+// intentionally NOT matched — ambiguous across countries.
 function identifierQuery(identifier) {
   const id = String(identifier).trim();
-  return { $or: [{ email: id.toLowerCase() }, { 'mobile.e164': id }] };
+  const clauses = [{ email: id.toLowerCase() }, { 'mobile.e164': id }];
+  const digits = id.replace(/\D/g, '');
+  if (digits) clauses.push({ 'mobile.e164': `+${digits}` });
+  return { $or: clauses };
 }
 
 function mapDuplicate(err) {
@@ -56,8 +63,7 @@ async function createUserWithOrg({ org, user }) {
 
 // --- registration -------------------------------------------------------------
 
-// Phase 1: buyer is active immediately; kycStatus/approval is status only, not a
-// gate (see docs/Note.md). No employee-approval gate here.
+// Phase 1: buyer is active immediately; approval is status only, not a gate.
 export async function registerBuyer({ name, email, mobile, password, company, country }) {
   const mob = normalizeMobile(mobile);
   return createUserWithOrg({
@@ -74,8 +80,7 @@ export async function registerBuyer({ name, email, mobile, password, company, co
   });
 }
 
-// Phase 1: exporter self-registers; profile is public immediately with
-// kycStatus 'pending'. Verification is NOT a gate — do not hide the profile.
+// Phase 1: exporter self-registers; profile public immediately, kycStatus pending.
 export async function registerExporter({ name, email, mobile, password, company, country, businessProfile }) {
   const mob = normalizeMobile(mobile);
   return createUserWithOrg({
@@ -92,13 +97,15 @@ export async function registerExporter({ name, email, mobile, password, company,
   });
 }
 
-// Admin-created employee: joins the admin's (platform) org. Generated-password
-// account, so mustChangePassword is set (decision #5, staff only).
-export async function createEmployee({ actor, name, email, mobile, password, permissions = [] }) {
+// Admin-created employee: generated-password account, so mustChangePassword is
+// set (enforced by authorize until they change it). Writes an audit entry.
+export async function createEmployee({ actor, name, email, mobile, password, permissions = [], meta }) {
   const mob = normalizeMobile(mobile);
   await assertUnique({ email: email.toLowerCase(), e164: mob.e164 });
+
+  let created;
   try {
-    return await User.create({
+    created = await User.create({
       name,
       email: email.toLowerCase(),
       mobile: mob,
@@ -113,6 +120,16 @@ export async function createEmployee({ actor, name, email, mobile, password, per
   } catch (err) {
     throw mapDuplicate(err);
   }
+
+  await recordAudit({
+    actor: { userId: actor.userId, role: actor.role },
+    action: 'employee.create',
+    entityType: 'User',
+    entityId: created._id,
+    orgId: actor.orgId,
+    meta,
+  });
+  return created;
 }
 
 // --- login (password → second factor → tokens) --------------------------------
@@ -128,15 +145,14 @@ export async function login({ identifier, password }) {
   const ok = await verifyPassword(user.passwordHash, password);
   if (!ok || !user.isActive) throw AppError.unauthorized('bad credentials', 'Invalid credentials.');
 
-  // ON HOLD (docs/Note.md D4): admin/superadmin TOTP enrollment is deferred, so
-  // ALL roles use OTP login for now. Restore TOTP-for-staff before project close
-  // (auth-sessions A4). completeLogin still handles the 'totp' method for then.
+  // ON HOLD (docs/Note.md D4): all roles use OTP for now (TOTP deferred).
+  // requestOtp enforces a durable lock, so it may throw "too many attempts".
   const method = 'otp';
   await requestOtp({ user, purpose: 'login', channel: 'mobile' });
   return { loginToken: signLoginToken(user, method), method };
 }
 
-export async function completeLogin({ loginToken, code, ip, userAgent }) {
+export async function completeLogin({ loginToken, code, ip, userAgent, requestId }) {
   const { sub, method } = verifyLoginToken(loginToken);
   const user = await User.findOne({ _id: sub, isActive: true }).select('+twoFactorSecret');
   if (!user) throw AppError.unauthorized('user gone', 'Invalid credentials.');
@@ -152,6 +168,14 @@ export async function completeLogin({ loginToken, code, ip, userAgent }) {
   const accessToken = signAccessToken(user);
   const { raw } = await startRefreshFamily({ userId: user._id, ip, userAgent });
   await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } });
+  await recordAudit({
+    actor: { userId: user._id, role: user.role },
+    action: 'auth.login',
+    entityType: 'User',
+    entityId: user._id,
+    orgId: user.orgId,
+    meta: { ip, userAgent, requestId },
+  });
 
   return { accessToken, refreshToken: raw, user };
 }
@@ -159,9 +183,8 @@ export async function completeLogin({ loginToken, code, ip, userAgent }) {
 // --- refresh / logout ---------------------------------------------------------
 
 export async function refresh({ refreshToken, ip, userAgent }) {
-  const { userId, raw } = await rotateRefreshToken({ presentedRaw: refreshToken, ip, userAgent });
-  const user = await User.findOne({ _id: userId, isActive: true });
-  if (!user) throw AppError.unauthorized('user gone', 'Session invalid. Please sign in again.');
+  // rotateRefreshToken validates the user is active before issuing a new token.
+  const { user, raw } = await rotateRefreshToken({ presentedRaw: refreshToken, ip, userAgent });
   return { accessToken: signAccessToken(user), refreshToken: raw };
 }
 
@@ -169,16 +192,46 @@ export async function logout({ refreshToken }) {
   if (refreshToken) await revokeRefreshToken(refreshToken);
 }
 
-// --- forgot / reset password --------------------------------------------------
+// --- change / forgot / reset password -----------------------------------------
 
-// Always generic: never reveal whether an account exists.
+// Authenticated password change (also clears mustChangePassword). Bumps
+// tokenVersion + revokes refresh tokens (kills old sessions), then issues a fresh
+// session so the caller stays logged in.
+export async function changePassword({ userId, currentPassword, newPassword, ip, userAgent, requestId }) {
+  const user = await User.findOne({ _id: userId, isActive: true }).select('+passwordHash');
+  if (!user) throw AppError.unauthorized('user gone', 'Not authenticated.');
+  if (!(await verifyPassword(user.passwordHash, currentPassword))) {
+    throw AppError.unauthorized('bad current password', 'Current password is incorrect.');
+  }
+
+  await User.updateOne(
+    { _id: user._id },
+    { $set: { passwordHash: await hashPassword(newPassword), mustChangePassword: false }, $inc: { tokenVersion: 1 } },
+  );
+  await revokeAllUserTokens(user._id);
+
+  const fresh = await User.findOne({ _id: user._id });
+  const accessToken = signAccessToken(fresh);
+  const { raw } = await startRefreshFamily({ userId: fresh._id, ip, userAgent });
+  await recordAudit({
+    actor: { userId: fresh._id, role: fresh.role },
+    action: 'auth.password_change',
+    entityType: 'User',
+    entityId: fresh._id,
+    orgId: fresh.orgId,
+    meta: { ip, userAgent, requestId },
+  });
+  return { accessToken, refreshToken: raw };
+}
+
+// Generic; never reveal whether an account exists; only active accounts get an OTP.
 export async function forgotPassword({ identifier }) {
-  const user = await User.findOne(identifierQuery(identifier));
+  const user = await User.findOne({ ...identifierQuery(identifier), isActive: true });
   if (user) await requestOtp({ user, purpose: 'forgot_password', channel: 'mobile' });
 }
 
-export async function resetPassword({ identifier, code, newPassword }) {
-  const user = await User.findOne(identifierQuery(identifier));
+export async function resetPassword({ identifier, code, newPassword, ip, userAgent, requestId }) {
+  const user = await User.findOne({ ...identifierQuery(identifier), isActive: true });
   if (!user) throw AppError.unauthorized('no user', 'Invalid or expired code.');
 
   await verifyOtp({ userId: user._id, purpose: 'forgot_password', code });
@@ -190,4 +243,12 @@ export async function resetPassword({ identifier, code, newPassword }) {
     { $set: { passwordHash: await hashPassword(newPassword), mustChangePassword: false }, $inc: { tokenVersion: 1 } },
   );
   await revokeAllUserTokens(user._id);
+  await recordAudit({
+    actor: { userId: user._id, role: user.role },
+    action: 'auth.password_reset',
+    entityType: 'User',
+    entityId: user._id,
+    orgId: user.orgId,
+    meta: { ip, userAgent, requestId },
+  });
 }

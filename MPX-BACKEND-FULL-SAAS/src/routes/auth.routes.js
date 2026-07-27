@@ -21,6 +21,10 @@ authRouter.post('/auth/verify-otp', publicRoute, authLimiter, validate(V.verifyO
 // Current user (any authenticated role).
 authRouter.get('/auth/me', authenticate, ctrl.me);
 
+// Change password (authenticate only, so a must-change-password user can reach
+// it; clears the flag, rotates the session).
+authRouter.post('/auth/change-password', authenticate, validate(V.changePassword), ctrl.changePassword);
+
 // Session lifecycle. Refresh/logout present an opaque token, not an access token.
 authRouter.post('/auth/refresh', publicRoute, authLimiter, validate(V.refresh), ctrl.refresh);
 authRouter.post('/auth/logout', publicRoute, validate(V.logout), ctrl.logout);

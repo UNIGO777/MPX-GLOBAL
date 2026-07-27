@@ -4,7 +4,7 @@ import * as authService from '../services/auth.service.js';
 // handler, so no try/catch wrapper is needed here.
 
 function clientMeta(req) {
-  return { ip: req.ip, userAgent: req.headers['user-agent'] };
+  return { ip: req.ip, userAgent: req.headers['user-agent'], requestId: req.id };
 }
 
 export async function buyerSignup(req, res) {
@@ -18,7 +18,7 @@ export async function exporterSignup(req, res) {
 }
 
 export async function createEmployee(req, res) {
-  const user = await authService.createEmployee({ actor: req.user, ...req.body });
+  const user = await authService.createEmployee({ actor: req.user, ...req.body, meta: clientMeta(req) });
   res.status(201).json({ user });
 }
 
@@ -57,6 +57,11 @@ export async function forgotPassword(req, res) {
 }
 
 export async function resetPassword(req, res) {
-  await authService.resetPassword(req.body);
+  await authService.resetPassword({ ...req.body, ...clientMeta(req) });
   res.json({ ok: true });
+}
+
+export async function changePassword(req, res) {
+  const tokens = await authService.changePassword({ userId: req.user.userId, ...req.body, ...clientMeta(req) });
+  res.json(tokens);
 }

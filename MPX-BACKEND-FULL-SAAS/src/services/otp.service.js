@@ -18,6 +18,19 @@ function randomNumericCode(length) {
 export async function requestOtp({ user, purpose, channel = 'mobile' }) {
   const identifier = channel === 'email' ? user.email : user.mobile.e164;
 
+  // Durable lock: if a live challenge is currently locked, do NOT replace it —
+  // otherwise the 5-attempt/15-min lock (A3) could be reset just by requesting a
+  // new OTP. Refuse until the lock expires.
+  const locked = await OtpChallenge.findOne({
+    userId: user._id,
+    purpose,
+    consumedAt: null,
+    lockedUntil: { $gt: new Date() },
+  });
+  if (locked) {
+    throw AppError.unauthorized('otp locked', 'Too many attempts. Please try again later.');
+  }
+
   // Only one live challenge per (user, purpose).
   await OtpChallenge.deleteMany({ userId: user._id, purpose, consumedAt: null });
 
