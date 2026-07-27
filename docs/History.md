@@ -129,6 +129,13 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-27** — Wrote **`build-plans/m1/backend-plan.md`** — full M1 (Identity & Access)
+  backend build plan, broken into 9 sub-modules (A KYC model · B upload · C review-align +
+  resubmit + tick · D KYC view · E user mgmt · F permission-assign · G mustChangePassword ·
+  H auth audit · I OTP delivery). All confirmed Phase-1 scope (no red-alerts). Key decisions
+  parked for owner: Cloudinary upload approach (signed-direct vs server multipart → new deps),
+  OTP provider, user-mgmt permission granularity. Documented behaviour changes: verify/reject
+  guard `pending`→`submitted`, `kycDocuments.url`→`storageKey`. No code written yet.
 - **2026-07-27** — Added the **month-1 / first-draft scope boundary**: new ledger
   `docs/month1-not-doing.md` (Bucket A = Phase-1-but-after-month-1: Quotation/Module 4,
   employee-only pieces of Module 6, Notifications/Module 8; Bucket B = Phase 2 + the 12
