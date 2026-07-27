@@ -129,6 +129,24 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-27** — **Auth gaps closed vs M1 plan.** Added: signup audit (`auth.signup`) +
+  refresh-reuse/theft audit (`auth.refresh.reuse`) [M1-H residual done]; `POST /auth/resend-otp`
+  (resend via loginToken, no password); **exporter signup extra fields** — `entityType`
+  (business/individual, **required**) + structured `address` now captured at signup and stored on
+  `Organisation` (owner decision — overrides M1-A's "entityType at KYC-upload"; buyer signup
+  unchanged). Login stays a single shared endpoint (role-detect after OTP); signup is per-role.
+  Still open: real OTP delivery (M1-I, provider decision). +4 tests → **34/34 green**, lint+boot clean.
+- **2026-07-27** — **Review + fix pass on `build-plans/m1/backend-plan.md`** (plan doc only, no
+  code): found + fixed 10 plan issues — #1 user-mgmt mutations hard role-gated (dropped grantable
+  `user:manage`, escalation risk); #2 deactivation acts on `User.isActive`+`tokenVersion` (org
+  flag unenforced in auth); #3 review guard tightened to `submitted`; #4 `entityType` at KYC
+  upload not signup; #5 mustChangePassword gate unbypassable; #6 search `q` regex-escaped;
+  #7 public `/exporters/:id` constrains `type` + 404s deactivated; #8 resubmit clears rejection
+  reason; #9 rate-limit KYC upload; #10 audit snapshot = docType+count. Reconciled plan with
+  code already shipped by the bug-fix pass: **M1-G + M1-H marked DONE**; fix #5 satisfied
+  (gate folded into `authorize`, unbypassable via boot route-guard — equivalent to plan's
+  approach). **Only fix #3 left open** (verification shipped as `pending`|`submitted`; whether to
+  tighten exporter verify to `submitted`-only once KYC upload lands = §3.6 owner decision).
 - **2026-07-27** — **Fixed all actionable auth bugs** from `Bug.supporter.md` (BUG-1…9): durable
   OTP lock; `trust proxy` (env `TRUST_PROXY`); login by mobile digits; active-only
   reset/forgot; `mustChangePassword` enforced via authorize + new `POST /auth/change-password`;

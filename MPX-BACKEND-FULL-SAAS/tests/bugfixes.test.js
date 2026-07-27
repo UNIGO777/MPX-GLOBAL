@@ -11,6 +11,7 @@ import '../src/models/index.js';
 import { User } from '../src/models/User.js';
 import { Organisation } from '../src/models/Organisation.js';
 import { RefreshToken } from '../src/models/RefreshToken.js';
+import { AuditLog } from '../src/models/AuditLog.js';
 import { signAccessToken, startRefreshFamily } from '../src/services/token.service.js';
 import { hashPassword } from '../src/services/password.service.js';
 
@@ -101,6 +102,38 @@ describe('bug fixes', () => {
     const tokens = await RefreshToken.find({ userId });
     expect(tokens.length).toBeGreaterThan(0);
     expect(tokens.every((t) => t.status === 'revoked')).toBe(true);
+  });
+
+  it('AUDIT: signup writes an auth.signup AuditLog row', async () => {
+    const b = makeBuyer();
+    const signup = await request(app).post('/auth/buyer/signup').send(b);
+    const userId = signup.body.user.id ?? signup.body.user._id;
+    const row = await AuditLog.findOne({ action: 'auth.signup', entityId: userId });
+    expect(row).toBeTruthy();
+    expect(String(row.actorId)).toBe(String(userId));
+  });
+
+  it('AUDIT: refresh-token reuse writes an auth.refresh.reuse row', async () => {
+    const b = makeBuyer();
+    const signup = await request(app).post('/auth/buyer/signup').send(b);
+    const userId = signup.body.user.id ?? signup.body.user._id;
+    const { raw: rt1 } = await startRefreshFamily({ userId, ip: '1.1.1.1', userAgent: 'test' });
+
+    await request(app).post('/auth/refresh').send({ refreshToken: rt1 }); // rotate → rt2
+    const reuse = await request(app).post('/auth/refresh').send({ refreshToken: rt1 }); // reuse
+    expect(reuse.status).toBe(401);
+
+    const row = await AuditLog.findOne({ action: 'auth.refresh.reuse', entityId: userId });
+    expect(row).toBeTruthy();
+  });
+
+  it('RESEND: resend-otp works with just the login token (no password)', async () => {
+    const b = makeBuyer();
+    await request(app).post('/auth/buyer/signup').send(b);
+    const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password });
+    const res = await request(app).post('/auth/resend-otp').send({ loginToken: login.body.loginToken });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toMatch(/otp/i);
   });
 
   it('BUG-8: inbound X-Request-Id is NOT trusted (TRUST_PROXY unset)', async () => {

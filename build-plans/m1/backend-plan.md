@@ -66,11 +66,19 @@ management surface, then the cross-cutting auth hardening.
 | **M1-D** | KYC document view (signed URL, reviewers) | A, B | 🧱 dep (Cloudinary) |
 | **M1-E** | User management (list/search, activate/deactivate) | — | no |
 | **M1-F** | Employee permission assignment (hard superadmin-gate) | — | no |
-| **M1-G** | `mustChangePassword` enforcement + change-password | — | no |
-| **M1-H** | Auth-event audit (login/signup/refresh-reuse/logout/reset) | — | no |
+| **M1-G** | `mustChangePassword` enforcement + change-password | — | ✅ **DONE** (bug-fix pass) |
+| **M1-H** | Auth-event audit (login/signup/refresh-reuse/logout/reset) | — | ✅ **DONE** (bug-fix pass) |
 | **M1-I** | Real OTP delivery provider | — | 🧱 dep/decision (provider + creds) |
 
-M1-A/E/F/G/H are unblocked and can start immediately. B/D/I wait on the decisions in §3.
+> **⚠️ Plan vs shipped code (2026-07-27):** a parallel bug-fix pass (`Bug.supporter.md`) already
+> shipped **M1-G** and **M1-H**, and part of **M1-C** — verification review now accepts
+> `pending` **or** `submitted` ([verification.service.js](../../MPX-BACKEND-FULL-SAAS/src/services/verification.service.js)),
+> and the `mustChangePassword` gate lives inside `requireRole`/`requirePermissions`
+> ([authorize.js](../../MPX-BACKEND-FULL-SAAS/src/middleware/authorize.js)), not folded into
+> `authenticate`. See the per-section notes — fix #5 is effectively satisfied; fix #3 is now an
+> open reconciliation decision (§3.6).
+
+M1-A/E/F are unblocked and can start immediately. B/D/I wait on the decisions in §3; G/H are done.
 
 ---
 
@@ -81,8 +89,10 @@ M1-A/E/F/G/H are unblocked and can start immediately. B/D/I wait on the decision
 
 **Changes — `src/models/Organisation.js`:**
 - Add `entityType: { type: String, enum: ['business','individual'] }` (drives the KYC path —
-  business ⇒ registration/GST/certs; individual ⇒ PAN/Aadhaar/passport). Set at signup for
-  exporters (m1.md fields), optional for buyers.
+  business ⇒ registration/GST/certs; individual ⇒ PAN/Aadhaar/passport). **Captured at
+  KYC-upload time (M1-B), not at signup** — the KYC path is decided when docs are submitted, so
+  a single source of truth avoids a signup field drifting out of sync with the actual docs. (No
+  change to `exporterSignup`/`registerExporter`.) Nullable until first upload.
 - `kycDocuments` sub-doc: **store the private storage reference, not a public URL.** Rename the
   `url` field to `storageKey` (Cloudinary `public_id`) + add `format`, `docType`
   (`registration|gst|certificate|pan|aadhaar|passport|other`). The current field is literally
@@ -109,19 +119,23 @@ moves `pending → submitted` (and `rejected → submitted` on resubmit, see M1-
 
 **Endpoint:** `POST /me/kyc/documents` (authenticated; self — writes the caller's **own** org).
 - Scope: caller's org via `req.user.orgId` — this is a **self** write, not a staff action.
+- **Rate-limited** — reuse `authLimiter` (or a dedicated `uploadLimiter`) so repeated uploads
+  can't be used to abuse Cloudinary quota / storage. (fix #9)
 - Accepts `entityType` + one or more documents (`docType` + the uploaded file/reference).
 - Validation (zod): `entityType` enum; `docType` enum; per §3 upload-approach decision.
 - Enforce **business ⇒ business docs**, **individual ⇒ ID doc** at the route boundary.
-- On success: push into `org.kycDocuments`, set `kycSubmittedAt`, transition
-  `kycStatus: pending|rejected → submitted`. If already `verified`, reject with 409 (nothing to
-  resubmit). Append AuditLog `kyc.submit` (snapshot = docTypes + count only, **never** the doc
-  contents or storageKeys-as-secrets... storageKey is fine to log as an id, but keep it minimal).
+- On success: push into `org.kycDocuments`, set `entityType`, set `kycSubmittedAt`, transition
+  `kycStatus: pending|rejected → submitted`, and **clear `kycRejectionReason`** (so a resubmit
+  drops the stale reason — fix #8). If already `submitted`, treat as an additive re-upload
+  (still `submitted`); if already `verified`, reject with 409 (nothing to resubmit).
+  Append AuditLog `kyc.submit` with a **minimal safe snapshot: `docType` values + count only** —
+  **no** doc contents and **no** `storageKey` (fix #10).
 
 **Status machine:** `pending` (signup) → `submitted` (this endpoint) → `verified` / `rejected`
 (M1-C) → `submitted` again (resubmit).
 
 **Security/tracker:** B6 (file uploads — allowlist ext, MIME via magic-bytes, size cap),
-A7/E3, ownership (self-write), default-deny.
+A7/E3, ownership (self-write), default-deny, rate-limit (B7).
 
 **🧱 Blocked on §3 decision** — server-side multipart upload vs signed direct-to-Cloudinary.
 That decision determines the validator shape, the dependencies, and whether magic-byte MIME
@@ -135,11 +149,14 @@ checking happens on our server or is enforced via Cloudinary upload constraints.
 tick.
 
 **Change — `src/services/verification.service.js`:**
-- `reviewOrg` currently requires `kycStatus === 'pending'`. **Change the guard to
-  `kycStatus === 'submitted'`** — a reviewer verifies/rejects *documents*, which only exist after
-  submission. (Buyer "approve" in Phase 1 = grant the trust tick after the buyer optionally
-  submits docs; it is not an activation gate — buyer is already fully active. This keeps
-  buyer and exporter review symmetric.)
+- **Shipped state (bug-fix pass):** `reviewOrg` now accepts `kycStatus` ∈ {`pending`,
+  `submitted`} (was `pending`-only). It permits reviewing before the KYC-upload flow exists.
+- **fix #3 — OPEN RECONCILIATION (§3.6):** once M1-B lands (upload sets `submitted`), do we
+  **tighten to `submitted`-only** so nothing is verified without evidence (my recommendation for
+  exporters, whose docs are mandatory), or **keep `pending`|`submitted`** so a doc-less buyer can
+  still be given a trust tick directly? Exporter → should be `submitted`-only; buyer → owner call.
+  Proposed: tighten **exporter** verify to `submitted`-only; leave **buyer** approve accepting
+  `pending`|`submitted`. Needs owner confirmation before changing the shipped guard.
 - Keep verify → `verified` (+ `verifiedBy/At`, clear rejection reason) and reject → `rejected`
   (+ reason), both already appending AuditLog. No change to the audit shape.
 
@@ -157,15 +174,21 @@ Verify this is covered by a test.
    (CLAUDE.md: exporter public from signup). Returns only public fields (name, country,
    description, logo, businessProfile subset, `kycStatus`, `verifiedAt`) — no contacts, no KYC
    docs. Marked `publicRoute`.
+   - **Query must constrain type + activeness (fix #7):**
+     `findOne({ _id, type: 'exporter', isActive: true })` — the `type` guard stops this public
+     route from leaking a buyer/platform org via a guessed id, and `isActive` makes a
+     **deactivated** org return **404**. A `rejected` exporter is still public (kycStatus shown
+     without a tick); only deactivated → 404.
 
 > **Scope note:** a full public exporter *directory/search* is Module 3 (catalogue). M1 ships
 > only the single-profile-by-id public read above so the B7 tick requirement is honoured now;
 > the "expose `kycStatus`, don't gate" rule then applies to Module 3's listing when built.
 
-**Existing tests to update:** `tests/verification.test.js` currently seeds orgs at `pending` and
-expects verify/reject to succeed from `pending`. After the guard change they must seed
-`submitted`. **This is a deliberate behaviour change — update the tests to the new state
-machine, do not weaken the guard to keep old tests green.**
+**Existing tests:** `tests/verification.test.js` seeds orgs at `pending` (`makeOrg` default) and
+currently passes because the shipped guard accepts `pending`. **Only if fix #3 tightens exporter
+verify to `submitted`-only** must the exporter tests seed `submitted` and add a 409-on-`pending`
+case — do not weaken the guard to keep old tests green. If the guard stays `pending`|`submitted`,
+no test change is needed here.
 
 **Security/tracker:** B7 (public visibility not gated), A6 (staff read by id+type → 404),
 append-only audit (C10).
@@ -196,26 +219,40 @@ Cloudinary URLs — public URLs never stored or returned in bulk.
 **Goal:** the super-admin management screens (m1.md §6). Month-1 = super admin operates these;
 employee panel dashboard is deferred, so gate to staff.
 
-**Permission model:** gate reads with `user:read` and the activate/deactivate action with
-`user:manage` (both **grantable**; superadmin all-access). Rationale: consistent with the
-existing permission-based review model; superadmin covers month-1 fully, and the surface can be
-delegated later without a rewrite. *(Alternative — hard `requireRole('admin','superadmin')` — is
-also acceptable; see §3.)*
+**Permission model (fix #1 — split reads vs mutations):**
+- **Reads** (`GET /admin/users`, `GET /admin/users/:id`) → grantable `user:read` (superadmin
+  all-access). Delegable, low-risk.
+- **Mutations** (activate/deactivate) → **hard `requireRole('admin','superadmin')`, NOT a
+  grantable permission.** A grantable `user:manage` would let an employee holding it deactivate
+  an admin — or re-activate itself — a privilege-escalation vector. State-changing user ops stay
+  role-gated so no employee can ever perform them regardless of granted perms. (So `user:manage`
+  is **dropped** from the catalogue; only `user:read` is added — see M1-F config note.)
 
 **Endpoints:**
 - `GET /admin/users` — list + search buyers/exporters/employees. Query params (validated):
-  `role?`, `kycStatus?`, `q?` (name/email/mobile prefix — **built from validated strings only**,
-  never raw `req.query` into the query), `page`, `pageSize` (**max page size capped**).
-  Response = curated rows (`id, name, email, mobile.e164, role, isActive, orgId, org.kycStatus`),
-  **no** `passwordHash`, `permissions`-of-others leakage minimal, no KYC docs.
+  `role?`, `kycStatus?`, `q?`, `page`, `pageSize` (**max page size capped**).
+  - **Search `q` safety (fix #6):** never build a `$regex` from raw input. Either (preferred) an
+    anchored prefix match with the input **regex-escaped** (`^` + escaped `q`, case-insensitive),
+    or a Mongo **text index** — so a crafted `q` cannot cause ReDoS or an unintended match.
+    (`rejectMongoOperators` blocks operator *objects*, not regex meta-chars inside a string.)
+  - Response = curated rows (`id, name, email, mobile.e164, role, isActive, orgId,
+    org.kycStatus`), **no** `passwordHash`, no other users' `permissions`, no KYC docs.
 - `GET /admin/users/:id` — one curated user + its org summary.
-- `POST /admin/users/:id/activate` and `/deactivate` — flip `User.isActive`. **Deactivate must
-  bump `tokenVersion`** (kills live sessions — auth-sessions A7) and should also flip the org's
-  `isActive` where appropriate (decide per role; a buyer/exporter user maps 1:1 to its org).
-  Append AuditLog `user.activate` / `user.deactivate`.
+- `POST /admin/users/:id/activate` and `/deactivate` — flip **`User.isActive`** (this is what
+  auth actually enforces). **Deactivate must set `User.isActive = false` AND bump
+  `tokenVersion`** (this is what kills live sessions + blocks login — auth-sessions A7).
+  - **Org flag caveat (fix #2):** `authenticate` and `login` check **only `User.isActive`**, not
+    `Organisation.isActive` — so flipping only the org flag is a silent no-op that does **not**
+    log the user out or block login. Therefore deactivation acts on the **User**. If a buyer/
+    exporter org's flag is also flipped for display, it is cosmetic only and must never be
+    relied on for access control. (Do **not** add an `Organisation.isActive` check into
+    `authenticate` in M1 — that's a wider change; keep enforcement on the user.)
+  - Append AuditLog `user.activate` / `user.deactivate`.
 
-**Guards:** cannot deactivate a `superadmin`; an admin cannot deactivate another admin/superadmin
-(only superadmin can act on admins). Enforce server-side.
+**Target-role guards (server-side, enforced in business logic):** cannot deactivate a
+`superadmin`; only a `superadmin` may act on an `admin` (an `admin` may act on buyer/exporter/
+employee users only). These checks run **in addition to** the route role-gate, since even an
+admin must not touch another admin.
 
 **Security/tracker:** A6/default-deny, pagination cap (B-api), tokenVersion invalidation (A7),
 audit (C10). Never return full user docs.
@@ -237,16 +274,29 @@ grantable permission flag** — otherwise an over-permissioned employee grants i
   `employee.permissions.update` (before/after permission arrays).
 
 **Config — `src/config/permissions.js`:** add the new grantable perms this module introduces:
-`KYC_VIEW = 'kyc:view'`, `USER_READ = 'user:read'`, `USER_MANAGE = 'user:manage'`. Keep
-`BUYER_APPROVE`, `EXPORTER_VERIFY`. (Permission-**assignment** itself is deliberately **not** in
-this catalogue — it stays a superadmin-only hard gate.)
+`KYC_VIEW = 'kyc:view'`, `USER_READ = 'user:read'`. Keep `BUYER_APPROVE`, `EXPORTER_VERIFY`.
+**Deliberately NOT in the catalogue** (never grantable): user **activate/deactivate** (hard
+role-gate, fix #1) and permission-**assignment** itself (superadmin-only hard gate) — both are
+privilege-escalation surfaces.
 
 **Security/tracker:** privilege-escalation prevention (governance hard-gate), A5 default-deny,
 tokenVersion (A7), audit (C10).
 
 ---
 
-### M1-G · `mustChangePassword` enforcement + change-password  🔨
+### M1-G · `mustChangePassword` enforcement + change-password  ✅ DONE (bug-fix pass)
+
+> **Shipped:** `POST /auth/change-password` (authenticate-only), `authenticate` selects+exposes
+> `mustChangePassword`, and the gate is folded into `requireRole`/`requirePermissions`
+> ([authorize.js](../../MPX-BACKEND-FULL-SAAS/src/middleware/authorize.js)) so every privileged
+> route blocks until the password is changed; `/auth/me`, `/auth/logout`, `/auth/change-password`
+> stay reachable. Covered by `tests/bugfixes.test.js` (BUG-5). **fix #5 is satisfied** — because
+> the boot route-guard forces a `requireRole`/`requirePermissions` on every non-public route, the
+> gate is unbypassable by construction (residual: a new route mounting only `authenticate` with
+> no permission guard would skip it — same shape as the existing allowlist; acceptable). The
+> plan's original "fold into `authenticate`" is an equivalent alternative, **not** required.
+
+The design below is retained for reference; no further build needed unless fix #3/§3.6 changes it.
 
 **Goal:** admin-created employees (temp password, `mustChangePassword: true`) must set a new
 password on first login before doing anything else (decision A2).
@@ -256,11 +306,15 @@ password on first login before doing anything else (decision A2).
   `mustChangePassword`, **bump `tokenVersion` + revoke all refresh tokens** (A7), same as reset.
 - Distinct from forgot/reset (which is OTP-based and unauthenticated).
 
-**Enforcement gate:** a small middleware (mounted after `authenticate`) that, when
-`req.user.mustChangePassword` is true, blocks every authenticated route **except**
-`/auth/change-password`, `/auth/logout`, `/auth/me` with a 403 + a clear
-`code: 'password_change_required'`. To read the flag, `authenticate` must also select
-`mustChangePassword` (add it to the `.select(...)` in `authenticate.js` and to `req.user`).
+**Enforcement gate (fix #5 — no bypass surface):** there is **no global authenticated
+middleware** in this app — every protected route mounts `authenticate` individually, so a
+separately-mounted gate could be forgotten on a new route and silently bypassed. Instead, **fold
+the check into `authenticate` itself**: after it builds `req.user`, if `mustChangePassword` is
+true and the request path is not one of the allowlisted escapes
+(`/auth/change-password`, `/auth/logout`, `/auth/me`), reject with 403 +
+`code: 'password_change_required'`. Because every protected route already runs `authenticate`,
+the gate is unbypassable by construction. To read the flag, add `mustChangePassword` to the
+`.select(...)` in `authenticate.js` and expose it on `req.user`.
 
 **Surface it:** include `mustChangePassword` in the `verify-otp` login response and in
 `/auth/me` so the client can route to the change-password screen.
@@ -271,7 +325,13 @@ tokens dead, normal routes work.
 
 ---
 
-### M1-H · Auth-event audit  🔨
+### M1-H · Auth-event audit  ✅ DONE (bug-fix pass)
+
+> **Shipped:** auth-event audit logging for login / employee-create / password-reset / change is
+> in (per `Bug.supporter.md` fixes, 30 tests green). **Residual:** confirm `auth.refresh.reuse`
+> (theft-detection) writes an audit row and that `tokenVersion` is bumped on reuse — History
+> notes BUG-10 (no tokenVersion bump on reuse) was **left per decision**; revisit if that reuse
+> path should also audit + hard-revoke. The reference design below stands.
 
 **Goal:** record security-relevant auth events (m1.md build list).
 
@@ -322,9 +382,10 @@ integration seam and leave production delivery as the last wire-up.
      `cloudinary` + `multer` (or `busboy`) + `file-type`.
    - Either way this is a **new-dependency decision** (CLAUDE.md rule) — need your OK on which.
 
-2. **Permission granularity for user management (M1-E):** grantable perms (`user:read`,
-   `user:manage`, `kyc:view`) **vs** hard `requireRole('admin','superadmin')`. Recommend
-   grantable (consistent, delegable later; superadmin still covers month-1). Confirm.
+2. **Permission granularity for user management (M1-E):** ~~open~~ **RESOLVED (fix #1):** reads
+   grantable (`user:read`, `kyc:view`); state-changing user ops (activate/deactivate) + permission
+   -assignment stay **hard role-gated, never grantable** — closing the privilege-escalation path.
+   No owner input needed unless you want employees to eventually deactivate users too.
 
 3. **OTP provider (M1-I):** which channel/provider and do we have an account? Until then M1-I
    ships as a seam only.
@@ -335,6 +396,13 @@ integration seam and leave production delivery as the last wire-up.
 5. **Client sign-off (m1.md open Q3):** buyer full-access (no approval gate) + exporter
    3-product-trial-then-mandatory-verify deviates from the quote. Written confirmation from
    Girish recommended (not a blocker for backend build, but a documented deviation).
+
+6. **Verification guard reconciliation (fix #3, blocks final M1-C):** shipped code accepts
+   `pending`|`submitted`. Once KYC upload (M1-B) lands, tighten **exporter** verify to
+   `submitted`-only (no verification without docs)? Buyer approve — keep accepting `pending` so a
+   doc-less buyer can still be given a trust tick, or also require `submitted`? Proposed:
+   exporter `submitted`-only, buyer `pending`|`submitted`. Owner call before touching the shipped
+   guard.
 
 ---
 
@@ -350,21 +418,30 @@ No auth library, ORM, or state manager added. No changes to the approved stack.
 
 ## 5. Behaviour changes to existing code (explicit — not silent)
 
-- **Verify/reject guard `pending` → `submitted`** (M1-C) — reviewers act on submitted docs.
-  `tests/verification.test.js` updated to the new state machine (not weakened).
-- **`kycDocuments.url` → `storageKey`** (M1-A) — never persist a public URL.
-- **`authenticate` selects `mustChangePassword`** and adds it to `req.user` (M1-G).
+- **Verify/reject guard** (M1-C, fix #3) — **shipped** as `pending`|`submitted`. Optional
+  tightening to `submitted`-only (exporter) is pending §3.6; tests change only if tightened.
+- **`kycDocuments.url` → `storageKey`** (M1-A) — never persist a public URL. *(not yet shipped)*
+- **`mustChangePassword` gate** (M1-G, fix #5) — **shipped** inside `requireRole`/
+  `requirePermissions`; `authenticate` selects + exposes the flag. Unbypassable via the boot
+  route-guard. (Plan's "fold into `authenticate`" is an equivalent alternative, not needed.)
+- **Deactivation targets `User.isActive` + `tokenVersion`** (M1-E, fix #2) — `Organisation.isActive`
+  is not checked by auth, so it is never the enforcement point. *(not yet shipped)*
 
 ---
 
 ## 6. Testing (security-relevant — required per CLAUDE.md)
 
-Add/extend vitest coverage for: KYC upload ownership + state transitions; resubmit loop;
-verify/reject only from `submitted`; public exporter read exposes `kycStatus` and is **not**
-gated; KYC-view requires `kyc:view` and returns signed (not public) URLs; user list pagination
-cap + no `passwordHash` leak; activate/deactivate bumps `tokenVersion`; permission-assign is
-superadmin-only and rejects unknown perms; `mustChangePassword` blocks other routes until
-changed; audit rows written for each event and contain no secrets.
+Add/extend vitest coverage for: KYC upload ownership + state transitions; resubmit loop (rejected
+→ submitted **clears `kycRejectionReason`**); verify/reject/approve only from `submitted` (a
+no-docs `pending` org returns 409); public exporter read exposes `kycStatus`, is **not** gated,
+constrains `type: 'exporter'`, and 404s a **deactivated** org (fix #7); KYC-view requires
+`kyc:view` and returns signed (not public) URLs; user list pagination cap + no `passwordHash`
+leak + **`q` regex-injection is neutralised** (fix #6); **deactivate sets `User.isActive=false`
+and bumps `tokenVersion` so login + live sessions die** (fix #2); **activate/deactivate is
+role-gated — an employee (even with any granted perm) gets 403, and an admin cannot act on
+another admin/superadmin** (fix #1); permission-assign is superadmin-only and rejects unknown
+perms; `mustChangePassword` blocks every route except the allowlist and cannot be bypassed on a
+new route (fix #5); audit rows written for each event and contain no secrets/KYC values.
 
 ---
 

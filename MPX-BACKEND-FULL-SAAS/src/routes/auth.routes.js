@@ -17,6 +17,7 @@ authRouter.post('/auth/exporter/signup', publicRoute, authLimiter, validate(V.ex
 // Login → second factor → tokens. Public (identity is being established here).
 authRouter.post('/auth/login', publicRoute, otpLimiter, validate(V.login), ctrl.login);
 authRouter.post('/auth/verify-otp', publicRoute, authLimiter, validate(V.verifyOtp), ctrl.verifyOtp);
+authRouter.post('/auth/resend-otp', publicRoute, otpLimiter, validate(V.resendOtp), ctrl.resendOtp);
 
 // Current user (any authenticated role).
 authRouter.get('/auth/me', authenticate, ctrl.me);

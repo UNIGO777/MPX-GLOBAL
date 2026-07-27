@@ -63,10 +63,21 @@ async function createUserWithOrg({ org, user }) {
 
 // --- registration -------------------------------------------------------------
 
+async function auditSignup(user, meta) {
+  await recordAudit({
+    actor: { userId: user._id, role: user.role },
+    action: 'auth.signup',
+    entityType: 'User',
+    entityId: user._id,
+    orgId: user.orgId,
+    meta,
+  });
+}
+
 // Phase 1: buyer is active immediately; approval is status only, not a gate.
-export async function registerBuyer({ name, email, mobile, password, company, country }) {
+export async function registerBuyer({ name, email, mobile, password, company, country, meta }) {
   const mob = normalizeMobile(mobile);
-  return createUserWithOrg({
+  const user = await createUserWithOrg({
     org: { name: company, type: 'buyer', country, kycStatus: 'pending' },
     user: {
       name,
@@ -78,13 +89,27 @@ export async function registerBuyer({ name, email, mobile, password, company, co
       mustChangePassword: false,
     },
   });
+  await auditSignup(user, meta);
+  return user;
 }
 
 // Phase 1: exporter self-registers; profile public immediately, kycStatus pending.
-export async function registerExporter({ name, email, mobile, password, company, country, businessProfile }) {
+// Extra exporter fields (fields image): entityType (drives KYC path) + address.
+export async function registerExporter({
+  name,
+  email,
+  mobile,
+  password,
+  company,
+  country,
+  entityType,
+  address,
+  businessProfile,
+  meta,
+}) {
   const mob = normalizeMobile(mobile);
-  return createUserWithOrg({
-    org: { name: company, type: 'exporter', country, kycStatus: 'pending', businessProfile },
+  const user = await createUserWithOrg({
+    org: { name: company, type: 'exporter', country, entityType, address, kycStatus: 'pending', businessProfile },
     user: {
       name,
       email: email.toLowerCase(),
@@ -95,6 +120,8 @@ export async function registerExporter({ name, email, mobile, password, company,
       mustChangePassword: false,
     },
   });
+  await auditSignup(user, meta);
+  return user;
 }
 
 // Admin-created employee: generated-password account, so mustChangePassword is
@@ -182,14 +209,24 @@ export async function completeLogin({ loginToken, code, ip, userAgent, requestId
 
 // --- refresh / logout ---------------------------------------------------------
 
-export async function refresh({ refreshToken, ip, userAgent }) {
-  // rotateRefreshToken validates the user is active before issuing a new token.
-  const { user, raw } = await rotateRefreshToken({ presentedRaw: refreshToken, ip, userAgent });
+export async function refresh({ refreshToken, ip, userAgent, requestId }) {
+  // rotateRefreshToken validates the user is active before issuing a new token,
+  // and audits a reuse/theft event.
+  const { user, raw } = await rotateRefreshToken({ presentedRaw: refreshToken, ip, userAgent, requestId });
   return { accessToken: signAccessToken(user), refreshToken: raw };
 }
 
 export async function logout({ refreshToken }) {
   if (refreshToken) await revokeRefreshToken(refreshToken);
+}
+
+// Resend the login OTP using only the login-pending token (no password re-entry).
+// requestOtp still enforces the durable lock, so this can throw "too many attempts".
+export async function resendLoginOtp({ loginToken }) {
+  const { sub } = verifyLoginToken(loginToken);
+  const user = await User.findOne({ _id: sub, isActive: true });
+  if (!user) throw AppError.unauthorized('user gone', 'Login session expired. Please sign in again.');
+  await requestOtp({ user, purpose: 'login', channel: 'mobile' });
 }
 
 // --- change / forgot / reset password -----------------------------------------

@@ -14,6 +14,14 @@ const mobile = z.object({
 });
 const otpCode = zString({ min: 4, max: 12 });
 const opaqueToken = zString({ min: 10, max: 4096 });
+const entityType = z.enum(['business', 'individual']);
+const address = z.object({
+  line1: zString({ max: 200 }).optional(),
+  line2: zString({ max: 200 }).optional(),
+  city: zString({ max: 100 }).optional(),
+  state: zString({ max: 100 }).optional(),
+  postalCode: zString({ max: 20 }).optional(),
+});
 
 export const buyerSignup = {
   body: z.object({
@@ -33,7 +41,11 @@ export const exporterSignup = {
     mobile,
     password,
     company: zString({ min: 1, max: 200 }),
+    // Exporter-only extra fields (fields image): entity type (required — drives
+    // the KYC path) and a structured address.
+    entityType,
     country,
+    address: address.optional(),
     businessProfile: z
       .object({
         registrationNumber: zString({ max: 100 }).optional(),
@@ -63,6 +75,10 @@ export const login = {
 
 export const verifyOtp = {
   body: z.object({ loginToken: opaqueToken, code: otpCode }),
+};
+
+export const resendOtp = {
+  body: z.object({ loginToken: opaqueToken }),
 };
 
 export const refresh = {

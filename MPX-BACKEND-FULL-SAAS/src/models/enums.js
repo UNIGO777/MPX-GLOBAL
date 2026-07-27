@@ -12,3 +12,6 @@ export const KYC_STATUS = ['pending', 'submitted', 'verified', 'rejected'];
 
 // Purposes a transactional OTP can be issued for.
 export const OTP_PURPOSE = ['login', 'forgot_password'];
+
+// KYC entity type — drives the KYC document path (business docs vs personal ID).
+export const ENTITY_TYPE = ['business', 'individual'];

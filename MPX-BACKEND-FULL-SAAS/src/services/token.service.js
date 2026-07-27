@@ -6,6 +6,7 @@ import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
 import { RefreshToken } from '../models/RefreshToken.js';
 import { User } from '../models/User.js';
+import { recordAudit } from './audit.service.js';
 
 const ACCESS_TYP = 'access';
 const LOGIN_PENDING_TYP = 'login_pending';
@@ -99,12 +100,20 @@ export async function revokeAllUserTokens(userId) {
 }
 
 // Rotate on use. Reuse of a non-active token = theft → revoke the whole family.
-export async function rotateRefreshToken({ presentedRaw, ip, userAgent }) {
+export async function rotateRefreshToken({ presentedRaw, ip, userAgent, requestId }) {
   const current = await RefreshToken.findOne({ tokenHash: hashRefresh(presentedRaw) });
   if (!current) throw AppError.unauthorized('unknown refresh token', 'Session invalid. Please sign in again.');
 
   if (current.status !== 'active') {
+    // Reuse of a rotated/revoked token = theft. Revoke the family and record it.
     await revokeFamily(current.familyId);
+    await recordAudit({
+      actor: { userId: current.userId },
+      action: 'auth.refresh.reuse',
+      entityType: 'User',
+      entityId: current.userId,
+      meta: { ip, userAgent, requestId },
+    });
     throw AppError.unauthorized('refresh token reuse', 'Session invalid. Please sign in again.');
   }
   if (current.expiresAt.getTime() <= Date.now()) {

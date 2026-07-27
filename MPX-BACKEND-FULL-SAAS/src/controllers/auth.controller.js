@@ -8,12 +8,12 @@ function clientMeta(req) {
 }
 
 export async function buyerSignup(req, res) {
-  const user = await authService.registerBuyer(req.body);
+  const user = await authService.registerBuyer({ ...req.body, meta: clientMeta(req) });
   res.status(201).json({ user }); // toJSON strips passwordHash / 2FA fields
 }
 
 export async function exporterSignup(req, res) {
-  const user = await authService.registerExporter(req.body);
+  const user = await authService.registerExporter({ ...req.body, meta: clientMeta(req) });
   res.status(201).json({ user });
 }
 
@@ -34,6 +34,11 @@ export async function login(req, res) {
 export async function verifyOtp(req, res) {
   const result = await authService.completeLogin({ ...req.body, ...clientMeta(req) });
   res.json({ accessToken: result.accessToken, refreshToken: result.refreshToken, user: result.user });
+}
+
+export async function resendOtp(req, res) {
+  await authService.resendLoginOtp(req.body);
+  res.json({ message: 'A new OTP has been sent.' });
 }
 
 export async function refresh(req, res) {

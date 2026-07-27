@@ -85,14 +85,26 @@ describe('auth', () => {
     expect(org.kycStatus).toBe('pending');
   });
 
-  it('exporter signup: public profile, kyc pending, active', async () => {
-    const b = { ...makeBuyer() };
+  it('exporter signup: extra fields (entityType + address) stored, kyc pending', async () => {
+    const b = {
+      ...makeBuyer(),
+      entityType: 'business',
+      address: { line1: '1 Trade St', city: 'Mumbai', state: 'MH', postalCode: '400001' },
+    };
     const res = await request(app).post('/auth/exporter/signup').send(b);
     expect(res.status).toBe(201);
     expect(res.body.user.role).toBe('exporter');
     const org = await Organisation.findById(res.body.user.orgId);
     expect(org.type).toBe('exporter');
     expect(org.kycStatus).toBe('pending');
+    expect(org.entityType).toBe('business');
+    expect(org.address.city).toBe('Mumbai');
+  });
+
+  it('exporter signup requires entityType', async () => {
+    const res = await request(app).post('/auth/exporter/signup').send({ ...makeBuyer() }); // no entityType
+    expect(res.status).toBe(400);
+    expect(res.body.error.fields.map((f) => f.field)).toContain('body.entityType');
   });
 
   it('duplicate email is rejected', async () => {

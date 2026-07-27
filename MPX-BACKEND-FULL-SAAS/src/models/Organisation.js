@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 import { baseSchemaOptions } from './baseSchema.js';
 import { declareScope, SCOPE } from './scoping.js';
-import { ORG_TYPE, KYC_STATUS } from './enums.js';
+import { ORG_TYPE, KYC_STATUS, ENTITY_TYPE } from './enums.js';
 
 const { Schema } = mongoose;
 
@@ -14,6 +14,10 @@ const organisationSchema = new Schema(
     name: { type: String, required: true, trim: true }, // A5: intentionally NOT unique
 
     type: { type: String, enum: ORG_TYPE, required: true, index: true },
+
+    // Captured at exporter signup (owner decision — the fields image). Drives the
+    // KYC document path (business ⇒ registration/GST; individual ⇒ govt ID).
+    entityType: { type: String, enum: ENTITY_TYPE },
 
     // A6: ISO 3166-1 alpha-2 code (IN, AE, AU) — never a display name.
     country: { type: String, uppercase: true, trim: true, minlength: 2, maxlength: 2 },
