@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPX Global — Category Form Fields Explorer</title>
+<style>
+  :root{
+    --bg:#f7f8fb; --card:#ffffff; --ink:#0f1b33; --muted:#5b6577; --line:#e3e7ef;
+    --accent:#2f6bff; --accent-bg:#e9f0ff; --accent-ink:#16346b;
+    --goods:#0f6e56; --goods-bg:#e1f5ee;
+    --service:#534ab7; --service-bg:#eeedfe;
+    --other:#854f0b; --other-bg:#faeeda;
+    --chip:#f2f4f9;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e1526; --card:#141d31; --ink:#eef2fb; --muted:#9aa6bd; --line:#26314b;
+      --accent:#6f9bff; --accent-bg:#16264a; --accent-ink:#bcd2ff;
+      --goods:#5dcaa5; --goods-bg:#0f2e28;
+      --service:#afa9ec; --service-bg:#241f4a;
+      --other:#efb454; --other-bg:#3a2c12;
+      --chip:#1c2740;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+    line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:860px;margin:0 auto;padding:32px 20px 56px;}
+  header h1{font-size:22px;font-weight:600;margin:0 0 4px;}
+  header p{margin:0;color:var(--muted);font-size:14px;}
+  .divider{height:1px;background:var(--line);margin:20px 0;}
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+  label{font-size:14px;color:var(--muted);}
+  select{font-size:15px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;
+    background:var(--card);color:var(--ink);min-width:280px;cursor:pointer;}
+  select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg);}
+  .badge{font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;letter-spacing:.2px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;}
+  .section{margin-bottom:20px;}
+  .section:last-child{margin-bottom:0;}
+  .section h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;
+    margin:0 0 10px;color:var(--muted);}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{font-size:13.5px;background:var(--chip);border:1px solid var(--line);
+    border-radius:8px;padding:6px 12px;}
+  .chip.req::after{content:" *";color:var(--accent);}
+  .note{font-size:13px;color:var(--muted);margin-top:22px;padding-top:16px;border-top:1px solid var(--line);}
+  .note b{color:var(--ink);font-weight:600;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--muted);}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>MPX Global — Category form fields</h1>
+    <p>Ek category select karo — us category ke product/service form me jo fields aayenge wo dikhenge.</p>
+  </header>
+  <div class="divider"></div>
+
+  <div class="controls">
+    <label for="catsel">Category</label>
+    <select id="catsel" aria-label="Select a category"></select>
+    <span class="badge" id="typebadge"></span>
+  </div>
+
+  <div class="card" id="panel"></div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--goods)"></span>Goods (1–34)</span>
+    <span><span class="dot" style="background:var(--service)"></span>Service (35–39)</span>
+    <span><span class="dot" style="background:var(--other)"></span>Other (seller picks)</span>
+    <span>* = category-specific fields</span>
+  </div>
+
+  <p class="note">
+    <b>Common fields</b> sab categories me aate hain. <b>Goods</b> ko trade fields (MOQ, HS code, origin, supply ability, lead time, packaging) milte hain; <b>Service</b> ko engagement / delivery / timeline (no MOQ). <b>Category-specific</b> fields sirf us category ke hote hain — ye <code>CategoryAttribute</code> se dynamic load honge. <b>Status</b> = seller ka active / inactive toggle (live dikhe ya hide) — approval nahi.
+  </p>
+</div>
+
+<script>
+const COMMON=["Category","Name","Description","Images","Price (fixed / range / on request)","Currency","Status (active / inactive)"];
+const GOODS=["MOQ","Unit","HS code","Country of origin","Supply ability","Lead time","Packaging","Payment terms"];
+const SERVICE=["Engagement type","Delivery model","Team size","Pricing model","Timeline"];
+const D=[
+["Agriculture","goods",["Variety / type","Grade","Packaging size","Shelf life","Organic (Y/N)","Moisture %"]],
+["Apparel & Garments","goods",["Size","Color","Fabric","Gender","Pattern","GSM"]],
+["Textiles, Fabrics & Yarn","goods",["Material","GSM","Width","Weave","Color","Pattern"]],
+["Leather & Leather Products","goods",["Leather type","Finish","Color","Thickness","Grade"]],
+["Bags, Luggage & Accessories","goods",["Material","Size / capacity","Color","Closure type","Gender"]],
+["Footwear","goods",["Size","Color","Material","Sole material","Gender","Type"]],
+["Food & Beverages","goods",["Weight / volume","Packaging type","Shelf life","Veg / non-veg","FSSAI cert"]],
+["Chemicals, Dyes & Solvents","goods",["Grade","Purity %","Form (powder/liquid)","CAS no.","Application"]],
+["Pharmaceuticals & Medical","goods",["Composition","Form","Strength","Packaging","Prescription (Y/N)"]],
+["Health & Beauty","goods",["Form","Skin / hair type","Volume","Fragrance","Shelf life"]],
+["Electronics & Electrical","goods",["Voltage","Power rating","Warranty","Brand","Model"]],
+["Industrial Machinery & Equipment","goods",["Power","Capacity","Automation grade","Voltage","Phase","Warranty"]],
+["Industrial Supplies","goods",["Material","Size","Grade","Brand","Application"]],
+["Mechanical Parts & Spares","goods",["Material","Size","Type","Application","Brand"]],
+["Automobile Parts & Spares","goods",["Vehicle type","Compatibility","Material","Part no.","Warranty"]],
+["Building & Construction","goods",["Material","Grade","Size","Finish","Strength","Color"]],
+["Pipes, Tubes & Fittings","goods",["Material","Diameter / size","Pressure rating","Length","Type"]],
+["Metals, Minerals & Ores","goods",["Grade","Form (sheet/coil/rod)","Thickness","Purity","Dimension"]],
+["Plastic & PVC","goods",["Material type","Grade","Color","Thickness","Application"]],
+["Rubber & Rubber Products","goods",["Material","Hardness (shore)","Color","Size","Application"]],
+["Packaging Material & Supplies","goods",["Material","Size","Capacity","Printing (Y/N)","Type"]],
+["Paper & Paper Products","goods",["GSM","Size","Type","Color","Brightness"]],
+["Furniture & Furnishings","goods",["Material","Dimensions","Color / finish","Type","Capacity"]],
+["Home & Kitchen","goods",["Material","Capacity / size","Color","Type","Brand"]],
+["Gems & Jewellery","goods",["Metal","Purity (karat)","Weight","Stone type","Design"]],
+["Handicrafts & Decoratives","goods",["Material","Size","Color","Theme","Handmade (Y/N)"]],
+["Sports, Toys & Games","goods",["Material","Age group","Size","Type","Brand"]],
+["Tools & Hardware","goods",["Material","Size","Type","Power (if any)","Brand"]],
+["Safety & Security","goods",["Type","Material","Size","Certification / standard","Application"]],
+["Scientific & Lab Instruments","goods",["Type","Range / accuracy","Power","Brand","Application"]],
+["Electricals — Lighting & Solar","goods",["Power / wattage","Voltage","Type","Efficiency","Warranty"]],
+["Environment & Water","goods",["Capacity","Type","Power","Technology","Application"]],
+["Office Supplies & Stationery","goods",["Type","Size","Color","Material","Brand"]],
+["Telecom & Mobile","goods",["Type","Brand","Model","Key specs","Warranty"]],
+["IT, Software & AI Services","service",["Service type","Tech stack","Engagement (project/hourly/dedicated)","Team size","Delivery (remote/onsite)","Timeline"]],
+["Finance, Accounting & BPO","service",["Service type","Compliance (ISO/GDPR)","Engagement","Team size","Delivery","Turnaround"]],
+["Healthcare & Clinical Services","service",["Service type","Specialization","Compliance / cert","Engagement","Delivery","Timeline"]],
+["Education, Training & EdTech","service",["Program type","Mode (online/offline)","Duration","Certification","Language","Batch size"]],
+["Marketing, Design & Digital Services","service",["Service type","Deliverables","Engagement","Turnaround","Tools / platforms","Revisions"]],
+["Other (catch-all)","other",["Free-form key-value specs (seller apne fields daale)"]]
+];
+
+const sel=document.getElementById("catsel");
+function grp(l){const o=document.createElement("optgroup");o.label=l;return o;}
+const g1=grp("Goods (1–34)"),g2=grp("Services (35–39)"),g3=grp("Other");
+D.forEach((r,i)=>{const o=document.createElement("option");o.value=i;o.textContent=(i+1)+". "+r[0];
+  (r[1]==="goods"?g1:r[1]==="service"?g2:g3).appendChild(o);});
+sel.appendChild(g1);sel.appendChild(g2);sel.appendChild(g3);
+
+function chips(arr,req){return '<div class="chips">'+arr.map(f=>'<span class="chip'+(req?' req':'')+'">'+f+'</span>').join('')+'</div>';}
+function section(title,html){return '<div class="section"><h3>'+title+'</h3>'+html+'</div>';}
+
+function render(i){
+  const r=D[i], type=r[1];
+  const badge=document.getElementById("typebadge");
+  let bg,ink,label;
+  if(type==="goods"){bg="var(--goods-bg)";ink="var(--goods)";label="Goods";}
+  else if(type==="service"){bg="var(--service-bg)";ink="var(--service)";label="Service";}
+  else{bg="var(--other-bg)";ink="var(--other)";label="Other — seller picks goods / service";}
+  badge.style.background=bg;badge.style.color=ink;badge.textContent=label;
+
+  let h=section("Common fields (all categories)",chips(COMMON));
+  if(type==="goods")h+=section("Goods extra — trade fields",chips(GOODS));
+  else if(type==="service")h+=section("Service extra",chips(SERVICE));
+  else h+=section("Type",chips(["Seller manually selects Goods or Service"]));
+  h+=section("Category-specific fields",chips(r[2],true));
+  document.getElementById("panel").innerHTML=h;
+}
+
+sel.value=2; render(2);
+sel.addEventListener("change",e=>render(+e.target.value));
+</script>
+</body>
+</html>

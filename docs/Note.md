@@ -34,6 +34,21 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
   guarded (it's expected scope) — just don't forget it.
 - _(Supersedes the earlier "Phase 1 = no limit" note.)_
 
+## S1 · M1 frontend screens — 🧭 ALERT before building
+Before building any M1 auth/KYC **frontend screen** (buyer, exporter, admin, employee), STOP and
+alert the owner first, then align the forms to the **backend contract**
+(`modules-in-detailed/m1-max-1.5days/feilds-data.png` + `m1.md §7`):
+- **Signup is per-role** (separate buyer & exporter forms); **login is ONE shared page**
+  (email/mobile + password → OTP verify → role-detect redirect).
+- **Exporter signup REQUIRES `entityType` (business/individual)** + optional structured `address`;
+  buyer signup does not.
+- Wire these flows: login → `verify-otp` (loginToken + code) with **`resend-otp`**; forgot →
+  `reset-password` (identifier + code + newPassword); **`change-password`** (must-change staff
+  flow: currentPassword + newPassword, returns fresh tokens).
+- Verified = a **tick** when `kycStatus === 'verified'` (no "not verified" badge).
+- **Admin TOTP is on hold (D4)** — screens show login/OTP only for now.
+Do not start the screens without surfacing this alert.
+
 ## D2 · Seller hard "verify-before-sell" gate  ❌ DROPPED
 - A hard block stopping an unverified seller from selling/publishing at all. **Not built** —
   replaced by D1's 3-product soft limit. Do **not** build the hard gate.

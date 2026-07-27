@@ -60,7 +60,7 @@ management surface, then the cross-cutting auth hardening.
 
 | ID | Sub-module | Depends on | Blocked? |
 |----|------------|-----------|----------|
-| **M1-A** | KYC data model & entity type | — | no |
+| **M1-A** | KYC data model & entity type | — | ✅ **DONE** (Phase 1) |
 | **M1-B** | KYC document upload | A | 🧱 dep/decision (Cloudinary approach) |
 | **M1-C** | Verification review alignment + resubmit + tick expose | A, B | no |
 | **M1-D** | KYC document view (signed URL, reviewers) | A, B | 🧱 dep (Cloudinary) |
@@ -82,7 +82,19 @@ M1-A/E/F are unblocked and can start immediately. B/D/I wait on the decisions in
 
 ---
 
-### M1-A · KYC data model & entity type  🔨
+### M1-A · KYC data model & entity type  ✅ DONE (Phase 1, 2026-07-27)
+
+> **Shipped:** `KYC_DOC_TYPE` + `KYC_DOCS_BY_ENTITY` enums added; `Organisation.kycDocuments`
+> sub-doc refactored to `{ docType (enum, required), storageKey (required — Cloudinary
+> public_id, never a public URL), format, uploadedAt (default now), verifiedAt, verifiedBy }`
+> with `select:false` kept; `kycSubmittedAt` added. `entityType` + `ENTITY_TYPE` were already
+> shipped by the bug-fix pass. New `tests/organisation.model.test.js` (4 tests) — 38/38 green,
+> lint clean.
+>
+> **fix #4 reconciled:** `entityType` is captured at **exporter signup** (shipped: required in
+> `exporterSignup` validator + stored by `registerExporter`, per the m1.md fields image), **not**
+> at upload as the plan originally proposed. M1-B upload will **validate submitted `docType`s
+> against the org's `entityType`** (via `KYC_DOCS_BY_ENTITY`) rather than set it.
 
 **Goal:** give the KYC flow the fields it needs; fix a naming/security gap in the current
 `kycDocuments` sub-doc.
@@ -123,7 +135,12 @@ moves `pending → submitted` (and `rejected → submitted` on resubmit, see M1-
   can't be used to abuse Cloudinary quota / storage. (fix #9)
 - Accepts `entityType` + one or more documents (`docType` + the uploaded file/reference).
 - Validation (zod): `entityType` enum; `docType` enum; per §3 upload-approach decision.
-- Enforce **business ⇒ business docs**, **individual ⇒ ID doc** at the route boundary.
+- Enforce **business ⇒ business docs**, **individual ⇒ ID doc** at the route boundary — use
+  `KYC_DOCS_BY_ENTITY` (added in M1-A) to check each `docType` is valid for the entity type.
+- **entityType source (confirmed Phase-1 bug check):** exporters already have `entityType` from
+  signup → use it; if the request also sends one, it must **match** (else 400). **Buyers have no
+  `entityType` at signup** (buyer signup doesn't capture it) → the upload **must accept and set**
+  it on first submission. So: exporter = validate-against-existing; buyer = accept-and-set.
 - On success: push into `org.kycDocuments`, set `entityType`, set `kycSubmittedAt`, transition
   `kycStatus: pending|rejected → submitted`, and **clear `kycRejectionReason`** (so a resubmit
   drops the stale reason — fix #8). If already `submitted`, treat as an additive re-upload
@@ -204,9 +221,14 @@ Cloudinary URLs — public URLs never stored or returned in bulk.
 - **Permission:** `kyc:view` (new, grantable — a reviewer who can `exporter:verify` needs to see
   docs; superadmin all-access). See §3 permission decision.
 - Fetch org by id (`findOne({ _id })`, 404 if missing) **with** `.select('+kycDocuments')`.
+- **⚠️ toJSON gotcha (confirmed during Phase-1 bug check):** `baseSchema.toJSON` strips every
+  `select:false` path — including `kycDocuments` — **even when explicitly selected**
+  ([baseSchema.js](../../MPX-BACKEND-FULL-SAAS/src/models/baseSchema.js)). So `res.json(org)` will
+  **never** emit the docs. Read `org.kycDocuments` in code (mongoose doc property, pre-serialize)
+  and build a **fresh curated array** for the response — do not spread the org.
 - For each doc, mint a **signed expiring** Cloudinary URL (short TTL, e.g. 60–120s) from the
-  stored `storageKey` and return `{ docType, uploadedAt, signedUrl, expiresAt }`. Never return
-  `storageKey` raw is acceptable, but the signed URL is the access path.
+  stored `storageKey` and return `{ docType, uploadedAt, signedUrl, expiresAt }`. Do not return
+  `storageKey`; the signed URL is the access path.
 - Append AuditLog `kyc.view` (who viewed whose docs — an access record, no doc contents).
 
 **Security/tracker:** A7/E3 (signed expiring, never public), C10 audit, default-deny perm.
@@ -420,7 +442,8 @@ No auth library, ORM, or state manager added. No changes to the approved stack.
 
 - **Verify/reject guard** (M1-C, fix #3) — **shipped** as `pending`|`submitted`. Optional
   tightening to `submitted`-only (exporter) is pending §3.6; tests change only if tightened.
-- **`kycDocuments.url` → `storageKey`** (M1-A) — never persist a public URL. *(not yet shipped)*
+- **`kycDocuments.url` → `storageKey`** (M1-A) — never persist a public URL. ✅ **shipped**
+  (+ `docType` enum, `format`, `kycSubmittedAt`).
 - **`mustChangePassword` gate** (M1-G, fix #5) — **shipped** inside `requireRole`/
   `requirePermissions`; `authenticate` selects + exposes the flag. Unbypassable via the boot
   route-guard. (Plan's "fold into `authenticate`" is an equivalent alternative, not needed.)

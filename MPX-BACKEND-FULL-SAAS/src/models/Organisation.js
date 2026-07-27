@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 import { baseSchemaOptions } from './baseSchema.js';
 import { declareScope, SCOPE } from './scoping.js';
-import { ORG_TYPE, KYC_STATUS, ENTITY_TYPE } from './enums.js';
+import { ORG_TYPE, KYC_STATUS, ENTITY_TYPE, KYC_DOC_TYPE } from './enums.js';
 
 const { Schema } = mongoose;
 
@@ -53,15 +53,20 @@ const organisationSchema = new Schema(
     },
 
     kycStatus: { type: String, enum: KYC_STATUS, default: 'pending', index: true },
+    // Set when documents are first submitted (kycStatus → 'submitted'); lets the
+    // review queue order by submission time.
+    kycSubmittedAt: { type: Date },
     // A7 (tracker E3): select:false so no list endpoint accidentally returns KYC
-    // document URLs. Documents are served via a permissioned endpoint that mints
-    // signed, expiring Cloudinary URLs — public URLs are never stored here.
+    // documents. We store only the Cloudinary `storageKey` (public_id) — a PRIVATE
+    // reference, never a public URL. Documents are served via a permissioned
+    // endpoint that mints signed, expiring URLs from the storageKey on read.
     kycDocuments: {
       type: [
         {
-          type: { type: String, trim: true },
-          url: { type: String, trim: true },
-          uploadedAt: { type: Date },
+          docType: { type: String, enum: KYC_DOC_TYPE, required: true },
+          storageKey: { type: String, required: true, trim: true },
+          format: { type: String, trim: true },
+          uploadedAt: { type: Date, default: Date.now },
           verifiedAt: { type: Date },
           verifiedBy: { type: Schema.Types.ObjectId, ref: 'User' },
         },

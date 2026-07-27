@@ -15,3 +15,14 @@ export const OTP_PURPOSE = ['login', 'forgot_password'];
 
 // KYC entity type — drives the KYC document path (business docs vs personal ID).
 export const ENTITY_TYPE = ['business', 'individual'];
+
+// Accepted KYC document types. Business entities submit registration/GST/
+// certificate proofs; individuals submit a personal govt ID (PAN/Aadhaar/
+// passport). 'other' is a catch-all the reviewer can still inspect.
+export const KYC_DOC_TYPE = ['registration', 'gst', 'certificate', 'pan', 'aadhaar', 'passport', 'other'];
+
+// Which document types are valid for each entity type (enforced at upload).
+export const KYC_DOCS_BY_ENTITY = Object.freeze({
+  business: ['registration', 'gst', 'certificate', 'other'],
+  individual: ['pan', 'aadhaar', 'passport', 'other'],
+});

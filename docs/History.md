@@ -129,6 +129,15 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-27** — **M1 Phase 1 (M1-A · KYC data model) built.** `enums.js`: added
+  `KYC_DOC_TYPE` + `KYC_DOCS_BY_ENTITY` (business→registration/gst/certificate; individual→
+  pan/aadhaar/passport; +other). `Organisation.kycDocuments` sub-doc refactored `url`→
+  **`storageKey`** (Cloudinary public_id, private — never a public URL) + `docType` (enum,
+  required) + `format` + `uploadedAt` default; kept `select:false` (A7/E3). Added
+  `kycSubmittedAt`. New `tests/organisation.model.test.js` (4). **38/38 green, lint clean.**
+  fix #4 reconciled: `entityType` stays at signup (already shipped); M1-B upload will validate
+  docTypes against it. Phases 2–3 (user-mgmt, permission-assign) unblocked next; 4–5 await the
+  Cloudinary + OTP-provider decisions.
 - **2026-07-27** — **Auth gaps closed vs M1 plan.** Added: signup audit (`auth.signup`) +
   refresh-reuse/theft audit (`auth.refresh.reuse`) [M1-H residual done]; `POST /auth/resend-otp`
   (resend via loginToken, no password); **exporter signup extra fields** — `entityType`

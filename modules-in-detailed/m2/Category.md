@@ -1,13 +1,14 @@
-# MPX Global — B2B Category Tree (IndiaMART-style, 2 levels)
+# MPX Global — B2B Category Tree (v2)
 
 > Seed taxonomy for the `Category` model (`name`, `slug`, `parentId`, `active`).
 > Top category = `parentId: null`. Sub-category = `parentId: <top>`.
-> IndiaMART ke actual me 1 lakh+ leaf categories hain — ye ek practical starter tree hai, baad me extend/edit kar sakte ho (admin CRUD se).
+> **40 top categories** (39 + Other) · goods + services (services same Product model me treat hote hain).
+> **Green/new** = naya top category · **[+NEW]** = existing branch me add hui sub-category.
 
 ---
 
 ## 1. Agriculture
-Seeds & plants · Grains, pulses & cereals · Fresh fruits & vegetables · Spices & herbs · Agricultural machinery & equipment · Fertilizers & soil · Animal feed & fodder · Cattle & livestock supplies
+Seeds & plants · Grains, pulses & cereals · Fresh fruits & vegetables · Spices & herbs · Agricultural machinery & equipment · Fertilizers & soil · Animal feed & fodder · Cattle & livestock supplies · **[+NEW]** Cold chain logistics & storage equipment · **[+NEW]** Smart irrigation & drone farming tech
 
 ## 2. Apparel & Garments
 Men's clothing · Women's clothing · Kids' & infant wear · Ethnic wear (sarees, kurtis, suits) · Sportswear & activewear · Uniforms & workwear · Undergarments & hosiery · Winter wear
@@ -28,7 +29,7 @@ Men's footwear · Women's footwear · Sports shoes · Safety & industrial shoes 
 Packaged & processed food · Snacks & confectionery · Beverages (tea, coffee, juices) · Dairy products · Bakery products · Edible oils · Dry fruits & nuts · Organic food
 
 ## 8. Chemicals, Dyes & Solvents
-Industrial chemicals · Dyes & pigments · Solvents · Adhesives & sealants · Laboratory chemicals · Agrochemicals · Water treatment chemicals · Specialty chemicals
+Industrial chemicals · Dyes & pigments · Solvents · Adhesives & sealants · Laboratory chemicals · Agrochemicals · Water treatment chemicals · Specialty chemicals · Bio-pesticides · Organic fertilizer chemistry
 
 ## 9. Pharmaceuticals & Medical
 Pharmaceutical formulations · Ayurvedic & herbal products · Surgical & medical instruments · Hospital furniture & equipment · Diagnostic equipment · Medical disposables · Nutraceuticals & supplements
@@ -40,7 +41,7 @@ Cosmetics & makeup · Skincare products · Hair care · Personal hygiene · Esse
 Consumer electronics · Electronic components · LED lights & lighting · Wires & cables · Switches & sockets · Batteries & power supplies · CCTV & security systems · Electrical panels
 
 ## 12. Industrial Machinery & Equipment
-Manufacturing machines · Packaging machines · Food processing machines · Printing machines · Textile machinery · CNC & machine tools · Material handling equipment · Special purpose machines
+Manufacturing machines · Packaging machines · Food processing machines · Printing machines · Textile machinery · CNC & machine tools · Material handling equipment · Special purpose machines · Timber/wood processing machinery
 
 ## 13. Industrial Supplies
 Bearings · Fasteners (nuts, bolts, screws) · Seals & gaskets · Abrasives · Lubricants & oils · Springs · Industrial belts · Hand & power tools
@@ -52,13 +53,13 @@ Pumps · Valves · Motors · Gears & gearboxes · Compressors · Hydraulic & pne
 Two-wheeler parts · Car parts & accessories · Commercial vehicle parts · Tyres & tubes · Auto electricals · Lubricants · Car care & wash equipment
 
 ## 16. Building & Construction
-TMT bars & steel · Cement & concrete · Bricks & blocks · Tiles & marble · Sanitaryware & fittings · Doors & windows · Paints & coatings · Construction chemicals
+TMT bars & steel · Cement & concrete · Bricks & blocks · Tiles & marble (ceramic/granite) · Sanitaryware & fittings · Doors & windows · Paints & coatings · Construction chemicals · Prefab components
 
 ## 17. Pipes, Tubes & Fittings
 PVC & CPVC pipes · GI & MS pipes · Pipe fittings · Flanges · Hoses · Tubing
 
 ## 18. Metals, Minerals & Ores
-Iron & steel · Aluminium · Copper & brass · Stainless steel · Minerals & ores · Metal sheets & coils · Scrap metal
+Iron & steel (casting/fabrication) · Aluminium · Copper & brass · Stainless steel · Minerals & ores · Metal sheets & coils · Scrap metal · **[+NEW]** Precision tools & metal components (export-grade)
 
 ## 19. Plastic & PVC
 Plastic granules & raw material · Plastic containers & crates · Plastic sheets & films · PVC products · Plastic water tanks · Moulded plastic products
@@ -67,7 +68,7 @@ Plastic granules & raw material · Plastic containers & crates · Plastic sheets
 Rubber sheets · Rubber seals & gaskets · Rubber hoses · Tyres · Rubber components · Latex products
 
 ## 21. Packaging Material & Supplies
-Corrugated boxes & cartons · PET bottles & jars · Pouches & films · Labels & stickers · Paper bags · Packaging tapes · Bottle caps & closures
+Corrugated boxes & cartons · PET bottles & jars · Pouches & films · Labels & stickers · Paper bags · Packaging tapes · Bottle caps & closures · Jute/cotton eco-packaging
 
 ## 22. Paper & Paper Products
 Copier & printing paper · Kraft paper · Paper plates & cups · Tissue paper · Notebooks & registers · Paperboard
@@ -91,13 +92,13 @@ Sports equipment · Fitness & gym equipment · Toys & games · Outdoor & adventu
 Hand tools · Power tools · Cutting tools · Measuring instruments · Hardware fittings · Welding equipment
 
 ## 29. Safety & Security
-Personal protective equipment (PPE) · Fire safety · Safety shoes & helmets · Surveillance systems · Access control · Industrial safety
+Personal protective equipment (PPE) · Fire safety · Safety shoes & helmets · Surveillance systems · Access control · **[+NEW]** Industrial PPE & safety gear
 
 ## 30. Scientific & Lab Instruments
 Laboratory equipment · Testing & measuring instruments · Microscopes · Analytical instruments · Lab glassware
 
 ## 31. Electricals — Lighting & Solar
-Solar panels & systems · Inverters & batteries · LED & lighting fixtures · Street & industrial lighting · Renewable energy equipment
+Solar PV panels & systems · Inverters & batteries · Lithium battery storage · LED & lighting fixtures · Street & industrial lighting · Renewable energy equipment · **[+NEW]** Green hydrogen equipment
 
 ## 32. Environment & Water
 Water treatment plants · RO & purification systems · Pollution control equipment · Waste management · Air filtration
@@ -108,9 +109,39 @@ Stationery items · Printing & promotional products · Office equipment · Files
 ## 34. Telecom & Mobile
 Mobile phones & accessories · Telecom equipment · Signal boosters · Networking devices · Cables & connectors
 
+## 35. IT, Software & AI Services  *(new)*
+Custom AI/ML & Generative AI (LLM) development · Mobile app development (iOS/Android) · Web & e-commerce development · Cloud migration & DevOps (AWS/Azure/GCP) · ERP implementation (SAP/Oracle) · Cybersecurity & data privacy services · Blockchain & Web3 development · Legacy code modernization (COBOL/Java) · Outsourced technical support (L1/L2)
+
+## 36. Finance, Accounting & Business Process Services  *(new)*
+Offshore accounting & bookkeeping · Tax preparation & compliance (ATO/IRS etc.) · Fractional CFO & financial advisory · SMSF / pension fund outsourcing · AI-led finance automation (AP/AR) · ISO/GDPR-compliant BPO / back-office teams · Legal process outsourcing (LPO)
+
+## 37. Healthcare & Clinical Services  *(new)*
+Clinical data management & R&D outsourcing · Medical device contract manufacturing (as a service) · Telemedicine platform development · Biotech lab outsourcing
+
+## 38. Education, Training & EdTech  *(new)*
+Vocational/technical training partnerships · EdTech content & LMS platforms · Professional certification training · Language & communication coaching
+
+## 39. Marketing, Design & Digital Services  *(new)*
+Digital marketing & AI personalization · 3D modeling & product prototyping (design service) · Content/creative production
+
 ---
 
-### Seeding notes
-- Har entry ke liye: `name`, `slug` (name se auto, e.g. "Cotton fabric" → `cotton-fabric`), `parentId` (top ke liye null), `active: true`.
-- Products **leaf/sub-category** se map hone chahiye (top se nahi) — cleaner search/filter.
-- Ye 34 top + ~230 sub ek starter set hai; admin CRUD se add/edit/deactivate ho sakta hai.
+## 40. Other  *(catch-all)*
+General / uncategorized products or services that don't fit above. **Yahan seller khud select karta hai — Goods ya Service** (kyunki type category se derive nahi ho sakta). Specifications free-form key-value (seller apne fields daale). Baaki sab categories (1-34 goods, 35-39 service) me type automatic aata hai.
+
+## Services treated as products
+Categories **35–39** mostly services hain (IT, BPO, clinical, training, marketing). Ye **same `Product` model** me rehti hain — koi alag service entity nahi. In ke liye:
+- `unit` = project / hour / month
+- price aksar "on request"
+- trade fields (HS code, country of origin) optional / N-A
+- attributes alag type ke (delivery model, engagement type, team size, tech stack) — goods jaise GSM/material nahi
+
+## Deprioritized (tree me rakhi, abhi low placement/SEO priority)
+Gems & Jewellery · Sports, Toys & Games · Handicrafts & Decoratives · Paper & Paper Products · Rubber & Rubber Products · Plastic & PVC · Office Supplies & Stationery · Telecom & Mobile.
+Breadth ke liye rakhi — delete nahi; abhi home-page / SEO priority nahi.
+
+## Seeding notes
+- Har entry: `name`, `slug` (auto, e.g. "Cotton fabric" → `cotton-fabric`), `parentId` (top = null), `active: true`.
+- Products **sub-category (leaf)** se map hon — cleaner search/filter.
+- Category-specific fields ek **`CategoryAttribute`** model se (structured per-category fields, free-form nahi).
+- 40 top (incl. Other) + ~250 sub ek starter set; admin CRUD se add/edit/deactivate.

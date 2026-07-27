@@ -61,6 +61,10 @@ while any close-time security commitment remains unraised.
 🧭 **Build-time reminder (confirmed scope, NOT red-alert guarded):**
 - **D1** — Unverified seller = max **3 products**. This IS Phase-1 scope; build/enforce it when
   the catalogue / product-add module is built. Just don't forget it.
+- **S1** — Before building any M1 **frontend screen** (buyer/exporter/admin/employee auth/KYC),
+  STOP and alert the owner first; align forms to the backend contract (exporter signup needs
+  `entityType`; **login is one shared page**; `resend-otp` + `change-password` flows exist;
+  verified = tick from `kycStatus`). Details in `docs/Note.md` **S1**.
 
 ⏸ **On hold (build later):**
 - **D4** — Admin/Super Admin TOTP 2FA. Staff use OTP now. **Restore before close** (A4).
