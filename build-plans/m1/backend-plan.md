@@ -64,7 +64,7 @@ management surface, then the cross-cutting auth hardening.
 | **M1-B** | KYC document upload | A | 🧱 dep/decision (Cloudinary approach) |
 | **M1-C** | Verification review alignment + resubmit + tick expose | A, B | no |
 | **M1-D** | KYC document view (signed URL, reviewers) | A, B | 🧱 dep (Cloudinary) |
-| **M1-E** | User management (list/search, activate/deactivate) | — | no |
+| **M1-E** | User management (list/search, activate/deactivate) | — | ✅ **DONE** (Phase 2) |
 | **M1-F** | Employee permission assignment (hard superadmin-gate) | — | no |
 | **M1-G** | `mustChangePassword` enforcement + change-password | — | ✅ **DONE** (bug-fix pass) |
 | **M1-H** | Auth-event audit (login/signup/refresh-reuse/logout/reset) | — | ✅ **DONE** (bug-fix pass) |
@@ -236,7 +236,19 @@ Cloudinary URLs — public URLs never stored or returned in bulk.
 
 ---
 
-### M1-E · User management (list/search, activate/deactivate)  🔨
+### M1-E · User management (list/search, activate/deactivate)  ✅ DONE (Phase 2, 2026-07-28)
+
+> **Shipped:** `GET /admin/users` (list+search, aggregation join to org for `kycStatus`, curated
+> projection, pageSize hard-capped ≤100, `q` regex-escaped anchored prefix), `GET /admin/users/:id`
+> (curated user + org summary) — both `requirePermissions('user:read')`.
+> `POST /admin/users/:id/activate|deactivate` — `requireRole('admin','superadmin')` (hard, not
+> grantable); deactivate sets `User.isActive=false` + bumps `tokenVersion` (kills sessions/login),
+> audits `user.activate|deactivate`. Target-role guards: no self-change, superadmin untouchable,
+> only superadmin may act on an admin. Uses `updateOne` (not `save`) to avoid the required
+> `passwordHash` validation trap. New files: `routes/admin.routes.js`, `controllers/admin.controller.js`,
+> `services/userManagement.service.js`, `validators/admin.validators.js`; `USER_READ` added to
+> `config/permissions.js`. 13 new tests in `tests/userManagement.test.js` — **51/51 green, lint clean.**
+> **Note:** `USER_READ` was added here (M1-E needs it), so M1-F only adds `KYC_VIEW`.
 
 **Goal:** the super-admin management screens (m1.md §6). Month-1 = super admin operates these;
 employee panel dashboard is deferred, so gate to staff.
@@ -295,8 +307,8 @@ grantable permission flag** — otherwise an over-permissioned employee grants i
   `tokenVersion` so the change takes effect on the employee's next request. Append AuditLog
   `employee.permissions.update` (before/after permission arrays).
 
-**Config — `src/config/permissions.js`:** add the new grantable perms this module introduces:
-`KYC_VIEW = 'kyc:view'`, `USER_READ = 'user:read'`. Keep `BUYER_APPROVE`, `EXPORTER_VERIFY`.
+**Config — `src/config/permissions.js`:** add `KYC_VIEW = 'kyc:view'` (this module's new grantable
+perm). `USER_READ = 'user:read'` was **already added in M1-E**. Keep `BUYER_APPROVE`, `EXPORTER_VERIFY`.
 **Deliberately NOT in the catalogue** (never grantable): user **activate/deactivate** (hard
 role-gate, fix #1) and permission-**assignment** itself (superadmin-only hard gate) — both are
 privilege-escalation surfaces.
@@ -448,7 +460,7 @@ No auth library, ORM, or state manager added. No changes to the approved stack.
   `requirePermissions`; `authenticate` selects + exposes the flag. Unbypassable via the boot
   route-guard. (Plan's "fold into `authenticate`" is an equivalent alternative, not needed.)
 - **Deactivation targets `User.isActive` + `tokenVersion`** (M1-E, fix #2) — `Organisation.isActive`
-  is not checked by auth, so it is never the enforcement point. *(not yet shipped)*
+  is not checked by auth, so it is never the enforcement point. ✅ **shipped**.
 
 ---
 

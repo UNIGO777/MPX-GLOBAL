@@ -11,6 +11,7 @@ import { rejectMongoOperators } from './middleware/rejectMongoOperators.js';
 import { publicRoute, assertRoutesGuarded } from './config/routeGuard.js';
 import { authRouter } from './routes/auth.routes.js';
 import { employeeRouter } from './routes/employee.routes.js';
+import { adminRouter } from './routes/admin.routes.js';
 
 const JSON_BODY_LIMIT = '1mb';
 
@@ -89,6 +90,7 @@ export function createApp() {
 
   app.use(authRouter);
   app.use(employeeRouter);
+  app.use(adminRouter);
 
   // Any unmatched route becomes a JSON 404 through the central handler.
   app.use((req, _res, next) => {

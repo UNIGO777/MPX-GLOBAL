@@ -112,7 +112,9 @@ trust boundary, token storage, XSS, state mgmt, clean-code), `web-design.md` (de
 responsive, a11y, SEO, trust signals), `web-ui-notes.md` (STRICT: log every non-operational
 button/link/control to `docs/UiWebNotes.md`), `remind.md` (D-item / out-of-scope guard),
 `scope-guard.md` (HIGH-PRIORITY: month-1 + out-of-scope 🔴 red-alert guard, backs
-`docs/month1-not-doing.md`), `history-log.md` (this file's update rule).
+`docs/month1-not-doing.md`), `history-log.md` (this file's update rule),
+`m3-public-projection.md` (M3 public whitelist projection + alert on widening the surface),
+`m3-seo.md` (M3 discovery-page SEO: slugs, meta/canonical/JSON-LD, sitemap/robots).
 
 ## 9. Tests
 24 tests across `validate`, `auth`, `verification`, `routeGuard`. `npm test` (needs a reachable
@@ -129,6 +131,41 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-28** — **Added `.claude/rules/m3-seo.md`** (auto-loads on slug/sitemap/robots/
+  JSON-LD/SEO files + public product/seller/category/search pages + Product/Category/Organisation
+  models). Codifies `m3-seo-rules.md`: slug-based readable URLs (unique/immutable/indexed, 301 on
+  change, no raw ObjectIds), on-page meta/canonical/OG + JSON-LD (city-level address only),
+  noindex+canonical on search/filtered URLs, active-only dynamic sitemap + robots, 404/410/301 on
+  deactivate. Cross-refs `m3-public-projection.md` — never emit private fields in HTML/meta/
+  JSON-LD/sitemap. SSR/prerender kept deferred (React SPA). Wired into CLAUDE.md + §8. Why:
+  SEO for public discovery without leaking private data or indexing non-active entities.
+- **2026-07-28** — **M1-E bug-check fix:** user-list pagination made stable — `$sort` now
+  `{ createdAt: -1, _id: -1 }` (tiebreaker prevents rows repeating/skipping across pages when
+  createdAt collides). +2 tests (role/kycStatus filter works; unknown role → 400). 53/53 green.
+- **2026-07-28** — **Added `.claude/rules/m3-public-projection.md`** (auto-loads on
+  search/public/projection/serializer files + Product/Category/Organisation models). Codifies
+  the M3 `Rules.png` / m3.md §5b–5c data-exposure spec: public routes return a **whitelist**
+  projection only (new fields default PRIVATE), private fields (KYC/contact/address/takedown/
+  internal IDs) never serialised, query-level exclusion of non-active/deactivated-category rows,
+  and B7 (kycStatus = tick only, never a filter). Includes a 🔴 STOP-and-alert list for any
+  change that widens the public surface. Wired into CLAUDE.md §Detailed rules. Why: prevents
+  accidental leak of moderation/ownership/KYC data to guests on public discovery routes.
+- **2026-07-28** — **M1 Phase 2 (M1-E · User management) built.** New `GET /admin/users`
+  (list+search: aggregation join to org for `kycStatus`, curated projection — no passwordHash/
+  permissions, pageSize hard-capped ≤100, `q` regex-escaped anchored prefix → no ReDoS/injection)
+  + `GET /admin/users/:id`; both `requirePermissions('user:read')`. `POST /admin/users/:id/
+  activate|deactivate` — **hard `requireRole('admin','superadmin')`** (not grantable); deactivate
+  flips `User.isActive` + bumps `tokenVersion` (kills sessions/login), audits `user.activate|
+  deactivate`. Role guards: no self-change, superadmin untouchable, only superadmin acts on an
+  admin. Uses `updateOne` (avoids required-`passwordHash` save trap). Files: `admin.routes.js`,
+  `admin.controller.js`, `userManagement.service.js`, `admin.validators.js`; `USER_READ` added to
+  `permissions.js`. +13 tests → **51/51 green, lint clean.** Tracker A6/A7. Phase 3 (M1-F
+  permission-assign) next; Phase 4–5 await Cloudinary + OTP-provider decisions.
+- **2026-07-28** — **Recorded a production-gate reminder** in `docs/Note.md` close checklist:
+  KYC docs on Cloudinary must be uploaded `type: authenticated` (not default public `upload`)
+  with a randomised `public_id`, else `storageKey` + signed URLs give only cosmetic protection
+  and KYC files are world-readable. Surfaced from the M1 Phase-1 storageKey review; must be
+  verified in M1-B and before production.
 - **2026-07-27** — **M1 Phase 1 (M1-A · KYC data model) built.** `enums.js`: added
   `KYC_DOC_TYPE` + `KYC_DOCS_BY_ENTITY` (business→registration/gst/certificate; individual→
   pan/aadhaar/passport; +other). `Organisation.kycDocuments` sub-doc refactored `url`→

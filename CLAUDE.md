@@ -96,3 +96,7 @@ matching files:
 - `api-endpoints.md` — routes, controllers, validation, error handling
 - `contracts-esign.md` — contract generation, versioning, signing
 - `mobile-app.md` — React Native app
+- `m3-public-projection.md` — M3 search/discovery public whitelist projection (Product /
+  Category / seller); alert before widening the public surface
+- `m3-seo.md` — M3 public discovery pages SEO (slugs, meta/canonical/JSON-LD, sitemap/robots,
+  noindex on search/filtered URLs; never expose private fields)

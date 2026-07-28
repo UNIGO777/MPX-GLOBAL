@@ -89,6 +89,15 @@ Do not start the screens without surfacing this alert.
   a production risk. The real/production superadmin must use a new secret, with
   `SEED_SUPERADMIN_PASSWORD` removed from `.env` after seeding.
 - **Remove the dev-only OTP terminal print** (`otp.sender.js`) and wire real OTP delivery.
+- **KYC docs on Cloudinary MUST be `type: authenticated` (or `private`), never default public
+  `upload`.** The whole KYC security model (A7 / tracker E3) hinges on this: we store only the
+  Cloudinary `public_id` as `Organisation.kycDocuments[].storageKey` and serve docs via
+  short-lived **signed** URLs. If a KYC file is uploaded as the default public `upload` type,
+  anyone who knows `cloud_name` + `public_id` + `format` can fetch the raw document **without any
+  signature** — the signed-URL endpoint (M1-D) becomes cosmetic and KYC data is world-readable.
+  Before production, verify the M1-B upload path sets `type: 'authenticated'`, uses a
+  **randomised `public_id`** (unguessable suffix), and that a raw public URL for a KYC asset
+  returns 401/404. _(Recorded 2026-07-28 during M1 Phase-1 review.)_
 - **Secret-scan** (gitleaks / trufflehog) over git history once the repo has commits (E6).
 
 _(Append future close-time items here. Standing hygiene rules: `.claude/rules/secrets-and-hygiene.md`.)_

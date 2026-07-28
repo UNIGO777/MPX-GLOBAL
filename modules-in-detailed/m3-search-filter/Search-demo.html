@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPX Discovery — full search UI</title>
+<style>
+  :root{
+    --bg:#f5f7fc; --card:#fff; --ink:#0f1b33; --muted:#5b6577; --line:#e4e8f0;
+    --accent:#2f6bff; --accent-bg:#e9f0ff; --accent-ink:#16346b;
+    --green:#0f9d58; --green-bg:#e4f6ec; --amber:#9a6a12; --amber-bg:#faf0dd;
+    --purple:#6a4bd0; --purple-bg:#efe9fc; --chip:#eef1f8; --radius:11px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0e1526; --card:#151d31; --ink:#eef2fb; --muted:#9aa6bd; --line:#26314b;
+      --accent:#6f9bff; --accent-bg:#16264a; --accent-ink:#bcd2ff;
+      --green:#4ecb8b; --green-bg:#0f2e21; --amber:#e6b45a; --amber-bg:#392a12;
+      --purple:#b3a3f0; --purple-bg:#241f45; --chip:#1c2740; }
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;line-height:1.5;}
+  .wrap{max-width:1000px;margin:0 auto;padding:22px 16px 60px;}
+  h1{font-size:19px;margin:0 0 2px;}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 16px;}
+
+  .searchrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .searchbar{flex:1;min-width:240px;display:flex;gap:8px;align-items:center;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--radius);padding:5px 8px 5px 14px;}
+  .searchbar input{flex:1;border:none;background:transparent;color:var(--ink);font-size:15px;padding:9px 0;outline:none;}
+  .toggle{display:flex;background:var(--chip);border-radius:9px;padding:3px;}
+  .toggle button{border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:7px;cursor:pointer;}
+  .toggle button.on{background:var(--card);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  .aibtn{border:1px solid var(--purple);color:var(--purple);background:var(--purple-bg);font-weight:600;
+    font-size:12.5px;padding:9px 14px;border-radius:9px;cursor:pointer;}
+  .aibtn.on{background:var(--purple);color:#fff;}
+
+  .layout{display:grid;grid-template-columns:230px 1fr;gap:18px;margin-top:18px;}
+  @media(max-width:720px){.layout{grid-template-columns:1fr;}}
+  .side{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;height:fit-content;}
+  .side h3{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:0 0 10px;}
+  .fgroup{margin-bottom:16px;}
+  .flabel{font-size:12.5px;font-weight:600;margin-bottom:6px;}
+  select,input[type=number]{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:13px;}
+  .opt{display:flex;align-items:center;gap:7px;font-size:13px;margin:5px 0;cursor:pointer;}
+  .cnt{color:var(--muted);font-size:11.5px;margin-left:auto;}
+  .clearbtn{font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;}
+
+  .section-label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:2px 2px 10px;}
+  .catmatch{background:var(--green-bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:12px;}
+  .catmatch .name{font-weight:600;font-size:14px;}
+  .catmatch .why{font-size:12px;color:var(--muted);margin-top:2px;}
+  .why em{color:var(--green);font-style:normal;font-weight:600;}
+  .aipanel{background:var(--purple-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+  .aipanel .t{font-size:12px;color:var(--purple);font-weight:700;margin-bottom:8px;}
+  .aichip{display:inline-block;font-size:12px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:3px 10px;margin:3px 4px 3px 0;}
+  .aichip b{color:var(--purple);}
+
+  .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:8px;}
+  .ccard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;cursor:pointer;text-align:center;transition:.12s;}
+  .ccard:hover{border-color:var(--accent);}
+  .ccard .cn{font-weight:600;font-size:13px;}
+  .ccard .cc{font-size:11.5px;color:var(--muted);margin-top:4px;}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px;}
+  .pcard,.scard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;position:relative;}
+  .pname,.sname{font-weight:600;font-size:14px;padding-right:22px;}
+  .pcat{display:inline-block;font-size:10.5px;background:var(--accent-bg);color:var(--accent-ink);padding:2px 8px;border-radius:20px;margin-top:6px;}
+  .pmeta,.smeta{font-size:12px;color:var(--muted);margin-top:7px;}
+  .price{font-weight:700;margin-top:6px;font-size:13.5px;}
+  .tick{color:var(--green);font-size:11px;font-weight:700;}
+  .matchtag{font-size:10.5px;color:var(--amber);background:var(--amber-bg);padding:2px 8px;border-radius:20px;display:inline-block;margin-top:8px;}
+  .heart{position:absolute;top:12px;right:12px;font-size:16px;color:var(--muted);cursor:pointer;}
+  .heart.on{color:#e0245e;}
+  .empty{color:var(--muted);font-size:14px;padding:16px 2px;}
+  .resulthead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .resulthead .sort{font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);}
+
+  .backdrop{position:fixed;inset:0;background:rgba(10,18,35,.55);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:60px 16px;}
+  .backdrop.on{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:560px;width:100%;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .modal h2{font-size:17px;margin:0 0 4px;display:flex;align-items:center;gap:8px;}
+  .modal .msub{font-size:13px;color:var(--muted);margin:0 0 14px;}
+  .modal textarea{width:100%;min-height:80px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:14.5px;padding:12px;outline:none;resize:vertical;font-family:inherit;}
+  .modal textarea:focus{border-color:var(--purple);}
+  .exqs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px;}
+  .exq{font-size:12px;background:var(--purple-bg);color:var(--purple);border:1px solid var(--line);border-radius:20px;padding:5px 11px;cursor:pointer;}
+  .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+  .btn{border:none;border-radius:9px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn.ghost{background:var(--chip);color:var(--muted);}
+  .btn.primary{background:var(--purple);color:#fff;}
+  .aians{background:var(--purple-bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px;}
+  .aians .at{font-size:12px;color:var(--purple);font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .aians .atext{font-size:14px;color:var(--ink);line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>MPX Discovery — search flow (working demo)</h1>
+  <p class="sub">All in one: keyword + synonyms, filters, and AI search. Try: <b>medicines</b>, <b>fabric</b>, or AI: <b>"cheap cotton fabric in bulk"</b></p>
+
+  <div class="searchrow">
+    <div class="searchbar">
+      <span style="color:var(--muted);font-size:17px;">&#128269;</span>
+      <input id="q" type="text" autocomplete="off" placeholder="Search…" />
+    </div>
+    <div class="toggle">
+      <button id="tp" class="on" onclick="setMode('products')">Products</button>
+      <button id="ts" onclick="setMode('suppliers')">Suppliers</button>
+    </div>
+    <button id="aibtn" class="aibtn" onclick="openAI()">&#10024; AI Search</button>
+  </div>
+  <p class="sub" id="modehint" style="margin-top:8px;"></p>
+
+  <div class="backdrop" id="aimodal">
+    <div class="modal">
+      <h2>&#10024; AI Search</h2>
+      <p class="msub">Describe what you need — GPT understands it and returns the best matches plus an answer.</p>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:12.5px;color:var(--muted);">Looking for:</span>
+        <div class="toggle">
+          <button id="aitp" class="on" onclick="setAiMode('products')">Products</button>
+          <button id="aits" onclick="setAiMode('suppliers')">Suppliers</button>
+        </div>
+      </div>
+      <textarea id="aiq" placeholder="e.g. cheap cotton fabric needed in bulk, 500+ MOQ"></textarea>
+      <div class="exqs">
+        <span class="exq" onclick="fillAI(this)">cheap cotton fabric in bulk</span>
+        <span class="exq" onclick="fillAI(this)">medicines with no prescription</span>
+        <span class="exq" onclick="fillAI(this)">industrial solvent under 100</span>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" onclick="closeAI()">Cancel</button>
+        <button class="btn primary" onclick="runAI()">&#10024; Search with AI</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="side" id="sidebar"></aside>
+    <main>
+      <div id="results"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+const CATS=[
+  {name:"Pharmaceuticals & Medical", syn:["medicine","medicines","pharma","drugs","tablets","medical","dawai"],
+   attrs:[{key:"Form",type:"select",options:["Tablet","Syrup","Injection"]},{key:"Prescription",type:"select",options:["Yes","No"]}]},
+  {name:"Textiles, Fabrics & Yarn", syn:["cloth","fabric","kapda","textile","yarn"],
+   attrs:[{key:"Material",type:"select",options:["Cotton","Silk","Synthetic"]},{key:"GSM",type:"number"}]},
+  {name:"Chemicals, Dyes & Solvents", syn:["chemical","chemicals","dye","solvent","acid"],
+   attrs:[{key:"Grade",type:"select",options:["Industrial","Lab"]},{key:"Form",type:"select",options:["Powder","Liquid"]}]},
+  {name:"Electronics & Electrical", syn:["electronic","electronics","gadget","device","led"],
+   attrs:[{key:"Warranty",type:"select",options:["Yes","No"]}]},
+  {name:"Agriculture", syn:["farming","agri","crops","seeds","grain","rice"],
+   attrs:[{key:"Organic",type:"select",options:["Yes","No"]},{key:"Grade",type:"select",options:["A","B"]}]},
+];
+const P=[
+  {n:"Paracetamol Tablets 500mg",c:"Pharmaceuticals & Medical",s:"MediCorp",v:true,price:2,moq:10000,a:{Form:"Tablet",Prescription:"No"}},
+  {n:"Cough Syrup",c:"Pharmaceuticals & Medical",s:"MediCorp",v:true,price:45,moq:5000,a:{Form:"Syrup",Prescription:"Yes"}},
+  {n:"Surgical Face Masks",c:"Pharmaceuticals & Medical",s:"HealthPlus",v:false,price:1.5,moq:5000,a:{}},
+  {n:"Cotton Fabric Roll",c:"Textiles, Fabrics & Yarn",s:"TextileHub",v:true,price:120,moq:500,a:{Material:"Cotton",GSM:180}},
+  {n:"Silk Blend Fabric",c:"Textiles, Fabrics & Yarn",s:"TextileHub",v:false,price:null,moq:300,a:{Material:"Silk",GSM:90}},
+  {n:"Denim Fabric",c:"Textiles, Fabrics & Yarn",s:"WeaveCo",v:true,price:200,moq:1000,a:{Material:"Cotton",GSM:320}},
+  {n:"Industrial Solvent IPA",c:"Chemicals, Dyes & Solvents",s:"ChemPro",v:true,price:90,moq:200,a:{Grade:"Industrial",Form:"Liquid"}},
+  {n:"Reactive Dye Red",c:"Chemicals, Dyes & Solvents",s:"ChemPro",v:false,price:450,moq:50,a:{Grade:"Industrial",Form:"Powder"}},
+  {n:"LED Panel Light 40W",c:"Electronics & Electrical",s:"VoltEdge",v:true,price:380,moq:100,a:{Warranty:"Yes"}},
+  {n:"Basmati Rice Grade A",c:"Agriculture",s:"AgriFields",v:true,price:85,moq:1000,a:{Organic:"No",Grade:"A"}},
+  {n:"Organic Turmeric",c:"Agriculture",s:"AgriFields",v:false,price:220,moq:500,a:{Organic:"Yes",Grade:"A"}},
+];
+const S=[
+  {n:"MediCorp",c:"Pharmaceuticals & Medical",v:true,country:"India",prod:12},
+  {n:"HealthPlus",c:"Pharmaceuticals & Medical",v:false,country:"India",prod:5},
+  {n:"TextileHub",c:"Textiles, Fabrics & Yarn",v:true,country:"India",prod:8},
+  {n:"WeaveCo",c:"Textiles, Fabrics & Yarn",v:true,country:"India",prod:6},
+  {n:"ChemPro",c:"Chemicals, Dyes & Solvents",v:true,country:"India",prod:15},
+  {n:"VoltEdge",c:"Electronics & Electrical",v:true,country:"India",prod:6},
+  {n:"AgriFields",c:"Agriculture",v:false,country:"India",prod:4},
+];
+
+let mode="products", aiMode=false, saved=new Set();
+let filters={category:"",priceMax:"",moqMin:"",verified:false,attrs:{},sort:"relevance"};
+let aiExtract=null;
+
+function esc(x){return (""+x).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+function setMode(m){mode=m;document.getElementById("tp").classList.toggle("on",m==="products");
+  document.getElementById("ts").classList.toggle("on",m==="suppliers");render();}
+let aiAnswer="";
+let aiTarget="products";
+function setAiMode(m){aiTarget=m;document.getElementById("aitp").classList.toggle("on",m==="products");document.getElementById("aits").classList.toggle("on",m==="suppliers");}
+function openAI(){document.getElementById("aimodal").classList.add("on");document.getElementById("aiq").focus();}
+function closeAI(){document.getElementById("aimodal").classList.remove("on");}
+function fillAI(el){document.getElementById("aiq").value=el.textContent;}
+function runAI(){
+  const sent=document.getElementById("aiq").value.trim();
+  if(!sent){closeAI();return;}
+  aiMode=true; aiExtract=aiParse(sent);
+  setMode(aiTarget);            // AI modal me chosen product/supplier
+  // set the visible query so normal engine + results reflect it
+  document.getElementById("q").value = aiExtract.keyword || sent;
+  // build a friendly AI answer
+  aiAnswer = buildAnswer(sent, aiExtract);
+  closeAI(); render();
+}
+function buildAnswer(sent, ex){
+  const cat = ex.category ? ex.category.split(",")[0] : "relevant";
+  const {list} = filterProducts(ex.keyword||"");
+  const n = list.length;
+  const top = list.slice(0,2).map(p=>p.n).join(" and ");
+  const what = aiTarget==="suppliers" ? "suppliers" : "products";
+  let a = "Understood your query — searched <b>"+what+"</b> in the <b>"+cat+"</b> category";
+  if(ex.priceIntent) a+=", prioritised <b>"+ex.priceIntent+"</b> price";
+  if(ex.moqMin) a+=", filtered MOQ ≥ <b>"+ex.moqMin+"</b>";
+  a+=". Found <b>"+n+"</b> matching options"+(top?" — such as "+top:"")+".";
+  if(ex.country) a+=" Note: '"+ex.country+"' looks like your shipping preference.";
+  a+=" See the results below, and use the left filters to narrow further.";
+  return a;
+}
+
+function matchCat(q){
+  q=q.toLowerCase();
+  for(const c of CATS){
+    if(c.name.toLowerCase().includes(q))return{cat:c,via:"name"};
+    const s=c.syn.find(x=>x.includes(q)||q.includes(x));
+    if(s)return{cat:c,via:"synonym: "+s};
+  }
+  return null;
+}
+
+// Simulated GPT extraction from a sentence
+function aiParse(sent){
+  const t=sent.toLowerCase();
+  const out={keyword:"",category:"",priceIntent:"",moqMin:"",country:""};
+  // category via synonyms
+  for(const c of CATS){ if(c.syn.some(s=>t.includes(s))||t.includes(c.name.toLowerCase().split(",")[0].toLowerCase())){out.category=c.name;break;} }
+  // price intent
+  if(/(sasti|cheap|low|budget|affordable)/.test(t))out.priceIntent="low";
+  const under=t.match(/(under|below|<|less than)\s*(\d+)/); if(under)out.priceIntent="under "+under[2];
+  // moq / bulk
+  if(/bulk|thok|large/.test(t))out.moqMin=1000;
+  const moqm=t.match(/(\d[\d,]{2,})\s*(moq|pieces|units|pcs)?/); if(moqm)out.moqMin=parseInt(moqm[1].replace(/,/g,""));
+  // country
+  const cc=["australia","india","uae","usa","uk","china"].find(x=>t.includes(x)); if(cc)out.country=cc;
+  // keyword = product-ish word
+  const words=t.replace(/[^a-z0-9 ]/g,"").split(" ").filter(w=>w.length>3 &&
+    !["sasti","cheap","bulk","chahiye","need","want","under","below","less","than","with","from"].includes(w));
+  const prodWord=words.find(w=>P.some(p=>p.n.toLowerCase().includes(w)));
+  out.keyword=prodWord||words[0]||"";
+  return out;
+}
+
+function currentCategory(q){
+  if(filters.category)return CATS.find(c=>c.name===filters.category);
+  if(aiMode&&aiExtract&&aiExtract.category)return CATS.find(c=>c.name===aiExtract.category);
+  if(q){const m=matchCat(q);if(m)return m.cat;}
+  return null;
+}
+
+function filterProducts(q){
+  let list=P.slice();
+  const cat=currentCategory(q);
+  const kw=(aiMode&&aiExtract)?aiExtract.keyword:q;
+  if(kw){const k=kw.toLowerCase();
+    list=list.filter(p=>p.n.toLowerCase().includes(k)|| (cat&&p.c===cat.name) || p.s.toLowerCase().includes(k) ||
+      Object.values(p.a).some(v=>(""+v).toLowerCase().includes(k)));
+  }
+  if(cat)list=list.filter(p=>p.c===cat.name);
+  if(filters.priceMax)list=list.filter(p=>p.price!=null&&p.price<=+filters.priceMax);
+  if(filters.moqMin)list=list.filter(p=>p.moq>=+filters.moqMin);
+  if(filters.verified)list=list.filter(p=>p.v);
+  for(const [k,val] of Object.entries(filters.attrs)){ if(val)list=list.filter(p=>(""+(p.a[k]??"")).toLowerCase()===(""+val).toLowerCase()); }
+  // AI price intent
+  if(aiMode&&aiExtract){ if(aiExtract.priceIntent==="low")list=list.sort((a,b)=>(a.price??1e9)-(b.price??1e9));
+    const u=(""+aiExtract.priceIntent).match(/under (\d+)/); if(u)list=list.filter(p=>p.price!=null&&p.price<=+u[1]);
+    if(aiExtract.moqMin)list=list.filter(p=>p.moq>=aiExtract.moqMin);
+  }
+  if(filters.sort==="price")list=list.sort((a,b)=>(a.price??1e9)-(b.price??1e9));
+  if(filters.sort==="newest")list=list.reverse();
+  return {list,cat,kw};
+}
+function filterSuppliers(q){
+  let list=S.slice();const cat=currentCategory(q);const kw=(aiMode&&aiExtract)?aiExtract.keyword:q;
+  if(kw){const k=kw.toLowerCase();list=list.filter(s=>s.n.toLowerCase().includes(k)||(cat&&s.c===cat.name)||s.c.toLowerCase().includes(k));}
+  if(cat)list=list.filter(s=>s.c===cat.name);
+  if(filters.verified)list=list.filter(s=>s.v);
+  return {list,cat};
+}
+
+function renderSidebar(q){
+  const cat=currentCategory(q);
+  let h='<h3>Filters</h3>';
+  h+='<div class="fgroup"><div class="flabel">Category</div><select onchange="setCat(this.value)"><option value="">All categories</option>'+
+     CATS.map(c=>'<option '+(cat&&cat.name===c.name?'selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select></div>';
+  h+='<div class="fgroup"><div class="flabel">Max price (₹)</div><input type="number" placeholder="any" value="'+esc(filters.priceMax)+'" oninput="setF(\'priceMax\',this.value)"></div>';
+  h+='<div class="fgroup"><div class="flabel">Min MOQ</div><input type="number" placeholder="any" value="'+esc(filters.moqMin)+'" oninput="setF(\'moqMin\',this.value)"></div>';
+  h+='<div class="fgroup"><label class="opt"><input type="checkbox" '+(filters.verified?'checked':'')+' onchange="setF(\'verified\',this.checked)"> Verified only</label></div>';
+  // dynamic attribute filters
+  if(cat&&cat.attrs&&cat.attrs.length){
+    h+='<div class="fgroup"><div class="flabel" style="color:var(--accent)">'+esc(cat.name.split(",")[0])+' filters</div>';
+    for(const at of cat.attrs){
+      if(at.type==="select"){
+        h+='<div style="margin-bottom:8px"><div class="flabel" style="font-weight:500">'+esc(at.key)+'</div><select onchange="setAttr(\''+at.key+'\',this.value)"><option value="">any</option>'+
+        at.options.map(o=>'<option '+(filters.attrs[at.key]===o?'selected':'')+'>'+esc(o)+'</option>').join('')+'</select></div>';
+      } else {
+        h+='<div style="margin-bottom:8px"><div class="flabel" style="font-weight:500">'+esc(at.key)+' (min)</div><input type="number" placeholder="any" value="'+esc(filters.attrs[at.key]||"")+'" oninput="setAttr(\''+at.key+'\',this.value)"></div>';
+      }
+    }
+    h+='</div>';
+  }
+  h+='<button class="clearbtn" onclick="clearF()">Clear all filters</button>';
+  document.getElementById("sidebar").innerHTML=h;
+}
+function setCat(v){filters.category=v;filters.attrs={};render();}
+function setF(k,v){filters[k]=v;render();}
+function setAttr(k,v){if(v)filters.attrs[k]=(CATS.flatMap(c=>c.attrs).find(a=>a.key===k&&a.type==="number")?+v:v);else delete filters.attrs[k];render();}
+function clearF(){filters={category:"",priceMax:"",moqMin:"",verified:false,attrs:{},sort:filters.sort};render();}
+function toggleSave(id){saved.has(id)?saved.delete(id):saved.add(id);render();}
+
+function render(){
+  const q=document.getElementById("q").value.trim();
+  document.getElementById("modehint").textContent = "Normal: type a word (matched to a category via synonyms) or use filters.  Use the AI Search button to ask in a full sentence.";
+
+  if(aiMode && q) aiExtract=aiParse(q); else if(!q) aiExtract=null;
+  renderSidebar(q);
+  const box=document.getElementById("results");
+  let h="";
+
+  // AI answer + extract panel
+  if(aiMode && aiExtract){
+    h+='<div class="aians"><div class="at">&#10024; AI answer</div><div class="atext">'+aiAnswer+'</div></div>';
+    h+='<div class="aipanel"><div class="t">Extracted filters (GPT → engine):</div>';
+    if(aiExtract.keyword)h+='<span class="aichip">keyword: <b>'+esc(aiExtract.keyword)+'</b></span>';
+    if(aiExtract.category)h+='<span class="aichip">category: <b>'+esc(aiExtract.category)+'</b></span>';
+    if(aiExtract.priceIntent)h+='<span class="aichip">price: <b>'+esc(aiExtract.priceIntent)+'</b></span>';
+    if(aiExtract.moqMin)h+='<span class="aichip">MOQ ≥ <b>'+esc(aiExtract.moqMin)+'</b></span>';
+    if(aiExtract.country)h+='<span class="aichip">country: <b>'+esc(aiExtract.country)+'</b></span>';
+    h+='</div>';
+  }
+
+  // category match banner (normal keyword)
+  if(!aiMode && q){const m=matchCat(q);
+    if(m){h+='<div class="catmatch"><div class="name">'+esc(m.cat.name)+'</div><div class="why">"'+esc(q)+'" &rarr; matched via <em>'+esc(m.via)+'</em> — its products/suppliers are shown below</div></div>';}
+  }
+
+  // category browse (no query, no filter)
+  if(!q && !filters.category){
+    h+='<div class="section-label">Browse categories</div><div class="catgrid">'+
+      CATS.map(c=>'<div class="ccard" onclick="setCat(\''+c.name.replace(/'/g,"")+'\')"><div class="cn">'+esc(c.name.split(",")[0])+'</div><div class="cc">'+P.filter(p=>p.c===c.name).length+' products</div></div>').join('')+'</div>';
+  }
+
+  if(mode==="products"){
+    const {list,cat,kw}=filterProducts(q);
+    h+='<div class="resulthead"><div class="section-label" style="margin:0">Products ('+list.length+')</div>'+
+      '<select class="sort" onchange="setF(\'sort\',this.value)"><option value="relevance">Relevance</option><option value="price" '+(filters.sort==="price"?"selected":"")+'>Price ↑</option><option value="newest" '+(filters.sort==="newest"?"selected":"")+'>Newest</option></select></div>';
+    if(list.length){h+='<div class="grid">'+list.map(p=>{
+      const id="p:"+p.n;
+      const why=(kw&&p.n.toLowerCase().includes((kw||"").toLowerCase()))?"name match":(cat&&p.c===cat.name)?"category match":p.s.toLowerCase().includes((kw||"").toLowerCase())?"seller match":"filter match";
+      return '<div class="pcard"><span class="heart '+(saved.has(id)?"on":"")+'" onclick="toggleSave(\''+id.replace(/'/g,"")+'\')">'+(saved.has(id)?"&#10084;":"&#9825;")+'</span>'+
+        '<div class="pname">'+esc(p.n)+(p.v?' <span class="tick">&#10003;</span>':'')+'</div>'+
+        '<span class="pcat">'+esc(p.c.split(",")[0])+'</span>'+
+        '<div class="pmeta">'+esc(p.s)+(p.v?' <span class="tick">verified</span>':'')+' &middot; MOQ '+p.moq+'</div>'+
+        '<div class="price">'+(p.price==null?"on request":"₹"+p.price)+'</div>'+
+        '<span class="matchtag">'+why+'</span></div>';
+    }).join('')+'</div>';} else h+='<p class="empty">No products found — try clearing filters.</p>';
+  } else {
+    const {list,cat}=filterSuppliers(q);
+    h+='<div class="section-label">Suppliers ('+list.length+')</div>';
+    if(list.length){h+='<div class="grid">'+list.map(s=>{
+      const id="s:"+s.n;
+      return '<div class="scard"><span class="heart '+(saved.has(id)?"on":"")+'" onclick="toggleSave(\''+id.replace(/'/g,"")+'\')">'+(saved.has(id)?"&#10084;":"&#9825;")+'</span>'+
+      '<div class="sname">'+esc(s.n)+(s.v?' <span class="tick">&#10003; verified</span>':'')+'</div>'+
+      '<div class="smeta">'+esc(s.c.split(",")[0])+'<br>'+esc(s.country)+' &middot; '+s.prod+' products</div>'+
+      '<span class="matchtag">'+(cat?"category match":"name match")+'</span></div>';
+    }).join('')+'</div>';} else h+='<p class="empty">No suppliers found.</p>';
+  }
+
+  box.innerHTML=h;
+}
+document.getElementById("q").addEventListener("input",function(){aiMode=false;aiExtract=null;document.getElementById("aibtn").classList.remove("on");render();});
+render();
+</script>
+</body>
+</html>
