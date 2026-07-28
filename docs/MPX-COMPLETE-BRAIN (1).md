@@ -69,7 +69,7 @@
 4.4 ACCESS MODEL — BUYER: full access at signup, no gate. Verification OPTIONAL → only earns a verified/trusted tick, never gates access. Buyer KYC docs optional.
 4.5 ACCESS MODEL — EXPORTER: LIMITED at signup — max 3 ACTIVE/published products (drafts allowed; only live listings capped). Verification MANDATORY to sell beyond 3 (not cosmetic). Verified → tick + full access. Exporter KYC: business ID proof, or personal ID if not a business. Manual employee review.
 4.6 B7: both buyer & exporter profiles are PUBLIC from signup (kycStatus pending); verified tick added only after employee verification — public visibility NOT gated behind verification. (Girish's decision.)
-4.7 ON HOLD: admin/superadmin TOTP 2FA built but on hold (D4 — OTP login for now); notifications incl. WhatsApp on hold (D5); OTP printed to terminal in dev only (no delivery provider); mustChangePassword field exists, enforcement not built.
+4.7 ON HOLD: superadmin TOTP 2FA built but on hold (D4 — OTP login for now); notifications incl. WhatsApp on hold (D5); OTP printed to terminal in dev only (no delivery provider); mustChangePassword field exists, enforcement not built.
 4.8 GAP (unresolved): no dedicated Organisation/company-profile setup/edit screen (logo/description/address/docs). Recommended to add in M1 for exporter + buyer.
 
 ═══════════════════════════════════════════════════════

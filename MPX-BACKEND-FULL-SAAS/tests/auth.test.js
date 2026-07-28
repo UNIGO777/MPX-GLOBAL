@@ -174,13 +174,13 @@ describe('auth', () => {
     expect(rt2after.status).toBe(401);
   });
 
-  it('admin-only route denies a buyer, and a body role cannot elevate', async () => {
+  it('superadmin-only route denies a buyer, and a body role cannot elevate', async () => {
     const b = makeBuyer();
     const { accessToken } = await signupAndLogin(b);
     const res = await request(app)
       .post('/admin/employees')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ role: 'admin', name: 'X', email: 'x@example.com', mobile: { countryCode: '+91', number: '9111111111' }, password: 'longpassword1' });
+      .send({ role: 'superadmin', name: 'X', email: 'x@example.com', mobile: { countryCode: '+91', number: '9111111111' }, password: 'longpassword1' });
     expect(res.status).toBe(403);
   });
 
@@ -189,17 +189,17 @@ describe('auth', () => {
     expect(res.status).toBe(400);
   });
 
-  // Admin/superadmin TOTP is ON HOLD (docs/Note.md D4) — admin logs in via OTP
+  // Superadmin TOTP is ON HOLD (docs/Note.md D4) — the superadmin logs in via OTP
   // like every other role for now.
-  it('admin logs in via OTP for now (TOTP enrollment on hold — D4)', async () => {
+  it('superadmin logs in via OTP for now (TOTP enrollment on hold — D4)', async () => {
     const org = await Organisation.create({ name: 'Platform', type: 'platform' });
-    const email = `admin_${Date.now()}@example.com`;
+    const email = `superadmin_${Date.now()}@example.com`;
     await User.create({
-      name: 'Admin',
+      name: 'Superadmin',
       email,
       mobile: { countryCode: '+91', number: '9990000001', e164: '+919990000001' },
       passwordHash: await hashPassword('adminpassword1'),
-      role: 'admin',
+      role: 'superadmin',
       orgId: org._id,
       isActive: true,
     });

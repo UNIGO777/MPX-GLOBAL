@@ -1,9 +1,14 @@
 // Shared enumerations. Kept in one place so a role or status string can't drift
 // between models (User.role, AuditLog.actorRole, Organisation.type, …).
 
-export const ROLES = ['buyer', 'exporter', 'employee', 'admin', 'superadmin'];
+// Four roles. There is deliberately NO 'admin' role: platform governance is
+// superadmin-only, and everyone else is an employee holding individually granted
+// permissions. (The quote names only "Super admin dashboard" + "Employee panel";
+// nothing ever created an 'admin' user, so the role was removed rather than left
+// as an unreachable branch.)
+export const ROLES = ['buyer', 'exporter', 'employee', 'superadmin'];
 
-// 'platform' backs the single Organisation that employees/admins/superadmins
+// 'platform' backs the single Organisation that employees and the superadmin
 // belong to, so every User has an orgId and ownership scoping never special-cases
 // null (decision A3).
 export const ORG_TYPE = ['buyer', 'exporter', 'platform'];

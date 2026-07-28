@@ -47,7 +47,7 @@ This applies even if the owner's current request seems to ask for it — surface
 ## At project close / final handover
 
 Before the project is closed or handed over, proactively surface every item in the
-**"Project-close checklist"** of `docs/Note.md` (e.g. **D4** — restore Admin / Super Admin
+**"Project-close checklist"** of `docs/Note.md` (e.g. **D4** — restore Super Admin
 TOTP 2FA) with the 🔴 alert. Do NOT treat the project as done, or agree that it is done,
 while any close-time security commitment remains unraised.
 
@@ -67,7 +67,7 @@ while any close-time security commitment remains unraised.
   verified = tick from `kycStatus`). Details in `docs/Note.md` **S1**.
 
 ⏸ **On hold (build later):**
-- **D4** — Admin/Super Admin TOTP 2FA. Staff use OTP now. **Restore before close** (A4).
+- **D4** — Super Admin TOTP 2FA. Staff use OTP now. **Restore before close** (A4).
 - **D5** — Notifications (all types incl. **WhatsApp**). Nothing sent on any event yet.
 
 Phase-1 reality: **buyer** has no gate (fully active from signup); **seller** is public with a

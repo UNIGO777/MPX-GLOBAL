@@ -43,13 +43,13 @@ koi change nahi. Sirf ek chhoti baat A2 me — neeche.
 exporter self-register karta hai, to uske liye mustChangePassword true nahi.)
 
 **A3 · Platform staff ka orgId** — same.
-Ek `Organisation` `type: 'platform'` banao, employee/admin/superadmin sabko uska
+Ek `Organisation` `type: 'platform'` banao, employee + superadmin sabko uska
 orgId do. orgId kabhi null/optional nahi — ownership scoping (A6) ke middleware me
 special case na aaye.
 
 **A4 · 2FA backup codes** — same.
 Hash karke, `{ codeHash, usedAt }` array, use pe usedAt set (delete nahi),
-poora field `select: false`. Admin/Super Admin ke 2FA ke liye.
+poora field `select: false`. Super Admin ke 2FA ke liye.
 
 **A5 · Organisation name uniqueness** — same.
 Name pe unique index NAHI. Chahiye to `{ registrationNumber, country }` pe

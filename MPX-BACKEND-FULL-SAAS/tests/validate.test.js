@@ -48,7 +48,7 @@ describe('validate + zString — NoSQL operator injection', () => {
   it('accepts a valid string body and strips unknown keys', async () => {
     const res = await request(buildApp())
       .post('/login')
-      .send({ email: 'buyer@example.com', password: 'longenough', role: 'admin' });
+      .send({ email: 'buyer@example.com', password: 'longenough', role: 'superadmin' });
 
     expect(res.status).toBe(200);
     expect(res.body.body.email).toBe('buyer@example.com');

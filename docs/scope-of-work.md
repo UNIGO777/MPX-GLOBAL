@@ -54,8 +54,11 @@ These are owner-confirmed and stable. Details + guards in `docs/Note.md`.
   verified = a **tick** (`kycStatus === 'verified'`; no "not verified" badge).
 - **Unverified seller product limit** — unverified seller may add **at most 3 products**; more
   only after an Employee verifies them. (Replaces the quote's hard "verify-before-sell" gate.)
-- **Admin access** — **superadmin = all-access**; everyone else (incl. `admin`) needs the
-  specific granted permission.
-- **Auth 2FA** — admin/superadmin currently log in via **OTP**; TOTP is on hold (restore
+- **Roles = 4** — `buyer` · `exporter` · `employee` · `superadmin`. **No separate `admin`
+  role** (removed 2026-07-28; the quote names only a "Super admin dashboard" and an
+  "Employee panel", so this aligns the build to the quote — not a scope change).
+- **Admin access** — **superadmin = all-access**; employees need the specific granted
+  permission.
+- **Auth 2FA** — the superadmin currently logs in via **OTP**; TOTP is on hold (restore
   before close).
 - **On hold now** — all notifications incl. **WhatsApp** (Module 8).

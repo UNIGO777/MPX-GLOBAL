@@ -21,9 +21,14 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
 - **Unverified seller product limit** — unverified seller may hold **at most 3 ACTIVE products**
   (taken-down products **excluded** from the count — Part A §A10) **+ max 10 drafts** (§A15);
   the cap lifts after an Employee verifies them (see **D1**).
-- **Admin access** — **superadmin = all-access**; everyone else (incl. `admin`) needs the
-  specific granted permission. Employee permissions are individually assignable.
-- **Auth 2FA** — admin/superadmin currently log in via **OTP** (TOTP on hold — see **D4**).
+- **Roles = 4** — `buyer` · `exporter` · `employee` · `superadmin`. **No `admin` role exists**
+  (removed 2026-07-28: nothing ever created one; the quote names only a Super admin dashboard
+  and an Employee panel). Don't re-add it without an explicit owner decision.
+- **Admin access** — **superadmin = all-access**; employees need the specific granted
+  permission. Employee permissions are individually assignable. Governance actions
+  (user activate/deactivate, employee create, permission assign) are **hard superadmin role
+  gates**, never grantable permissions.
+- **Auth 2FA** — the superadmin currently logs in via **OTP** (TOTP on hold — see **D4**).
 
 ---
 
@@ -38,7 +43,7 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
 - _(Supersedes the earlier "Phase 1 = no limit" note.)_
 
 ## S1 · M1 frontend screens — 🧭 ALERT before building
-Before building any M1 auth/KYC **frontend screen** (buyer, exporter, admin, employee), STOP and
+Before building any M1 auth/KYC **frontend screen** (buyer, exporter, super admin, employee), STOP and
 alert the owner first, then align the forms to the **backend contract**
 (`modules-in-detailed/m1-max-1.5days/feilds-data.png` + `m1.md §7`):
 - **Signup is per-role** (separate buyer & exporter forms); **login is ONE shared page**
@@ -61,11 +66,11 @@ Do not start the screens without surfacing this alert.
   buyer is fully active from signup. Do **not** add this gate without an explicit override
   (red-alert first).
 
-## D4 · Admin / Super Admin TOTP 2FA  ⏸ ON HOLD (restore before close)
-- **Committed control (auth-sessions A4):** TOTP required for Admin/Super Admin at login.
-- **On hold (heavy):** TOTP enrollment endpoint, admin/superadmin seeding, backup-code login,
+## D4 · Super Admin TOTP 2FA  ⏸ ON HOLD (restore before close)
+- **Committed control (auth-sessions A4):** TOTP required for the Super Admin at login.
+- **On hold (heavy):** TOTP enrollment endpoint, superadmin seeding, backup-code login,
   and re-enabling TOTP-for-staff at login.
-- **Interim (built + tested):** admin/superadmin log in via **OTP** (still two-factor). The
+- **Interim (built + tested):** the superadmin logs in via **OTP** (still two-factor). The
   `totp` branch + `twofactor.service` are ready, so restoring is wiring, not new logic.
 - **⚠️ MUST be restored before project close / final handover.**
 
@@ -107,7 +112,7 @@ Do not start the screens without surfacing this alert.
 ---
 
 ## 🔒 Project-close checklist (raise these BEFORE final handover)
-- **D4** — restore Admin / Super Admin TOTP 2FA (currently OTP-only).
+- **D4** — restore Super Admin TOTP 2FA (currently OTP-only).
 - **D5** — confirm the full notification set is delivered (or explicitly descoped).
 - **Production superadmin — seed with a FRESH password** (not the dev/chat one). The current
   Atlas is a **test-only** environment (owner-confirmed), so the dev superadmin password is not

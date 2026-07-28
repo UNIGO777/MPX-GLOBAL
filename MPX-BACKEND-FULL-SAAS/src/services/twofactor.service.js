@@ -7,7 +7,7 @@ import { generateSecret, generate, verify, generateURI } from 'otplib';
 const ISSUER = 'MPX Global';
 const BACKUP_CODE_COUNT = 8;
 
-// --- TOTP (Admin / Super Admin 2FA, auth-sessions A4) -------------------------
+// --- TOTP (Super Admin 2FA, auth-sessions A4) ---------------------------------
 
 export function generateTotpSecret() {
   return generateSecret();

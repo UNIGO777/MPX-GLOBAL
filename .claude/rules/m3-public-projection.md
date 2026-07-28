@@ -58,8 +58,8 @@ never returned in the response.
 
 ## Who may see private data (and where)
 
-- **Admin / Employee** — KYC docs (verification only) · takedown reason · audit ·
-  moderation fields. On admin/employee routes, never bolted onto a public route.
+- **Super admin / Employee** — KYC docs (verification only) · takedown reason · audit ·
+  moderation fields. On staff routes, never bolted onto a public route.
 - **Seller (own only)** — own drafts · own docs · own contact / address · own listing's
   `takedown` reason + date (Part A §A9) — **never `takedown.byUserId` / the acting admin**.
   Ownership-scoped (`orgId` match), per security-baseline A6.

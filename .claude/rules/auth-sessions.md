@@ -36,9 +36,10 @@ hashed. Rate limit per mobile, per email and per IP. Never return an OTP in a re
 never log one, never send one to an address supplied in the request rather than the one on
 the account.
 
-## Admin 2FA (A4)
+## Super Admin 2FA (A4)
 
-TOTP required for Admin and Super Admin at login. Backup codes stored hashed, single use.
+TOTP required for the Super Admin at login. Backup codes stored hashed, single use.
+(There is no separate "Admin" role — see the role list in `CLAUDE.md`.)
 
 ## RBAC (A5)
 

@@ -124,8 +124,8 @@ export async function registerExporter({
   return user;
 }
 
-// Admin-created employee: generated-password account, so mustChangePassword is
-// set (enforced by authorize until they change it). Writes an audit entry.
+// Superadmin-created employee: generated-password account, so mustChangePassword
+// is set (enforced by authorize until they change it). Writes an audit entry.
 export async function createEmployee({ actor, name, email, mobile, password, permissions = [], meta }) {
   const mob = normalizeMobile(mobile);
   await assertUnique({ email: email.toLowerCase(), e164: mob.e164 });

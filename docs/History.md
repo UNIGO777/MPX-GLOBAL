@@ -81,16 +81,19 @@ Routes: `POST /auth/buyer/signup`, `/auth/exporter/signup`, `/auth/login` (→ O
 2. **Seller** — public from signup; hard "verify-before-sell" gate **dropped**; instead an
    **unverified seller may add max 3 products** (more after verify). Verified = a tick.
 3. **Verified tick** — only a verified tick (no "not verified" badge); absence = unverified.
-4. **Admin 2FA** — TOTP **on hold**; admin/superadmin log in via **OTP** for now.
+4. **Super Admin 2FA** — TOTP **on hold**; the superadmin logs in via **OTP** for now.
 5. **Notifications** (incl. WhatsApp) — **on hold**; nothing sent on any event yet.
 6. **OTP delivery** — no provider yet; OTP **printed to terminal in dev only** (prod-safe gated).
-7. **Admin access** — superadmin = all-access; `admin`/employees need explicit permissions.
+7. **Admin access** — superadmin = all-access; employees need explicit permissions.
+8. **Roles = 4** (`buyer · exporter · employee · superadmin`) — **no `admin` role**; removed
+   2026-07-28 as unreachable. Governance = hard superadmin gate, never a grantable permission.
 
 ## 6. Guards / deferred / on-hold  (`docs/Note.md` + `.claude/rules/remind.md`)
 - 🔴 **D3** buyer activation gate — OFF; do not build without override.
 - ❌ **D2** seller hard verify-before-sell gate — dropped.
 - 🧭 **D1** unverified-seller 3-product limit — confirmed scope; enforce when catalogue module is built.
-- ⏸ **D4** admin/superadmin TOTP 2FA — restore before close. **D5** notifications+WhatsApp.
+- ⏸ **D4** superadmin TOTP 2FA — restore before close. **D5** notifications+WhatsApp.
+- ⏸ **D6** seller "request unblock" for a taken-down product — build ~2026-08-28, not month 1.
 - Project-close checklist + secrets hygiene: see `docs/Note.md` and `.claude/rules/secrets-and-hygiene.md`.
 
 ## 7. Technical gotchas (save future debugging)
@@ -131,6 +134,22 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-28** — **`admin` role REMOVED — roles are now 4: `buyer · exporter · employee ·
+  superadmin`.** Why: nothing ever created an `admin` user (signup → buyer/exporter, `POST
+  /admin/employees` hardcodes `'employee'`, seed → superadmin), so the role was an unreachable
+  branch; the quote itself names only a "Super admin dashboard" + "Employee panel", so this
+  aligns the build **to** the quote — not a scope change. Code: `enums.js` ROLES (cascades to
+  `User.role` + `AuditLog.actorRole`), `POST /admin/employees` and `/admin/users/:id/
+  activate|deactivate` → `requireRole('superadmin')`, dropped the now-dead "only superadmin may
+  modify an admin" branch in `userManagement.service.js` (self-lockout + superadmin-immunity
+  guards KEPT), comment fixes. Tests: replaced the admin-hierarchy test with one asserting the
+  role **cannot be assigned** (locks the decision in), self-state test now asserts the specific
+  client message so it still proves the self-guard fired, permission test uses a non-staff role.
+  **89/89 green, lint clean.** Behaviour change = zero (no admin user existed). URL prefix
+  `/admin/*` and the `admin.*.js` filenames **kept on purpose** — that's a route namespace, not
+  a role. **D4 renamed** "Admin/Super Admin TOTP" → "Super Admin TOTP". ⚠️ Stale: M1 images
+  (`Flow-cart-full.png`, `Screens-web.png`) still show "Admin / Super Admin", and
+  `docs/security-tracker.xlsx` control **A4** still says "Admin and Super Admin" — owner to fix.
 - **2026-07-28** — **New deferral recorded: seller "request unblock" for a taken-down product.**
   Owner ne M2 takedown discussion ke baad kaha — jab admin product takedown kare, seller uske
   unblock ki **request** bhej sake; build **~2026-08-28 (1 month baad)**, month-1 me nahi.

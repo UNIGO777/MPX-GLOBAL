@@ -27,19 +27,18 @@ adminRouter.get(
 
 // Activate / deactivate — HARD role gate, never a grantable permission (a granted
 // employee must not be able to change any user's active state → privilege
-// escalation). Superadmin is all-access; an admin cannot act on another admin
-// (enforced in the service).
+// escalation). Superadmin-only: there is no 'admin' role (see models/enums.js).
 adminRouter.post(
   '/admin/users/:id/activate',
   authenticate,
-  requireRole('admin', 'superadmin'),
+  requireRole('superadmin'),
   validate(V.userIdParam),
   ctrl.activateUser,
 );
 adminRouter.post(
   '/admin/users/:id/deactivate',
   authenticate,
-  requireRole('admin', 'superadmin'),
+  requireRole('superadmin'),
   validate(V.userIdParam),
   ctrl.deactivateUser,
 );

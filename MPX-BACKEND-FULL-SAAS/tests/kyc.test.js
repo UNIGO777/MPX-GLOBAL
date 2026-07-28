@@ -147,7 +147,7 @@ describe('KYC document upload (M1-B)', () => {
     expect(res.status).toBe(400);
   });
 
-  it('an employee/admin has no KYC to submit (403)', async () => {
+  it('platform staff have no KYC to submit (403)', async () => {
     const emp = await makeUser('employee');
     const res = await upload(emp.token, { docType: 'gst', entityType: 'business' });
     expect(res.status).toBe(403);

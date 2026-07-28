@@ -2,8 +2,8 @@ import { Organisation } from '../models/Organisation.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 
-// Platform-staff operation: an employee/admin reviews organisations they do NOT
-// own, so access is governed by PERMISSION (RBAC), not org-ownership. The org is
+// Platform-staff operation: an employee (or the superadmin) reviews organisations
+// they do NOT own, so access is governed by PERMISSION (RBAC), not org-ownership. The org is
 // fetched by id + expected type (findOne, never findById); a missing/mismatched
 // record is 404, never 403.
 async function reviewOrg({ orgId, expectType, toStatus, reason, actor, action, meta }) {

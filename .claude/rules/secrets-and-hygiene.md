@@ -46,5 +46,5 @@ it is tracked:
 
 ## Before production / handover — hygiene pass
 - Rotate every seeded/dev credential; remove dev affordances (OTP print); wire real OTP
-  delivery; restore Admin/Super Admin TOTP (`docs/Note.md` D4); run a secret-scan (gitleaks /
+  delivery; restore Super Admin TOTP (`docs/Note.md` D4); run a secret-scan (gitleaks /
   trufflehog) over git history (tracker E6) once the repo has history.

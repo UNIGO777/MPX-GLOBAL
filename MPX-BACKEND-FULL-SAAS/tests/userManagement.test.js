@@ -177,16 +177,21 @@ describe('user management — activate/deactivate (M1-E)', () => {
     expect(after.isActive).toBe(true); // unchanged
   });
 
-  it('an admin cannot deactivate another admin, but a superadmin can', async () => {
-    const target = await makeUser('admin');
-
-    const admin = await makeUser('admin');
-    const denied = await request(app).post(`/admin/users/${target.user._id}/deactivate`).set(bearer(admin.token));
-    expect(denied.status).toBe(403);
-
-    const sa = await makeUser('superadmin');
-    const ok = await request(app).post(`/admin/users/${target.user._id}/deactivate`).set(bearer(sa.token));
-    expect(ok.status).toBe(200);
+  // The 'admin' role was removed from ROLES: governance is superadmin-only and
+  // nothing ever created an 'admin' user. This locks the decision in — if a later
+  // change re-adds the role to the enum, this test fails.
+  it("the 'admin' role does not exist — it cannot be assigned", async () => {
+    const org = await Organisation.create({ name: 'Platform', type: 'platform' });
+    await expect(
+      User.create({
+        name: 'Admin',
+        email: `admin_${Date.now()}@example.com`,
+        mobile: { countryCode: '+91', number: '9990000009', e164: '+919990000009' },
+        passwordHash: await hashPassword('longpassword1'),
+        role: 'admin',
+        orgId: org._id,
+      }),
+    ).rejects.toThrow(/validation/i);
   });
 
   it('a superadmin cannot be deactivated', async () => {
@@ -196,10 +201,13 @@ describe('user management — activate/deactivate (M1-E)', () => {
     expect(res.status).toBe(403);
   });
 
+  // Asserts the SELF-protection guard specifically (not the superadmin-immunity
+  // guard that follows it) — the distinct client message proves which one fired.
   it('cannot change your own active state', async () => {
-    const admin = await makeUser('admin');
-    const res = await request(app).post(`/admin/users/${admin.user._id}/deactivate`).set(bearer(admin.token));
+    const sa = await makeUser('superadmin');
+    const res = await request(app).post(`/admin/users/${sa.user._id}/deactivate`).set(bearer(sa.token));
     expect(res.status).toBe(403);
+    expect(res.body.error.message).toMatch(/own account status/i);
   });
 
   it('404 for a missing user', async () => {
@@ -259,10 +267,10 @@ describe('employee permission assignment (M1-F)', () => {
     expect(res.status).toBe(400);
   });
 
-  it('is superadmin-only — an admin cannot assign permissions (403)', async () => {
-    const admin = await makeUser('admin');
+  it('is superadmin-only — a non-staff role cannot assign permissions (403)', async () => {
+    const exporter = await makeUser('exporter');
     const emp = await makeUser('employee');
-    const res = await setPerms(admin.token, emp.user._id, ['user:read']);
+    const res = await setPerms(exporter.token, emp.user._id, ['user:read']);
     expect(res.status).toBe(403);
   });
 

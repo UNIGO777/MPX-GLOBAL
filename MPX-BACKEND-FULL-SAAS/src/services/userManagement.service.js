@@ -2,10 +2,10 @@ import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 
-// Platform-staff operation (M1-E). Admin/superadmin manage users across tenants,
-// so access is governed by RBAC (route guards), not org-ownership — the reads
-// below intentionally fetch by _id without an org filter. A missing record is
-// 404, never 403.
+// Platform-staff operation (M1-E). The superadmin (and employees granted
+// user:read) manage users across tenants, so access is governed by RBAC (route
+// guards), not org-ownership — the reads below intentionally fetch by _id without
+// an org filter. A missing record is 404, never 403.
 
 // Escape regex metacharacters so a user-supplied search string is matched
 // LITERALLY (never compiled as a pattern) — no ReDoS, no unintended matches.
@@ -76,8 +76,9 @@ export async function getUser({ id }) {
 // Activate / deactivate a user. Deactivation sets isActive=false AND bumps
 // tokenVersion — that (not any org flag) is what kills live sessions and blocks
 // login (auth-sessions A7). Uses updateOne (not doc.save) so the un-selected,
-// required passwordHash never trips validation. Role hierarchy is enforced so a
-// caller can never act above their level.
+// required passwordHash never trips validation. Caller is always a superadmin
+// (hard route gate); the guards below stop a superadmin from locking itself out
+// or taking down a peer.
 export async function setUserActive({ id, active, actor, meta }) {
   const user = await User.findOne({ _id: id });
   if (!user) throw AppError.notFound('user not found', 'Not found.');
@@ -86,14 +87,10 @@ export async function setUserActive({ id, active, actor, meta }) {
   if (String(user._id) === String(actor.userId)) {
     throw AppError.forbidden('cannot change own state', 'You cannot change your own account status.');
   }
-  // A superadmin is never deactivatable through this endpoint.
+  // A superadmin is never deactivatable through this endpoint — one superadmin
+  // must never be able to lock out another.
   if (user.role === 'superadmin') {
     throw AppError.forbidden('cannot modify superadmin', 'Not allowed.');
-  }
-  // Only a superadmin may act on an admin (an admin may act on buyer/exporter/
-  // employee only) — even though the route already role-gates to admin+.
-  if (user.role === 'admin' && actor.role !== 'superadmin') {
-    throw AppError.forbidden('only superadmin may modify an admin', 'Not allowed.');
   }
 
   const before = { isActive: user.isActive };

@@ -162,7 +162,7 @@ O6. `POST /saved` · `DELETE /saved/:id` · `GET /saved` — saved items (buyer-
 P1. **Rule:** public routes return ONLY whitelisted public fields; any NEW field defaults to PRIVATE unless explicitly added. Whitelist, never blacklist. Same projection on web + app. Private fields never serialised on public routes.
 
 P2. **SELLER public:** company name, logo, description, verified tick + since-date (status only), general location (country/city — NOT exact street), business type, main categories, public catalogue (active products only), member-since, product count.
-P3. **SELLER private:** KYC documents (business/personal ID — admin/employee review only), owner personal ID/PII, direct contact phone/email (reached ONLY via M4 enquiry), precise/street address, internal/auth fields (userId, tokenVersion, role, verification notes, audit trail), financial/account details.
+P3. **SELLER private:** KYC documents (business/personal ID — super admin/employee review only), owner personal ID/PII, direct contact phone/email (reached ONLY via M4 enquiry), precise/street address, internal/auth fields (userId, tokenVersion, role, verification notes, audit trail), financial/account details.
 
 P4. **PRODUCT public:** name, description, images, category/sub-category (+type), price (mode+min/max+currency), MOQ+unit, trade info (HS code, origin, supply ability, lead time, packaging), service info (engagement/delivery/team/timeline), attributes (specs), seller public projection, listed-since.
 P5. **PRODUCT private:** internal status states (draft/archived), takedown{isDown,reason,byUserId,at}, raw exporterOrgId/internal owner IDs, seller's private fields, moderation/audit fields, deletedAt/soft-delete markers.
@@ -170,7 +170,7 @@ P5. **PRODUCT private:** internal status states (draft/archived), takedown{isDow
 P6. **CATEGORY public:** name, slug, parent/sub tree, type (goods/service), synonyms (search only), filterable attributes, active categories only.
 P7. **CATEGORY private:** inactive categories, order/admin flags.
 
-P8. **Who sees private:** Admin/Employee → KYC docs, takedown reason, audit, moderation. Seller → own drafts/docs/contact (ownership-scoped only). Contact → reached only via M4 enquiry (phone/email hidden to stop scraping/spam/off-platform leakage).
+P8. **Who sees private:** Super admin/Employee → KYC docs, takedown reason, audit, moderation. Seller → own drafts/docs/contact (ownership-scoped only). Contact → reached only via M4 enquiry (phone/email hidden to stop scraping/spam/off-platform leakage).
 P9. Verified tick reflects STATUS only; KYC documents stay admin-only.
 P10. When an entity is deactivated/archived/taken-down, its public page returns 404/410 (or 301 to category) and drops from sitemap.
 

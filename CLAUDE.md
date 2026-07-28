@@ -20,7 +20,9 @@ auth or contracts.
 
 ## Roles
 
-Buyer · Exporter · Employee · Admin/Super Admin. In Phase 1, both buyers and
+Buyer · Exporter · Employee · Super Admin. **There is no separate "Admin" role** —
+platform governance is superadmin-only; everyone else on staff is an Employee holding
+individually granted permissions. In Phase 1, both buyers and
 exporters self-register. A buyer's account is then approved by an Employee; an
 exporter self-registers and is then verified by an Employee. An exporter's
 profile is publicly visible from signup, marked as not-yet-verified, and gains

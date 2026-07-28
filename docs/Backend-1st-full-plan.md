@@ -12,13 +12,13 @@
 **Models:** `User`, `Organisation`, `AuditLog`
 
 **Auth (sab panels)** — ✅ done
-- Buyer & exporter self-signup; employee/admin created (not self)
+- Buyer & exporter self-signup; employee superadmin-created (not self)
 - Login → OTP → access + refresh tokens; refresh rotate + reuse→family-revoke
 - Logout, forgot/reset password, `/auth/me`
 - Default-deny RBAC, ownership scoping, session invalidation
 
 **Employee & permissions** — 🔨 build
-- `POST /admin/employees` — admin/superadmin banaye ✅
+- `POST /admin/employees` — superadmin banaye ✅ *(2026-07-28: `admin` role hata — superadmin-only)*
 - Per-employee permission assignment — **hard superadmin-gate** (permission-flag nahi, warna privilege escalation)
 
 **KYC process** — 🔨 build (ye tumhara main naya point)
@@ -62,7 +62,7 @@
 - Public read (discovery + product form ke liye)
 - Admin CRUD (managed tree)
 
-**Admin / employee — monitoring** — 🔨 build
+**Super admin / employee — monitoring** — 🔨 build
 - Naye products + kaunse seller ke (view-only)
 
 **Guards:** **B6** — koi approval state nahi (sirf monitored); **D1** — unverified seller max **3 active products**, verify pe cap hatta; tenant-scoped by `orgId`
@@ -105,7 +105,7 @@
 - Authed handshake (JWT + `tokenVersion`)
 - Har event pe **parties membership server-side re-check** (client trust nahi)
 
-**Admin / employee — live chat monitoring** — 🔨 build
+**Super admin / employee — live chat monitoring** — 🔨 build
 - Read-only, permission-gated (`chat:monitor`); month 1 me super admin
 
 **Guards:** **B1** — `findOne({ _id, parties: req.user.orgId })`, IDOR-safe
@@ -122,7 +122,7 @@
 - Featured / banner content (minimal, landing/discovery ke liye)
 - Notification settings — **placeholder only** (poora notification layer ⏸ deferred, D5)
 
-**Guards:** hard admin/superadmin gate; audit view read-only
+**Guards:** hard superadmin gate; audit view read-only
 
 ---
 

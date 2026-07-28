@@ -34,11 +34,12 @@ authRouter.post('/auth/logout', publicRoute, validate(V.logout), ctrl.logout);
 authRouter.post('/auth/forgot-password', publicRoute, otpLimiter, validate(V.forgotPassword), ctrl.forgotPassword);
 authRouter.post('/auth/reset-password', publicRoute, authLimiter, validate(V.resetPassword), ctrl.resetPassword);
 
-// Admin creates an employee (default-deny: admin/superadmin only).
+// Superadmin creates an employee (default-deny). Governance is a HARD role gate,
+// never a grantable permission — see admin.routes.js.
 authRouter.post(
   '/admin/employees',
   authenticate,
-  requireRole('admin', 'superadmin'),
+  requireRole('superadmin'),
   validate(V.createEmployee),
   ctrl.createEmployee,
 );
