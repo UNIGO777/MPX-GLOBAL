@@ -131,6 +131,16 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-28** — **M1 Phase 3 (M1-F · Employee permission assignment) built.**
+  `PATCH /admin/employees/:id/permissions` — **hard `requireRole('superadmin')`** (never a
+  grantable perm → no privilege escalation). Body validated against the `PERMISSIONS` catalogue
+  (`z.enum(Object.values(PERMISSIONS))` → unknown/non-grantable e.g. `user:manage` = 400), max 50,
+  de-duped; non-employee target = 404; audits `employee.permissions.update`. **Deliberate
+  deviation from plan: no `tokenVersion` bump** — `authenticate` reads permissions from the DB
+  each request, so a grant/revoke is live on the next call without forcing a re-login (A7 bumps on
+  role-change/deactivation, not permission edits); a test proves it's live on the same token.
+  +7 tests → **60/60 green, lint clean.** Phase 4–5 (KYC upload/view + real OTP) remain blocked on
+  the Cloudinary-approach + OTP-provider decisions.
 - **2026-07-28** — **Added `.claude/rules/m3-seo.md`** (auto-loads on slug/sitemap/robots/
   JSON-LD/SEO files + public product/seller/category/search pages + Product/Category/Organisation
   models). Codifies `m3-seo-rules.md`: slug-based readable URLs (unique/immutable/indexed, 301 on

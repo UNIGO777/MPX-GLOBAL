@@ -1,5 +1,10 @@
 # MPX Global — SEO Rules (for Claude Code)
 
+> ## 🔴 Part A overrides (authoritative — supersede this reference doc)
+> - **§A6 — slug archive marker (exception to slug immutability in §1).** Slugs are immutable in normal operation, **except on archive**: when a product is archived, append an archive marker to its slug (e.g. `cotton-fabric-roll` → `cotton-fabric-roll--archived-a1b2`) to free the clean slug so the seller can re-list the same name. Safe because archived products have **no public page** (they 404/410 and drop from the sitemap), so no indexed URL breaks.
+> - **§A1/§A5/§A7** — only `status: active` entities are indexable and in the sitemap; `draft / inactive / archived / taken-down` are excluded. Archived rows are kept indefinitely (§A7) but are never public.
+> - **§A2** — unique, indexed `slug` on **Product, Category, Organisation** (this matches §1 below).
+
 > Merge these into the Claude Code project rules. When generating or editing frontend/backend code for public discovery pages (products, sellers, categories, search), Claude Code MUST follow these rules. Stack is React (SPA) for now — apply what is possible in a client-rendered app; SSR/prerender items are marked as deferred but should be kept in mind so they aren't blocked later.
 
 ---

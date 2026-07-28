@@ -1,5 +1,13 @@
 # MPX Global — Category & Attribute Schema (Module 2)
 
+> ## 🔴 Part A overrides (authoritative — supersede this reference doc)
+> These decisions post-date this doc. Where they conflict with anything below, **Part A wins**.
+> - **§A1 — `Product.status`** = `draft | active | inactive | archived` (4 values). `draft` is the create default and is **one-way** (a published product can never return to draft). **No `isActive` on Product or Category** — Product's lifecycle lives entirely in `status`; Category uses `active` + `prevActive`.
+> - **§A2/§A6 — ownership & slugs.** `Product.exporterOrgId` (not the generic `orgId`); `SavedItem.orgId` (see M3). Unique, indexed **`slug`** on **Product, Category, Organisation** (on archive the product slug gets an archive marker — see SEO §A6).
+> - **§A4 — Category** = `active` + **`prevActive`**. Cascade: deactivating a top category writes each sub's current `active` into `prevActive`, then sets subs inactive; reactivating restores each sub from `prevActive` (a sub the admin deliberately switched off stays off).
+> - **§A11 — Category** gets an optional **`image`** (Cloudinary URL) for category cards.
+> - **§A14 — "Other"** is seeded as two typed sub-categories (**Other goods** = `goods`, **Other services** = `service`). The seller never manually picks goods/service, and **`resolvedType` is NOT added to Product**. (Consequence: no leaf category is `either`; confirm before removing `either` from the `type` enum.)
+
 > Best practice: **har category ka alag schema NAHI**. Ek `Category`, ek `Product`, aur category-specific fields ek alag `CategoryAttribute` model me (data-driven). 40 alag schemas = 40 collections, har naye category pe code change + migration + search nightmare. Data-driven me admin bina code touch kiye category add/edit karta hai.
 
 ---
@@ -68,7 +76,8 @@
   // category-specific values (dynamic):
   attributes: [ { attributeId, key, value } ],
 
-  status,          // 'active' | 'inactive'  (seller toggle, approval nahi — B6)
+  status,          // 🔴 Part A §A1: 'draft' | 'active' | 'inactive' | 'archived' (draft = default, ONE-WAY). Seller toggle, no approval — B6. NO isActive on Product.
+  slug,            // 🔴 Part A §A6: unique, indexed; archive marker appended on archive
   createdAt, updatedAt
 }
 ```

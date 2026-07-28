@@ -288,6 +288,11 @@ describe('employee permission assignment (M1-F)', () => {
     expect(dup.status).toBe(200);
     expect(dup.body.user.permissions).toEqual(['buyer:approve']);
 
+    // Audit captures the PRIOR non-empty set as a plain, independent snapshot.
+    const audit = await AuditLog.findOne({ action: 'employee.permissions.update' });
+    expect(audit.before.permissions).toEqual(['user:read']);
+    expect(audit.after.permissions).toEqual(['buyer:approve']);
+
     const revoke = await setPerms(sa.token, emp.user._id, []);
     expect(revoke.status).toBe(200);
     expect(revoke.body.user.permissions).toEqual([]);

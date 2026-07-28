@@ -1,5 +1,12 @@
 # MPX Global — B2B Category Tree (v2)
 
+> ## 🔴 Part A overrides (authoritative — supersede this reference doc)
+> - **§A14 — "Other" (#40)** is seeded as **two typed sub-categories**: **Other goods** (`type: 'goods'`) and **Other services** (`type: 'service'`). Products map to a leaf as usual and type is derived from the category — the **seller never manually picks goods/service**, and **`resolvedType` is not used**. This supersedes the "Yahan seller khud select karta hai — Goods ya Service" note in §40 below.
+> - **⚠️ OPEN ITEM — do NOT build without a decision:** whether "Other" supports **free-form, seller-defined spec fields**. For now build Other goods / Other services as ordinary categories with normal `CategoryAttribute` fields, and **raise the question** — do not build a free-form mechanism.
+> - **§A11 — Category** gets an optional **`image`** (Cloudinary URL); expected on the 40 tops, optional on subs (with a sensible fallback).
+> - **§A12 — `synonyms: [String]`** is **admin-editable** (a tags input on the sub-category create/edit form), not only seeded — otherwise admin-created categories are invisible to synonym search.
+> - **§A4** Category uses `active` + `prevActive` (cascade). **§A6** unique, indexed `slug` on Category (and Product, Organisation).
+
 > Seed taxonomy for the `Category` model (`name`, `slug`, `parentId`, `active`).
 > Top category = `parentId: null`. Sub-category = `parentId: <top>`.
 > **40 top categories** (39 + Other) · goods + services (services same Product model me treat hote hain).

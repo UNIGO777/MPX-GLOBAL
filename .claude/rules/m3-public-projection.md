@@ -60,8 +60,9 @@ never returned in the response.
 
 - **Admin / Employee** — KYC docs (verification only) · takedown reason · audit ·
   moderation fields. On admin/employee routes, never bolted onto a public route.
-- **Seller (own only)** — own drafts · own docs · own contact / address. Ownership-scoped
-  (`orgId` match), per security-baseline A6.
+- **Seller (own only)** — own drafts · own docs · own contact / address · own listing's
+  `takedown` reason + date (Part A §A9) — **never `takedown.byUserId` / the acting admin**.
+  Ownership-scoped (`orgId` match), per security-baseline A6.
 - **Contact = via M4** — phone/email stay hidden; buyers connect only through enquiry / chat.
   Never expose contact to enable off-platform / scraping.
 

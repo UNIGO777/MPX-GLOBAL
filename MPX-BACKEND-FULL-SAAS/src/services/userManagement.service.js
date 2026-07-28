@@ -133,7 +133,9 @@ export async function setEmployeePermissions({ id, permissions, actor, meta }) {
   }
 
   const unique = [...new Set(permissions)];
-  const before = { permissions: user.permissions ?? [] };
+  // Snapshot a PLAIN copy (not the live MongooseArray) so the append-only audit
+  // record can never be affected by later mutation of the document.
+  const before = { permissions: [...(user.permissions ?? [])] };
   await User.updateOne({ _id: user._id }, { $set: { permissions: unique } });
 
   await recordAudit({

@@ -65,7 +65,7 @@ management surface, then the cross-cutting auth hardening.
 | **M1-C** | Verification review alignment + resubmit + tick expose | A, B | no |
 | **M1-D** | KYC document view (signed URL, reviewers) | A, B | 🧱 dep (Cloudinary) |
 | **M1-E** | User management (list/search, activate/deactivate) | — | ✅ **DONE** (Phase 2) |
-| **M1-F** | Employee permission assignment (hard superadmin-gate) | — | no |
+| **M1-F** | Employee permission assignment (hard superadmin-gate) | — | ✅ **DONE** (Phase 3) |
 | **M1-G** | `mustChangePassword` enforcement + change-password | — | ✅ **DONE** (bug-fix pass) |
 | **M1-H** | Auth-event audit (login/signup/refresh-reuse/logout/reset) | — | ✅ **DONE** (bug-fix pass) |
 | **M1-I** | Real OTP delivery provider | — | 🧱 dep/decision (provider + creds) |
@@ -293,7 +293,22 @@ audit (C10). Never return full user docs.
 
 ---
 
-### M1-F · Employee permission assignment  🔨
+### M1-F · Employee permission assignment  ✅ DONE (Phase 3, 2026-07-28)
+
+> **Shipped:** `PATCH /admin/employees/:id/permissions` — hard `requireRole('superadmin')`.
+> Body `permissions: string[]`, each **must be in the `PERMISSIONS` catalogue** (`z.enum` over
+> `Object.values(PERMISSIONS)` → unknown/non-grantable values 400), max 50, de-duped. Target
+> must be `role: 'employee'` else **404** (never reveal a non-employee). Audits
+> `employee.permissions.update` (before/after arrays). Files touched: `admin.validators.js`,
+> `userManagement.service.js` (`setEmployeePermissions`), `admin.controller.js`, `admin.routes.js`.
+> +7 tests → **60/60 green, lint clean.**
+>
+> **⚠️ Deviation from plan (deliberate) — no `tokenVersion` bump:** the plan said bump so the
+> change "takes effect next request", but `authenticate` reads `permissions` **from the DB on
+> every request**, so a grant/revoke is already live on the employee's next call **without**
+> re-login. auth-sessions A7 bumps `tokenVersion` on role-change/deactivation, **not** on a
+> permission edit. Bumping would only force an unnecessary logout with zero enforcement benefit,
+> so it is omitted. A test proves the new permission is live on the SAME token (session intact).
 
 **Goal:** super admin edits an employee's `permissions`. **This must be a HARD role gate, never a
 grantable permission flag** — otherwise an over-permissioned employee grants itself everything
@@ -303,8 +318,9 @@ grantable permission flag** — otherwise an over-permissioned employee grants i
 - **Gate:** `requireRole('superadmin')` — hard, not `requirePermissions`.
 - Validate: `permissions: string[]`, each value must be a **member of the `PERMISSIONS`
   catalogue** (reject unknown perms — no free-text permission strings). Cap array length.
-- Only applies to `role === 'employee'` targets (404 otherwise). Set `user.permissions`, bump
-  `tokenVersion` so the change takes effect on the employee's next request. Append AuditLog
+- Only applies to `role === 'employee'` targets (404 otherwise). Set `user.permissions`. **(Do
+  NOT bump `tokenVersion`** — see the deviation note above; permissions are DB-sourced per request
+  so the change is already live without a forced logout.) Append AuditLog
   `employee.permissions.update` (before/after permission arrays).
 
 **Config — `src/config/permissions.js`:** add `KYC_VIEW = 'kyc:view'` (this module's new grantable

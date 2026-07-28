@@ -1,5 +1,10 @@
 # MPX Global — Phase 1 · Module 3 · **SavedItem Model** (+ validations)
 
+> ## 🔴 Part A overrides (authoritative — supersede this reference doc)
+> - **§A13 — the ownership field is `orgId`, not `orgId`, and ANY org can save** (exporters buy too). Unique compound `(orgId, targetType, targetId)`, index on `orgId`, ownership-scoped reads/deletes (`findOne({ _id, orgId })`). Every `orgId` below now reads `orgId`.
+> - **§A5 — seller delete is ALWAYS soft** (`status = 'archived'`) — **no** draft=hard / published=soft branching, **no** hard delete. The single exception is the admin **§A8** 90-day blocked-product purge (a cleanup job, not a user action).
+> - **§A7 — archived rows are kept indefinitely.** Availability in the saved list: temporary-unavailable (inactive / taken-down / category deactivated) **stays**, flagged "currently unavailable"; **archived → removed** (cleanup).
+
 > Discovery & Search ka **ekmatra naya model**. Buyer product ya supplier "save/favourite" kare. Baaki M3 (search, filters, AI search) koi naya model nahi — sab existing Product/Category/Organisation pe query.
 
 ---
@@ -8,7 +13,7 @@
 
 ```js
 SavedItem {
-  buyerOrgId,        // ref Organisation — kis buyer ne save kiya
+  orgId,        // ref Organisation — kis buyer ne save kiya
   targetType,        // 'product' | 'supplier'
   targetId,          // ref Product (agar product) YA Organisation (agar supplier)
   savedAt,           // Date
@@ -26,8 +31,8 @@ Alag `SavedProduct` / `SavedSupplier` models banane ki zaroorat nahi. Future me 
 
 ## 2. Indexes
 
-- **Unique compound:** `(buyerOrgId, targetType, targetId)` — ek buyer same cheez **do baar save na kar sake** (duplicate block).
-- **`buyerOrgId`** — buyer ki saved-list fast aaye.
+- **Unique compound:** `(orgId, targetType, targetId)` — ek buyer same cheez **do baar save na kar sake** (duplicate block).
+- **`orgId`** — buyer ki saved-list fast aaye.
 
 ---
 
@@ -51,17 +56,17 @@ Yaani seller-side, admin-side, ya employee-side — **kahin se bhi** cheez unava
 | **Inactive / hide** (temporary, wapas aa sakta) | **rahega** | "currently unavailable" |
 | **Category deactivate / takedown** (temporary) | **rahega** | "currently unavailable" |
 | **Soft-delete / archive** (permanently gaya) | **hata do (cleanup)** | list se gaayab |
-| **Hard-delete** (draft delete) | **hata do (cleanup)** | list se gaayab |
+| **Hard-delete** (🔴 §A5: only the admin §A8 90-day blocked purge — never a seller/draft delete) | **hata do (cleanup)** | list se gaayab |
 
 - **Temporary gone** → saved-item me **raho**, product detail pe "currently unavailable" (buyer wait kar sakta hai, wapas active hone pe milega).
 - **Permanently gone** → saved-item se **cleanup** (post-delete hook/cascade) — koi dead entry na bache.
 
-### 3.3 Seller delete logic (kaise decide ho hard ya soft)
-Seller apne product delete kar sakta hai. Type product ki state se:
-- **Draft product** (kabhi publish nahi, koi enquiry/save/reference nahi) → **HARD delete** (clean removal).
-- **Kabhi live/active raha product** (enquiry/chat/save/order ho sakte) → **SOFT delete / archive** (`status: archived`) — seller ke liye gaayab + har jagah hidden, par record + references safe.
-- UI dono case me "Delete" dikhata hai; backend khud decide karta hai (published tha / refs hain to soft, warna hard).
-- **Chat/enquiry pe asar nahi** — soft-delete me record rehta hai, chat history intact, product detail pe "not available".
+### 3.3 Seller delete logic (🔴 Part A §A5 — supersedes the hard-vs-soft branching)
+Seller apne product delete kar sakta hai. **Always soft — no branching:**
+- **Any product (draft ya kabhi-live)** → **SOFT delete** = `status = 'archived'`. Seller ke liye gaayab + har jagah hidden, par record + references safe. Koi hard delete nahi (na draft pe).
+- UI ek hi "Delete" dikhata hai; backend hamesha archive karta hai (published/refs check ki zaroorat nahi).
+- **Chat/enquiry pe asar nahi** — archive me record rehta hai, chat history intact, product detail pe "not available".
+- **Only exception:** admin **§A8** 90-day blocked-product purge (cleanup job, not a seller action).
 
 ### 3.4 Enforce kaise
 - **Display:** saved-list read pe target ka current status lookup — temporary-unavailable ko "currently unavailable" tag ke saath dikhao.
@@ -71,7 +76,7 @@ Seller apne product delete kar sakta hai. Type product ki state se:
 ## 4. Endpoints
 
 - `POST /saved` — save (`{ targetType, targetId }`); duplicate → unique index se block
-- `DELETE /saved/:id` — unsave (ownership-scoped: `findOne({ _id, buyerOrgId })`)
+- `DELETE /saved/:id` — unsave (ownership-scoped: `findOne({ _id, orgId })`)
 - `GET /saved` — buyer ki saved-list (**read-time availability filter applied**), optional `?targetType=product|supplier`
 - Sab buyer-scoped, default-deny.
 
@@ -79,7 +84,7 @@ Seller apne product delete kar sakta hai. Type product ki state se:
 
 ## 5. Conflict-check (locked decisions ke against) — ✅ clean
 - SavedItem M3 me (M2 se yahan move kiya) — consistent.
-- Admin = **takedown, not hard delete** (M2 locked) — is doc me respect kiya; "delete" ko soft-delete treat kiya.
+- Admin = **takedown, not hard delete** (M2 locked) — is doc me respect kiya; "delete" ko soft-delete treat kiya. 🔴 **Except Part A §A8**: blocked > 90 days → purge (with audit snapshot).
 - Temporary-unavailable saved rehta hai ("currently unavailable"); permanent-gone cleanup hota hai — B7/active-only/cascade rules ke consistent.
 - Koi conflict nahi.
 
@@ -88,4 +93,4 @@ Seller apne product delete kar sakta hai. Type product ki state se:
 ## 6. Resolved decisions
 - Temporary-unavailable → saved-list me **greyed "currently unavailable"** (rakho).
 - Permanent-gone (delete/archive) → saved-list se **hata do** (cleanup).
-- Seller delete: draft = hard, ever-published = soft/archive.
+- Seller delete: **always soft** (`status: archived`) — no draft=hard branching (Part A §A5). Only hard delete = admin §A8 90-day blocked-product purge.

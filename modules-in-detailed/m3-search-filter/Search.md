@@ -1,5 +1,10 @@
 # MPX Global — Phase 1 · Module 3 · **Search & Discovery** (Detailed)
 
+> ## 🔴 Part A / Part B overrides (authoritative — supersede this reference doc)
+> - **Search engine is LOCKED to Atlas Search** (Part B) — the "DECISION PENDING" in §5.1 / §13 is **resolved**. The index covers product text + **category name + synonyms** + seller company name; facets come from `CategoryAttribute` where `filterable: true`; **OR within a group, AND across groups**.
+> - **Ranking** (Part B): text relevance → **verified-seller boost** → recency → listing completeness. **Verified is a boost, NEVER a filter** — the "verified-only" toggle in §3.1 is a separate, user-selected facet, not the ranking.
+> - **§A12** — `synonyms` are **admin-editable** per category (so admin-created categories are searchable). **§A13** — saving is open to **any org** (`SavedItem.orgId`). **§A1** — only `status: active` surfaces; `draft/inactive/archived/taken-down` and deactivated-category products are excluded **in the query**.
+
 > Everything for the search experience: three search types, synonym matching, faceted filters, AI search, ranking, availability rules, endpoints, screens, and the GPT prompt for AI search.
 > Language: this doc and all UI text are in English.
 > Status: planning locked (except search-engine choice).
@@ -93,9 +98,10 @@ Buyers don't know our category names. They type "medicines", not "Pharmaceutical
 
 ## 5. The one engine — ranking, sort, pagination
 
-### 5.1 Search engine choice (DECISION PENDING)
-- **Atlas Search** (recommended) — fuzzy/typo tolerance, better relevance, built-in facets; already on Atlas.
-- **Native Mongo text index** — simpler, portable, but weaker relevance and no fuzzy.
+### 5.1 Search engine choice (🔴 RESOLVED — Part B: LOCKED to Atlas Search)
+- **Atlas Search** — LOCKED (Part B). Fuzzy/typo tolerance, better relevance, built-in facets; already on Atlas.
+- ~~Native Mongo text index~~ — not chosen.
+- **Ranking (Part B):** relevance → verified-seller **boost** → recency → listing completeness (verified is a boost, never a filter).
 
 ### 5.2 Sort
 - Relevance (default), Newest, Price (low→high / high→low).
@@ -238,6 +244,6 @@ Server then: validate → run the same search engine with these filters → gene
 ## 12. Conflict-check (against locked decisions) — ✅ clean
 - SavedItem in M3 (moved from M2); B7 all-shown + tick; active-only + takedown-excluded; seller-profile display in M3 (data from M1/M2); AI single-call, no embeddings; toggle for normal search, GPT only in AI search — all consistent. No conflicts.
 
-## 13. Pending decisions
-1. **Search engine:** Atlas Search (recommended) vs native Mongo text index.
-2. Confirm `synonyms: [String]` added to Category model (needed for keyword→category matching).
+## 13. Pending decisions — 🔴 RESOLVED
+1. **Search engine:** ~~Atlas vs native~~ → **LOCKED to Atlas Search** (Part B).
+2. `synonyms: [String]` on Category — **confirmed** and **admin-editable** (Part A §A12).
