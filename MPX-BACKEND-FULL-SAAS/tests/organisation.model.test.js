@@ -61,3 +61,36 @@ describe('Organisation KYC model (M1-A)', () => {
     expect(withDocs.kycSubmittedAt).toBeUndefined();
   });
 });
+
+describe('Organisation slug (A6 / SEO §1)', () => {
+  it('generates a slug from the company name on create', async () => {
+    const org = await makeExporter({ name: 'Textile Hub' });
+    expect(org.slug).toBe('textile-hub');
+  });
+
+  it('lowercases, strips specials, and collapses spaces', async () => {
+    const org = await makeExporter({ name: '  Acme  Co., Ltd.!!  ' });
+    expect(org.slug).toBe('acme-co-ltd');
+  });
+
+  it('appends a short id suffix on collision so slugs stay unique', async () => {
+    const a = await makeExporter({ name: 'Same Name' });
+    const b = await makeExporter({ name: 'Same Name' });
+    expect(a.slug).toBe('same-name');
+    expect(b.slug).toMatch(/^same-name-[a-f0-9]{4}$/);
+    expect(b.slug).not.toBe(a.slug);
+  });
+
+  it('is immutable — renaming the company does not change the slug', async () => {
+    const org = await makeExporter({ name: 'Original Name' });
+    expect(org.slug).toBe('original-name');
+    org.name = 'Renamed Company';
+    await org.save();
+    expect(org.slug).toBe('original-name');
+  });
+
+  it('the partial-unique index rejects a duplicate explicit slug', async () => {
+    await makeExporter({ name: 'One', slug: 'dup-slug' });
+    await expect(makeExporter({ name: 'Two', slug: 'dup-slug' })).rejects.toThrow();
+  });
+});

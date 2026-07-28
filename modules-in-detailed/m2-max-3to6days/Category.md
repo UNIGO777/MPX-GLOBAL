@@ -2,10 +2,11 @@
 
 > ## 🔴 Part A overrides (authoritative — supersede this reference doc)
 > - **§A14 — "Other" (#40)** is seeded as **two typed sub-categories**: **Other goods** (`type: 'goods'`) and **Other services** (`type: 'service'`). Products map to a leaf as usual and type is derived from the category — the **seller never manually picks goods/service**, and **`resolvedType` is not used**. This supersedes the "Yahan seller khud select karta hai — Goods ya Service" note in §40 below.
-> - **⚠️ OPEN ITEM — do NOT build without a decision:** whether "Other" supports **free-form, seller-defined spec fields**. For now build Other goods / Other services as ordinary categories with normal `CategoryAttribute` fields, and **raise the question** — do not build a free-form mechanism.
+> - **§A17 — "Other" has FIXED fields, not free-form.** Other goods / Other services are ordinary categories with a small, **fixed** set of `CategoryAttribute` fields (defined like every other category). **There is NO free-form, seller-defined spec mechanism anywhere in the system** — the earlier "Other" free-form idea is **CANCELLED** (not a future note, not a pending decision). *(⚠️ `Other-category-feilds.png` shows the OLD design — `type=either`, manual goods/service pick, `resolvedType`, free-form specs, a single "General" sub — **all superseded**: "Other" = two typed subs (Other goods / Other services), type from the leaf, no manual pick, no `resolvedType`, fixed `CategoryAttribute` fields.)*
 > - **§A11 — Category** gets an optional **`image`** (Cloudinary URL); expected on the 40 tops, optional on subs (with a sensible fallback).
 > - **§A12 — `synonyms: [String]`** is **admin-editable** (a tags input on the sub-category create/edit form), not only seeded — otherwise admin-created categories are invisible to synonym search.
 > - **§A4** Category uses `active` + `prevActive` (cascade). **§A6** unique, indexed `slug` on Category (and Product, Organisation).
+> - **§A16 — `type` lives on the leaf.** `type` (`'goods' | 'service'`) is **required on sub-categories** and **NOT set on the 40 top categories** (`parentId: null` — absent, no default). A top's goods/services grouping is derived from its children at read time, never stored. **Seeding must not set `type` on any top category.**
 
 > Seed taxonomy for the `Category` model (`name`, `slug`, `parentId`, `active`).
 > Top category = `parentId: null`. Sub-category = `parentId: <top>`.
@@ -134,7 +135,7 @@ Digital marketing & AI personalization · 3D modeling & product prototyping (des
 ---
 
 ## 40. Other  *(catch-all)*
-General / uncategorized products or services that don't fit above. **Yahan seller khud select karta hai — Goods ya Service** (kyunki type category se derive nahi ho sakta). Specifications free-form key-value (seller apne fields daale). Baaki sab categories (1-34 goods, 35-39 service) me type automatic aata hai.
+General / uncategorized products or services that don't fit above. 🔴 **Part A §A14/§A17:** "Other" ab do typed sub-categories hain (**Other goods** / **Other services**) — seller manually goods/service **nahi** chunta, type leaf se aata hai. Specs = ek **chhota FIXED `CategoryAttribute` set** (baaki categories jaisa) — **koi free-form key-value nahi**. Baaki sab categories (1-34 goods, 35-39 service) me type automatic aata hai.
 
 ## Services treated as products
 Categories **35–39** mostly services hain (IT, BPO, clinical, training, marketing). Ye **same `Product` model** me rehti hain — koi alag service entity nahi. In ke liye:
@@ -149,6 +150,8 @@ Breadth ke liye rakhi — delete nahi; abhi home-page / SEO priority nahi.
 
 ## Seeding notes
 - Har entry: `name`, `slug` (auto, e.g. "Cotton fabric" → `cotton-fabric`), `parentId` (top = null), `active: true`.
+- 🔴 **§A16 — `type` sirf sub-categories pe** (`parentId` set, required). **Top 40 pe `type` set NAHI** (absent, koi default nahi). Top ki goods/service grouping children ke types se **read-time pe derive** hoti hai (mixed top dono me dikhega).
+- 🔴 **GAP (seed plan) — `synonyms` for the 40 tops NOT authored yet.** Only 1–2 examples exist in the docs (e.g. Pharmaceuticals → medicine/medicines/pharma/drugs/dawai). A full per-top synonym list must be written before seeding (needed for keyword→category search per A12). **Do NOT invent it** — this is a known open gap.
 - Products **sub-category (leaf)** se map hon — cleaner search/filter.
 - Category-specific fields ek **`CategoryAttribute`** model se (structured per-category fields, free-form nahi).
 - 40 top (incl. Other) + ~250 sub ek starter set; admin CRUD se add/edit/deactivate.

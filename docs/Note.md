@@ -18,17 +18,20 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
   recorded status only (flips `kycStatus` → verified for the tick).
 - **Exporter / seller** — self-registers, **profile public immediately**, `kycStatus: pending`.
   Verified = a **tick** (`kycStatus === 'verified'`; no "not verified" badge — absence = unverified).
-- **Unverified seller product limit** — unverified seller may add **at most 3 products**; more
-  only after an Employee verifies them (see **D1**).
+- **Unverified seller product limit** — unverified seller may hold **at most 3 ACTIVE products**
+  (taken-down products **excluded** from the count — Part A §A10) **+ max 10 drafts** (§A15);
+  the cap lifts after an Employee verifies them (see **D1**).
 - **Admin access** — **superadmin = all-access**; everyone else (incl. `admin`) needs the
   specific granted permission. Employee permissions are individually assignable.
 - **Auth 2FA** — admin/superadmin currently log in via **OTP** (TOTP on hold — see **D4**).
 
 ---
 
-## D1 · Unverified seller = max 3 products  🧭 BUILD-TIME REMINDER (confirmed scope)
-- **Rule (owner-confirmed):** an unverified seller may add at most **3 products**; to add more,
-  an Employee must **verify** them first.
+## D1 · Unverified seller = max 3 ACTIVE products (+10 drafts)  🧭 BUILD-TIME REMINDER (confirmed scope)
+- **Rule (owner-confirmed, refined by Part A §A10/§A15):** an unverified seller may hold at most
+  **3 ACTIVE (published) products** — **taken-down products do NOT count** toward the cap
+  (`takedown.isDown` excluded) — **plus max 10 drafts**; verification lifts the cap.
+  Authoritative source: `docs/MPX-M2-M3-Build-Prompt.md` Part A (this ledger mirrors it).
 - **Status:** this **IS** Phase-1 scope — build/enforce it when the **catalogue / product-add**
   module is built. No product endpoints exist yet, so nothing enforces it today. Not red-alert
   guarded (it's expected scope) — just don't forget it.
@@ -74,6 +77,28 @@ Do not start the screens without surfacing this alert.
   terminal in dev/test** (`otp.sender.js`), **hard-gated to non-production**. This is a
   temporary dev affordance — **remove/replace it when real OTP delivery is wired** (OTP must
   never be logged in production — auth-sessions A3).
+
+## D6 · Seller "request unblock" for a taken-down product  ⏸ ON HOLD (build ~1 month later)
+- **What the owner asked for (recorded 2026-07-28):** jab admin ek product **takedown** kar de,
+  seller us product ke **unblock ki request** bhej sake — abhi seller sirf `takedown.reason` +
+  date dekh sakta hai (Part A §A9), koi appeal/reinstatement path nahi hai.
+- **Deferred:** build **around 2026-08-28** (owner ne "1 month baad" kaha). Month-1 / first draft
+  me **NAHI** — see `docs/month1-not-doing.md` **A5**.
+- **Build-time constraints (jab banega, ye mat todna):**
+  - Ownership-scoped: `findOne({ _id, exporterOrgId: req.user.orgId })`; not-found = **404**.
+  - Request sirf tab valid jab `takedown.isDown === true`; ek product pe ek hi pending request
+    (duplicate spam rokna) + rate-limit.
+  - Seller ko **`takedown.byUserId` kabhi na dikhe** (§A9) — request/response me acting admin ka
+    koi trace nahi.
+  - Unblock **admin decide karega** — approve = existing `POST /admin/products/:id/restore` path;
+    seller khud kabhi restore na kar paaye.
+  - Request raise / approve / reject — teeno **AuditLog** me (actor + target + timestamp +
+    reason), append-only (§A19).
+  - 🔴 **§A8 interaction:** 180-din-blocked purge se pehle ek pending unblock request ka kya hoga
+    — purge rok de ya request lapse ho jaaye — **owner se poochna hai jab build ho** (abhi undecided).
+- **Open (owner decide kare jab build ho):** naya `UnblockRequest` model banega ya `takedown`
+  object ke andar hi sub-fields; seller ko decision ka pata kaise chalega (D5 notifications
+  on-hold hain, to abhi sirf in-panel status dikhega).
 
 > ⚠️ **Quotation note on record:** the quote (pages 2, 3, 9) implies a harder gate ("verified
 > before they can sell", "only approved buyers participate fully"). Owner has replaced that with

@@ -59,7 +59,7 @@ while any close-time security commitment remains unraised.
 - **D2** — Seller hard "verify-before-sell" gate. DROPPED — do not build (replaced by D1).
 
 🧭 **Build-time reminder (confirmed scope, NOT red-alert guarded):**
-- **D1** — Unverified seller = max **3 products**. This IS Phase-1 scope; build/enforce it when
+- **D1** — Unverified seller = max **3 ACTIVE products** (🔴 Part A §A10: **taken-down products do NOT count** toward the cap — the cap query must exclude `takedown.isDown: true`) **+ max 10 drafts** (§A15). This IS Phase-1 scope; build/enforce it when
   the catalogue / product-add module is built. Just don't forget it.
 - **S1** — Before building any M1 **frontend screen** (buyer/exporter/admin/employee auth/KYC),
   STOP and alert the owner first; align forms to the backend contract (exporter signup needs
@@ -71,5 +71,5 @@ while any close-time security commitment remains unraised.
 - **D5** — Notifications (all types incl. **WhatsApp**). Nothing sent on any event yet.
 
 Phase-1 reality: **buyer** has no gate (fully active from signup); **seller** is public with a
-verified tick and a **3-product limit while unverified** (D1). Verification/approval is status
+verified tick and a **3-active-listing limit while unverified** (taken-down excluded from the count — §A10; + 10-draft cap §A15) (D1). Verification/approval is status
 + tick, not a hard gate.

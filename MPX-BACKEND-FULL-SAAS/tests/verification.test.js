@@ -49,9 +49,9 @@ beforeEach(async () => {
 });
 
 describe('verification & approval', () => {
-  it('employee with buyer:approve approves a pending buyer + writes audit with actor id', async () => {
+  it('employee with buyer:approve approves a submitted buyer + writes audit with actor id', async () => {
     const { user, token } = await makeStaff('employee', ['buyer:approve']);
-    const org = await makeOrg('buyer');
+    const org = await makeOrg('buyer', 'submitted');
 
     const res = await request(app).post(`/employee/buyers/${org._id}/approve`).set(bearer(token)).send({});
     expect(res.status).toBe(200);
@@ -64,21 +64,45 @@ describe('verification & approval', () => {
     const audit = await AuditLog.findOne({ entityId: org._id, action: 'buyer.approve' });
     expect(audit).toBeTruthy();
     expect(String(audit.actorId)).toBe(String(user._id));
-    expect(audit.before.kycStatus).toBe('pending');
+    expect(audit.before.kycStatus).toBe('submitted');
     expect(audit.after.kycStatus).toBe('verified');
   });
 
-  it('employee with exporter:verify verifies a pending exporter', async () => {
+  it('employee with exporter:verify verifies a submitted exporter', async () => {
     const { token } = await makeStaff('employee', ['exporter:verify']);
-    const org = await makeOrg('exporter');
+    const org = await makeOrg('exporter', 'submitted');
     const res = await request(app).post(`/employee/exporters/${org._id}/verify`).set(bearer(token)).send({});
     expect(res.status).toBe(200);
     expect(res.body.organisation.kycStatus).toBe('verified');
   });
 
+  it('cannot verify/approve or reject an org that has NOT submitted documents (409, fix #3)', async () => {
+    const buyerReviewer = await makeStaff('employee', ['buyer:approve']);
+    const pendingBuyer = await makeOrg('buyer', 'pending');
+    const approve = await request(app)
+      .post(`/employee/buyers/${pendingBuyer._id}/approve`)
+      .set(bearer(buyerReviewer.token))
+      .send({});
+    expect(approve.status).toBe(409);
+
+    const exporterReviewer = await makeStaff('employee', ['exporter:verify']);
+    const pendingExporter = await makeOrg('exporter', 'pending');
+    const verify = await request(app)
+      .post(`/employee/exporters/${pendingExporter._id}/verify`)
+      .set(bearer(exporterReviewer.token))
+      .send({});
+    expect(verify.status).toBe(409);
+
+    const reject = await request(app)
+      .post(`/employee/exporters/${pendingExporter._id}/reject`)
+      .set(bearer(exporterReviewer.token))
+      .send({ reason: 'no docs' });
+    expect(reject.status).toBe(409);
+  });
+
   it('rejection stores the reason and requires one', async () => {
     const { token } = await makeStaff('employee', ['exporter:verify']);
-    const org = await makeOrg('exporter');
+    const org = await makeOrg('exporter', 'submitted');
 
     const noReason = await request(app).post(`/employee/exporters/${org._id}/reject`).set(bearer(token)).send({});
     expect(noReason.status).toBe(400);
@@ -133,7 +157,7 @@ describe('verification & approval', () => {
 
   it('the audit entry is append-only (cannot be updated)', async () => {
     const { token } = await makeStaff('employee', ['buyer:approve']);
-    const org = await makeOrg('buyer');
+    const org = await makeOrg('buyer', 'submitted');
     await request(app).post(`/employee/buyers/${org._id}/approve`).set(bearer(token)).send({});
 
     const audit = await AuditLog.findOne({ entityId: org._id });

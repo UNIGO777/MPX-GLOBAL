@@ -42,7 +42,7 @@ product count · member-since.
 min/max + currency) · MOQ · unit · trade info (goods) / service info (services) · attributes
 (specs) · seller public projection · createdAt / listed-since.
 
-**Category** — name · slug · parent / sub tree · type (goods/service) · filterable attributes ·
+**Category** — name · slug · parent / sub tree · type (goods/service — a **sub-category's `type` is stored; a top category's is derived from its children at read time**, not stored; the public contract is unchanged) · filterable attributes ·
 active categories only. `synonyms` is **search-only** — used for keyword→category matching,
 never returned in the response.
 

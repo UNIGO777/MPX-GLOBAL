@@ -6,7 +6,11 @@
 > - **§A2/§A6 — ownership & slugs.** `Product.exporterOrgId` (not the generic `orgId`); `SavedItem.orgId` (see M3). Unique, indexed **`slug`** on **Product, Category, Organisation** (on archive the product slug gets an archive marker — see SEO §A6).
 > - **§A4 — Category** = `active` + **`prevActive`**. Cascade: deactivating a top category writes each sub's current `active` into `prevActive`, then sets subs inactive; reactivating restores each sub from `prevActive` (a sub the admin deliberately switched off stays off).
 > - **§A11 — Category** gets an optional **`image`** (Cloudinary URL) for category cards.
-> - **§A14 — "Other"** is seeded as two typed sub-categories (**Other goods** = `goods`, **Other services** = `service`). The seller never manually picks goods/service, and **`resolvedType` is NOT added to Product**. (Consequence: no leaf category is `either`; confirm before removing `either` from the `type` enum.)
+> - **§A14 — "Other"** is seeded as two typed sub-categories (**Other goods** = `goods`, **Other services** = `service`). The seller never manually picks goods/service, and **`resolvedType` is NOT added to Product**. (Consequence: no leaf category is `either` — **`either` is removed from the `type` enum**; Category `type` = `'goods' | 'service'`.)
+> - **§A16 — `type` lives on the leaf.** `type` is **required on sub-categories** (`parentId` set) and **not set on top categories** (`parentId: null` — left **absent**, no default, not optional-but-populated). A product always maps to a sub, so form fields resolve from the leaf; a top's own type was never read for product creation. A top's goods/services grouping on browse screens is **derived from its children's types at read time, never stored** (a mixed top appears under both — this is how "Other" works without an exception). **Seed must not set `type` on any of the 40 top categories.**
+> - **§A19 — `Product.createdBy` is dropped** (exists in code, in no plan doc, superseded by AuditLog). Instead, **product create AND edit must write AuditLog entries** (actor + target + timestamp) — that is the replacement for `createdBy`, not an optional extra. A **separate error-log** (errors only; strict exclusion list — no KYC/tokens/passwords/OTPs/full bodies/contact) is also required; its storage = **MongoDB `errorLogs` with a 90-day TTL index**; AuditLog stays permanent (no TTL). *(M1 already keeps these out of logs via `select:false` + shaped errors + no body logging; extend pino `redact` as a build-time backstop.)*
+> - **§A17** no free-form spec mechanism anywhere. **§A18** purge window = 180 days. **§A20** admin category edit uploads `image` on top cats too (deliberate exception to activate/deactivate-only).
+> - **🔴 M2↔M3 — `Product.categoryId` = leaf/sub only** (`parentId` set); reject top categories (else M3 `type`/facets/form break). Form: top → sub (leaf stored). **`country` is NOT on Product** — M3's country facet uses the seller's `Organisation.country` (join via `exporterOrgId`).
 
 > Best practice: **har category ka alag schema NAHI**. Ek `Category`, ek `Product`, aur category-specific fields ek alag `CategoryAttribute` model me (data-driven). 40 alag schemas = 40 collections, har naye category pe code change + migration + search nightmare. Data-driven me admin bina code touch kiye category add/edit karta hai.
 
@@ -29,7 +33,7 @@
   name,            // "Textiles, Fabrics & Yarn"
   slug,            // "textiles-fabrics-yarn"  (unique)
   parentId,        // null = top-level; warna parent Category (tree)
-  type,            // 'goods' | 'service' | 'either'
+  type,            // 🔴 §A14 'goods' | 'service' (no 'either'); §A16 REQUIRED on subs (parentId set), ABSENT on top cats (parentId null — derived from children at read time)
   active,          // Boolean (admin toggle)
   order,           // Number (display order)
   icon             // optional
@@ -38,7 +42,7 @@
 - `type` form ka behaviour decide karta hai:
   - `goods` → MOQ + trade fields (HS code, origin, supply ability, lead time, packaging)
   - `service` → engagement type, delivery model, team size, pricing model, timeline (no MOQ)
-  - `either` → seller khud Goods/Service chune (sirf **"Other"** category ke liye)
+  - ~~`either` → seller khud Goods/Service chune~~ — 🔴 REMOVED (Part A §A14): "Other" ab do typed subs (Other goods / Other services); type category se aata hai, seller manually nahi chunta.
 - Tree `parentId` se banta hai. Products **leaf/sub-category** se map hon.
 
 ### 2. `CategoryAttribute`  (har category ke apne fields, as data)
@@ -88,7 +92,7 @@
 
 1. Seller **category select** kare.
 2. Us category ki **`CategoryAttribute` list** load ho → wahi fields form me render.
-3. `category.type` se **goods/service/either** fields dikhein.
+3. `category.type` se **goods/service** fields dikhein ('either' removed — Part A §A14).
 4. Seller values bhare → `Product.attributes[]` me `{ key, value }` save.
 5. Discovery/search **`attributes.key` + `value`** pe chale (indexed).
 

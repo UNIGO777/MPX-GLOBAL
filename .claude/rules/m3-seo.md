@@ -34,6 +34,10 @@ IDs, takedown reason, draft/archived data) may appear in HTML, meta, JSON-LD, or
   slug on the document.
 - **Immutable:** never change a slug on rename. If it must change, keep the old one and
   **301-redirect** old→new. Never hard-break an indexed URL.
+- **Archive exception (Part A §A6):** on archive, append an archive marker to the product slug
+  (e.g. `cotton-fabric-roll` → `cotton-fabric-roll--archived-a1b2`) to free the clean slug for
+  re-listing. Safe because archived products have no public page (they 404/410 and drop from the
+  sitemap), so no indexed URL breaks.
 - Store `slug` as an **indexed, unique** field on `Product`, `Category`, `Organisation`.
 
 ## 2 · On-page SEO (every public page)

@@ -157,7 +157,7 @@ describe('bug fixes', () => {
       mustChangePassword: true,
     });
     const token = signAccessToken(emp);
-    const buyerOrg = await Organisation.create({ name: 'B', type: 'buyer', kycStatus: 'pending' });
+    const buyerOrg = await Organisation.create({ name: 'B', type: 'buyer', kycStatus: 'submitted' });
 
     // Blocked until password changed.
     const blocked = await request(app).post(`/employee/buyers/${buyerOrg._id}/approve`).set(bearer(token)).send({});

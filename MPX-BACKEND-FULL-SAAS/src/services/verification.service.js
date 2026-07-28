@@ -9,10 +9,12 @@ import { recordAudit } from './audit.service.js';
 async function reviewOrg({ orgId, expectType, toStatus, reason, actor, action, meta }) {
   const org = await Organisation.findOne({ _id: orgId, type: expectType });
   if (!org) throw AppError.notFound('organisation not found', 'Not found.');
-  // Reviewable from 'pending' or 'submitted' (once the KYC-upload flow lands).
-  // Full resubmit-after-rejection (rejected → pending) is Module C, not built yet.
-  if (!['pending', 'submitted'].includes(org.kycStatus)) {
-    throw AppError.conflict('not reviewable', 'This account is not awaiting review.');
+  // Reviewable ONLY after documents are submitted (owner decision, fix #3): a
+  // reviewer verifies/rejects actual evidence, so a 'pending' (no-docs) org cannot
+  // be verified or rejected — applies to buyer approve AND exporter verify. A
+  // rejected org resubmits via the KYC-upload path (→ 'submitted') to re-enter here.
+  if (org.kycStatus !== 'submitted') {
+    throw AppError.conflict('not reviewable', 'This account has not submitted documents for review.');
   }
 
   const before = { kycStatus: org.kycStatus };

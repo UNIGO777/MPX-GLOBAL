@@ -48,6 +48,14 @@
 - Delivery-tracking + retry handling
 - *(Month 1 me sirf OTP flows)* — see `docs/Note.md` **D5**.
 
+### A5 · Seller "request unblock" for a taken-down product (Module 2 moderation)
+- Admin ne product **takedown** kiya → seller **unblock request** bhej sake (appeal path).
+- Admin approve/reject kare; approve = existing `POST /admin/products/:id/restore`.
+- **Month 1 me nahi** — owner ne **~2026-08-28** (1 month baad) ke liye kaha (recorded 2026-07-28).
+- Abhi month-1 me sirf itna: seller apni listing pe `takedown.reason` + date dekhta hai
+  (Part A §A9, **`byUserId` kabhi nahi**) — koi request/appeal endpoint nahi.
+- Full detail + build-time constraints: `docs/Note.md` **D6**.
+
 ### A4 · Cross-cutting (close se pehle)
 - **TOTP 2FA (D4)** — bana hua par on-hold; close se pehle restore
 - App store submission, demo accounts, privacy policy / data-safety (M3)
@@ -79,7 +87,7 @@
 
 ## Net
 Month 1 / first draft se **bahar**: **Quotation (Module 4)**, employee-only pieces (Module 6 ka
-hissa), **Notifications (Module 8)** — sab month-1-ke-baad. Aur poora **Phase-2** stack (Bucket B).
+hissa), **Notifications (Module 8)**, **seller unblock-request (A5)** — sab month-1-ke-baad. Aur poora **Phase-2** stack (Bucket B).
 Month 1 me **ban raha**: Module 2 (catalogue/discovery), Module 3 (chat + AI search), Module 5
 (super admin) + shared employee-ops endpoints.
 

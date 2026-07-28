@@ -61,7 +61,7 @@ management surface, then the cross-cutting auth hardening.
 | ID | Sub-module | Depends on | Blocked? |
 |----|------------|-----------|----------|
 | **M1-A** | KYC data model & entity type | — | ✅ **DONE** (Phase 1) |
-| **M1-B** | KYC document upload | A | 🧱 dep/decision (Cloudinary approach) |
+| **M1-B** | KYC document upload | A | ✅ **DONE** (Phase 4b) |
 | **M1-C** | Verification review alignment + resubmit + tick expose | A, B | no |
 | **M1-D** | KYC document view (signed URL, reviewers) | A, B | 🧱 dep (Cloudinary) |
 | **M1-E** | User management (list/search, activate/deactivate) | — | ✅ **DONE** (Phase 2) |
@@ -124,7 +124,24 @@ M1-A/E/F are unblocked and can start immediately. B/D/I wait on the decisions in
 
 ---
 
-### M1-B · KYC document upload  🔨 🧱
+### M1-B · KYC document upload  ✅ DONE (Phase 4b, 2026-07-28)
+
+> **Decision taken:** Cloudinary approach **(b) server multipart** (owner choice). Deps added:
+> `cloudinary`, `multer`, `file-type`. **Shipped:**
+> - **4a infra:** `config/cloudinary.js` (lazy config + `isCloudinaryConfigured`),
+>   `middleware/upload.js` (multer memory, single `document` field, 10 MB cap, typed errors),
+>   `services/kyc.storage.service.js` — `verifyKycFile` (magic-byte allowlist: pdf/jpg/png/webp,
+>   size cap), `uploadKycDocument` (uploads as Cloudinary **`type: 'private'`** with a
+>   **randomised public_id**, returns only `storageKey`), `signedKycUrl` (expiring
+>   `private_download_url`). Satisfies the Note.md production reminder (private, not public).
+> - **4b endpoint:** `POST /me/kyc/documents` (authenticate + generalLimiter + multer + zod).
+>   Self-write to caller's org. entityType: exporter uses signup value (mismatch → 400); buyer
+>   must supply it (then set). docType validated against entity via `KYC_DOCS_BY_ENTITY`.
+>   `pending|rejected → submitted`, sets `kycSubmittedAt`, **clears `kycRejectionReason`**;
+>   `verified` → 409; employee/admin → 403. Audit `kyc.submit` = **docType + status only, no
+>   storageKey**. Files: `kyc.validators.js`, `kyc.service.js`, `kyc.controller.js`,
+>   `me.routes.js`. Tests: `kycStorage.test.js` (5, real magic-byte) + `kyc.test.js` (10, storage
+>   mocked). **75/75 green, lint clean.**
 
 **Goal:** exporter (mandatory) / buyer (optional) uploads business or personal ID docs; status
 moves `pending → submitted` (and `rejected → submitted` on resubmit, see M1-C).

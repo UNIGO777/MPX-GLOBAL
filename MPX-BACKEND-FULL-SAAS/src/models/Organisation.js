@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { baseSchemaOptions } from './baseSchema.js';
 import { declareScope, SCOPE } from './scoping.js';
 import { ORG_TYPE, KYC_STATUS, ENTITY_TYPE, KYC_DOC_TYPE } from './enums.js';
+import { slugify } from '../utils/slug.js';
 
 const { Schema } = mongoose;
 
@@ -12,6 +13,11 @@ const { Schema } = mongoose;
 const organisationSchema = new Schema(
   {
     name: { type: String, required: true, trim: true }, // A5: intentionally NOT unique
+
+    // Public, readable slug for SEO URLs (/supplier/:slug). Generated from `name`
+    // on first save, then IMMUTABLE — a rename must never change it and break an
+    // indexed public URL (A6 / SEO §1). See the pre-validate hook below.
+    slug: { type: String, lowercase: true, trim: true },
 
     type: { type: String, enum: ORG_TYPE, required: true, index: true },
 
@@ -96,6 +102,27 @@ organisationSchema.index(
     partialFilterExpression: { 'businessProfile.registrationNumber': { $type: 'string' } },
   },
 );
+
+// Public slug is unique, but only where present — pre-existing orgs created before
+// this field (null slug) don't collide on the index (partial filter).
+organisationSchema.index(
+  { slug: 1 },
+  { unique: true, partialFilterExpression: { slug: { $type: 'string' } } },
+);
+
+// Generate the slug once, from the company name, then leave it alone (immutable:
+// a rename must not rewrite an indexed public URL — A6). On a base-slug clash,
+// append a short suffix from the id (SEO §1). Async throw-style hook (Mongoose 9);
+// runs before validation so the unique index sees the final value.
+organisationSchema.pre('validate', async function generateSlug() {
+  if (this.slug || !this.name) return;
+  const base = slugify(this.name) || String(this._id).slice(-6);
+  const clash = await this.constructor
+    .findOne({ slug: base, _id: { $ne: this._id } })
+    .select('_id')
+    .lean();
+  this.slug = clash ? `${base}-${String(this._id).slice(-4)}` : base;
+});
 
 declareScope(organisationSchema, SCOPE.SELF);
 

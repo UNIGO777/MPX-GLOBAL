@@ -131,6 +131,34 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-28** — **New deferral recorded: seller "request unblock" for a taken-down product.**
+  Owner ne M2 takedown discussion ke baad kaha — jab admin product takedown kare, seller uske
+  unblock ki **request** bhej sake; build **~2026-08-28 (1 month baad)**, month-1 me nahi.
+  Recorded as `docs/Note.md` **D6** (⏸ ON HOLD, build-time constraints ke saath) +
+  `docs/month1-not-doing.md` **A5** (Bucket A). Month-1 behaviour unchanged: seller apni listing
+  pe sirf `takedown.reason` + date dekhta hai (§A9, `byUserId` kabhi nahi), koi appeal endpoint
+  nahi. **Open gotcha jab build ho:** §A8 ka 180-din blocked-purge aur ek pending unblock request
+  ka interaction undecided hai (purge ruke ya request lapse ho) — owner se poochna hai.
+- **2026-07-28** — **M1 Phase 4a+4b (KYC upload) built.** Owner chose Cloudinary approach **(b)
+  server multipart**; deps added: **`cloudinary`, `multer`, `file-type`**. Infra: `config/
+  cloudinary.js`, `middleware/upload.js` (multer memory, single `document`, 10 MB), `services/
+  kyc.storage.service.js` — `verifyKycFile` (magic-byte allowlist pdf/jpg/png/webp), `uploadKyc
+  Document` (Cloudinary **`type: private`** + randomised public_id → stores only `storageKey`,
+  never a public URL), `signedKycUrl` (expiring). Endpoint `POST /me/kyc/documents` (auth +
+  generalLimiter + multer + zod): self-write, exporter uses signup `entityType` (mismatch 400),
+  buyer supplies+sets it, docType checked vs `KYC_DOCS_BY_ENTITY`, `pending|rejected→submitted`,
+  clears `kycRejectionReason`, `verified`→409, employee/admin→403; audit `kyc.submit` = docType+
+  status only (no storageKey). +15 tests (5 magic-byte real, 10 endpoint w/ storage mocked) →
+  **75/75 green, lint clean.** Gotcha: run `vitest --no-file-parallelism` (parallel connects flake
+  on localhost DB). Next: 4c (verify-guard reconcile #3 + tick expose) → 4d (KYC signed-URL view).
+- **2026-07-28** — **M1-F bug-check.** No functional bug found. One audit-integrity hardening:
+  `setEmployeePermissions` now snapshots `before.permissions` as a **plain array copy**
+  (`[...(user.permissions ?? [])]`) instead of the live MongooseArray, so the append-only audit
+  record can never be touched by later mutation; +1 assertion locking the non-empty `before`.
+  60/60 green, lint clean. **Test-run gotcha:** vitest runs files in parallel and the concurrent
+  `mongoose.connect`s can time out against a flaky localhost DB → spurious "0 tests / import
+  hang". Run `npx vitest run --no-file-parallelism` (sequential) for a reliable full-suite pass;
+  DB was up the whole time (docker `mpx-mongo`/`mpx-redis`).
 - **2026-07-28** — **M1 Phase 3 (M1-F · Employee permission assignment) built.**
   `PATCH /admin/employees/:id/permissions` — **hard `requireRole('superadmin')`** (never a
   grantable perm → no privilege escalation). Body validated against the `PERMISSIONS` catalogue
