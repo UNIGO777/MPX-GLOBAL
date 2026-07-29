@@ -96,6 +96,15 @@ async function auditSignup(user, meta) {
   });
 }
 
+// A21 §4a: after a self-signup, issue an OTP by REUSING the login mechanism
+// (requestOtp + signLoginToken — no second OTP system) and return a login-pending
+// token. Signup returns NO session; the caller verifies the OTP at
+// /auth/verify-otp (token-identified) to exchange this token for tokens.
+async function issueSignupOtp(user) {
+  await requestOtp({ user, purpose: 'login', channel: 'mobile' });
+  return { user, loginToken: signLoginToken(user, 'otp'), method: 'otp' };
+}
+
 // Phase 1: buyer is active immediately; approval is status only, not a gate.
 export async function registerBuyer({ name, email, mobile, password, company, country, meta }) {
   const mob = normalizeMobile(mobile);
@@ -112,7 +121,7 @@ export async function registerBuyer({ name, email, mobile, password, company, co
     },
   });
   await auditSignup(user, meta);
-  return user;
+  return issueSignupOtp(user);
 }
 
 // Phase 1: exporter self-registers; profile public immediately, kycStatus pending.
@@ -143,7 +152,7 @@ export async function registerExporter({
     },
   });
   await auditSignup(user, meta);
-  return user;
+  return issueSignupOtp(user);
 }
 
 // Superadmin-created employee: generated-password account, so mustChangePassword

@@ -7,14 +7,19 @@ function clientMeta(req) {
   return { ip: req.ip, userAgent: req.headers['user-agent'], requestId: req.id };
 }
 
+// A21 §4a: signup issues an OTP and returns a login-pending token — NOT a session.
+// `user` (toJSON-stripped) is returned for convenience; access/refresh tokens are
+// only issued after /auth/verify-otp succeeds.
+function signupResponse(res, { user, loginToken, method }) {
+  res.status(201).json({ user, loginToken, method, message: 'An OTP has been sent. Verify it to activate your session.' });
+}
+
 export async function buyerSignup(req, res) {
-  const user = await authService.registerBuyer({ ...req.body, meta: clientMeta(req) });
-  res.status(201).json({ user }); // toJSON strips passwordHash / 2FA fields
+  signupResponse(res, await authService.registerBuyer({ ...req.body, meta: clientMeta(req) }));
 }
 
 export async function exporterSignup(req, res) {
-  const user = await authService.registerExporter({ ...req.body, meta: clientMeta(req) });
-  res.status(201).json({ user });
+  signupResponse(res, await authService.registerExporter({ ...req.body, meta: clientMeta(req) }));
 }
 
 export async function createEmployee(req, res) {

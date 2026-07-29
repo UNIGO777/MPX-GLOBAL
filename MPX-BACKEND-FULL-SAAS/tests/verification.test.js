@@ -172,3 +172,46 @@ describe('verification & approval', () => {
     await expect(AuditLog.updateOne({ _id: audit._id }, { $set: { action: 'tampered' } })).rejects.toThrow();
   });
 });
+
+describe('A21 · review targets a SIDE, not a type', () => {
+  const bothSides = (kycStatus = 'submitted') =>
+    Organisation.create({ name: 'Both Co', type: 'business', buyerSide: true, exporterSide: true, kycStatus });
+
+  it('a both-sides org is found by BOTH buyer:approve and exporter:verify', async () => {
+    const buyerReviewer = await makeStaff('employee', ['buyer:approve']);
+    const exporterReviewer = await makeStaff('employee', ['exporter:verify']);
+
+    const orgA = await bothSides();
+    const approve = await request(app)
+      .post(`/employee/buyers/${orgA._id}/approve`)
+      .set(bearer(buyerReviewer.token))
+      .send({});
+    expect(approve.status).toBe(200);
+
+    const orgB = await bothSides();
+    const verify = await request(app)
+      .post(`/employee/exporters/${orgB._id}/verify`)
+      .set(bearer(exporterReviewer.token))
+      .send({});
+    expect(verify.status).toBe(200);
+  });
+
+  it('a buyerSide-only org is NOT found by exporter:verify; exporterSide-only NOT by buyer:approve (404)', async () => {
+    const exporterReviewer = await makeStaff('employee', ['exporter:verify']);
+    const buyerReviewer = await makeStaff('employee', ['buyer:approve']);
+
+    const buyerOnly = await makeOrg('buyer', 'submitted'); // buyerSide:true only
+    const v = await request(app)
+      .post(`/employee/exporters/${buyerOnly._id}/verify`)
+      .set(bearer(exporterReviewer.token))
+      .send({});
+    expect(v.status).toBe(404);
+
+    const exporterOnly = await makeOrg('exporter', 'submitted'); // exporterSide:true only
+    const a = await request(app)
+      .post(`/employee/buyers/${exporterOnly._id}/approve`)
+      .set(bearer(buyerReviewer.token))
+      .send({});
+    expect(a.status).toBe(404);
+  });
+});

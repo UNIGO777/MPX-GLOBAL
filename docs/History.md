@@ -134,6 +134,41 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-30** — **A21 CODE — Step 3 patch + Step 4a (OTP on signup).** *Patch:* +6 tests
+  locking the HAS-a-side behaviour (both-sides org found by both reviews; wrong-side → 404; public
+  `/exporters/:id` side-based 200/404; public response never leaks buyerSide/exporterSide/kycStatus;
+  migration logic tested — `migrate-a21-org-sides.mjs` refactored to export `migrateOrgSides(db)`,
+  CLI-guarded). *4a:* self-signup now **issues an OTP by reusing the login mechanism** (`requestOtp`
+  + `signLoginToken`, purpose `login` — no second OTP system) and returns `{user, loginToken,
+  method}` — **no access/refresh session**; the caller exchanges it at `/auth/verify-otp`
+  (token-identified, no portal). `verify-otp`/`resend-otp` unchanged; signup keeps `authLimiter`
+  (no `otpLimiter` touch). No split, no claim, no KYC/Phase-2/M2-M3 change. **otpLimiter finding
+  (reported, NOT changed):** `/auth/login` + `/auth/forgot-password` key on the identifier without
+  the portal, so a buyer + exporter on the SAME email **share** one 5/10-min OTP-request budget;
+  the per-userId OTP *challenge* lock is already separate. Proposed (awaiting owner) to add the
+  portal to that key. **108/108 green, lint clean.** Step 4b (split + claim) NOT started.
+- **2026-07-30** — **A21 CODE — Step 3 done (Organisation side flags + `type` cleanup).**
+  `ORG_TYPE=['business','platform']` (buyer/exporter removed from `type`); added
+  `buyerSide`/`exporterSide` (Boolean, `default:false`, indexed) as the discriminators, + compound
+  index `{exporterSide:1, isActive:1}` for the M3 public-seller read (C2). Signup writes
+  `type:'business'`+side; verification.service reviews by **HAS-a-side** (`{_id,[sideFlag]:true}`);
+  public exporter read → `{_id, exporterSide:true, isActive:true}` (isActive unchanged; response
+  still only `verified`+`verifiedAt`, never raw `kycStatus` — B7). **DECISION 2 (accepted, NOT a
+  bug):** both sides share ONE `kycStatus` — first review verifies the whole company; a later
+  claimed side inherits the tick with no separate review. One company = one Organisation, one
+  tick; do **not** add per-side verification/second kycStatus/per-side flag (comment placed at
+  the verification.service.js site). **API-contract break:** verification-review, `/admin/users`,
+  and `/employee/orgs/:id/kyc/documents` responses dropped `type` → now return
+  `buyerSide`+`exporterSide` (logged in `docs/UiWebNotes.md`). **C1:** `mobile.e164` is
+  `required:true` and set on every path (signup/employee/seed) → no null-collision, no
+  partialFilterExpression needed. **C3:** `.trim()` added to `assertIdentityAvailable`;
+  `identifierQuery` already trimmed. **MIGRATIONS run against Atlas** (test cluster, 2 users):
+  `migrate-a21-org-sides.mjs` (0 modified — only the platform org exists) then
+  `migrate-a21-user-indexes.mjs` (dropped `email_1`+`mobile.e164_1`, created the compound pair;
+  Atlas users now show only compound uniques). **Both scripts (`scripts/migrate-a21-*.mjs`) MUST
+  be re-run per environment before deploy — `autoIndex` never drops indexes and the app runs no
+  `syncIndexes` at startup.** Test ripple: all org-creating test helpers → `type:'business'`+side.
+  **101/101 green, lint clean.** Tracker A1/A5/A6/A7. Step 4 (two-step signup+claim) NOT started.
 - **2026-07-30** — **CLAUDE.md: added an "Auth shape" section + a standing "When a decision
   changes" note.** Auth shape (index-depth only, pointing at §A21/§A22): 4 roles, no `admin` —
   **`/admin/*` is a route namespace, not a role** (verified: those routes are guarded per-endpoint,

@@ -287,3 +287,32 @@ describe('resubmit-after-rejection loop (M1-C)', () => {
     expect(fresh.kycStatus).toBe('verified');
   });
 });
+
+describe('A21 · public exporter read is side-based (M1-C)', () => {
+  it('200s a business org with exporterSide:true; 404s a buyerSide-only org', async () => {
+    const exp = await makeUser('exporter', { entityType: 'business', kycStatus: 'verified' });
+    expect(exp.org.type).toBe('business');
+    expect(exp.org.exporterSide).toBe(true);
+    const ok = await request(app).get(`/exporters/${exp.org._id}`);
+    expect(ok.status).toBe(200);
+    expect(ok.body.exporter.verified).toBe(true);
+
+    const buyer = await makeUser('buyer'); // buyerSide:true only, no exporter side
+    const no = await request(app).get(`/exporters/${buyer.org._id}`);
+    expect(no.status).toBe(404);
+  });
+
+  it('does NOT leak buyerSide / exporterSide / kycStatus on the public response (B7 whitelist)', async () => {
+    const exp = await makeUser('exporter', { entityType: 'business', kycStatus: 'verified' });
+    const res = await request(app).get(`/exporters/${exp.org._id}`);
+    expect(res.status).toBe(200);
+    const fields = Object.keys(res.body.exporter).sort();
+    // exact public whitelist — whether the company also BUYS is not exposed.
+    expect(fields).toEqual(
+      ['country', 'description', 'establishedYear', 'id', 'logo', 'name', 'slug', 'verified', 'verifiedAt', 'website'].sort(),
+    );
+    expect(fields).not.toContain('buyerSide');
+    expect(fields).not.toContain('exporterSide');
+    expect(fields).not.toContain('kycStatus');
+  });
+});

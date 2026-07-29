@@ -111,6 +111,28 @@ describe('auth', () => {
     expect(res.body.error.fields.map((f) => f.field)).toContain('body.entityType');
   });
 
+  it('A21 §4a: signup sends an OTP and returns NO session; verify-otp exchanges it for tokens', async () => {
+    const b = makeBuyer();
+    const signup = await request(app).post('/auth/buyer/signup').send(b);
+    expect(signup.status).toBe(201);
+    expect(signup.body.loginToken).toBeTruthy();
+    expect(signup.body.method).toBe('otp');
+    // no usable session issued at signup
+    expect(signup.body.accessToken).toBeUndefined();
+    expect(signup.body.refreshToken).toBeUndefined();
+
+    // the OTP was actually sent (captured), and verify-otp (token-identified,
+    // using the SIGNUP loginToken — no separate login) yields the session
+    const code = otpBox.byId.get(e164(b));
+    expect(code).toMatch(/^\d{6}$/);
+    const verify = await request(app)
+      .post('/auth/verify-otp')
+      .send({ loginToken: signup.body.loginToken, code });
+    expect(verify.status).toBe(200);
+    expect(verify.body.accessToken).toBeTruthy();
+    expect(verify.body.refreshToken).toBeTruthy();
+  });
+
   it('duplicate email is rejected', async () => {
     const b = makeBuyer();
     await request(app).post('/auth/buyer/signup').send(b);

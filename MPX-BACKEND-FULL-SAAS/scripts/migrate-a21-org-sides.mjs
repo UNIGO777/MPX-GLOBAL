@@ -5,18 +5,26 @@ import mongoose from 'mongoose';
 // (no Mongoose schema validation), so it can write type:'business' before the
 // enum-tightened code exists. ORDER: buyerSide → exporterSide → retype.
 // Re-run once per environment before deploying the tightened enum.
-await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
-const orgs = mongoose.connection.db.collection('organisations');
 
-const proj = { projection: { name: 1, type: 1, buyerSide: 1, exporterSide: 1 } };
-console.log('BEFORE:', JSON.stringify(await orgs.find({}, proj).toArray(), null, 2));
+// Exported so it is unit-testable against any db handle. Returns the modified
+// counts. Idempotent: a second run matches 0 rows.
+export async function migrateOrgSides(db) {
+  const orgs = db.collection('organisations');
+  const r1 = await orgs.updateMany({ type: 'buyer' }, { $set: { buyerSide: true } });
+  const r2 = await orgs.updateMany({ type: 'exporter' }, { $set: { exporterSide: true } });
+  const r3 = await orgs.updateMany({ type: { $in: ['buyer', 'exporter'] } }, { $set: { type: 'business' } });
+  return { buyerSideSet: r1.modifiedCount, exporterSideSet: r2.modifiedCount, retyped: r3.modifiedCount };
+}
 
-const r1 = await orgs.updateMany({ type: 'buyer' }, { $set: { buyerSide: true } });
-console.log('1. buyerSide=true where type=buyer     → modified', r1.modifiedCount);
-const r2 = await orgs.updateMany({ type: 'exporter' }, { $set: { exporterSide: true } });
-console.log('2. exporterSide=true where type=exporter → modified', r2.modifiedCount);
-const r3 = await orgs.updateMany({ type: { $in: ['buyer', 'exporter'] } }, { $set: { type: 'business' } });
-console.log('3. retype buyer|exporter → business      → modified', r3.modifiedCount);
+async function run() {
+  await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
+  const db = mongoose.connection.db;
+  const proj = { projection: { name: 1, type: 1, buyerSide: 1, exporterSide: 1 } };
+  console.log('BEFORE:', JSON.stringify(await db.collection('organisations').find({}, proj).toArray(), null, 2));
+  console.log('modified:', await migrateOrgSides(db));
+  console.log('AFTER:', JSON.stringify(await db.collection('organisations').find({}, proj).toArray(), null, 2));
+  await mongoose.disconnect();
+}
 
-console.log('AFTER:', JSON.stringify(await orgs.find({}, proj).toArray(), null, 2));
-await mongoose.disconnect();
+// Run only when executed directly (`node scripts/...`), not when imported by a test.
+if (import.meta.url === `file://${process.argv[1]}`) run();
