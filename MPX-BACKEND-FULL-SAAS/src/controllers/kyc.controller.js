@@ -19,6 +19,11 @@ export async function uploadKyc(req, res) {
   res.status(201).json({ kyc: result });
 }
 
+export async function getOrgKyc(req, res) {
+  const result = await svc.getOrgKycDocuments({ orgId: req.params.id, actor: req.user, meta: meta(req) });
+  res.json(result);
+}
+
 export async function getMyVerification(req, res) {
   const org = await svc.getMyVerification({ user: req.user });
   // Curate: per-document metadata only (no storageKey). Rejection reason is shown

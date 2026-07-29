@@ -3,7 +3,7 @@
 > ## 🔴 Part A / Part B overrides (authoritative — supersede this reference doc)
 > - **Search engine is LOCKED to Atlas Search** (Part B) — the "DECISION PENDING" in §5.1 / §13 is **resolved**. The index covers product text + **category name + synonyms** + seller company name; facets come from `CategoryAttribute` where `filterable: true`; **OR within a group, AND across groups**.
 > - **Ranking** (Part B): text relevance → **verified-seller boost** → recency → listing completeness. **Verified is a boost, NEVER a filter** — the "verified-only" toggle in §3.1 is a separate, user-selected facet, not the ranking.
-> - **§A12** — `synonyms` are **admin-editable** per category (so admin-created categories are searchable). **§A13** — saving is open to **any org** (`SavedItem.orgId`). **§A1** — only `status: active` surfaces; `draft/inactive/archived/taken-down` and deactivated-category products are excluded **in the query**.
+> - **§A12** — `synonyms` are **admin-editable** per category (so admin-created categories are searchable). **§A13 (reversed)** — saving is **buyer-only** (`SavedItem.buyerOrgId`; only a buyer account saves — an exporter buys from a separate buyer account per §A21). **§A1** — only `status: active` surfaces; `draft/inactive/archived/taken-down` and deactivated-category products are excluded **in the query**.
 > - **🔴 M2↔M3 fixes (facets/filters):** (a) **`country`** facet = the seller's `Organisation.country` (Product has no country field; `countryOfOrigin` is goods-only) — join via `exporterOrgId`. (b) **`on_request` pricing = a separate filter toggle**, NOT caught by the min/max price range (on-request products have no price → a price filter must not drop them). (c) The facet panel **adapts to the leaf `type`** — goods-only facets (MOQ, country-of-origin, HS code) don't render for service categories. (d) A product's `categoryId` is always a **leaf/sub** (tops rejected) so `type` + attribute facets always resolve.
 
 > Everything for the search experience: three search types, synonym matching, faceted filters, AI search, ranking, availability rules, endpoints, screens, and the GPT prompt for AI search.
@@ -117,8 +117,8 @@ Buyers don't know our category names. They type "medicines", not "Pharmaceutical
 - Only products with `status: active`.
 - Exclude **taken-down** products and products in **deactivated categories** (cascade).
 - Exclude **draft / inactive / archived**.
-- **B7:** all sellers are shown regardless of KYC; `kycStatus` only drives the verified tick — it is never a filter.
-- Guests can search; login is required only to save.
+- **B7:** all sellers are shown regardless of KYC; verification **never filters** results. The public projection carries a **`verified` boolean** (derived server-side from `kycStatus`) — raw `kycStatus`/`rejected` is never exposed. (Frontend renders the tick from `verified`, **not** `kycStatus`.)
+- Guests can search; login is required only to save (buyer account).
 
 ---
 
@@ -156,7 +156,7 @@ Shared sub-components: verified-tick badge, save button, "unavailable" badge.
 6. **Shared components** — product/supplier/category cards, filter panel, SaveButton, tick badge, unavailable badge.
 
 **App specifics:** filters open as a full-screen modal; facets lazy-load.
-**Roles:** buyer/public are the users; exporter can also search (buying is open); admin has no search screens.
+**Roles:** buyer/public are the users; exporter can also search — search is a **public page open to all (guests included), never a permission and NOT a buying flow** (an exporter buys only from a **separate buyer account**, §A13/§A21); admin has no search screens.
 
 ---
 

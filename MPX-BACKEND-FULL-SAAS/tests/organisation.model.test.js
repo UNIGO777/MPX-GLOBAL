@@ -22,7 +22,7 @@ beforeEach(async () => {
 });
 
 const makeExporter = (extra = {}) =>
-  Organisation.create({ name: 'Exporter Co', type: 'exporter', entityType: 'business', ...extra });
+  Organisation.create({ name: 'Exporter Co', type: 'business', exporterSide: true, entityType: 'business', ...extra });
 
 describe('Organisation KYC model (M1-A)', () => {
   it('kycDocuments is excluded by default and only returned with explicit select', async () => {

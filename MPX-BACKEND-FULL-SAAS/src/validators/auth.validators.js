@@ -66,7 +66,20 @@ export const createEmployee = {
   }),
 };
 
+// A21: buyer/exporter portals share /auth/login, so the login must say which
+// portal — the same email may hold both.
+const portal = z.enum(['buyer', 'exporter']);
+
 export const login = {
+  body: z.object({
+    identifier: zString({ min: 3, max: 200 }),
+    password: zString({ min: 1, max: 200 }),
+    portal,
+  }),
+};
+
+// Staff (employee/superadmin) — a staff email is exclusive, so no portal.
+export const staffLogin = {
   body: z.object({
     identifier: zString({ min: 3, max: 200 }),
     password: zString({ min: 1, max: 200 }),
@@ -90,10 +103,23 @@ export const logout = {
 };
 
 export const forgotPassword = {
+  body: z.object({ identifier: zString({ min: 3, max: 200 }), portal }),
+};
+
+export const staffForgotPassword = {
   body: z.object({ identifier: zString({ min: 3, max: 200 }) }),
 };
 
 export const resetPassword = {
+  body: z.object({
+    identifier: zString({ min: 3, max: 200 }),
+    code: otpCode,
+    newPassword: password,
+    portal,
+  }),
+};
+
+export const staffResetPassword = {
   body: z.object({
     identifier: zString({ min: 3, max: 200 }),
     code: otpCode,

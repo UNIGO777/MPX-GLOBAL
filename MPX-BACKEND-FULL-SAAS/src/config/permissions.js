@@ -7,4 +7,7 @@ export const PERMISSIONS = Object.freeze({
   // deliberately NOT a grantable permission — it is hard role-gated
   // (requireRole('superadmin')) so a granted employee can never escalate.
   USER_READ: 'user:read',
+  // Grantable VIEW of an org's KYC documents (M1-D) via short-lived signed URLs — a
+  // reviewer who can verify needs to see the docs. superadmin is all-access.
+  KYC_VIEW: 'kyc:view',
 });

@@ -62,8 +62,8 @@ management surface, then the cross-cutting auth hardening.
 |----|------------|-----------|----------|
 | **M1-A** | KYC data model & entity type | — | ✅ **DONE** (Phase 1) |
 | **M1-B** | KYC document upload | A | ✅ **DONE** (Phase 4b) |
-| **M1-C** | Verification review alignment + resubmit + tick expose | A, B | no |
-| **M1-D** | KYC document view (signed URL, reviewers) | A, B | 🧱 dep (Cloudinary) |
+| **M1-C** | Verification review alignment + resubmit + tick expose | A, B | ✅ **DONE** (Phase 4c) |
+| **M1-D** | KYC document view (signed URL, reviewers) | A, B | ✅ **DONE** (Phase 4d) |
 | **M1-E** | User management (list/search, activate/deactivate) | — | ✅ **DONE** (Phase 2) |
 | **M1-F** | Employee permission assignment (hard superadmin-gate) | — | ✅ **DONE** (Phase 3) |
 | **M1-G** | `mustChangePassword` enforcement + change-password | — | ✅ **DONE** (bug-fix pass) |
@@ -78,7 +78,10 @@ management surface, then the cross-cutting auth hardening.
 > `authenticate`. See the per-section notes — fix #5 is effectively satisfied; fix #3 is now an
 > open reconciliation decision (§3.6).
 
-M1-A/E/F are unblocked and can start immediately. B/D/I wait on the decisions in §3; G/H are done.
+**Status (2026-07-28):** A·B·C·D·E·F·G·H all **DONE**. Owner decisions locked — Cloudinary =
+**(b) server multipart** (deps `cloudinary`+`multer`+`file-type`, upload `type:'private'`); fix #3
+= verify/approve **`submitted`-only for BOTH buyer and exporter** (no verify without docs). Only
+**M1-I** (real OTP delivery) remains — deferred by owner (terminal-print dev affordance stays).
 
 ---
 
@@ -464,12 +467,11 @@ integration seam and leave production delivery as the last wire-up.
    3-product-trial-then-mandatory-verify deviates from the quote. Written confirmation from
    Girish recommended (not a blocker for backend build, but a documented deviation).
 
-6. **Verification guard reconciliation (fix #3, blocks final M1-C):** shipped code accepts
-   `pending`|`submitted`. Once KYC upload (M1-B) lands, tighten **exporter** verify to
-   `submitted`-only (no verification without docs)? Buyer approve — keep accepting `pending` so a
-   doc-less buyer can still be given a trust tick, or also require `submitted`? Proposed:
-   exporter `submitted`-only, buyer `pending`|`submitted`. Owner call before touching the shipped
-   guard.
+6. **Verification guard reconciliation (fix #3):** ~~open~~ **RESOLVED (2026-07-28, owner):**
+   verify/approve requires `kycStatus === 'submitted'` for **BOTH buyer and exporter** — a
+   doc-less (`pending`) org returns **409**; nothing is verified without submitted evidence.
+   Shipped in `verification.service.js`; existing tests updated (verification + bugfixes BUG-5)
+   to seed `submitted`. Resubmit (`rejected → submitted` via the upload path) re-enters review.
 
 ---
 

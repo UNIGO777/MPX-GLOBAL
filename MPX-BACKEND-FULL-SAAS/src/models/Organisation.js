@@ -19,7 +19,17 @@ const organisationSchema = new Schema(
     // indexed public URL (A6 / SEO §1). See the pre-validate hook below.
     slug: { type: String, lowercase: true, trim: true },
 
+    // A21: `type` only separates a company org (`business`) from the single
+    // platform/system org (`platform`). It is NO LONGER the buyer/exporter
+    // discriminator — that is buyerSide/exporterSide below.
     type: { type: String, enum: ORG_TYPE, required: true, index: true },
+
+    // A21: which sides this ONE company operates. Both false = the platform org.
+    // A buyer-approved company that later claims an exporter side shares the same
+    // kycStatus (one company, one tick — see verification.service.js). Boolean +
+    // default:false so a missing flag can never read as truthy.
+    buyerSide: { type: Boolean, default: false, index: true },
+    exporterSide: { type: Boolean, default: false, index: true },
 
     // Captured at exporter signup (owner decision — the fields image). Drives the
     // KYC document path (business ⇒ registration/GST; individual ⇒ govt ID).
@@ -109,6 +119,12 @@ organisationSchema.index(
   { slug: 1 },
   { unique: true, partialFilterExpression: { slug: { $type: 'string' } } },
 );
+
+// A21 (C2): the public exporter read/listing filters { exporterSide, isActive }.
+// The single-profile read is _id-anchored (backed by _id_), but the M3 public
+// seller list — the hottest M3 query — filters on these two, so back it explicitly
+// so it never degrades to a collection scan.
+organisationSchema.index({ exporterSide: 1, isActive: 1 });
 
 // Generate the slug once, from the company name, then leave it alone (immutable:
 // a rename must not rewrite an indexed public URL — A6). On a base-slug clash,

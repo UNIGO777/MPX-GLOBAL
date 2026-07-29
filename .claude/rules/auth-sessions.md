@@ -53,8 +53,17 @@ Every query scopes by owner. Never `findById` alone. Not found returns 404, neve
 
 ## Accounts
 
-Named accounts only, unique email per user. No shared or generic logins. Every audit entry
-records a user ID, never a role.
+Named accounts only, no shared or generic logins. Every audit entry records a user ID, never a
+role.
+
+**Dual accounts (build-prompt A21).** Email is **not** globally unique across roles: the same
+email and the same mobile may hold **one buyer account and one exporter account** — but never two
+of the same role. Their credentials are **independent** — no password syncing, and each keeps its
+own OTP lock (deliberate; do not "fix" it later). A **staff** email (employee/superadmin) is
+exclusive and may not also be a buyer or exporter. Login is per-portal: `POST /auth/login` takes a
+`portal` (buyer/exporter); staff use `POST /auth/staff/login` (no portal). A wrong portal returns
+the **same generic "Invalid credentials"** as a wrong password — never reveal that the account
+exists under another portal.
 
 ## Never
 

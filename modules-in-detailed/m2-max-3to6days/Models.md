@@ -3,7 +3,7 @@
 > ## 🔴 Part A overrides (authoritative — supersede this reference doc)
 > These decisions post-date this doc. Where they conflict with anything below, **Part A wins**.
 > - **§A1 — `Product.status`** = `draft | active | inactive | archived` (4 values). `draft` is the create default and is **one-way** (a published product can never return to draft). **No `isActive` on Product or Category** — Product's lifecycle lives entirely in `status`; Category uses `active` + `prevActive`.
-> - **§A2/§A6 — ownership & slugs.** `Product.exporterOrgId` (not the generic `orgId`); `SavedItem.orgId` (see M3). Unique, indexed **`slug`** on **Product, Category, Organisation** (on archive the product slug gets an archive marker — see SEO §A6).
+> - **§A2/§A6 — ownership & slugs.** `Product.exporterOrgId` (not the generic `orgId`); `SavedItem.buyerOrgId` (saving is **buyer-only** — see M3 §A13 / build-prompt A21). Unique, indexed **`slug`** on **Product, Category, Organisation** (on archive the product slug gets an archive marker — see SEO §A6).
 > - **§A4 — Category** = `active` + **`prevActive`**. Cascade: deactivating a top category writes each sub's current `active` into `prevActive`, then sets subs inactive; reactivating restores each sub from `prevActive` (a sub the admin deliberately switched off stays off).
 > - **§A11 — Category** gets an optional **`image`** (Cloudinary URL) for category cards.
 > - **§A14 — "Other"** is seeded as two typed sub-categories (**Other goods** = `goods`, **Other services** = `service`). The seller never manually picks goods/service, and **`resolvedType` is NOT added to Product**. (Consequence: no leaf category is `either` — **`either` is removed from the `type` enum**; Category `type` = `'goods' | 'service'`.)

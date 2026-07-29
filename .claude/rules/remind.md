@@ -61,10 +61,22 @@ while any close-time security commitment remains unraised.
 🧭 **Build-time reminder (confirmed scope, NOT red-alert guarded):**
 - **D1** — Unverified seller = max **3 ACTIVE products** (🔴 Part A §A10: **taken-down products do NOT count** toward the cap — the cap query must exclude `takedown.isDown: true`) **+ max 10 drafts** (§A15). This IS Phase-1 scope; build/enforce it when
   the catalogue / product-add module is built. Just don't forget it.
-- **S1** — Before building any M1 **frontend screen** (buyer/exporter/admin/employee auth/KYC),
-  STOP and alert the owner first; align forms to the backend contract (exporter signup needs
-  `entityType`; **login is one shared page**; `resend-otp` + `change-password` flows exist;
-  verified = tick from `kycStatus`). Details in `docs/Note.md` **S1**.
+- **S1** — Before building any M1 **frontend screen** (buyer/exporter/employee/superadmin auth/KYC),
+  STOP and alert the owner first; align forms to the backend contract (**Part A §A21**:
+  **separate buyer & exporter login portals** — `POST /auth/login` takes a `portal`, staff use a
+  separate `POST /auth/staff/login`, NO single shared login; **signup is two-step** — shared
+  step-1 → OTP → step-2 Organisation claim/create where exporter adds `entityType`; same
+  email/mobile may hold one buyer + one exporter account; `resend-otp` + `change-password` flows
+  exist; verified = tick from `kycStatus`). Details in `docs/Note.md` **S1** + build-prompt **A21**.
+- **A22 · Company profile screens (M1, new — S1 covers them too)** — buyer **and** exporter can view
+  and edit their own `Organisation`; Organisation data is **not write-once at signup** (A21 creates,
+  A22 edits — keep the field sets identical). Exporter screen also carries **logo, description,
+  business type, working categories** (M3's public seller page has no other capture path for them)
+  plus a public-page preview through the shared `toPublic()` projection. **Lock after verification:**
+  name, country, address, `entityType` become read-only; changing one is allowed but drops
+  `kycStatus` → `submitted` (existing resubmit path) so the tick is withheld until re-approval, and
+  writes an AuditLog entry. 🔴 **"Business type" is undefined and is NOT `entityType` — do not guess
+  its values**; working categories' shape is also undecided. Detail: build-prompt **§A22** + `m1.md` §5b.
 
 ⏸ **On hold (build later):**
 - **D4** — Super Admin TOTP 2FA. Staff use OTP now. **Restore before close** (A4).

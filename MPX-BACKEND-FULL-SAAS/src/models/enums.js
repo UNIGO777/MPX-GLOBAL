@@ -11,7 +11,10 @@ export const ROLES = ['buyer', 'exporter', 'employee', 'superadmin'];
 // 'platform' backs the single Organisation that employees and the superadmin
 // belong to, so every User has an orgId and ownership scoping never special-cases
 // null (decision A3).
-export const ORG_TYPE = ['buyer', 'exporter', 'platform'];
+// A21: `type` no longer discriminates buyer vs exporter — that is `buyerSide` /
+// `exporterSide` on Organisation. `type` now only separates a company org
+// (`business`) from the single platform/system org (`platform`).
+export const ORG_TYPE = ['business', 'platform'];
 
 export const KYC_STATUS = ['pending', 'submitted', 'verified', 'rejected'];
 

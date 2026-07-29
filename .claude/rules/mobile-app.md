@@ -9,7 +9,13 @@ paths:
 
 # Mobile app (React Native / Expo)
 
-One app, one login, role-based experience. Buyer and Exporter. No exporter signup screen.
+One app serving Buyer and Exporter. **⚠️ Part A §A21 reverses the old "one login / no exporter
+signup" model:** buyer and exporter are **separate accounts** — the login screen selects the
+**portal** (`POST /auth/login` with a `portal` field; the same email may hold one of each).
+**Signup is two-step** on both sides — shared step-1 (name/email/phone/password) → OTP → step-2
+(claim an existing Organisation or create-new; exporter adds `entityType` + address). The old
+"no exporter signup screen" note is superseded; confirm the exact app signup surface with the
+owner before building it (S1 alert still applies).
 
 ## Storage (G1)
 

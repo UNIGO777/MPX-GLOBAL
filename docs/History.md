@@ -134,6 +134,154 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-30** — **CLAUDE.md: added an "Auth shape" section + a standing "When a decision
+  changes" note.** Auth shape (index-depth only, pointing at §A21/§A22): 4 roles, no `admin` —
+  **`/admin/*` is a route namespace, not a role** (verified: those routes are guarded per-endpoint,
+  some `requireRole('superadmin')`, some by a granted employee permission, so employees do reach
+  some of them); buyer/exporter = separate accounts on separate portals; `/auth/login` carries
+  `portal`, staff on `/auth/staff/login`; signup = two steps with OTP between, then claim-or-create
+  Organisation; one company = one Organisation, a claimed one carries its verification over;
+  both sides can edit their own company profile (§A22) and KYC-checked fields lock once verified.
+  **Why now, not later:** A21 is mid-build (steps 1–2 shipped) — CLAUDE.md's generic signup
+  description was merely *silent* today and becomes *actively wrong* the moment step 4 lands.
+  **Standing note added** (CLAUDE.md "When a decision changes", mirrored into
+  `.claude/rules/history-log.md`): a decision change is not done when the plan doc is updated —
+  it is done when CLAUDE.md and `.claude/rules/` have been checked in the **same pass**, because
+  they are read first and outrank plan docs. Recorded because it has now cost us twice (the raw
+  `kycStatus` line; buyer approval described as a D3-guarded gate).
+- **2026-07-30** — **CLAUDE.md corrected — it contradicted the current decision set in four
+  places, and it is read FIRST by every session, so it outranked the files we had just fixed.**
+  (1) 🔴 **The tick:** "expose kycStatus instead so the frontend can show the tick" → **never expose
+  raw `kycStatus`; return a derived `verified` boolean + `verifiedAt`**, never `rejected`, never a
+  rejection reason; no "not verified" badge (absence of tick = unverified). This one was live-fire —
+  the always-first instruction told every session to leak the exact field B7 / `m3-public-projection.md`
+  / m1.md §5 forbid. (2) **Buyer gate:** "A buyer's account is then approved by an Employee" read as
+  a gate → buyer is **fully active from signup**, approval is a recorded status only, and any
+  activation gate is **D3-guarded**. (3) **Ownership rule 1:** the literal `orgId: req.user.orgId`
+  pattern contradicted §A2 (`Product.exporterOrgId`, `SavedItem.buyerOrgId`) and missed that
+  `Organisation` is the tenant root (`findOne({ _id: req.user.orgId })`) — field name is per-model,
+  scoping is never optional, org always from the token. (4) **Framing:** "sits in the path of
+  escrowed importer funds" with no phase qualifier → escrow/payouts/contracts are **Phase 2, not
+  being built**; Phase 1 = discovery + trust, no money moves. Also fixed the rules index, which
+  claimed all rules load "when you work on matching files" and omitted five: `scope-guard.md`,
+  `remind.md`, `secrets-and-hygiene.md`, `history-log.md` (all always-loaded) and the three
+  `web-*` rules. **Gotcha worth keeping:** correcting a plan doc is not enough — CLAUDE.md and
+  `.claude/rules/` outrank plan docs at read time, so a decision change has to be chased into them
+  or the stale instruction wins.
+- **2026-07-30** — **§A22 added (docs only, no code): company profile = Organisation view/edit.**
+  A gap that was never planned anywhere — neither buyer nor exporter had any way to see or edit
+  their own `Organisation` after signup, and **four fields M3's public seller page depends on had no
+  capture path at all**: `logo` + `description` (on the model, no endpoint sets them) and **business
+  type** + **working categories** (don't exist). Built as-is the public seller page would render
+  with just a name and a country. A22 scopes it as **M1 work**: exporter page (full set + a
+  public-page preview through the shared `toPublic()` projection) and a smaller buyer one
+  (name/country/address/`entityType` — buyer has no public page, but buyer KYC is optional and the
+  company details must live somewhere). **Field lock is the point:** once verified, the KYC-checked
+  fields (name, country, address, `entityType`) lock — otherwise a seller verifies as "TextileHub
+  Exports", gets the tick, renames, and the tick sits on an unchecked company (liability). Renaming
+  is still **allowed**, it just drops `kycStatus` → `submitted` via the **existing resubmit path**
+  (no new mechanism; `verified` is derived, so the tick withholds itself) + AuditLog. Recorded too:
+  a **buyer's company name is not private** (M4 seller-side chat titles = "product × buyer company",
+  composed at read time → a rename retitles old threads), so the lock applies to buyers as well; and
+  `Organisation.slug` is immutable (A6) so a rename does **not** change `/supplier/:slug`.
+  Propagated: build-prompt (A22 + A21 cross-ref + Part C "prerequisite gap" flipped from *not
+  scoped, do not design* → scoped, + Part E), `m1.md` (§1 four areas → **five**, new **§5b**, §7
+  screen table rows for buyer + exporter, §8, §9, §10 open items), `m3.md` / M3 memo (U2) / BRAIN
+  (their "PENDING — do NOT design" blocks were now actively wrong), `Note.md` S1 + `remind.md`
+  (two new M1 screens to alert on), `m3-public-projection.md` (capture-path warning).
+  🔴 **Left open on purpose — "business type" has never been defined and is NOT `entityType`**;
+  also open: working categories' shape, whether `website`/`businessProfile`/`authorisedSignatory`
+  appear on the screen, `verifiedAt`/`verifiedBy`/`kycSubmittedAt` handling on demotion, the
+  `registrationNumber + country` unique index vs a country change, and staff-side org editing.
+- **2026-07-30** — **A21 CODE build — Steps 1 & 2 done (of 6); FIRST and ALONE (no M2/M3).**
+  **Step 1 (Uniqueness):** User email/mobile are now **compound-unique with role** —
+  `(email, role)` + `(mobile.e164, role)` indexes (global-unique dropped); `assertIdentityAvailable`
+  in `auth.service` lets one email/mobile hold a buyer **and** an exporter (never two same-role) and
+  keeps **staff exclusive both ways**, enforced at signup + employee-create. **Step 2 (Login):**
+  `/auth/login` now takes a required `portal` (buyer/exporter, role-scoped lookup); new
+  `/auth/staff/login` (role-detect, own `staffOtpLimiter`); same split for forgot/reset
+  (`/auth/staff/forgot-password`, `/auth/staff/reset-password`); `verify-otp`/`resend-otp` unchanged
+  (token-identified); wrong portal → generic "Invalid credentials" (no oracle). Existing buyer-login
+  tests updated to `portal:'buyer'`, superadmin login test → `/auth/staff/login`. +9 tests
+  (`a21-uniqueness`, `a21-login-portal`) → **101/101 green, lint clean.** Tracker A1/A5/A7.
+  **PAUSED at the Step-3 gate** (reported every `Organisation.type` read; awaiting go-ahead to make
+  `type=['business','platform']` + `buyerSide`/`exporterSide` flags). Steps 4 (two-step signup+claim),
+  5 (org block) still to build.
+- **2026-07-30** — **DOC-ONLY: repo-wide phantom-filename sweep.** Redirected **every** reference
+  to the five phantom M2/M3 doc names to their actual repo paths, in one pass: Search-prompt →
+  `…/Search.md`, SEO-rules → `…/m3-seo-rules.md`, Discovery-Full → `…/m3.md`, SavedItem-Model →
+  `…/Saved-item.md`, Catalogue-Full → the three M2 files (`M2.md`+`Models.md`+`Category.md`). Full
+  repo paths used from `docs/` (cross-directory); bare sibling names inside `m3.md`. The
+  AI-search system-prompt pointer (Part B depends on it) now correctly resolves to
+  `…/m3-search-filter-3-4days-max/Search.md` §11. Files changed: `MPX-Module3-COMPLETE-MEMO.md`,
+  `MPX-COMPLETE-BRAIN.md`, `m3.md`, `MPX-M2-M3-Build-Prompt.md` (its 3 prior bare refs upgraded to
+  full paths). Repo-wide grep for the five names now returns nothing. **Still phantom (unlisted,
+  NOT fixed — no owner mapping):** the BRAIN "PART 9 — ALL FILES PRODUCED" historical manifest +
+  a few demo refs — `MPX-HANDOFF`, `MPX-Module1-Identity-Access`, `MPX-Category-Tree` /
+  `-Model-Schema` / `-Form-Fields`, `MPX-Phase1-Month1-Backend-SOW`, `MPX-Month1-Backend-KARNA-HAI`
+  / `-NAHI-KARNA` / `-Modules`, and `MPX-Discovery-UI` / `MPX-Search-Demo` HTML demos.
+- **2026-07-30** — **DOC-ONLY: fixed build-prompt "Document versions" — it had it backwards.**
+  The section called the `modules-in-detailed/` files "reference only, never a source of truth"
+  while they are in fact the **only maintained plan** (all corrections A16–A21 / A13 / verified /
+  whitelist landed there). Rewrote to **TWO precedence levels** — (1) Part A, (2) the plan docs —
+  and named level-2 docs by their **actual repo paths** (M2 split across `M2.md`+`Models.md`+
+  `Category.md`; M3 = `m3.md`/`Search.md`/`Saved-item.md`/`m3-seo-rules.md` + `MPX-Module3-COMPLETE-MEMO.md`
+  + `MPX-COMPLETE-BRAIN.md`), stating they are current/updated-in-place, not stale. Removed the
+  3rd level + "reference only" entirely. Also fixed **3 body cross-refs** to phantom filenames
+  (two SEO-rules pointers → `m3-seo-rules.md`, one AI-prompt pointer → `Search.md`). **Flagged:** the
+  same phantom names still appear in MEMO/BRAIN/m3.md (AI-prompt / SEO pointers) — fixed in the next entry.
+- **2026-07-28** — **DOC-ONLY: scrubbed + renamed the two load-bearing M3 docs; reported
+  build-prompt version.** (a) **Renamed** `MPX-Module3-COMPLETE-MEMO (1).md` → `…-MEMO.md` and
+  `MPX-COMPLETE-BRAIN (1).md` → `MPX-COMPLETE-BRAIN.md` (git mv) so they match the build-prompt's
+  level-2 "current documents" names. (b) **Applied corrections 1/2/3** to both: correction 1
+  (buyer-only `buyerOrgId`) was **already correct** in both; correction 2 (public `verified`
+  boolean, never raw `kycStatus`) applied to MEMO L6 + BRAIN 6.8/6.10/§B7; correction 3 (`slug`
+  on Product+Seller, `image` on Category) added to BRAIN 6.10 + MEMO L8. Also fixed a **duplicate
+  L8 + a stale "buying is open to all"** in MEMO, and two more **"buying is open"** leftovers in
+  Search.md/m3.md (search = public page, never a buying flow). (c) **CORRECTION to prior claim:**
+  MEMO + BRAIN are **level-2 CURRENT / load-bearing** (they hold the Atlas-Search lock, full
+  ranking order, and the AI system prompt that Part B depends on) — NOT "reference-only"; the
+  level-3 "reference only" tag applies to the `modules-in-detailed/` copies. (d) **Build-prompt
+  version finding:** the repo copy **has A16–A21** at level 1, but uses the **3-level** precedence
+  wording (owner says current is 2-level), and **5 of its 7 listed "current documents" are MISSING
+  from the repo** (only MEMO + BRAIN existed, under `(1)` names now fixed). Flagged for the owner.
+- **2026-07-28** — **DOC-ONLY: three cross-module doc corrections** (no code). (1) **A13 reversed
+  to buyer-only** — `SavedItem.buyerOrgId` (not `orgId`), unique `(buyerOrgId,targetType,targetId)`,
+  only a buyer account saves; under A21 an exporter buys from a separate buyer account. Fixed in
+  build-prompt A13 + A2, m3.md (§A13 override + saved endpoints), Saved-item.md (broken
+  "orgId not orgId" override + §1/§2/§4), Search.md, M2 Models.md. (2) **Public seller projection
+  = `verified` boolean, not raw `kycStatus`** (code is correct; docs were wrong — would have made
+  `seller.kycStatus==='verified'` undefined and the tick never render). Fixed m3.md (B7 + 5b.1/5c.1
+  + inline), Search.md §6, m3-public-projection.md, m1.md §5/§8; B7 *rule* unchanged (verification
+  never filters). Noted `verifiedAt` is already returned by M1's `/exporters/:id`. (3) **Whitelist
+  gaps added** (owner-authorised): `slug` on Product + Seller public projections, `image` on
+  Category — in m3.md + m3-public-projection.md (needed for cards to render/link; A3 makes new
+  fields private by default). ~~Left memo/brain stale as "reference-only"~~ — **corrected in the
+  next entry: they are level-2 CURRENT (load-bearing), not reference-only.**
+- **2026-07-28** — **DOC-ONLY: recorded decision A21 (dual accounts, two-step signup,
+  Organisation claim)** — reverses the old "one shared login for all four roles". Buyer & exporter
+  = separate accounts on separate portals (`/auth/login` + `portal`; staff on `/auth/staff/login`);
+  same email/mobile may hold one buyer + one exporter (never two same-role, independent creds/OTP
+  locks); signup = shared step-1 → OTP → step-2 Organisation claim-or-create; `Organisation.type`
+  can no longer be the single buyer/exporter discriminator; admin block acts on the Organisation
+  (both sides). Also corrected the M3 line that implied exporters can buy (search = public page,
+  never a permission). Files touched (no code): `docs/MPX-M2-M3-Build-Prompt.md` (added §A21 +
+  fixed A13 search/buy line), `modules-in-detailed/m1-max-1.5days/m1.md` (§3/§7/§8),
+  `docs/Note.md` (S1 + confirmed-behaviour), `.claude/rules/remind.md` (S1),
+  `.claude/rules/auth-sessions.md` (Accounts), `.claude/rules/mobile-app.md`. **Not yet built in
+  code** — A21 implies future changes to login/signup + the Organisation model.
+- **2026-07-28** — **M1 Phase 4 COMPLETE (M1-C review-align + M1-D KYC view).** Owner decisions
+  locked: Cloudinary = **server multipart** (`cloudinary`+`multer`+`file-type`, upload
+  `type:'private'` + randomised public_id); fix #3 = verify/approve **`submitted`-only for BOTH
+  buyer & exporter** (doc-less `pending` → 409). **M1-C:** verification guard tightened
+  (`verification.service.js`); resubmit = `rejected → submitted` via upload path (clears reason);
+  tick expose — `GET /me/verification` (self status + doc metadata, no storageKey) and public
+  `GET /exporters/:id` (curated, `verified` boolean only — never leaks raw `kycStatus`/`rejected`,
+  type-constrained, deactivated→404). **M1-D:** `GET /employee/orgs/:id/kyc/documents` —
+  `requirePermissions('kyc:view')`, mints short-lived signed URLs from private storageKey, records
+  `kyc.view` access audit; `KYC_VIEW` added to catalogue. Existing tests updated for the
+  submitted-only guard (verification + bugfixes BUG-5). +tests → **92/92 green, lint clean.**
+  Only **M1-I** (real OTP delivery) remains — deferred by owner.
 - **2026-07-28** — **`admin` role REMOVED — roles are now 4: `buyer · exporter · employee ·
   superadmin`.** Why: nothing ever created an `admin` user (signup → buyer/exporter, `POST
   /admin/employees` hardcodes `'employee'`, seed → superadmin), so the role was an unreachable

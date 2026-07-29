@@ -30,7 +30,15 @@ async function makeStaff(role, permissions = []) {
 }
 
 const bearer = (t) => ({ Authorization: `Bearer ${t}` });
-const makeOrg = (type, kycStatus = 'pending') => Organisation.create({ name: `${type} Co`, type, kycStatus });
+// A21: `side` ('buyer'|'exporter') → a business org with that side flag set.
+const makeOrg = (side, kycStatus = 'pending') =>
+  Organisation.create({
+    name: `${side} Co`,
+    type: 'business',
+    buyerSide: side === 'buyer',
+    exporterSide: side === 'exporter',
+    kycStatus,
+  });
 
 beforeAll(async () => {
   await mongoose.connect(process.env.MONGODB_URI);

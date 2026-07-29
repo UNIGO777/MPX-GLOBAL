@@ -9,7 +9,10 @@ function view(org) {
   return {
     id: String(org._id),
     name: org.name,
-    type: org.type,
+    // A21: `type` (buyer/exporter) removed from the response — the sides are the
+    // discriminator now. API contract change (logged in docs/UiWebNotes.md).
+    buyerSide: Boolean(org.buyerSide),
+    exporterSide: Boolean(org.exporterSide),
     kycStatus: org.kycStatus,
     verifiedAt: org.verifiedAt ?? null,
     kycRejectionReason: org.kycRejectionReason ?? null,

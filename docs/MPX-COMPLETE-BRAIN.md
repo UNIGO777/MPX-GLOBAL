@@ -4,12 +4,13 @@
 > As of 28 July 2026. Chat language = Hinglish. UI/demos = English (rule).
 
 > ## 🔴 Part A overrides (authoritative — supersede this doc)
-> `docs/MPX-M2-M3-Build-Prompt.md` **Part A (A1–A20)** is precedence-1 and wins over anything here. This round's items:
+> `docs/MPX-M2-M3-Build-Prompt.md` **Part A (A1–A22)** is precedence-1 and wins over anything here. This round's items:
 > - **§A17 — no free-form specs anywhere.** "Other" (goods/services) = ordinary categories with a small **FIXED** `CategoryAttribute` set. The free-form key-value idea (5.11 below) is **cancelled**.
 > - **§A18 — blocked-product purge = 180 days** (not 90).
 > - **§A19 — logging.** `Product.createdBy` **dropped** (superseded by AuditLog); **product create AND edit must write AuditLog**; AuditLog append-only/permanent; a **separate MongoDB `errorLogs`** collection (errors only, **90-day TTL**, strict exclusion list).
 > - **§A20 — admin uploads category images, incl. TOP categories** — a deliberate exception to top = activate/deactivate-only (5.17 below).
-> - **Organisation / company profile = PENDING** (not scoped): the backend has **no Organisation endpoints** yet, which blocks `GET /public/exporters/:id`; raise before building — do not design it. (Full note in `modules-in-detailed/m3-search-filter/m3.md`.)
+> - **§A21 — dual accounts / separate login portals / two-step signup** with Organisation claim-or-create; same email+mobile may hold one buyer + one exporter; `Organisation.type` is no longer the buyer/exporter discriminator.
+> - **§A22 — company profile is now SCOPED (was PENDING).** The backend still has **no Organisation endpoints**, which blocks `GET /public/exporters/:id` — but this is now **M1 work**, not an open question: exporter + buyer company-profile view/edit, and the missing capture path for **logo, description, business type, working categories**. Organisation data is **not write-once at signup** (A21 creates, A22 edits). KYC-checked fields (**name, country, address, `entityType`**) **lock once verified**; changing one drops `kycStatus` → `submitted` via the existing resubmit path and the tick is withheld until re-approval. 🔴 Do **not** invent: **"business type"** has never been defined and is **not** `entityType`; **working categories'** shape is undecided.
 > - ⚠️ Older lines below also predate **A1–A16** (e.g. 5.11 `type=either`, 5.14 status without `archived`, 5.15 cap without the taken-down exclusion) — Part A supersedes them; see the build prompt.
 
 ═══════════════════════════════════════════════════════
@@ -147,17 +148,17 @@
 6.5 SEARCH ENGINE = Atlas Search (locked — already on Atlas; fuzzy/typo tolerance, relevance, built-in facets).
 6.6 DEFAULT RANKING (Phase 1): relevance → VERIFIED sellers boosted → recency → completeness. Verified-first is a BOOST not a filter (B7 still shows both). Full quality ranking (ratings/orders) = Phase 2. Buyer can sort (relevance/newest/price).
 6.7 3 cards: product, supplier, category (shared: tick badge, save button, unavailable badge).
-6.8 Availability: only status:active, exclude draft/inactive/archived/taken-down + deactivated-category products; QUERY-LEVEL enforcement (not response-hiding). B7: all sellers shown, kycStatus = tick only, never a filter. Guests can search; login only to save; exporters can also search; admin has no search screens.
+6.8 Availability: only status:active, exclude draft/inactive/archived/taken-down + deactivated-category products; QUERY-LEVEL enforcement (not response-hiding). B7: all sellers shown, verification never filters — the public projection carries a `verified` boolean (derived from kycStatus, never exposed raw). Guests can search; login only to save (buyer account); exporters can also search (public page, not a buying flow); admin has no search screens.
 6.9 SavedItem availability: temporary-unavailable → stays as "currently unavailable"; permanently-gone (archived/deleted) → removed via cleanup. Chat unaffected by soft-delete.
 6.10 PUBLIC vs PRIVATE (WHITELIST projection; new fields default private): 
-     - Seller public: name, logo, description, tick+since, general location (city not street), business type, categories, active catalogue, member-since, product count. Private: KYC docs, direct contact (via M4 only), exact address, internal IDs, financial.
-     - Product public: name, description, images, category+type, price, MOQ/unit, trade/service info, attributes, seller public projection, listed-since. Private: draft/archived status, takedown{reason,byUserId}, raw owner IDs.
-     - Category public: name, slug, tree, type, synonyms(search only), filterable attributes, active only. Private: inactive cats, admin flags.
+     - Seller public: name, **slug** (/supplier/:slug), logo, description, **`verified` boolean + verifiedAt** (the tick — never raw kycStatus/rejected), general location (city not street), business type, categories, active catalogue, member-since, product count. Private: KYC docs, **raw kycStatus**, direct contact (via M4 only), exact address, internal IDs, financial.
+     - Product public: name, **slug** (/product/:slug), description, images, category+type, price, MOQ/unit, trade/service info, attributes, seller public projection, listed-since. Private: draft/archived status, takedown{reason,byUserId}, raw owner IDs.
+     - Category public: name, slug, **image** (§A11 — card render), tree, type, synonyms(search only), filterable attributes, active only. Private: inactive cats, admin flags.
 6.11 Screens (web+app): search results, AI modal, product detail, seller profile, category browse, saved list, shared components. App: filters=full-screen modal, facets lazy-load, swipe-to-unsave.
 6.12 Endpoints: GET /public/search, GET /public/facets, POST /search/ai, GET /public/products/:id, GET /public/exporters/:id, POST|DELETE|GET /saved.
 6.13 Empty/no-results state: message + clear-filters + did-you-mean (fuzzy) + category/AI fallback.
 6.14 Recently-viewed/search-history = Phase 2 (skipped).
-6.15 AI GPT prompt: converts buyer sentence → strict JSON {target, keywords, category, priceMax, priceIntent, moqMin, country, attributes, verifiedOnly}; temperature 0, one call, inject live category+synonym+attribute list, defensive parse + keyword fallback. Full prompt in MPX-Module3-Search.md §11.
+6.15 AI GPT prompt: converts buyer sentence → strict JSON {target, keywords, category, priceMax, priceIntent, moqMin, country, attributes, verifiedOnly}; temperature 0, one call, inject live category+synonym+attribute list, defensive parse + keyword fallback. Full prompt in modules-in-detailed/m3-search-filter-3-4days-max/Search.md §11.
 
 ═══════════════════════════════════════════════════════
 ## PART 7 — SEO RULES (part of M3; for Claude Code)
@@ -170,7 +171,7 @@
 7.6 Only public-projected fields in HTML/meta/JSON-LD; only active entities indexable + in sitemap; deactivated → 404/410 or 301.
 7.7 Performance: lazy-load images, explicit dimensions (CLS), sized/WebP (Cloudinary), healthy Core Web Vitals.
 7.8 STACK DECISION: React SPA stays for now (no change). SSR/prerender for public pages is DEFERRED, but keep emitting meta/canonical/JSON-LD client-side + keep slugs/sitemap ready so later SSR migration doesn't break URLs.
-7.9 Delivered as MPX-SEO-Rules.md — MERGE into Claude Code project rules.
+7.9 Delivered as modules-in-detailed/m3-search-filter-3-4days-max/m3-seo-rules.md — MERGE into Claude Code project rules.
 
 ═══════════════════════════════════════════════════════
 ## PART 8 — CURRENT STATE & WHAT'S NEXT
@@ -189,6 +190,8 @@
 ═══════════════════════════════════════════════════════
 ## PART 9 — ALL FILES PRODUCED (portable package)
 ═══════════════════════════════════════════════════════
+> ⚠️ **Historical record of planning artefacts — NOT a live file index.** These names record what was produced during planning; they are not navigation pointers and several do not exist in this repo under these names. Do not treat any entry here as a path to follow. (The live, maintained plan docs are in the build-prompt's "Document versions" section.)
+
 Handoff/master:
 - MPX-COMPLETE-BRAIN.md (this file)
 - MPX-HANDOFF.md (shorter handoff)
@@ -196,10 +199,10 @@ Handoff/master:
 
 Module docs:
 - MPX-Module1-Identity-Access.md
-- MPX-Module2-Catalogue-Full.md
-- MPX-Module3-Discovery-Full.md
-- MPX-Module3-SavedItem-Model.md
-- MPX-Module3-Search.md (includes the full AI GPT prompt §11)
+- modules-in-detailed/m2-max-3to6days/M2.md + Models.md + Category.md  (Catalogue — split across three files)
+- modules-in-detailed/m3-search-filter-3-4days-max/m3.md
+- modules-in-detailed/m3-search-filter-3-4days-max/Saved-item.md
+- modules-in-detailed/m3-search-filter-3-4days-max/Search.md (includes the full AI GPT prompt §11)
 
 Category system:
 - MPX-Category-Tree.md / .pdf
@@ -213,7 +216,7 @@ Month-1 backend scope:
 - MPX-Month1-Backend-Modules.md
 
 SEO:
-- MPX-SEO-Rules.md (merge into Claude Code rules)
+- modules-in-detailed/m3-search-filter-3-4days-max/m3-seo-rules.md (merge into Claude Code rules)
 
 Demos (English UI):
 - MPX-Discovery-UI.html / index.html (full working search demo)
@@ -223,7 +226,7 @@ Demos (English UI):
 ## PART 10 — CODED DECISION SHORTHAND (glossary)
 ═══════════════════════════════════════════════════════
 - B6 = product has no approval flow; seller-owned; only active/inactive toggle; admin can takedown (not delete).
-- B7 = all sellers/products shown regardless of KYC; kycStatus only drives the verified tick, never a filter; profiles public from signup.
+- B7 = all sellers/products shown regardless of KYC; the public projection carries a `verified` boolean (derived from kycStatus server-side, raw kycStatus never exposed), never a filter; profiles public from signup.
 - D1 = unverified exporter cap = 3 ACTIVE products (drafts allowed).
 - D4 = admin TOTP 2FA built but on hold (OTP login for now).
 - D5 = notifications (incl. WhatsApp) on hold.

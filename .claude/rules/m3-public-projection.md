@@ -33,16 +33,27 @@ below**. Everything else stays private.
 
 ## Public whitelist (the ONLY fields a buyer/guest may receive)
 
-**Seller / Supplier** — company/business name · logo · description · verified tick + since-date
-(derived from `kycStatus`, status only) · general location (country / city, **not** street
+**Seller / Supplier** — company/business name · **`slug`** (`/supplier/:slug` link — §A6) · logo ·
+description · verified tick = a **`verified` boolean** + `verifiedAt` (derived server-side from
+`kycStatus`; the raw `kycStatus` / `rejected` state is **never** exposed — frontend reads
+`verified`, not `kycStatus`) · general location (country / city, **not** street
 address) · business type · main categories · public catalogue (active products only) ·
 product count · member-since.
 
-**Product** — name · description · images · category (+ type goods/service) · price (mode +
+> ⚠️ **Capture path — build-prompt §A22.** `logo`, `description`, **business type** and **main /
+> working categories** are only enterable through the **company profile screen (§A22, M1 work)**.
+> Until that lands, the seller page renders with a company name and a country. 🔴 **"Business type"
+> has never been defined and is NOT `entityType`** (`business`/`individual`, which drives the KYC
+> document path); the shape of working categories is also undecided. **Ask — do not guess a value
+> set, and do not alias business type to `entityType` to make the projection compile.**
+
+**Product** — name · **`slug`** (`/product/:slug` link — §A6) · description · images ·
+category (+ type goods/service) · price (mode +
 min/max + currency) · MOQ · unit · trade info (goods) / service info (services) · attributes
 (specs) · seller public projection · createdAt / listed-since.
 
-**Category** — name · slug · parent / sub tree · type (goods/service — a **sub-category's `type` is stored; a top category's is derived from its children at read time**, not stored; the public contract is unchanged) · filterable attributes ·
+**Category** — name · slug · **`image`** (§A11 — the category card cannot render without it) ·
+parent / sub tree · type (goods/service — a **sub-category's `type` is stored; a top category's is derived from its children at read time**, not stored; the public contract is unchanged) · filterable attributes ·
 active categories only. `synonyms` is **search-only** — used for keyword→category matching,
 never returned in the response.
 
@@ -73,8 +84,9 @@ The exclusion happens **in the query**, not by filtering the response afterwards
 - Return **only `status: active`** — draft / inactive / archived / taken-down excluded in the
   query itself.
 - Products in **deactivated categories** are excluded (cascade).
-- **B7:** all sellers are shown regardless of KYC; `kycStatus` only drives the verified tick —
-  **it is never a filter and never a query condition.**
+- **B7:** all sellers are shown regardless of KYC; verification is **never a filter and never a
+  query condition.** The public projection carries a **`verified` boolean** (derived server-side
+  from `kycStatus`) — raw `kycStatus` / `rejected` is never serialised to a public route.
 
 ## 🔴 STOP-and-alert — before going beyond this whitelist
 

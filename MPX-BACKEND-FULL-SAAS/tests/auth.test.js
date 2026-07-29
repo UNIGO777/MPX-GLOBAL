@@ -40,7 +40,7 @@ const e164 = (b) => `+91${b.mobile.number}`;
 
 async function signupAndLogin(b) {
   await request(app).post('/auth/buyer/signup').send(b);
-  const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password });
+  const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password, portal: 'buyer' });
   const code = otpBox.byId.get(e164(b));
   const verify = await request(app)
     .post('/auth/verify-otp')
@@ -81,7 +81,9 @@ describe('auth', () => {
     expect(JSON.stringify(res.body)).not.toContain(b.password);
 
     const org = await Organisation.findById(res.body.user.orgId);
-    expect(org.type).toBe('buyer');
+    expect(org.type).toBe('business');
+    expect(org.buyerSide).toBe(true);
+    expect(org.exporterSide).toBe(false);
     expect(org.kycStatus).toBe('pending');
   });
 
@@ -95,7 +97,9 @@ describe('auth', () => {
     expect(res.status).toBe(201);
     expect(res.body.user.role).toBe('exporter');
     const org = await Organisation.findById(res.body.user.orgId);
-    expect(org.type).toBe('exporter');
+    expect(org.type).toBe('business');
+    expect(org.exporterSide).toBe(true);
+    expect(org.buyerSide).toBe(false);
     expect(org.kycStatus).toBe('pending');
     expect(org.entityType).toBe('business');
     expect(org.address.city).toBe('Mumbai');
@@ -117,8 +121,8 @@ describe('auth', () => {
   it('wrong password and unknown user return the same generic 401', async () => {
     const b = makeBuyer();
     await request(app).post('/auth/buyer/signup').send(b);
-    const wrong = await request(app).post('/auth/login').send({ identifier: b.email, password: 'wrongpassword9' });
-    const unknown = await request(app).post('/auth/login').send({ identifier: 'ghost@example.com', password: 'wrongpassword9' });
+    const wrong = await request(app).post('/auth/login').send({ identifier: b.email, password: 'wrongpassword9', portal: 'buyer' });
+    const unknown = await request(app).post('/auth/login').send({ identifier: 'ghost@example.com', password: 'wrongpassword9', portal: 'buyer' });
     expect(wrong.status).toBe(401);
     expect(unknown.status).toBe(401);
     expect(wrong.body.error.message).toBe(unknown.body.error.message);
@@ -127,7 +131,7 @@ describe('auth', () => {
   it('login → OTP → tokens, then /auth/me works', async () => {
     const b = makeBuyer();
     await request(app).post('/auth/buyer/signup').send(b);
-    const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password });
+    const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password, portal: 'buyer' });
     expect(login.status).toBe(200);
     expect(login.body.method).toBe('otp');
 
@@ -185,7 +189,7 @@ describe('auth', () => {
   });
 
   it('rejects a Mongo operator object in the identifier field', async () => {
-    const res = await request(app).post('/auth/login').send({ identifier: { $gt: '' }, password: 'longpassword1' });
+    const res = await request(app).post('/auth/login').send({ identifier: { $gt: '' }, password: 'longpassword1', portal: 'buyer' });
     expect(res.status).toBe(400);
   });
 
@@ -204,7 +208,7 @@ describe('auth', () => {
       isActive: true,
     });
 
-    const login = await request(app).post('/auth/login').send({ identifier: email, password: 'adminpassword1' });
+    const login = await request(app).post('/auth/staff/login').send({ identifier: email, password: 'adminpassword1' });
     expect(login.status).toBe(200);
     expect(login.body.method).toBe('otp');
 

@@ -2,7 +2,7 @@ import { Organisation } from '../models/Organisation.js';
 import { KYC_DOCS_BY_ENTITY } from '../models/enums.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
-import { uploadKycDocument } from './kyc.storage.service.js';
+import { uploadKycDocument, signedKycUrl } from './kyc.storage.service.js';
 
 // Self-service KYC submission (M1-B). The caller writes only their OWN org
 // (req.user.orgId) — this is a self write, not a staff action. Status moves
@@ -80,4 +80,46 @@ export async function getMyVerification({ user }) {
   const org = await Organisation.findOne({ _id: user.orgId }).select('+kycDocuments');
   if (!org) throw AppError.notFound('org not found', 'Not found.');
   return org;
+}
+
+// Reviewer view of an org's KYC documents (M1-D). Platform-staff op: fetched by id
+// (RBAC-gated by the route's kyc:view permission), missing → 404 never 403. Mints a
+// SHORT-LIVED signed URL per document from the private storageKey — the raw
+// storageKey/public URL is never returned. Records a kyc.view access audit (who
+// viewed whose docs) with NO document content.
+export async function getOrgKycDocuments({ orgId, actor, meta }) {
+  const org = await Organisation.findOne({ _id: orgId }).select('+kycDocuments');
+  if (!org) throw AppError.notFound('org not found', 'Not found.');
+
+  const documents = (org.kycDocuments ?? []).map((d) => {
+    const { url, expiresAt } = signedKycUrl({ storageKey: d.storageKey, format: d.format });
+    return {
+      docType: d.docType,
+      uploadedAt: d.uploadedAt,
+      verifiedAt: d.verifiedAt ?? null,
+      signedUrl: url,
+      expiresAt,
+    };
+  });
+
+  await recordAudit({
+    actor,
+    action: 'kyc.view',
+    entityType: 'Organisation',
+    entityId: org._id,
+    orgId: org._id,
+    before: null,
+    after: { docCount: documents.length }, // access record only — no storageKey/content
+    meta,
+  });
+
+  // A21: `type` (buyer/exporter) replaced by the side flags (UiWebNotes logged).
+  return {
+    orgId: String(org._id),
+    buyerSide: Boolean(org.buyerSide),
+    exporterSide: Boolean(org.exporterSide),
+    kycStatus: org.kycStatus,
+    entityType: org.entityType ?? null,
+    documents,
+  };
 }

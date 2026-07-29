@@ -10,7 +10,11 @@ const userSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
 
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    // A21: uniqueness is COMPOUND (email + role), NOT global — the same email may
+    // hold one buyer AND one exporter account (never two of the same role). Staff
+    // (employee/superadmin) exclusivity is enforced in the service layer. See the
+    // compound indexes below.
+    email: { type: String, required: true, lowercase: true, trim: true },
 
     // A1: keep countryCode + number for display, and a normalized e164 that all
     // lookups and the unique index use. International buyers mean a single plain
@@ -59,7 +63,12 @@ const userSchema = new Schema(
   baseSchemaOptions,
 );
 
-userSchema.index({ 'mobile.e164': 1 }, { unique: true });
+// A21: (email, role) and (mobile.e164, role) are each unique — permits a shared
+// buyer+exporter identity while blocking two accounts of the same role. Staff
+// exclusivity (a staff identity may not coexist with any other account, and a
+// party identity may not be given to staff) is an additional service-layer check.
+userSchema.index({ email: 1, role: 1 }, { unique: true });
+userSchema.index({ 'mobile.e164': 1, role: 1 }, { unique: true });
 userSchema.index({ orgId: 1, role: 1 });
 
 declareScope(userSchema, SCOPE.ORG);

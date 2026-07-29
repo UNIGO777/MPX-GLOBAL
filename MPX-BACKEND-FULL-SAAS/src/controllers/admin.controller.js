@@ -20,7 +20,9 @@ function userView(user) {
       ? {
           id: String(org._id),
           name: org.name,
-          type: org.type,
+          // A21: `type` removed; sides are the discriminator (UiWebNotes logged).
+          buyerSide: Boolean(org.buyerSide),
+          exporterSide: Boolean(org.exporterSide),
           kycStatus: org.kycStatus,
           verifiedAt: org.verifiedAt ?? null,
         }

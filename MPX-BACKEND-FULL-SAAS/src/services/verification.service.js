@@ -4,10 +4,20 @@ import { recordAudit } from './audit.service.js';
 
 // Platform-staff operation: an employee (or the superadmin) reviews organisations
 // they do NOT own, so access is governed by PERMISSION (RBAC), not org-ownership. The org is
-// fetched by id + expected type (findOne, never findById); a missing/mismatched
+// fetched by id + the required SIDE flag (findOne, never findById); a missing/mismatched
 // record is 404, never 403.
-async function reviewOrg({ orgId, expectType, toStatus, reason, actor, action, meta }) {
-  const org = await Organisation.findOne({ _id: orgId, type: expectType });
+//
+// A21 — ONE SHARED kycStatus, BY DESIGN (accepted, not a bug — do NOT "fix" it):
+// buyer:approve and exporter:verify both act on the SAME Organisation and write the
+// SAME `kycStatus`. So whichever review runs first verifies the WHOLE company, and
+// the other side inherits the tick with no separate review — including a
+// buyer-approved company that later claims an exporter side and gets the public
+// verified tick without an exporter-side review. This follows the locked rule
+// "one company = one Organisation, no second KYC, one tick". Do NOT add per-side
+// verification, a second kycStatus, or a per-side verified flag — that is a KYC-flow
+// change and is out of scope.
+async function reviewOrg({ orgId, sideFlag, toStatus, reason, actor, action, meta }) {
+  const org = await Organisation.findOne({ _id: orgId, [sideFlag]: true });
   if (!org) throw AppError.notFound('organisation not found', 'Not found.');
   // Reviewable ONLY after documents are submitted (owner decision, fix #3): a
   // reviewer verifies/rejects actual evidence, so a 'pending' (no-docs) org cannot
@@ -49,19 +59,19 @@ async function reviewOrg({ orgId, expectType, toStatus, reason, actor, action, m
 // "inactive until approved" gate is on-hold D3 (docs/Note.md); do not add it here
 // without the reminder.
 export function approveBuyer({ orgId, actor, meta }) {
-  return reviewOrg({ orgId, expectType: 'buyer', toStatus: 'verified', actor, action: 'buyer.approve', meta });
+  return reviewOrg({ orgId, sideFlag: 'buyerSide', toStatus: 'verified', actor, action: 'buyer.approve', meta });
 }
 
 // Exporter is already publicly visible; verifying only adds the verified state
 // (frontend shows the tick).
 export function verifyExporter({ orgId, actor, meta }) {
-  return reviewOrg({ orgId, expectType: 'exporter', toStatus: 'verified', actor, action: 'exporter.verify', meta });
+  return reviewOrg({ orgId, sideFlag: 'exporterSide', toStatus: 'verified', actor, action: 'exporter.verify', meta });
 }
 
 export function rejectBuyer({ orgId, reason, actor, meta }) {
-  return reviewOrg({ orgId, expectType: 'buyer', toStatus: 'rejected', reason, actor, action: 'buyer.reject', meta });
+  return reviewOrg({ orgId, sideFlag: 'buyerSide', toStatus: 'rejected', reason, actor, action: 'buyer.reject', meta });
 }
 
 export function rejectExporter({ orgId, reason, actor, meta }) {
-  return reviewOrg({ orgId, expectType: 'exporter', toStatus: 'rejected', reason, actor, action: 'exporter.reject', meta });
+  return reviewOrg({ orgId, sideFlag: 'exporterSide', toStatus: 'rejected', reason, actor, action: 'exporter.reject', meta });
 }

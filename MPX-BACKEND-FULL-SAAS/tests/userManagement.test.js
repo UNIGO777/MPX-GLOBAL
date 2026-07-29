@@ -15,8 +15,14 @@ let seq = 0;
 
 async function makeUser(role, { permissions = [], isActive = true, kycStatus = 'pending' } = {}) {
   seq += 1;
-  const type = role === 'buyer' ? 'buyer' : role === 'exporter' ? 'exporter' : 'platform';
-  const org = await Organisation.create({ name: `${role} Co`, type, kycStatus });
+  const isCompany = role === 'buyer' || role === 'exporter';
+  const org = await Organisation.create({
+    name: `${role} Co`,
+    type: isCompany ? 'business' : 'platform',
+    buyerSide: role === 'buyer',
+    exporterSide: role === 'exporter',
+    kycStatus,
+  });
   const user = await User.create({
     name: `${role}-${seq}`,
     email: `u_${Date.now()}_${seq}@example.com`,

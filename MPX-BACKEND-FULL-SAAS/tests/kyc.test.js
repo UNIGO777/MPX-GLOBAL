@@ -10,7 +10,10 @@ vi.mock('../src/services/kyc.storage.service.js', () => ({
     format: 'pdf',
   })),
   verifyKycFile: vi.fn(),
-  signedKycUrl: vi.fn(),
+  signedKycUrl: vi.fn(({ storageKey }) => ({
+    url: `https://signed.fake/${storageKey}?sig=abc`,
+    expiresAt: new Date(Date.now() + 120000).toISOString(),
+  })),
 }));
 
 const { createApp } = await import('../src/app.js');
@@ -26,10 +29,12 @@ let seq = 0;
 
 async function makeUser(role, { entityType, kycStatus = 'pending', permissions = [], isActive = true } = {}) {
   seq += 1;
-  const type = role === 'buyer' ? 'buyer' : role === 'exporter' ? 'exporter' : 'platform';
+  const isCompany = role === 'buyer' || role === 'exporter';
   const org = await Organisation.create({
     name: `${role} Co`,
-    type,
+    type: isCompany ? 'business' : 'platform',
+    buyerSide: role === 'buyer',
+    exporterSide: role === 'exporter',
     kycStatus,
     isActive,
     ...(entityType ? { entityType } : {}),
@@ -216,6 +221,45 @@ describe('GET /exporters/:id (public tick, M1-C)', () => {
   it('a deactivated exporter returns 404', async () => {
     const ex = await makeUser('exporter', { entityType: 'business', kycStatus: 'verified', isActive: false });
     const res = await request(app).get(`/exporters/${ex.org._id}`);
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('GET /employee/orgs/:id/kyc/documents (reviewer KYC view, M1-D)', () => {
+  it('a reviewer with kyc:view gets signed URLs (no storageKey) + a kyc.view audit', async () => {
+    const ex = await makeUser('exporter', { entityType: 'business' });
+    await upload(ex.token, { docType: 'gst' });
+
+    const reviewer = await makeUser('employee', { permissions: ['kyc:view'] });
+    const res = await request(app).get(`/employee/orgs/${ex.org._id}/kyc/documents`).set(bearer(reviewer.token));
+
+    expect(res.status).toBe(200);
+    expect(res.body.documents).toHaveLength(1);
+    expect(res.body.documents[0].docType).toBe('gst');
+    expect(res.body.documents[0].signedUrl).toContain('https://signed.fake/');
+    expect(res.body.documents[0].expiresAt).toBeTruthy();
+    // The raw private storageKey is never returned to the client.
+    expect(res.body.documents[0]).not.toHaveProperty('storageKey');
+
+    const audit = await AuditLog.findOne({ action: 'kyc.view', entityId: ex.org._id });
+    expect(audit).toBeTruthy();
+    expect(String(audit.actorId)).toBe(String(reviewer.user._id));
+    expect(JSON.stringify(audit.toObject())).not.toContain('mpx/kyc/fake');
+  });
+
+  it('requires kyc:view — an employee without it is denied (403)', async () => {
+    const ex = await makeUser('exporter', { entityType: 'business' });
+    await upload(ex.token, { docType: 'gst' });
+    const noPerm = await makeUser('employee', { permissions: [] });
+    const res = await request(app).get(`/employee/orgs/${ex.org._id}/kyc/documents`).set(bearer(noPerm.token));
+    expect(res.status).toBe(403);
+  });
+
+  it('404 for a missing org', async () => {
+    const reviewer = await makeUser('employee', { permissions: ['kyc:view'] });
+    const res = await request(app)
+      .get(`/employee/orgs/${new mongoose.Types.ObjectId()}/kyc/documents`)
+      .set(bearer(reviewer.token));
     expect(res.status).toBe(404);
   });
 });

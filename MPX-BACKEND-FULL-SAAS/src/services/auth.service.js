@@ -41,17 +41,39 @@ function mapDuplicate(err) {
   return err;
 }
 
-async function assertUnique({ email, e164 }) {
-  const existing = await User.findOne({ $or: [{ email: email.toLowerCase() }, { 'mobile.e164': e164 }] });
-  if (existing) {
-    throw AppError.conflict('duplicate account', 'An account with this email or mobile already exists.');
+const STAFF_ROLES = new Set(['employee', 'superadmin']);
+const isStaffRole = (r) => STAFF_ROLES.has(r);
+
+// A21 identity rules (service-layer enforcement; the compound (email|mobile, role)
+// unique indexes are the race backstop for same-role duplicates):
+//  - buyer + exporter (party roles) MAY share an email/mobile — one of each, never
+//    two of the same role;
+//  - staff (employee/superadmin) are EXCLUSIVE both ways — a staff identity may not
+//    coexist with ANY other account, and an email/mobile already used by a buyer or
+//    exporter may not be given to staff.
+async function assertIdentityAvailable({ email, e164, role }) {
+  const existing = await User.find({
+    $or: [{ email: String(email).trim().toLowerCase() }, { 'mobile.e164': e164 }],
+  }).select('role');
+  if (existing.length === 0) return;
+
+  const newIsStaff = isStaffRole(role);
+  for (const u of existing) {
+    // Staff on either side is exclusive — no coexistence at all.
+    if (newIsStaff || isStaffRole(u.role)) {
+      throw AppError.conflict('identity reserved', 'An account with this email or mobile already exists.');
+    }
+    // Two party accounts: only a DIFFERENT role may share (buyer + exporter).
+    if (u.role === role) {
+      throw AppError.conflict('duplicate account', 'An account with this email or mobile already exists.');
+    }
   }
 }
 
 // Create org then user. No transactions on standalone Mongo, so compensate by
 // removing the org if the user insert loses a uniqueness race.
 async function createUserWithOrg({ org, user }) {
-  await assertUnique({ email: user.email, e164: user.mobile.e164 });
+  await assertIdentityAvailable({ email: user.email, e164: user.mobile.e164, role: user.role });
   const orgDoc = await Organisation.create(org);
   try {
     return await User.create({ ...user, orgId: orgDoc._id });
@@ -78,7 +100,7 @@ async function auditSignup(user, meta) {
 export async function registerBuyer({ name, email, mobile, password, company, country, meta }) {
   const mob = normalizeMobile(mobile);
   const user = await createUserWithOrg({
-    org: { name: company, type: 'buyer', country, kycStatus: 'pending' },
+    org: { name: company, type: 'business', buyerSide: true, country, kycStatus: 'pending' },
     user: {
       name,
       email: email.toLowerCase(),
@@ -109,7 +131,7 @@ export async function registerExporter({
 }) {
   const mob = normalizeMobile(mobile);
   const user = await createUserWithOrg({
-    org: { name: company, type: 'exporter', country, entityType, address, kycStatus: 'pending', businessProfile },
+    org: { name: company, type: 'business', exporterSide: true, country, entityType, address, kycStatus: 'pending', businessProfile },
     user: {
       name,
       email: email.toLowerCase(),
@@ -128,7 +150,9 @@ export async function registerExporter({
 // is set (enforced by authorize until they change it). Writes an audit entry.
 export async function createEmployee({ actor, name, email, mobile, password, permissions = [], meta }) {
   const mob = normalizeMobile(mobile);
-  await assertUnique({ email: email.toLowerCase(), e164: mob.e164 });
+  // Staff exclusivity (A21): an email/mobile already used by ANY account (buyer,
+  // exporter, or other staff) cannot be given an employee.
+  await assertIdentityAvailable({ email: email.toLowerCase(), e164: mob.e164, role: 'employee' });
 
   let created;
   try {
@@ -161,10 +185,17 @@ export async function createEmployee({ actor, name, email, mobile, password, per
 
 // --- login (password → second factor → tokens) --------------------------------
 
-export async function login({ identifier, password }) {
-  const user = await User.findOne(identifierQuery(identifier)).select('+passwordHash');
+const STAFF_LOGIN_FILTER = { role: { $in: [...STAFF_ROLES] } };
 
-  // Same outcome whether the user is missing or the password is wrong.
+// A21: login is scoped by role. Buyer/exporter come through /auth/login with a
+// `portal` (→ role filter); staff come through /auth/staff/login (staff roles
+// only). A WRONG portal simply matches no user → the SAME "Invalid credentials"
+// as a bad password, so it never reveals the account exists under another portal.
+async function loginWithRole({ identifier, password, roleFilter }) {
+  const user = await User.findOne({ ...identifierQuery(identifier), ...roleFilter }).select('+passwordHash');
+
+  // Same outcome whether the user is missing (incl. wrong portal) or the password
+  // is wrong.
   if (!user) {
     await verifyDummy(password);
     throw AppError.unauthorized('no such user', 'Invalid credentials.');
@@ -177,6 +208,14 @@ export async function login({ identifier, password }) {
   const method = 'otp';
   await requestOtp({ user, purpose: 'login', channel: 'mobile' });
   return { loginToken: signLoginToken(user, method), method };
+}
+
+export function login({ identifier, password, portal }) {
+  return loginWithRole({ identifier, password, roleFilter: { role: portal } });
+}
+
+export function staffLogin({ identifier, password }) {
+  return loginWithRole({ identifier, password, roleFilter: STAFF_LOGIN_FILTER });
 }
 
 export async function completeLogin({ loginToken, code, ip, userAgent, requestId }) {
@@ -262,13 +301,22 @@ export async function changePassword({ userId, currentPassword, newPassword, ip,
 }
 
 // Generic; never reveal whether an account exists; only active accounts get an OTP.
-export async function forgotPassword({ identifier }) {
-  const user = await User.findOne({ ...identifierQuery(identifier), isActive: true });
+// Role-scoped like login (A21): a wrong portal finds no user → still generic.
+async function forgotWithRole({ identifier, roleFilter }) {
+  const user = await User.findOne({ ...identifierQuery(identifier), ...roleFilter, isActive: true });
   if (user) await requestOtp({ user, purpose: 'forgot_password', channel: 'mobile' });
 }
 
-export async function resetPassword({ identifier, code, newPassword, ip, userAgent, requestId }) {
-  const user = await User.findOne({ ...identifierQuery(identifier), isActive: true });
+export function forgotPassword({ identifier, portal }) {
+  return forgotWithRole({ identifier, roleFilter: { role: portal } });
+}
+
+export function staffForgotPassword({ identifier }) {
+  return forgotWithRole({ identifier, roleFilter: STAFF_LOGIN_FILTER });
+}
+
+async function resetWithRole({ identifier, code, newPassword, roleFilter, ip, userAgent, requestId }) {
+  const user = await User.findOne({ ...identifierQuery(identifier), ...roleFilter, isActive: true });
   if (!user) throw AppError.unauthorized('no user', 'Invalid or expired code.');
 
   await verifyOtp({ userId: user._id, purpose: 'forgot_password', code });
@@ -288,4 +336,12 @@ export async function resetPassword({ identifier, code, newPassword, ip, userAge
     orgId: user.orgId,
     meta: { ip, userAgent, requestId },
   });
+}
+
+export function resetPassword({ identifier, code, newPassword, portal, ip, userAgent, requestId }) {
+  return resetWithRole({ identifier, code, newPassword, roleFilter: { role: portal }, ip, userAgent, requestId });
+}
+
+export function staffResetPassword({ identifier, code, newPassword, ip, userAgent, requestId }) {
+  return resetWithRole({ identifier, code, newPassword, roleFilter: STAFF_LOGIN_FILTER, ip, userAgent, requestId });
 }

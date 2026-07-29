@@ -22,13 +22,21 @@ export async function createEmployee(req, res) {
   res.status(201).json({ user });
 }
 
-export async function login(req, res) {
-  const { loginToken, method } = await authService.login(req.body);
+function loginResponse(res, { loginToken, method }) {
   res.json({
     loginToken,
     method,
     message: method === 'otp' ? 'An OTP has been sent.' : 'Enter your authenticator code.',
   });
+}
+
+export async function login(req, res) {
+  loginResponse(res, await authService.login(req.body));
+}
+
+// A21: staff portal (employee/superadmin) — no `portal` field.
+export async function staffLogin(req, res) {
+  loginResponse(res, await authService.staffLogin(req.body));
 }
 
 export async function verifyOtp(req, res) {
@@ -61,8 +69,18 @@ export async function forgotPassword(req, res) {
   res.json({ message: 'If an account exists, a reset code has been sent.' });
 }
 
+export async function staffForgotPassword(req, res) {
+  await authService.staffForgotPassword(req.body);
+  res.json({ message: 'If an account exists, a reset code has been sent.' });
+}
+
 export async function resetPassword(req, res) {
   await authService.resetPassword({ ...req.body, ...clientMeta(req) });
+  res.json({ ok: true });
+}
+
+export async function staffResetPassword(req, res) {
+  await authService.staffResetPassword({ ...req.body, ...clientMeta(req) });
   res.json({ ok: true });
 }
 

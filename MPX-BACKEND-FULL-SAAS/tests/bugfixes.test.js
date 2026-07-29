@@ -53,7 +53,7 @@ describe('bug fixes', () => {
   it('BUG-1: OTP lock survives a new login attempt (no reset)', async () => {
     const b = makeBuyer();
     await request(app).post('/auth/buyer/signup').send(b);
-    const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password });
+    const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password, portal: 'buyer' });
     const { loginToken } = login.body;
 
     // Exhaust the 5 attempts with wrong codes → challenge locks.
@@ -61,7 +61,7 @@ describe('bug fixes', () => {
       await request(app).post('/auth/verify-otp').send({ loginToken, code: '000000' });
     }
     // A fresh login must NOT reset the lock — requestOtp refuses.
-    const relogin = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password });
+    const relogin = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password, portal: 'buyer' });
     expect(relogin.status).toBe(401);
     expect(relogin.body.error.message).toMatch(/too many attempts/i);
   });
@@ -70,7 +70,7 @@ describe('bug fixes', () => {
     const b = makeBuyer();
     await request(app).post('/auth/buyer/signup').send(b);
     const digits = e164(b).replace('+', ''); // "919800000..."
-    const res = await request(app).post('/auth/login').send({ identifier: digits, password: b.password });
+    const res = await request(app).post('/auth/login').send({ identifier: digits, password: b.password, portal: 'buyer' });
     expect(res.status).toBe(200);
     expect(res.body.method).toBe('otp');
   });
@@ -82,7 +82,7 @@ describe('bug fixes', () => {
 
     const res = await request(app)
       .post('/auth/reset-password')
-      .send({ identifier: b.email, code: '000000', newPassword: 'anotherpass1' });
+      .send({ identifier: b.email, code: '000000', newPassword: 'anotherpass1', portal: 'buyer' });
     expect(res.status).toBe(401);
   });
 
@@ -130,7 +130,7 @@ describe('bug fixes', () => {
   it('RESEND: resend-otp works with just the login token (no password)', async () => {
     const b = makeBuyer();
     await request(app).post('/auth/buyer/signup').send(b);
-    const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password });
+    const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password, portal: 'buyer' });
     const res = await request(app).post('/auth/resend-otp').send({ loginToken: login.body.loginToken });
     expect(res.status).toBe(200);
     expect(res.body.message).toMatch(/otp/i);
@@ -157,7 +157,7 @@ describe('bug fixes', () => {
       mustChangePassword: true,
     });
     const token = signAccessToken(emp);
-    const buyerOrg = await Organisation.create({ name: 'B', type: 'buyer', kycStatus: 'submitted' });
+    const buyerOrg = await Organisation.create({ name: 'B', type: 'business', buyerSide: true, kycStatus: 'submitted' });
 
     // Blocked until password changed.
     const blocked = await request(app).post(`/employee/buyers/${buyerOrg._id}/approve`).set(bearer(token)).send({});

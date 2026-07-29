@@ -66,15 +66,26 @@ export const authLimiter = buildLimiter({
 // than only per IP, so an attacker rotating IPs still can't fan out OTP requests
 // against one account. Falls back to the IP when no identifier is present.
 // Requires req.body to be parsed first (mount after express.json()).
+function otpKeyGenerator(req) {
+  const raw = req.body?.identifier ?? req.body?.email ?? req.body?.mobile?.number ?? req.body?.mobile;
+  if (raw != null && String(raw).trim() !== '') {
+    return `id:${String(raw).trim().toLowerCase()}`;
+  }
+  return `ip:${ipKeyGenerator(req.ip)}`;
+}
+
 export const otpLimiter = buildLimiter({
   prefix: 'rl:otp:',
   windowMs: 10 * MINUTE,
   limit: 5,
-  keyGenerator: (req) => {
-    const raw = req.body?.identifier ?? req.body?.email ?? req.body?.mobile?.number ?? req.body?.mobile;
-    if (raw != null && String(raw).trim() !== '') {
-      return `id:${String(raw).trim().toLowerCase()}`;
-    }
-    return `ip:${ipKeyGenerator(req.ip)}`;
-  },
+  keyGenerator: otpKeyGenerator,
+});
+
+// A21: staff login / OTP has its OWN limiter (separate counter) so the staff
+// endpoints and the buyer/exporter portal endpoints never share a rate budget.
+export const staffOtpLimiter = buildLimiter({
+  prefix: 'rl:staff-otp:',
+  windowMs: 10 * MINUTE,
+  limit: 5,
+  keyGenerator: otpKeyGenerator,
 });

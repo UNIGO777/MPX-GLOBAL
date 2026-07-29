@@ -4,9 +4,10 @@
 > Language rule: all UI text English. Standing rule: conflict-check every new decision.
 
 > ## 🔴 Part A overrides (authoritative — supersede this doc)
-> `docs/MPX-M2-M3-Build-Prompt.md` **Part A (A1–A20)** is precedence-1 and wins over anything here. This round's items:
+> `docs/MPX-M2-M3-Build-Prompt.md` **Part A (A1–A22)** is precedence-1 and wins over anything here. This round's items:
 > - **§A17** no free-form specs anywhere ("Other" = fixed `CategoryAttribute` fields). **§A18** blocked-product purge = 180 days. **§A19** `Product.createdBy` dropped → product create AND edit write AuditLog (append-only/permanent); a separate MongoDB `errorLogs` (90-day TTL, strict exclusion list). **§A20** admin uploads category images incl. top categories (exception to activate/deactivate-only).
-> - **Organisation / company profile = PENDING** (not scoped): no `Organisation` endpoints exist yet, which blocks `GET /public/exporters/:id` (O5 below); raise before building — do not design it. (Full note in `modules-in-detailed/m3-search-filter/m3.md`.)
+> - **§A21** dual accounts, separate login portals, two-step signup with Organisation claim/create.
+> - **Organisation / company profile = ✅ SCOPED by §A22** (was PENDING; supersedes U2 below): company profile view/edit is **M1 work** — it is the missing capture path for **logo, description, business type, working categories** (P2's public seller fields). KYC-checked fields (name, country, address, `entityType`) **lock after verification**; changing one drops `kycStatus` → `submitted` and withholds the tick. 🔴 Still open, do **not** invent: **"business type"** is undefined and is **not** `entityType`; the shape of **working categories** is undecided.
 
 ---
 
@@ -97,7 +98,7 @@ I5. AI is NOT a separate engine — it only converts the sentence into filters t
 I6. GPT infers target (product/supplier) too, but the modal toggle is the explicit control.
 I7. **Guardrails:** validate the JSON against known categories/attributes (drop unrecognised → prevents garbage/injection); fallback to plain keyword search on failure/timeout; rate-limit per user; timeout the call; OpenAI only; temperature 0; low max-tokens; inject live category+synonym+attribute list into the prompt at runtime; defensive JSON parsing.
 I8. **No embeddings / no semantic vectors** in Phase 1.
-I9. Full GPT system prompt + example is documented in MPX-Module3-Search.md §11 (returns strict JSON only).
+I9. Full GPT system prompt + example is documented in modules-in-detailed/m3-search-filter-3-4days-max/Search.md §11 (returns strict JSON only).
 I10. JSON shape: `{ target, keywords[], category|null, priceMax|null, priceIntent"low"/"high"|null, moqMin|null, country|null, attributes{}, verifiedOnly }`.
 I11. Prompt rules: map synonyms to category; "cheap/budget/sasti/low"→priceIntent low; "bulk/thok"→moqMin ~1000; only use attribute keys from the resolved category; never invent categories/attributes; if nothing maps, return keywords = original query words.
 
@@ -122,10 +123,11 @@ L2. Draft / inactive / archived excluded.
 L3. Taken-down products excluded.
 L4. Products in deactivated categories excluded (cascade).
 L5. **Query-level enforcement** — excluded IN THE QUERY, not just hidden in the response (prevents leaks).
-L6. **B7:** all sellers shown regardless of KYC; `kycStatus` only produces the verified tick — NEVER a filter.
-L7. Guests can search; login required ONLY to save.
-L8. Exporters can also search (buying is open to all).
-L9. Admin has NO search screens.
+L6. **B7:** all sellers shown regardless of KYC; verification is **NEVER a filter**. The public projection carries a **`verified` boolean** (+ `verifiedAt`), derived server-side from `kycStatus` — raw `kycStatus` / `rejected` is **never** exposed (frontend renders the tick from `verified`, not `kycStatus`).
+L7. Guests can search; login required ONLY to save (buyer account — saving is buyer-only, §A13).
+L8. Public whitelist adds **`slug`** on Product + Seller (for `/product/:slug`, `/supplier/:slug` links, §A6) and **`image`** on Category (§A11 — card cannot render without it). New fields default **PRIVATE** (§A3); these are explicitly public.
+L9. Exporters can also search — search is a **public page open to all (guests included), never a permission**. This is **NOT a buying flow**: an exporter who wants to buy uses a **separate buyer account** (§A13 / §A21).
+L10. Admin has NO search screens.
 
 ## M. Cards (3 types)
 
@@ -183,7 +185,7 @@ Q4. If the query matched a category but no products, offer "Browse {category}" l
 Q5. Popular/featured fallback if nothing at all matches.
 Q6. AI-search nudge: "Try describing what you need" → opens AI modal.
 
-## R. SEO (part of M3; full rules in MPX-SEO-Rules.md)
+## R. SEO (part of M3; full rules in modules-in-detailed/m3-search-filter-3-4days-max/m3-seo-rules.md)
 
 R1. Slug-based readable public URLs: /product/:slug, /supplier/:slug, /category/:slug, /category/:parent/:child; search = /search?q=... (query params).
 R2. Slug rules: auto-generate from name (lowercase, hyphens, strip specials); unique suffix on clash; slug IMMUTABLE (301-redirect old→new on rename; never break indexed links); slug stored as indexed unique field on Product, Category, Organisation.
@@ -194,7 +196,7 @@ R6. Dynamic sitemap.xml (active products/sellers/categories only; exclude drafts
 R7. Content visibility: only public-projected fields in HTML/meta/JSON-LD; only active entities get indexable pages + sitemap entries.
 R8. Performance (ranking factor): lazy-load below-fold images, explicit width/height (avoid CLS), sized/WebP images (Cloudinary), healthy Core Web Vitals.
 R9. **React SPA stays for now** (decision: no change to stack). SSR/prerender for public pages is deferred (client-only React indexes poorly) — but keep emitting titles/meta/canonical/JSON-LD client-side and keep slugs + sitemap ready so a later SSR migration doesn't break URLs.
-R10. SEO rules delivered as MPX-SEO-Rules.md, formatted to MERGE into Claude Code project rules so generated code follows them.
+R10. SEO rules delivered as modules-in-detailed/m3-search-filter-3-4days-max/m3-seo-rules.md, formatted to MERGE into Claude Code project rules so generated code follows them.
 
 ## S. Boundary — NOT in M3
 
@@ -216,11 +218,11 @@ T6. Seller profile/card display placed in M3 (data from M1/M2) — consistent; n
 ## U. Open items touching M3
 
 U1. "Other" (#40) is a top category but products map to sub-categories → needs a sub under Other or an exception (flagged, unresolved).
-U2. M1 lacks a dedicated Organisation/company-profile setup/edit screen (logo/description/address/docs) — recommended to add in M1 (unresolved).
+U2. ✅ **RESOLVED by build-prompt §A22** — M1 lacked a dedicated Organisation/company-profile setup/edit screen (logo/description/address). It is now scoped as M1 work for **both** exporter (full, incl. public-page preview) and buyer (name/country/address/`entityType` only), with lock-after-verification on the KYC-checked fields. What remains open is **not** the screen but two field definitions: **business type** (undefined, ≠ `entityType`) and the shape of **working categories**.
 
 ## V. Related M3 docs
-- MPX-Module3-Discovery-Full.md — full module doc (incl. detailed public/private sections 5b, 5c).
-- MPX-Module3-SavedItem-Model.md — SavedItem model + availability/delete rules.
-- MPX-Module3-Search.md — search detail + full GPT prompt (§11).
-- MPX-SEO-Rules.md — SEO rules for Claude Code.
+- modules-in-detailed/m3-search-filter-3-4days-max/m3.md — full module doc (incl. detailed public/private sections 5b, 5c).
+- modules-in-detailed/m3-search-filter-3-4days-max/Saved-item.md — SavedItem model + availability/delete rules.
+- modules-in-detailed/m3-search-filter-3-4days-max/Search.md — search detail + full GPT prompt (§11).
+- modules-in-detailed/m3-search-filter-3-4days-max/m3-seo-rules.md — SEO rules for Claude Code.
 - MPX-Discovery-UI.html / index.html — working demo (keyword+synonym, filters, AI modal + answer, product/supplier toggle, save).

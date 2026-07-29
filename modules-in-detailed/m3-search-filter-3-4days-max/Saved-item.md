@@ -1,7 +1,7 @@
 # MPX Global — Phase 1 · Module 3 · **SavedItem Model** (+ validations)
 
 > ## 🔴 Part A overrides (authoritative — supersede this reference doc)
-> - **§A13 — the ownership field is `orgId`, not `orgId`, and ANY org can save** (exporters buy too). Unique compound `(orgId, targetType, targetId)`, index on `orgId`, ownership-scoped reads/deletes (`findOne({ _id, orgId })`). Every `orgId` below now reads `orgId`.
+> - **§A13 (reversed) — saving is BUYER-ONLY; the ownership field is `buyerOrgId`.** Only a **buyer account** saves. Unique compound `(buyerOrgId, targetType, targetId)`, index on `buyerOrgId`, ownership-scoped reads/deletes (`findOne({ _id, buyerOrgId })`). Under **§A21** an exporter who wants to buy uses a **separate buyer account** — so "buyer-only" is the buyer **account**, not the buyer company; nothing is lost.
 > - **§A5 — seller delete is ALWAYS soft** (`status = 'archived'`) — **no** draft=hard / published=soft branching, **no** hard delete. The single exception is the admin **§A8** 180-day blocked-product purge (a cleanup job, not a user action).
 > - **§A7 — archived rows are kept indefinitely.** Availability in the saved list: temporary-unavailable (inactive / taken-down / category deactivated) **stays**, flagged "currently unavailable"; **archived → removed** (cleanup).
 
@@ -13,7 +13,7 @@
 
 ```js
 SavedItem {
-  orgId,        // ref Organisation — kis buyer ne save kiya
+  buyerOrgId,        // ref Organisation (buyer side) — kis buyer ACCOUNT ne save kiya
   targetType,        // 'product' | 'supplier'
   targetId,          // ref Product (agar product) YA Organisation (agar supplier)
   savedAt,           // Date
@@ -31,8 +31,8 @@ Alag `SavedProduct` / `SavedSupplier` models banane ki zaroorat nahi. Future me 
 
 ## 2. Indexes
 
-- **Unique compound:** `(orgId, targetType, targetId)` — ek buyer same cheez **do baar save na kar sake** (duplicate block).
-- **`orgId`** — buyer ki saved-list fast aaye.
+- **Unique compound:** `(buyerOrgId, targetType, targetId)` — ek buyer same cheez **do baar save na kar sake** (duplicate block).
+- **`buyerOrgId`** — buyer ki saved-list fast aaye.
 
 ---
 
@@ -76,9 +76,9 @@ Seller apne product delete kar sakta hai. **Always soft — no branching:**
 ## 4. Endpoints
 
 - `POST /saved` — save (`{ targetType, targetId }`); duplicate → unique index se block
-- `DELETE /saved/:id` — unsave (ownership-scoped: `findOne({ _id, orgId })`)
+- `DELETE /saved/:id` — unsave (ownership-scoped: `findOne({ _id, buyerOrgId })`)
 - `GET /saved` — buyer ki saved-list (**read-time availability filter applied**), optional `?targetType=product|supplier`
-- Sab buyer-scoped, default-deny.
+- Sab **buyer-account**-scoped (`buyerOrgId`), default-deny. Only a buyer account may call these.
 
 ---
 

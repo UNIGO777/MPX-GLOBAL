@@ -5,6 +5,7 @@ import { requirePermissions } from '../middleware/authorize.js';
 import { validate } from '../middleware/validate.js';
 import { PERMISSIONS } from '../config/permissions.js';
 import * as ctrl from '../controllers/verification.controller.js';
+import * as kycCtrl from '../controllers/kyc.controller.js';
 import * as V from '../validators/verification.validators.js';
 
 export const employeeRouter = Router();
@@ -41,4 +42,14 @@ employeeRouter.post(
   requirePermissions(PERMISSIONS.EXPORTER_VERIFY),
   validate(V.rejectSchema),
   ctrl.rejectExporter,
+);
+
+// KYC document viewer (M1-D): mints short-lived signed URLs for a reviewer. Needs
+// the kyc:view permission; records a kyc.view access audit.
+employeeRouter.get(
+  '/employee/orgs/:id/kyc/documents',
+  authenticate,
+  requirePermissions(PERMISSIONS.KYC_VIEW),
+  validate(V.reviewParams),
+  kycCtrl.getOrgKyc,
 );

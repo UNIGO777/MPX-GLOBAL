@@ -24,6 +24,14 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
 - **Roles = 4** — `buyer` · `exporter` · `employee` · `superadmin`. **No `admin` role exists**
   (removed 2026-07-28: nothing ever created one; the quote names only a Super admin dashboard
   and an Employee panel). Don't re-add it without an explicit owner decision.
+- **Dual accounts / separate portals / two-step signup (build-prompt §A21, 2026-07-28)** —
+  buyer & exporter are **separate accounts on separate login portals** (`/auth/login` + `portal`;
+  staff on `/auth/staff/login`). Same email/mobile may hold **one buyer + one exporter** (never two
+  same-role); credentials + OTP locks independent. Signup = shared step-1 → OTP → step-2 with
+  **Organisation claim-or-create**. One company = one Organisation (claim carries the tick over);
+  an Organisation may be buyer-side, exporter-side, or **both** → **`Organisation.type` can no
+  longer be the single buyer/exporter discriminator**; an admin block takes both sides down.
+  This **reverses** the old "one shared login for all four roles" decision.
 - **Admin access** — **superadmin = all-access**; employees need the specific granted
   permission. Employee permissions are individually assignable. Governance actions
   (user activate/deactivate, employee create, permission assign) are **hard superadmin role
@@ -46,15 +54,30 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
 Before building any M1 auth/KYC **frontend screen** (buyer, exporter, super admin, employee), STOP and
 alert the owner first, then align the forms to the **backend contract**
 (`modules-in-detailed/m1-max-1.5days/feilds-data.png` + `m1.md §7`):
-- **Signup is per-role** (separate buyer & exporter forms); **login is ONE shared page**
-  (email/mobile + password → OTP verify → role-detect redirect).
-- **Exporter signup REQUIRES `entityType` (business/individual)** + optional structured `address`;
-  buyer signup does not.
+- **⚠️ Updated by build-prompt Part A §A21 (reverses the old "one shared login"):**
+  - **Separate buyer & exporter login portals**, each its own page — `POST /auth/login` takes a
+    `portal`; **staff (employee/superadmin) use a separate `POST /auth/staff/login`** (no portal).
+    There is **no** single shared login / role-detect redirect anymore.
+  - **Signup is TWO steps:** shared **step-1** (name, email, phone, password) → **OTP** →
+    **step-2** company step showing whether an Organisation already exists → **claim** or
+    **create-new**. Create-new adds name, country (exporter also `entityType` + address). Signup
+    no longer creates User + Organisation in one call.
+  - **Same email/mobile may hold one buyer + one exporter account** (never two same-role);
+    credentials + OTP locks independent. Wrong portal → generic "Invalid credentials".
 - Wire these flows: login → `verify-otp` (loginToken + code) with **`resend-otp`**; forgot →
   `reset-password` (identifier + code + newPassword); **`change-password`** (must-change staff
   flow: currentPassword + newPassword, returns fresh tokens).
 - Verified = a **tick** when `kycStatus === 'verified'` (no "not verified" badge).
 - **Admin TOTP is on hold (D4)** — screens show login/OTP only for now.
+- **⚠️ New — build-prompt §A22 adds TWO M1 screens that were never in the plan:** the **company
+  profile** (Organisation view/edit) for **exporter** (name/country/address/`entityType` + logo,
+  description, business type, working categories + public-page preview) and for **buyer**
+  (name/country/address/`entityType` only). Organisation data is **not write-once at signup**.
+  Verify hone ke baad the KYC-checked fields (**name, country, address, `entityType`**) are
+  **read-only on the screen**; changing one is allowed but drops `kycStatus` → `submitted` and
+  withholds the tick — the form must say so before submitting. 🔴 **"Business type" is undefined
+  (≠ `entityType`) and working categories' shape is undecided — ask, don't guess.** Detail:
+  `m1.md` §5b + build-prompt §A22.
 Do not start the screens without surfacing this alert.
 
 ## D2 · Seller hard "verify-before-sell" gate  ❌ DROPPED

@@ -1,0 +1,112 @@
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import request from 'supertest';
+import mongoose from 'mongoose';
+import Redis from 'ioredis';
+
+import { createApp } from '../src/app.js';
+import '../src/models/index.js';
+import { User } from '../src/models/User.js';
+import { Organisation } from '../src/models/Organisation.js';
+import { hashPassword } from '../src/services/password.service.js';
+
+// A21 · Step 2 — login portal split (/auth/login + portal · /auth/staff/login).
+const app = createApp();
+let seq = 0;
+let redis;
+const uniq = () => {
+  seq += 1;
+  return `${Date.now()}_${seq}`;
+};
+
+const buyerPayload = ({ email, number }) => ({
+  name: 'Buyer',
+  email,
+  mobile: { countryCode: '+91', number },
+  password: 'longpassword1',
+  company: 'Buyer Co',
+  country: 'IN',
+});
+const exporterPayload = ({ email, number }) => ({
+  ...buyerPayload({ email, number }),
+  name: 'Exporter',
+  company: 'Exp Co',
+  entityType: 'business',
+});
+
+async function makeStaffAccount(role = 'superadmin') {
+  const org = await Organisation.create({ name: 'Platform', type: 'platform' });
+  const email = `staff_${uniq()}@example.com`;
+  await User.create({
+    name: 'Staff',
+    email,
+    mobile: { countryCode: '+91', number: '7000000101', e164: '+917000000101' },
+    passwordHash: await hashPassword('longpassword1'),
+    role,
+    orgId: org._id,
+    isActive: true,
+  });
+  return { email };
+}
+
+beforeAll(async () => {
+  await mongoose.connect(process.env.MONGODB_URI);
+  for (const name of mongoose.modelNames()) await mongoose.model(name).syncIndexes();
+  redis = new Redis(process.env.REDIS_URL);
+});
+afterAll(async () => {
+  await mongoose.disconnect();
+  await redis.quit();
+});
+beforeEach(async () => {
+  await User.deleteMany({});
+  await Organisation.deleteMany({});
+  await redis.flushdb();
+});
+
+const login = (body) => request(app).post('/auth/login').send(body);
+const staffLogin = (body) => request(app).post('/auth/staff/login').send(body);
+
+describe('A21 · login portals', () => {
+  it('a dual account: the portal selects which account logs in', async () => {
+    const email = `dual_${uniq()}@example.com`;
+    await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000101' }));
+    await request(app).post('/auth/exporter/signup').send(exporterPayload({ email, number: '9820000102' }));
+
+    expect((await login({ identifier: email, password: 'longpassword1', portal: 'buyer' })).status).toBe(200);
+    expect((await login({ identifier: email, password: 'longpassword1', portal: 'exporter' })).status).toBe(200);
+  });
+
+  it('wrong portal returns the SAME "Invalid credentials" as a wrong password (no oracle)', async () => {
+    const email = `buyeronly_${uniq()}@example.com`;
+    await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000111' }));
+
+    expect((await login({ identifier: email, password: 'longpassword1', portal: 'buyer' })).status).toBe(200);
+
+    const wrongPortal = await login({ identifier: email, password: 'longpassword1', portal: 'exporter' });
+    const wrongPass = await login({ identifier: email, password: 'wrongpassword9', portal: 'buyer' });
+    expect(wrongPortal.status).toBe(401);
+    expect(wrongPass.status).toBe(401);
+    // Identical client message — a wrong portal must not reveal the account exists.
+    expect(wrongPortal.body.error.message).toBe(wrongPass.body.error.message);
+    expect(wrongPortal.body.error.message).toMatch(/invalid credentials/i);
+  });
+
+  it('a missing portal on /auth/login is a 400 validation error', async () => {
+    const email = `np_${uniq()}@example.com`;
+    await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000121' }));
+    expect((await login({ identifier: email, password: 'longpassword1' })).status).toBe(400);
+  });
+
+  it('staff log in ONLY on /auth/staff/login; a party portal cannot serve them', async () => {
+    const sa = await makeStaffAccount('superadmin');
+    expect((await staffLogin({ identifier: sa.email, password: 'longpassword1' })).status).toBe(200);
+    // superadmin cannot come through the buyer/exporter portal endpoint
+    expect((await login({ identifier: sa.email, password: 'longpassword1', portal: 'buyer' })).status).toBe(401);
+  });
+
+  it('a buyer/exporter cannot use the staff login endpoint', async () => {
+    const email = `b_${uniq()}@example.com`;
+    await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000131' }));
+    expect((await staffLogin({ identifier: email, password: 'longpassword1' })).status).toBe(401);
+  });
+});
