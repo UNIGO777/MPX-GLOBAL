@@ -308,11 +308,59 @@ describe('A21 · public exporter read is side-based (M1-C)', () => {
     expect(res.status).toBe(200);
     const fields = Object.keys(res.body.exporter).sort();
     // exact public whitelist — whether the company also BUYS is not exposed.
+    // Serialised via Organisation.PUBLIC_FIELDS + the shared toPublic() (A3), so
+    // this assertion is what fails if someone widens that list without deciding to.
     expect(fields).toEqual(
-      ['country', 'description', 'establishedYear', 'id', 'logo', 'name', 'slug', 'verified', 'verifiedAt', 'website'].sort(),
+      [
+        'country',
+        'description',
+        'entityType',
+        'establishedYear',
+        'id',
+        'logo',
+        'memberSince',
+        'name',
+        'slug',
+        'verified',
+        'verifiedAt',
+      ].sort(),
     );
     expect(fields).not.toContain('buyerSide');
     expect(fields).not.toContain('exporterSide');
     expect(fields).not.toContain('kycStatus');
+  });
+
+  it('does NOT expose website — internal, our verification use only', async () => {
+    const exp = await makeUser('exporter', { entityType: 'business', kycStatus: 'verified' });
+    await Organisation.updateOne({ _id: exp.org._id }, { $set: { website: 'https://example-exporter.test' } });
+
+    const res = await request(app).get(`/exporters/${exp.org._id}`);
+    expect(res.status).toBe(200);
+    expect(res.body.exporter).not.toHaveProperty('website');
+    expect(JSON.stringify(res.body)).not.toContain('example-exporter.test');
+  });
+
+  it('exposes memberSince as a YEAR ONLY, not the exact signup timestamp', async () => {
+    const exp = await makeUser('exporter', { entityType: 'business', kycStatus: 'verified' });
+    const res = await request(app).get(`/exporters/${exp.org._id}`);
+    expect(res.status).toBe(200);
+    expect(res.body.exporter.memberSince).toBe(exp.org.createdAt.getFullYear());
+    // the exact second must not be recoverable from the public response
+    expect(JSON.stringify(res.body)).not.toContain(exp.org.createdAt.toISOString());
+  });
+
+  it('exposes entityType (trust signal — closes the cancelled "business type", A22.5)', async () => {
+    const biz = await makeUser('exporter', { entityType: 'business', kycStatus: 'verified' });
+    const bizRes = await request(app).get(`/exporters/${biz.org._id}`);
+    expect(bizRes.status).toBe(200);
+    expect(bizRes.body.exporter.entityType).toBe('business');
+
+    const solo = await makeUser('exporter', { entityType: 'individual' });
+    const soloRes = await request(app).get(`/exporters/${solo.org._id}`);
+    expect(soloRes.status).toBe(200);
+    expect(soloRes.body.exporter.entityType).toBe('individual');
+    // still no leak of WHICH documents were filed, nor of the review state
+    expect(soloRes.body.exporter).not.toHaveProperty('kycStatus');
+    expect(soloRes.body.exporter).not.toHaveProperty('kycDocuments');
   });
 });

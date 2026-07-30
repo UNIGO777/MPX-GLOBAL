@@ -134,6 +134,56 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-30** — **`memberSince` → year only; `entityType` made public (closes the business-type
+  cancellation properly).** *(1)* `memberSince` moved from `PUBLIC_FIELDS` (raw `createdAt` → full
+  ISO timestamp) to `PUBLIC_DERIVED` as **`createdAt.getFullYear()`** — the UI shows "member since
+  2024", so a public field should carry the minimum the interface needs and not the exact signup
+  second. Test now asserts the year **and** that the full ISO string is not recoverable from the
+  response. *(2)* **`entityType` (`business` | `individual`) added to the public surface.** The
+  business-type cancellation rested on "`entityType` covers the purpose" — but `entityType` was not
+  in the public key set, so the public seller page said **nothing** about whether a seller was a
+  registered business or an individual: the gap had **moved, not closed**. It is a trust signal that
+  sits next to the verified tick and reveals nothing about *which* KYC documents were filed.
+  Whitelisted in `m3.md` §5b.1 + §7 and `.claude/rules/m3-public-projection.md` **in the same pass**
+  as the code (the `establishedYear` lesson), + a new test covering both `business` and `individual`
+  and re-asserting no `kycStatus`/`kycDocuments` leak. **§A22.5 + m1.md §5b.5 now record that
+  `entityType` is what closed the cancellation**, so a later reader cannot mistake the cancellation
+  for having left a hole. **Noted consequence:** `entityType` is now both publicly visible **and**
+  locked after verification (A22.1) — a stronger rule, not a coincidence: a public trust signal
+  checked against the KYC documents must not change quietly afterwards. Public key set is now
+  `country, description, entityType, establishedYear, id, logo, memberSince, name, slug, verified,
+  verifiedAt`. **112/112 green, lint clean.**
+- **2026-07-30** — **§A22 trimmed to 2 fields + the public seller projection moved to the A3
+  pattern (first real code on the public surface).** *(1) Cancelled:* **"business type" and seller
+  "working/main categories" are DROPPED** — removed, not deferred; `entityType` covers the purpose.
+  Cut from 11 files (build-prompt §A22 + Part C + Part E, m1.md §1/§5b/§7/§8/§9/§10, m3.md §5b.1
+  table + §7, m3-public-projection.md, Note.md S1, remind.md, M3 memo P2/U2, BRAIN, **m5.md +
+  m5-features.md** — the m5 superadmin seller-detail screens listed "working categories" too).
+  m1.md §10's open items #4/#5 are now struck through as **CLOSED by removal, not definition**.
+  ⇒ **A22 needs NO new model fields**: `name`/`country`/`address`/`entityType`/`logo`/`description`
+  all already exist on `Organisation`; the remaining work is the **edit endpoint + lock enforcement
+  + verified→submitted demotion**, none of it schema. *(2) `website` is NOT public* — it is for our
+  own verification use; removed from the response and recorded as **internal** in m3.md §5b.2 +
+  the projection rule (with "do not add it back because it looks harmless"). *(3) `establishedYear`
+  IS public* — it was already being returned but had **never** been whitelisted; now whitelisted.
+  *(4) `memberSince` added* — derived from `createdAt` (timestamps), **no schema field**; a real B2B
+  trust signal. Whitelisted in m3.md + the rule **in the same pass** as the code, deliberately not
+  repeating the `establishedYear` mistake. **CODE (A3):** `publicView()`'s hand-rolled object
+  literal is gone. New `src/utils/toPublic.js` = the **one** shared whitelist serialiser (supports
+  dotted source paths + renamed output keys + derived values, Mongoose-doc or lean);
+  `Organisation.js` now exports **`PUBLIC_FIELDS` + `PUBLIC_DERIVED`** (the surface declared on the
+  model, per A3); `exporters.controller.js` just calls `toPublic()`. `verified` stays a computed
+  boolean and `verifiedAt` stays nulled unless verified — **raw `kycStatus` still never exposed**
+  (B7). Public key set is now `country, description, establishedYear, id, logo, memberSince, name,
+  slug, verified, verifiedAt`. **Tests: 111/111 green** (108 → +3: exact-whitelist assertion
+  updated, plus new tests that `website` never ships and that `memberSince` matches `createdAt`),
+  **lint clean.** *(5) Product count — deliberately NOT built:* whitelisted but blocked on M2
+  (`Product` is a 2-field stub with generic `orgId`, no `exporterOrgId` per §A2 and no `status`, so
+  "active only" isn't expressible). Drift marker kept in m3.md §5b.1 + the rule, and a new
+  **`M2.md` §9b** records the exact unblock condition and the count query to use — with an explicit
+  "no placeholder second query on the profile read". **Gotcha:** A21 owns `exporters.service.js`
+  (its Step 4b/5 may return to it), so this change stayed in the **controller + model + a new
+  util** and left that service untouched — deliberate, to avoid a two-writer collision.
 - **2026-07-30** — **A21 CODE — Step 3 patch + Step 4a (OTP on signup).** *Patch:* +6 tests
   locking the HAS-a-side behaviour (both-sides org found by both reviews; wrong-side → 404; public
   `/exporters/:id` side-based 200/404; public response never leaks buyerSide/exporterSide/kycStatus;

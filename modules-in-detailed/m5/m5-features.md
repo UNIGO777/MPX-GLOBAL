@@ -157,7 +157,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 | Exporter account chats | Count and link — only if the exporter side exists |
 | Audit trail | This Organisation's full record |
 
-**Exporter side only** — products by status · takedown count and history · link to the monitoring list filtered to this org · link to the public seller profile · working categories
+**Exporter side only** — products by status · takedown count and history · link to the monitoring list filtered to this org · link to the public seller profile *(🚫 "working categories" removed — **cancelled 2026-07-30** with "business type"; the field does not exist and will not be built)*
 
 **Buyer side only** — enquiries sent · saved items · link to conversations
 

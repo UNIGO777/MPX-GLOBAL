@@ -7,7 +7,8 @@
 > `docs/MPX-M2-M3-Build-Prompt.md` **Part A (A1–A22)** is precedence-1 and wins over anything here. This round's items:
 > - **§A17** no free-form specs anywhere ("Other" = fixed `CategoryAttribute` fields). **§A18** blocked-product purge = 180 days. **§A19** `Product.createdBy` dropped → product create AND edit write AuditLog (append-only/permanent); a separate MongoDB `errorLogs` (90-day TTL, strict exclusion list). **§A20** admin uploads category images incl. top categories (exception to activate/deactivate-only).
 > - **§A21** dual accounts, separate login portals, two-step signup with Organisation claim/create.
-> - **Organisation / company profile = ✅ SCOPED by §A22** (was PENDING; supersedes U2 below): company profile view/edit is **M1 work** — it is the missing capture path for **logo, description, business type, working categories** (P2's public seller fields). KYC-checked fields (name, country, address, `entityType`) **lock after verification**; changing one drops `kycStatus` → `submitted` and withholds the tick. 🔴 Still open, do **not** invent: **"business type"** is undefined and is **not** `entityType`; the shape of **working categories** is undecided.
+> - **Organisation / company profile = ✅ SCOPED by §A22** (was PENDING; supersedes U2 below): company profile view/edit is **M1 work** — it is the missing capture path for **logo + description** (P2's public seller fields). KYC-checked fields (name, country, address, `entityType`) **lock after verification**; changing one drops `kycStatus` → `submitted` and withholds the tick. **No new model fields needed** — the work is the edit endpoint, the lock and the demotion.
+> - **🚫 CANCELLED 2026-07-30 — "business type" + seller "main/working categories".** Removed from the public seller list (P2/M2 below), not deferred; `entityType` covers the purpose. **🔒 `website` is internal, never public** (it was being returned and has been removed). **✅ `establishedYear` IS public** — already returned, now whitelisted.
 
 ---
 
@@ -163,7 +164,7 @@ O6. `POST /saved` · `DELETE /saved/:id` · `GET /saved` — saved items (buyer-
 
 P1. **Rule:** public routes return ONLY whitelisted public fields; any NEW field defaults to PRIVATE unless explicitly added. Whitelist, never blacklist. Same projection on web + app. Private fields never serialised on public routes.
 
-P2. **SELLER public:** company name, logo, description, verified tick + since-date (status only), general location (country/city — NOT exact street), business type, main categories, public catalogue (active products only), member-since, product count.
+P2. **SELLER public:** company name, logo, description, verified tick + since-date (status only), general location (country/city — NOT exact street), **`establishedYear`**, public catalogue (active products only), member-since, product count. *(**business type** + **main categories**: cancelled 2026-07-30. **`website`**: internal, never public.)*
 P3. **SELLER private:** KYC documents (business/personal ID — super admin/employee review only), owner personal ID/PII, direct contact phone/email (reached ONLY via M4 enquiry), precise/street address, internal/auth fields (userId, tokenVersion, role, verification notes, audit trail), financial/account details.
 
 P4. **PRODUCT public:** name, description, images, category/sub-category (+type), price (mode+min/max+currency), MOQ+unit, trade info (HS code, origin, supply ability, lead time, packaging), service info (engagement/delivery/team/timeline), attributes (specs), seller public projection, listed-since.
@@ -218,7 +219,7 @@ T6. Seller profile/card display placed in M3 (data from M1/M2) — consistent; n
 ## U. Open items touching M3
 
 U1. "Other" (#40) is a top category but products map to sub-categories → needs a sub under Other or an exception (flagged, unresolved).
-U2. ✅ **RESOLVED by build-prompt §A22** — M1 lacked a dedicated Organisation/company-profile setup/edit screen (logo/description/address). It is now scoped as M1 work for **both** exporter (full, incl. public-page preview) and buyer (name/country/address/`entityType` only), with lock-after-verification on the KYC-checked fields. What remains open is **not** the screen but two field definitions: **business type** (undefined, ≠ `entityType`) and the shape of **working categories**.
+U2. ✅ **RESOLVED by build-prompt §A22** — M1 lacked a dedicated Organisation/company-profile setup/edit screen (logo/description/address). It is now scoped as M1 work for **both** exporter (logo + description + public-page preview) and buyer (name/country/address/`entityType` only), with lock-after-verification on the KYC-checked fields. **Fully closed:** the two field definitions that were still open here — business type and working categories — were **cancelled** on 2026-07-30, and A22 needs **no new model fields**.
 
 ## V. Related M3 docs
 - modules-in-detailed/m3-search-filter-3-4days-max/m3.md — full module doc (incl. detailed public/private sections 5b, 5c).

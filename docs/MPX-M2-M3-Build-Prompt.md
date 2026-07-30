@@ -261,21 +261,25 @@ This **reverses** the earlier "one shared login page for all four roles" decisio
 
 Neither buyer nor exporter has ever had a way to view or edit their own `Organisation`. m1.md describes four areas — auth, KYC documents, verification, user management — and company profile is in none of them; its screen table has no row for it either. This section adds it as **M1 work**.
 
-It is also the missing **capture path for M3**. Four fields the public seller page is specified to show have no way of being entered anywhere in the system: **logo**, **description**, **business type**, and the **categories a seller works in**. (`logo` and `description` exist on the `Organisation` model but no endpoint ever sets them; business type and working categories do not exist at all.) Built as-is, `GET /public/exporters/:id` renders with a company name and a country.
+It is also the missing **capture path for M3**. Two fields the public seller page shows — **logo** and **description** — exist on the `Organisation` model but **no endpoint ever sets them**. Built as-is, `GET /public/exporters/:id` renders with a company name and a country.
+
+> **Cancelled (2026-07-30):** "business type" and the seller's **working categories** were previously listed here as a third and fourth field. Both are **dropped entirely — do not build them, do not add them to any model, screen, projection or whitelist.** `entityType` covers the purpose. This closes the earlier open item by **removal, not definition** — there is nothing left to define.
+
+**A22 therefore needs NO new model fields at all.** Every field it touches already exists on `Organisation` (`name`, `country`, `address`, `entityType`, `logo`, `description`). The remaining work is entirely behavioural: **the edit endpoint, the lock enforcement, and the verified→submitted demotion.** None of it is schema. Do not open the model for this.
 
 **Exporter — company profile page**
 
 Lives in the exporter panel alongside dashboard, KYC upload and resubmit. Carries:
 
 - company name, country, address, `entityType`
-- logo, description, business type, working categories
+- logo, description
 - a **preview of how the public seller page will look**
 
 The preview renders through the **same `toPublic()` projection as the live public page** (A3). It must not build its own field list, or it will drift from what buyers actually see.
 
 **Buyer — company profile in the profile section**
 
-Same idea, smaller: **company name, country, address, `entityType` only.** No logo, description, business type, working categories or public preview — a buyer has no public page.
+Same idea, smaller: **company name, country, address, `entityType` only.** No logo, description or public preview — a buyer has no public page.
 
 It is needed even though buyer KYC is optional: when a buyer *does* submit, `entityType` and documents arrive, and the company details have to live somewhere.
 
@@ -293,8 +297,6 @@ Fields that were checked against the KYC documents **lock once the organisation 
 | `entityType` | editable (buyer) · fixed at signup for exporters | **locked** |
 | logo | editable | editable |
 | description | editable | editable |
-| business type | editable | editable |
-| working categories | editable | editable |
 
 Before verification everything is editable, because nothing has been checked yet. After verification those four lock.
 
@@ -323,19 +325,23 @@ Note this in the docs so nobody assumes otherwise: M4's seller-side chat list ti
 
 A21's signup step 2 already creates the Organisation with the company fields. **A22 is the EDIT path for the same data afterwards.** Keep the field sets consistent — do not let signup capture one set and the profile screen a different one.
 
-Precisely: **A22's set is a superset of A21's.** Signup stays lean (name, country; exporter also `entityType` + address); the profile screen adds the four public ones (logo, description, business type, working categories), which are optional and have no place in a signup form. For every field the two **share**, the name, validation and format must be identical — one `country` format, one address shape, one length limit. A change to a shared field on either side changes both.
+Precisely: **A22's set is a superset of A21's.** Signup stays lean (name, country; exporter also `entityType` + address); the profile screen adds **logo and description**, which are optional and have no place in a signup form. For every field the two **share**, the name, validation and format must be identical — one `country` format, one address shape, one length limit. A change to a shared field on either side changes both.
 
 Slug consequence: `Organisation.slug` is generated from the company name once and is **immutable** (A6). A rename therefore does **not** change `/supplier/:slug` — the public URL keeps the old name. That is deliberate (indexed links must not break), but it must be visible on the rename screen so it is not later read as a bug.
 
-### A22.5 Do not invent
+### A22.5 Cancelled, and what is still open
 
-**"Business type" is undefined.** It appears in M3's public seller projection and has never been specified anywhere. It is **NOT** `entityType` (`business` / `individual`, which drives the KYC document path). Leave it as an **open item and flag it** — do not guess a value set, do not quietly alias it to `entityType`, and do not ship a free-text box in its place.
+**"Business type" and working categories are cancelled** (see the note at the top of A22). They are not open items any more — they are **removed**. Do not re-raise them, do not add a field for either, and do not treat their absence from the public projection as a bug to fix.
+
+**What closed the business-type cancellation: `entityType` is now a public field.** The cancellation rested on "`entityType` covers the purpose" — but `entityType` was not in the public key set, so for a few hours the public seller page said nothing at all about whether a seller was a registered business or an individual. That moved the gap rather than closing it. `entityType` (`business` | `individual`) is therefore **on the public surface** as of 2026-07-30, sitting next to the verified tick. It is not sensitive: it says nothing about *which* documents were filed, only which path applies. **Read the cancellation together with this** — it left no hole, and nobody needs to re-open "business type" to fill one.
+
+Consequence worth noting: `entityType` is both **publicly visible** and **locked after verification** (A22.1). That is now a stronger rule, not a coincidence — a public trust signal that was checked against the KYC documents must not change quietly afterwards.
+
+**`website` is internal, not public.** It is held for our own verification use. It must **not** appear on any public response — see A3 and `.claude/rules/m3-public-projection.md`.
 
 Open, to be confirmed before this is built:
 
-- **Business type** — its value list (above).
-- **Working categories** — references to `Category` documents or free tags; seller-entered or derived from the products they list.
-- **Which other `Organisation` fields the screen exposes.** `website`, `businessProfile` (registrationNumber / taxId / establishedYear) and `authorisedSignatory` exist on the model, appear in neither A21's nor A22's field list, and have no capture path either. Adding them silently invents scope; leaving them silently is another A22-shaped gap.
+- **Which other `Organisation` fields the screen exposes.** `businessProfile` (registrationNumber / taxId / establishedYear) and `authorisedSignatory` exist on the model, appear in neither A21's nor A22's field list, and have no capture path either. Adding them silently invents scope; leaving them silently is another A22-shaped gap. (`establishedYear` is a special case — it is already **public**; see A3 / the projection whitelist.)
 - **`verifiedAt` / `verifiedBy` on demotion** — cleared, or kept as the record of the previous approval — and whether `kycSubmittedAt` is re-stamped so the review queue orders correctly.
 - **`businessProfile.registrationNumber` + `country` carry a unique partial index.** A country change on a verified organisation can collide with another organisation's registration number. Decide the behaviour before allowing that edit.
 - **Employee / superadmin editing an organisation's company fields** — not covered here. A22 is the owner's own edit path only.
@@ -369,9 +375,9 @@ The `Organisation` model exists and is created at signup, but the backend has **
 
 This blocks M3: `GET /public/exporters/:id` is the public seller profile and reads from `Organisation`. Without these endpoints that page renders effectively empty — just the company name captured at signup.
 
-**This is no longer an open question.** §A22 scopes it as **M1 work**: exporter + buyer company profile screens, the four M3 fields that had no capture path (logo, description, business type, working categories), field locking after verification, and re-review on a locked-field change. Build it to A22 — not to your own design. It must land before step 10 (public surfaces) is meaningful.
+**This is no longer an open question.** §A22 scopes it as **M1 work**: exporter + buyer company profile screens, the capture path for **logo and description**, field locking after verification, and re-review on a locked-field change. Build it to A22 — not to your own design. It must land before step 10 (public surfaces) is meaningful.
 
-A22's own **open items are still open** (business type's value list, the shape of working categories, the other `Organisation` fields). Raise those rather than guessing.
+**A22 needs no new model fields** — every field it touches already exists on `Organisation`. The work is the edit endpoint, the lock, and the demotion. "Business type" and working categories were **cancelled** on 2026-07-30; the only thing still open is whether the screen exposes `businessProfile` / `authorisedSignatory`.
 
 ## Order
 
@@ -413,7 +419,6 @@ Stop and ask if you hit any of these:
 - Changing `scoping.js` would require altering M1's auth flow beyond field naming.
 - A rule in Part B cannot be implemented as written given the current architecture.
 
-Two open items are deliberately **not** decided and must not be invented:
+One open item is deliberately **not** decided and must not be invented: whether the "Other" categories support free-form, seller-defined spec fields. Build "Other goods" and "Other services" as ordinary categories with normal `CategoryAttribute` fields, and raise the question rather than building a free-form mechanism.
 
-1. Whether the "Other" categories support free-form, seller-defined spec fields. Build "Other goods" and "Other services" as ordinary categories with normal `CategoryAttribute` fields, and raise the question rather than building a free-form mechanism.
-2. **"Business type"** on the seller profile (§A22.5) — it has never been defined, and it is **not** `entityType`. Raise it; do not guess a value set and do not alias it to `entityType`. The same applies to the shape of a seller's **working categories**.
+*(The former second item — "business type" on the seller profile — is **cancelled**, not open. See §A22.5.)*

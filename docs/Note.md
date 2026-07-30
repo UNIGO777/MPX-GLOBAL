@@ -71,13 +71,14 @@ alert the owner first, then align the forms to the **backend contract**
 - **Admin TOTP is on hold (D4)** — screens show login/OTP only for now.
 - **⚠️ New — build-prompt §A22 adds TWO M1 screens that were never in the plan:** the **company
   profile** (Organisation view/edit) for **exporter** (name/country/address/`entityType` + logo,
-  description, business type, working categories + public-page preview) and for **buyer**
+  description + public-page preview) and for **buyer**
   (name/country/address/`entityType` only). Organisation data is **not write-once at signup**.
   Verify hone ke baad the KYC-checked fields (**name, country, address, `entityType`**) are
   **read-only on the screen**; changing one is allowed but drops `kycStatus` → `submitted` and
-  withholds the tick — the form must say so before submitting. 🔴 **"Business type" is undefined
-  (≠ `entityType`) and working categories' shape is undecided — ask, don't guess.** Detail:
-  `m1.md` §5b + build-prompt §A22.
+  withholds the tick — the form must say so before submitting. **A22 needs no new model fields** —
+  `logo`/`description` already exist; the work is the endpoint + lock + demotion. 🚫 **"Business
+  type" and working categories are CANCELLED** (2026-07-30) — removed, not deferred; `entityType`
+  covers it. 🔒 `website` is **internal, never public**. Detail: `m1.md` §5b + build-prompt §A22.
 Do not start the screens without surfacing this alert.
 
 ## D2 · Seller hard "verify-before-sell" gate  ❌ DROPPED

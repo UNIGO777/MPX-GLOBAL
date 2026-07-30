@@ -69,7 +69,14 @@ export const authLimiter = buildLimiter({
 function otpKeyGenerator(req) {
   const raw = req.body?.identifier ?? req.body?.email ?? req.body?.mobile?.number ?? req.body?.mobile;
   if (raw != null && String(raw).trim() !== '') {
-    return `id:${String(raw).trim().toLowerCase()}`;
+    // A21: scope the budget by portal so a buyer and an exporter on the SAME email
+    // get INDEPENDENT OTP-request budgets (one burning it must not lock the other).
+    // Only /auth/login + /auth/forgot-password carry a portal; staff endpoints have
+    // none, so their key is unchanged. (Mongo operators are rejected globally before
+    // here, so `portal` is a plain string or absent.)
+    const portal = req.body?.portal;
+    const scope = portal ? `:${String(portal).trim().toLowerCase()}` : '';
+    return `id:${String(raw).trim().toLowerCase()}${scope}`;
   }
   return `ip:${ipKeyGenerator(req.ip)}`;
 }

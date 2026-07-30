@@ -142,4 +142,48 @@ organisationSchema.pre('validate', async function generateSlug() {
 
 declareScope(organisationSchema, SCOPE.SELF);
 
+// A3: the seller's PUBLIC whitelist — the ONLY Organisation fields a buyer or
+// guest may receive. Serialise with `toPublic()` (src/utils/toPublic.js); never
+// return the document or its `toJSON`, which is a blacklist.
+//
+// Adding a field here PUBLISHES it. Before doing so, check
+// `.claude/rules/m3-public-projection.md` — deliberately NOT public: `website`
+// (our verification use only), `buyerSide`/`exporterSide`, the street address,
+// `businessProfile.registrationNumber` / `taxId`, `authorisedSignatory`,
+// `kycDocuments`, and `kycStatus` itself (see PUBLIC_DERIVED below).
+export const PUBLIC_FIELDS = [
+  'name',
+  'slug',
+  'country', // ISO alpha-2 only — the street address stays private
+  'description',
+  'logo',
+  // 'business' | 'individual'. A trust signal that sits next to the verified tick,
+  // and the field that closes the cancelled "business type" (A22.5): without it the
+  // public page said nothing about whether a seller is a registered business.
+  // Not sensitive — it says nothing about WHICH documents were filed.
+  'entityType',
+  ['businessProfile.establishedYear', 'establishedYear'],
+];
+
+// A3 + B7: values computed at read time, never stored and never copied straight
+// from the document.
+export const PUBLIC_DERIVED = {
+  id: (org) => String(org._id),
+
+  // B7: the tick is a BOOLEAN derived here. Raw `kycStatus` must never reach a
+  // public response — publishing it would leak the `rejected` state, and the
+  // product rule is "verified tick or nothing" (there is no not-verified badge).
+  verified: (org) => org.kycStatus === 'verified',
+
+  // Nulled unless verified, so an unverified org cannot expose a stale
+  // review timestamp.
+  verifiedAt: (org) => (org.kycStatus === 'verified' ? (org.verifiedAt ?? null) : null),
+
+  // Trust signal: "member since 2024" reads very differently from a brand-new
+  // account. YEAR ONLY — a public field should carry the minimum the interface
+  // needs, and the exact signup second serves nobody. `createdAt` comes free from
+  // baseSchemaOptions, so this is derived, not stored.
+  memberSince: (org) => org.createdAt?.getFullYear() ?? null,
+};
+
 export const Organisation = mongoose.model('Organisation', organisationSchema);

@@ -70,13 +70,15 @@ while any close-time security commitment remains unraised.
   exist; verified = tick from `kycStatus`). Details in `docs/Note.md` **S1** + build-prompt **A21**.
 - **A22 · Company profile screens (M1, new — S1 covers them too)** — buyer **and** exporter can view
   and edit their own `Organisation`; Organisation data is **not write-once at signup** (A21 creates,
-  A22 edits — keep the field sets identical). Exporter screen also carries **logo, description,
-  business type, working categories** (M3's public seller page has no other capture path for them)
-  plus a public-page preview through the shared `toPublic()` projection. **Lock after verification:**
-  name, country, address, `entityType` become read-only; changing one is allowed but drops
-  `kycStatus` → `submitted` (existing resubmit path) so the tick is withheld until re-approval, and
-  writes an AuditLog entry. 🔴 **"Business type" is undefined and is NOT `entityType` — do not guess
-  its values**; working categories' shape is also undecided. Detail: build-prompt **§A22** + `m1.md` §5b.
+  A22 edits — keep the field sets identical). Exporter screen also carries **logo + description**
+  (M3's public seller page has no other capture path for them) plus a public-page preview through
+  the shared `toPublic()` projection. **Lock after verification:** name, country, address,
+  `entityType` become read-only; changing one is allowed but drops `kycStatus` → `submitted`
+  (existing resubmit path) so the tick is withheld until re-approval, and writes an AuditLog entry.
+  ✅ **No new model fields needed** — every A22 field already exists on `Organisation`; the work is
+  the edit endpoint, the lock and the demotion, not schema. 🚫 **"Business type" + working categories
+  are CANCELLED** (2026-07-30) — removed, not deferred. 🔒 **`website` is internal, never public.**
+  Detail: build-prompt **§A22** + `m1.md` §5b.
 
 ⏸ **On hold (build later):**
 - **D4** — Super Admin TOTP 2FA. Staff use OTP now. **Restore before close** (A4).

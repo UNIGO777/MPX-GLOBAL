@@ -37,15 +37,34 @@ below**. Everything else stays private.
 description · verified tick = a **`verified` boolean** + `verifiedAt` (derived server-side from
 `kycStatus`; the raw `kycStatus` / `rejected` state is **never** exposed — frontend reads
 `verified`, not `kycStatus`) · general location (country / city, **not** street
-address) · business type · main categories · public catalogue (active products only) ·
-product count · member-since.
+address) · **`entityType`** (`business` | `individual` — the trust signal that replaced the cancelled
+"business type"; it reveals nothing about *which* KYC documents were filed) · **`establishedYear`** ·
+**`memberSince`** (**year only**, derived from `createdAt` — no schema field, and never the exact
+signup timestamp) · public catalogue (active products only) · product count.
 
-> ⚠️ **Capture path — build-prompt §A22.** `logo`, `description`, **business type** and **main /
-> working categories** are only enterable through the **company profile screen (§A22, M1 work)**.
-> Until that lands, the seller page renders with a company name and a country. 🔴 **"Business type"
-> has never been defined and is NOT `entityType`** (`business`/`individual`, which drives the KYC
-> document path); the shape of working categories is also undecided. **Ask — do not guess a value
-> set, and do not alias business type to `entityType` to make the projection compile.**
+> 🚫 **Cancelled 2026-07-30 — `business type` and `main / working categories` are REMOVED from
+> this whitelist.** Not deferred, not pending a definition: **dropped.** Do not add a field, a
+> projection key, or a whitelist entry for either, and do not treat their absence as an omission
+> to fix. **`entityType` is public and carries that signal** — the cancellation left no hole.
+>
+> 🔒 **`website` is INTERNAL — never public.** It is held for our own verification use. It *was*
+> being returned by `GET /exporters/:id` and has been removed. **Do not add it back because it
+> looks harmless** — that is exactly how it got there.
+>
+> ⚠️ **Capture path — build-prompt §A22.** `logo` and `description` exist on `Organisation` but are
+> only *enterable* through the **company profile screen (§A22, M1 work)**. Until that lands, the
+> seller page renders with a company name and a country. A22 needs **no new model fields**.
+>
+> ⏳ **`product count` is whitelisted but NOT implemented.** It needs `Product.exporterOrgId` (§A2)
+> and a `status` field before "active products only" is even expressible — `Product` is still a stub.
+> Add it when M2 lands. **Do not** bolt a second collection query onto the profile read meanwhile.
+
+**How the seller projection is implemented** (copy this for `Product` / `Category`):
+`Organisation.PUBLIC_FIELDS` + `PUBLIC_DERIVED` declare the surface on the **model**;
+`src/utils/toPublic.js` is the **one** shared serialiser; `exporters.controller.js` calls it. A
+controller that hand-rolls an object literal is the bug this pattern exists to prevent — that is how
+`website` reached the public response. `tests/kyc.test.js` asserts the **exact** key set, so
+widening the whitelist without deciding to will fail a test.
 
 **Product** — name · **`slug`** (`/product/:slug` link — §A6) · description · images ·
 category (+ type goods/service) · price (mode +
@@ -60,6 +79,7 @@ never returned in the response.
 ## Private — NEVER on a public route
 
 - **Seller:** KYC documents · direct contact (phone / email) · precise/street address ·
+  **`website`** (internal — our verification use only, 2026-07-30) · `buyerSide` / `exporterSide` ·
   owner personal IDs / PII · internal & auth fields (userId, tokenVersion, role, verification
   notes) · financial/account details.
 - **Product:** `status` internal states (draft/archived) · `takedown { isDown, reason,

@@ -109,4 +109,21 @@ describe('A21 · login portals', () => {
     await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000131' }));
     expect((await staffLogin({ identifier: email, password: 'longpassword1' })).status).toBe(401);
   });
+
+  it('the OTP budget is portal-scoped: a buyer burning it does not lock the exporter on the same email', async () => {
+    const email = `shared_${uniq()}@example.com`;
+    await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000201' }));
+    await request(app).post('/auth/exporter/signup').send(exporterPayload({ email, number: '9820000202' }));
+
+    // otpLimiter is 5 / 10min. Hit the buyer portal 6× → the 6th is 429 (budget spent).
+    let last;
+    for (let i = 0; i < 6; i += 1) {
+      last = await login({ identifier: email, password: 'longpassword1', portal: 'buyer' });
+    }
+    expect(last.status).toBe(429);
+
+    // The exporter on the SAME email has its own budget → still works.
+    const exporter = await login({ identifier: email, password: 'longpassword1', portal: 'exporter' });
+    expect(exporter.status).toBe(200);
+  });
 });
