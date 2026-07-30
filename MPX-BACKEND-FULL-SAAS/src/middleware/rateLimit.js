@@ -96,3 +96,15 @@ export const staffOtpLimiter = buildLimiter({
   limit: 5,
   keyGenerator: otpKeyGenerator,
 });
+
+// M2 (§A25.3 hardening): image-upload endpoints get their OWN, much tighter
+// budget — the general limit (300/15min) × 5 files × 5 MB would allow ~7.5 GB of
+// orphan-able Cloudinary uploads per window (the storage-abuse class the KYC
+// doc-cap closed). Keyed per authenticated user (these routes sit behind
+// `authenticate`), IP as fallback.
+export const uploadLimiter = buildLimiter({
+  prefix: 'rl:upload:',
+  windowMs: 60 * MINUTE,
+  limit: 30,
+  keyGenerator: (req) => (req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
+});

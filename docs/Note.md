@@ -45,9 +45,9 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
   **3 ACTIVE (published) products** — **taken-down products do NOT count** toward the cap
   (`takedown.isDown` excluded) — **plus max 10 drafts**; verification lifts the cap.
   Authoritative source: `docs/MPX-M2-M3-Build-Prompt.md` Part A (this ledger mirrors it).
-- **Status:** this **IS** Phase-1 scope — build/enforce it when the **catalogue / product-add**
-  module is built. No product endpoints exist yet, so nothing enforces it today. Not red-alert
-  guarded (it's expected scope) — just don't forget it.
+- **Status:** ✅ **ENFORCED — M2 backend built 2026-07-31.** The 3-ACTIVE cap (taken-down
+  excluded — §A10) fires on every publish (draft→active AND inactive→active) and the 10-draft
+  cap (§A15) on create; both server-side with tests. Verification lifts both.
 - _(Supersedes the earlier "Phase 1 = no limit" note.)_
 
 ## S1 · M1 frontend screens — 🧭 ALERT before building

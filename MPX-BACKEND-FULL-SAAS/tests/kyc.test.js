@@ -337,6 +337,7 @@ describe('A21 · public exporter read is side-based (M1-C)', () => {
         'logo',
         'memberSince',
         'name',
+        'productCount', // §9b — delivered by M2 (live listings only)
         'slug',
         'verified',
         'verifiedAt',

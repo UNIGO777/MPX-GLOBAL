@@ -12,7 +12,8 @@
     "start": "node src/server.js",
     "test": "vitest run",
     "lint": "eslint src tests",
-    "seed": "node src/seed/superadmin.js"
+    "seed": "node src/seed/superadmin.js",
+    "seed:catalogue": "node src/seed/catalogue.js"
   },
   "private": true,
   "dependencies": {
@@ -28,6 +29,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.8.0",
     "multer": "^2.2.0",
+    "node-cron": "^4.6.0",
     "otplib": "^13.4.1",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.3",

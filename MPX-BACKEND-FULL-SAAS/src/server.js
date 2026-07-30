@@ -3,6 +3,7 @@ import { env } from './config/env.js';
 import { logger } from './utils/logger.js';
 import { connectDatabase, closeDatabase } from './config/database.js';
 import './models/index.js'; // register every model with mongoose
+import { schedulePurgeJob } from './jobs/purgeBlockedProducts.js';
 
 // Connect to MongoDB before accepting traffic — a payments-adjacent service must
 // not serve requests without its database.
@@ -14,6 +15,9 @@ try {
 }
 
 const app = createApp();
+
+// A8 cleanup job (daily + boot catch-up; no-op in tests).
+schedulePurgeJob();
 
 const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'MPX Global backend listening');

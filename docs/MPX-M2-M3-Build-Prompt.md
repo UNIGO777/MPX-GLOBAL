@@ -378,6 +378,28 @@ after 180 days (A8), so counting from `Product` rows undercounts repeat offender
 matters; and M5's Organisation list sorts by this count, which must not need an aggregate per row.
 This is the trigger data for the F6 suspension threshold (threshold value itself still open).
 
+## A25. M2 build parameters (owner-decided 2026-07-31)
+
+Four build-time questions were put to the owner before starting M2; the answers are binding:
+
+1. **Permission strings (M2 adds FOUR grantable permissions to the catalogue):**
+   - `category:read` — admin category tree / attribute read
+   - `category:manage` — sub-category CRUD, attribute CRUD, top toggle, image upload (A20), synonyms
+   - `product:read` — product monitoring list + detail
+   - `product:takedown` — takedown AND restore
+   **Catalogue writes are deliberately grantable** (supersedes the 2026-07-30 "takedown =
+   superadmin-only" default — the owner chose flexibility over the quote's "view-only" wording).
+   Governance stays hard-gated exactly as before: user activate/deactivate, employee
+   create/permissions, org block/unblock are **never** grantable. Superadmin remains all-access.
+2. **CategoryAttribute seed = sensible defaults from the Form-Fields HTML names:** numeric-sounding
+   fields (GSM, Purity %, Team size, …) → `number` + unit + `filterable`; Y/N fields → `boolean`;
+   everything else → `text`. **Select options are NOT invented** — those fields seed as `text`
+   until an admin defines options in the attribute manager.
+3. **Product images: max 5 per product, 5 MB each.** Cloudinary **public** assets (unlike KYC),
+   JPG/PNG/WEBP only, magic-byte verified like the KYC path.
+4. **Purge job scheduling: `node-cron`** (new dependency — owner-approved 2026-07-31) runs the A8
+   180-day blocked-product purge daily, plus a catch-up run at boot. The job is idempotent.
+
 ---
 
 # Part B — Rules carried over unchanged
@@ -423,7 +445,7 @@ This blocks M3: `GET /exporters/:id` is the public seller profile (shipped route
 8. **M3 search** — Atlas Search index, `GET /public/search`, `GET /public/facets`, ranking.
 9. **M3 AI search** — `POST /search/ai` with all guardrails.
 10. **M3 public surfaces** — product detail, public seller profile, category browse, all through `toPublic()`.
-11. **Cleanup job** — the 90-day blocked-product purge (A8).
+11. **Cleanup job** — the **180-day** blocked-product purge (A8/A18 — the old 90-day figure was stale).
 12. **M3 tests** — especially the projection tests below.
 
 ---

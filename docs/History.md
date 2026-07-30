@@ -135,6 +135,153 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-31** — **Post-build M1+M2 combined audit — ~50 possibilities walked, 2 bugs found and
+  fixed, 5 interaction tests added. 191/191 green (×2 runs — no flakiness), lint clean.**
+  **BUG-1 (real):** a cross-TYPE category change bricked the product — the old goods/service
+  field values failed the type check and the API has no "unset" input, so every subsequent edit
+  400'd. Fix: `updateProduct` auto-clears the now-inapplicable field group on a type-changing
+  move and DROPS stale attribute keys (caller supplies the new leaf's set); regression test
+  covers goods→service→goods round-trip. **BUG-2:** admin sub-category create hit a raw 500 on a
+  slug insert-race — now a clean 409 ("please retry"). **New interaction tests
+  (`m1-m2-interactions.test.js`):** *(1)* full end-to-end over real HTTP — exporter signup → OTP
+  exchange → product create → publish → public browse → employee verify → tick flips on the M2
+  seller block + §A23 `sellerVerified` sync + §9b productCount, with raw `kycStatus` asserted
+  absent; *(2)* superadmin's `requireRole` bypass cannot create a product (`exporterSide` org
+  guard → 403); *(3)* F1-A org block × M2 — session dead + profile 404 while **products stay
+  publicly visible** (pins the accepted F1-B gap as a test, so its closure is a conscious
+  change); *(4)* cross-type regression; *(5)* public browse `seller` filter by SLUG.
+  **Checked and clean (highlights):** empty-`$in` category filter · leaf-under-inactive-top
+  intersection · takedown-on-draft (frozen via status-block, consistent) · purge boot-order
+  (after DB connect) · seed CLI guard under vitest · both-sides org verify syncs products via
+  either review path · route-order (`/categories/top` vs `:idOrSlug`) · no `status`/`slug` in the
+  product PATCH surface · publish-cap race (accepted, documented).
+- **2026-07-31** — **M2 CATALOGUE BACKEND BUILT — all ten plan phases (M2-A→M2-J) in one pass.
+  186/186 green (126 → +60), lint clean, route-guard passes.** Tracker: **A5** (default-deny +
+  4 new grantable perms), **A6/A2** (Product ownership via `exporterOrgId` + cross-org-404
+  tests), **B2** (attributes primitive-union boundary), **B6** (magic-byte image uploads, 5×5MB),
+  **B7** (public reads rate-limited), **C10** (append-only audit incl. purge snapshot).
+  **Shipped:** *(A)* `SCOPE.EXPORTER_ORG`/`BUYER_ORG` in scoping.js (§A2, the one sanctioned M1
+  change) · §A25 permission strings · `node-cron`. *(B)* Models: `Category` rebuilt (A4
+  `active`/`prevActive`, A16 type-on-leaf validator, A11 image, A12 synonyms) · `CategoryAttribute`
+  (compound-unique `(categoryId,key)`, options-vs-inputType validator) · `Product` rebuilt (§A1
+  4-state status, §A2, §A6 slug, §A19 no createdBy, §A23 `sellerCountry`/`sellerVerified`,
+  `images` as `{url,publicId}` for purge bookkeeping, 5 indexes) · `Organisation.takedownCount`
+  (§A24). *(C)* Idempotent seed: 40 tops (typeless) + 262 subs + Other×2 (A14/A17) + §A25.2
+  attribute defaults; `leather-footwear` slug de-dup; synonyms EMPTY (owner content). *(D)*
+  Category endpoints: 5 public reads (id-or-slug; inactive hidden in-query) + admin tree read
+  (`category:read`) + toggle with A4 cascade AND the cascade-intent rule (deactivate-during-off
+  records `prevActive:false`) + sub CRUD (type locks with products; parentId/slug immutable) +
+  attribute CRUD (key+inputType immutable) + A20 image upload (tops too). *(E)* Product seller
+  endpoints: two-step image upload behind a NEW `uploadLimiter` (30/hr/user) with own-prefix ref
+  validation · create (leaf-only, type-driven fields, attribute validation, §A15 draft cap,
+  §A23 set-on-create) · edit (archived TERMINAL; frozen-while-takedown allows content fixes but
+  blocks status/delete; rename keeps slug) · status (one-way draft; D1 cap with A10 exclusion on
+  BOTH publish paths; publish enforces required attributes) · A5 delete→archive + slug marker ·
+  /mine (A9 — never byUserId). *(F)* Public browse/detail (`/public/products[/:idOrSlug]`,
+  id-or-slug, query-level availability incl. parent-aware `activeLeafIds` w/ 30s-TTL cache;
+  `category` + `seller` filters) through `toPublic()` whitelists on all three models; **§9b
+  `productCount` DELIVERED** on `GET /exporters/:id` (whitelist + rule + m3.md + kyc.test updated
+  same pass). *(G)* Moderation: monitoring list (3-option status filter; drafts/archived never
+  shown; purge countdown + org takedownCount; staff view shows byUserId — A9 is seller-only) ·
+  takedown (reason required; status untouched; §A24 counter++; **archived → 409, the A7 guard**) ·
+  restore (state exactly as frozen; counter NOT decremented). *(H)* A8 purge job: node-cron daily
+  03:15 + boot catch-up, test-env disabled, `status:{$ne:'archived'}` defence-in-depth,
+  audit-snapshot-BEFORE-delete (name + seller company name), best-effort Cloudinary cleanup,
+  injectable `now`. *(I)* `errorLogs` collection (5xx-only, shaped, fire-and-forget, 90-day TTL —
+  AuditLog untouched) · pino redact extension (passwordHash/storageKey/kycDocuments/contact) ·
+  §A23 `sellerVerified` sync in verification.service (the one flagged M1 touch, tested).
+  **Docs same-pass:** m3-public-projection rule + m3.md §5b.1 productCount ✅-marked · M2.md §9b
+  DELIVERED · Note.md D1 + remind.md D1 → ENFORCED · plan phase table → all DONE.
+  **Gotcha:** model pre-validate hooks throw plain Errors → map to 400 in the service
+  (mapAttributeError), else they surface as 500s. **NOT built (deliberate):** synonyms content
+  (owner), M3 search/facets/AI, F1-B products-cascade (now unblocked — schedule in FINALIZE),
+  D6 unblock-request, any frontend screen.
+- **2026-07-31** — **M2 plan third (final) verify pass — systematic §A1–A25 + rules + edge-hunt
+  sweep; 8 findings, all fixed in one batch.** Notable: *(1)* **cascade-intent bug** — an admin
+  deactivating a sub while its top is cascade-off was a no-op, so the top's reactivation would
+  resurrect a sub the admin had deliberately refused; fix = that action writes
+  `prevActive: false` (records intent, m5-rules §12 guarantee actually holds). *(2)* **image
+  upload was the next storage-abuse surface** — general 300/15-min limit × 5 files × 5 MB ≈
+  7.5 GB/window of orphan-able uploads; fix = dedicated `uploadLimiter` (~30/hr/user) on product
+  AND category image endpoints (same class as the KYC doc-cap fix). *(3)* **`attributes[].value`
+  = primitive union only** (string|number|boolean; objects/arrays 400) — the Mixed path is
+  indexed and becomes an M3 filter target, so operator objects must be impossible at the
+  boundary. *(4)* category single read accepts **id OR slug** (SEO parity with product detail).
+  *(5)* seller-route guards spelled out (`authenticate` + `requireRole('exporter')` on all six
+  `/products*` routes). *(6)* product **rename never regenerates slug** (A6, explicit).
+  *(7)* `activeLeafIds` cache gets a ~30s TTL backstop (per-process assumption documented).
+  *(8)* gotcha recorded: **blocked-org products stay publicly visible until F1-B** (not an M2
+  bug; no sneaky read-side filter) + **M2 unblocks F1-B's products half — schedule in FINALIZE
+  after M2**. Final consistency grep clean (no generalLimiter-on-images, no stale 90-day purge
+  figure, no superadmin-only takedown leftovers, no `resolvedType`/`either`). Plan now verified
+  3×: 7 + 4 + 8 findings — build-ready.
+- **2026-07-31** — **M2 plan second verify pass (owner-requested) — 4 more catches, one
+  serious.** (1) 🔴 **A7-violation path closed:** taking down an `archived` product would make it
+  match the purge query and get hard-deleted at 180d — takedown on archived now 409s AND the
+  purge query adds `status: { $ne: 'archived' }` (defence-in-depth). (2) **Archived declared
+  TERMINAL** (no un-archive path exists in any spec) — edit/status on archived → 409; re-list =
+  new product on the freed slug. (3) **Seed slug collisions are real** — top "Footwear" (#6) vs
+  Leather's sub "Footwear" both slugify to `footwear`; seed data resolves clashes explicitly
+  (parent-prefixed sub slug, deterministic re-runs). (4) **Public product detail accepts id OR
+  slug** (SEO §1 mandates `/product/:slug`; avoids an M3 contract break). Test lists extended
+  (inputType immutability, archived-terminal, A7 guard, cross-seller image ref, sub-toggle
+  guard).
+- **2026-07-31** — **M2 plan self-verify pass — 7 gaps fixed in `build-plans/m2/backend-plan.md`
+  before build.** (1) `GET /admin/categories` (`category:read`) was missing — public reads hide
+  inactive, so the m5 admin tree screen had no data source. (2) `GET /public/products` had no
+  **`seller` filter** — the public seller page's catalogue had no product source. (3) Category
+  `order` was wrongly placed in the public projection — the projection rule lists it private;
+  server sorts by it instead. (4) Image upload reworked to **two-step** (multipart can't carry
+  nested `attributes[]` JSON): `POST /products/images` → `{url, publicId}` refs → JSON
+  create/edit; refs must match the caller's own `mpx/products/{orgId}/` prefix; orphans accepted
+  MVP. (5) Product create gains an **`exporterSide: true` org guard** (requireRole's superadmin
+  bypass would otherwise create platform-org-owned products). (6) Consistency guards: activating
+  a sub under an inactive top → 409; `activeLeafIds` checks parent too; attribute **`inputType`
+  immutable** (a number→select flip corrupts stored typed values); sub `parentId` immutable.
+  (7) Clarified: staff monitoring view MAY show `takedown.byUserId` (A9 restricts the seller
+  only); cap-after-demotion doesn't auto-unpublish (recorded as intended); purge job
+  single-process note. Flagged-defaults list extended (Other-subs attribute set, two-step
+  upload, sub-toggle guard).
+- **2026-07-31** — **Wrote `build-plans/m2/backend-plan.md` — full phased M2 build plan (no code
+  yet).** Ten phases M2-A→M2-J: base layer (scoping gets `EXPORTER_ORG` + `BUYER_ORG` scope
+  types — completes §A2 once; §A25 permission strings; `node-cron` install) → models (Category
+  rebuilt with A4 `active`/`prevActive` NOT the mixin `isActive`; CategoryAttribute with
+  immutable `key` + compound unique `(categoryId,key)`; Product rebuilt per A1/A2/A23 with
+  **`images` as `{url, publicId}`** so the A8 purge can actually delete Cloudinary assets —
+  public projection maps to plain URLs; `Organisation.takedownCount`) → idempotent seed
+  (upsert-by-slug; §A25.2 attribute defaults; synonyms seeded EMPTY — owner list pending) →
+  category endpoints (A4 cascade, A20 image on tops, A12 synonyms, attribute CRUD) → product
+  endpoints (caps D1/A10/A15, draft=shape-valid vs publish=full validation, one-way draft,
+  A5 archive + A6 slug marker, A9 no-byUserId) → public reads + **§9b `productCount` unblock**
+  (kyc.test whitelist assertion updates in the same commit) → moderation (3-option status
+  filter, takedown never touches status, §A24 counter) → purge job (node-cron daily + boot
+  catch-up, test-env disabled, audit-snapshot-then-delete) → cross-cutting (A19 `errorLogs`
+  5xx-only 90d TTL, pino redact extension, §A23 `sellerVerified` sync in
+  verification.service — the one flagged M1 touch) → Part D test matrix. **Flagged defaults**
+  (owner can override): status-change blocked while taken down · tops accept synonyms via PATCH
+  · publish doesn't require an image · seeded attributes all `required:false`. **Accepted
+  risks recorded:** publish cap race (MVP), kyc.test exact-whitelist failing on productCount =
+  A3 working as designed. Estimate ~5–6 days.
+- **2026-07-31** — **§A25 added — M2 build parameters (owner-decided), 4 questions closed before
+  build.** *(1)* **Permissions:** M2 adds FOUR grantable strings — `category:read`,
+  `category:manage`, `product:read`, `product:takedown`. 🔴 **Decision change:** catalogue writes
+  (incl. takedown/restore) are **grantable** — supersedes the 2026-07-30 "takedown =
+  superadmin-only month 1" default; conflict was flagged to the owner explicitly. Governance
+  (user activate, employee create/permissions, org block) stays hard-gated. Propagated: m5-rules §5
+  (new "catalogue writes" tier) + §6, m5-features gates (screens 6/7/8/9) + permissions summary,
+  m5.md §8, M2.md §5.3 + header. *(2)* **Attribute seed** = sensible defaults from the Form-Fields
+  names (number+unit+filterable / boolean / text; select-options never invented — admin defines
+  them later). *(3)* **Product images: max 5 × 5 MB**, public Cloudinary, magic-byte checked.
+  *(4)* **Purge job = `node-cron`** (new dependency, owner-approved) — daily + boot catch-up,
+  idempotent. Build defaults noted without asking: currency = ISO-4217 allowlist ·
+  `countryOfOrigin` = ISO alpha-2 · fixed price stores a single value · verified sellers have no
+  draft cap · public reads behind `generalLimiter` · backend-first order (month-1 SOW sequence).
+- **2026-07-31** — **DOC-ONLY (M2 pre-build read-through):** build-prompt Part C step 11 said
+  "90-day blocked-product purge" — stale per §A18 (window is **180 days**); corrected. Also noted
+  while reading: the M2 folder images (`Models-Chart.png`, `m2.png`, `m2-work.png`,
+  `Other-category-feilds.png`) and the Form-Fields HTML's "Other — seller picks" badge carry
+  pre-Part-A designs (`type: either`, `resolvedType`, status without `archived`, Featured content,
+  manual goods/service pick) — the .md files + Part A win; images are visual aids only.
 - **2026-07-30** — **CODE: all audit findings fixed (owner-confirmed) — 126/126 green (+5), lint
   clean.** Owner decisions: `businessProfile` **removed from exporter signup** (A5 — captured at
   verification, not signup; zod strips it, so senders get 201 and nothing is stored — the

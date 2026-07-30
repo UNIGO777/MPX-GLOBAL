@@ -22,6 +22,11 @@ export const SCOPE = Object.freeze({
   USER: 'user',
   SELF: 'self',
   PLATFORM: 'platform',
+  // A2 (M2/M3): role-specific ownership field names. Product is owned by the
+  // exporter org; SavedItem (M3) by the buyer org. Same single-field pattern as
+  // ORG, just the per-model field name the plan mandates.
+  EXPORTER_ORG: 'exporterOrg',
+  BUYER_ORG: 'buyerOrg',
 });
 
 export function declareScope(schema, type) {
@@ -51,6 +56,10 @@ export function ownershipFilter(model, user) {
       return { _id: user.orgId };
     case SCOPE.PLATFORM:
       return {};
+    case SCOPE.EXPORTER_ORG:
+      return { exporterOrgId: user.orgId };
+    case SCOPE.BUYER_ORG:
+      return { buyerOrgId: user.orgId };
     default:
       throw new Error(`Unknown ownership scope "${scope}" for model "${model.modelName}"`);
   }

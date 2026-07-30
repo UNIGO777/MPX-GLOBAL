@@ -60,7 +60,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 | **Data** | Full tree — 40 top categories, ~250 sub-categories · active state · order |
 | **Filters** | Active/inactive · search by name |
 | **Actions** | Activate / deactivate a top category · image upload |
-| **Gate** | To propose (§8 of m5.md) |
+| **Gate** | Read: `category:read` · toggle/image: `category:manage` (§A25, 2026-07-31) |
 | **Notes** | Top categories are toggle-only — no create, edit or delete. Deactivating one stores each sub's `prevActive` first, so reactivating restores rather than blanket-enabling. Image upload on top categories is a deliberate narrow exception (A20). `type` is not set on top categories at all (A16) |
 
 ## 7 · Sub-category CRUD + attribute manager 📋
@@ -69,7 +69,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 |---|---|
 | **Data** | Sub-category name · slug · parent · `type` (goods/service) · active · order · synonyms · image · its `CategoryAttribute` list |
 | **Actions** | Create · edit · delete · manage attributes (name, key, inputType, options, unit, required, filterable, order) |
-| **Gate** | To propose |
+| **Gate** | Read: `category:read` · all writes: `category:manage` (§A25) |
 | **Notes** | Delete is blocked when products or child categories exist. `type` is REQUIRED here — it is the leaf that decides the product form. A `synonyms` tags input is mandatory, otherwise admin-created categories are invisible to search (A12) |
 
 ## 8 · Product monitoring list 🔵
@@ -79,7 +79,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 | **Data** | Product name · seller company · category · status · that seller's takedown count · purge countdown · created date · who took it down, when and why |
 | **Filters** | Category · sub-category · status (Active / Inactive / Blocked) · seller · product name search |
 | **Actions** | Takedown (reason required) · restore · open product detail · view that product's chats · open the seller's public profile · open the seller's Organisation |
-| **Gate** | To propose — read grantable, takedown/restore superadmin-gated |
+| **Gate** | Read: `product:read` · takedown/restore: `product:takedown` — both grantable (§A25, 2026-07-31; supersedes the 07-30 superadmin-only default) |
 | **Notes** | Read-only monitoring: admin cannot edit a product (B6). `draft` and seller-`archived` products are NOT shown. "Blocked" reads `takedown.isDown`, never `status`. No bulk takedown — block the Organisation instead. The purge countdown and the seller takedown count are both load-bearing, not decoration. Takedown count reads **`Organisation.takedownCount`** (§A24 — persisted, increment-only, purge-proof) |
 
 ## 9 · Takedown action 📋
@@ -88,7 +88,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 |---|---|
 | **Data** | Reason (required) |
 | **Actions** | Take down · restore |
-| **Gate** | Superadmin-gated |
+| **Gate** | `product:takedown` — grantable (§A25) |
 | **Notes** | Likely a modal inside screen 8 rather than its own screen. Sets `takedown{isDown, reason, byUserId, at}` and never touches `status`, so restoring returns the product to whatever state it was in. Writes AuditLog with actor and reason. The seller sees the reason and date on their own listing but never `byUserId`. Never a hard delete |
 
 ## 10 · All conversations 🔵📋
@@ -180,8 +180,10 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 
 ## Permissions summary
 
-**Grantable today:** `buyer:approve` · `exporter:verify` · `user:read` · `kyc:view`
+**Grantable — M1:** `buyer:approve` · `exporter:verify` · `user:read` · `kyc:view`
+
+**Grantable — M2 (§A25, decided 2026-07-31):** `category:read` · `category:manage` · `product:read` · `product:takedown` *(catalogue writes are grantable — supersedes the 07-30 "takedown superadmin-only" default)*
 
 **Never grantable — hard `requireRole('superadmin')`:** user activate/deactivate · employee create · permission assignment · organisation block/unblock
 
-**Still to propose:** read and action permissions for the category, product-monitoring, conversation and organisation screens. Follow M1's split — reads grantable, state-changing governance hard-gated. Do not invent permission strings inline.
+**Still to propose:** read permissions for the conversation (M4) and organisation (M5) screens. Do not invent permission strings inline.

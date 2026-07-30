@@ -60,7 +60,8 @@ Two tiers, and they do not blur:
 | Tier | Gate |
 |---|---|
 | **Reads** — lists, details, viewers | Grantable permission |
-| **State-changing governance** — user activate/deactivate, employee create, permission assignment, organisation block/unblock, **product takedown/restore (month 1 — decided 2026-07-30; matches the quote's "product monitoring (view-only)" for employees)** | Hard `requireRole('superadmin')` |
+| **Catalogue writes** — category CRUD/toggle/image/attributes (`category:manage`), product takedown/restore (`product:takedown`) | Grantable permission (🔴 §A25, 2026-07-31 — supersedes the 07-30 "takedown superadmin-only" default; owner chose grantable) |
+| **State-changing governance** — user activate/deactivate, employee create, permission assignment, organisation block/unblock | Hard `requireRole('superadmin')` — never grantable |
 
 A grantable `user:manage`-style permission is a privilege-escalation path: an employee holding it could deactivate a superadmin, or reactivate itself. It must not exist in the catalogue.
 
@@ -70,7 +71,12 @@ A grantable `user:manage`-style permission is a privilege-escalation path: an em
 
 The boot route-guard refuses to start if a route declares neither a permission nor `publicRoute`. No admin route is ever public.
 
-**Do not invent permission strings inline.** The catalogue currently holds four grantable permissions: `buyer:approve`, `exporter:verify`, `user:read`, `kyc:view`. New screens need new ones — propose the list, get it confirmed, add it to the catalogue, then use it. A permission that exists only in a route file is invisible to the assignment screen.
+**Do not invent permission strings inline.** The catalogue holds four grantable permissions from M1
+(`buyer:approve`, `exporter:verify`, `user:read`, `kyc:view`) **plus four decided for M2 (§A25,
+2026-07-31): `category:read`, `category:manage`, `product:read`, `product:takedown`.** Anything
+beyond these (conversation/organisation reads for M4/M5 screens) — propose the list, get it
+confirmed, add it to the catalogue, then use it. A permission that exists only in a route file is
+invisible to the assignment screen.
 
 ## 7 · Staff reads are RBAC-scoped, not org-owned
 

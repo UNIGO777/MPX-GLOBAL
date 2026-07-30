@@ -31,6 +31,18 @@ const REDACT_PATHS = [
   '*.aadhaar',
   'kyc',
   '*.kyc',
+  // A19 backstop (M2): hash/KYC-reference/contact paths — redaction is the
+  // safety net, not a licence to log these.
+  'passwordHash',
+  '*.passwordHash',
+  'storageKey',
+  '*.storageKey',
+  'kycDocuments',
+  '*.kycDocuments',
+  'email',
+  '*.email',
+  'mobile',
+  '*.mobile',
 ];
 
 export const logger = pino({

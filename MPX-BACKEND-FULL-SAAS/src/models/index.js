@@ -4,8 +4,10 @@
 export { User } from './User.js';
 export { Organisation } from './Organisation.js';
 export { AuditLog } from './AuditLog.js';
+export { ErrorLog } from './ErrorLog.js';
 
 export { Category } from './Category.js';
+export { CategoryAttribute } from './CategoryAttribute.js';
 export { Product } from './Product.js';
 
 export { Inquiry } from './Inquiry.js';

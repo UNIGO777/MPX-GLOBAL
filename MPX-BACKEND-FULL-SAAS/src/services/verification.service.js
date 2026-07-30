@@ -1,4 +1,5 @@
 import { Organisation } from '../models/Organisation.js';
+import { Product } from '../models/Product.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 
@@ -39,6 +40,16 @@ async function reviewOrg({ orgId, sideFlag, toStatus, reason, actor, action, met
     org.kycRejectionReason = reason;
   }
   await org.save();
+
+  // §A23 (M2): sync the denormalised `sellerVerified` search field onto the
+  // org's products — Atlas $search cannot join, so the verified boost reads
+  // this copy. A reject was never verified, so `false` is a no-op there. (The
+  // A22 demotion + country-change syncs attach to the A22 edit endpoint when it
+  // is built — §A22.2 step 5.)
+  await Product.updateMany(
+    { exporterOrgId: org._id },
+    { $set: { sellerVerified: toStatus === 'verified' } },
+  );
 
   await recordAudit({
     actor,

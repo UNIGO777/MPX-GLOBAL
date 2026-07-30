@@ -1,5 +1,29 @@
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
+import { ErrorLog } from '../models/ErrorLog.js';
+
+// A19: persist 5xx errors to the `errorLogs` collection (90-day TTL).
+// Fire-and-forget — a logging failure must NEVER affect the response — and the
+// exclusion list is enforced by construction: only these shaped fields are ever
+// written (no bodies, no headers, no KYC/tokens/OTPs/contact).
+export function persistErrorLog({ err, req, statusCode }) {
+  return ErrorLog.create({
+    statusCode,
+    message: err?.message,
+    stack: err?.stack,
+    route: req.originalUrl,
+    method: req.method,
+    requestId: req.id,
+    userId: req.user?.userId ?? undefined,
+    orgId: req.user?.orgId ?? undefined,
+    occurredAt: new Date(),
+  }).catch((persistErr) => {
+    logger.warn(
+      { err: { name: persistErr?.name, message: persistErr?.message } },
+      'errorLogs persist failed (response unaffected)',
+    );
+  });
+}
 
 // Central error handler. Registered last. The client receives only a generic
 // (or explicitly-safe) message plus the requestId; full detail is logged
@@ -29,6 +53,7 @@ export function errorHandler(err, req, res, _next) {
   const context = { err, method: req.method, url: req.originalUrl, statusCode };
   if (statusCode >= 500) {
     log.error(context, 'request failed');
+    persistErrorLog({ err, req, statusCode }); // A19 — errors only, never awaited
   } else {
     log.warn(context, 'request rejected');
   }

@@ -55,9 +55,10 @@ signup timestamp) · public catalogue (active products only) · product count.
 > only *enterable* through the **company profile screen (§A22, M1 work)**. Until that lands, the
 > seller page renders with a company name and a country. A22 needs **no new model fields**.
 >
-> ⏳ **`product count` is whitelisted but NOT implemented.** It needs `Product.exporterOrgId` (§A2)
-> and a `status` field before "active products only" is even expressible — `Product` is still a stub.
-> Add it when M2 lands. **Do not** bolt a second collection query onto the profile read meanwhile.
+> ✅ **`productCount` SHIPPED with M2 (2026-07-31).** LIVE listings only:
+> `countDocuments({ exporterOrgId, status: 'active', 'takedown.isDown': { $ne: true } })` — same
+> shape as the D1 cap query. Computed in the controller next to `toPublic()` (async, so it can't
+> live in the sync `PUBLIC_DERIVED`); pinned by the exact-key assertion in `tests/kyc.test.js`.
 
 **How the seller projection is implemented** (copy this for `Product` / `Category`):
 `Organisation.PUBLIC_FIELDS` + `PUBLIC_DERIVED` declare the surface on the **model**;

@@ -109,6 +109,13 @@ const organisationSchema = new Schema(
     blockReason: { type: String, trim: true },
     blockedAt: { type: Date },
     blockedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+
+    // §A24 (M2): per-seller takedown counter — INCREMENT-ONLY (a restore never
+    // decrements; it counts offences, not current state). Purge-proof by design:
+    // blocked products hard-delete at 180 days (A8), so counting Product rows
+    // would undercount repeat offenders exactly when it matters. This is the
+    // trigger data for the F6 suspension threshold. INTERNAL — not public.
+    takedownCount: { type: Number, default: 0 },
   },
   baseSchemaOptions,
 );

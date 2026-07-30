@@ -1,0 +1,361 @@
+import { randomBytes } from 'node:crypto';
+
+import { Product } from '../models/Product.js';
+import { Category } from '../models/Category.js';
+import { CategoryAttribute } from '../models/CategoryAttribute.js';
+import { Organisation } from '../models/Organisation.js';
+import { AppError } from '../utils/AppError.js';
+import { slugify } from '../utils/slug.js';
+import { recordAudit } from './audit.service.js';
+import { uploadPublicImage } from './image.storage.service.js';
+
+// D1/A15 caps (unverified sellers). A10: taken-down products do NOT occupy an
+// active slot — the cap query excludes them explicitly.
+const MAX_ACTIVE_UNVERIFIED = 3;
+const MAX_DRAFTS_UNVERIFIED = 10;
+
+const GOODS_FIELDS = ['moq', 'unit', 'hsCode', 'countryOfOrigin', 'supplyAbility', 'leadTime', 'packaging', 'terms'];
+const SERVICE_FIELDS = ['engagementType', 'deliveryModel', 'teamSize', 'pricingModel', 'timeline'];
+
+// ---------------------------------------------------------------------------
+// Shared guards
+// ---------------------------------------------------------------------------
+
+// The caller must be an exporter-side company (defensive: requireRole's
+// superadmin bypass must not create platform-org-owned products).
+async function loadExporterOrg(orgId) {
+  const org = await Organisation.findOne({ _id: orgId }).select('exporterSide country kycStatus');
+  if (!org || !org.exporterSide) {
+    throw AppError.forbidden('not an exporter org', 'Not allowed.');
+  }
+  return org;
+}
+
+// M2↔M3 fix: a product maps to a LEAF only — a top category has no type, no
+// attributes and no form, so it is rejected outright.
+async function loadLeafCategory(categoryId) {
+  const cat = await Category.findOne({ _id: categoryId });
+  if (!cat) throw AppError.badRequest('category not found', 'Unknown category.');
+  if (cat.parentId == null) {
+    throw AppError.badRequest('top category rejected', 'Pick a sub-category — products cannot sit on a top category.');
+  }
+  return cat;
+}
+
+// Leaf type decides the field group (§A14 — the seller never picks it manually):
+// a goods listing must not carry service fields and vice versa.
+function assertTypeFields(leaf, doc) {
+  const forbidden = leaf.type === 'goods' ? SERVICE_FIELDS : GOODS_FIELDS;
+  const present = forbidden.filter((f) => doc[f] !== undefined && doc[f] !== null && doc[f] !== '');
+  if (present.length > 0) {
+    throw AppError.badRequest(
+      `wrong-type fields: ${present.join(',')}`,
+      `These fields do not apply to a ${leaf.type} listing: ${present.join(', ')}.`,
+    );
+  }
+}
+
+// Validate submitted attributes against the leaf's CategoryAttribute defs.
+// Draft = shape-valid only; PUBLISH additionally requires every `required` def
+// to be present (a seller may save an incomplete draft — plan M2-E).
+async function validateAttributes(leaf, attributes, { forPublish = false } = {}) {
+  const defs = await CategoryAttribute.find({ categoryId: leaf._id }).lean();
+  const byKey = new Map(defs.map((d) => [d.key, d]));
+
+  const out = [];
+  const seen = new Set();
+  for (const { key, value } of attributes ?? []) {
+    const def = byKey.get(key);
+    if (!def) {
+      throw AppError.badRequest(`unknown attribute key: ${key}`, `Unknown specification "${key}" for this category.`);
+    }
+    if (seen.has(key)) {
+      throw AppError.badRequest(`duplicate attribute key: ${key}`, `Specification "${key}" appears twice.`);
+    }
+    seen.add(key);
+
+    const type = typeof value;
+    const ok =
+      (def.inputType === 'number' && type === 'number' && Number.isFinite(value)) ||
+      (def.inputType === 'boolean' && type === 'boolean') ||
+      (def.inputType === 'text' && type === 'string') ||
+      (def.inputType === 'select' && type === 'string' && def.options.includes(value));
+    if (!ok) {
+      throw AppError.badRequest(
+        `bad attribute value: ${key}`,
+        `Invalid value for "${def.name}" (expects ${def.inputType}).`,
+      );
+    }
+    out.push({ attributeId: def._id, key, value });
+  }
+
+  if (forPublish) {
+    const missing = defs.filter((d) => d.required && !seen.has(d.key)).map((d) => d.name);
+    if (missing.length > 0) {
+      throw AppError.badRequest(
+        `missing required attributes: ${missing.join(',')}`,
+        `Required specifications missing: ${missing.join(', ')}.`,
+      );
+    }
+  }
+  return out;
+}
+
+// Image refs must point into the caller's OWN upload prefix — no cross-seller
+// references (plan-verify rule).
+function assertImageRefsOwned(images, orgId) {
+  const prefix = `mpx/products/${orgId}/`;
+  for (const img of images ?? []) {
+    if (!img.publicId.startsWith(prefix)) {
+      throw AppError.badRequest('foreign image ref', 'One of the images does not belong to this account.');
+    }
+  }
+}
+
+const isVerified = (org) => org.kycStatus === 'verified';
+
+async function assertDraftCap(org, exporterOrgId) {
+  if (isVerified(org)) return;
+  const drafts = await Product.countDocuments({ exporterOrgId, status: 'draft' });
+  if (drafts >= MAX_DRAFTS_UNVERIFIED) {
+    throw AppError.conflict(
+      'draft cap reached',
+      `Draft limit reached (${MAX_DRAFTS_UNVERIFIED}). Publish or delete a draft, or complete verification.`,
+    );
+  }
+}
+
+// D1 + A10: cap counts ACTIVE rows only, taken-down excluded (a block frees a slot).
+async function assertActiveCap(org, exporterOrgId) {
+  if (isVerified(org)) return;
+  const active = await Product.countDocuments({
+    exporterOrgId,
+    status: 'active',
+    'takedown.isDown': { $ne: true },
+  });
+  if (active >= MAX_ACTIVE_UNVERIFIED) {
+    throw AppError.conflict(
+      'active cap reached',
+      `Unverified sellers can have ${MAX_ACTIVE_UNVERIFIED} live products. Complete verification to list more.`,
+    );
+  }
+}
+
+// The slug hook resolves a VISIBLE clash; an insert-race E11000 retries once
+// with a random suffix (same pattern as org signup).
+async function saveHandlingSlugRace(doc) {
+  try {
+    return await doc.save();
+  } catch (err) {
+    if (err?.code === 11000 && err?.keyPattern?.slug) {
+      doc.slug = `${slugify(doc.name) || 'product'}-${randomBytes(2).toString('hex')}`;
+      return doc.save();
+    }
+    throw err;
+  }
+}
+
+async function loadOwned(id, exporterOrgId) {
+  const product = await Product.findOne({ _id: id, exporterOrgId });
+  if (!product) throw AppError.notFound('product not found', 'Not found.');
+  return product;
+}
+
+// Archived is TERMINAL (no un-archive path exists in the spec) and a taken-down
+// product is FROZEN for the seller (restore must return it exactly as the admin
+// froze it; content fixes stay possible — see update()).
+function assertNotArchived(product) {
+  if (product.status === 'archived') {
+    throw AppError.conflict('product archived', 'This product was deleted. List it again as a new product.');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Seller operations
+// ---------------------------------------------------------------------------
+
+export async function uploadImages({ user, files }) {
+  await loadExporterOrg(user.orgId);
+  if (!files || files.length === 0) {
+    throw AppError.badRequest('no files', 'No images were uploaded (field "images").');
+  }
+  const refs = [];
+  for (const file of files) {
+    refs.push(await uploadPublicImage({ buffer: file.buffer, folder: `mpx/products/${user.orgId}` }));
+  }
+  return refs;
+}
+
+export async function createProduct({ user, body, meta }) {
+  const org = await loadExporterOrg(user.orgId);
+  const leaf = await loadLeafCategory(body.categoryId);
+
+  assertTypeFields(leaf, body);
+  const attributes = await validateAttributes(leaf, body.attributes);
+  assertImageRefsOwned(body.images, user.orgId);
+  await assertDraftCap(org, user.orgId);
+
+  const product = new Product({
+    ...body,
+    attributes,
+    exporterOrgId: user.orgId,
+    status: 'draft', // §A1 — create default, regardless of input
+    // §A23 denorm — set from the owning org; synced on org state changes.
+    sellerCountry: org.country,
+    sellerVerified: isVerified(org),
+  });
+  await saveHandlingSlugRace(product);
+
+  // A19: create MUST audit (createdBy was dropped — this is who-listed-what).
+  await recordAudit({
+    actor: user,
+    action: 'product.create',
+    entityType: 'Product',
+    entityId: product._id,
+    orgId: user.orgId,
+    after: { name: product.name, slug: product.slug, categoryId: String(product.categoryId) },
+    meta,
+  });
+  return product;
+}
+
+export async function updateProduct({ user, id, patch, meta }) {
+  const product = await loadOwned(id, user.orgId);
+  assertNotArchived(product);
+
+  const categoryChanged =
+    patch.categoryId !== undefined && String(patch.categoryId) !== String(product.categoryId);
+  const leaf = await loadLeafCategory(patch.categoryId ?? product.categoryId);
+
+  // A cross-TYPE category change auto-clears the now-inapplicable field group —
+  // without this the seller is stuck: the old goods/service values fail the
+  // type check and the API has no "unset" input (bug found in the M1+M2 audit).
+  const merged = { ...product.toObject(), ...patch };
+  if (categoryChanged) {
+    const oldLeaf = await Category.findOne({ _id: product.categoryId }).select('type').lean();
+    if (oldLeaf && oldLeaf.type !== leaf.type) {
+      const stale = leaf.type === 'goods' ? SERVICE_FIELDS : GOODS_FIELDS;
+      for (const field of stale) {
+        if (patch[field] === undefined) {
+          product[field] = undefined;
+          delete merged[field];
+        }
+      }
+    }
+  }
+  assertTypeFields(leaf, merged);
+
+  // On a category change, stale attribute keys are DROPPED (they belong to the
+  // old leaf) — the caller supplies the new leaf's attributes or none. Without
+  // a change, a patch re-validates and an untouched set stays as-is.
+  const attributes =
+    patch.attributes !== undefined || categoryChanged
+      ? await validateAttributes(leaf, patch.attributes ?? (categoryChanged ? [] : product.attributes), {
+          forPublish: product.status === 'active',
+        })
+      : undefined;
+  if (patch.images !== undefined) assertImageRefsOwned(patch.images, user.orgId);
+
+  const changed = [];
+  for (const [field, value] of Object.entries(patch)) {
+    product[field] = value;
+    changed.push(field);
+  }
+  if (attributes !== undefined) product.attributes = attributes;
+  // A6: slug never regenerates on rename — the public URL keeps the old name.
+
+  await product.save();
+  await recordAudit({
+    actor: user,
+    action: 'product.update',
+    entityType: 'Product',
+    entityId: product._id,
+    orgId: user.orgId,
+    after: { changed },
+    meta,
+  });
+  return product;
+}
+
+export async function setProductStatus({ user, id, status, meta }) {
+  const product = await loadOwned(id, user.orgId);
+  assertNotArchived(product);
+  if (status === 'draft') {
+    // §A1 one-way — belt-and-braces (the validator only admits active/inactive).
+    throw AppError.conflict('draft is one-way', 'A published product cannot return to draft.');
+  }
+  if (product.takedown?.isDown) {
+    // Frozen: restore must put back exactly the state the admin took down (A9 —
+    // the seller sees the reason + date on their own listing).
+    throw AppError.conflict('product taken down', 'This product was taken down by the platform.');
+  }
+  if (product.status === status) {
+    throw AppError.conflict('status unchanged', `The product is already ${status}.`);
+  }
+
+  if (status === 'active') {
+    const org = await loadExporterOrg(user.orgId);
+    // Full publish validation: required attributes must be present now.
+    const leaf = await loadLeafCategory(product.categoryId);
+    await validateAttributes(leaf, product.attributes, { forPublish: true });
+    await assertActiveCap(org, user.orgId); // D1/A10 — applies to draft→active AND inactive→active
+  }
+
+  const before = { status: product.status };
+  product.status = status;
+  await product.save();
+
+  await recordAudit({
+    actor: user,
+    action: status === 'active' ? 'product.publish' : 'product.unpublish',
+    entityType: 'Product',
+    entityId: product._id,
+    orgId: user.orgId,
+    before,
+    after: { status },
+    meta,
+  });
+  return product;
+}
+
+// A5: delete is ALWAYS soft — status='archived', slug gets an archive marker so
+// the clean slug frees up for a re-list (A6). Kept forever (A7).
+export async function archiveProduct({ user, id, meta }) {
+  const product = await loadOwned(id, user.orgId);
+  assertNotArchived(product);
+  if (product.takedown?.isDown) {
+    // Flagged default: a blocked product cannot be archived by the seller —
+    // archiving would pull it out of the A8 purge (archived rows are never
+    // purged), letting a seller shelter blocked content from cleanup.
+    throw AppError.conflict('product taken down', 'This product was taken down by the platform.');
+  }
+
+  const before = { status: product.status, slug: product.slug };
+  product.status = 'archived';
+  product.slug = `${product.slug}--archived-${randomBytes(2).toString('hex')}`;
+  await saveHandlingSlugRace(product);
+
+  await recordAudit({
+    actor: user,
+    action: 'product.archive',
+    entityType: 'Product',
+    entityId: product._id,
+    orgId: user.orgId,
+    before,
+    after: { status: 'archived', slug: product.slug },
+    meta,
+  });
+  return product;
+}
+
+export async function listMine({ user, page, pageSize }) {
+  const filter = { exporterOrgId: user.orgId };
+  const [rows, total] = await Promise.all([
+    Product.find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize),
+    Product.countDocuments(filter),
+  ]);
+  return { rows, total, page, pageSize };
+}

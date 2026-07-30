@@ -59,8 +59,7 @@ while any close-time security commitment remains unraised.
 - **D2** — Seller hard "verify-before-sell" gate. DROPPED — do not build (replaced by D1).
 
 🧭 **Build-time reminder (confirmed scope, NOT red-alert guarded):**
-- **D1** — Unverified seller = max **3 ACTIVE products** (🔴 Part A §A10: **taken-down products do NOT count** toward the cap — the cap query must exclude `takedown.isDown: true`) **+ max 10 drafts** (§A15). This IS Phase-1 scope; build/enforce it when
-  the catalogue / product-add module is built. Just don't forget it.
+- **D1** — Unverified seller = max **3 ACTIVE products** (🔴 Part A §A10: **taken-down products do NOT count** toward the cap — the cap query must exclude `takedown.isDown: true`) **+ max 10 drafts** (§A15). ✅ **ENFORCED since 2026-07-31** — M2 backend built; both caps fire server-side with tests (publish + create paths). Verification lifts them.
 - **S1** — Before building any M1 **frontend screen** (buyer/exporter/employee/superadmin auth/KYC),
   STOP and alert the owner first; align forms to the backend contract (**Part A §A21**:
   **separate buyer & exporter login portals** — `POST /auth/login` takes a `portal`, staff use a
