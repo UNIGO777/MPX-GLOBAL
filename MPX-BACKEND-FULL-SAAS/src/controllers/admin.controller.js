@@ -1,4 +1,5 @@
 import * as svc from '../services/userManagement.service.js';
+import * as orgSvc from '../services/orgBlock.service.js';
 
 function meta(req) {
   return { ip: req.ip, userAgent: req.headers['user-agent'], requestId: req.id };
@@ -50,6 +51,41 @@ export async function activateUser(req, res) {
 export async function deactivateUser(req, res) {
   const user = await svc.setUserActive({ id: req.params.id, active: false, actor: req.user, meta: meta(req) });
   res.json({ user: userView(user) });
+}
+
+// F1-A: curated org view for the block/unblock responses. Internal moderation
+// fields (blockReason / blockedAt / blockedBy) are fine here — the caller is a
+// superadmin — but this is NOT the public projection (see Organisation
+// PUBLIC_FIELDS + toPublic, which never carries them).
+function orgBlockView(org) {
+  return {
+    id: String(org._id),
+    name: org.name,
+    isActive: org.isActive,
+    blockReason: org.blockReason ?? null,
+    blockedAt: org.blockedAt ?? null,
+    blockedBy: org.blockedBy ? String(org.blockedBy) : null,
+  };
+}
+
+export async function blockOrg(req, res) {
+  const { org, usersCascaded } = await orgSvc.blockOrganisation({
+    id: req.params.id,
+    reason: req.body.reason,
+    actor: req.user,
+    meta: meta(req),
+  });
+  res.json({ organisation: orgBlockView(org), usersCascaded });
+}
+
+export async function unblockOrg(req, res) {
+  const { org, usersRestored } = await orgSvc.unblockOrganisation({
+    id: req.params.id,
+    reason: req.body.reason,
+    actor: req.user,
+    meta: meta(req),
+  });
+  res.json({ organisation: orgBlockView(org), usersRestored });
 }
 
 export async function updateEmployeePermissions(req, res) {

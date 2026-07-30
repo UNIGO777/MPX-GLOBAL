@@ -1,4 +1,5 @@
 import { User } from '../models/User.js';
+import { Organisation } from '../models/Organisation.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 
@@ -91,6 +92,21 @@ export async function setUserActive({ id, active, actor, meta }) {
   // must never be able to lock out another.
   if (user.role === 'superadmin') {
     throw AppError.forbidden('cannot modify superadmin', 'Not allowed.');
+  }
+
+  // F1-A: no reactivating a single user out from under an org-level block. The
+  // org block deactivated this row deliberately; letting this endpoint flip it
+  // back would punch a hole straight through the block (and the unblock cascade
+  // would then restore a prevActive snapshot that no longer reflects reality).
+  // Unblock the Organisation instead.
+  if (active) {
+    const org = await Organisation.findOne({ _id: user.orgId }).select('isActive');
+    if (org && org.isActive === false) {
+      throw AppError.conflict(
+        'organisation blocked',
+        "This user's organisation is blocked. Unblock the organisation first.",
+      );
+    }
   }
 
   const before = { isActive: user.isActive };

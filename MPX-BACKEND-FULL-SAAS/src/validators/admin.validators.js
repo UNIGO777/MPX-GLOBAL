@@ -28,6 +28,25 @@ export const userIdParam = {
   params: z.object({ id: zObjectId() }),
 };
 
+// F1-A org block. The reason is REQUIRED — an org block takes a whole company
+// offline and kills every one of its sessions, so the audit trail must say why
+// (a per-user deactivate has no reason field; this deliberately does).
+export const blockOrg = {
+  params: z.object({ id: zObjectId() }),
+  body: z.object({
+    reason: zString({ min: 3, max: 500 }),
+  }),
+};
+
+// Unblock: reason optional — it explains the reversal, it is not the record of
+// the moderation decision itself.
+export const unblockOrg = {
+  params: z.object({ id: zObjectId() }),
+  body: z.object({
+    reason: zString({ min: 3, max: 500 }).optional(),
+  }),
+};
+
 // Replace an employee's permission set. Empty array = revoke all. Each entry must
 // be a known grantable permission; unknown values fail validation (no free-text).
 export const updateEmployeePermissions = {

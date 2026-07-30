@@ -43,6 +43,25 @@ adminRouter.post(
   ctrl.deactivateUser,
 );
 
+// F1-A · Organisation block / unblock — HARD superadmin gate, never a grantable
+// permission (same governance reasoning as activate/deactivate above: an employee
+// able to take a whole company offline, or to bring a blocked one back, is a
+// privilege-escalation path). Blocking cascades to every user of the org.
+adminRouter.post(
+  '/admin/orgs/:id/block',
+  authenticate,
+  requireRole('superadmin'),
+  validate(V.blockOrg),
+  ctrl.blockOrg,
+);
+adminRouter.post(
+  '/admin/orgs/:id/unblock',
+  authenticate,
+  requireRole('superadmin'),
+  validate(V.unblockOrg),
+  ctrl.unblockOrg,
+);
+
 // Assign/replace an employee's permissions — HARD superadmin gate (governance).
 // This must NEVER be a grantable permission: an over-permissioned employee could
 // otherwise grant itself every permission (privilege escalation). m1.md §6.

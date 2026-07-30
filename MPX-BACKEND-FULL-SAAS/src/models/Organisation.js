@@ -97,7 +97,18 @@ const organisationSchema = new Schema(
     // not exposed on public listings.
     kycRejectionReason: { type: String, trim: true },
 
+    // F1-A: an admin block flips this to false. The public seller read already
+    // filters { isActive: true }, so the profile 404s the moment it does. NOTE this
+    // flag alone does NOT end sessions — `authenticate` never reads the org (that
+    // lookup is deliberately kept off every request), so the block MUST also cascade
+    // onto the org's user rows. See services/orgBlock.service.js.
     isActive: { type: Boolean, default: true },
+
+    // F1-A: why the org was blocked, and by whom. INTERNAL — never public (it is
+    // absent from PUBLIC_FIELDS below, which is what keeps it private).
+    blockReason: { type: String, trim: true },
+    blockedAt: { type: Date },
+    blockedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   baseSchemaOptions,
 );
@@ -150,7 +161,9 @@ declareScope(organisationSchema, SCOPE.SELF);
 // `.claude/rules/m3-public-projection.md` — deliberately NOT public: `website`
 // (our verification use only), `buyerSide`/`exporterSide`, the street address,
 // `businessProfile.registrationNumber` / `taxId`, `authorisedSignatory`,
-// `kycDocuments`, and `kycStatus` itself (see PUBLIC_DERIVED below).
+// `kycDocuments`, `kycStatus` itself (see PUBLIC_DERIVED below), and the F1-A
+// block fields (`blockReason` / `blockedAt` / `blockedBy`) — a blocked org is
+// invisible to the public read anyway, and the moderation reason is internal.
 export const PUBLIC_FIELDS = [
   'name',
   'slug',

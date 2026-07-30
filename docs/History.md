@@ -134,6 +134,51 @@ modules (Modules 2–8) beyond what's above.
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-30** — **A21 Step 5 / F1-A BUILT — org-level block cascade. This completes A21.**
+  Tracker: **A5** (RBAC — hard `requireRole('superadmin')`, default-deny, route-guard clean),
+  **A7** (sessions — `tokenVersion++` invalidates every issued access token), **C10** (append-only
+  audit — new `org.block` / `org.unblock` rows). **New:** `POST /admin/orgs/:id/block` +
+  `/unblock` (superadmin-only; **NOT** a grantable permission, so `permissions.js` is unchanged —
+  an employee able to take a company offline would be a privilege-escalation path),
+  `src/services/orgBlock.service.js`, `tests/f1a-org-block.test.js`. **Two writes, both required:**
+  `Organisation.isActive=false` (the writer that never existed — the public seller read already
+  filtered on it, so the profile 404s the instant it flips) **and** the cascade onto user rows
+  (`isActive:false` + `tokenVersion++`), because `authenticate` deliberately never reads the org —
+  the org flag alone would hide the shopfront and leave everyone logged in. **Reason is required**
+  on block (validator), stored as `Organisation.blockReason`/`blockedAt`/`blockedBy` (internal —
+  absent from `PUBLIC_FIELDS`, so private by default), and carried into the audit rows.
+  **Three holes closed:** `assertOrgClaimable()` refuses a claim onto a blocked org (**Step 4c must
+  call it** — 4c isn't built, so the guard is central + directly tested rather than wired to an
+  endpoint); `/admin/users/:id/activate` → **409** while the org is blocked; unblock restores from
+  **`User.prevActive`** (captured pre-cascade, cleared after) so a user deactivated individually
+  *before* the block **stays off** — no blanket reactivate. Extra guards: the **platform org can
+  never be blocked** (self-lockout), double-block/unblock are 409s. **F1-B (products→takedown,
+  chats freeze) deliberately NOT staged** — no commented-out or dormant `Product`/`Conversation`
+  cascade in the block path; only a comment pointing at F1-B, which needs M2 + M4 and its own
+  prevActive design. **121/121 green (+9), lint clean, route-guard passes.** FINALIZE doc updated
+  to mark F1-A built (its "nothing here is built" header, the status table, and the F1-A bullets).
+- **2026-07-30** — **DOC-ONLY: F1 (FINALIZE) corrected — it claimed an org-block user cascade that
+  does not exist, and F1 is now split A/B.** Code audit (report-only, no changes) established the
+  actual state: there is **no org-level block anywhere** — `grep` for `blockOrg` / `Product.updateMany`
+  across the whole repo returns nothing, `Conversation` never appears in `src/`, and **A21 Step 5
+  (org block) was never started**. What M1 shipped is `setUserActive()` — a **per-user** superadmin
+  toggle (`POST /admin/users/:id/activate|deactivate`) setting `isActive:false` + `tokenVersion++`
+  for **one** user. Also confirmed: **nothing ever sets `Organisation.isActive = false`** — all five
+  Organisation write sites (signup create, signup-rollback delete, platform seed, KYC submit,
+  verification review) leave it untouched, so the flag is permanently `true` in production while
+  `getPublicExporter` filters on it. **Fixes:** the "what must happen on block" table gained a
+  **Status column** (Account/Organisation/Reason = TO BUILD **F1-A**; Catalogue/Products/Chats =
+  TO BUILD **F1-B**), the Account row no longer says "already built in M1"; the "half is already
+  plumbed" para now says only the **read** side is done and explicitly that **nothing flips the
+  flag**; **open point 5 rewritten** as a correction (no cascade exists; A21 Step 5 unstarted).
+  **F1 now splits:** **F1-A · M1-core** (org-level deactivate entry point, reason field, user
+  cascade with `prevActive` restore, the `Organisation.isActive` writer) — **buildable now, needs no
+  other module**; **F1-B · FINALIZE-half** (products→takedown needs **M2**, chats freeze needs
+  **M4**), each with its own `prevActive` design. **Gotcha recorded in the doc:** `authenticate`
+  never reads the org, so setting `Organisation.isActive=false` **alone would not log anyone out** —
+  the user cascade is not optional. Plus a standing warning **not to stage F1-B as dormant/
+  commented code inside F1-A** — a products cascade without `prevActive`/`takedown` must never sit
+  in the block path waiting for M2 to make it live.
 - **2026-07-30** — **`memberSince` → year only; `entityType` made public (closes the business-type
   cancellation properly).** *(1)* `memberSince` moved from `PUBLIC_FIELDS` (raw `createdAt` → full
   ISO timestamp) to `PUBLIC_DERIVED` as **`createdAt.getFullYear()`** — the UI shows "member since

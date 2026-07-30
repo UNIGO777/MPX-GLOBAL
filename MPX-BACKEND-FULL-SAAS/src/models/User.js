@@ -44,6 +44,14 @@ const userSchema = new Schema(
     tokenVersion: { type: Number, default: 0 },
 
     isActive: { type: Boolean, default: true },
+
+    // F1-A: the user's own isActive as it was JUST BEFORE an org-level block
+    // cascaded over it. Unblock restores from here instead of blanket-reactivating,
+    // so a user a superadmin had deactivated individually *before* the block stays
+    // deactivated. Same pattern as Category.prevActive (§A4).
+    // Set only by the org block cascade; cleared on unblock. Undefined at all other
+    // times — a value here means "an org block is currently overriding this row".
+    prevActive: { type: Boolean },
     isEmailVerified: { type: Boolean, default: false },
     isMobileVerified: { type: Boolean, default: false },
 
