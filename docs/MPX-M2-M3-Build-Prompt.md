@@ -141,7 +141,7 @@ Rule D1 caps unverified exporters at 3 active products. **Taken-down products ar
 
 This is deliberate and needs explicit code; without the exclusion a blocked product would occupy a slot, since takedown does not change `status`.
 
-Consequence to handle: because a block frees a slot, a bad actor could keep re-listing. Track a per-seller takedown count so the existing "repeat offenders get their account suspended" rule can actually be applied. That rule is now the only guardrail here.
+Consequence to handle: because a block frees a slot, a bad actor could keep re-listing. Track a per-seller takedown count so the existing "repeat offenders get their account suspended" rule can actually be applied. That rule is now the only guardrail here. **How it is stored is decided — see §A24:** a persisted `Organisation.takedownCount`, increment-only (purge-proof; never derived from `Product` rows).
 
 ## A11. Category image
 
@@ -261,7 +261,7 @@ This **reverses** the earlier "one shared login page for all four roles" decisio
 
 Neither buyer nor exporter has ever had a way to view or edit their own `Organisation`. m1.md describes four areas — auth, KYC documents, verification, user management — and company profile is in none of them; its screen table has no row for it either. This section adds it as **M1 work**.
 
-It is also the missing **capture path for M3**. Two fields the public seller page shows — **logo** and **description** — exist on the `Organisation` model but **no endpoint ever sets them**. Built as-is, `GET /public/exporters/:id` renders with a company name and a country.
+It is also the missing **capture path for M3**. Two fields the public seller page shows — **logo** and **description** — exist on the `Organisation` model but **no endpoint ever sets them**. Built as-is, `GET /exporters/:id` renders with a company name and a country.
 
 > **Cancelled (2026-07-30):** "business type" and the seller's **working categories** were previously listed here as a third and fourth field. Both are **dropped entirely — do not build them, do not add them to any model, screen, projection or whitelist.** `entityType` covers the purpose. This closes the earlier open item by **removal, not definition** — there is nothing left to define.
 
@@ -312,6 +312,12 @@ Companies do genuinely rename and relocate. **Allow the change** — it just cos
 2. Drop `kycStatus` back to **`submitted`**, so the organisation re-enters review.
 3. The tick is withheld until an employee re-approves — automatic, because the public `verified` boolean is derived from `kycStatus` (B7), never stored.
 4. Write an `AuditLog` entry (A19): actor, organisation, which locked field changed, old and new value, timestamp.
+5. **(Once M4 exists)** a company-**name** change must also update the denormalised
+   `Conversation.buyerOrgName` / `exporterOrgName` copies (m4.md §8.5) — the chat-list search reads
+   those stored copies, so without this hook renamed companies stay findable only under the old
+   name. A23's `sellerCountry` sync (country change) and `sellerVerified` sync (demotion) fire from
+   this same edit path once M2 exists. Build A22 now, add these hooks when those modules land — but
+   record them here so the edit endpoint is written with the hook point in mind.
 
 This **reuses the existing resubmit path** — same queue, same approve/reject endpoints. No new mechanism and no new status.
 
@@ -346,6 +352,32 @@ Open, to be confirmed before this is built:
 - **`businessProfile.registrationNumber` + `country` carry a unique partial index.** A country change on a verified organisation can collide with another organisation's registration number. Decide the behaviour before allowing that edit.
 - **Employee / superadmin editing an organisation's company fields** — not covered here. A22 is the owner's own edit path only.
 
+## A23. Search denormalisation — `sellerCountry` + `sellerVerified` on Product (2026-07-30)
+
+Atlas Search cannot join inside `$search`: the **country facet** (which resolves to the seller's
+`Organisation.country`) and the **verified-seller ranking boost** both need their values **on the
+Product document in the search index**. A `$lookup` after `$search` breaks facet counts and cannot
+feed the boost. So:
+
+- `Product` carries two **denormalised, internal-only** fields: **`sellerCountry`** (copy of the
+  owning org's `country`) and **`sellerVerified`** (boolean, derived from the org's `kycStatus`).
+- **Set on product create** from the owning Organisation. **Synced** whenever the org changes state:
+  verification approved → `sellerVerified: true` on all its products; A22 demotion (verified →
+  `submitted`) → `false`; org `country` edit → `sellerCountry` updated on all its products.
+- Both fields are **NEVER public** (A3 — they are not in any `PUBLIC_FIELDS` list; the public seller
+  block still comes from the seller projection). They exist only for the search index and facets.
+- M3's Product filter indexes use `sellerCountry` — **not** a `country` field on Product (Product
+  still has no own `country`; `countryOfOrigin` stays goods-only trade data).
+
+## A24. Per-seller takedown counter — `Organisation.takedownCount` (2026-07-30)
+
+A10's "track a per-seller takedown count" is a **persisted counter on `Organisation`**, not a
+derived query: `takedownCount` increments by 1 on every product takedown and is **never decremented**
+(restore does not lower it — it counts offences, not current state). Reason: blocked products purge
+after 180 days (A8), so counting from `Product` rows undercounts repeat offenders exactly when it
+matters; and M5's Organisation list sorts by this count, which must not need an aggregate per row.
+This is the trigger data for the F6 suspension threshold (threshold value itself still open).
+
 ---
 
 # Part B — Rules carried over unchanged
@@ -353,7 +385,7 @@ Open, to be confirmed before this is built:
 These are already in the plan docs and are **not** modified by Part A. Implement them as written.
 
 - **B6** — products have no approval workflow. The seller owns the listing and controls `status`. Admin can take down, never delete (except A8).
-- **B7** — all sellers and products appear in public results regardless of KYC. `kycStatus` is returned so the frontend can render the verified tick; it is **never** used as a filter.
+- **B7** — all sellers and products appear in public results regardless of KYC; verification is **never** used as a filter. The public projection carries a server-derived **`verified` boolean + `verifiedAt`** — raw `kycStatus` / `rejected` is **never** exposed on any public response (corrected 2026-07-30; the old "return `kycStatus` for the tick" wording was the exact leak B7's fix pass removed everywhere else). *(One exception to "never a filter": the buyer's explicit opt-in **verified-only facet toggle** — see Search.md §3.1 and the carve-out in `.claude/rules/m3-public-projection.md`.)*
 - **D1** — unverified exporters capped at 3 active products; verification lifts the cap.
 - **Admin category rights** — top categories: activate/deactivate only, no create/edit/delete. Sub-categories: full CRUD, plus CRUD on their `CategoryAttribute` fields.
 - **Sub-category delete is blocked** when products or child categories exist.
@@ -373,7 +405,7 @@ These are already in the plan docs and are **not** modified by Part A. Implement
 
 The `Organisation` model exists and is created at signup, but the backend has **no endpoints for it** — only the `auth`, `employee`, and `admin` routers are mounted. A seller cannot view or edit their company profile.
 
-This blocks M3: `GET /public/exporters/:id` is the public seller profile and reads from `Organisation`. Without these endpoints that page renders effectively empty — just the company name captured at signup.
+This blocks M3: `GET /exporters/:id` is the public seller profile (shipped route — the older `/public/exporters/:id` spelling in plan docs is corrected to match the code) and reads from `Organisation`. Without these endpoints that page renders effectively empty — just the company name captured at signup.
 
 **This is no longer an open question.** §A22 scopes it as **M1 work**: exporter + buyer company profile screens, the capture path for **logo and description**, field locking after verification, and re-review on a locked-field change. Build it to A22 — not to your own design. It must land before step 10 (public surfaces) is meaningful.
 

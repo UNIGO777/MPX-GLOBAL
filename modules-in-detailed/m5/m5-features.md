@@ -2,7 +2,7 @@
 
 A flat list of every M5 screen: what it shows, what it filters on, what it can do, and what gates it. Companion to `m5.md`, which carries the reasoning.
 
-**Legend:** ✅ built · 📋 rules written elsewhere, screen not built · 🔵 planned in M5 · ⏸ out of month-1 scope
+**Legend:** ✅ **backend/API** built + tested (⚠️ the web **screen** does not exist — no web frontend has been built yet; S1 alert before building any) · 📋 rules written elsewhere, screen not built · 🔵 planned in M5 · ⏸ out of month-1 scope
 
 ---
 
@@ -80,7 +80,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 | **Filters** | Category · sub-category · status (Active / Inactive / Blocked) · seller · product name search |
 | **Actions** | Takedown (reason required) · restore · open product detail · view that product's chats · open the seller's public profile · open the seller's Organisation |
 | **Gate** | To propose — read grantable, takedown/restore superadmin-gated |
-| **Notes** | Read-only monitoring: admin cannot edit a product (B6). `draft` and seller-`archived` products are NOT shown. "Blocked" reads `takedown.isDown`, never `status`. No bulk takedown — block the Organisation instead. The purge countdown and the seller takedown count are both load-bearing, not decoration |
+| **Notes** | Read-only monitoring: admin cannot edit a product (B6). `draft` and seller-`archived` products are NOT shown. "Blocked" reads `takedown.isDown`, never `status`. No bulk takedown — block the Organisation instead. The purge countdown and the seller takedown count are both load-bearing, not decoration. Takedown count reads **`Organisation.takedownCount`** (§A24 — persisted, increment-only, purge-proof) |
 
 ## 9 · Takedown action 📋
 
@@ -95,7 +95,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 
 | | |
 |---|---|
-| **Data** | Thread title as buyer × seller × product · last message time and preview · unread state · frozen state and reason |
+| **Data** | Thread title as buyer × seller × product · last message time and preview · unread state (**the parties'** unread, derived from `buyerLastReadAt`/`exporterLastReadAt` — admin has no own read-tracking) · frozen state and reason |
 | **Filters** | Search by name — product, buyer company or seller company — and by `buyerOrgId` / `exporterOrgId` pasted directly |
 | **Actions** | Open the chat viewer · block a chat · unblock |
 | **Gate** | To propose — grantable read, with every read audited |
@@ -150,9 +150,9 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 |---|---|
 | Header | Name · slug · sides badge · verified state and since · active/blocked · block/unblock |
 | Company | Country · address · entityType · logo · description · created date |
-| Verification | Status · who · when · rejection reason · KYC documents link (`kyc:view`) · resubmit count · **which side was actually reviewed** |
-| Sides | Which sides are enabled and when · claim history — who claimed which side, when |
-| Users | Every user on this Organisation · role · active/blocked · last login |
+| Verification | Status · who · when · rejection reason · KYC documents link (`kyc:view`) · resubmit count · **which side was actually reviewed** *(derived from AuditLog `buyer.approve` vs `exporter.verify` rows — no schema field)* |
+| Sides | Which sides are enabled and when · claim history — who claimed which side, when *(side flags carry no timestamp — "when" + claim history derive from AuditLog signup/`org.claim` rows)* |
+| Users | Every user on this Organisation · role · active/blocked · last login *(reads `User.lastLoginAt` — already built; set on every successful login)* |
 | Buyer account chats | Count and link — only if the buyer side exists |
 | Exporter account chats | Count and link — only if the exporter side exists |
 | Audit trail | This Organisation's full record |

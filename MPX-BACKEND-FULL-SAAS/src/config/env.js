@@ -18,9 +18,9 @@ const envSchema = z.object({
   JWT_ACCESS_SECRET: z.string().min(32, 'must be at least 32 characters'),
   JWT_REFRESH_SECRET: z.string().min(32, 'must be at least 32 characters'),
   JWT_ACCESS_TTL: z.string().default('15m'),
-  JWT_REFRESH_TTL: z.string().default('30d'),
   // Opaque refresh tokens live 7 days (auth-sessions A2). Absolute family
-  // lifetime — rotation does not extend it.
+  // lifetime — rotation does not extend it. (A dead `JWT_REFRESH_TTL` var was
+  // removed 2026-07-30 — this is the ONLY refresh-lifetime knob.)
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
 
   // Feature integrations are optional until the step that wires each one, at

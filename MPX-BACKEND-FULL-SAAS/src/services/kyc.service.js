@@ -4,6 +4,12 @@ import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 import { uploadKycDocument, signedKycUrl } from './kyc.storage.service.js';
 
+// Hard cap on stored KYC documents per organisation (owner decision 2026-07-30):
+// without it a hostile account can push unlimited 10-MB files to Cloudinary
+// (storage-cost abuse + unbounded array growth). 20 leaves room for both entity
+// types' document sets plus several resubmit rounds.
+const KYC_MAX_DOCS_PER_ORG = 20;
+
 // Self-service KYC submission (M1-B). The caller writes only their OWN org
 // (req.user.orgId) — this is a self write, not a staff action. Status moves
 // pending|rejected|submitted → submitted (resubmit after rejection is the same
@@ -14,8 +20,17 @@ export async function submitKycDocument({ user, entityType, docType, buffer, met
     throw AppError.forbidden('role has no kyc', 'Not allowed.');
   }
 
-  const org = await Organisation.findOne({ _id: user.orgId });
+  // +kycDocuments (select:false) loaded ONLY to count — never returned.
+  const org = await Organisation.findOne({ _id: user.orgId }).select('+kycDocuments');
   if (!org) throw AppError.notFound('org not found', 'Not found.');
+
+  // Checked BEFORE the Cloudinary upload so a capped org costs no storage call.
+  if ((org.kycDocuments?.length ?? 0) >= KYC_MAX_DOCS_PER_ORG) {
+    throw AppError.conflict(
+      'kyc document limit reached',
+      'Document limit reached for this account. Please contact support.',
+    );
+  }
 
   // Resolve the entity type. Exporters set it at signup (immutable here); a buyer
   // has none until the first upload, so it must be supplied then.

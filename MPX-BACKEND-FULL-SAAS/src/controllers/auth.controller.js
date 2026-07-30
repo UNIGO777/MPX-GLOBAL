@@ -7,11 +7,34 @@ function clientMeta(req) {
   return { ip: req.ip, userAgent: req.headers['user-agent'], requestId: req.id };
 }
 
+// Curated self view for auth responses (signup / verify-otp). The document's
+// toJSON DOES strip select:false paths, but it still carries internal fields the
+// client has no use for (tokenVersion, verification flags, timestamps) — return
+// only what the frontend actually renders. Same shape as /auth/me plus identity
+// basics. (API contract logged in docs/UiWebNotes.md.)
+function authUserView(user) {
+  return {
+    id: String(user._id),
+    name: user.name,
+    email: user.email,
+    mobile: user.mobile?.e164 ?? null,
+    role: user.role,
+    orgId: user.orgId ? String(user.orgId) : null,
+    isActive: user.isActive,
+    mustChangePassword: Boolean(user.mustChangePassword),
+  };
+}
+
 // A21 §4a: signup issues an OTP and returns a login-pending token — NOT a session.
-// `user` (toJSON-stripped) is returned for convenience; access/refresh tokens are
+// A curated `user` view is returned for convenience; access/refresh tokens are
 // only issued after /auth/verify-otp succeeds.
 function signupResponse(res, { user, loginToken, method }) {
-  res.status(201).json({ user, loginToken, method, message: 'An OTP has been sent. Verify it to activate your session.' });
+  res.status(201).json({
+    user: authUserView(user),
+    loginToken,
+    method,
+    message: 'An OTP has been sent. Verify it to activate your session.',
+  });
 }
 
 export async function buyerSignup(req, res) {
@@ -46,7 +69,7 @@ export async function staffLogin(req, res) {
 
 export async function verifyOtp(req, res) {
   const result = await authService.completeLogin({ ...req.body, ...clientMeta(req) });
-  res.json({ accessToken: result.accessToken, refreshToken: result.refreshToken, user: result.user });
+  res.json({ accessToken: result.accessToken, refreshToken: result.refreshToken, user: authUserView(result.user) });
 }
 
 export async function resendOtp(req, res) {

@@ -20,7 +20,7 @@ KYC, ownership, moderation or contact data to guests.** Source of truth:
 ## The core rule — whitelist, never blacklist
 
 Public routes (`GET /public/search`, `GET /public/facets`, `GET /public/products/:id`,
-`GET /public/exporters/:id`, `POST /search/ai`) return **ONLY the whitelisted public fields
+`GET /exporters/:id`, `POST /search/ai`) return **ONLY the whitelisted public fields
 below**. Everything else stays private.
 
 - **Any NEW field defaults to PRIVATE** — it must not appear on a public route until it is
@@ -83,8 +83,10 @@ never returned in the response.
   owner personal IDs / PII · internal & auth fields (userId, tokenVersion, role, verification
   notes) · financial/account details.
 - **Product:** `status` internal states (draft/archived) · `takedown { isDown, reason,
-  byUserId, at }` · raw `exporterOrgId` / internal owner IDs · any `deletedAt` / soft-delete
-  markers · moderation / audit / internal flags.
+  byUserId, at }` · raw `exporterOrgId` / internal owner IDs · **`sellerCountry` +
+  `sellerVerified`** (§A23 denormalised search-index copies — internal-only; the public response
+  carries country/verified via the **seller projection**, never these raw fields) · any
+  `deletedAt` / soft-delete markers · moderation / audit / internal flags.
 - **Category:** inactive categories · order / admin flags.
 
 ## Who may see private data (and where)
@@ -104,9 +106,12 @@ The exclusion happens **in the query**, not by filtering the response afterwards
 - Return **only `status: active`** — draft / inactive / archived / taken-down excluded in the
   query itself.
 - Products in **deactivated categories** are excluded (cascade).
-- **B7:** all sellers are shown regardless of KYC; verification is **never a filter and never a
-  query condition.** The public projection carries a **`verified` boolean** (derived server-side
+- **B7:** all sellers are shown regardless of KYC; verification is **never a default filter or
+  ranking gate.** The public projection carries a **`verified` boolean** (derived server-side
   from `kycStatus`) — raw `kycStatus` / `rejected` is never serialised to a public route.
+  **The ONE carve-out (2026-07-30):** the buyer's explicit, opt-in **"verified-only" facet
+  toggle** (Search.md §3.1, locked plan) may filter on the derived verified state — only when
+  the buyer selects it, never by default, and it still never serialises raw `kycStatus`.
 
 ## 🔴 STOP-and-alert — before going beyond this whitelist
 
@@ -118,7 +123,9 @@ RED-ALERT and get explicit owner confirmation **before writing code** that would
    reason/actor, moderation/audit, raw owner IDs, `deletedAt`) onto a public route.
 3. **Return the raw `Organisation` / `Product` document** (or a spread of it) on a public route
    instead of the explicit public projection.
-4. **Use `kycStatus` (or verification state) as a filter / query condition** on results.
+4. **Use `kycStatus` (or verification state) as a default filter / query condition** on results.
+   *(Exception, already decided 2026-07-30: the buyer's opt-in "verified-only" facet toggle —
+   Search.md §3.1 — is allowed and needs no alert. Anything beyond that opt-in toggle does.)*
 5. **Hide-in-response instead of exclude-in-query** — returning draft / inactive / archived /
    taken-down / deactivated-category rows and stripping them later.
 

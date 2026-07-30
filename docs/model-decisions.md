@@ -134,10 +134,12 @@ Exporter/seller signup pe `kycStatus: pending`. Employee verify kare →
 (Girish sir ke decision se) sab sellers public dikhte hain, verified ko sirf tick
 milta hai.
 
-To: public product/seller queries me `kycStatus` **filter mat karo** — sab
-laao, aur `kycStatus` field response me **bhejo** taaki frontend verified tick
-dikha sake. `KYC_STATUS` enum (`pending/submitted/verified/rejected`) already
-iske liye theek hai.
+To: public product/seller queries me `kycStatus` **filter mat karo** — sab laao.
+**Par response me raw `kycStatus` KABHI nahi** (corrected 2026-07-30 — purani "bhejo"
+wording wahi leak thi jo B7 fix pass ne hataayi): public projection me server-derived
+**`verified` boolean + `verifiedAt`** jaata hai; `rejected` state/reason kabhi public
+nahi. Frontend tick `verified` se render karta hai. `KYC_STATUS` enum
+(`pending/submitted/verified/rejected`) internal use ke liye theek hai.
 
 ---
 
@@ -187,7 +189,8 @@ history pe ek baar chala lena.
 >    self-register, mustChangePassword false; sirf employee ke liye true).
 > 2. Inquiry, Quotation, Conversation, Message pe `parties` scoping (B1) lagao.
 > 3. Product pe koi approval state nahi (B6), aur public queries kycStatus filter
->    na karein — kycStatus response me bhejein (B7).
+>    na karein — response me **`verified` boolean + `verifiedAt`** bhejein, raw
+>    `kycStatus` kabhi nahi (B7, corrected 2026-07-30).
 > 4. Phir Step 7 (token layer) pe badho.
 >
 > Har model ke baad batana kaunse tracker IDs cover hue.

@@ -68,7 +68,10 @@ export async function listUsers({ role, kycStatus, q, page, pageSize }) {
 export async function getUser({ id }) {
   const user = await User.findOne({ _id: id }).populate({
     path: 'orgId',
-    select: 'name type kycStatus verifiedAt',
+    // A21: the sides are the buyer/exporter discriminator — they MUST be selected
+    // here or userView serialises them as false for every org (the bug this select
+    // used to have when it still selected the dropped `type` instead).
+    select: 'name buyerSide exporterSide kycStatus verifiedAt',
   });
   if (!user) throw AppError.notFound('user not found', 'Not found.');
   return user;

@@ -125,15 +125,86 @@ Mongo + Redis). Tests use a local `mpx_global_test` DB and flush Redis between c
 **not** touch the Atlas cluster.
 
 ## 10. Not done / gaps
-Real OTP/email/WhatsApp delivery · TOTP enrollment + restore (D4) · `mustChangePassword`
-enforcement · email/mobile verification endpoints · audit on auth events (login/signup) ·
-notifications (D5) · resubmit-after-rejection (in-scope Module 7, build with verification) ·
+Real OTP/email/WhatsApp delivery · TOTP enrollment + restore (D4) · email/mobile verification
+endpoints · notifications (D5) ·
 DB-level append-only grant on audit collection · the catalogue/discovery/chat/quotation/admin
-modules (Modules 2–8) beyond what's above.
+modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30 as already done:
+`mustChangePassword` enforcement, auth-event audit, resubmit-after-rejection — all shipped
+2026-07-27/28; the list had gone stale against the change log.)*
 
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-30** — **CODE: all audit findings fixed (owner-confirmed) — 126/126 green (+5), lint
+  clean.** Owner decisions: `businessProfile` **removed from exporter signup** (A5 — captured at
+  verification, not signup; zod strips it, so senders get 201 and nothing is stored — the
+  duplicate-regNo 500 is now unreachable) · **KYC cap = 20 documents/org** (409 before any
+  Cloudinary call). Fixes: **(1)** `GET /admin/users/:id` sides bug — populate now selects
+  `buyerSide exporterSide` (dropped stale `type`); regression assertions added. **(2)**
+  `createOrgHandlingDuplicates()` — org-level E11000 mapped to a clean 409, and a **slug race
+  retries once with a random suffix** (explicit slug skips the pre-validate hook). **(3)**
+  `createEmployee` permissions now validated against the catalogue (`z.enum`), same as the PATCH
+  (tracker A5 — no free-text permission strings anywhere). **(4)** `/auth/logout` gained
+  `generalLimiter`. **(5)** dead `JWT_REFRESH_TTL` removed from env schema + `.env`/`.env.example`
+  (`REFRESH_TOKEN_TTL_DAYS` is the only knob). **(6)** unused `express-mongo-sanitize` dependency
+  uninstalled. **(7)** signup/verify-otp now return a **curated `authUserView`** (`id, name, email,
+  mobile(e164), role, orgId, isActive, mustChangePassword`) instead of the full document —
+  **API-contract change logged in `docs/UiWebNotes.md`** (`user.id` not `_id`; `mobile` is now a
+  string) alongside the sides fix and the new KYC-cap 409. New tests: sides regression ·
+  catalogue-validated employee create (400/201) · curated-view (no `tokenVersion`) ·
+  businessProfile stripped + same-regNo-twice no-500 · same-name distinct slugs · KYC cap 409.
+  NOT fixed (accepted, benign): OTP double-consume race; org-block prevActive capture window.
+- **2026-07-30** — **M1 backend full code audit (report-only; suite re-run 121/121 green, lint
+  clean).** Findings reported to owner, code NOT changed: **(1) confirmed bug** —
+  `GET /admin/users/:id` always returns `buyerSide:false, exporterSide:false` (the `userView`
+  reads the flags but `userManagement.getUser`'s populate selects only `name type kycStatus
+  verifiedAt`; the test asserts only `kycStatus`, so it never caught it; the verification-review
+  and KYC-doc endpoints are unaffected — they load the full doc). **(2)** exporter signup accepts
+  `businessProfile.registrationNumber`, so a duplicate (regNo, country) hits the unique partial
+  index at `Organisation.create` — which `mapDuplicate` does NOT wrap → raw E11000 → **500**; also
+  contradicts A5's "enforce at verification, not signup". **(3)** same unwrapped-500 family: the
+  org slug pre-validate race (two same-name signups). **Smaller:** `createEmployee` accepts
+  free-text permission strings (PATCH validates against the catalogue; POST doesn't) · KYC uploads
+  per org are unbounded (no doc-count cap; 10 MB each on Cloudinary) · `/auth/logout` has no rate
+  limiter · dead env `JWT_REFRESH_TTL` (real TTL = `REFRESH_TOKEN_TTL_DAYS`) ·
+  `express-mongo-sanitize` dep unused (replaced by `rejectMongoOperators`) · signup/verify-otp
+  return the full user `toJSON` (self-data only; `select:false` IS stripped — verified
+  `twoFactorSecret` cannot leak — but `tokenVersion` etc. ride along) · benign races noted (OTP
+  double-consume; org-block prevActive capture window). **Two stale doc claims corrected against
+  code:** `User.lastLoginAt` ALREADY exists + is set on login (yesterday's notes in m1/m5 said "to
+  build" — fixed), and the otpLimiter portal-scoping recorded as "proposed, awaiting owner" in the
+  Step-4a entry has since been implemented (`otpKeyGenerator` keys on identifier+portal). §10 gaps
+  list updated accordingly.
+- **2026-07-30** — **DOC-ONLY: full cross-module consistency pass (owner-confirmed) — 4 new
+  decisions + a stale-line sweep across 18 files.** **New decisions:** *(1)* **§A23** — Atlas
+  `$search` cannot join, so `Product` gets denormalised **internal-only** `sellerCountry` +
+  `sellerVerified` (country facet + verified boost read them; set on create, synced on org
+  verify/demote/country-edit; never public — added to the projection rule's private list). *(2)*
+  **§A24** — per-seller takedown count = persisted **`Organisation.takedownCount`**, increment-only
+  (purge-proof; F6's trigger data; M5 reads it). *(3)* **F2 CANCELLED — §A7 reconfirmed:** archived
+  products are kept **forever** (the 29-Jul "purge archived at 180d" reversal is itself reversed;
+  §A8 stays takedown-only). *(4)* **M4 first/system messages are exempt from the 200-char cap**
+  (M4-12 — the composed enquiry message would exceed it); **F4 self-enquiry guard moved INTO M4**
+  (new M4-39, at `POST /inquiries`). **Defaults recorded:** verified-only facet = allowed buyer
+  **opt-in** (carve-out added to `m3-public-projection.md`'s B7 + STOP #4 — it would have
+  red-alerted a locked feature); takedown/restore = **superadmin-only month 1** (added to m5-rules
+  §5 hard tier); public seller route = shipped **`GET /exporters/:id`** (all `/public/exporters/:id`
+  doc spellings corrected); `User.lastLoginAt` = new M1 field for M5's "last login" column; AI
+  search open to guests (per-IP rate-limit). **Stale-line sweep (the "stale instruction wins"
+  class):** raw-`kycStatus`-in-response wording killed in its last 4 hiding places (build-prompt
+  **Part B B7**, M2.md §3+§4.2, model-decisions.md B7 ×2, Backend-1st-full-plan.md); m3.md §2.3's
+  phantom `country` index → `sellerCountry`; M2.md §5.3 "Featured content" struck (F5);
+  Backend-1st-full-plan.md got a SUPERSEDED banner (attachments/pending/B7 lines listed);
+  scope-of-work D1 wording → 3-ACTIVE + 10-drafts; m1.md — `mustChangePassword` + auth-audit marked
+  DONE (shipped 27/28 Jul), "+TOTP" → D4 hold, employee row → M5's shared-console model, §5b.2 +
+  §A22.2 gained the cross-module hooks (M4 conversation-name sync, §A23 syncs); History §10 gaps
+  list de-staled; M5 docs — "Already built" clarified to **backend-only** (no web screens exist),
+  dashboard both-sides double-count note, derived-vs-stored sources pinned (side-reviewed/claim
+  history/resubmit count = AuditLog; last login = `User.lastLoginAt`), admin list "unread" =
+  parties' unread; m4.md §7.2 socket note (handshake `tokenVersion` check alone isn't "immediate"
+  — re-verify per send or force-disconnect); memo/BRAIN P2/6.10 gained `slug` + `entityType`;
+  Models.md `icon` → `image`. **CLAUDE.md + Note.md checked in the same pass — no line in either
+  was affected by these decisions; no code touched.**
 - **2026-07-30** — **A21 Step 5 / F1-A BUILT — org-level block cascade. This completes A21.**
   Tracker: **A5** (RBAC — hard `requireRole('superadmin')`, default-deny, route-guard clean),
   **A7** (sessions — `tokenVersion++` invalidates every issued access token), **C10** (append-only

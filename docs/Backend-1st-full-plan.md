@@ -1,5 +1,14 @@
 # MPX Global — Phase 1 · Month-1 Backend · **Module Breakdown**
 
+> ## ⚠️ SUPERSEDED (2026-07-30) — historical overview only, do NOT build from this file
+> Current specs: `modules-in-detailed/` (m1–m6) + `docs/MPX-M2-M3-Build-Prompt.md` **Part A**.
+> Known-stale lines below (already corrected in the current docs — listed so nobody "fixes" them
+> back): chat has **NO attachments in month 1** (m4.md M4-14); resubmit goes `rejected →
+> **submitted**` (not "wapas pending"); B7 = public response carries a **`verified` boolean**,
+> never raw `kycStatus`; M5's "Featured/banner content" moved to FINALIZE (F5) and "Notification
+> settings placeholder" moved to month 2; module numbering here ("Module 4 = chat") predates the
+> current M4/M5 naming.
+
 > Har module = ek **vertical slice**: us domain ki saari cheezein ek jagah — models, user/seller/buyer routes, aur us domain ke **super-admin/management + KYC + approval routes bhi isi module me**.
 > Quote ke 8 client-facing modules inhi **5 backend domain-modules** me pack ho jaate hain.
 > Status tags: ✅ done · 🔨 build (month 1) · ⏸ deferred
@@ -79,7 +88,7 @@
 - Filters: category, **country (ISO alpha-2)**, price range, MOQ
 - Product detail page data
 - Public seller/exporter profile + uska catalogue
-- **B7** — `kycStatus` response me, koi filter nahi (tick ke liye)
+- **B7** — koi filter nahi; response me **`verified` boolean** (raw `kycStatus` kabhi nahi — corrected 2026-07-30)
 
 **Buyer** — 🔨 build
 - Saved items (products & suppliers) save / unsave / list

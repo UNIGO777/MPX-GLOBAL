@@ -60,7 +60,7 @@ Two tiers, and they do not blur:
 | Tier | Gate |
 |---|---|
 | **Reads** — lists, details, viewers | Grantable permission |
-| **State-changing governance** — user activate/deactivate, employee create, permission assignment, organisation block/unblock | Hard `requireRole('superadmin')` |
+| **State-changing governance** — user activate/deactivate, employee create, permission assignment, organisation block/unblock, **product takedown/restore (month 1 — decided 2026-07-30; matches the quote's "product monitoring (view-only)" for employees)** | Hard `requireRole('superadmin')` |
 
 A grantable `user:manage`-style permission is a privilege-escalation path: an employee holding it could deactivate a superadmin, or reactivate itself. It must not exist in the catalogue.
 
@@ -134,6 +134,12 @@ Three holes that must stay closed:
 ## 14 · M5 introduces no new models
 
 Everything M5 shows already exists in `User`, `Organisation`, `AuditLog`, `Category`, `CategoryAttribute`, `Product`, `Inquiry`, `Conversation`, `Message`.
+
+Fields M5 screens read that are **owned by other modules** (they are NOT M5 additions — build them
+there): `Organisation.takedownCount` (§A24, M2) · `Product.sellerCountry`/`sellerVerified` (§A23,
+M2 — internal-only) · `User.lastLoginAt` (M1 — **already built**, set on successful login).
+Derived-only values (no field anywhere): "which side was reviewed", side-enabled dates, claim
+history, resubmit count — all from AuditLog.
 
 If a task appears to need a new collection or a new persisted field to make an M5 screen work: 🔴 **stop and ask.** That is the signal that the feature belongs elsewhere — it is exactly why featured content and the settings document were both moved out of this module.
 

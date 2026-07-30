@@ -8,7 +8,8 @@
 > - **§A17** no free-form specs anywhere ("Other" = fixed `CategoryAttribute` fields). **§A18** blocked-product purge = 180 days. **§A19** `Product.createdBy` dropped → product create AND edit write AuditLog (append-only/permanent); a separate MongoDB `errorLogs` (90-day TTL, strict exclusion list). **§A20** admin uploads category images incl. top categories (exception to activate/deactivate-only).
 > - **§A21** dual accounts, separate login portals, two-step signup with Organisation claim/create.
 > - **Organisation / company profile = ✅ SCOPED by §A22** (was PENDING; supersedes U2 below): company profile view/edit is **M1 work** — it is the missing capture path for **logo + description** (P2's public seller fields). KYC-checked fields (name, country, address, `entityType`) **lock after verification**; changing one drops `kycStatus` → `submitted` and withholds the tick. **No new model fields needed** — the work is the edit endpoint, the lock and the demotion.
-> - **🚫 CANCELLED 2026-07-30 — "business type" + seller "main/working categories".** Removed from the public seller list (P2/M2 below), not deferred; `entityType` covers the purpose. **🔒 `website` is internal, never public** (it was being returned and has been removed). **✅ `establishedYear` IS public** — already returned, now whitelisted.
+> - **🚫 CANCELLED 2026-07-30 — "business type" + seller "main/working categories".** Removed from the public seller list (P2/M2 below), not deferred; `entityType` covers the purpose (and is **public** since 2026-07-30). **🔒 `website` is internal, never public** (it was being returned and has been removed). **✅ `establishedYear` IS public** — already returned, now whitelisted.
+> - **§A23/§A24 (2026-07-30):** Product carries denormalised, **internal-only** `sellerCountry` + `sellerVerified` (Atlas `$search` cannot join — the country facet and verified boost read these; synced on org verify/demote/country-edit; never public). Per-seller takedown count = persisted **`Organisation.takedownCount`** (increment-only, purge-proof).
 
 ---
 
@@ -19,7 +20,7 @@ A2. Search/filter and save-favourite were deliberately moved OUT of M2 and INTO 
 A3. Only ONE new model in M3: **SavedItem**. Everything else is a read/query layer over existing models.
 A4. Reused models: Product, Category, CategoryAttribute (from M2); Organisation (from M1).
 A5. Category model gets ONE new field in M3: `synonyms: [String]`.
-A6. Product needs new indexes (not a new model): text index (name+description+searchable attribute values), filter indexes on categoryId, status, country, attributes.key, attributes.value.
+A6. Product needs new indexes (not a new model): text index (name+description+searchable attribute values), filter indexes on categoryId, status, **sellerCountry** (§A23 — the denormalised org-country copy; Product has no own `country`), attributes.key, attributes.value.
 A7. No new model for "recently viewed" / "search history" — those are Phase 2, skipped.
 
 ## B. SavedItem model
@@ -157,14 +158,14 @@ O1. `GET /public/search` — keyword + filters + sort + page (params: q, type=pr
 O2. `GET /public/facets` — available filters + counts for the current query/category.
 O3. `POST /search/ai` — AI search (body {query, target}) → {answer, extracted, results}.
 O4. `GET /public/products/:id` — product detail (public projection only).
-O5. `GET /public/exporters/:id` — seller profile + catalogue + tick (public projection only).
+O5. `GET /exporters/:id` — seller profile + catalogue + tick (public projection only; shipped M1 route — the older `/public/exporters/:id` spelling is corrected to match the code).
 O6. `POST /saved` · `DELETE /saved/:id` · `GET /saved` — saved items (buyer-scoped, ownership-checked).
 
 ## P. Public vs Private data (WHITELIST projection — critical)
 
 P1. **Rule:** public routes return ONLY whitelisted public fields; any NEW field defaults to PRIVATE unless explicitly added. Whitelist, never blacklist. Same projection on web + app. Private fields never serialised on public routes.
 
-P2. **SELLER public:** company name, logo, description, verified tick + since-date (status only), general location (country/city — NOT exact street), **`establishedYear`**, public catalogue (active products only), member-since, product count. *(**business type** + **main categories**: cancelled 2026-07-30. **`website`**: internal, never public.)*
+P2. **SELLER public:** company name, **`slug`** (`/supplier/:slug` — §A6), logo, description, verified tick + since-date (status only — a **`verified` boolean + `verifiedAt`**, never raw `kycStatus`), general location (country/city — NOT exact street), **`entityType`** (`business`|`individual` — whitelisted 2026-07-30, closes the business-type cancellation), **`establishedYear`**, public catalogue (active products only), member-since (**year only**), product count. *(**business type** + **main categories**: cancelled 2026-07-30. **`website`**: internal, never public.)*
 P3. **SELLER private:** KYC documents (business/personal ID — super admin/employee review only), owner personal ID/PII, direct contact phone/email (reached ONLY via M4 enquiry), precise/street address, internal/auth fields (userId, tokenVersion, role, verification notes, audit trail), financial/account details.
 
 P4. **PRODUCT public:** name, description, images, category/sub-category (+type), price (mode+min/max+currency), MOQ+unit, trade info (HS code, origin, supply ability, lead time, packaging), service info (engagement/delivery/team/timeline), attributes (specs), seller public projection, listed-since.

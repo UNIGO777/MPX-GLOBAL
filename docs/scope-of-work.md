@@ -52,8 +52,11 @@ These are owner-confirmed and stable. Details + guards in `docs/Note.md`.
   approval is a recorded status only (flips `kycStatus` → verified for the tick).
 - **Exporter/seller** — self-registers, **profile public immediately** (`kycStatus: pending`);
   verified = a **tick** (`kycStatus === 'verified'`; no "not verified" badge).
-- **Unverified seller product limit** — unverified seller may add **at most 3 products**; more
-  only after an Employee verifies them. (Replaces the quote's hard "verify-before-sell" gate.)
+- **Unverified seller product limit** — unverified seller may hold **at most 3 ACTIVE (published)
+  products** (taken-down products excluded from the count — Part A §A10) **plus max 10 drafts**
+  (§A15); the cap lifts after an Employee verifies them. (Replaces the quote's hard
+  "verify-before-sell" gate. The older "may add at most 3 products" total-upload wording is stale —
+  the cap is on LIVE listings.)
 - **Roles = 4** — `buyer` · `exporter` · `employee` · `superadmin`. **No separate `admin`
   role** (removed 2026-07-28; the quote names only a "Super admin dashboard" and an
   "Employee panel", so this aligns the build to the quote — not a scope change).

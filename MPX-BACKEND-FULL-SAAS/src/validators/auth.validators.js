@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { zString } from './helpers.js';
+import { PERMISSIONS } from '../config/permissions.js';
 
 // zString rejects non-strings (so a Mongo operator object can never reach these
 // fields); each object schema strips unknown keys by default.
@@ -43,16 +44,14 @@ export const exporterSignup = {
     company: zString({ min: 1, max: 200 }),
     // Exporter-only extra fields (fields image): entity type (required — drives
     // the KYC path) and a structured address.
+    // `businessProfile` (registrationNumber/taxId/establishedYear) is deliberately
+    // NOT accepted at signup (A5: the registration number is checked at
+    // verification time, and its unique index must not fire on a public signup —
+    // owner decision 2026-07-30). Unknown keys are stripped by zod, so sending it
+    // is harmless.
     entityType,
     country,
     address: address.optional(),
-    businessProfile: z
-      .object({
-        registrationNumber: zString({ max: 100 }).optional(),
-        taxId: zString({ max: 100 }).optional(),
-        establishedYear: z.coerce.number().int().gte(1800).lte(2100).optional(),
-      })
-      .optional(),
   }),
 };
 
@@ -62,7 +61,10 @@ export const createEmployee = {
     email,
     mobile,
     password,
-    permissions: z.array(zString({ min: 1, max: 100 })).max(100).optional(),
+    // Same rule as PATCH /admin/employees/:id/permissions: only catalogue values.
+    // A free-text string here would store a permission the assignment screen can
+    // never show, and a typo would silently grant nothing.
+    permissions: z.array(z.enum(Object.values(PERMISSIONS))).max(50).optional(),
   }),
 };
 

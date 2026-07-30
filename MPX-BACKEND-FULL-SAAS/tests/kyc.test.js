@@ -152,6 +152,23 @@ describe('KYC document upload (M1-B)', () => {
     expect(res.status).toBe(400);
   });
 
+  it('caps stored documents at 20 per organisation (409, checked before any storage call)', async () => {
+    const ex = await makeUser('exporter', { entityType: 'business' });
+    const docs = Array.from({ length: 20 }, (_, i) => ({
+      docType: 'other',
+      storageKey: `mpx/kyc/fake/prefill_${i}`,
+      format: 'pdf',
+      uploadedAt: new Date(),
+    }));
+    await Organisation.updateOne({ _id: ex.org._id }, { $set: { kycDocuments: docs } });
+
+    const res = await upload(ex.token, { docType: 'gst' });
+    expect(res.status).toBe(409);
+
+    const fresh = await Organisation.findById(ex.org._id).select('+kycDocuments');
+    expect(fresh.kycDocuments).toHaveLength(20); // nothing appended past the cap
+  });
+
   it('platform staff have no KYC to submit (403)', async () => {
     const emp = await makeUser('employee');
     const res = await upload(emp.token, { docType: 'gst', entityType: 'business' });

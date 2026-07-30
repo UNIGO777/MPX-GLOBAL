@@ -21,6 +21,22 @@ Status legend: **Pending** = renders but does nothing real · **Done** = wired t
 Backend response shapes that changed after the web was designed. A screen still reading the OLD
 field will break silently.
 
+### 2026-07-30 · Auth responses curated + admin sides fix (code audit fixes)
+
+1. **`POST /auth/buyer/signup`, `/auth/exporter/signup`, `/auth/verify-otp`** — the `user` object is
+   now a **curated view**: `{ id, name, email, mobile, role, orgId, isActive, mustChangePassword }`.
+   Changes a screen must follow: read **`user.id`** (there is no `_id`), and **`user.mobile` is now
+   the e164 string** (was the `{ countryCode, number, e164 }` object). Internal fields
+   (`tokenVersion`, `isEmailVerified`, `permissions`, timestamps) are no longer returned.
+2. **`POST /auth/exporter/signup` no longer accepts `businessProfile`** (registrationNumber / taxId /
+   establishedYear) — the field is stripped at the boundary (A5: captured at verification, not
+   signup). Do not build a signup input for it.
+3. **`GET /admin/users/:id`** — `user.org.buyerSide` / `exporterSide` used to be **always `false`**
+   (populate bug); they now carry real values. A screen written against the buggy shape would have
+   shown every company as side-less.
+4. **KYC upload (`POST /me/kyc/documents`)** — new **409** case: "Document limit reached" once an
+   organisation holds 20 stored documents.
+
 ### 2026-07-30 · A21 · `organisation.type` → `buyerSide` / `exporterSide`
 
 `Organisation.type` is no longer `buyer`/`exporter` (it is now `business`/`platform`, and NOT a

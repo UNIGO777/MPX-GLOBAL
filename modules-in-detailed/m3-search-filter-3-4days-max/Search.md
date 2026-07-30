@@ -4,7 +4,7 @@
 > - **Search engine is LOCKED to Atlas Search** (Part B) — the "DECISION PENDING" in §5.1 / §13 is **resolved**. The index covers product text + **category name + synonyms** + seller company name; facets come from `CategoryAttribute` where `filterable: true`; **OR within a group, AND across groups**.
 > - **Ranking** (Part B): text relevance → **verified-seller boost** → recency → listing completeness. **Verified is a boost, NEVER a filter** — the "verified-only" toggle in §3.1 is a separate, user-selected facet, not the ranking.
 > - **§A12** — `synonyms` are **admin-editable** per category (so admin-created categories are searchable). **§A13 (reversed)** — saving is **buyer-only** (`SavedItem.buyerOrgId`; only a buyer account saves — an exporter buys from a separate buyer account per §A21). **§A1** — only `status: active` surfaces; `draft/inactive/archived/taken-down` and deactivated-category products are excluded **in the query**.
-> - **🔴 M2↔M3 fixes (facets/filters):** (a) **`country`** facet = the seller's `Organisation.country` (Product has no country field; `countryOfOrigin` is goods-only) — join via `exporterOrgId`. (b) **`on_request` pricing = a separate filter toggle**, NOT caught by the min/max price range (on-request products have no price → a price filter must not drop them). (c) The facet panel **adapts to the leaf `type`** — goods-only facets (MOQ, country-of-origin, HS code) don't render for service categories. (d) A product's `categoryId` is always a **leaf/sub** (tops rejected) so `type` + attribute facets always resolve.
+> - **🔴 M2↔M3 fixes (facets/filters):** (a) **`country`** facet = the seller's `Organisation.country` (Product has no own country field; `countryOfOrigin` is goods-only) — carried via **§A23's denormalised internal-only `Product.sellerCountry` + `sellerVerified`** (Atlas `$search` cannot join; the verified **boost** reads `sellerVerified` too; synced on org verify/demote/country-edit; never public). (b) **`on_request` pricing = a separate filter toggle**, NOT caught by the min/max price range (on-request products have no price → a price filter must not drop them). (c) The facet panel **adapts to the leaf `type`** — goods-only facets (MOQ, country-of-origin, HS code) don't render for service categories. (d) A product's `categoryId` is always a **leaf/sub** (tops rejected) so `type` + attribute facets always resolve.
 
 > Everything for the search experience: three search types, synonym matching, faceted filters, AI search, ranking, availability rules, endpoints, screens, and the GPT prompt for AI search.
 > Language: this doc and all UI text are in English.
@@ -92,7 +92,7 @@ Buyers don't know our category names. They type "medicines", not "Pharmaceutical
 
 ### 4.3 Guardrails
 - **Fallback:** if OpenAI fails/times out, run a plain keyword search on the raw query.
-- **Rate-limit** per user; **timeout** the call; **OpenAI only**.
+- **Rate-limit** per user (logged-in) / **per IP** (guests — AI search is open to guests like the rest of search, decided 2026-07-30); **timeout** the call; **OpenAI only**.
 - **No embeddings / semantic vectors** in Phase 1 (that's Phase 2).
 
 ---
@@ -140,7 +140,7 @@ Shared sub-components: verified-tick badge, save button, "unavailable" badge.
 - `GET /public/facets` — available filters + counts for the current query/category.
 - `POST /search/ai` — AI search (body: `{ query, target }`) → `{ answer, extracted, results }`.
 - `GET /public/products/:id` — product detail.
-- `GET /public/exporters/:id` — seller profile + their catalogue + tick.
+- `GET /exporters/:id` — seller profile + their catalogue + tick (shipped M1 route).
 - `POST /saved` · `DELETE /saved/:id` · `GET /saved` — saved items (buyer-scoped).
 
 ---

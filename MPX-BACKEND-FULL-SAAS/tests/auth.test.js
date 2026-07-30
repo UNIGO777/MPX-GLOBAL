@@ -111,6 +111,52 @@ describe('auth', () => {
     expect(res.body.error.fields.map((f) => f.field)).toContain('body.entityType');
   });
 
+  it('signup + verify-otp return a CURATED user view (no tokenVersion / internal flags)', async () => {
+    const b = makeBuyer();
+    const signup = await request(app).post('/auth/buyer/signup').send(b);
+    expect(signup.status).toBe(201);
+    expect(signup.body.user.id).toBeTruthy();
+    expect(signup.body.user).not.toHaveProperty('tokenVersion');
+    expect(signup.body.user).not.toHaveProperty('isEmailVerified');
+    expect(signup.body.user).not.toHaveProperty('permissions');
+
+    const code = otpBox.byId.get(e164(b));
+    const verify = await request(app)
+      .post('/auth/verify-otp')
+      .send({ loginToken: signup.body.loginToken, code });
+    expect(verify.status).toBe(200);
+    expect(verify.body.user.id).toBe(signup.body.user.id);
+    expect(verify.body.user).not.toHaveProperty('tokenVersion');
+  });
+
+  it('exporter signup does NOT accept businessProfile (A5) — same regNo twice stores nothing, no 500', async () => {
+    const bp = { registrationNumber: 'REG-DUP-1', taxId: 'TAX-1', establishedYear: 2001 };
+    const r1 = await request(app)
+      .post('/auth/exporter/signup')
+      .send({ ...makeBuyer(), entityType: 'business', businessProfile: bp });
+    const r2 = await request(app)
+      .post('/auth/exporter/signup')
+      .send({ ...makeBuyer(), entityType: 'business', businessProfile: bp });
+    // Both succeed: the field is stripped at the boundary, so the (regNo, country)
+    // unique index can never fire on a public signup (this used to be a raw 500).
+    expect(r1.status).toBe(201);
+    expect(r2.status).toBe(201);
+    const org = await Organisation.findById(r1.body.user.orgId);
+    expect(org.businessProfile?.registrationNumber ?? undefined).toBeUndefined();
+  });
+
+  it('two orgs with the same company name sign up cleanly with distinct slugs', async () => {
+    const r1 = await request(app).post('/auth/buyer/signup').send({ ...makeBuyer(), company: 'Same Name Traders' });
+    const r2 = await request(app).post('/auth/buyer/signup').send({ ...makeBuyer(), company: 'Same Name Traders' });
+    expect(r1.status).toBe(201);
+    expect(r2.status).toBe(201);
+    const o1 = await Organisation.findById(r1.body.user.orgId);
+    const o2 = await Organisation.findById(r2.body.user.orgId);
+    expect(o1.slug).toBeTruthy();
+    expect(o2.slug).toBeTruthy();
+    expect(o1.slug).not.toBe(o2.slug);
+  });
+
   it('A21 §4a: signup sends an OTP and returns NO session; verify-otp exchanges it for tokens', async () => {
     const b = makeBuyer();
     const signup = await request(app).post('/auth/buyer/signup').send(b);

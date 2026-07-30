@@ -1,6 +1,9 @@
+import { randomBytes } from 'node:crypto';
+
 import { User } from '../models/User.js';
 import { Organisation } from '../models/Organisation.js';
 import { AppError } from '../utils/AppError.js';
+import { slugify } from '../utils/slug.js';
 import { hashPassword, verifyPassword, verifyDummy } from './password.service.js';
 import {
   signAccessToken,
@@ -70,11 +73,31 @@ async function assertIdentityAvailable({ email, e164, role }) {
   }
 }
 
+// The slug pre-validate hook resolves a VISIBLE clash, but two same-name signups
+// racing can both pass its check and one insert then loses on the unique index.
+// Retry once with a random suffix (an explicitly set slug skips the hook). Any
+// other org-level duplicate (e.g. the registrationNumber+country partial index)
+// is mapped to a clean conflict instead of leaking a raw Mongo 500.
+async function createOrgHandlingDuplicates(org) {
+  try {
+    return await Organisation.create(org);
+  } catch (err) {
+    if (err?.code === 11000 && err?.keyPattern?.slug) {
+      const base = slugify(org.name) || 'org';
+      return Organisation.create({ ...org, slug: `${base}-${randomBytes(2).toString('hex')}` });
+    }
+    if (err?.code === 11000) {
+      throw AppError.conflict('duplicate organisation', 'An organisation with these details already exists.');
+    }
+    throw err;
+  }
+}
+
 // Create org then user. No transactions on standalone Mongo, so compensate by
 // removing the org if the user insert loses a uniqueness race.
 async function createUserWithOrg({ org, user }) {
   await assertIdentityAvailable({ email: user.email, e164: user.mobile.e164, role: user.role });
-  const orgDoc = await Organisation.create(org);
+  const orgDoc = await createOrgHandlingDuplicates(org);
   try {
     return await User.create({ ...user, orgId: orgDoc._id });
   } catch (err) {
@@ -135,12 +158,11 @@ export async function registerExporter({
   country,
   entityType,
   address,
-  businessProfile,
   meta,
 }) {
   const mob = normalizeMobile(mobile);
   const user = await createUserWithOrg({
-    org: { name: company, type: 'business', exporterSide: true, country, entityType, address, kycStatus: 'pending', businessProfile },
+    org: { name: company, type: 'business', exporterSide: true, country, entityType, address, kycStatus: 'pending' },
     user: {
       name,
       email: email.toLowerCase(),

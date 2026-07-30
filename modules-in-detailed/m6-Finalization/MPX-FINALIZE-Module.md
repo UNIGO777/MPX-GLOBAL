@@ -68,15 +68,22 @@ That cascade is **F1-A (M1-core)**, buildable now. It still does **not** reach t
 
 ---
 
-## F2 · Purge of archived products
+## F2 · Purge of archived products — 🚫 CANCELLED 2026-07-30 (A7 reconfirmed by owner)
 
-**Decided 29 July, reversing A7.** Archived products were to be kept forever on the reasoning that the seller was choosing to keep them. They will now also be purged at 180 days.
+**The 29-July reversal is itself reversed.** The owner reconfirmed **§A7 as final**: archived
+(seller-deleted) products keep their DB row **and** Cloudinary images **indefinitely — no purge,
+no expiry, ever.** The only deletion in the system remains §A8's 180-day purge of admin-**blocked**
+products.
 
-**Upside:** one purge job with two triggers — admin block, and seller archive — rather than two mechanisms.
+Why this entry stays in the file: for two days Part A §A7 said "keep forever" while this entry said
+"purge at 180 days" — and Part A always wins, so the reversal was never propagated. Rather than
+propagate it, the owner cancelled it. **Do not build an archived-product purge**; the §A8 job keeps
+exactly one trigger (takedown), and M4's red-label text needs no seller-archive variant.
 
-**Open point — the chat label.** M4's red chat label reads *"Product deleted by admin"*. That is wrong for a seller-archived purge, where the admin did nothing. It needs different text, or no label in that case.
-
-**Accepted cost:** archived products are already hidden from the admin monitoring list. Once they're purged too, a later *"this seller listed it then deleted it"* dispute has nothing at all to show.
+**Still true (accepted, unchanged):** archived products are hidden from the admin monitoring list,
+so a later *"this seller listed it then deleted it"* dispute has only the AuditLog archive entry to
+point at — but the row and images do still exist (A7), so evidence is retained even if no screen
+shows it. A link from the audit log could surface it later.
 
 ---
 
@@ -92,13 +99,15 @@ Until this closes, the Organisation detail screen must **hide these or label the
 
 ---
 
-## F4 · Self-enquiry guard
+## F4 · Self-enquiry guard — ➡️ moved INTO M4 (decided 2026-07-30)
 
 Now that one Organisation can hold both a buyer and an exporter side (A21), a company's buyer account can enquire on its own exporter listing, making `buyerOrgId === exporterOrgId`.
 
 In that case the chat shows in both portals, the company gets notified about itself, and enquiry counts skew. A guard on enquiry creation closes it.
 
-**Until it exists:** the same conversation can appear under both the buyer-account and exporter-account sections of the admin Organisation screen.
+**Decision 2026-07-30: the guard is built in M4 itself, at `POST /inquiries` — see m4.md M4-39.**
+It is not FINALIZE work any more; this entry stays only as the record of why the guard exists.
+Until M4 ships, the gap is moot (no enquiry endpoint exists at all).
 
 ---
 
@@ -120,6 +129,11 @@ The error log, when built: errors only, its own collection separate from `AuditL
 This matters more than it looks. Under A10 a taken-down product no longer occupies a slot in the D1 three-active cap, so blocking a product *frees* a slot. Account suspension is therefore the **only real abuse control left**, and it has no trigger value.
 
 The platform settings screen would have given it a home, but that screen moved to month 2. So the number has to be chosen as a constant in code.
+
+**Trigger data decided (2026-07-30, §A24):** the count the threshold fires on is the persisted
+**`Organisation.takedownCount`** — incremented on every takedown, never decremented on restore,
+so it survives the §A8 purge (counting from `Product` rows would undercount repeat offenders
+exactly when it matters). Only the threshold **value** remains open.
 
 ---
 

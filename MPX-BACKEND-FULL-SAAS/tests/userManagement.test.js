@@ -136,6 +136,37 @@ describe('user management — reads (M1-E)', () => {
     expect(res.body.user.id).toBe(String(target.user._id));
     expect(res.body.user).not.toHaveProperty('passwordHash');
     expect(res.body.user.org.kycStatus).toBe('verified');
+    // A21 contract: the side flags are the buyer/exporter discriminator. This
+    // regressed once (the populate select didn't include them → false for every
+    // org) — these assertions lock the fix in.
+    expect(res.body.user.org.exporterSide).toBe(true);
+    expect(res.body.user.org.buyerSide).toBe(false);
+  });
+
+  it('POST /admin/employees validates permissions against the catalogue', async () => {
+    const sa = await makeUser('superadmin');
+    const employeeBody = (email, number, permissions) => ({
+      name: 'New Employee',
+      email,
+      mobile: { countryCode: '+91', number },
+      password: 'longpassword1',
+      permissions,
+    });
+
+    // A string outside the catalogue (e.g. a would-be governance permission) is a
+    // 400 at the boundary — same rule as PATCH /admin/employees/:id/permissions.
+    const bad = await request(app)
+      .post('/admin/employees')
+      .set(bearer(sa.token))
+      .send(employeeBody(`emp_bad_${Date.now()}@example.com`, '9890000001', ['user:manage']));
+    expect(bad.status).toBe(400);
+
+    const ok = await request(app)
+      .post('/admin/employees')
+      .set(bearer(sa.token))
+      .send(employeeBody(`emp_ok_${Date.now()}@example.com`, '9890000002', ['user:read']));
+    expect(ok.status).toBe(201);
+    expect(ok.body.user.permissions).toEqual(['user:read']);
   });
 });
 
