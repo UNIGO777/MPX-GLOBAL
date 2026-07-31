@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 import { baseSchemaOptions } from './baseSchema.js';
 import { declareScope, SCOPE } from './scoping.js';
-import { PRODUCT_STATUS, PRICE_MODE, CURRENCIES } from './enums.js';
+import { PRODUCT_STATUS, PRICE_MODE, CURRENCIES, CATEGORY_TYPE } from './enums.js';
 import { slugify } from '../utils/slug.js';
 
 const { Schema } = mongoose;
@@ -110,6 +110,19 @@ const productSchema = new Schema(
     // §A23 denorm — INTERNAL-ONLY (never in PUBLIC_FIELDS).
     sellerCountry: { type: String, uppercase: true, trim: true, minlength: 2, maxlength: 2 },
     sellerVerified: { type: Boolean, default: false, index: true },
+
+    // §A26 denorms — also INTERNAL-ONLY. Native $text cannot join and cannot sit
+    // inside $or, so the searchable corpus and the facet keys have to live on
+    // the product row. Kept in sync by services/searchSync.service.js.
+    //
+    // searchKeywords: leaf category name + synonyms + attribute values + seller
+    // company name (see utils/searchKeywords.js). select:false — it is index
+    // fodder, not payload, and must never be serialised anywhere.
+    searchKeywords: { type: String, select: false },
+    // The leaf's `type` — powers the goods/service facet without a lookup.
+    categoryType: { type: String, enum: CATEGORY_TYPE, index: true },
+    // The leaf's parent — powers the category facet counts without a lookup.
+    topCategoryId: { type: Schema.Types.ObjectId, ref: 'Category', index: true },
   },
   baseSchemaOptions,
 );
@@ -119,6 +132,18 @@ productSchema.index({ categoryId: 1, status: 1 }); // browse by category
 productSchema.index({ 'attributes.key': 1, 'attributes.value': 1 }); // M3 facet filters
 productSchema.index({ 'takedown.isDown': 1, 'takedown.at': 1 }); // purge scan + Blocked filter
 productSchema.index({ sellerCountry: 1 });
+
+// §A26 — THE text index. ⚠️ MongoDB allows exactly ONE text index per
+// collection: extend this compound definition, never add a second one.
+// Weights put a product's own name first, the denormalised corpus (category /
+// synonyms / attribute values / seller name) second, the free-text description
+// last. Left on the DEFAULT english analyser on purpose — its stemming already
+// matches "medicines" to "medicine" without any fuzzy engine (do not set
+// default_language: 'none').
+productSchema.index(
+  { name: 'text', searchKeywords: 'text', description: 'text' },
+  { weights: { name: 10, searchKeywords: 5, description: 1 }, name: 'product_text' },
+);
 
 // Slug once, from the name; short id suffix on a visible clash (an insert-race
 // E11000 is retried by the service with a random suffix).

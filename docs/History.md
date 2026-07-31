@@ -135,6 +135,210 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-07-31** — **M3 DISCOVERY & SEARCH BACKEND BUILT — all eight plan phases (M3-A→M3-H) in
+  one pass, then three verification rounds. 274/274 green (192 → +82), lint clean, production-mode
+  boot + route-guard pass.** Tracker: **A3** (whitelist projections on every new surface), **A6**
+  (SavedItem ownership scoping), **A5** (route declarations; **M3 adds NO new permission strings**),
+  **B2** (operator/injection rejection incl. the AI JSON), **B7** (dedicated `searchLimiter` +
+  `aiLimiter` + per-org AI quota). **Shipped:** *(A)* three internal-only Product denorms
+  (`searchKeywords` = category name + synonyms + attribute values + **seller company name**,
+  `categoryType`, `topCategoryId`), ONE compound `$text` index on Product (name 10 /
+  searchKeywords 5 / description 1) + one on Organisation, `searchSync.service` covering every
+  sync point, and a re-runnable backfill (`npm run backfill:search`). *(B)* shared
+  `search.query.js` — M2's browse now compiles through it too (§A27.4), its param contract
+  untouched — plus `GET /public/search`: keyword+synonym, ranking (textScore → verified boost →
+  recency → completeness), three-tier currency-aware price sort that never changes the result set,
+  and the suppliers path. *(C)* `GET /public/facets` with §A27.2 exclude-own-group counts,
+  currency-scoped price bounds, and TOP-level attribute **intersection**. *(D)* `SavedItem`
+  (buyer-only, unique compound index, no `ref` on the polymorphic target) with the
+  temporary-stays-flagged / permanent-is-cleaned rule, cleanup hooks on **archive AND purge**, and
+  a dangling-target sweep. *(E)* `POST /search/ai` on the `openai` SDK (**owner-approved
+  dependency**; key arrives at testing time) — one call, temperature 0, tops+synonyms-only prompt,
+  post-hoc attribute validation, keyword fallback on any failure, `optionalAuthenticate`,
+  `aiLimiter` + Redis per-org daily quota. *(F)* `sitemap.xml` + `robots.txt` from the new
+  `PUBLIC_WEB_URL`. *(G)* zero-result "did you mean" over category names + synonyms.
+  **Bugs found BY the tests and fixed:** *(1)* 🔴 the bulk re-sync stamped `updatedAt` on every
+  row, so one category rename would have marked thousands of untouched products as just-edited —
+  **polluting recency ranking and every sitemap `lastmod`** (fixed with `timestamps: false`);
+  *(2)* `loadExporterOrg` never selected the org's `name`, so the seller company name silently
+  never reached the search corpus; *(3)* the AI prompt injected only TOP synonyms, missing
+  synonyms an admin had put on sub-categories (A12 allows both) — now folded up; *(4)* a syntax
+  error caught by `node --check`. **Verification rounds:** 13 adversarial edge-case tests
+  (operator payloads, regex-shaped queries, unicode/emoji, empty world, paging boundaries, and a
+  sweep asserting **no M3 surface leaks** kycStatus/KYC/contact/takedown/denorms) · 8 cross-module
+  journeys over real HTTP (signup→OTP→list→publish→search→save→verify→tick, takedown ripple,
+  category rename sync, F1-A block × M3, archive/purge cleanup, D1 cap vs discovery, four-account
+  isolation) · **19 full-suite runs**. **Flake fixed centrally:** limiter counters live in Redis
+  keyed per IP, so requests accumulated across test files until a limiter fired mid-suite and an
+  unrelated assertion failed with a 429 — `tests/setup.js` now flushes Redis before **every** test
+  globally, so no future test file has to remember. 14 consecutive clean runs followed; one
+  earlier failure in that sequence was never reproduced and is recorded rather than papered over.
+  **Docs same-pass:** plan phase table → all DONE + verification note; `docs/UiWebNotes.md` gained
+  the full M3 API contract for the frontend (bracket attribute params, `fallback:true` handling,
+  buyer-only saved rules, supplier-mode 400s, and the **sitemap/robots reverse-proxy requirement**).
+  **Still owner-side (non-blocking):** the top-40 synonyms list and the OpenAI key.
+- **2026-07-31** — **DOC-ONLY: FINAL exhaustive M3 verify (phase-by-phase A→H, every lens at
+  once) — 8 findings, all fixed; plan closed at 32 findings across 4 passes.** 🔴 *(1)* **An
+  ordering bug inside the plan itself:** the SavedItem orphan sweep was placed in the **M3-A**
+  backfill script, but `SavedItem` does not exist until **M3-D** — moved. 🔴 *(2)* **An unflagged
+  dependency:** AI search silently assumed an OpenAI client library, which CLAUDE.md forbids adding
+  without asking. Decided: **built-in `fetch` + `AbortController`, no new package** (Node 20 has
+  both; also trivially mockable) — with the SDK left as an explicit owner override, now the only
+  open dependency question in M3. *(3)* the per-org AI quota had no **store** — Redis
+  (`q:ai:<orgId>:<date>`, 24h TTL), no-op when Redis is absent in dev, exactly as the limiters
+  already degrade. *(4)* **supplier mode now 400s product-only params** (price/moq/attr/category/
+  price-sort) instead of silently ignoring them — silent ignoring hides frontend bugs. *(5)*
+  attribute facets under a **TOP** show the **intersection** of its leaves' keys, not the union
+  (a union would render mostly-zero options and look broken). *(6)* the sitemap emits subs as
+  **`/category/:parent/:child`** — SEO §1 defines two URL forms and emitting both would be
+  duplicate content. *(7)* stated explicitly that **M3 adds NO permission strings** (the §A25
+  catalogue stays at eight; admin has no discovery screens) and **writes NO AuditLog rows** (A19:
+  reads/searches are never audited) — both to stop either being invented. *(8)* M2's
+  `/public/products` **keeps `generalLimiter`**; only search/facets get the new `searchLimiter`.
+  A **§8 Verification record** was added to the plan summarising all four passes, so a future
+  reader can see what was already checked and stop re-deriving it. No code touched.
+- **2026-07-31** — **DOC-ONLY: third verify pass, M3 plan ONLY (M1/M2 are built; their plans are
+  now historical) — 7 findings, all fixed.** 🔴 *(1)* **The saved list must NOT reuse
+  `getPublicProduct()`/`getPublicExporter()`** — those apply the availability filter **in the
+  query** and therefore 404 exactly the rows the saved list is required to KEEP and flag
+  "currently unavailable"; reusing them would have silently deleted the module's central rule.
+  It reuses the **projection**, never the filtered read path. 🔴 *(2)* **`Search.md` §11's
+  "inject the live category + synonym + attribute list" is not buildable as written** — the tree
+  is 40 tops + ~262 subs, and every sub's attributes would be thousands of tokens on *every*
+  search (contradicting memo I7's "keep the call cheap"), and worse, it is chicken-and-egg: those
+  attributes belong to a category the model has not resolved yet, while a second call is banned.
+  Resolved: inject **tops + synonyms only**, and handle attributes on the **validation** side
+  (drop unknown keys against the resolved category) — which is what I7 actually asks for.
+  🔴 *(3)* **Sitemap/robots have no delivery story:** absolute URLs need a new **`PUBLIC_WEB_URL`**
+  env value, and both files must be served from the **web** domain — so the VPS needs an nginx
+  reverse-proxy rule for `/sitemap.xml` + `/robots.txt`; flagged to the owner alongside the §A26
+  MongoDB setup rather than shipping endpoints nobody routes to. *(4)* `SavedItem.targetId` must
+  be a plain ObjectId with **no `ref`** (it points at Product *or* Organisation — a static ref
+  would populate against the wrong collection half the time). *(5)* AI needs the
+  **per-organisation daily quota** the api-endpoints rule requires in as many words, not just a
+  rate limiter (default flagged: 100/day). *(6)* the did-you-mean name+synonym cache must be
+  invalidated by the same admin category writes that already invalidate `activeLeafIds`.
+  ✅ *(7)* recorded a quiet win so nobody removes it: the default **English** text analyser stems
+  `medicines`→`medicin`←`medicine`, so singular/plural already match with no fuzzy engine — do
+  **not** set `default_language: 'none'`. **M3 plan now verified 3× (8 + 9 + 7 findings). No code
+  touched; 192/192 still green.**
+- **2026-07-31** — **DOC-ONLY: second verify pass over ALL THREE build plans — 9 M3 findings + 4
+  stale lines in the M1/M2 plans.** 🔴 **The worst one is in the M1 plan:** three separate places
+  still instructed a future reader to **"expose `kycStatus`" on the public exporter read** — the
+  exact leak B7 forbids, and precisely the stale-instruction class that (per two earlier entries)
+  has already cost this project twice. Corrected to the shipped truth: a derived **`verified`
+  boolean + `verifiedAt`**, never the raw status, never the rejection; the shipped whitelist is
+  spelled out; and the stale `type: 'exporter'` query (A21 removed `type`) is now
+  `exporterSide: true` with id-or-slug. **M2 plan:** two "Atlas index" references corrected to the
+  native `$text` engine (§A26). **M3 plan (9):** 🔴 *(1)* the planned `attr.<key>=v` **dotted query
+  param would have been 400-rejected by our own `rejectMongoOperators`** (it blocks any dotted
+  request key, and `qs` does not expand dots) — switched to **bracket** notation
+  `attr[gsm][min]`, with the constraint recorded as a gotcha so it is not reintroduced.
+  🔴 *(2)* **price SORT had the same mixed-currency flaw §A27.1 fixed for the price FILTER** —
+  now a three-tier order (selected currency → other currencies → on-request) that **never changes
+  the result set**. *(3)* on-request placement in a price sort, *(4)* price-facet buckets are
+  currency-scoped and echo their currency, *(5)* sellers with zero listings **do** appear in
+  supplier results (B7 — hiding them would be an unauthorised visibility gate), *(6)* search/facets
+  get a dedicated **`searchLimiter`** (the api-endpoints rule names search explicitly and `$text` +
+  `$facet` costs far more than a plain read), *(7)* `GET /saved` must tolerate a dangling
+  `targetId` + a one-off orphan sweep in the backfill, *(8)* "did you mean" also applies after an
+  AI fallback that returns zero, *(9)* two more MongoDB constraints recorded (`$text` cannot sit
+  inside `$or`; `textScore` must be projected before `$facet`). **192/192 green, lint clean**
+  (no code changed this pass). **Note for future runs:** vitest must be invoked from
+  `MPX-BACKEND-FULL-SAAS/` — from the repo root `.env` is not found and env validation exits 1,
+  which looks like a mass test failure but is not.
+- **2026-07-31** — **CODE: the one M3-verify gap that was a REAL shipped-code bug is fixed —
+  `GET /exporters/:idOrSlug` now accepts a slug. 192/192 green (+1), lint clean.** Seven of the
+  eight verify-pass gaps were plan-only (that code does not exist yet); this one was live: SEO §1
+  serves the seller page at `/supplier/:slug` and the M3 sitemap will emit those URLs, but the
+  shipped endpoint was **id-only**, so that page had **no API to call** — while product and
+  category detail already accepted id-or-slug. Fixed now instead of waiting for M3-F. **Also
+  de-duplicated:** this was the id-or-slug helper's **third** copy, so it moved to
+  `src/utils/idOrSlug.js` and `category.service` + `publicProducts.service` now import it (zero
+  behaviour change, proven by the existing tests). The validator loosened from `zObjectId()` to a
+  bounded `zString` — `zString` still rejects any non-string operator payload, and the service
+  decides id-vs-slug with a strict 24-hex test (plain `isValidObjectId` would accept a 12-char
+  slug). **New test** in `m2-public.test.js`: slug payload is byte-identical to the id payload ·
+  buyer-only org 404s by slug (the exporterSide check still applies) · blocked org 404s by slug
+  (F1-A read side) · unknown slug is a clean 404, never a 500. **API-contract note logged in
+  `docs/UiWebNotes.md`** (non-breaking — existing id calls unaffected). Plan updated: the
+  prerequisite is struck from M3-F and the "already delivered" table now lists it as shipped.
+- **2026-07-31** — **M3 plan verify pass — 8 gaps + 4 notes, all fixed before any code.**
+  🔴 **(1) Seller company name was missing from the product search corpus** — memo **F8/K2**
+  require product relevance to consider the seller name ("TextileHub" in Products mode must return
+  their listings); added to `searchKeywords`, **§A26 updated**, and a new sync point recorded (org
+  rename → rebuild that org's products) alongside the existing A22 hooks. 🔴 **(2) Numeric
+  attribute RANGE filters were unexpressible** — `attr.<key>=v1,v2` is OR-of-values, but memo
+  **H3/H7** explicitly require "GSM 100–150"; added `attr.<key>.min`/`.max`, validated against the
+  attribute's real `inputType`. 🔴 **(3) `/supplier/:slug` had no API** — SEO serves seller pages
+  by slug and the sitemap emits those URLs, but `GET /exporters/:id` is **id-only** (product and
+  category already accept id-or-slug); M3-F now adds the slug branch. **(4) Supplier-mode facets
+  and sorts were undefined** — pinned deliberately narrow (country + verified; relevance/newest
+  only) because **"working categories" were cancelled (§A22.5)**, so an org has no category/price/
+  MOQ of its own; a build session must not invent a supplier↔category link. **(5) AI route auth
+  shape** — public endpoint that still wants per-user rate keying needs a new
+  **`optionalAuthenticate`** (never throws, carries the route-guard marker); previously undefined.
+  **(6) Supplier `productCount` N+1** — must be batched per page, not 20 `countDocuments`.
+  **(7) Browse param scope** — sharing the query builder must NOT silently give `/public/products`
+  the search params; its shipped contract is frozen. **(8) `GET /public/facets` contract** — takes
+  the same params as search (counts are "for the current query"). **Notes added:** one-text-index
+  rule now applies to Organisation too · facets with `q` run one `$text` per group (accepted;
+  fix is caching, never the cheaper counting model §A27.2 rejected) · saved-list availability is
+  batched per page · unit normalisation (memo H7) is a **non-issue** since `unit` lives on the
+  attribute — stated so it isn't later read as missing.
+- **2026-07-31** — **§A27 recorded + `build-plans/m3/backend-plan.md` written (no code yet).**
+  **§A27 — four owner decisions:** *(1)* 🔴 **price filter is CURRENCY-SCOPED** — a gap no plan doc
+  had caught: products price in any ISO-4217 currency and Phase 1 has **no FX conversion**, so a
+  bare numeric range across currencies is wrong; the range now applies only together with a
+  `currency` selection (default INR) and other currencies are excluded from that filtered result.
+  *(2)* **facet counts exclude their own group's selection** (standard faceted-search behaviour —
+  one small aggregation per group). *(3)* **supplier search = company name + description only**
+  (memo F8); surfacing sellers via their products was considered and rejected for Phase 1.
+  *(4)* **both public surfaces stay** — M2's `/public/products` browse keeps its shipped contract
+  and `/public/search` is added, but both compile through **one shared availability/filter
+  builder** so the exclusion rules cannot drift. **Plan = 8 phases (M3-A→M3-H), ~4–5 days:**
+  §A26 denorms (`searchKeywords`/`categoryType`/`topCategoryId`) + the two text indexes + a
+  re-runnable backfill script → shared query builder + `GET /public/search` (keyword, ranking,
+  sorts) → `GET /public/facets` → `SavedItem` + availability rules + **archive AND purge cleanup
+  hooks** → `POST /search/ai` (single call, temperature 0, runtime category injection, strict
+  validation, keyword fallback, per-user/per-IP limits) → `sitemap.xml` + `robots.txt` →
+  "did you mean" (the §A26 fuzzy replacement, zero-result only) → test close-out. **Plan records
+  that M1+M2 already delivered ~half of M3** (both §A23 denorms, synonyms field + admin path,
+  `filterable`, all three public projections, `getActiveLeafIds`, product detail, seller profile +
+  `productCount`, browse, `SCOPE.BUYER_ORG`, slugs). **Risks pinned:** one-text-index-per-collection,
+  `searchKeywords` staleness (every sync point gets a test), no partial-word matching, `$text` must
+  stay in the first `$match`, backfill per environment, and search inheriting the accepted F1-B
+  blocked-org gap (do NOT quietly filter it here). **🧱 Still owner-side:** the top-40 synonyms list
+  (now M3's biggest functional gap — code path, index and admin screen all wait on values) and the
+  OpenAI key.
+- **2026-07-31** — **🔴 DOC-ONLY: §A26 — SEARCH ENGINE REVERSED, Atlas Search → native MongoDB
+  `$text`.** Owner confirmed **production runs a self-hosted MongoDB on a Hostinger VPS — there is
+  no Atlas**, which invalidates the Part B / m3.md / memo-J "LOCKED to Atlas Search" decision
+  (`$search` is Atlas-only). Memo **J3** had already predicted the flip ("native would only be
+  better if hosting had to stay portable — not the case here"); it is the case now. **New engine:**
+  ONE compound `$text` index on Product (`name` 10 · `searchKeywords` 5 · `description` 1) +
+  a text index on `Organisation.name` for the Suppliers toggle; facets via `$facet`; ranking
+  unchanged in intent (textScore → verified boost → recency → completeness). **Three new
+  internal-only Product denorms in M3** (§A23 extended — its *reason* changes from "Atlas cannot
+  join" to "keep the facet pipeline single-collection", the fields stay): **`searchKeywords`**
+  (leaf category name + synonyms + attribute values — this is what makes "medicines →
+  Pharmaceuticals" work in one index), **`categoryType`** and **`topCategoryId`** (the type and
+  category facets were a join I had missed — caught during the M3 read-through). **Honestly
+  recorded losses:** fuzzy/typo tolerance and autocomplete are **gone**; replacement is a "did you
+  mean" closest-match over category names + synonyms, run only on zero-result queries (memo Q3
+  corrected). **Unblocked:** the "search can't be tested locally" problem disappears — native runs
+  identically in the local test DB. **M4 also corrected** (its chat-list search explicitly reused
+  the Atlas lock): native `$text` over the three denormalised name fields, with the no-typo-
+  tolerance consequence stated. **Ops added to FINALIZE:** VPS MongoDB needs auth + localhost
+  binding + our own `mongodump` backups + index-sync per environment; ✅ upside — the **C10
+  append-only audit grant** is finally enforceable now that we own the DB users. **Propagated in
+  one pass (11 files):** build-prompt (§A26 + Part B + Part C step 8 + §A23 note + doc-versions
+  header), m3.md (§3.4, §2.3 indexes, §13, override header), Search.md (§5.1, §13, header), memo
+  (J1–J4, K2, Q3, header), BRAIN (1.6 stack, 6.5, override header), m4.md (§5 index table, §8.3),
+  M2.md + Models.md (denorm rationale), FINALIZE (client-dependency row), model-decisions (C4),
+  **CLAUDE.md** (Stack — self-hosted, native `$text`, one-text-index-per-collection warning) and
+  **`.claude/rules/secrets-and-hygiene.md`** (Atlas = dev-only) — the two always-read files
+  checked in the same pass per the standing rule. **No code touched** (M2 ships no search yet).
 - **2026-07-31** — **Post-build M1+M2 combined audit — ~50 possibilities walked, 2 bugs found and
   fixed, 5 interaction tests added. 191/191 green (×2 runs — no flakiness), lint clean.**
   **BUG-1 (real):** a cross-TYPE category change bricked the product — the old goods/service

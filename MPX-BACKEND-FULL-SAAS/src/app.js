@@ -16,6 +16,7 @@ import { meRouter } from './routes/me.routes.js';
 import { publicRouter } from './routes/public.routes.js';
 import { categoryRouter } from './routes/category.routes.js';
 import { productRouter } from './routes/product.routes.js';
+import { savedRouter } from './routes/saved.routes.js';
 
 const JSON_BODY_LIMIT = '1mb';
 
@@ -99,6 +100,7 @@ export function createApp() {
   app.use(publicRouter);
   app.use(categoryRouter);
   app.use(productRouter);
+  app.use(savedRouter);
 
   // Any unmatched route becomes a JSON 404 through the central handler.
   app.use((req, _res, next) => {

@@ -138,6 +138,14 @@ organisationSchema.index(
   { unique: true, partialFilterExpression: { slug: { $type: 'string' } } },
 );
 
+// §A26 — the Suppliers side of the M3 search toggle matches on company name and
+// description (§A27.3: NOT on their products). ⚠️ Like Product, this collection
+// may hold exactly ONE text index — extend this definition, never add another.
+organisationSchema.index(
+  { name: 'text', description: 'text' },
+  { weights: { name: 10, description: 1 }, name: 'organisation_text' },
+);
+
 // A21 (C2): the public exporter read/listing filters { exporterSide, isActive }.
 // The single-profile read is _id-anchored (backed by _id_), but the M3 public
 // seller list — the hottest M3 query — filters on these two, so back it explicitly

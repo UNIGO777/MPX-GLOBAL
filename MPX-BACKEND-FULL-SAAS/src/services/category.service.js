@@ -1,22 +1,17 @@
-import mongoose from 'mongoose';
-
+import { env } from '../config/env.js';
 import { Category } from '../models/Category.js';
 import { CategoryAttribute } from '../models/CategoryAttribute.js';
 import { Product } from '../models/Product.js';
 import { AppError } from '../utils/AppError.js';
+import { idOrSlugFilter } from '../utils/idOrSlug.js';
 import { recordAudit } from './audit.service.js';
 import { uploadPublicImage } from './image.storage.service.js';
+import { rebuildForCategory } from './searchSync.service.js';
 
 // ---------------------------------------------------------------------------
 // Lookups. Public reads hide inactive rows IN THE QUERY; admin reads see all.
 // Ids and slugs are both accepted on single reads (SEO §1 serves /category/:slug).
 // ---------------------------------------------------------------------------
-
-const isObjectId = (v) => mongoose.isValidObjectId(v) && /^[a-fA-F0-9]{24}$/.test(String(v));
-
-function idOrSlugFilter(idOrSlug) {
-  return isObjectId(idOrSlug) ? { _id: idOrSlug } : { slug: String(idOrSlug).toLowerCase() };
-}
 
 // ---------------------------------------------------------------------------
 // activeLeafIds — the availability helper the public product reads filter on.
@@ -35,14 +30,19 @@ export function invalidateLeafCache() {
 
 export async function getActiveLeafIds() {
   const now = Date.now();
-  if (leafCache.ids && now - leafCache.at < LEAF_CACHE_TTL_MS) return leafCache.ids;
+  // Never cache in tests: a stale entry surviving between cases makes results
+  // depend on test ORDER, which is exactly the kind of flake that wastes a day
+  // to diagnose. Production keeps the cache (the collection is ~300 rows and the
+  // admin writes invalidate it explicitly).
+  const cacheable = env.NODE_ENV !== 'test';
+  if (cacheable && leafCache.ids && now - leafCache.at < LEAF_CACHE_TTL_MS) return leafCache.ids;
 
   const activeTops = await Category.find({ parentId: null, active: true }).select('_id').lean();
   const topIds = activeTops.map((t) => t._id);
   const leaves = await Category.find({ parentId: { $in: topIds }, active: true }).select('_id').lean();
   const ids = leaves.map((l) => l._id);
 
-  leafCache = { ids, at: now };
+  if (cacheable) leafCache = { ids, at: now };
   return ids;
 }
 
@@ -250,6 +250,14 @@ export async function updateCategory({ id, patch, actor, meta }) {
 
   await cat.save();
   invalidateLeafCache();
+
+  // §A26: a rename or a synonyms edit changes the search corpus of every product
+  // in this category — rebuild them now, or the category silently stops matching
+  // under its new name. Rare admin action, bounded batch (searchSync.service).
+  if (after.name !== undefined || after.synonyms !== undefined) {
+    await rebuildForCategory(cat._id);
+  }
+
   await recordAudit({
     actor,
     action: 'category.update',

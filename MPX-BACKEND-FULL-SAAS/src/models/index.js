@@ -9,6 +9,7 @@ export { ErrorLog } from './ErrorLog.js';
 export { Category } from './Category.js';
 export { CategoryAttribute } from './CategoryAttribute.js';
 export { Product } from './Product.js';
+export { SavedItem } from './SavedItem.js';
 
 export { Inquiry } from './Inquiry.js';
 export { Quotation } from './Quotation.js';

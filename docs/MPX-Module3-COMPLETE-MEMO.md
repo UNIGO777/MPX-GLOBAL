@@ -9,7 +9,8 @@
 > - **§A21** dual accounts, separate login portals, two-step signup with Organisation claim/create.
 > - **Organisation / company profile = ✅ SCOPED by §A22** (was PENDING; supersedes U2 below): company profile view/edit is **M1 work** — it is the missing capture path for **logo + description** (P2's public seller fields). KYC-checked fields (name, country, address, `entityType`) **lock after verification**; changing one drops `kycStatus` → `submitted` and withholds the tick. **No new model fields needed** — the work is the edit endpoint, the lock and the demotion.
 > - **🚫 CANCELLED 2026-07-30 — "business type" + seller "main/working categories".** Removed from the public seller list (P2/M2 below), not deferred; `entityType` covers the purpose (and is **public** since 2026-07-30). **🔒 `website` is internal, never public** (it was being returned and has been removed). **✅ `establishedYear` IS public** — already returned, now whitelisted.
-> - **§A23/§A24 (2026-07-30):** Product carries denormalised, **internal-only** `sellerCountry` + `sellerVerified` (Atlas `$search` cannot join — the country facet and verified boost read these; synced on org verify/demote/country-edit; never public). Per-seller takedown count = persisted **`Organisation.takedownCount`** (increment-only, purge-proof).
+> - **🔴 §A26 (2026-07-31) — search engine REVERSED to native MongoDB `$text`** (production = self-hosted VPS, no Atlas). Adds three internal-only Product denorms in M3: `searchKeywords` · `categoryType` · `topCategoryId`. Fuzzy/autocomplete lost — see §J.
+> - **§A23/§A24 (2026-07-30):** Product carries denormalised, **internal-only** `sellerCountry` + `sellerVerified` (kept under §A26 to keep the facet pipeline single-collection — the country facet and verified boost read these; synced on org verify/demote/country-edit; never public). Per-seller takedown count = persisted **`Organisation.takedownCount`** (increment-only, purge-proof).
 
 ---
 
@@ -104,16 +105,25 @@ I9. Full GPT system prompt + example is documented in modules-in-detailed/m3-sea
 I10. JSON shape: `{ target, keywords[], category|null, priceMax|null, priceIntent"low"/"high"|null, moqMin|null, country|null, attributes{}, verifiedOnly }`.
 I11. Prompt rules: map synonyms to category; "cheap/budget/sasti/low"→priceIntent low; "bulk/thok"→moqMin ~1000; only use attribute keys from the resolved category; never invent categories/attributes; if nothing maps, return keywords = original query words.
 
-## J. Search engine (DECISION: Atlas Search)
+## J. Search engine (🔴 DECISION REVERSED 2026-07-31 — §A26: NATIVE MongoDB text search)
 
-J1. **Locked: Atlas Search** (not native Mongo text index).
-J2. Reasons: already on Atlas (free/built-in, no extra infra); fuzzy/typo tolerance ("medisin"→medicine); better relevance ranking; built-in faceting + counts; easier autocomplete/"did you mean".
-J3. Native text index would only be better if hosting had to stay portable (self-host) — not the case here.
+J1. ~~**Locked: Atlas Search**~~ → **LOCKED: native MongoDB `$text` search.** Production runs a
+    **self-hosted MongoDB on a Hostinger VPS** — there is no Atlas, so `$search` is unavailable.
+J2. ~~Atlas reasons~~ — **no longer available to us**: fuzzy/typo tolerance and autocomplete are
+    **lost**; facet counts move to a `$facet` aggregation. Replacement for typos: a **"did you
+    mean"** closest-match over category names + synonyms on zero-result queries only.
+J3. 🔴 **This line predicted the reversal and is now the operative one:** "Native text index would
+    only be better if hosting had to stay portable (self-host)" — **it is self-host.** Native also
+    means one code path that runs in the local test database, so search is fully testable.
+J4. Shape (§A26): ONE compound text index on Product (`name` 10 · `searchKeywords` 5 ·
+    `description` 1) where **`searchKeywords`** denormalises the leaf category name + synonyms +
+    attribute values; a text index on `Organisation.name` for supplier results; new internal
+    denorms `categoryType` + `topCategoryId` for the type/category facets.
 
 ## K. Ranking (default order of results)
 
 K1. Fiverr-style full ranking (ratings/orders/reviews/promoted) is NOT possible in Phase 1 (no order/review data yet).
-K2. **Phase 1 default ranking order:** (1) text relevance (Atlas score on product name + description + seller name) → (2) **verified sellers boosted above unverified** → (3) recency → (4) listing completeness (has images/full details).
+K2. **Phase 1 default ranking order:** (1) text relevance (**native `textScore`** on product name + `searchKeywords` + description; seller name via the Organisation index on the supplier side — §A26) → (2) **verified sellers boosted above unverified** (`sellerVerified`) → (3) recency → (4) listing completeness (has images/full details).
 K3. **Verified-first is a ranking BOOST, not a filter** — both verified & unverified still shown (consistent with B7). Boosting also incentivises verification.
 K4. Buyer can override with sort: relevance (default), newest, price (low→high / high→low).
 K5. Full quality ranking (ratings, order count, response time, promoted listings, new-seller rotation) → Phase 2.
@@ -182,7 +192,7 @@ P10. When an entity is deactivated/archived/taken-down, its public page returns 
 
 Q1. Never a blank screen. Show a clear message: "No products found for 'xyz'".
 Q2. If filters are applied, show "Try removing some filters" + a **"Clear all filters"** button.
-Q3. "Did you mean" suggestions using Atlas fuzzy matching.
+Q3. "Did you mean" suggestions — ⚠️ **corrected by §A26**: native text search has no fuzzy matching, so this is a **closest-match pass over the category name + synonym list** (small, in-memory) run only when a query returns zero results. It is not full typo tolerance.
 Q4. If the query matched a category but no products, offer "Browse {category}" link.
 Q5. Popular/featured fallback if nothing at all matches.
 Q6. AI-search nudge: "Try describing what you need" → opens AI modal.

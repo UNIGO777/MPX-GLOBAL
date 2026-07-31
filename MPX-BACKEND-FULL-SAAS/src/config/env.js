@@ -42,6 +42,10 @@ const envSchema = z.object({
   // Number of trusted proxy hops in front of the app (e.g. 1 behind nginx/ELB).
   // Set in production so req.ip is the real client and rate limiting works.
   TRUST_PROXY: z.coerce.number().int().nonnegative().optional(),
+  // M3: absolute origin of the PUBLIC WEB app — the sitemap emits
+  // `${PUBLIC_WEB_URL}/product/<slug>` and robots.txt points at the sitemap, so
+  // both are unusable without it. Defaulted for dev; set it in production.
+  PUBLIC_WEB_URL: z.string().url().default('http://localhost:5173'),
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),

@@ -206,20 +206,30 @@ Verify this is covered by a test.
    `{ kycStatus, kycRejectionReason (only if rejected), verifiedAt, entityType, kycDocuments
    metadata (docType/uploadedAt only, no storageKey) }`. Powers the buyer/exporter "Verification
    status" + "resubmit after reject" screens. Self-scoped.
-2. **Public tick:** `GET /exporters/:id` (public) → curated public exporter profile **including
-   `kycStatus`** so the frontend renders the verified tick; **never filter by verification**
-   (CLAUDE.md: exporter public from signup). Returns only public fields (name, country,
-   description, logo, businessProfile subset, `kycStatus`, `verifiedAt`) — no contacts, no KYC
-   docs. Marked `publicRoute`.
-   - **Query must constrain type + activeness (fix #7):**
-     `findOne({ _id, type: 'exporter', isActive: true })` — the `type` guard stops this public
+2. **Public tick:** `GET /exporters/:idOrSlug` (public) → curated public exporter profile;
+   **never filter by verification** (CLAUDE.md: exporter public from signup). Marked `publicRoute`.
+   - 🔴 **CORRECTED 2026-07-31 — this bullet used to say "including `kycStatus` so the frontend
+     renders the tick". That is exactly the leak B7 forbids** (and precisely the stale-instruction
+     class this project has been bitten by twice — see the History entries on CLAUDE.md). **What
+     actually shipped, and what is correct:** the response carries a server-derived **`verified`
+     boolean + `verifiedAt`** — raw `kycStatus` and any `rejected` state are **never** exposed.
+   - **Shipped whitelist** (`Organisation.PUBLIC_FIELDS`/`PUBLIC_DERIVED`, serialised by the shared
+     `toPublic()` — A3): `id · name · slug · country · description · logo · entityType ·
+     establishedYear · memberSince (year only) · verified · verifiedAt · productCount` — no
+     contacts, no address, no `website`, no KYC. Pinned by an exact-key test in `kyc.test.js`.
+   - **Query constrains side + activeness (fix #7, updated by A21):**
+     `findOne({ ...idOrSlug, exporterSide: true, isActive: true })` — `type: 'exporter'` no longer
+     exists (A21 replaced it with the side flags). The side guard stops this public
      route from leaking a buyer/platform org via a guessed id, and `isActive` makes a
-     **deactivated** org return **404**. A `rejected` exporter is still public (kycStatus shown
-     without a tick); only deactivated → 404.
+     **deactivated** org return **404**. A `rejected` exporter is still public — it simply comes
+     back with **`verified: false`**, and the rejection is never disclosed (no raw status, no
+     reason); only deactivated → 404.
 
-> **Scope note:** a full public exporter *directory/search* is Module 3 (catalogue). M1 ships
-> only the single-profile-by-id public read above so the B7 tick requirement is honoured now;
-> the "expose `kycStatus`, don't gate" rule then applies to Module 3's listing when built.
+> **Scope note:** a full public exporter *directory/search* is Module 3 (discovery). M1 ships
+> only the single-profile public read above so the B7 tick requirement is honoured now; the
+> **"never filter by verification, return a derived `verified` boolean"** rule (corrected
+> 2026-07-31 — it previously read "expose `kycStatus`, don't gate", which was the leak itself)
+> then applies to Module 3's listing when built.
 
 **Existing tests:** `tests/verification.test.js` seeds orgs at `pending` (`makeOrg` default) and
 currently passes because the shipped guard accepts `pending`. **Only if fix #3 tightens exporter
@@ -503,8 +513,9 @@ No auth library, ORM, or state manager added. No changes to the approved stack.
 
 Add/extend vitest coverage for: KYC upload ownership + state transitions; resubmit loop (rejected
 → submitted **clears `kycRejectionReason`**); verify/reject/approve only from `submitted` (a
-no-docs `pending` org returns 409); public exporter read exposes `kycStatus`, is **not** gated,
-constrains `type: 'exporter'`, and 404s a **deactivated** org (fix #7); KYC-view requires
+no-docs `pending` org returns 409); public exporter read returns a derived **`verified` boolean
+(never raw `kycStatus`)**, is **not** gated, constrains **`exporterSide: true`** (A21 — not the
+removed `type`), accepts an **id or slug**, and 404s a **deactivated** org (fix #7); KYC-view requires
 `kyc:view` and returns signed (not public) URLs; user list pagination cap + no `passwordHash`
 leak + **`q` regex-injection is neutralised** (fix #6); **deactivate sets `User.isActive=false`
 and bumps `tokenVersion` so login + live sessions die** (fix #2); **activate/deactivate is

@@ -38,4 +38,10 @@ export class AppError extends Error {
   static conflict(message, clientMessage = 'Conflict.', code) {
     return new AppError(message, { statusCode: 409, clientMessage, code });
   }
+
+  // Quota/limit exhaustion raised by our own code (the rate-limit middleware
+  // builds its own 429 for transport-level limits).
+  static tooManyRequests(message, clientMessage = 'Too many requests. Please try again later.', code) {
+    return new AppError(message, { statusCode: 429, clientMessage, code });
+  }
 }

@@ -12,7 +12,8 @@ project. Complements (does not replace) `security-baseline.md`.
 
 ## 🔴 Before committing/pushing `.env` — ALWAYS alert first
 `.env` is currently **tracked in git at the owner's request** — the present values are
-**test-only** (a throwaway Atlas cluster, dev JWT secrets, a dev superadmin password). Because
+**test-only** (a throwaway Atlas cluster used for DEV only — production is a **self-hosted
+MongoDB on the VPS**, §A26 — plus dev JWT secrets and a dev superadmin password). Because
 it is tracked:
 - **Before any commit or push that includes `.env`, alert the owner** — list exactly what the
   file currently holds (especially connection strings / credentials) and proceed only on their OK.

@@ -482,8 +482,9 @@ Every box below has a named test before M2 is called done:
 - [ ] `sellerVerified` sync on verify (§A23)
 - [ ] All M1 tests (126) still green · lint clean · boot route-guard passes
 
-*(The synonym search test — "medicines" → Pharmaceuticals — lands in M3 with the Atlas index;
-M2 only carries the field + the A12 edit path.)*
+*(The synonym search test — "medicines" → Pharmaceuticals — lands in M3 with the **native `$text`
+index** (§A26 reversed the Atlas decision: production is a self-hosted VPS); M2 only carries the
+field + the A12 edit path.)*
 
 ---
 
@@ -492,7 +493,8 @@ M2 only carries the field + the A12 edit path.)*
 Search/filters/facets/AI + `SavedItem` (→ M3) · enquiry/chat (→ M4) · quotation (deferred) ·
 employee panel surface (month 2; permissions ship now, screens don't) · ~~featured/banner~~
 (FINALIZE F5) · seller unblock-request (D6, ~2026-08-28) · notifications (D5) · hard delete
-except A8 · Media model · level-3 categories · Atlas Search index creation (M3, with
+except A8 · Media model · level-3 categories · the M3 **native `$text` index** + its
+`searchKeywords`/`categoryType`/`topCategoryId` denorms (§A26 — with
 `sellerCountry`/`sellerVerified` already in place from here).
 
 ## 5. Gotchas / risks (recorded so they don't bite)

@@ -25,7 +25,12 @@ A module built **last**, after M1–M5. It holds everything that cuts across mod
 
 `src/services/orgBlock.service.js` · `tests/f1a-org-block.test.js` (9 tests) · suite 121/121.
 
-**F1-B · FINALIZE-half — blocked on other modules.** Cannot start until its dependencies exist:
+**F1-B · FINALIZE-half — the PRODUCTS half is now UNBLOCKED (2026-07-31).** M2 shipped
+`Product.exporterOrgId`, `status` and the full `takedown` object, and M3 shipped discovery — so a
+blocked company's listings are now **provably still public** (pinned by a test in
+`m1-m2-m3-integration.test.js`, which asserts the gap on purpose so closing it is a deliberate
+act, never an accident). **Schedule the products cascade next**; the CHATS half still waits on M4.
+Original blockers, for the record:
 
 - **products into takedown** — needs **M2**. `Product` is still a 2-field stub: no `exporterOrgId` (§A2), no `status`, no `takedown` object
 - **chats freeze** — needs **M4**. `Conversation` does not appear anywhere in `src/` yet
@@ -39,8 +44,8 @@ A module built **last**, after M1–M5. It holds everything that cuts across mod
 |---|---|---|
 | Account | `isActive: false`, `tokenVersion++` on **every user of the org** | ✅ **BUILT (F1-A, 2026-07-30)** — cascades from `POST /admin/orgs/:id/block` |
 | Organisation | Also deactivated, so the public seller profile disappears from discovery | ✅ **BUILT (F1-A)** — the writer now exists; the read side already filtered `isActive` |
-| Catalogue | The seller's entire catalogue deactivated | TO BUILD (F1-B — needs M2) |
-| Products | Every product goes into takedown | TO BUILD (F1-B — needs M2) |
+| Catalogue | The seller's entire catalogue deactivated | TO BUILD (F1-B — ✅ **unblocked**, M2/M3 shipped) |
+| Products | Every product goes into takedown | TO BUILD (F1-B — ✅ **unblocked**, M2/M3 shipped) |
 | Chats | Every in-progress conversation involving that seller freezes | TO BUILD (F1-B — needs M4) |
 | Reason | The same reason used everywhere: the account was blocked by an admin | ✅ **BUILT (F1-A)** — required on block, stored + audited |
 
@@ -144,7 +149,8 @@ exactly when it matters). Only the threshold **value** remains open.
 | **Synonyms for the 40 top categories** | Us. The list does not exist — only one or two examples appear anywhere in the docs. Without it, keyword→category search only half works |
 | **40 category images** | Us, uploaded through the admin panel — which is why A20 makes image upload on top categories a deliberate exception |
 | **Real OTP delivery provider** | Client. Until then OTP prints to the terminal, dev only |
-| **OpenAI key, production Atlas, Redis, Cloudinary** | Client |
+| **OpenAI key, Redis, Cloudinary** | Client |
+| **Production VPS + self-hosted MongoDB** (⚠️ §A26, 2026-07-31 — **NOT Atlas**: Hostinger VPS with a local MongoDB). Needs, before go-live: auth enabled + bound to localhost, a scheduled `mongodump` backup with off-server retention, the index-sync scripts run against it, and the **C10 append-only audit grant** (app DB user = insert+find only on audit collections) — which self-hosting finally makes enforceable | Us + client (server) |
 | **Girish's written sign-off** | Buyer full-access with no approval gate, and the exporter 3-product trial — both deviate from the quote |
 
 ---

@@ -14,7 +14,10 @@ auth or contracts.
 
 - **Web:** React + Tailwind
 - **Backend:** Node.js + Express
-- **Database:** MongoDB (Mongoose)
+- **Database:** MongoDB (Mongoose) — **self-hosted on the production VPS, NOT Atlas**. This is
+  what decides the search engine: M3/M4 search is **native `$text`**, never Atlas `$search`
+  (build-prompt **§A26**). MongoDB allows only **one text index per collection** — extend the
+  existing one, never add a second.
 - **Mobile:** React Native (Expo)
 - **Auth:** JWT + OTP
 - **Storage:** Cloudinary

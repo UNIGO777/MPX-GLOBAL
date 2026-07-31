@@ -12,7 +12,8 @@
 > - **§A21 — dual accounts / separate login portals / two-step signup** with Organisation claim-or-create; same email+mobile may hold one buyer + one exporter; `Organisation.type` is no longer the buyer/exporter discriminator.
 > - **§A22 — company profile is now SCOPED (was PENDING).** The backend still has **no Organisation edit endpoint**, which blocks `GET /exporters/:id` from rendering fully — but this is now **M1 work**, not an open question: exporter + buyer company-profile view/edit, and the missing capture path for **logo + description**. Organisation data is **not write-once at signup** (A21 creates, A22 edits). KYC-checked fields (**name, country, address, `entityType`**) **lock once verified**; changing one drops `kycStatus` → `submitted` via the existing resubmit path and the tick is withheld until re-approval. ✅ **A22 needs NO new model fields** — the work is the edit endpoint, the lock and the demotion, not schema.
 > - **🚫 CANCELLED 2026-07-30 — "business type" + seller "working/main categories"** (removed, not deferred — `entityType` covers it). **🔒 `website` = internal only, never public** (was being returned by `/exporters/:id`; removed). **✅ `establishedYear` = public** (already returned, now whitelisted).
-> - **§A23/§A24 (2026-07-30):** Product carries denormalised **internal-only** `sellerCountry` + `sellerVerified` (Atlas `$search` cannot join — country facet + verified boost read these; synced on org verify/demote/country-edit; never public). Per-seller takedown count = persisted **`Organisation.takedownCount`** (increment-only, purge-proof — F6's trigger data).
+> - **§A23/§A24 (2026-07-30):** Product carries denormalised **internal-only** `sellerCountry` + `sellerVerified` (country facet + verified boost read these; synced on org verify/demote/country-edit; never public). Per-seller takedown count = persisted **`Organisation.takedownCount`** (increment-only, purge-proof — F6's trigger data).
+> - **🔴 §A26 (2026-07-31) — SEARCH ENGINE REVERSED to NATIVE MongoDB text search** (production = self-hosted VPS, no Atlas). Adds three more internal-only Product denorms in M3: **`searchKeywords`** (category name + synonyms + attribute values → makes one text index cover everything), **`categoryType`**, **`topCategoryId`**. Fuzzy/autocomplete lost; "did you mean" replaces them.
 > - ⚠️ Older lines below also predate **A1–A16** (e.g. 5.11 `type=either`, 5.14 status without `archived`, 5.15 cap without the taken-down exclusion) — Part A supersedes them; see the build prompt.
 
 ═══════════════════════════════════════════════════════
@@ -31,7 +32,7 @@
 1.3 Agency: NxtGenDigitals (owner: Naman). Built with Claude Code in Trae IDE.
 1.4 Phase 1 fee: ₹7,70,000 (taxes extra), web + app, first phase of a larger ~₹20L arrangement, built standalone.
 1.5 Two original quotations: web (NXT/2026/MPX-02) and app (NXT/2026/MPX-APP-02); combined ~₹4.2L after a 40% "partnership discount"; later consolidated into the single ₹7.7L MVP fee.
-1.6 Stack: React.js (web SPA) + Node.js + MongoDB (Atlas) + Cloudinary + JWT; React Native (Expo) app; OpenAI GPT for AI; Socket.io for chat; VPS hosting.
+1.6 Stack: React.js (web SPA) + Node.js + **MongoDB self-hosted on the VPS** (⚠️ corrected 2026-07-31 — NOT Atlas; see §A26, it decides the search engine) + Cloudinary + JWT; React Native (Expo) app; OpenAI GPT for AI; Socket.io for chat; Hostinger VPS hosting.
 1.7 Backend repo: MPX-BACKEND-FULL-SAAS — built for the FULL engagement (25 models incl. Phase-2 escrow/payment skeletons). Extras stay as skeletons (do NOT delete). Phase 1 uses a subset.
 1.8 Payment: 70% advance / 30% on delivery; 3 months free support, then AMC.
 1.9 Quoted timelines: ~8 weeks web, ~6 weeks app.
@@ -147,7 +148,7 @@
 6.2 THREE search types, one engine: (1) keyword + Products/Suppliers TOGGLE + synonym matching; (2) faceted filters (standard + dynamic attribute filters from CategoryAttribute filterable=true, OR-in/AND-across, counts, real-time); (3) AI search MODAL (query box + toggle + example prompts → single OpenAI call → keywords+filters JSON → same engine → AI answer + results; validate, fallback, rate-limit, no embeddings).
 6.3 Synonym matching solves "buyer types 'medicines', category is 'Pharmaceuticals'": Category.synonyms + index = category name + synonyms + product text. Buyer never chooses keyword vs AI.
 6.4 Toggle (not GPT) for normal product/supplier intent; GPT only in AI search (AI modal also has its own toggle).
-6.5 SEARCH ENGINE = Atlas Search (locked — already on Atlas; fuzzy/typo tolerance, relevance, built-in facets).
+6.5 SEARCH ENGINE = 🔴 **NATIVE MongoDB text search** (REVERSED 2026-07-31, §A26 — production is a **self-hosted MongoDB on a Hostinger VPS**, so Atlas `$search` does not exist). ~~Atlas Search~~. One compound `$text` index on Product (`name`/`searchKeywords`/`description`) + a text index on `Organisation.name`; facets via `$facet`. **Fuzzy/typo tolerance + autocomplete are lost** — zero-result queries get a "did you mean" over category names + synonyms.
 6.6 DEFAULT RANKING (Phase 1): relevance → VERIFIED sellers boosted → recency → completeness. Verified-first is a BOOST not a filter (B7 still shows both). Full quality ranking (ratings/orders) = Phase 2. Buyer can sort (relevance/newest/price).
 6.7 3 cards: product, supplier, category (shared: tick badge, save button, unavailable badge).
 6.8 Availability: only status:active, exclude draft/inactive/archived/taken-down + deactivated-category products; QUERY-LEVEL enforcement (not response-hiding). B7: all sellers shown, verification never filters — the public projection carries a `verified` boolean (derived from kycStatus, never exposed raw). Guests can search; login only to save (buyer account); exporters can also search (public page, not a buying flow); admin has no search screens.
@@ -187,7 +188,7 @@
    - "Other" (#40) top-category-vs-sub-category mapping gap (needs a sub under Other or an exception).
    - M1 missing Organisation/company-profile setup/edit screen.
    - Seller verification resubmit-after-reject.
-8.5 PENDING SCHEMA/DECISIONS already resolved this session: attributes.value=mixed; product status draft/active/inactive; D1 cap=3 active; search engine=Atlas Search; synonyms field=yes; ranking=verified-first; recently-viewed=Phase 2.
+8.5 PENDING SCHEMA/DECISIONS already resolved this session: attributes.value=mixed; product status draft/active/inactive; D1 cap=3 active; ~~search engine=Atlas Search~~ → **native MongoDB `$text` (REVERSED 2026-07-31, §A26 — self-hosted VPS)**; synonyms field=yes; ranking=verified-first; recently-viewed=Phase 2.
 
 ═══════════════════════════════════════════════════════
 ## PART 9 — ALL FILES PRODUCED (portable package)

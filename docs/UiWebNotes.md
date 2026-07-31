@@ -21,6 +21,30 @@ Status legend: **Pending** = renders but does nothing real · **Done** = wired t
 Backend response shapes that changed after the web was designed. A screen still reading the OLD
 field will break silently.
 
+### 2026-07-31 · M3 Discovery — new public endpoints the web/app can now call
+
+All are **public** (guests included); login is needed only to save.
+
+| Endpoint | Notes for the frontend |
+|---|---|
+| `GET /public/search` | `q` · `type=product\|supplier` · `category` · `seller` · `country` · `currency` (default INR) · `priceMin/priceMax` · `onRequest=true` · `moqMin` · `goodsOrService` · `verifiedOnly=true` · `sort=relevance\|newest\|priceAsc\|priceDesc` · `page`/`pageSize` (≤100) · **attribute filters use BRACKETS**: `attr[gsm]=140`, `attr[gsm][min]=100&attr[gsm][max]=150`, `attr[material]=Cotton,Silk` (OR within a key). ⚠️ **Dotted params like `attr.gsm` are rejected with 400** — always brackets. Response: `{ type, products[], total, page, pageSize, didYouMean }` |
+| `GET /public/facets` | Takes the **same params** as search. Returns `{ category[], country[], goodsOrService[], verified[], price{min,max,currency}, moq{min,max}, attributes[] }`. Counts for a group ignore that group's own selection, so a filtered option list never collapses to zeros |
+| `POST /search/ai` | Body `{ query }` (2–500 chars). Returns `{ answer, extracted, fallback, type, products[]/suppliers[], total, didYouMean }`. **`fallback: true` means the AI step failed and these are plain keyword results — render them normally, no error state.** Guests allowed |
+| `GET /saved` · `POST /saved` · `DELETE /saved/:id` | **Buyer accounts only** (401 for guests, 403 for exporters/staff). `POST` body `{ targetType: 'product'\|'supplier', targetId }`; duplicate → **409**. `GET` returns `{ items[], total, page, pageSize }`, each item carrying `available` + `unavailableReason` — **an unavailable item is still listed, greyed, not removed** |
+| `GET /sitemap.xml` · `GET /robots.txt` | Generated from `PUBLIC_WEB_URL`. **Deployment must reverse-proxy these two from the web domain to the API**, otherwise crawlers never see them |
+
+**Supplier mode is narrow by design:** with `type=supplier` the product-only params
+(`category`, `seller`, `priceMin/Max`, `moqMin`, `onRequest`, `goodsOrService`, `attr[...]`,
+`sort=price*`) return **400**, naming the offending parameter.
+
+### 2026-07-31 · `GET /exporters/:id` now accepts a SLUG too
+
+The public seller endpoint takes **an ObjectId or the organisation's `slug`** —
+`GET /exporters/textilehub-exports` returns exactly the same payload as `GET /exporters/<id>`.
+This is what lets the SEO route `/supplier/:slug` fetch its data (product and category detail
+already worked this way). **No breaking change** — existing id calls are unaffected, and the
+response field set is unchanged.
+
 ### 2026-07-30 · Auth responses curated + admin sides fix (code audit fixes)
 
 1. **`POST /auth/buyer/signup`, `/auth/exporter/signup`, `/auth/verify-otp`** — the `user` object is

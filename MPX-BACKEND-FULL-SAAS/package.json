@@ -13,7 +13,8 @@
     "test": "vitest run",
     "lint": "eslint src tests",
     "seed": "node src/seed/superadmin.js",
-    "seed:catalogue": "node src/seed/catalogue.js"
+    "seed:catalogue": "node src/seed/catalogue.js",
+    "backfill:search": "node scripts/backfill-m3-search-fields.mjs"
   },
   "private": true,
   "dependencies": {
@@ -30,6 +31,7 @@
     "mongoose": "^9.8.0",
     "multer": "^2.2.0",
     "node-cron": "^4.6.0",
+    "openai": "^7.2.0",
     "otplib": "^13.4.1",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.3",

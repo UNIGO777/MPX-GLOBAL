@@ -168,7 +168,9 @@ Docker se:
 docker run -d -p 27017:27017 --name mpx-mongo mongo:7
 docker run -d -p 6379:6379 --name mpx-redis redis:7
 ```
-Mongo chalu hone ke baad database.js ko server.js me wire. Production me Atlas.
+Mongo chalu hone ke baad database.js ko server.js me wire. **Production = Hostinger VPS pe
+self-hosted MongoDB** (⚠️ corrected 2026-07-31, §A26 — Atlas NAHI; isi wajah se search engine bhi
+native `$text` hai, Atlas Search nahi).
 
 **C5 · Local .env** — same.
 `.gitignore` me confirm, `git log` me kabhi commit nahi. `gitleaks`/`trufflehog`

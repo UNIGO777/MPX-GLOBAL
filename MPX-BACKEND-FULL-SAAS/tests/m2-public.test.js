@@ -181,6 +181,37 @@ describe('public product projection (M2-F / Part D whitelist)', () => {
   });
 });
 
+describe('GET /exporters/:idOrSlug — slug lookup (SEO §1, /supplier/:slug)', () => {
+  it('resolves by slug exactly like by id, and non-public orgs 404 either way', async () => {
+    const org = await makeOrg({ verified: true });
+    const fresh = await Organisation.findById(org._id);
+    expect(fresh.slug).toBeTruthy();
+
+    const byId = await request(app).get(`/exporters/${org._id}`);
+    const bySlug = await request(app).get(`/exporters/${fresh.slug}`);
+    expect(byId.status).toBe(200);
+    expect(bySlug.status).toBe(200);
+    expect(bySlug.body).toEqual(byId.body); // identical payload, no widened surface
+
+    // A buyer-only org is not reachable by slug either (side check still applies).
+    const buyerOrg = await Organisation.create({
+      name: 'Buyer Only Co',
+      type: 'business',
+      buyerSide: true,
+      country: 'IN',
+    });
+    const buyerFresh = await Organisation.findById(buyerOrg._id);
+    expect((await request(app).get(`/exporters/${buyerFresh.slug}`)).status).toBe(404);
+
+    // A blocked (isActive:false) org 404s by slug too — F1-A's read side.
+    await Organisation.updateOne({ _id: org._id }, { $set: { isActive: false } });
+    expect((await request(app).get(`/exporters/${fresh.slug}`)).status).toBe(404);
+
+    // An unknown slug is a plain 404, never a 500.
+    expect((await request(app).get('/exporters/no-such-company')).status).toBe(404);
+  });
+});
+
 describe('§9b productCount on GET /exporters/:id (M2-F)', () => {
   it('counts LIVE listings only — inactive/draft/archived/taken-down excluded', async () => {
     const org = await makeOrg();

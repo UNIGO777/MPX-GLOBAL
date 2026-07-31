@@ -26,7 +26,7 @@ All the M2/M3 plan lives in the repo and is **maintained in place** — there ar
 - `modules-in-detailed/m3-search-filter-3-4days-max/m3-seo-rules.md`
 - `docs/MPX-Module3-COMPLETE-MEMO.md`
 
-**Cross-module brain** (Atlas-Search lock, full ranking order, AI system prompt — Part B depends on it):
+**Cross-module brain** (full ranking order, AI system prompt — Part B depends on it; its Atlas-Search lock is **superseded by §A26**):
 - `docs/MPX-COMPLETE-BRAIN.md`
 
 **Precedence — TWO levels, highest first:**
@@ -316,8 +316,10 @@ Companies do genuinely rename and relocate. **Allow the change** — it just cos
    `Conversation.buyerOrgName` / `exporterOrgName` copies (m4.md §8.5) — the chat-list search reads
    those stored copies, so without this hook renamed companies stay findable only under the old
    name. A23's `sellerCountry` sync (country change) and `sellerVerified` sync (demotion) fire from
-   this same edit path once M2 exists. Build A22 now, add these hooks when those modules land — but
-   record them here so the edit endpoint is written with the hook point in mind.
+   this same edit path once M2 exists. **§A26 adds one more: a company-name change must rebuild
+   `Product.searchKeywords` for that org's products** (the company name is part of the product
+   search corpus). Build A22 now, add these hooks when those modules land — but record them here so
+   the edit endpoint is written with the hook point in mind.
 
 This **reuses the existing resubmit path** — same queue, same approve/reject endpoints. No new mechanism and no new status.
 
@@ -354,7 +356,7 @@ Open, to be confirmed before this is built:
 
 ## A23. Search denormalisation — `sellerCountry` + `sellerVerified` on Product (2026-07-30)
 
-Atlas Search cannot join inside `$search`: the **country facet** (which resolves to the seller's
+*(⚠️ Reason updated by §A26 — the fields stay, the justification changed: the search/facet pipeline must remain single-collection. Original wording:)* Atlas Search cannot join inside `$search`: the **country facet** (which resolves to the seller's
 `Organisation.country`) and the **verified-seller ranking boost** both need their values **on the
 Product document in the search index**. A `$lookup` after `$search` breaks facet counts and cannot
 feed the boost. So:
@@ -400,6 +402,107 @@ Four build-time questions were put to the owner before starting M2; the answers 
 4. **Purge job scheduling: `node-cron`** (new dependency — owner-approved 2026-07-31) runs the A8
    180-day blocked-product purge daily, plus a catch-up run at boot. The job is idempotent.
 
+## A26. 🔴 SEARCH ENGINE REVERSED — native MongoDB text search, NOT Atlas Search (2026-07-31)
+
+**Owner decision: production runs a self-hosted MongoDB on a Hostinger VPS — there is no Atlas.**
+That invalidates the Part B / m3.md / memo-J "LOCKED to Atlas Search" decision, because `$search`
+is an Atlas-only feature. **This section supersedes every "Atlas Search" line in every document.**
+
+Note the original reasoning literally flips: memo **J3** said native text search "would only be
+better if hosting had to stay portable (self-host) — not the case here." It **is** the case now.
+
+### The engine
+
+- **MongoDB native text search** (`$text` + `textScore`) inside a normal aggregation pipeline.
+  One code path, works identically on the VPS, on a dev machine, and in the **local test
+  database** — which also removes the "search cannot be tested locally" blocker entirely.
+- **`Product` gets ONE compound text index** — `name`, `description`, `searchKeywords` — with
+  weights (`name` 10 · `searchKeywords` 5 · `description` 1). ⚠️ **MongoDB allows only ONE text
+  index per collection** — never add a second; extend this one.
+- **`Product.searchKeywords`** (new, internal-only, `select:false`): a denormalised string built
+  from the leaf **category name + its `synonyms` + the product's attribute values + the seller's
+  company name**. This is what makes "medicines → Pharmaceuticals" work in a single index — and
+  the company name is included because memo **F8/K2** require product relevance to consider the
+  seller name (searching "TextileHub" in Products mode must return their listings). Rebuilt on
+  product create/edit and **bulk-synced** when an admin renames a category or edits its
+  `synonyms`, **or when the owning organisation is renamed** (all rare; `updateMany` scoped to
+  that `categoryId` / `exporterOrgId`).
+- **`Organisation` gets a text index** on `name` (+ `description`) for the **Suppliers** side of
+  the Products|Suppliers toggle.
+- **Facets + counts** come from a `$facet` aggregation (native) rather than Atlas `$searchMeta`.
+  Volumes are small (hundreds of categories, thousands of products), so this is fine — but keep
+  the facet pipeline **single-collection**, which is what the denormalised fields below are for.
+- **Ranking is unchanged in intent** (Part B): text relevance (`textScore`) → **verified-seller
+  boost** (`sellerVerified`) → recency → listing completeness, computed in `$addFields` and
+  applied in `$sort`. Verified remains a **boost, never a filter** (B7).
+
+### What we lose, and what replaces it (state honestly, do not silently drop)
+
+| Atlas feature | Native reality | Replacement |
+|---|---|---|
+| Fuzzy / typo tolerance ("medisin" → medicine) | **Not available** | On a **zero-result** query, run a closest-match pass over the in-memory category **name + synonym** list (small set) and return a **"did you mean"** suggestion. Covers the common case; it is NOT full fuzzy matching. |
+| Partial-word / autocomplete | Not available (`$text` matches whole terms) | Out of M3 scope. If needed later, an anchored regex on `name` — never a second text index. |
+| Built-in facet counts | `$facet` aggregation | Same output, slightly more pipeline. |
+
+Memo **Q3** ("did you mean via Atlas fuzzy") is corrected by the row above.
+
+### Denormalisation (extends §A23 — the reason changes, the fields stay)
+
+The original reason was "Atlas `$search` cannot join". The new reason is "the search/facet
+pipeline must stay single-collection to be fast" — so the existing fields **stay**, and M3 adds
+the two that were missed for faceting:
+
+- ✅ `sellerCountry` · ✅ `sellerVerified` (built in M2)
+- 🔨 **`categoryType`** (`goods` | `service`) — the type facet reads the LEAF's type, which would
+  otherwise be a join on every faceted query.
+- 🔨 **`topCategoryId`** — the category facet counts by TOP category; without it every facet
+  needs the parent lookup.
+- 🔨 **`searchKeywords`** (above).
+
+All three are **internal-only** — never in `PUBLIC_FIELDS`, same as the existing pair. All are set
+on product create/edit and synced when the owning category changes (rename / synonyms / a product
+moving to a different leaf).
+
+### Ops consequences of self-hosting (record for the FINALIZE hygiene pass)
+
+- MongoDB must run with **authentication enabled** and bound to **localhost only** (never a public
+  interface), with the app connecting over the loopback.
+- **Backups are now ours**, not a managed service's — a scheduled `mongodump` with off-server
+  retention is required before go-live.
+- ✅ **Upside:** the tracker **C10** commitment (the app's database user holds insert+find on audit
+  collections, no update/delete) is finally *actually* enforceable, because we control the database
+  users. Do it during the production hardening pass.
+- `MONGODB_URI` moves from the `mongodb+srv://` test cluster to a local connection string; the
+  index-sync scripts must be run against the VPS database before go-live (they were written to be
+  re-runnable per environment).
+- Standalone (non-replica-set) MongoDB is fine for everything M1–M3 uses: text search, TTL indexes
+  and our write patterns need no transactions.
+
+## A27. M3 build parameters (owner-decided 2026-07-31)
+
+Four questions put to the owner before M3 planning; the answers are binding.
+
+1. **🔴 Price filter is CURRENCY-SCOPED** (a gap no plan doc had addressed). Products price in any
+   ISO-4217 currency, and there is **no FX conversion anywhere in Phase 1**, so a bare numeric
+   range across mixed currencies would be wrong ("100 USD" matching a "100–500 INR" filter).
+   Therefore: **the price-range facet only applies together with a `currency` selection**
+   (default `INR`) — the filter means "priced 100–500 **in INR**". Products in other currencies
+   are **excluded from that filtered result**, not silently mixed in. Without a price range the
+   currency parameter does nothing. Never introduce a conversion table without a new decision.
+2. **Facet counts EXCLUDE their own group's selection** (standard faceted-search behaviour): the
+   `Material` counts are computed with every filter applied *except* Material, so a buyer can see
+   what selecting a different option would yield. Implementation: one count pipeline per facet
+   group (~5–8 small aggregations; volumes are low). The result set itself always has all filters
+   applied.
+3. **Supplier search matches company `name` + `description` only** (memo F8) — a text index on
+   `Organisation`. A supplier does **not** surface because their products match; that broader
+   behaviour was considered and rejected for Phase 1 (heavier aggregate per query, and the
+   relevance blend is guesswork).
+4. **Both public read surfaces stay, over ONE core query builder.** `/public/products` (M2 browse:
+   category + seller) keeps its shipped contract, and `/public/search` (q + facets + sort) is
+   added — but both compile their filter through the **same availability + filter builder**, so
+   the exclusion rules can never drift apart. Browse is simply the no-`q` case.
+
 ---
 
 # Part B — Rules carried over unchanged
@@ -413,7 +516,7 @@ These are already in the plan docs and are **not** modified by Part A. Implement
 - **Sub-category delete is blocked** when products or child categories exist.
 - **Query-level exclusion** — draft, inactive, archived, taken-down, and deactivated-category products are excluded **in the query**, not filtered out of the response after fetching.
 - **Attributes** — `Product.attributes` is an array of `{ attributeId, key, value }` with `value` as a Mixed type, indexed on `attributes.key` and `attributes.value` so numeric range filters work.
-- **Search** — Atlas Search. The index covers product text plus category `name` and `synonyms` plus seller company name. Facets come from `CategoryAttribute` where `filterable: true`. OR within a facet group, AND across groups.
+- **Search** — 🔴 **superseded by §A26: native MongoDB text search, NOT Atlas** (production is a self-hosted VPS). The coverage is unchanged — product text plus category `name` and `synonyms` (via the denormalised `searchKeywords`) plus seller company name (Organisation text index). Facets come from `CategoryAttribute` where `filterable: true`. OR within a facet group, AND across groups.
 - **Ranking** — text relevance, then a boost for verified sellers, then recency, then listing completeness. Verified is a **boost, never a filter**.
 - **AI search** — one OpenAI call per request, JSON validated against real categories and attributes with unknown keys dropped, fallback to plain keyword search on failure or timeout, per-user rate limit, explicit timeout, `temperature: 0`, key from environment only. The live category, synonym, and attribute list is injected at runtime. Full system prompt in `modules-in-detailed/m3-search-filter-3-4days-max/Search.md` §11.
 - **SavedItem availability** — temporarily unavailable items (inactive, taken-down, category deactivated) stay in the saved list flagged "currently unavailable". Archived items are removed from saved lists.
@@ -442,7 +545,7 @@ This blocks M3: `GET /exporters/:id` is the public seller profile (shipped route
 5. **M2 product endpoints** — seller CRUD, status transitions with both caps enforced (A15, D1), Cloudinary upload, admin takedown/restore.
 6. **M2 tests** — cap enforcement, one-way draft, cascade restore, ownership isolation, takedown does not alter `status`.
 7. **M3 SavedItem** — model, indexes, endpoints, availability rules.
-8. **M3 search** — Atlas Search index, `GET /public/search`, `GET /public/facets`, ranking.
+8. **M3 search** — native text indexes (§A26) + `searchKeywords`/`categoryType`/`topCategoryId` denorms, `GET /public/search`, `GET /public/facets`, ranking.
 9. **M3 AI search** — `POST /search/ai` with all guardrails.
 10. **M3 public surfaces** — product detail, public seller profile, category browse, all through `toPublic()`.
 11. **Cleanup job** — the **180-day** blocked-product purge (A8/A18 — the old 90-day figure was stale).

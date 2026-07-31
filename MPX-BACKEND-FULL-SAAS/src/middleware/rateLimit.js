@@ -108,3 +108,24 @@ export const uploadLimiter = buildLimiter({
   limit: 30,
   keyGenerator: (req) => (req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
 });
+
+// M3: the api-endpoints rule names **search** among the endpoints that must be
+// rate limited, and a `$text` + `$facet` request costs far more than the plain
+// reads `generalLimiter` is sized for. `/public/products` (M2 browse) stays on
+// the general limiter — it is still a cheap read.
+export const searchLimiter = buildLimiter({
+  prefix: 'rl:search:',
+  windowMs: 5 * MINUTE,
+  limit: 120,
+  keyGenerator: (req) => (req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
+});
+
+// AI search is the expensive one (an external paid call per request), so it gets
+// the tightest budget. Per user when signed in, per IP for guests; a separate
+// per-ORGANISATION daily quota sits on top (services/aiQuota.service.js).
+export const aiLimiter = buildLimiter({
+  prefix: 'rl:ai:',
+  windowMs: 10 * MINUTE,
+  limit: 20,
+  keyGenerator: (req) => (req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
+});

@@ -8,6 +8,8 @@ import { AppError } from '../utils/AppError.js';
 import { slugify } from '../utils/slug.js';
 import { recordAudit } from './audit.service.js';
 import { uploadPublicImage } from './image.storage.service.js';
+import { searchFieldsFor } from './searchSync.service.js';
+import { removeSavedForProduct } from './saved.service.js';
 
 // D1/A15 caps (unverified sellers). A10: taken-down products do NOT occupy an
 // active slot — the cap query excludes them explicitly.
@@ -24,7 +26,10 @@ const SERVICE_FIELDS = ['engagementType', 'deliveryModel', 'teamSize', 'pricingM
 // The caller must be an exporter-side company (defensive: requireRole's
 // superadmin bypass must not create platform-org-owned products).
 async function loadExporterOrg(orgId) {
-  const org = await Organisation.findOne({ _id: orgId }).select('exporterSide country kycStatus');
+  // `name` is selected because §A26 puts the seller's company name into the
+  // product's search corpus — without it "TextileHub" would never match that
+  // seller's listings (caught by the M3-A create test).
+  const org = await Organisation.findOne({ _id: orgId }).select('name exporterSide country kycStatus');
   if (!org || !org.exporterSide) {
     throw AppError.forbidden('not an exporter org', 'Not allowed.');
   }
@@ -203,6 +208,8 @@ export async function createProduct({ user, body, meta }) {
     // §A23 denorm — set from the owning org; synced on org state changes.
     sellerCountry: org.country,
     sellerVerified: isVerified(org),
+    // §A26 denorms — search corpus + facet keys (searchSync owns the shape).
+    ...searchFieldsFor({ leaf, org, attributes }),
   });
   await saveHandlingSlugRace(product);
 
@@ -263,6 +270,17 @@ export async function updateProduct({ user, id, patch, meta }) {
   }
   if (attributes !== undefined) product.attributes = attributes;
   // A6: slug never regenerates on rename — the public URL keeps the old name.
+
+  // §A26: the corpus depends on the leaf and the product's attribute values, so
+  // rebuild whenever either moved. (A rename does NOT touch it — `name` is its
+  // own weighted field in the text index.)
+  if (categoryChanged || attributes !== undefined) {
+    const org = await Organisation.findOne({ _id: user.orgId }).select('name');
+    Object.assign(
+      product,
+      searchFieldsFor({ leaf, org, attributes: attributes ?? product.attributes ?? [] }),
+    );
+  }
 
   await product.save();
   await recordAudit({
@@ -334,6 +352,11 @@ export async function archiveProduct({ user, id, meta }) {
   product.status = 'archived';
   product.slug = `${product.slug}--archived-${randomBytes(2).toString('hex')}`;
   await saveHandlingSlugRace(product);
+
+  // M3-D: archived = PERMANENTLY gone for buyers, so its saved rows are removed
+  // (Saved-item.md §3.2 — temporary-unavailable stays flagged, permanent-gone
+  // is cleaned up so no dead entry survives).
+  await removeSavedForProduct(product._id);
 
   await recordAudit({
     actor: user,
