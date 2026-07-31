@@ -126,6 +126,10 @@ export async function listSaved({ user, targetType, page, pageSize }) {
     }
   }
 
+  // Note: `total` counts saved ROWS, so a skipped dangling target makes it read
+  // one higher than `items.length` on that page. That state is transient by
+  // design — the archive/purge hooks prevent it, and `sweepOrphanedSavedItems()`
+  // clears any legacy rows — so it is not worth a second query per request.
   return {
     items,
     context: {

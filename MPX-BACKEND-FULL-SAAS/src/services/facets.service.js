@@ -3,6 +3,7 @@ import { Category } from '../models/Category.js';
 import { Organisation } from '../models/Organisation.js';
 import { CategoryAttribute } from '../models/CategoryAttribute.js';
 import { buildPublicProductFilter, resolveCategoryLeafIds } from './search.query.js';
+import { idOrSlugFilter } from '../utils/idOrSlug.js';
 
 /**
  * M3-C — available filters + counts for the CURRENT query.
@@ -62,11 +63,13 @@ async function attributeFacets(params) {
   // every option would read 0 and the panel would look broken.
   let keys = [...new Set(defs.map((d) => d.key))];
   if (leafIds.length > 1) {
-    const byLeaf = new Map();
+    // Seed the map with EVERY leaf, not just the ones that happen to define an
+    // attribute (review fix): a leaf with no filterable attributes must still
+    // veto a key, otherwise a top would offer a filter that half of its visible
+    // products can never satisfy.
+    const byLeaf = new Map(leafIds.map((id) => [String(id), new Set()]));
     for (const def of defs) {
-      const bucket = byLeaf.get(String(def.categoryId)) ?? new Set();
-      bucket.add(def.key);
-      byLeaf.set(String(def.categoryId), bucket);
+      byLeaf.get(String(def.categoryId))?.add(def.key);
     }
     keys = keys.filter((key) => [...byLeaf.values()].every((set) => set.has(key)));
   }
@@ -112,15 +115,30 @@ async function attributeFacets(params) {
 }
 
 async function productFacets(params) {
-  // A selected TOP drills into its leaves; otherwise count by top.
+  // The category facet always answers "where can I go next".
+  //  - nothing selected → the TOP categories, counted across the whole catalogue
+  //  - a top OR a leaf selected → that branch's LEAVES, scoped to the branch
+  //
+  // Review fix: this used to switch on `leafIds.length > 1`, so a top holding
+  // exactly one sub-category behaved as if a leaf had been selected. Decide from
+  // what the category actually IS, never from how many children it has.
+  const selected = params.category
+    ? await Category.findOne({ ...idOrSlugFilter(params.category), active: true })
+        .select('_id parentId')
+        .lean()
+    : null;
+
   let categoryField = 'topCategoryId';
-  if (params.category) {
-    const leafIds = await resolveCategoryLeafIds(params.category);
-    if (leafIds.length > 1) categoryField = 'categoryId'; // a top → offer its leaves
+  let categoryParams = without(params, ['category']);
+  if (selected) {
+    categoryField = 'categoryId';
+    // Keep the branch, drop only the leaf-level choice — otherwise the drill-down
+    // would list leaves belonging to entirely unrelated top categories.
+    categoryParams = { ...params, category: String(selected.parentId ?? selected._id) };
   }
 
   const [categoryRows, countryRows, typeRows, verifiedRows, price, moq, attributes] = await Promise.all([
-    countBy(params, ['category'], categoryField),
+    countBy(categoryParams, [], categoryField),
     countBy(params, ['country'], 'sellerCountry'),
     countBy(params, ['goodsOrService'], 'categoryType'),
     countBy(params, ['verifiedOnly'], 'sellerVerified'),

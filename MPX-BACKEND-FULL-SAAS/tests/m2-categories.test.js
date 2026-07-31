@@ -3,7 +3,10 @@ import request from 'supertest';
 import mongoose from 'mongoose';
 
 // Mock ONLY the Cloudinary-backed image storage (no network in tests).
-vi.mock('../src/services/image.storage.service.js', () => ({
+vi.mock('../src/services/image.storage.service.js', async (importOriginal) => ({
+  // Keep the REAL isOwnCloudinaryUrl — it is a pure check with no network,
+  // and mocking it away would hide the ref-forgery guard it exists to enforce.
+  ...(await importOriginal()),
   verifyImageFile: vi.fn(),
   uploadPublicImage: vi.fn(async ({ folder }) => ({
     url: `https://res.cloudinary.com/fake/${folder}/img.jpg`,
@@ -189,13 +192,34 @@ describe('admin category endpoints (M2-D)', () => {
     expect((await Category.findById(subA._id)).active).toBe(false); // intent survived the restore
   });
 
-  it('activating a sub under an inactive top is 409; sub create is top-parent-only', async () => {
+  it('toggling a sub under an inactive top edits the RESTORE INTENT, both ways (review fix)', async () => {
     const { offTop, subA } = await makeTree();
     const sa = await makeStaff('superadmin');
 
-    const sub = await Category.create({ name: 'Kraft', parentId: offTop._id, type: 'goods', active: false });
-    const res = await request(app).patch(`/admin/categories/${sub._id}/toggle`).set(bearer(sa.token));
-    expect(res.status).toBe(409);
+    // A sub that WOULD come back when the top is reactivated.
+    const sub = await Category.create({
+      name: 'Kraft',
+      parentId: offTop._id,
+      type: 'goods',
+      active: false,
+      prevActive: true,
+    });
+
+    // Toggle once → "stay off when the top returns".
+    const off = await request(app).patch(`/admin/categories/${sub._id}/toggle`).set(bearer(sa.token));
+    expect(off.status).toBe(200);
+    expect((await Category.findById(sub._id)).prevActive).toBe(false);
+    expect((await Category.findById(sub._id)).active).toBe(false); // still hidden — the top is off
+
+    // Toggle again → the admin can UNDO it. This used to 409, making the
+    // decision a one-way door until the top was reactivated.
+    const back = await request(app).patch(`/admin/categories/${sub._id}/toggle`).set(bearer(sa.token));
+    expect(back.status).toBe(200);
+    expect((await Category.findById(sub._id)).prevActive).toBe(true);
+
+    // Reactivating the top now honours that intent.
+    await request(app).patch(`/admin/categories/${offTop._id}/toggle`).set(bearer(sa.token));
+    expect((await Category.findById(sub._id)).active).toBe(true);
 
     const nested = await request(app)
       .post('/admin/categories')

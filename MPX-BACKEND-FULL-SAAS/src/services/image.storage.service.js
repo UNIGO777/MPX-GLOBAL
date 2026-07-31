@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { fileTypeFromBuffer } from 'file-type';
 
 import { cloudinary, isCloudinaryConfigured } from '../config/cloudinary.js';
+import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
 
 // PUBLIC image assets (product photos, category card images) — unlike KYC
@@ -65,4 +66,32 @@ export async function uploadPublicImage({ buffer, folder }) {
 export async function deletePublicImage(publicId) {
   assertConfigured();
   await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+}
+
+/**
+ * Is this `{ url, publicId }` pair one WE issued?
+ *
+ * Product image refs travel through the client between the upload call and the
+ * create/edit call, so the server must be able to re-verify them. A URL is
+ * trusted only when it is served by our own Cloudinary cloud AND embeds the
+ * publicId being claimed — that pair cannot be fabricated without an actual
+ * upload into that path.
+ */
+export function isOwnCloudinaryUrl(url, publicId) {
+  if (typeof url !== 'string' || typeof publicId !== 'string' || !publicId) return false;
+
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'https:') return false;
+  if (parsed.hostname !== 'res.cloudinary.com') return false;
+
+  const cloud = env.CLOUDINARY_CLOUD_NAME;
+  // Path shape: /<cloud>/image/upload/<transform?>/<publicId>.<ext>
+  if (cloud && !parsed.pathname.startsWith(`/${cloud}/`)) return false;
+
+  return parsed.pathname.includes(publicId);
 }

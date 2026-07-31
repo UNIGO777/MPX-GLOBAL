@@ -67,15 +67,34 @@ export async function verifyOtp({ userId, purpose, code }) {
   if (challenge.expiresAt.getTime() <= now) throw fail();
 
   if (!(await argon2.verify(challenge.codeHash, code))) {
-    challenge.attempts += 1;
-    if (challenge.attempts >= challenge.maxAttempts) {
-      challenge.lockedUntil = new Date(now + env.OTP_LOCK_SECONDS * 1000);
+    // Count the attempt ATOMICALLY. A read-modify-write here (`challenge.attempts
+    // += 1; save()`) lets N concurrent wrong guesses all read the same value and
+    // collapse into a single increment — which defeats the 5-attempt lock (A3)
+    // outright, turning a 6-digit code into an unlimited brute-force target. The
+    // argon2 verify above takes ~100ms, so that window is wide and easy to hit.
+    const updated = await OtpChallenge.findOneAndUpdate(
+      { _id: challenge._id },
+      { $inc: { attempts: 1 } },
+      { returnDocument: 'after', projection: { attempts: 1, maxAttempts: 1, lockedUntil: 1 } },
+    );
+    if (updated && updated.attempts >= updated.maxAttempts) {
+      // `lockedUntil: null` also matches "field absent", so the lock is stamped
+      // exactly once — a later loser cannot slide the window forward.
+      await OtpChallenge.updateOne(
+        { _id: challenge._id, lockedUntil: null },
+        { $set: { lockedUntil: new Date(Date.now() + env.OTP_LOCK_SECONDS * 1000) } },
+      );
     }
-    await challenge.save();
     throw fail();
   }
 
-  challenge.consumedAt = new Date();
-  await challenge.save();
+  // Consume ATOMICALLY too: an OTP is single-use, so only the request that
+  // actually flips `consumedAt` may proceed. Without the guard, two concurrent
+  // submissions of the same correct code both open a session.
+  const consumed = await OtpChallenge.findOneAndUpdate(
+    { _id: challenge._id, consumedAt: null },
+    { $set: { consumedAt: new Date() } },
+  );
+  if (!consumed) throw fail();
   return true;
 }

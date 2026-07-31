@@ -7,7 +7,7 @@ import { Organisation } from '../models/Organisation.js';
 import { AppError } from '../utils/AppError.js';
 import { slugify } from '../utils/slug.js';
 import { recordAudit } from './audit.service.js';
-import { uploadPublicImage } from './image.storage.service.js';
+import { uploadPublicImage, isOwnCloudinaryUrl } from './image.storage.service.js';
 import { searchFieldsFor } from './searchSync.service.js';
 import { removeSavedForProduct } from './saved.service.js';
 
@@ -63,7 +63,13 @@ function assertTypeFields(leaf, doc) {
 // Validate submitted attributes against the leaf's CategoryAttribute defs.
 // Draft = shape-valid only; PUBLISH additionally requires every `required` def
 // to be present (a seller may save an incomplete draft — plan M2-E).
-async function validateAttributes(leaf, attributes, { forPublish = false } = {}) {
+// `dropStale` (edit path only): an admin can delete an attribute, or remove a
+// `select` option, AFTER products already store values for it. Rejecting those
+// on edit would lock the seller out of their OWN live listing — a normal
+// GET-then-PATCH round-trip would 400 forever (review finding). On an edit we
+// therefore DROP entries the category no longer recognises; on create there is
+// nothing stale yet, so an unknown key is still a hard error.
+async function validateAttributes(leaf, attributes, { forPublish = false, dropStale = false } = {}) {
   const defs = await CategoryAttribute.find({ categoryId: leaf._id }).lean();
   const byKey = new Map(defs.map((d) => [d.key, d]));
 
@@ -72,6 +78,7 @@ async function validateAttributes(leaf, attributes, { forPublish = false } = {})
   for (const { key, value } of attributes ?? []) {
     const def = byKey.get(key);
     if (!def) {
+      if (dropStale) continue;
       throw AppError.badRequest(`unknown attribute key: ${key}`, `Unknown specification "${key}" for this category.`);
     }
     if (seen.has(key)) {
@@ -86,6 +93,10 @@ async function validateAttributes(leaf, attributes, { forPublish = false } = {})
       (def.inputType === 'text' && type === 'string') ||
       (def.inputType === 'select' && type === 'string' && def.options.includes(value));
     if (!ok) {
+      if (dropStale) {
+        seen.delete(key); // the value is gone, so the key is not "supplied"
+        continue;
+      }
       throw AppError.badRequest(
         `bad attribute value: ${key}`,
         `Invalid value for "${def.name}" (expects ${def.inputType}).`,
@@ -106,13 +117,21 @@ async function validateAttributes(leaf, attributes, { forPublish = false } = {})
   return out;
 }
 
-// Image refs must point into the caller's OWN upload prefix — no cross-seller
-// references (plan-verify rule).
+// Image refs are client-supplied JSON, so BOTH halves must be verified — the
+// `publicId` alone is not enough (review finding): the `url` is what buyers
+// actually load, so a forged pair could hotlink another seller's asset or an
+// arbitrary external image while passing a prefix check.
+//   1. publicId must sit in the caller's OWN upload prefix — no cross-seller refs
+//   2. url must be OUR Cloudinary host AND contain that publicId — so the pair
+//      can only be one this server issued
 function assertImageRefsOwned(images, orgId) {
   const prefix = `mpx/products/${orgId}/`;
   for (const img of images ?? []) {
     if (!img.publicId.startsWith(prefix)) {
       throw AppError.badRequest('foreign image ref', 'One of the images does not belong to this account.');
+    }
+    if (!isOwnCloudinaryUrl(img.url, img.publicId)) {
+      throw AppError.badRequest('untrusted image url', 'One of the image links is not a valid upload.');
     }
   }
 }
@@ -153,7 +172,12 @@ async function saveHandlingSlugRace(doc) {
     return await doc.save();
   } catch (err) {
     if (err?.code === 11000 && err?.keyPattern?.slug) {
-      doc.slug = `${slugify(doc.name) || 'product'}-${randomBytes(2).toString('hex')}`;
+      // Suffix the slug the caller ALREADY set — never rebuild it from `name`
+      // (review finding): on the archive path the caller has just appended the
+      // `--archived-xxxx` marker, and rebuilding would hand the archived row a
+      // CLEAN slug again, re-occupying the very name archiving is meant to free.
+      const current = doc.slug || slugify(doc.name) || 'product';
+      doc.slug = `${current}-${randomBytes(2).toString('hex')}`;
       return doc.save();
     }
     throw err;
@@ -259,6 +283,10 @@ export async function updateProduct({ user, id, patch, meta }) {
     patch.attributes !== undefined || categoryChanged
       ? await validateAttributes(leaf, patch.attributes ?? (categoryChanged ? [] : product.attributes), {
           forPublish: product.status === 'active',
+          // Edit path: tolerate values the category no longer defines (see
+          // validateAttributes) so an admin's attribute change can never brick a
+          // seller's ability to edit their own listing.
+          dropStale: true,
         })
       : undefined;
   if (patch.images !== undefined) assertImageRefsOwned(patch.images, user.orgId);

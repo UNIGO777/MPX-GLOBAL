@@ -47,7 +47,12 @@ export async function exporterSignup(req, res) {
 
 export async function createEmployee(req, res) {
   const user = await authService.createEmployee({ actor: req.user, ...req.body, meta: clientMeta(req) });
-  res.status(201).json({ user });
+  // Curated, not the raw document. `toJSON` only strips `select:false` paths, so
+  // returning the doc shipped tokenVersion/createdBy/verification flags and would
+  // ship any field added to the model later — the "never return a full user
+  // document" case in the api-endpoints rule. `permissions` is included on
+  // purpose (the superadmin just set them), matching PATCH .../permissions.
+  res.status(201).json({ user: { ...authUserView(user), permissions: user.permissions ?? [] } });
 }
 
 function loginResponse(res, { loginToken, method }) {

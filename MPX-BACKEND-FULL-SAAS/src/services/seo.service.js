@@ -1,4 +1,5 @@
 import { env } from '../config/env.js';
+import { logger } from '../utils/logger.js';
 import { Product } from '../models/Product.js';
 import { Category } from '../models/Category.js';
 import { Organisation } from '../models/Organisation.js';
@@ -17,6 +18,8 @@ import { buildAvailabilityFilter } from './search.query.js';
  */
 
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1h — it is a crawler-facing full scan
+const SITEMAP_MAX_URLS = 50_000; // sitemap protocol limit for a single file
+const SITEMAP_WARN_AT = 45_000;
 let cache = { xml: null, at: 0 };
 
 export function invalidateSitemapCache() {
@@ -72,6 +75,18 @@ export async function buildSitemap() {
         }),
       ),
   ];
+
+  // The sitemap protocol caps ONE file at 50,000 URLs; past that a crawler
+  // rejects the whole document. We are orders of magnitude below it today, so a
+  // sitemap-index split is not built — but this must never fail silently, so it
+  // warns early and loudly. If this ever fires, split by type
+  // (/sitemap-products.xml, -sellers, -categories) behind a sitemap index.
+  if (entries.length > SITEMAP_WARN_AT) {
+    logger.warn(
+      { urls: entries.length, limit: SITEMAP_MAX_URLS },
+      'sitemap approaching the 50k URL limit — a sitemap-index split is now required',
+    );
+  }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>`;
   if (cacheable) cache = { xml, at: now };

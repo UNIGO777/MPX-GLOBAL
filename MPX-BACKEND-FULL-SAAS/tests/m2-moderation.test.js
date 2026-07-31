@@ -126,6 +126,22 @@ describe('takedown / restore (M2-G)', () => {
     expect((await request(app).post(`/admin/products/${p._id}/restore`).set(bearer(sa.token))).status).toBe(409);
   });
 
+  it('a DRAFT cannot be taken down (409) — it was never public and would be stranded', async () => {
+    const sa = await makeStaff('superadmin');
+    const draft = await Product.create(productDoc({ status: 'draft' }));
+
+    const res = await request(app)
+      .post(`/admin/products/${draft._id}/takedown`)
+      .set(bearer(sa.token))
+      .send({ reason: 'reported by mistake' });
+    expect(res.status).toBe(409);
+
+    // Nothing was recorded against the seller for content no buyer ever saw.
+    expect((await Organisation.findById(sellerOrg._id)).takedownCount).toBe(0);
+    // …and the draft is still fully usable by its owner.
+    expect((await Product.findById(draft._id)).takedown.isDown).toBe(false);
+  });
+
   it('A7 guard: an ARCHIVED product cannot be taken down (409) — it must never become purgeable', async () => {
     const sa = await makeStaff('superadmin');
     const p = await Product.create(productDoc({ status: 'archived' }));

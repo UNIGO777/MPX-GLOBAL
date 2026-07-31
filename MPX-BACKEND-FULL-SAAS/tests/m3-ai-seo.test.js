@@ -127,6 +127,26 @@ describe('POST /search/ai — happy path (M3-E)', () => {
     expect(system).not.toContain('Pharmaceutical formulations'); // sub-categories are NOT
     expect(system).not.toContain('Form'); // attributes are NOT — validated post-hoc
   });
+
+  it('the prompt forbids GUESSING a number, and asks for the English term beside a Hinglish one', async () => {
+    aiBox.reply = JSON.stringify({ target: 'product', keywords: ['x'] });
+    await request(app).post('/search/ai').send({ query: 'anything' });
+    const { system } = aiBox.calls[0];
+
+    // These two instructions are load-bearing and were both proven against the
+    // live model. The old prompt told it to invent `moqMin: 1000` from the word
+    // "thok", which turned "sasti dawai thok mein chahiye" into ZERO results by
+    // filtering out the MOQ-100/500 stock the buyer actually wanted.
+    expect(system).toContain('NEVER GUESS A NUMBER');
+    expect(system).toMatch(/leave moqMin null/i);
+    expect(system).toMatch(/leave priceMax null/i);
+    // Hinglish recall: the catalogue is indexed in English, so the English word
+    // is what the $text index can actually match.
+    expect(system).toMatch(/ENGLISH term/i);
+    expect(system).toContain('"dawai" -> ["dawai","medicine"]');
+    // And the old guess-a-number rule must not creep back in.
+    expect(system).not.toMatch(/reasonable "moqMin"/i);
+  });
 });
 
 describe('POST /search/ai — guardrails (M3-E)', () => {
@@ -216,6 +236,69 @@ describe('POST /search/ai — guardrails (M3-E)', () => {
     expect(res.body.type).toBe('supplier');
     expect(res.body.suppliers[0].name).toBe('India Pharma');
     expect(res.body.suppliers[0]).not.toHaveProperty('kycStatus');
+  });
+
+  it('a supplier query does NOT claim filters the supplier engine never applied (review fix)', async () => {
+    // The model happily extracts a category, a price cap, an MOQ and attributes
+    // from a supplier sentence — but §A27.3's supplier engine takes only
+    // q / country / verifiedOnly. Reporting the rest would tell the buyer their
+    // list was narrowed when it is the full set.
+    aiBox.reply = JSON.stringify({
+      target: 'supplier',
+      keywords: ['pharma'],
+      category: 'Pharmaceuticals',
+      priceMax: 500,
+      moqMin: 1000,
+      country: 'IN',
+      attributes: { form: 'Tablet' },
+      verifiedOnly: true,
+    });
+
+    const res = await request(app).post('/search/ai').send({ query: 'verified pharma suppliers in india under 500' });
+    expect(res.status).toBe(200);
+    expect(res.body.type).toBe('supplier');
+
+    // Echo carries ONLY what was applied — shape unchanged, unapplied keys null.
+    expect(res.body.extracted).toMatchObject({
+      target: 'supplier',
+      country: 'IN',
+      verifiedOnly: true,
+      category: null,
+      priceMax: null,
+      moqMin: null,
+      attributes: {},
+    });
+
+    // …and the sentence must not mention them either.
+    expect(res.body.answer).toContain('from IN');
+    expect(res.body.answer).not.toMatch(/pharmaceutical/i);
+    expect(res.body.answer).not.toContain('under 500');
+    expect(res.body.answer).not.toContain('MOQ');
+  });
+
+  it('a PRODUCT query still reports every filter it applied', async () => {
+    aiBox.reply = JSON.stringify({
+      target: 'product',
+      keywords: ['paracetamol'],
+      category: 'Pharmaceuticals',
+      priceMax: 500,
+      moqMin: 100,
+      country: 'IN',
+      verifiedOnly: true,
+    });
+
+    const res = await request(app).post('/search/ai').send({ query: 'paracetamol under 500 from india' });
+    expect(res.status).toBe(200);
+    expect(res.body.extracted).toMatchObject({
+      target: 'product',
+      category: 'pharmaceuticals',
+      priceMax: 500,
+      moqMin: 100,
+      country: 'IN',
+      verifiedOnly: true,
+    });
+    expect(res.body.answer).toContain('under 500');
+    expect(res.body.answer).toContain('MOQ 100+');
   });
 });
 

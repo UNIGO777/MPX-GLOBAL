@@ -19,12 +19,18 @@ import { recordAudit } from './audit.service.js';
  *     (auth-sessions A7), exactly as the per-user path already does.
  *
  * NOT here: products and chats. Taking a blocked seller's catalogue down and
- * freezing their conversations is **F1-B**, which needs M2 (`Product` is still a
- * stub — no `exporterOrgId`, no `status`, no `takedown`) and M4 (`Conversation`
- * does not exist yet). F1-B must be written deliberately when those models are
- * real, WITH its own prevActive capture — it is intentionally not stubbed,
- * commented out, or staged here, because a half-written cascade that wakes up on
- * its own is worse than no cascade. See modules-in-detailed/m6-Finalization.
+ * freezing their conversations is **F1-B**, scheduled in FINALIZE.
+ *
+ * Status (2026-07-31): the PRODUCTS half is now UNBLOCKED — M2/M3 shipped, so
+ * `Product` really has `exporterOrgId`, `status` and `takedown`. The CHATS half
+ * still needs M4 (`Conversation` does not exist yet). Nothing is staged here
+ * regardless: F1-B gets written deliberately, WITH its own prevActive capture,
+ * because a half-written cascade that wakes up on its own is worse than none.
+ *
+ * ⚠️ Consequence until it lands: a blocked org's PRODUCTS stay publicly
+ * searchable — the block hides the shopfront, not the catalogue. This is a known
+ * accepted gap, pinned by a test so closing it is a conscious act, not a
+ * side effect. See modules-in-detailed/m6-Finalization.
  */
 
 // A block/unblock is only ever an admin action on a COMPANY org. The single

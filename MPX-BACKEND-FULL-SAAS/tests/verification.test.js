@@ -123,6 +123,35 @@ describe('verification & approval', () => {
     expect(res.body.organisation.kycStatus).toBe('rejected');
     const fresh = await Organisation.findById(org._id);
     expect(fresh.kycRejectionReason).toBe('Documents unreadable');
+
+    // A reject must leave NO verification evidence behind (review fix). These
+    // fields mean "verified, by whom, when"; a rejected org carrying a real
+    // `verifiedAt` is wrong on every staff response and is one careless
+    // `Boolean(org.verifiedAt)` away from handing rejected companies a public
+    // tick. Who rejected it lives in the append-only AuditLog instead.
+    expect(fresh.verifiedAt).toBeFalsy();
+    expect(fresh.verifiedBy).toBeFalsy();
+    expect(await AuditLog.findOne({ action: 'exporter.reject', entityId: org._id })).toBeTruthy();
+  });
+
+  it('a previously-verified org that is re-reviewed and rejected loses its tick AND its verifiedAt', async () => {
+    const { token } = await makeStaff('employee', ['exporter:verify']);
+    const org = await makeOrg('exporter', 'submitted');
+
+    await request(app).post(`/employee/exporters/${org._id}/verify`).set(bearer(token));
+    expect((await Organisation.findById(org._id)).verifiedAt).toBeTruthy();
+
+    // The A22 demotion path puts a verified org back into review.
+    await Organisation.updateOne({ _id: org._id }, { $set: { kycStatus: 'submitted' } });
+    await request(app)
+      .post(`/employee/exporters/${org._id}/reject`)
+      .set(bearer(token))
+      .send({ reason: 'Address no longer matches the documents' });
+
+    const fresh = await Organisation.findById(org._id);
+    expect(fresh.kycStatus).toBe('rejected');
+    expect(fresh.verifiedAt).toBeFalsy(); // stale evidence cleared, not carried over
+    expect(fresh.verifiedBy).toBeFalsy();
   });
 
   it('default-deny: no permission → 403; wrong permission → 403', async () => {

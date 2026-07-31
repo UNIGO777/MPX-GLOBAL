@@ -1,7 +1,14 @@
 // Runs before any test module imports app/env. dotenv (loaded inside env.js)
 // does not override already-set process.env, so these win over .env.
 process.env.NODE_ENV = 'test';
-process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/mpx_global_test';
+// ⚠️ Every test file wipes these collections in `beforeEach`, so TWO test
+// processes pointed at the same database will delete each other's fixtures
+// mid-run. The symptom is not an obvious clash: queries simply return 0 rows,
+// failures scatter across unrelated tests, and nothing errors — it reads exactly
+// like a flaky search engine. Diagnosing that cost hours. If you need a second
+// concurrent run (a focused file while the suite runs, CI on a shared box), set
+// MONGODB_TEST_DB to a different name for it.
+process.env.MONGODB_URI = `mongodb://127.0.0.1:27017/${process.env.MONGODB_TEST_DB || 'mpx_global_test'}`;
 process.env.REDIS_URL = 'redis://127.0.0.1:6379';
 process.env.JWT_ACCESS_SECRET =
   process.env.JWT_ACCESS_SECRET || 'test_access_secret_at_least_32_chars_long_000';

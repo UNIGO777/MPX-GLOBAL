@@ -156,6 +156,29 @@ describe('standard facets (M3-C)', () => {
     );
   });
 
+  it('drills into LEAVES whenever a branch is chosen — even a top with a single sub (review fix)', async () => {
+    await makeProduct({ org: inOrg, leaf: cottonLeaf, name: 'Cotton A' });
+    await makeProduct({ org: aeOrg, leaf: silkLeaf, name: 'Silk B' });
+    await makeProduct({ org: aeOrg, leaf: serviceLeaf, name: 'Web C' });
+    await rebuildAll();
+
+    // Nothing selected → TOP categories.
+    const tops = (await facets()).body.facets.category.map((c) => c.slug);
+    expect(tops).toEqual(expect.arrayContaining(['textiles', 'it-services']));
+
+    // A multi-leaf top → its leaves, scoped to that branch (no foreign leaves).
+    const textiles = (await facets({ category: 'textiles' })).body.facets.category.map((c) => c.slug);
+    expect(textiles.sort()).toEqual(['cotton-fabric', 'silk-fabric']);
+
+    // A SINGLE-leaf top used to fall through to top-level counts — it must not.
+    const itLeaves = (await facets({ category: 'it-services' })).body.facets.category.map((c) => c.slug);
+    expect(itLeaves).toEqual(['web-development']);
+
+    // Selecting a LEAF shows its siblings, still scoped to the branch.
+    const siblings = (await facets({ category: 'cotton-fabric' })).body.facets.category.map((c) => c.slug);
+    expect(siblings.sort()).toEqual(['cotton-fabric', 'silk-fabric']);
+  });
+
   it('§A27.2: a group\'s counts EXCLUDE its own selection but respect the others', async () => {
     await makeProduct({ org: inOrg, leaf: cottonLeaf, name: 'IN Cotton' });
     await makeProduct({ org: aeOrg, leaf: cottonLeaf, name: 'AE Cotton' });
@@ -259,6 +282,24 @@ describe('dynamic attribute facets (M3-C)', () => {
     expect(keys).toContain('gsm'); // on both leaves
     expect(keys).toContain('material'); // on both leaves
     expect(keys).not.toContain('weave'); // cotton only → excluded at top level
+  });
+
+  it('a leaf with NO filterable attributes still vetoes a key at top level (review fix)', async () => {
+    // Denim sits under Textiles and defines nothing filterable, so `gsm` (which
+    // cotton and silk both have) must NOT be offered when the TOP is selected.
+    const denim = await Category.create({ name: 'Denim', parentId: textileTop._id, type: 'goods' });
+    await makeProduct({ org: inOrg, leaf: cottonLeaf, name: 'C', attributes: [{ key: 'gsm', value: 120 }] });
+    await makeProduct({ org: inOrg, leaf: silkLeaf, name: 'S', attributes: [{ key: 'gsm', value: 90 }] });
+    await makeProduct({ org: inOrg, leaf: denim, name: 'D' });
+    await rebuildAll();
+
+    const keys = (await facets({ category: 'textiles' })).body.facets.attributes.map((a) => a.key);
+    expect(keys).not.toContain('gsm');
+    expect(keys).toEqual([]); // nothing is common to all three leaves
+
+    // …but selecting the leaf itself still offers it.
+    const leafKeys = (await facets({ category: 'cotton-fabric' })).body.facets.attributes.map((a) => a.key);
+    expect(leafKeys).toContain('gsm');
   });
 
   it('an attribute\'s own selection does not zero out its siblings (§A27.2)', async () => {

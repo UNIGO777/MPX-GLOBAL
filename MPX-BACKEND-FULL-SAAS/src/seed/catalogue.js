@@ -43,6 +43,17 @@ export async function seedCatalogue() {
       const type = sub.type ?? subTypeForTopIndex(i);
 
       let subDoc = await Category.findOne({ slug: subSlug });
+      // Slugs are globally unique, so a lookup by slug alone could match a TOP
+      // or another top's sub — and the loop below would then write this top's
+      // attribute defaults onto the wrong row, silently (review finding). The
+      // data file resolves known clashes explicitly; this catches a new one.
+      if (subDoc && String(subDoc.parentId ?? '') !== String(topDoc._id)) {
+        logger.warn(
+          { slug: subSlug, expectedParent: top.name },
+          'catalogue seed: slug already belongs to a different category — skipping (add an explicit slug in catalogue.data.js)',
+        );
+        continue;
+      }
       if (!subDoc) {
         subDoc = await Category.create({
           name: sub.name,

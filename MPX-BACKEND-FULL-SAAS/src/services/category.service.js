@@ -4,8 +4,9 @@ import { CategoryAttribute } from '../models/CategoryAttribute.js';
 import { Product } from '../models/Product.js';
 import { AppError } from '../utils/AppError.js';
 import { idOrSlugFilter } from '../utils/idOrSlug.js';
+import { logger } from '../utils/logger.js';
 import { recordAudit } from './audit.service.js';
-import { uploadPublicImage } from './image.storage.service.js';
+import { uploadPublicImage, deletePublicImage } from './image.storage.service.js';
 import { rebuildForCategory } from './searchSync.service.js';
 
 // ---------------------------------------------------------------------------
@@ -135,43 +136,48 @@ export async function toggleCategory({ id, actor, meta }) {
 
   let after;
   if (cat.parentId == null) {
+    // Save the PARENT first, then cascade (review finding): if a cascade write
+    // failed after the parent flip, the half-applied state is the harmless one —
+    // a sub is invisible anyway while its top is off, and the public reads check
+    // the parent. The reverse order could leave every sub off under a live top.
     if (cat.active) {
-      // Deactivate top: snapshot each sub's state, then switch all off.
+      cat.active = false;
+      await saveCategory(cat);
+      // Snapshot each sub's state, then switch all off.
       await Category.updateMany({ parentId: cat._id, active: true }, { $set: { prevActive: true, active: false } });
       await Category.updateMany(
         { parentId: cat._id, active: false, prevActive: { $exists: false } },
         { $set: { prevActive: false } },
       );
-      cat.active = false;
     } else {
-      // Reactivate top: restore each sub from its snapshot, clear the markers.
       cat.active = true;
+      await saveCategory(cat);
+      // Restore each sub from its snapshot, then clear the markers.
       await Category.updateMany({ parentId: cat._id, prevActive: true }, { $set: { active: true } });
       await Category.updateMany({ parentId: cat._id }, { $unset: { prevActive: '' } });
     }
     after = { active: cat.active, cascade: true };
-    await cat.save();
   } else {
     const parent = await Category.findOne({ _id: cat.parentId }).select('active');
-    if (!cat.active) {
-      if (parent && !parent.active) {
-        if (cat.prevActive === true) {
-          // Cascade-off period: record the admin's intent — stay off on restore.
-          cat.prevActive = false;
-          await cat.save();
-          after = { active: false, prevActive: false, intentRecorded: true };
-        } else {
-          throw AppError.conflict('parent top inactive', 'The parent category is deactivated.');
-        }
+    const parentOff = parent && !parent.active;
+
+    if (parentOff) {
+      // While the top is off every sub is already inactive, so the toggle edits
+      // the RESTORE INTENT instead — and it must work BOTH ways (review finding:
+      // it used to be a one-way door, 409-ing the moment an admin tried to undo).
+      if (cat.prevActive === false) {
+        cat.prevActive = true;
+        await saveCategory(cat);
+        after = { active: false, prevActive: true, intentRecorded: true };
       } else {
-        cat.active = true;
-        await cat.save();
-        after = { active: true };
+        cat.prevActive = false;
+        await saveCategory(cat);
+        after = { active: false, prevActive: false, intentRecorded: true };
       }
     } else {
-      cat.active = false;
-      await cat.save();
-      after = { active: false };
+      cat.active = !cat.active;
+      await saveCategory(cat);
+      after = { active: cat.active };
     }
   }
 
@@ -248,7 +254,7 @@ export async function updateCategory({ id, patch, actor, meta }) {
     throw AppError.badRequest('empty patch', 'Nothing to update.');
   }
 
-  await cat.save();
+  await saveCategory(cat);
   invalidateLeafCache();
 
   // §A26: a rename or a synonyms edit changes the search corpus of every product
@@ -300,10 +306,28 @@ export async function deleteCategory({ id, actor, meta }) {
 // A11/A20 — admin uploads the card image; ALLOWED on tops too (the deliberate
 // exception to top = toggle-only; do not "fix" it away).
 export async function setCategoryImage({ id, buffer, actor, meta }) {
-  const cat = await loadCategory(id);
-  const { url } = await uploadPublicImage({ buffer, folder: 'mpx/categories' });
+  // `+publicId` — it is select:false, and we need the OLD asset id to clean up.
+  const cat = await Category.findOne({ _id: id }).select('+publicId');
+  if (!cat) throw AppError.notFound('category not found', 'Not found.');
+  const previous = cat.publicId;
+  const { url, publicId } = await uploadPublicImage({ buffer, folder: 'mpx/categories' });
   cat.image = url;
-  await cat.save();
+  cat.publicId = publicId;
+  await saveCategory(cat);
+
+  // Drop the replaced asset (review finding: every re-upload used to orphan one
+  // on Cloudinary forever). Best-effort — a storage hiccup must not fail the
+  // request, the local write has already succeeded.
+  if (previous && previous !== publicId) {
+    try {
+      await deletePublicImage(previous);
+    } catch (err) {
+      logger.warn(
+        { err: { name: err?.name, message: err?.message }, publicId: previous },
+        'category image replace: old asset not deleted',
+      );
+    }
+  }
   await recordAudit({
     actor,
     action: 'category.image.upload',
@@ -327,17 +351,31 @@ async function loadSubCategory(id) {
   return cat;
 }
 
-// The model's options-vs-inputType hook throws a plain Error — surface it as a
-// 400 (its message is our own safe text), never a 500.
-function mapAttributeError(err) {
+// Both models' pre-validate hooks throw PLAIN Errors, and the central handler
+// only honours `err.status` — so an unmapped throw becomes a 500 with no useful
+// message. Map them to a 400 carrying our own (already safe) text. This also
+// covers legacy/drifted rows: a pre-A16 sub with no `type` would otherwise 500
+// on ANY save, including an unrelated image upload (review finding).
+function mapModelError(err) {
   if (err?.code === 11000) {
-    return AppError.conflict('duplicate key', 'An attribute with this key already exists on this category.');
+    return AppError.conflict('duplicate key', 'An entry with this key already exists on this category.');
   }
-  if (err?.name === 'ValidationError' || String(err?.message).startsWith('CategoryAttribute:')) {
-    const clientMessage = String(err.message).replace(/^CategoryAttribute:\s*/, '');
+  if (err?.name === 'ValidationError' || /^(CategoryAttribute|Category):/.test(String(err?.message))) {
+    const clientMessage = String(err.message).replace(/^(CategoryAttribute|Category):\s*/, '');
     return AppError.badRequest(err.message, clientMessage);
   }
   return err;
+}
+const mapAttributeError = mapModelError;
+
+// Every Category save goes through this, so no model-level rule can surface as
+// a 500.
+async function saveCategory(cat) {
+  try {
+    return await cat.save();
+  } catch (err) {
+    throw mapModelError(err);
+  }
 }
 
 export async function createAttribute({ categoryId, def, actor, meta }) {

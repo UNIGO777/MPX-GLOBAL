@@ -505,6 +505,13 @@ except A8 · Media model · level-3 categories · the M3 **native `$text` index*
   environment before deploy (autoIndex never drops).
 - **Cap race:** two concurrent publishes can both pass the count check → 4 active. Accepted for
   MVP (same class as M1's accepted races) — noted, not engineered around.
+- 🧱 **Restore can leave a seller OVER the D1 cap** (found in the 2026-07-31 review, left as-is
+  pending an owner decision): a takedown frees a slot, the seller publishes a replacement, and the
+  admin's restore then makes 4 live. Blocking or downgrading the restore would break m5-rules §2
+  ("a restore returns the product to exactly the state the admin froze"), so the code keeps that
+  guarantee. The state self-corrects — the seller cannot publish again until back under the cap.
+  **Owner may choose:** leave it, or have restore return the product as `inactive` when the seller
+  is at the cap.
 - **kyc.test exact-whitelist will fail when `productCount` lands** — that's the A3 pattern
   working; update the assertion in the same commit (deliberate widening).
 - **`vitest --no-file-parallelism`** for reliable full-suite runs (M1 lesson).

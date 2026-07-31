@@ -44,6 +44,9 @@ const categorySchema = new Schema(
     // A11: optional Cloudinary URL for category cards; A20: uploaded by admin
     // (tops included — the deliberate exception to top = toggle-only).
     image: { type: String, trim: true },
+    // The asset behind `image`, kept so a replacement can delete the old file
+    // instead of orphaning it. INTERNAL — not in PUBLIC_FIELDS.
+    publicId: { type: String, trim: true, select: false },
 
     // A12/M3: keyword→category search terms. Seeded empty (the top-40 list is
     // owner content); admin-editable. Search-only — never on a public response.

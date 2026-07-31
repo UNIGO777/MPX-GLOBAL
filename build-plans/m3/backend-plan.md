@@ -406,8 +406,13 @@ third copy) moved to the shared `src/utils/idOrSlug.js`. Covered by a test in `m
   pick one per row; the nested form is the canonical URL for a sub, so emitting the flat form too
   would create duplicate content). Each with `lastmod`. Drafts, inactive,
   archived, taken-down, dead-category rows, and every filtered/search URL are excluded. Cached
-  in-process (short TTL) since it is a crawler-facing full scan; sitemap-index split if >50k URLs
-  (not expected at Phase-1 volumes, but the split path is written).
+  in-process (short TTL) since it is a crawler-facing full scan.
+  ⚠️ **Known limit, deliberately not built:** the sitemap protocol caps ONE file at 50,000 URLs.
+  The **split into a sitemap index is NOT implemented** — Phase-1 volumes are orders of magnitude
+  below it, and untested surface is worse than none. Instead the builder **logs a loud warning at
+  45,000 URLs** so it can never fail silently; if that ever fires, split by type
+  (`/sitemap-products.xml`, `-sellers`, `-categories`) behind an index. Recorded rather than
+  quietly capped.
 - `GET /robots.txt` (`publicRoute`) — allow base public pages, `Disallow: /search`, disallow
   filter query patterns, reference the sitemap URL.
 - **404/410 semantics** already hold from M2 (a non-public product/category/seller 404s) — a test

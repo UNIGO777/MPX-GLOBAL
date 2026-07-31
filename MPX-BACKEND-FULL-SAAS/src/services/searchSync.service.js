@@ -39,11 +39,28 @@ export function searchFieldsFor({ leaf, org, attributes = [] }) {
 const CHUNK = 500;
 
 async function rebuild(filter) {
-  const products = await Product.find(filter)
-    .select('_id exporterOrgId categoryId attributes')
-    .lean();
-  if (products.length === 0) return { updated: 0 };
+  let updated = 0;
+  // Page the READ as well as the write (review finding): loading every matching
+  // product up front would hold a whole category's catalogue in memory during
+  // what is a routine admin action (a rename). `_id` paging is stable under
+  // concurrent writes in a way `skip` is not.
+  let after = null;
 
+  for (;;) {
+    const page = await Product.find(after ? { ...filter, _id: { $gt: after } } : filter)
+      .select('_id exporterOrgId categoryId attributes')
+      .sort({ _id: 1 })
+      .limit(CHUNK)
+      .lean();
+    if (page.length === 0) break;
+    after = page[page.length - 1]._id;
+    updated += await rebuildPage(page);
+  }
+
+  return { updated };
+}
+
+async function rebuildPage(products) {
   // Load each distinct leaf and org once, not per product.
   const leafIds = [...new Set(products.map((p) => String(p.categoryId)))];
   const orgIds = [...new Set(products.map((p) => String(p.exporterOrgId)))];
@@ -54,29 +71,25 @@ async function rebuild(filter) {
   const leafById = new Map(leaves.map((c) => [String(c._id), c]));
   const orgById = new Map(orgs.map((o) => [String(o._id), o]));
 
-  let updated = 0;
-  for (let i = 0; i < products.length; i += CHUNK) {
-    const ops = products.slice(i, i + CHUNK).map((p) => ({
-      updateOne: {
-        filter: { _id: p._id },
-        update: {
-          $set: searchFieldsFor({
-            leaf: leafById.get(String(p.categoryId)),
-            org: orgById.get(String(p.exporterOrgId)),
-            attributes: p.attributes ?? [],
-          }),
-        },
+  const ops = products.map((p) => ({
+    updateOne: {
+      filter: { _id: p._id },
+      update: {
+        $set: searchFieldsFor({
+          leaf: leafById.get(String(p.categoryId)),
+          org: orgById.get(String(p.exporterOrgId)),
+          attributes: p.attributes ?? [],
+        }),
       },
-    }));
-    // `timestamps: false` matters (caught by the idempotency test): Mongoose
-    // otherwise stamps `updatedAt` on every bulkWrite row, so a single category
-    // rename would mark thousands of untouched products as just-modified —
-    // polluting the RECENCY leg of search ranking and every sitemap `lastmod`.
-    // Rebuilding a derived index field is not a business modification.
-    const res = await Product.bulkWrite(ops, { timestamps: false });
-    updated += res.modifiedCount ?? 0;
-  }
-  return { updated };
+    },
+  }));
+  // `timestamps: false` matters (caught by the idempotency test): Mongoose
+  // otherwise stamps `updatedAt` on every bulkWrite row, so a single category
+  // rename would mark thousands of untouched products as just-modified —
+  // polluting the RECENCY leg of search ranking and every sitemap `lastmod`.
+  // Rebuilding a derived index field is not a business modification.
+  const res = await Product.bulkWrite(ops, { timestamps: false });
+  return res.modifiedCount ?? 0;
 }
 
 /** Category renamed, or its `synonyms` edited (A12) — its products' corpus changed. */

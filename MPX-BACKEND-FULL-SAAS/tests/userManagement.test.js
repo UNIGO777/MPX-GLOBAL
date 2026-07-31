@@ -167,6 +167,18 @@ describe('user management — reads (M1-E)', () => {
       .send(employeeBody(`emp_ok_${Date.now()}@example.com`, '9890000002', ['user:read']));
     expect(ok.status).toBe(201);
     expect(ok.body.user.permissions).toEqual(['user:read']);
+
+    // Curated view, not the raw document (review fix). This used to return the
+    // whole Mongoose doc, so anything added to the User model later shipped to
+    // the client for free. Asserting the EXACT key set is what makes widening it
+    // a deliberate act.
+    expect(Object.keys(ok.body.user).sort()).toEqual(
+      ['email', 'id', 'isActive', 'mobile', 'mustChangePassword', 'name', 'orgId', 'permissions', 'role'].sort(),
+    );
+    expect(ok.body.user.mustChangePassword).toBe(true); // generated password
+    for (const leaked of ['passwordHash', 'tokenVersion', 'twoFactorSecret', 'twoFactorBackupCodes', 'createdBy']) {
+      expect(ok.body.user).not.toHaveProperty(leaked);
+    }
   });
 });
 

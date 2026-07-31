@@ -205,7 +205,13 @@ Rules:
 - Map informal/synonym words to the correct category (e.g. "medicines"→Pharmaceuticals & Medical,
   "kapda"/"cloth"→Textiles Fabrics & Yarn).
 - "cheap", "budget", "sasti", "affordable", "low cost" → "priceIntent":"low".
-- "bulk", "large order", "thok" → set a reasonable "moqMin" (e.g. 1000) if no number given.
+- ~~"bulk", "large order", "thok" → set a reasonable "moqMin" (e.g. 1000) if no number given.~~
+  🚫 **SUPERSEDED 2026-07-31 (owner-approved) — do NOT reinstate.** Guessing a number here was
+  proven harmful against the live model: *"sasti dawai thok mein chahiye"* returned **0 results**
+  because the invented `moqMin: 1000` excluded the MOQ-100/500 stock the buyer wanted. `moqMin` and
+  `priceMax` are now set **only from a value the buyer actually stated**; vague intent words map to
+  the soft `priceIntent` signal, which re-orders but never excludes. The prompt carries an explicit
+  `NEVER GUESS A NUMBER` rule, pinned by a test. See `docs/History.md` (2026-07-31).
 - Only use attribute keys/values that belong to the resolved category.
 - If nothing maps, return {"target":"product","keywords":[<original query words>]}.
 - Never invent categories or attributes that are not in the provided list.

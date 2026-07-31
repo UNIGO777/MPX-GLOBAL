@@ -21,9 +21,18 @@ paths:
 ## MongoDB injection (B2)
 
 The real risk on this stack. `{"$gt": ""}` sent as a password logs an attacker in if the
-value reaches the query. Reject objects where a string is expected. Use
-`express-mongo-sanitize`. Never pass `req.body`, `req.query` or `req.params` into a query
-unvalidated.
+value reaches the query. Reject objects where a string is expected. Never pass `req.body`,
+`req.query` or `req.params` into a query unvalidated.
+
+**We do NOT use `express-mongo-sanitize`** (it was removed — it silently *strips* keys, and
+it cannot reassign `req.query`, which is a read-only getter in Express 5). The control is
+`src/middleware/rejectMongoOperators.js`, mounted globally: it **rejects** — never strips —
+any request whose keys start with `$`, contain a `.`, or are prototype-pollution keys
+(`__proto__` / `prototype` / `constructor`), walking body, query and params to depth 20.
+Paired with strict zod validation per route (`zString` refuses non-strings).
+
+⚠️ **Consequence for API design:** a dotted request key is a 400. Any nested filter must use
+**bracket notation** — `?attr[gsm]=120`, never `?attr.gsm=120`.
 
 ## Rate limiting (B7)
 

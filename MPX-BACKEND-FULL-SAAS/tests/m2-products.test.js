@@ -2,7 +2,10 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vites
 import request from 'supertest';
 import mongoose from 'mongoose';
 
-vi.mock('../src/services/image.storage.service.js', () => ({
+vi.mock('../src/services/image.storage.service.js', async (importOriginal) => ({
+  // Keep the REAL isOwnCloudinaryUrl — it is a pure check with no network,
+  // and mocking it away would hide the ref-forgery guard it exists to enforce.
+  ...(await importOriginal()),
   verifyImageFile: vi.fn(),
   uploadPublicImage: vi.fn(async ({ folder }) => ({
     url: `https://res.cloudinary.com/fake/${folder}/p.jpg`,
@@ -85,10 +88,13 @@ async function makeTree() {
   });
 }
 
-const imgRef = (orgId, n = 1) => ({
-  url: `https://res.cloudinary.com/fake/p${n}.jpg`,
-  publicId: `mpx/products/${orgId}/p_${n}`,
-});
+// A ref must look like one the upload endpoint actually issued: our Cloudinary
+// host, and the URL embedding the publicId. The service re-verifies both, so a
+// fabricated pair (any URL + a plausible publicId) is rejected.
+const imgRef = (orgId, n = 1) => {
+  const publicId = `mpx/products/${orgId}/p_${n}`;
+  return { url: `https://res.cloudinary.com/demo/image/upload/v1/${publicId}.jpg`, publicId };
+};
 
 const validBody = (orgId, extra = {}) => ({
   name: 'Cotton Fabric Roll',
@@ -215,6 +221,36 @@ describe('product create (M2-E)', () => {
       .set(bearer(ex.token))
       .send(validBody(ex.org._id, { images: [imgRef(new mongoose.Types.ObjectId())] }));
     expect(foreign.status).toBe(400);
+
+    // A forged pair — the publicId sits in the caller's own prefix, but the URL
+    // points somewhere else entirely. Checking only the prefix would let this
+    // through and serve an arbitrary image to buyers (review finding).
+    const forgedUrl = await request(app)
+      .post('/products')
+      .set(bearer(ex.token))
+      .send(
+        validBody(ex.org._id, {
+          images: [{ url: 'https://evil.example/stolen.jpg', publicId: `mpx/products/${ex.org._id}/p_1` }],
+        }),
+      );
+    expect(forgedUrl.status).toBe(400);
+
+    // …and a real Cloudinary host but a URL that does not contain the publicId
+    // (i.e. someone else's asset) is rejected too.
+    const mismatched = await request(app)
+      .post('/products')
+      .set(bearer(ex.token))
+      .send(
+        validBody(ex.org._id, {
+          images: [
+            {
+              url: 'https://res.cloudinary.com/demo/image/upload/v1/mpx/products/someone-else/x.jpg',
+              publicId: `mpx/products/${ex.org._id}/p_1`,
+            },
+          ],
+        }),
+      );
+    expect(mismatched.status).toBe(400);
   });
 });
 
@@ -367,6 +403,45 @@ describe('archive + frozen states (M2-E)', () => {
     const editAudit = await AuditLog.findOne({ action: 'product.update' });
     expect(editAudit).toBeTruthy();
     expect(editAudit.after.changed).toContain('name');
+  });
+
+  it('an admin deleting an attribute does NOT brick the seller\'s ability to edit (review fix)', async () => {
+    const ex = await makeExporter();
+    const created = await request(app)
+      .post('/products')
+      .set(bearer(ex.token))
+      .send(validBody(ex.org._id, { attributes: [{ key: 'gsm', value: 140 }, { key: 'material', value: 'Cotton' }] }));
+    expect(created.status).toBe(201);
+    const id = created.body.product.id;
+
+    // The admin removes the attribute AFTER products already store a value.
+    await CategoryAttribute.deleteOne({ categoryId: goodsLeaf._id, key: 'material' });
+
+    // The seller's normal round-trip — GET the product, PATCH it back — must
+    // still work; the orphaned key is dropped rather than 400-ing forever.
+    const mine = await request(app).get('/products/mine').set(bearer(ex.token));
+    const current = mine.body.products.find((p) => p.id === id);
+    const edit = await request(app)
+      .patch(`/products/${id}`)
+      .set(bearer(ex.token))
+      .send({ name: 'Renamed Roll', attributes: current.attributes });
+    expect(edit.status).toBe(200);
+    expect(edit.body.product.attributes).toEqual([{ key: 'gsm', value: 140 }]);
+
+    // A select option removed under a stored value behaves the same way.
+    await CategoryAttribute.updateOne({ categoryId: goodsLeaf._id, key: 'gsm' }, { $set: { inputType: 'number' } });
+    const again = await request(app)
+      .patch(`/products/${id}`)
+      .set(bearer(ex.token))
+      .send({ attributes: [{ key: 'gsm', value: 150 }] });
+    expect(again.status).toBe(200);
+
+    // But CREATE still rejects an unknown key — nothing is stale on a new listing.
+    const fresh = await request(app)
+      .post('/products')
+      .set(bearer(ex.token))
+      .send(validBody(ex.org._id, { attributes: [{ key: 'material', value: 'Cotton' }] }));
+    expect(fresh.status).toBe(400);
   });
 
   it('A9: /products/mine shows takedown reason + date but NEVER byUserId', async () => {

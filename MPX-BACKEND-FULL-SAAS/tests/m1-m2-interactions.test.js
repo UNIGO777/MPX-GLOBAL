@@ -9,7 +9,10 @@ vi.mock('../src/services/otp.sender.js', () => ({
     otpBox.byId.set(identifier, code);
   },
 }));
-vi.mock('../src/services/image.storage.service.js', () => ({
+vi.mock('../src/services/image.storage.service.js', async (importOriginal) => ({
+  // Keep the REAL isOwnCloudinaryUrl — it is a pure check with no network,
+  // and mocking it away would hide the ref-forgery guard it exists to enforce.
+  ...(await importOriginal()),
   verifyImageFile: vi.fn(),
   uploadPublicImage: vi.fn(),
   deletePublicImage: vi.fn(),

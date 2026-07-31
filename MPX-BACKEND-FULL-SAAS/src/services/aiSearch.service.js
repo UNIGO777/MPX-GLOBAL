@@ -48,33 +48,68 @@ async function buildSystemPrompt() {
     })
     .join('\n');
 
-  return `You are a search query parser for a B2B import/export marketplace (MPX Global).
-The buyer types a natural-language request. Convert it into a STRICT JSON object of
-search keywords and structured filters. Return ONLY the JSON — no explanation.
+  return `You are the search-query parser for a B2B import/export marketplace (MPX Global).
+The buyer writes ONE line, informally, in English, Hindi, Hinglish or a mix, often with
+typos and filler words. Turn it into a STRICT JSON search query. Return ONLY the JSON.
 
-Available categories (map buyer words, including synonyms, to the closest one; use null if none):
+Your job is to produce a query that FINDS the buyer what they asked for. A filter you
+guessed is worse than no filter at all: it silently hides stock they wanted, and they
+never learn why. When in doubt, leave a filter out and let the keywords do the work.
+
+CATEGORIES — map the buyer's words, including the synonyms in brackets, to exactly ONE
+of these names. If none clearly fits, use null. NEVER output a name that is not listed:
 ${list}
 
-Output JSON shape (include a field only if present in the query; otherwise omit it):
+OUTPUT SHAPE (omit any field the buyer did not actually express):
 {
   "target": "product" | "supplier",
   "keywords": ["..."],
-  "category": "<one category name from the list above>" | null,
+  "category": "<one name from the list above>" | null,
   "priceMax": <number> | null,
   "priceIntent": "low" | "high" | null,
   "moqMin": <number> | null,
-  "country": "<ISO alpha-2 country code>" | null,
-  "currency": "<ISO-4217 code>" | null,
-  "attributes": { "<key>": "<value>" },
+  "country": "<ISO alpha-2>" | null,
+  "currency": "<ISO-4217>" | null,
+  "attributes": { "<spec name>": "<value>" },
   "verifiedOnly": true | false
 }
 
-Rules:
-- Map informal/synonym words to the correct category.
-- "cheap", "budget", "sasti", "affordable", "low cost" -> "priceIntent":"low".
-- "bulk", "large order", "thok" -> a reasonable "moqMin" (e.g. 1000) if no number is given.
-- Never invent categories that are not in the list.
-- Return valid JSON only.`;
+keywords — REQUIRED and never empty. This is what actually searches the catalogue.
+- Keep the product/service words. Drop filler ("mujhe", "chahiye", "I need", "looking
+  for", "please", "kya aap") and drop any word you already captured in another field.
+- ALWAYS add the ENGLISH term alongside a Hindi/Hinglish one:
+  "dawai" -> ["dawai","medicine"], "kapda" -> ["kapda","fabric"],
+  "chawal" -> ["chawal","rice"], "masala" -> ["masala","spices"].
+  The catalogue is indexed in English, so the English word is what matches.
+- Fix obvious typos ("cottn" -> "cotton"). Max 10 entries.
+- If the line has no clear product word, fall back to the buyer's own significant words.
+
+HARD FILTERS — set ONLY from a value the buyer actually stated. These EXCLUDE results.
+- priceMax: only an explicit cap — "under 500", "500 se kam", "max ₹500".
+- moqMin: only an explicit quantity — "MOQ 1000", "1000 pieces minimum", "500+ order".
+- country: ISO alpha-2 of where they want to BUY FROM — "India" -> "IN", "UAE" -> "AE",
+  "China" -> "CN". Exactly two uppercase letters, never a full country name.
+- currency: ISO-4217 — "rupees"/"₹" -> "INR", "dollars"/"$" -> "USD", "€" -> "EUR".
+- attributes: only specs they actually named, as {"spec":"value"} — e.g. "120 gsm"
+  -> {"gsm":"120"}, "in blue" -> {"colour":"blue"}. Omit entirely if none. (These are
+  illustrations: use whatever spec word the buyer used; unknown ones are dropped later.)
+- verifiedOnly: true only if they ask for verified / genuine / trusted / certified sellers.
+
+NEVER GUESS A NUMBER. "bulk", "thok", "wholesale", "large order", "container load" state
+an INTENT, not a quantity — leave moqMin null. "cheap", "sasti", "budget", "affordable"
+are NOT a price cap — leave priceMax null and use priceIntent instead. Inventing a number
+here is the single worst mistake you can make: it hides matching stock behind a limit the
+buyer never asked for.
+
+SOFT SIGNAL — priceIntent only re-orders results, it never removes any:
+- "low" for cheap / sasti / budget / affordable / low cost / kam daam / economical.
+- "high" for premium / best quality / high grade / top / superior.
+
+target — "supplier" ONLY when they ask for companies rather than goods (supplier,
+manufacturer, exporter, vendor, factory, "kaun banata hai", "who supplies").
+Otherwise "product".
+
+Return valid JSON only.`;
 }
 
 // Everything the model returns is treated as untrusted: unknown categories,
@@ -140,6 +175,31 @@ function toSearchParams(extracted, fallbackQuery) {
   return params;
 }
 
+/**
+ * The filters that were ACTUALLY applied, given the target.
+ *
+ * §A27.3: supplier mode's engine takes `q` / `country` / `verifiedOnly` and
+ * nothing else — a company is not "in" one category and carries no price or MOQ,
+ * so `searchSuppliers` ignores category, priceMax, moqMin and attributes. Both
+ * the answer sentence and the `extracted` echo are built from THIS, not from the
+ * raw extraction: telling a buyer "Found 12 suppliers in textiles, under 500"
+ * when neither filter was applied is a false claim about their own results —
+ * they would reasonably believe the list was narrowed when it is the full set.
+ *
+ * The key set stays identical in both modes, so the client response shape never
+ * changes; the unapplied fields are simply null/empty.
+ */
+function appliedExtraction(extracted) {
+  if (extracted.target !== 'supplier') return extracted;
+  return {
+    target: 'supplier',
+    keywords: extracted.keywords,
+    country: extracted.country,
+    verifiedOnly: extracted.verifiedOnly,
+    attributesRaw: {},
+  };
+}
+
 function answerFor(extracted, total) {
   const bits = [];
   if (extracted.category) bits.push(`in ${extracted.category.replace(/-/g, ' ')}`);
@@ -188,20 +248,23 @@ export async function aiSearch({ query }) {
       ? await searchSuppliers({ ...params, category: undefined, attributes: [] })
       : await searchProducts(params);
 
+  // Report what the engine actually did, not what the model asked for.
+  const applied = appliedExtraction(extracted);
+
   return {
-    answer: answerFor(extracted, results.total),
+    answer: answerFor(applied, results.total),
     extracted: {
-      target: extracted.target,
-      keywords: extracted.keywords,
-      category: extracted.category ?? null,
-      country: extracted.country ?? null,
-      priceMax: extracted.priceMax ?? null,
-      moqMin: extracted.moqMin ?? null,
-      verifiedOnly: Boolean(extracted.verifiedOnly),
-      attributes: extracted.attributesRaw,
+      target: applied.target,
+      keywords: applied.keywords,
+      category: applied.category ?? null,
+      country: applied.country ?? null,
+      priceMax: applied.priceMax ?? null,
+      moqMin: applied.moqMin ?? null,
+      verifiedOnly: Boolean(applied.verifiedOnly),
+      attributes: applied.attributesRaw,
     },
     results,
-    target: extracted.target,
+    target: applied.target,
     fallback: false,
   };
 }

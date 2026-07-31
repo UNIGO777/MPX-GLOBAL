@@ -27,7 +27,12 @@ export async function consumeAiQuota(orgId) {
   try {
     const key = todayKey(orgId);
     const used = await redis.incr(key);
-    if (used === 1) await redis.expire(key, 24 * 60 * 60);
+    // Set the TTL on EVERY call, not just the first (review fix): a crash or a
+    // dropped connection between INCR and EXPIRE would otherwise leave a
+    // never-expiring counter, permanently locking that company out of AI search.
+    // Re-setting it is harmless — the key is date-stamped, so it is replaced at
+    // midnight regardless of when the TTL was last touched.
+    await redis.expire(key, 24 * 60 * 60);
     if (used > DAILY_LIMIT) {
       throw AppError.tooManyRequests(
         'ai quota exceeded',

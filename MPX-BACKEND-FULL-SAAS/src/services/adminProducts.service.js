@@ -38,7 +38,10 @@ export async function listAdminProducts({ category, status, seller, q, page, pag
     match.categoryId = { $in: await resolveCategoryIdsForAdmin(category) };
   }
   if (seller !== undefined) match.exporterOrgId = new mongoose.Types.ObjectId(seller);
-  if (q) match.name = new RegExp(`^${escapeRegex(q)}`, 'i');
+  // SUBSTRING, not prefix (review finding): a moderator searching "cotton"
+  // expects to find "Premium Cotton Fabric". Still regex-ESCAPED, so no user
+  // input is ever compiled as a pattern (no ReDoS, no injection).
+  if (q) match.name = new RegExp(escapeRegex(q), 'i');
   if (status === 'active' || status === 'inactive') match.status = status;
   if (status === 'blocked') match['takedown.isDown'] = true;
 
@@ -94,6 +97,15 @@ async function loadForModeration(id) {
 
 export async function takedownProduct({ id, reason, actor, meta }) {
   const product = await loadForModeration(id);
+  if (product.status === 'draft') {
+    // A draft was never publicly visible, is deliberately absent from the
+    // monitoring list, and taking one down STRANDS it (review finding): the
+    // seller can then neither publish nor delete it, it occupies one of their
+    // 10 draft slots until the 180-day purge, and it inflates the takedownCount
+    // that drives F6 suspension — all for content no buyer ever saw. Moderation
+    // acts on what is live-or-was-live, matching the list's own contract.
+    throw AppError.conflict('draft not takedownable', 'Draft products are not publicly visible.');
+  }
   if (product.status === 'archived') {
     // A7 guard (plan second-verify): a taken-down archived row would match the
     // purge query and get hard-deleted — archived rows must never become
@@ -124,6 +136,19 @@ export async function takedownProduct({ id, reason, actor, meta }) {
   return product;
 }
 
+/**
+ * ⚠️ Known consequence, deliberately NOT guarded (raised in review, left as-is):
+ * a takedown frees a D1 slot (A10), so an unverified seller can publish a
+ * replacement while one listing is down. Restoring it then puts them at 4 live
+ * products — over the cap.
+ *
+ * We do not block or downgrade the restore, because m5-rules §2 is explicit that
+ * a restore returns the product to exactly the state the admin froze; silently
+ * publishing it as `inactive` instead would break that guarantee and confuse the
+ * seller. The cap governs the SELLER's publish action, not an admin's reversal,
+ * and the state self-corrects — they cannot publish anything further until they
+ * are back under the cap. Flagged to the owner rather than decided here.
+ */
 export async function restoreProduct({ id, actor, meta }) {
   const product = await loadForModeration(id);
   if (!product.takedown?.isDown) {

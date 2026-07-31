@@ -35,17 +35,27 @@ async function reviewOrg({ orgId, sideFlag, toStatus, reason, actor, action, met
     org.verifiedAt = new Date();
     org.kycRejectionReason = null;
   } else if (toStatus === 'rejected') {
-    org.verifiedBy = actor.userId;
-    org.verifiedAt = new Date();
+    // `verifiedBy`/`verifiedAt` mean "this org was VERIFIED, by whom and when".
+    // They must stay empty on a reject — stamping them here (as this used to)
+    // left a rejected org carrying a real `verifiedAt`, which is both wrong on
+    // every staff/self response and one careless line away from a public tick:
+    // anyone later deriving `verified` from `Boolean(org.verifiedAt)` instead of
+    // from `kycStatus` would hand the tick to rejected companies. Clearing also
+    // covers the A22 demotion path, where a previously-verified org is
+    // re-reviewed and must not keep its old verification evidence.
+    // WHO rejected and WHEN is preserved in the append-only AuditLog below.
+    org.verifiedBy = undefined;
+    org.verifiedAt = undefined;
     org.kycRejectionReason = reason;
   }
   await org.save();
 
   // §A23 (M2): sync the denormalised `sellerVerified` search field onto the
-  // org's products — Atlas $search cannot join, so the verified boost reads
-  // this copy. A reject was never verified, so `false` is a no-op there. (The
-  // A22 demotion + country-change syncs attach to the A22 edit endpoint when it
-  // is built — §A22.2 step 5.)
+  // org's products. Search is native MongoDB `$text` (§A26 — self-hosted, not
+  // Atlas) and cannot join across collections, so the verified boost reads this
+  // copy. A reject was never verified, so `false` is a no-op there. (The A22
+  // demotion + country-change syncs attach to the A22 edit endpoint when it is
+  // built — §A22.2 step 5.)
   await Product.updateMany(
     { exporterOrgId: org._id },
     { $set: { sellerVerified: toStatus === 'verified' } },
