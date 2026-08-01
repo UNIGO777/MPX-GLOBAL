@@ -10,6 +10,14 @@ node_modules/
 !.env.example
 !**/.env.example
 
+# Cloud service-account keys. These arrive as a downloaded .json and land in the
+# repo directory by accident — a plain `git add .` would commit a live signing
+# key. They belong in .env (base64) and nowhere else.
+*firebase-adminsdk*.json
+*service-account*.json
+*serviceAccountKey*.json
+gcp-*.json
+
 # logs / coverage / build
 logs/
 *.log

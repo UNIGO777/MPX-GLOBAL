@@ -11,6 +11,7 @@ import * as PV from '../validators/product.validators.js';
 import * as searchCtrl from '../controllers/search.controller.js';
 import * as SV from '../validators/search.validators.js';
 import * as seoCtrl from '../controllers/seo.controller.js';
+import * as featuredCtrl from '../controllers/featured.controller.js';
 
 export const publicRouter = Router();
 
@@ -43,6 +44,13 @@ publicRouter.get(
   validate(PV.publicIdOrSlugParam),
   productsCtrl.getPublic,
 );
+
+// FINALIZE F5b: the landing page's curated content — banners, featured products,
+// featured categories, highlighted suppliers — in ONE call, so the front page
+// renders in a single round trip. Every target is re-resolved through the same
+// availability rules as the rest of the public surface, so a taken-down product
+// or a blocked company disappears from here on its own.
+publicRouter.get('/public/featured', publicRoute, generalLimiter, featuredCtrl.landing);
 
 // M3-B: the one search surface (native $text — §A26). Guests included; login is
 // only ever needed to SAVE. Its own tighter limiter (api-endpoints rule).

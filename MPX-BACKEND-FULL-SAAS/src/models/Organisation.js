@@ -116,6 +116,21 @@ const organisationSchema = new Schema(
     // would undercount repeat offenders exactly when it matters. This is the
     // trigger data for the F6 suspension threshold. INTERNAL — not public.
     takedownCount: { type: Number, default: 0 },
+
+    // F1-B: what the org-block cascade did, and whether it finished. This exists
+    // BECAUSE the cascade is asynchronous (owner decision 2026-08-01) — a
+    // background job that failed silently would leave a blocked company's
+    // catalogue live with nobody aware, which is worse than the gap it replaced.
+    // Surfaced on the admin Organisation detail screen. INTERNAL — never public.
+    blockCascade: {
+      status: { type: String, enum: ['running', 'done', 'failed'] },
+      direction: { type: String, enum: ['block', 'unblock'] },
+      startedAt: { type: Date },
+      completedAt: { type: Date },
+      products: { type: Number },
+      conversations: { type: Number },
+      error: { type: String },
+    },
   },
   baseSchemaOptions,
 );

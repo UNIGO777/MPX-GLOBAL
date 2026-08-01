@@ -24,9 +24,28 @@ RED-ALERT **before** writing, editing, enabling, scaffolding, or stubbing anythi
 - **(Out of scope)** asks for something **outside `docs/scope-of-work.md`** — not among the 8
   modules, or a new feature not in the quote; **OR**
 - **(Bucket A)** touches anything in `docs/month1-not-doing.md` Bucket A — **Quotation &
-  negotiation (Module 4)**, the **employee-only pieces** (ticket/query handling, enquiry routing,
-  internal notes, per-employee dashboard/reports, employee-permission UI), or the **notification
-  layer (Module 8)** beyond OTP; **OR**
+  negotiation (quote Module 4)**, the **employee-only pieces** (ticket/query handling, enquiry
+  routing, internal notes, per-employee dashboard/reports, employee-permission UI), or the
+  **notification layer (quote Module 8)** beyond OTP **and beyond the approved FCM slice below**;
+  **OR**
+
+> ⚠️ **TWO NUMBERING SYSTEMS — read this before alerting on anything called "Module 4".**
+> The **quote** numbers 8 modules (`docs/scope-of-work.md`); `modules-in-detailed/` numbers **build
+> milestones**. They do **not** line up:
+>
+> | Build folder | What it is | Quote module | Month 1? |
+> |---|---|---|---|
+> | `m2` | catalogue | Module 2 | ✅ built |
+> | `m3` | search / discovery | Module 3 (search half) | ✅ built |
+> | **`m4`** | **Enquiry & Chat** | **Module 3 (chat half)** | ✅ **IN SCOPE — do NOT alert** |
+> | `m5` | super admin | Module 5 | ✅ |
+> | — | Quotation & negotiation | **Module 4** | ❌ Bucket A1 |
+>
+> **`modules-in-detailed/m4` is Enquiry & Chat and is month-1 in-scope** — confirmed by
+> `month1-not-doing.md` line 91 ("Module 3 (chat + AI search)" is being built) and by A2's
+> parenthetical "buyer khud enquiry+chat month 1 me hai". **Quotation is what is deferred**, and
+> `m4.md` itself puts quotation out of its own scope. Alerting on the *folder* name `m4` would be a
+> false alarm; the `Quotation` skeleton model is what stays untouched.
 - **(Bucket B)** touches anything in Bucket B — escrow, payouts, contracts/eSign, semantic
   search, trust score, chat-analysis, chatbot, orders/shipments, directories/investment,
   subscriptions, deep analytics; **OR**
@@ -55,7 +74,19 @@ RED-ALERT **before** writing, editing, enabling, scaffolding, or stubbing anythi
   ticket create+list lands in month 1. Until they say so, it is **deferred** — alert before
   building any of it.
 - Building month-1 in-scope work (Modules 2, 3, 5, shared employee-ops, auth) needs **no** alert
-  — that's the confirmed first-draft scope. Only the triggers above require the alert.
+  — that's the confirmed first-draft scope. Only the triggers above require the alert. This
+  includes **`modules-in-detailed/m4` (Enquiry & Chat)** — see the numbering table above.
+- ✅ **FCM push — APPROVED INTO MONTH 1 (owner, 2026-07-31). Do not alert on it again.** The
+  owner explicitly pulled Firebase push out of Bucket A3 / D5 and into M4. It is a **schedule**
+  change only, not a scope change — notifications are quote **Module 8**, already inside Phase 1.
+  **The approval is NARROW — only this slice:** `firebase-admin`, a `DeviceToken` model with
+  register/unregister, dead-token cleanup, and sends on exactly two M4 events (new enquiry → seller,
+  new message → counterparty).
+  🔴 **The REST of Module 8 is still deferred and still needs an alert:** email notifications,
+  WhatsApp, the `Notification` model / in-app centre, admin per-type enable-disable, delivery
+  tracking + retry, and notifications for any non-M4 event (signup, verify/reject, quotation).
+- ✅ **Socket reconnect recovery — approved into month 1 (owner, 2026-07-31).** It was only in
+  `m4.md` §13's own month-2 list, never in a scope bucket or a D-item, so it never needed an alert.
 
 ## Never
 

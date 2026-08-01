@@ -40,8 +40,16 @@
 - **Employee create + permissions assign ka UI** *(backend hard superadmin-gate hai, UI baad me)*
 
 ### A3 · Notification layer (Module 8) — OTP ke aage sab kuch
+> ✅ **PARTIAL CARVE-OUT — 2026-07-31, owner ne explicitly confirm kiya:** **FCM push ab month 1 me
+> hai**, M4 (Enquiry & Chat) ke andar. Ye **scope change NAHI** — notifications quote ka Module 8
+> hai, Phase 1 me pehle se; sirf **schedule** aage khiska. **Sirf itna approved hai:**
+> `firebase-admin` + `DeviceToken` model (register/unregister) + dead-token cleanup + **do event**
+> (nayi enquiry → seller, naya message → doosri party). 🔴 **Baaki A3 ab bhi deferred hai aur
+> red-alert maangta hai** — neeche ki list me se sab kuch chhod kar wo do event.
+
 - `Notification` model + in-app notification centre
-- Push (Firebase FCM) — web + app
+- ~~Push (Firebase FCM) — web + app~~ → ✅ **month 1 me le liya (upar dekhein)**; iske aage ka push
+  (non-M4 events, admin controls) ab bhi deferred
 - Email notifications (OTP ke alawa)
 - WhatsApp notifications (approved provider + template approval)
 - Admin control: har notification type enable/disable/edit

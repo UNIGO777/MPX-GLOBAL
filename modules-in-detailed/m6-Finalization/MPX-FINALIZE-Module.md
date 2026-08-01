@@ -4,7 +4,10 @@ A module built **last**, after M1–M5. It holds everything that cuts across mod
 
 **Why it exists, in the owner's words:** if something can't be finished within month 1, it moves to the next month. FINALIZE is where those items wait rather than being dropped.
 
-**Status:** open register, as of 29 July 2026. Nothing here is built **except F1-A (the org block cascade), which shipped 2026-07-30** — see F1 below. Everything else is still open.
+**Status:** open register. **F1 is now COMPLETE — F1-A shipped 2026-07-30, F1-B shipped 2026-08-01**
+(see F1 below). **F6 is CLOSED by owner decision (2026-08-01): no threshold is being built.** F2 and
+F4 were already cancelled/moved. What remains is F3 (unreachable fields), F5 (featured content + the
+error-log viewer), and the content/infrastructure list — most of which is not code.
 
 ---
 
@@ -25,7 +28,7 @@ A module built **last**, after M1–M5. It holds everything that cuts across mod
 
 `src/services/orgBlock.service.js` · `tests/f1a-org-block.test.js` (9 tests) · suite 121/121.
 
-**F1-B · FINALIZE-half — the PRODUCTS half is now UNBLOCKED (2026-07-31).** M2 shipped
+**F1-B · ✅ BUILT 2026-08-01 — both halves.** *(History: the PRODUCTS half unblocked 2026-07-31 when M2/M3 shipped; the CHATS half unblocked when M4 shipped, and the two were built together.)* Original note: M2 shipped
 `Product.exporterOrgId`, `status` and the full `takedown` object, and M3 shipped discovery — so a
 blocked company's listings are now **provably still public** (pinned by a test in
 `m1-m2-m3-integration.test.js`, which asserts the gap on purpose so closing it is a deliberate
@@ -44,9 +47,9 @@ Original blockers, for the record:
 |---|---|---|
 | Account | `isActive: false`, `tokenVersion++` on **every user of the org** | ✅ **BUILT (F1-A, 2026-07-30)** — cascades from `POST /admin/orgs/:id/block` |
 | Organisation | Also deactivated, so the public seller profile disappears from discovery | ✅ **BUILT (F1-A)** — the writer now exists; the read side already filtered `isActive` |
-| Catalogue | The seller's entire catalogue deactivated | TO BUILD (F1-B — ✅ **unblocked**, M2/M3 shipped) |
-| Products | Every product goes into takedown | TO BUILD (F1-B — ✅ **unblocked**, M2/M3 shipped) |
-| Chats | Every in-progress conversation involving that seller freezes | TO BUILD (F1-B — needs M4) |
+| Catalogue | The seller's entire catalogue deactivated | ✅ **BUILT (F1-B, 2026-08-01)** — live products go into takedown; **drafts and archived rows are exempt** (a draft was never public; an archived row in takedown would match the §A8 purge and be deleted, breaking A7) |
+| Products | Every product goes into takedown | ✅ **BUILT (F1-B)** — reason: "Account blocked by MPX Global". ⚠️ `Organisation.takedownCount` is deliberately **NOT** incremented: §A24 counts individual moderation decisions, and one account block is ONE decision — inflating it by catalogue size would corrupt the very signal F6 was about |
+| Chats | Every in-progress conversation involving that seller freezes | ✅ **BUILT (F1-B)** — a third freeze reason `account` was added, because lifting a product takedown must not reopen a thread whose COMPANY is still blocked |
 | Reason | The same reason used everywhere: the account was blocked by an admin | ✅ **BUILT (F1-A)** — required on block, stored + audited |
 
 **The read side was already plumbed** — the public exporter read filters `isActive: true` on `Organisation` (`getPublicExporter`), and A21 indexed `{ exporterSide: 1, isActive: 1 }` for it. So the profile hides **the moment that flag flips**.
@@ -55,15 +58,25 @@ Original blockers, for the record:
 
 ### F1 open points
 
-**1. Unblock must not blanket-restore.** Some of that seller's products may have been taken down individually *before* the account block, and some chats may have been blocked individually. Turning everything back on would silently undo those admin decisions.
-
-The pattern already exists in this project — Category's `prevActive`. Before the cascade, store each product's and each conversation's prior state; restore from that on unblock.
+**1. ~~Unblock must not blanket-restore.~~** ✅ **CLOSED (F1-B, 2026-08-01)** — implemented exactly as
+this entry proposed. `Product.prevTakedown` and `Conversation.prevFrozen` capture prior state before
+the cascade, and unblock restores only what the cascade itself switched off: a product taken down
+individually beforehand stays down **with its own reason**, and a chat blocked individually stays
+blocked. Unfreezing routes through `recomputeFreeze` (M4-30), so a thread reopens only when nothing
+at all still holds it shut. Pinned by `tests/f1b-block-cascade.test.js`.
 
 **2. There is no reason field on the block.** The AuditLog only records the before/after of `isActive`. F1 needs a reason on the block itself, both to show the cascade explanation and so the audit trail says *why*.
 
-**3. Timed suspension.** Today it's an on/off toggle with no duration or auto-expiry. Whether a 7-day or 30-day suspension is needed is undecided.
+**3. ~~Timed suspension.~~** ✅ **DECIDED 2026-08-01 — not being built.** The block stays a manual
+on/off toggle. An auto-expiry needs its own scheduled job, and a job that misfires brings a blocked
+company back online by itself.
 
-**4. Scale.** A seller with hundreds of products and chats means a large cascade. Whether it runs inline or as a background job is a build-time decision.
+**4. ~~Scale.~~** ✅ **DECIDED 2026-08-01 — the cascade runs in the BACKGROUND.** The admin gets an
+immediate response; the account half (which ends every session) stays synchronous, because that is
+the part that cannot wait. ⚠️ **Consequence, deliberately handled:** a background job failing
+silently would leave a blocked company's catalogue live with nobody aware — strictly worse than the
+gap it replaced. So the cascade records its state on `Organisation.blockCascade` and the admin
+Organisation screen reports `running` / `done` / **`failed`** alongside the row counts.
 
 **5. ⚠️ Corrected — there is NO org-level cascade today.** An earlier version of this point said the dual-account work "cascades an org block to its users". **It does not.** A21's **Step 5 (org block) was never started** — steps 1–4a shipped, 4b and 5 did not. What M1 actually shipped is `setUserActive()`: a superadmin toggle that sets `isActive: false` and bumps `tokenVersion` for **one named user**, killing that user's sessions and login. There is no org-level block, and no cascade of any kind.
 
@@ -129,7 +142,12 @@ The error log, when built: errors only, its own collection separate from `AuditL
 
 ## F6 · The number that is still undefined
 
-**The repeat-offender suspension threshold** — how many takedowns before an account is suspended.
+🚫 **CLOSED 2026-08-01 — no threshold is being built.** The console shows `Organisation.takedownCount`
+and the admin decides; there is no number and no automatic action. An auto-suspend firing on a
+mis-set trigger would take an entire company offline, so automatic enforcement stays out of month 1.
+The original entry follows, for its reasoning.
+
+~~**The repeat-offender suspension threshold** — how many takedowns before an account is suspended.~~
 
 This matters more than it looks. Under A10 a taken-down product no longer occupies a slot in the D1 three-active cap, so blocking a product *frees* a slot. Account suspension is therefore the **only real abuse control left**, and it has no trigger value.
 
@@ -159,8 +177,31 @@ exactly when it matters). Only the threshold **value** remains open.
 
 Two items matter more than the rest:
 
-**F1**, because without the cascade a blocked seller's shopfront stays open — the block looks like it worked and didn't. Note **F1-A (M1-core) is buildable now** and does not have to wait for FINALIZE: today there is no org-level block *at all*, so the gap is worse than "the cascade is incomplete".
+~~**F1**~~ ✅ **DONE (2026-08-01).** Both halves shipped, so a block now closes the shopfront, the
+catalogue and the chats together.
 
-**F6**, because without a threshold the only abuse control in the system has nothing to fire on.
+~~**F6**~~ ✅ **CLOSED by decision (2026-08-01)** — no threshold; the count is shown and the admin acts.
 
-Everything else here is an unfinished feature. Those two leave a hole in how month 1 actually behaves.
+**What is actually left**, in rough order:
+
+1. ~~**Error-log viewer**~~ ✅ **BUILT 2026-08-01** (F5a). `GET /admin/errors` + `/admin/errors/:id`,
+   read-only, gated by its own **`errorlog:read`** — owner-decided, kept separate from `audit:read`
+   so a debugging grant does not also hand over the record of every KYC document and private
+   conversation staff have opened. Filters: requestId · route prefix · method · statusCode (5xx
+   only, enforced) · user/org · date range. **No write verb exists** — retention is the TTL's job.
+   ⚠️ Building it surfaced a real leak and closed it: `err.message` / `err.stack` are the only
+   persisted fields whose shape we do not control, and a Mongo driver error quotes its own
+   connection string — which in production carries the DB password. `src/utils/redact.js` now
+   strips known secrets **at the write site**. Plan: `build-plans/m6-finalize/backend-plan.md`.
+2. ~~**Featured listings + banners**~~ ✅ **BUILT 2026-08-01** (F5b). Owner reversed the same-day
+   "month 2" call — the landing page needs it now. New **`FeaturedItem`** model covering all four
+   kinds (banner · product · category · supplier), public `GET /public/featured` in one call, admin
+   CRUD under `/admin/featured` behind a grantable **`featured:manage`**.
+   🔑 A featured row is a **pointer, never a snapshot**: the public read re-resolves every target
+   through the same availability rules as the rest of the public surface, so a taken-down product
+   or a **blocked company leaves the landing page on its own**. Denormalising a name or price onto
+   the row would have re-opened exactly the F1 failure.
+3. **F3 · the unreachable fields** — no capture form exists; identity capture is Phase 2. The M5
+   screen already labels them "not captured", so nothing misleads in the meantime.
+4. **The content + infrastructure list above** — mostly not code, and the production-server items
+   (Mongo auth, backups, the **C10 append-only audit grant**) are go-live blockers.

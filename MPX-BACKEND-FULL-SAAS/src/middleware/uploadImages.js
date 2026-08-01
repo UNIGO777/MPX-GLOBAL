@@ -38,3 +38,6 @@ export const uploadProductImages = wrapMulterErrors(
 
 // Category card image: field `image`, single file (A11/A20).
 export const uploadCategoryImage = wrapMulterErrors(makeUploader({ files: 1 }).single('image'));
+
+// Landing banner image: field `image`, single file (FINALIZE F5b).
+export const uploadBannerImage = wrapMulterErrors(makeUploader({ files: 1 }).single('image'));

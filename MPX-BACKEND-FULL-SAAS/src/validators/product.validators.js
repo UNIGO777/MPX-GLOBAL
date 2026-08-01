@@ -137,6 +137,9 @@ export const listAdminProducts = {
   query: z.object({
     category: idOrSlug.optional(),
     status: z.enum(['active', 'inactive', 'blocked']).optional(),
+    // §5 — lets the dashboard's "nearing purge" tile link to a list that
+    // reproduces its own count, instead of to every blocked product.
+    nearingPurge: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
     seller: zObjectId().optional(),
     q: zString({ min: 1, max: 100 }).optional(),
     page: z.coerce.number().int().min(1).default(1),

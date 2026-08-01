@@ -6,6 +6,8 @@ import { generalLimiter } from '../middleware/rateLimit.js';
 import { uploadKycDocument } from '../middleware/upload.js';
 import * as ctrl from '../controllers/kyc.controller.js';
 import * as V from '../validators/kyc.validators.js';
+import * as DV from '../validators/device.validators.js';
+import * as deviceCtrl from '../controllers/devices.controller.js';
 
 export const meRouter = Router();
 
@@ -25,3 +27,9 @@ meRouter.post(
 
 // The caller's own verification status (buyer/exporter dashboards). Self-scoped.
 meRouter.get('/me/verification', authenticate, ctrl.getMyVerification);
+
+// M4-H · FCM device registration. Any authenticated role may register a device —
+// buyers and sellers both need push, and staff carry the same app. Registration
+// is an UPSERT because a device changes hands and FCM reuses the token.
+meRouter.post('/me/devices', authenticate, generalLimiter, validate(DV.registerDevice), deviceCtrl.register);
+meRouter.delete('/me/devices/:token', authenticate, generalLimiter, validate(DV.deviceTokenParam), deviceCtrl.unregister);

@@ -50,6 +50,12 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
+
+  // M4-H · FCM push. The Firebase service account JSON, base64-encoded into a
+  // single line so deployment needs only environment variables and no file.
+  // Optional by design: with it absent the push layer is INERT — never a crash,
+  // never a 5xx — the same posture as OPENAI_API_KEY.
+  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   PAYMENT_API_BASE_URL: z.string().url().optional(),
   PAYMENT_API_KEY: z.string().optional(),
   PAYMENT_API_SECRET: z.string().optional(),

@@ -38,6 +38,15 @@ const auditLogSchema = new Schema(
 
 auditLogSchema.index({ entityType: 1, entityId: 1 });
 auditLogSchema.index({ occurredAt: -1 });
+// M5 §6 — the audit viewer filters by action type, and there was no index on
+// `action`. This collection is append-only so it only ever grows, and `kyc.view`
+// + `conversation.read` make it the highest-write collection in the system: an
+// unindexed action filter degrades into a collection scan exactly as the log
+// gets big enough to matter. Compound with `occurredAt` because the viewer
+// always sorts newest-first, so one index serves filter + sort together.
+auditLogSchema.index({ action: 1, occurredAt: -1 });
+// The viewer's other main filter — "everything this person did", newest first.
+auditLogSchema.index({ actorId: 1, occurredAt: -1 });
 
 declareScope(auditLogSchema, SCOPE.PLATFORM);
 
@@ -70,5 +79,14 @@ auditLogSchema.pre('save', function blockResave() {
 auditLogSchema.pre('deleteOne', { document: true, query: false }, function blockDocDelete() {
   throw new Error('AuditLog is append-only: delete is not permitted');
 });
+
+// `bulkWrite` bypasses query middleware entirely — every hook above is blind to
+// it. Found while hardening Message (M4-13) and verified here too: a
+// `bulkWrite([{ updateOne: ... }])` edited an append-only row straight through.
+// bulkWrite is already used elsewhere in this codebase (searchSync.service.js),
+// so it is a realistic path. Nothing needs it on an audit collection.
+auditLogSchema.statics.bulkWrite = function blockBulkWrite() {
+  return Promise.reject(new Error('AuditLog is append-only: bulkWrite is not permitted'));
+};
 
 export const AuditLog = mongoose.model('AuditLog', auditLogSchema);

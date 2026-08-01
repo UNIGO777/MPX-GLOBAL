@@ -97,10 +97,24 @@ Do not start the screens without surfacing this alert.
 - **Interim (built + tested):** the superadmin logs in via **OTP** (still two-factor). The
   `totp` branch + `twofactor.service` are ready, so restoring is wiring, not new logic.
 - **⚠️ MUST be restored before project close / final handover.**
+- **2026-08-01 — RAISED at the FINALIZE build plan, owner said NOT NOW.** D4 stays ON HOLD;
+  staff continue on OTP. This is a deferral, **not** a cancellation — it must be raised again
+  at close, and `auth.service.js`'s `// ON HOLD (docs/Note.md D4)` comment stays accurate.
+  Confirmed while planning: what is missing is only **enrolment + the login switch + backup-code
+  redemption + disable**. `twofactor.service.js` (secret, key URI, verify, hashed single-use
+  backup codes) and `completeLogin`'s `method === 'totp'` branch already exist and are tested.
+  **Two decisions still open when it is picked up:** superadmin-only or all staff, and mandatory
+  or opt-in. *(Mandatory locks a superadmin out permanently if they lose both the authenticator
+  and the backup codes — opt-in until the owner has enrolled is the safer first step.)*
 
-## D5 · Notifications (all types, incl. WhatsApp)  ⏸ ON HOLD
-- Module 8 not wired: push (Firebase), email, **WhatsApp**, in-app centre. No notification is
-  sent on any event yet (signup, approve/verify/reject, enquiry, message, quotation).
+## D5 · Notifications (all types, incl. WhatsApp)  ⏸ ON HOLD — **except FCM push (carved out)**
+> ✅ **2026-07-31 — owner explicitly approved FCM push into month 1**, built inside M4. Schedule
+> change only (Module 8 is already Phase 1), **not** a scope change. Approved slice: `firebase-admin`,
+> `DeviceToken` register/unregister, dead-token cleanup, and sends on **two M4 events only** —
+> new enquiry → seller, new message → counterparty. Everything else in D5 stays ON HOLD.
+- Module 8 not wired: ~~push (Firebase)~~ *(see carve-out above)*, email, **WhatsApp**, in-app
+  centre. No notification is sent on any **non-M4** event (signup, approve/verify/reject,
+  quotation) — and email/WhatsApp are sent on nothing at all.
 - **WhatsApp** additionally depends on external template approval (outside the build). Build later.
 - **Interim (dev only):** since no SMS/email provider exists, OTP codes are **printed to the
   terminal in dev/test** (`otp.sender.js`), **hard-gated to non-production**. This is a
@@ -137,6 +151,14 @@ Do not start the screens without surfacing this alert.
 
 ## 🔒 Project-close checklist (raise these BEFORE final handover)
 - **D4** — restore Super Admin TOTP 2FA (currently OTP-only).
+- 🔴 **ROTATE THE FIREBASE SERVICE ACCOUNT before production (2026-08-01).** The key currently in
+  `.env` (`mpx-global`, `firebase-adminsdk-fbsvc@mpx-global.iam.gserviceaccount.com`) was
+  downloaded into the repo directory and its contents passed through a chat transcript, so by
+  `secrets-and-hygiene.md` it counts as **compromised**. Fine for testing; before launch generate a
+  new private key in Firebase Console → Project settings → Service accounts, replace
+  `FIREBASE_SERVICE_ACCOUNT_JSON`, and **delete the old key** from the same screen so the leaked one
+  stops working. *(The repo now gitignores `*firebase-adminsdk*.json` and friends, so the file
+  itself can no longer be committed by accident.)*
 - **D5** — confirm the full notification set is delivered (or explicitly descoped).
 - **Production superadmin — seed with a FRESH password** (not the dev/chat one). The current
   Atlas is a **test-only** environment (owner-confirmed), so the dev superadmin password is not
@@ -152,6 +174,19 @@ Do not start the screens without surfacing this alert.
   Before production, verify the M1-B upload path sets `type: 'authenticated'`, uses a
   **randomised `public_id`** (unguessable suffix), and that a raw public URL for a KYC asset
   returns 401/404. _(Recorded 2026-07-28 during M1 Phase-1 review.)_
+  ✅ **VERIFIED IN CODE 2026-08-01 — this one already passes.** `kyc.storage.service.js` uploads
+  with `type: 'private'` (equivalent to `authenticated` for this purpose — no publicly-reachable
+  URL) and a `randomBytes(12)` suffix, returns only the `storageKey` and never a URL, and signs
+  with a 120-second TTL. **Now pinned by tests** (`tests/kycStorage.test.js`) so a future change
+  cannot silently make KYC world-readable. What remains is the live check against production
+  Cloudinary: fetch a raw public URL for a KYC asset and confirm 401/404.
+- 🔴 **Run `npm run indexes:sync` against the production database before traffic (2026-08-01).**
+  `database.js` sets `autoIndex: false` in production **by design** (startup must not block on a
+  large index build) and nothing runs `syncIndexes()` at boot — so a fresh production deploy comes
+  up with **no indexes at all** beyond `_id`. That is not only slow: `ErrorLog`'s 90-day retention
+  (A19) IS a TTL index, so without this step nothing ever expires, and the uniqueness guarantees
+  are indexes too. Use `npm run indexes:check` first — it is a true dry run and prints the drop
+  list, which matters because `syncIndexes()` also drops indexes a schema no longer declares.
 - **Secret-scan** (gitleaks / trufflehog) over git history once the repo has commits (E6).
 
 _(Append future close-time items here. Standing hygiene rules: `.claude/rules/secrets-and-hygiene.md`.)_

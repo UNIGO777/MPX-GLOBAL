@@ -93,6 +93,14 @@ const productSchema = new Schema(
     // (delete path only). Transition rules live in the service.
     status: { type: String, enum: PRODUCT_STATUS, default: 'draft', index: true },
 
+    // F1-B: whether this product was ALREADY taken down when an org block
+    // cascaded over it. Unblock restores only the rows the cascade itself downed
+    // — a product an admin had taken down individually beforehand stays down, or
+    // the unblock would silently undo a separate moderation decision.
+    // Same pattern as Category.prevActive and User.prevActive. Undefined at all
+    // other times; a value here means an org block is currently overriding it.
+    prevTakedown: { type: Boolean },
+
     // Public SEO handle (/product/:slug). Generated once from `name` (short id
     // suffix on clash); immutable on rename; the ARCHIVE path appends a marker
     // to free the clean slug (A6).

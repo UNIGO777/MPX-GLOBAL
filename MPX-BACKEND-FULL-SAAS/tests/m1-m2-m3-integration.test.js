@@ -211,6 +211,17 @@ describe('the whole platform, one journey (M1 → M2 → M3)', () => {
   });
 });
 
+
+// F1-B cascade is asynchronous — wait for the real one rather than racing it.
+async function waitForCascade(Organisation, orgId, direction = 'block') {
+  for (let i = 0; i < 50; i += 1) {
+    const org = await Organisation.findById(orgId).select('blockCascade').lean();
+    if (org?.blockCascade?.status === 'done' && org.blockCascade.direction === direction) return;
+    await new Promise((resolve) => { setTimeout(resolve, 20); });
+  }
+  throw new Error('block cascade did not complete');
+}
+
 describe('admin actions ripple correctly into discovery', () => {
   it('takedown hides it from search AND flags the buyer\'s saved copy — restore reverses both', async () => {
     const seller = await signupAndLogin('exporter');
@@ -250,7 +261,7 @@ describe('admin actions ripple correctly into discovery', () => {
     expect((await request(app).get('/public/search').query({ q: 'kapda' })).body.total).toBe(0); // old synonym gone
   });
 
-  it('F1-A org block: profile 404s and sessions die, but products stay searchable (the known F1-B gap)', async () => {
+  it('org block: sessions die, profile 404s, AND the catalogue leaves discovery (F1-B)', async () => {
     const seller = await signupAndLogin('exporter');
     await publishProduct(seller.token, seller.orgId);
 
@@ -262,9 +273,11 @@ describe('admin actions ripple correctly into discovery', () => {
 
     expect((await request(app).get('/products/mine').set(bearer(seller.token))).status).toBe(401); // session dead
     expect((await request(app).get(`/exporters/${seller.orgId}`)).status).toBe(404); // profile hidden
-    // Documented, accepted until F1-B lands — pinned so its closure is deliberate:
-    expect((await request(app).get('/public/search')).body.total).toBe(1);
-    // …though the seller no longer appears in the SUPPLIERS results (isActive filter)
+    // F1-B (2026-08-01): the products now go down with the account. This test
+    // used to pin the OPPOSITE — the gap was asserted on purpose so that closing
+    // it had to be a deliberate act, and this is that act.
+    await waitForCascade(Organisation, seller.orgId);
+    expect((await request(app).get('/public/search')).body.total).toBe(0);
     expect((await request(app).get('/public/search').query({ type: 'supplier' })).body.total).toBe(0);
   });
 });

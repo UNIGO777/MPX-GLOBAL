@@ -3,13 +3,36 @@ import mongoose from 'mongoose';
 import { Product } from '../models/Product.js';
 import { Category } from '../models/Category.js';
 import { Organisation } from '../models/Organisation.js';
+import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
+import { freezeThreadsForProduct, unfreezeThreadsForProduct } from './conversationFreeze.service.js';
 
 // A8/A18: a product blocked continuously for 180 days is purged. The countdown
 // the monitoring list shows derives from this.
 export const PURGE_AFTER_DAYS = 180;
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+// §5 — "nearing purge" warns well before the deadline; a countdown that only
+// appears on the last day is not a warning.
+export const NEARING_PURGE_DAYS = 150;
+
+/**
+ * The nearing-purge filter, defined ONCE and shared by the monitoring list and
+ * the dashboard tile.
+ *
+ * 🔴 It must mirror the purge JOB: taken down, old enough, and NOT archived —
+ * archived rows are never purged (A7). Two copies of this filter would drift,
+ * and a tile whose count does not match the list it links to is the exact
+ * failure W1 was raised about.
+ */
+export function nearingPurgeFilter(now = new Date()) {
+  return {
+    'takedown.isDown': true,
+    'takedown.at': { $lte: new Date(now.getTime() - NEARING_PURGE_DAYS * DAY_MS) },
+    status: { $ne: 'archived' },
+  };
+}
 
 function escapeRegex(input) {
   return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -31,7 +54,7 @@ async function resolveCategoryIdsForAdmin(idOrSlug) {
 // m5 §4: the monitoring list NEVER shows drafts or seller-archived rows, and
 // its status filter has EXACTLY three options — Active/Inactive read `status`,
 // Blocked reads `takedown.isDown` (never conflated — m5-rules §2).
-export async function listAdminProducts({ category, status, seller, q, page, pageSize }) {
+export async function listAdminProducts({ category, status, seller, q, nearingPurge, page, pageSize }) {
   const match = { status: { $in: ['active', 'inactive'] } };
 
   if (category !== undefined) {
@@ -44,6 +67,12 @@ export async function listAdminProducts({ category, status, seller, q, page, pag
   if (q) match.name = new RegExp(escapeRegex(q), 'i');
   if (status === 'active' || status === 'inactive') match.status = status;
   if (status === 'blocked') match['takedown.isDown'] = true;
+
+  // §5 — the dashboard's "nearing purge" tile links HERE, so the list has to be
+  // able to reproduce that exact count. Without it the tile pointed at
+  // `status=blocked`, which is every blocked product — a number that does not
+  // match the page it opens.
+  if (nearingPurge) Object.assign(match, nearingPurgeFilter());
 
   const pipeline = [
     { $match: match },
@@ -79,8 +108,31 @@ export async function listAdminProducts({ category, status, seller, q, page, pag
   ];
 
   const [result] = await Product.aggregate(pipeline);
+
+  // G5 — m5 §4 wants WHO took a product down, not an opaque id. Resolved in ONE
+  // batched lookup for the page, never per row.
+  //
+  // 🔴 STAFF VIEW ONLY. §A9 keeps the acting admin invisible to the seller, and
+  // the seller's own view (`/products/mine`) builds a different projection that
+  // carries only `reason` and `at`. Adding the name here must never leak there.
+  const actorIds = [
+    ...new Set(result.rows.map((r) => r.takedown?.byUserId).filter(Boolean).map(String)),
+  ];
+  const actors = actorIds.length
+    ? await User.find({ _id: { $in: actorIds } }).select('name').lean()
+    : [];
+  const actorById = new Map(actors.map((u) => [String(u._id), u.name]));
+
   const rows = result.rows.map((r) => ({
     ...r,
+    takedown: r.takedown?.isDown
+      ? {
+          ...r.takedown,
+          // Null when the acting user has since been removed — the row still
+          // renders, it just cannot name them.
+          byName: actorById.get(String(r.takedown.byUserId)) ?? null,
+        }
+      : r.takedown,
     // Purge countdown is load-bearing (m5 §4) — without it the 180-day purge is
     // silent and the admin only notices when the row is gone.
     purgeAt: r.takedown?.isDown && r.takedown?.at ? new Date(r.takedown.at.getTime() + PURGE_AFTER_DAYS * DAY_MS) : null,
@@ -124,13 +176,19 @@ export async function takedownProduct({ id, reason, actor, meta }) {
   // §A24: increment-only offence counter (survives the purge; F6's trigger).
   await Organisation.updateOne({ _id: product.exporterOrgId }, { $inc: { takedownCount: 1 } });
 
+  // M4-21: every thread on this product freezes on BOTH sides, and each gets a
+  // system message explaining there is an issue and pointing the buyer at other
+  // suppliers. Reading stays open (M4-22) — only writing stops. M4-29 means a
+  // thread an admin had already blocked keeps ITS reason.
+  const { frozen } = await freezeThreadsForProduct({ productId: product._id, reason: 'takedown' });
+
   await recordAudit({
     actor,
     action: 'product.takedown',
     entityType: 'Product',
     entityId: product._id,
     orgId: product.exporterOrgId,
-    after: { reason },
+    after: { reason, conversationsFrozen: frozen },
     meta,
   });
   return product;
@@ -161,6 +219,11 @@ export async function restoreProduct({ id, actor, meta }) {
   await product.save();
   // takedownCount deliberately NOT decremented (§A24 — offences, not state).
 
+  // M4-30: NOT a blanket unfreeze. Each thread is re-derived from live state, so
+  // one an admin had separately blocked stays shut and only its own block can
+  // reopen it. Runs after the product is saved, so the re-check reads the new state.
+  const { reopened } = await unfreezeThreadsForProduct({ productId: product._id });
+
   await recordAudit({
     actor,
     action: 'product.restore',
@@ -168,7 +231,7 @@ export async function restoreProduct({ id, actor, meta }) {
     entityId: product._id,
     orgId: product.exporterOrgId,
     before,
-    after: { restored: true },
+    after: { restored: true, conversationsReopened: reopened },
     meta,
   });
   return product;

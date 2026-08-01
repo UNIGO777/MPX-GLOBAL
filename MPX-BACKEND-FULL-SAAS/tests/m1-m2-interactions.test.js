@@ -168,8 +168,19 @@ describe('M1 auth → M2 catalogue, end to end over real HTTP', () => {
   });
 });
 
-describe('F1-A org block × M2 catalogue (the documented F1-B gap)', () => {
-  it('block kills the seller session AND hides the profile — but products stay public until F1-B', async () => {
+
+// F1-B cascade is asynchronous — wait for the real one rather than racing it.
+async function waitForCascade(Organisation, orgId, direction = 'block') {
+  for (let i = 0; i < 50; i += 1) {
+    const org = await Organisation.findById(orgId).select('blockCascade').lean();
+    if (org?.blockCascade?.status === 'done' && org.blockCascade.direction === direction) return;
+    await new Promise((resolve) => { setTimeout(resolve, 20); });
+  }
+  throw new Error('block cascade did not complete');
+}
+
+describe('F1 org block × M2 catalogue (F1-B shipped 2026-08-01)', () => {
+  it('block kills the session, hides the profile AND takes the catalogue down', async () => {
     seq += 1;
     const org = await Organisation.create({
       name: 'Blocked Co',
@@ -213,10 +224,11 @@ describe('F1-A org block × M2 catalogue (the documented F1-B gap)', () => {
     expect((await request(app).get('/products/mine').set(bearer(sellerToken))).status).toBe(401);
     expect((await request(app).get(`/exporters/${org._id}`)).status).toBe(404);
 
-    // M2 side: the accepted F1-B gap — listings remain publicly visible.
+    // M2 side: F1-B now closes what was a documented gap — the listings go down
+    // with the account, so the block no longer "looks like it worked and didn't".
+    await waitForCascade(Organisation, org._id);
     const browse = await request(app).get('/public/products');
-    expect(browse.body.total).toBe(1);
-    expect(browse.body.products[0].name).toBe('Still Visible');
+    expect(browse.body.total).toBe(0);
   });
 });
 

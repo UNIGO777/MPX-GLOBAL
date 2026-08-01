@@ -81,7 +81,14 @@ while any close-time security commitment remains unraised.
 
 ⏸ **On hold (build later):**
 - **D4** — Super Admin TOTP 2FA. Staff use OTP now. **Restore before close** (A4).
-- **D5** — Notifications (all types incl. **WhatsApp**). Nothing sent on any event yet.
+  ⚠️ **Raised 2026-08-01 during FINALIZE planning; owner said NOT NOW.** Still ON HOLD, still a
+  deferral rather than a cancellation — **raise it again at close**. Do not read the earlier ask
+  as standing approval. Detail (what is already built, and the two decisions it still needs):
+  `docs/Note.md` D4.
+- **D5** — Notifications (email, **WhatsApp**, in-app centre, admin controls, non-M4 events).
+  ✅ **CARVE-OUT 2026-07-31 — FCM push is APPROVED into month 1** (owner-confirmed), built in M4:
+  `firebase-admin` + `DeviceToken` + dead-token cleanup + **two events only** (new enquiry → seller,
+  new message → counterparty). **Do not re-alert on that slice.** Everything else in D5 still is.
 
 Phase-1 reality: **buyer** has no gate (fully active from signup); **seller** is public with a
 verified tick and a **3-active-listing limit while unverified** (taken-down excluded from the count — §A10; + 10-draft cap §A15) (D1). Verification/approval is status

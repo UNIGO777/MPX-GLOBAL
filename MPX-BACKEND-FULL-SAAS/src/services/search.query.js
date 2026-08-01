@@ -12,8 +12,11 @@ import { getActiveLeafIds } from './category.service.js';
  * filtering a response: only `status: 'active'`, not taken down, and sitting in
  * an active leaf under an active top.
  *
- * Known, accepted gap (F1-B): a BLOCKED org's products stay visible here until
- * the FINALIZE cascade lands — deliberately no org filter. Do not add one here.
+ * ✅ The old "blocked org's products stay visible" gap is CLOSED (F1-B, 2026-08-01)
+ * — and still with no org filter here. The cascade puts every product of a
+ * blocked company into `takedown`, so `takedown.isDown` already excludes them.
+ * Do not add an org join to "fix" it: that would cost a lookup on the hottest
+ * query on the platform to re-derive a fact the takedown flag already carries.
  */
 
 export async function buildAvailabilityFilter() {

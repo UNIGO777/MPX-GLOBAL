@@ -72,3 +72,40 @@ export const CURRENCIES = [
   'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XCD', 'XOF', 'XPF',
   'YER', 'ZAR', 'ZMW', 'ZWL',
 ];
+
+// --- FINALIZE F5b · Featured landing content ---------------------------------
+
+// What a curated landing-page slot points at. One model covers all four because
+// they share every operational field (order, active window, curation audit) and
+// the landing page reads them in a single call.
+//   banner   — a standalone image + link. The only kind with no targetId.
+//   product  — quote Module 5 "featured listings"
+//   category — quote Module 1 "featured categories"
+//   supplier — quote Module 1 "highlighted suppliers"
+export const FEATURED_KIND = ['banner', 'product', 'category', 'supplier'];
+
+// --- M4 · Enquiry & Chat -----------------------------------------------------
+
+// Who wrote a message. `system` is the platform's own automated voice (the
+// welcome template, freeze notices) — it has no org and no user (M4-11).
+export const MESSAGE_SENDER_TYPE = ['buyer', 'exporter', 'system'];
+
+// Why messaging is frozen. FIRST REASON WINS and is never overwritten (M4-29).
+// `account` is F1-B's org-block cascade: the COMPANY is blocked, which is a
+// different fact from this chat being blocked or this product being taken down —
+// and it has to be distinguishable, because lifting a product takedown must not
+// reopen a thread whose company is still blocked.
+//
+// ⚠️ `purged` is deliberately NOT a value: m4.md §4 listed it, but M4-22 (label
+// turns red at purge) and M4-29 (never overwritten) cannot both hold if the
+// purge rewrites this field. The red "product no longer available" label is
+// DERIVED at read time from the product row being gone — see the M4 build plan
+// C5. A purge therefore writes nothing to any conversation.
+export const CONVERSATION_FROZEN_REASON = ['takedown', 'blocked', 'account'];
+
+// Enquiry lifecycle. Written once at creation and left alone — the flow that
+// drives it is month 2 (m4.md §13). Do not add transitions here.
+export const INQUIRY_STATUS = ['open', 'responded', 'closed'];
+
+// Device platforms for FCM push registration.
+export const DEVICE_PLATFORM = ['android', 'ios', 'web'];

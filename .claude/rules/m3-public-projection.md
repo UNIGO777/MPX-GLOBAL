@@ -20,8 +20,8 @@ KYC, ownership, moderation or contact data to guests.** Source of truth:
 ## The core rule — whitelist, never blacklist
 
 Public routes (`GET /public/search`, `GET /public/facets`, `GET /public/products/:id`,
-`GET /exporters/:id`, `POST /search/ai`) return **ONLY the whitelisted public fields
-below**. Everything else stays private.
+`GET /exporters/:id`, `POST /search/ai`, **`GET /public/featured`**) return **ONLY the
+whitelisted public fields below**. Everything else stays private.
 
 - **Any NEW field defaults to PRIVATE** — it must not appear on a public route until it is
   **explicitly** added to the public whitelist.
@@ -71,6 +71,18 @@ widening the whitelist without deciding to will fail a test.
 category (+ type goods/service) · price (mode +
 min/max + currency) · MOQ · unit · trade info (goods) / service info (services) · attributes
 (specs) · seller public projection · createdAt / listed-since.
+
+**Featured landing content** (FINALIZE F5b, `GET /public/featured`) — the product / category /
+supplier cards are **exactly the projections above**, composed by the same `toPublic()` calls.
+A landing card is never a richer object than the entity's own public read, and
+`tests/f5b-featured.test.js` asserts the key sets match. The **only** fields this route adds are
+the banner's own admin-authored presentation — `image` · `title` · `subtitle` · `linkUrl` — plus
+the curation `order`. 🚫 Never public from `FeaturedItem`: `publicId` (the internal Cloudinary
+asset id, `select: false`), `active`, `startsAt` / `endsAt`, `createdBy`.
+⚠️ **A featured row is a POINTER, never a snapshot.** Do not denormalise a product name, price or
+seller name onto it "to save a lookup": the public read re-resolves every target through the same
+availability rules, which is what makes a taken-down product or a blocked company leave the
+landing page on its own. A cached copy would keep a blocked supplier on the front page.
 
 **Category** — name · slug · **`image`** (§A11 — the category card cannot render without it) ·
 parent / sub tree · type (goods/service — a **sub-category's `type` is stored; a top category's is derived from its children at read time**, not stored; the public contract is unchanged) · filterable attributes ·

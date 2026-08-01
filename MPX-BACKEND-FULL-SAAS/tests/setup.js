@@ -1,22 +1,62 @@
 // Runs before any test module imports app/env. dotenv (loaded inside env.js)
 // does not override already-set process.env, so these win over .env.
 process.env.NODE_ENV = 'test';
-// ⚠️ Every test file wipes these collections in `beforeEach`, so TWO test
-// processes pointed at the same database will delete each other's fixtures
-// mid-run. The symptom is not an obvious clash: queries simply return 0 rows,
-// failures scatter across unrelated tests, and nothing errors — it reads exactly
-// like a flaky search engine. Diagnosing that cost hours. If you need a second
-// concurrent run (a focused file while the suite runs, CI on a shared box), set
-// MONGODB_TEST_DB to a different name for it.
-process.env.MONGODB_URI = `mongodb://127.0.0.1:27017/${process.env.MONGODB_TEST_DB || 'mpx_global_test'}`;
+
+/**
+ * 🔴 ONE DATABASE PER TEST FILE. Do not collapse this back to a shared name.
+ *
+ * Every test file wipes Organisation / Category / Product / Conversation in its
+ * `beforeEach`. When files shared a database, one file's cleanup deleted another
+ * file's fixtures mid-request — and the symptom was deceptive: nothing errored,
+ * queries just returned 0 rows, so failures scattered across unrelated tests and
+ * read like a flaky search engine or a broken cursor. It cost hours of chasing
+ * ghosts across this project, and it repeatedly hid whether a real defect
+ * existed.
+ *
+ * Vitest gives each file its own forked process and a distinct
+ * `VITEST_WORKER_ID` (verified: 0,1,2,3… never reused within a run), so that id
+ * is a sound per-file key. Ids repeat across runs, which is what keeps the
+ * database count bounded rather than growing forever.
+ *
+ * `MONGODB_TEST_DB` still overrides the base name, for a second concurrent run.
+ */
+const testDbBase = process.env.MONGODB_TEST_DB || 'mpx_global_test';
+const workerId = process.env.VITEST_WORKER_ID ?? '0';
+process.env.MONGODB_URI = `mongodb://127.0.0.1:27017/${testDbBase}_w${workerId}`;
 process.env.REDIS_URL = 'redis://127.0.0.1:6379';
 process.env.JWT_ACCESS_SECRET =
   process.env.JWT_ACCESS_SECRET || 'test_access_secret_at_least_32_chars_long_000';
 process.env.JWT_REFRESH_SECRET =
   process.env.JWT_REFRESH_SECRET || 'test_refresh_secret_at_least_32_chars_long_00';
 
+// 🔴 Push OFF for the whole suite, regardless of what is in `.env`.
+// Now that a real Firebase credential lives there, leaving it visible would make
+// the tests behave differently on a machine that has one — and would let a test
+// run reach out to Google. Tests that exercise push mock `push.client.js`
+// outright; everything else must see an inert layer. Set to empty, not deleted,
+// so `env.js`'s optional() check reads it as absent.
+process.env.FIREBASE_SERVICE_ACCOUNT_JSON = '';
+
 import { beforeEach, afterAll } from 'vitest';
 import Redis from 'ioredis';
+
+/**
+ * ⚠️ KNOWN, UNDERSTOOD, NOT FIXED: a rare `Parse Error: Expected HTTP/, RTSP/ or
+ * ICE/` — roughly 1 full-suite run in 8. It is a supertest/OS artifact and has
+ * never once corresponded to a product defect.
+ *
+ * Do NOT "fix" it by disabling HTTP keep-alive. That was tried twice here, and a
+ * probe settled it: **supertest passes `agent: false`**, so it never touches
+ * `http.globalAgent` and does no connection pooling at all. Setting
+ * `globalAgent.keepAlive = false` is a pure no-op against this suite.
+ *
+ * The real cause is port churn: `request(app)` binds a FRESH ephemeral-port
+ * server per call — ~59 in one file, thousands across the suite — so the OS
+ * eventually hands a new server a port a previous connection has not finished
+ * with. The real fix is one listening server per test FILE (`request(server)`
+ * instead of `request(app)`), which is a deliberate refactor across every test
+ * file, not a line in this one.
+ */
 
 /**
  * Reset the rate-limit / quota state between EVERY test, globally.

@@ -98,7 +98,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 | **Data** | Thread title as buyer × seller × product · last message time and preview · unread state (**the parties'** unread, derived from `buyerLastReadAt`/`exporterLastReadAt` — admin has no own read-tracking) · frozen state and reason |
 | **Filters** | Search by name — product, buyer company or seller company — and by `buyerOrgId` / `exporterOrgId` pasted directly |
 | **Actions** | Open the chat viewer · block a chat · unblock |
-| **Gate** | To propose — grantable read, with every read audited |
+| **Gate** | ✅ `conversation:read` (grantable) — every read audited. Block/unblock: `conversation:block`. **Built 2026-08-01** |
 | **Notes** | Admin sees every thread on the platform. Search matches three denormalised name fields on `Conversation` plus the two org ids; the role only changes the scope filter, never the searched fields. Cursor pagination, never page numbers. Message content is never searched |
 
 ## 11 · Chat viewer 🔵📋
@@ -107,7 +107,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 |---|---|
 | **Data** | Full message history · participants including the platform · frozen state and its reason |
 | **Actions** | Read only. Block or unblock the chat |
-| **Gate** | To propose · every read writes an audit row |
+| **Gate** | ✅ `conversation:read` (grantable) · every read writes an audit row. **Built 2026-08-01** |
 | **Notes** | **No composer.** Enforced server-side by role, not by hiding a control. Admin joins the socket room only when a thread is opened, never all rooms by default. Messages load in bundles on scroll — cursor-based, never page numbers |
 
 ## 12 · Dashboard 🔵
@@ -129,7 +129,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 | **Detail** | The whole entry — before/after snapshot, reason, actor role, target id |
 | **Filters** | Actor · action type · date range · target |
 | **Actions** | Read only |
-| **Gate** | To propose |
+| **Gate** | ✅ `audit:read` (grantable, decided 2026-08-01) |
 | **Notes** | Append-only. No edit, no delete, no exceptions. Must cover: KYC submit and view, buyer approve/reject, exporter verify/reject, product takedown/restore, the 180-day purge, chat block/unblock, admin and employee chat reads, user activate/deactivate, permission changes, organisation block/unblock, and the organisation claim |
 
 ## 14 · Organisation list 🔵
@@ -139,7 +139,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 | **Columns** | Company name · verification · products count · takedowns count · state |
 | **Filters** | Side · verification · blocked. Sorted by takedown count |
 | **Actions** | Open detail |
-| **Gate** | To propose |
+| **Gate** | ✅ `organisation:read` (grantable, decided 2026-08-01) |
 | **Notes** | Five columns only — a wider table breaks on responsive. Country and the sides badge live on the detail screen. A second line under the company name for country or slug is recommended, since company names collide |
 
 ## 15 · Organisation detail 🔵
@@ -164,7 +164,7 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 | | |
 |---|---|
 | **Actions** | Block / unblock with reason · open KYC documents · verify or reject if pending |
-| **Gate** | Read to propose · block/unblock hard `requireRole('superadmin')` |
+| **Gate** | Read: ✅ `organisation:read` (grantable) · block/unblock: hard `requireRole('superadmin')` |
 | **Notes** | Block is prominent — it replaced bulk takedown as the answer to "many bad products". Today a block reaches the Organisation and its users only; F1's cascade into catalogue, products and chats is FINALIZE work and the screen must not imply otherwise. `registrationNumber`, `website`, `taxId`, `establishedYear` and `authorisedSignatory` have no capture path and must be hidden or labelled "not captured" |
 
 ---
@@ -184,6 +184,14 @@ A flat list of every M5 screen: what it shows, what it filters on, what it can d
 
 **Grantable — M2 (§A25, decided 2026-07-31):** `category:read` · `category:manage` · `product:read` · `product:takedown` *(catalogue writes are grantable — supersedes the 07-30 "takedown superadmin-only" default)*
 
+**Grantable — M4 (decided + built 2026-08-01):** `conversation:read` · `conversation:block` *(the block string is grantable to employees — **supersedes M4-38's "read permission only in month 1"**)*
+
+**Grantable — M5 (decided 2026-08-01):** `organisation:read` *(Organisation list + detail)* · `audit:read` *(audit log viewer)*
+
 **Never grantable — hard `requireRole('superadmin')`:** user activate/deactivate · employee create · permission assignment · organisation block/unblock
 
-**Still to propose:** read permissions for the conversation (M4) and organisation (M5) screens. Do not invent permission strings inline.
+**The dashboard has NO permission of its own** — every tile is filtered by what the caller already
+holds, the same way the sidebar is, so a tile can never link an employee to a list they cannot open.
+
+✅ **Nothing is left to propose.** All twelve grantable strings are decided (4 M1 + 4 M2 + 2 M4 + 2 M5); adding an eleventh needs an
+owner decision first (rule 6 — never invent a permission string inline).

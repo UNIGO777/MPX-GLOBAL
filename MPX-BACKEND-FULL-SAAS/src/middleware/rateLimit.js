@@ -120,6 +120,29 @@ export const searchLimiter = buildLimiter({
   keyGenerator: (req) => (req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
 });
 
+// M4 (G12): thread creation. M4-5 makes "one enquiry per product" the control on
+// THREADS, and M4-27 deliberately accepts that a blocked buyer can still open a
+// thread on another product — which makes spraying enquiries across a catalogue
+// the obvious abuse path. Keyed per authenticated user (the route is behind
+// `authenticate`), IP as fallback.
+export const enquiryLimiter = buildLimiter({
+  prefix: 'rl:enquiry:',
+  windowMs: 60 * MINUTE,
+  limit: 20,
+  keyGenerator: (req) => (req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
+});
+
+// M4 (G12): message sends. M4-5 makes "one enquiry per product" the control on
+// THREADS — it says nothing about how many messages may flow inside one, so
+// without this a single open thread is an unbounded write endpoint. Generous
+// enough that real conversation never touches it.
+export const messageLimiter = buildLimiter({
+  prefix: 'rl:message:',
+  windowMs: MINUTE,
+  limit: 60,
+  keyGenerator: (req) => (req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
+});
+
 // AI search is the expensive one (an external paid call per request), so it gets
 // the tightest budget. Per user when signed in, per IP for guests; a separate
 // per-ORGANISATION daily quota sits on top (services/aiQuota.service.js).

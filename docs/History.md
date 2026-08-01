@@ -34,7 +34,9 @@ MPX-GLOBAL/
   real/production secrets in it** — the moment it needs a real secret, untrack it
   (`git rm --cached`) and share via a secure channel. See `.claude/rules/secrets-and-hygiene.md`.
 - Scripts: `npm run dev` (nodemon) · `npm start` · `npm test` (vitest) · `npm run lint`
-  (eslint) · `npm run seed` (create superadmin from `SEED_SUPERADMIN_*` in `.env`).
+  (eslint) · `npm run seed` (create superadmin from `SEED_SUPERADMIN_*` in `.env`) ·
+  `npm run indexes:check` (dry run) / `npm run indexes:sync` — **required on every production
+  deploy**, see the index gotcha in §7.
 - **Current `MONGODB_URI` points at a test-only Atlas cluster** (`mongodb+srv://…`). Tests
   ignore it — they use a local `mpx_global_test` DB (`tests/setup.js`).
 
@@ -106,6 +108,17 @@ Routes: `POST /auth/buyer/signup`, `/auth/exporter/signup`, `/auth/login` (→ O
 - **argon2**: native module; if a build issue arises, `@node-rs/argon2` is a drop-in (Rust, prebuilt).
 - **Dev indexes**: with `bufferCommands:false` + models compiled before connect, autoIndex may
   not run on boot in dev — call `syncIndexes()` if needed (seed/tests do).
+- 🔴 **PRODUCTION indexes are not created by anything** (found 2026-08-01). `database.js` sets
+  `autoIndex: env.NODE_ENV !== 'production'` deliberately — startup must not block on a large
+  index build — and nothing runs `syncIndexes()` at boot, so a fresh production deploy comes up
+  with only `_id`. Not just a performance issue: **`ErrorLog`'s 90-day retention (A19) IS a TTL
+  index**, so without it nothing ever expires, and uniqueness guarantees are indexes too.
+  **Run `npm run indexes:sync` before traffic** (121 indexes / 50 models).
+  ⚠️ Two traps in that script, both handled — read them before writing a similar one:
+  `syncIndexes()` also **drops** indexes a schema no longer declares (hence `indexes:check`, which
+  prints the drop list), and Mongoose defaults **`autoIndex: true` on `connect()`**, so a "dry run"
+  that merely connects with models registered will background-build every index it claims only to
+  be reporting — the script passes `autoIndex: false` explicitly to stop that.
 - **OTP terminal print** (`otp.sender.js`) is dev/test only, hard-gated to non-production.
 
 ## 8. Rules in `.claude/rules/` (auto-loaded)
@@ -149,6 +162,612 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-01** — **FINALIZE F5b BUILT — featured landing content. 757/757 green** (723 → +34),
+  lint clean, 51 test files. **Owner reversed the morning's "month 2" decision** — the landing page
+  needs it now. ✅ **Not a scope change and not a change request:** `scope-of-work.md` Module 5
+  literally says "banners" and Module 1 says "featured categories and highlighted suppliers", and
+  the item appears **nowhere** in `month1-not-doing.md` and is not a D-item. Only FINALIZE F5's own
+  "just not month 1" line had deferred it — the same situation as socket-reconnect, which likewise
+  needed no alert.
+  **New `FeaturedItem` model** covering all four kinds (banner · product · category · supplier) —
+  one model because they share every operational field and the landing page reads them together.
+  Public `GET /public/featured` returns all four groups in ONE call; admin CRUD under
+  `/admin/featured` gated by a new **grantable `featured:manage`** (follows `category:manage`:
+  curation is content work, not governance — it cannot change anyone's access and every action is
+  audited). Catalogue 13 → **14**.
+  🔑 **The design decision that matters: a featured row is a POINTER, never a snapshot.** It stores
+  only `targetId`, and the public read re-resolves every target through the *same* availability
+  rules as the rest of the public surface. So a taken-down product, a deactivated category or a
+  **blocked company disappears from the landing page by itself** — no un-feature step to forget.
+  Denormalising a name/price onto the row would have kept a blocked supplier on the front page,
+  which is exactly the failure F1 existed to close. Tests pin all of it.
+  ⚠️ `linkUrl` is allowlisted to a relative path or an absolute http(s) URL. This is a **security**
+  check, not tidiness: the frontend renders it into an `href`, so `javascript:…` would be stored
+  XSS placed by an employee with `featured:manage` and served to every visitor. Tested.
+  🧹 Found and fixed **two stale comments** claiming "a BLOCKED org's products stay visible — known
+  accepted gap (F1-B)" in `search.query.js` and `publicProducts.service.js`. F1-B shipped this
+  morning and closed that gap; a comment advertising a live data leak that no longer exists is
+  worse than none. Both now explain why there is still deliberately no org join.
+  ⚠️ Gotcha re-confirmed the hard way: **Mongoose 9 pre-hooks are throw/async, not `next(err)`** —
+  already in §7, cost a round of red tests anyway.
+  📌 `Banner` (an empty, unused, never-referenced skeleton, and NOT a Phase-2 protected model) is
+  now redundant — **left in place deliberately**; removing it is the owner's call.
+- **2026-08-01** — **FINALIZE F5a BUILT — the error-log viewer. 723/723 green** (681 → +42),
+  lint clean, 50 test files. Plan: `build-plans/m6-finalize/backend-plan.md`.
+  **Owner decisions taken first:** (1) the viewer gets its **own `errorlog:read`** permission
+  rather than reusing `audit:read` — stack traces are a debugging grant, while `audit:read`
+  carries the record of every KYC document and private conversation staff have ever opened, and
+  bundling them would mean handing over the heaviest read on the platform just to let someone
+  chase a bug; (2) **D4 (superadmin TOTP) stays ON HOLD** — raised, owner said not now, so it must
+  be raised again at close; (3) **featured listings + banners → month 2** (in the quote, so no
+  change request later, but it needs a new model).
+  Endpoints: `GET /admin/errors` (filters: requestId · route prefix · method · statusCode ·
+  user/org · date range) and `GET /admin/errors/:id`. Read-only — **no write verb exists**, because
+  retention belongs to the TTL (A19) and a "clear the errors" button is how a bad week stops
+  being visible.
+  ⚠️ **Gotcha found while building, and fixed at the source:** the viewer exposes `err.message`
+  and `err.stack`, which are the only two persisted fields whose shape we do not control. A Mongo
+  driver failure quotes its own **connection string**, which in production carries the database
+  password (§A26) — so turning on the viewer would have put a live credential in front of every
+  `errorlog:read` holder. New `src/utils/redact.js` strips known secrets **at the write site**, not
+  the read site: a value redacted before storage cannot leak from a backup or a `mongodump` either.
+  It matches the actual configured env values (an exact string cannot be evaded the way a pattern
+  can), plus `user:pass@` in any URI, JWTs and bearer fragments.
+  🔴 **Bigger gotcha, recorded to the close checklist:** `database.js` sets `autoIndex: false` in
+  production and nothing runs `syncIndexes()` at boot, so **a fresh production deploy would have
+  had no indexes at all** beyond `_id` — including `ErrorLog`'s TTL, which means A19's 90-day
+  retention would silently never have happened. New `npm run indexes:sync` / `indexes:check`
+  (`scripts/sync-indexes.mjs`, 121 indexes across 50 models, verified idempotent).
+  **`--dry-run` was not actually read-only on the first attempt** — Mongoose defaults `autoIndex`
+  to true, so merely connecting with the models registered background-built the very indexes the
+  dry run claimed only to report; the script now passes `autoIndex: false` explicitly.
+  ✅ Also closed a close-checklist item by **verification, not code**: KYC uploads were already
+  `type: 'private'` with a randomised `public_id`, and are now pinned by tests so that cannot
+  silently regress.
+  Two tests were deliberately broken and updated: the permission catalogue is pinned to an exact
+  list (12 → **13**) so a new string forces an owner decision to be recorded.
+- **2026-08-01** — **F1-B BUILT — the org block finally reaches the catalogue and the chats.
+  681/681 green** (666 → +15), lint clean. FINALIZE's own top-priority item is now closed: until
+  today a block *"looked like it worked and didn't"* — the seller could not log in, but buyers still
+  saw their products and still sent enquiries nobody would ever answer.
+  **Owner decisions:** the block stays a **manual** on/off toggle (no timed auto-expiry — a
+  misfiring job would bring a blocked company back online by itself), and the cascade runs in the
+  **background** so the admin gets an immediate response. The account half stays synchronous,
+  because ending every session is the part that cannot wait.
+  ⚠️ **The background choice has a failure mode, and it is handled rather than hidden:** a job
+  failing silently would leave a blocked company's catalogue live with nobody aware — strictly worse
+  than the documented gap it replaced. So the cascade records `Organisation.blockCascade`
+  (`running` / `done` / **`failed`** + row counts) and the admin Organisation screen reports it.
+  **F1 open point 1 closed exactly as it asked:** `Product.prevTakedown` and
+  `Conversation.prevFrozen` capture prior state first, so unblock restores **only what the cascade
+  switched off** — a product taken down individually beforehand stays down with its own reason, and
+  a chat blocked individually stays blocked.
+  **Two judgement calls worth recording:** *(1)* drafts and archived products are **exempt** — a
+  draft was never public, and an archived row in takedown would match the §A8 purge and be
+  hard-deleted, breaking A7's "keep forever". *(2)* `takedownCount` is deliberately **not**
+  incremented by the cascade: §A24 counts individual moderation decisions, and one account block is
+  ONE decision — inflating it by catalogue size would corrupt the very signal F6 was about.
+  A **third freeze reason `account`** was needed: without it, restoring one product would reopen the
+  conversations of a company that is still blocked.
+  🧪 **Four existing tests failed on purpose and were updated.** They were written to pin the F1-B
+  gap *"so closing it is a deliberate act, never an accident"* — and this is that act. Also fixed a
+  flaw in my own new test: it ran the cascade a **second** time via `runCascadeNow` instead of
+  waiting for the real one, which reported 0 rows changed (the first pass had done the work) and
+  exercised a path production never takes. It now polls for the real cascade.
+  📋 **FINALIZE register updated** — F1 marked complete, F6 marked closed by decision, open points 1,
+  3 and 4 resolved, and the priority section rewritten to what is genuinely left: the error-log
+  viewer (small — the data layer already exists and is tested), featured listings/banners (needs a
+  new model, Phase-1 but not month 1), F3's unreachable fields (Phase 2 capture), and the
+  infrastructure list whose production items are go-live blockers.
+  🔬 **Separately — the `Parse Error` flake was probed and my own fix was disproven.** supertest
+  passes **`agent: false`**, so it never touches `http.globalAgent` and does no pooling: setting
+  `globalAgent.keepAlive = false` is a **pure no-op** here. My earlier revert of that fix was
+  therefore right, and re-applying it today was wrong; it has been removed again and `tests/setup.js`
+  now records the disproof so nobody tries it a third time. The real cause is ephemeral-port churn
+  (`request(app)` binds a fresh server per call — ~59 per file), and the real fix is one listening
+  server per test file. Left as a known, understood ~1-in-8 harness artifact; it has never once
+  corresponded to a product defect.
+- **2026-08-01** — **M1→M5 FULL-STACK PASS. New `m1-m5-full-stack.test.js` (13 cases), the
+  long-standing test-infrastructure flake ROOT-CAUSED AND FIXED, and a REAL concurrency bug found
+  and fixed. 666 tests.**
+  🔴 **The flake is gone — one database per test file.** It had cost signal ~6 times across this
+  project and was actively hiding whether real defects existed. Root cause confirmed by measurement:
+  every test file wipes the shared collections in `beforeEach`, so one file's cleanup deleted
+  another's fixtures mid-request — silently, with queries just returning 0 rows, which reads like a
+  broken cursor or a flaky search engine rather than a test-harness problem. A probe showed vitest
+  gives each file **its own forked process and a distinct `VITEST_WORKER_ID`** (0,1,2,3… never
+  reused within a run), so that is now the per-file database key. Ids repeat across runs, which keeps
+  the database count bounded. Full-suite runs went from ~1-in-3 failing to clean.
+  🔴 **REAL BUG, surfaced only once the harness stopped lying: concurrent enquiries could still
+  500.** `Inquiry` carries the same unique `(buyerOrgId, productId)` index as `Conversation`, so a
+  loser can fail on the **Inquiry** insert while the winner has written its Inquiry but **not yet its
+  Conversation**. The recovery path looked for the Conversation exactly once, found nothing, and
+  rethrew the raw E11000 as a 500 — the precise outcome V7 was written to prevent. It never appeared
+  under the old harness because the noise buried it. Fixed with a bounded wait for the winner to
+  finish (the winner is milliseconds away), falling back to a clean **409**, never a driver error.
+  **The new full-stack file tests the SEAMS**, which is where cross-module defects live — one module
+  updates its state and another module's view of the same fact goes stale. It follows single actions
+  all the way through: one **verification** rippling into the product denorm, the public tick,
+  `verifiedOnly` search, `reviewedSides`, the dashboard queue and turnaround, and the audit trail;
+  one **takedown** freezing chats, incrementing the offence counter, vanishing from search, flagging
+  the buyer's saved item, naming its actor in monitoring, and landing in the org breakdown as
+  `blocked` (not `inactive`); a **restore** reversing all of it **except** the increment-only
+  counter; a **stacked block + takedown** where lifting the product does not reopen an
+  admin-blocked thread; the **purge** deleting the product while the thread, the audit row (as
+  "System") and the counter survive; an **org block** killing sessions and 404-ing the profile while
+  the catalogue stays live — with the screen saying so; and a **category deactivation** hiding
+  products from discovery but never from moderation.
+  🧪 **One of my own test errors, worth recording:** the §6 coverage test asserted `auth.signup` rows
+  existed while every fixture user was created directly via `User.create()` — so it was checking an
+  action the test never performed. It now performs a real signup through the endpoint, making the
+  coverage claim true rather than incidental.
+- **2026-08-01** — **LINE-BY-LINE REVIEW OF THE M5 CODE — 4 gaps found and fixed. 653/653 green**
+  (648 → +5), lint clean. All four were in code written hours earlier, which is the point of reading
+  it again with the plan open rather than trusting a green suite.
+  🔴 **F4 · §7's "Audit trail — this Organisation's full record" could not be fetched at all.** The
+  viewer filtered by actor / action / date / target, and "target" is not the same question: a product
+  takedown carries `entityType: 'Product'` but the **seller's `orgId`**, so filtering by target would
+  have missed most of a company's own history. `AuditLog` already indexes `orgId`; the API simply had
+  no way to use it. Added `?orgId=`, with a test proving the target filter alone finds 1 row where
+  the org filter finds 2.
+  🟠 **F1 · `reviewedSide` reported only the FIRST side reviewed.** Both sides can be reviewed over
+  time, so a company whose exporter side had since been verified would still read "buyer" — on the
+  one screen whose entire job is to show which side was actually looked at. Now `reviewedSides`, an
+  array.
+  🟠 **F2 · the product breakdown double-counted.** `blocked` matched `takedown.isDown` while
+  `inactive` matched `status` alone, so a taken-down product whose underlying status was `inactive`
+  landed in **both** buckets and the parts summed to more than the whole. The buckets are now
+  disjoint with `blocked` taking precedence — a takedown is the fact that matters, and the status
+  underneath is whatever the seller happened to leave. A test asserts the five buckets sum to the
+  collection count.
+  🟡 **F3 · `verifiedBy` returned a raw ObjectId** where §7 asks *who* verified — the identical
+  mistake G5 had just fixed on the monitoring list, repeated one file away. Now resolved to a name,
+  with the same "null when the account is gone" behaviour the audit viewer uses.
+  Also reviewed and found sound: the `kycDocuments` count path (loaded with `+kycDocuments` purely to
+  measure `.length`, never serialised), the `q` escaping, the cursor/tiebreaker logic, and the
+  dashboard's permission gating.
+- **2026-08-01** — **M5 ADMIN CONSOLE BACKEND COMPLETE (M5-C → M5-F). 648/648 green** (577 → +71),
+  lint clean, three consecutive full-suite runs. All four missing surfaces built; M5's defining
+  property held — **no new models and no new persisted fields** (rule 14).
+  **M5-C · Audit log viewer.** `GET /admin/audit` + `/:id`, filtered by actor / action / date range
+  / target, actor names batched in one query. **W2 delivered:** the 180-day purge writes
+  `actorId: null`, and that row — the only hard delete in the system, and the one a dispute is most
+  likely to need — renders as **"System"**, proven against the real job rather than a hand-written
+  row. **W6 delivered:** an inverted `from`/`to` range is a **400**, because an empty page reads as
+  "no activity in this window", the opposite of the truth. `entityId` without `entityType` is also
+  refused (the index is the pair). Read-only proven from the route side: POST/PATCH/PUT/DELETE all
+  404.
+  **M5-D · Organisation list + detail.** Five columns plus country/slug; **V4** product counts are
+  **one aggregation** for the whole page; **V5** the platform org is absent from the list and 404s on
+  detail. The four AuditLog-derived values are wired (`reviewedSide`, `resubmitCount`, claim history,
+  signup date). Three honesty requirements are each pinned by a test: **`blockReach` reports what a
+  block ACTUALLY does** — organisation and users yes, products and conversations **no** — so nobody
+  blocks a company and assumes its listings are hidden; **`reviewedSide`** names which side was
+  actually reviewed, because one shared `kycStatus` means the first review verifies the whole
+  company; and the five **never-captured** fields are flagged rather than rendered blank.
+  **V2/V3 leaks closed:** the user list carries no `permissions` for anyone, and `organisation:read`
+  returns a **`kycDocumentCount`** but never a document or a `storageKey` — a test confirms that
+  grant still gets **403** on the KYC endpoint and writes no `kyc.view` row.
+  **M5-E · Dashboard.** Permission-filtered tiles with **no permission of its own** but a real role
+  gate (**V1** — a buyer and an exporter both get 403, not an empty object). **W1 delivered:** the
+  nearing-purge tile reuses the purge job's own filter, so an **archived** taken-down product is not
+  counted — it will never be purged (A7), and a countdown that never fires teaches an admin to
+  distrust the number. **D3 delivered:** turnaround averages **verifications only** and is named
+  `averageDaysToVerify`; a test proves a rejected org (30 days old) does not drag the average,
+  because `verifiedAt` is cleared on reject by design. `bothSidesPending` is reported so the two
+  verification tiles cannot be read as independent queues.
+  **M5-F · Adversarial pass** (14 cases): party accounts refused on every new route; one grant never
+  implies another (`organisation:read` ⇏ `audit:read`, neither reaches governance); an employee
+  cannot grant themselves the new strings; a revoked grant dies on the next request; **no new route
+  writes anything** in any verb; Mongo-operator and prototype payloads refused; hostile search
+  strings never compile as patterns; a 10-field forbidden list absent from six admin responses; and
+  **`takedownCount` survives the purge** — proven by deleting the product and watching the count
+  hold, which is the whole reason §A24 persists it instead of counting rows.
+  ⚠️ **Still open, unchanged:** the cross-file test intermittent (this run: `m4-messages`, 1 failure
+  in 3 full-suite runs, **5/5 clean in isolation**). It is the documented shared-DB class, not a
+  product defect. A probe into per-file database naming was inconclusive and was stopped rather than
+  half-applied; the fix remains giving each test file its own DB via `MONGODB_TEST_DB`.
+- **2026-08-01** — **M5-A + M5-B BUILT. 577/577 green** (552 → +25), lint clean.
+  **M5-A · foundation.** The two owner-decided permission strings (`organisation:read`,
+  `audit:read`) added to the catalogue, plus two AuditLog indexes: `{action, occurredAt}` for the
+  viewer's action filter and `{actorId, occurredAt}` for "everything this person did". A test
+  **proves the action-filtered query uses an IXSCAN, not a COLLSCAN** — the point of the index, not
+  just its existence. The catalogue is pinned to its exact twelve strings, so an eleventh cannot
+  appear without an owner decision (rule 6), and the governance strings are asserted **absent**
+  (rule 5 — a grantable `user:manage` would be a privilege-escalation path).
+  **M5-B · the five M4 gaps, both rule violations first.**
+  *(G1)* `/admin/conversations` moved from **skip to cursor pagination** (m5-rules §9). Proven by a
+  test that forces every row to share one `lastMessageAt` so only the `_id` tiebreaker separates
+  them — the exact case page numbers get wrong. `total` is deliberately gone from the contract: a
+  count over a set that reorders on every message is wrong by the time it renders.
+  *(G2)* The staff view now carries **the PARTIES' unread**, per side, and a test asserts that
+  **reading a thread as admin changes neither** — staff have no read-tracking of their own.
+  *(G3)* `?productId=` — §4's "view that product's chats", which `q` could never express because it
+  only ever branched on an org id. *(G4)* `?side=&orgId=` splits a **both-sides company** into the
+  two clean lists §7 requires; `side` without `orgId` is a 400 rather than a filter that silently
+  does nothing. *(G5)* Monitoring names **who** took a product down via one batched lookup — with a
+  **§A9 regression test** proving the seller's own view still shows the reason and never the actor,
+  by id or by name.
+  🧪 **Two of my own test errors, both caught and fixed:** the G5 tests read `body.products` when the
+  monitoring endpoint returns `body.rows`; and the unread-flip test hit the **same millisecond tie**
+  I had already fixed once in M4-D — `unread` is a strict `>` by design, so a read landing in the
+  same millisecond as the message flips it. The rule is right; the test's timing was the problem, so
+  it now pins the message into the past. Three consecutive clean runs confirm it.
+- **2026-08-01** — **M5 (Admin Console) plan read twice, cross-checked against the code, and a build
+  plan written at `build-plans/m5/backend-plan.md`. No code yet.**
+  **M5 turns out to be much smaller than it looks: 12 of its 16 screens already have a backend** —
+  M1 built five, M2 four, and M4 built the two conversation screens today. Only **four** are missing:
+  dashboard, audit log viewer, Organisation list, Organisation detail. (The web screens exist for
+  none of them — no frontend has been built.)
+  🔎 **A second, slower read found seven things the first pass missed — two of them rule violations
+  in code I wrote today.** *(1)* `GET /admin/conversations` uses **skip pagination** while
+  `m5-rules §9` requires **cursor** for conversation lists — and it matters most there, because the
+  list sorts by `lastMessageAt` so every new message shifts rows under a paging moderator. *(2)* the
+  **staff conversation view has no `unread`**, which `m5-features #10` lists as Data (the *parties'*
+  unread — admin has no read-tracking of its own). Three missing capabilities: no way to filter admin
+  conversations **by product** (§4's "view that product's chats"), no way to filter **by one side**
+  (§7 needs two separate lists and the code always `$or`s both org ids), and product monitoring
+  returns `takedown.byUserId` as a raw id where the screen wants a name. Two build-time hazards:
+  **AuditLog has no index on `action`** though §6 filters by it — on the fastest-growing collection
+  in the system that is a collection scan; and **verification turnaround can no longer be computed
+  for rejections**, a direct consequence of the (correct) 07-31 fix that stopped stamping
+  `verifiedAt` on reject.
+  ✅ **All four §10 open items closed by owner decision:** permissions are **`organisation:read` +
+  `audit:read`**, both grantable, with the **dashboard taking none of its own** (tiles filter by what
+  the caller already holds, so a tile can never link to a list they cannot open); scope is all four
+  new backends **plus** the five gaps; **turnaround counts verifications only** and the tile must be
+  labelled "average days to verify", not "to decision"; and **F6 gets no threshold** — the console
+  shows `takedownCount` and the admin decides, because an auto-suspend on a mis-set trigger takes a
+  whole company offline. Recorded in `m5.md` §8/§10 and `m5-features.md`, which also had **stale
+  "to propose" gates** for the M4 conversation screens that were in fact decided and built today.
+  📌 **One gap the plan itself anticipated is now confirmed real:** `org.claim` audit rows are never
+  written because A21 Step 4b is unbuilt, so Organisation detail's **claim history and side-enabled
+  dates will render empty** — the screen must say "no claim recorded" rather than imply data is
+  missing.
+  🧾 **Plan then verified and given the phase sequence it was missing** (M2/M3/M4 plans all had one;
+  this did not). Six phases ordered by real dependency — foundation → the M4 gaps → audit → orgs →
+  dashboard → cross-module pass — with the gaps deliberately early because **G4 unblocks Organisation
+  detail's two chat sections** and two of them are rule violations in shipped code. The dashboard is
+  last, since every tile links to a list the earlier phases build.
+  **Five holes closed in the verification pass**, the sharpest being **the dashboard route had no
+  role gate**: "no permission of its own" had been written as `authenticate` only, which would let a
+  **buyer or exporter reach an `/admin/*` route** — empty response, but wrong surface. Now
+  `requireRole('employee','superadmin')` with tiles filtered inside. Also closed: org detail must not
+  return other users' **permissions** (rule 8) nor any **`kycDocuments`** — otherwise the weaker
+  `organisation:read` would silently escalate into document access that is supposed to need
+  `kyc:view` and to leave a `kyc.view` audit row; the org list's product counts must be **one
+  aggregation, not twenty** `countDocuments` calls; and the **platform org** (the non-company row
+  that owns the superadmin) must be absent from the list and 404 on detail.
+  🧾 **A third pass found six more, two of which would have made a screen lie.** *(1)* The
+  **"nearing purge" tile must reuse the purge job's own filter** — the job excludes
+  `status: 'archived'` because archived rows are never purged (A7), so a tile counting only "blocked
+  150+ days" would show a countdown that never fires, and an admin stops trusting a number that lies.
+  *(2)* **The audit viewer must render a NULL actor as "System"** — `purgeBlockedProducts` writes
+  `actorId: null` deliberately, and the 180-day purge is exactly the entry a dispute is most likely
+  to need. Also: an archived product **count** is not an archived product **list** (§7 shows the
+  count, §4 hides the rows — so the count must not link into monitoring); my own rationale for the
+  audit index overstated the case ("every admin read writes a row" — only `kyc.view` and
+  `conversation.read` do); "returns a link" was not a backend contract, so org detail returns
+  `kycDocumentCount` instead; and an inverted `from`/`to` range must be a **400**, not a silent empty
+  page that reads as "no activity". All Organisation fields the plan depends on were verified to
+  exist in the model rather than assumed.
+- **2026-08-01** — **LINE-BY-LINE REVIEW OF M1+M2+M3+M4 (11,979 lines) — 6 real bugs found and
+  fixed, 5 of them in M4-G. 552/552 green** (524 → +28), lint clean.
+  🔴 **Five defects in the socket layer**, which had been written and reviewed only once:
+  *(1)* **A header-authenticated client could connect but never send.** The handshake accepts
+  `auth.token` OR an `Authorization` header, but the per-send re-verification read only
+  `auth.token` — so every send from a header client saw an empty token and was rejected. One
+  `tokenFromHandshake()` helper now serves both.
+  *(2)* 🔒 **`conversation:resync` returned message BODIES without re-verifying the token.** Only
+  `message:send` re-checked, so after a `tokenVersion` bump (deactivation, password change, org
+  block) an already-open socket kept serving a revoked user their counterparty's conversation for
+  as long as the connection lasted. Every data-touching handler now re-verifies — which is what
+  §7.2's "disconnected immediately" actually requires.
+  *(3)* **Socket CORS was effectively broken for browsers.** `CORS_ORIGINS` is a comma-separated
+  STRING; it was handed to socket.io raw, so a browser's origin was compared against the whole
+  joined list and matched nothing. Every browser client would have been blocked while curl and the
+  mobile app worked — the worst kind of bug to debug. Now parsed exactly as `app.js` does.
+  *(4)* **The 200-character rule disagreed with itself across transports.** `zString` trims then
+  bounds, so 200 characters plus trailing whitespace is valid over REST; the socket measured the
+  raw string and rejected the same input. Trim now happens first on both.
+  *(5)* **D-N3's comment was wrong about its own behaviour.** Parties join ALL their rooms on
+  connect, so "in the room" means "has the app open", not "is viewing this thread" — a connected
+  user therefore gets no push for anything. Defensible (they receive it live instead) but broader
+  than the decision's wording; comment corrected and flagged for the owner.
+  🟠 **One more in M4-C:** `scopeFilter` returned `{ _id: null }` for staff, which — spread into
+  `{ _id: id, ...scope }` — silently **overwrote the id being looked up**. It produced the right
+  answer (match nothing) purely by key collision, which is one refactor away from producing the
+  wrong one. Now filters on `parties`.
+  **Coverage measured for the first time** (`@vitest/coverage-v8`, new dev dependency): 84.87%
+  statements / 75.2% branches. It pointed at three controls everything else assumes but almost
+  nothing tested — the `toJSON` strip guard (38%), the central error handler (26% branch) and
+  ownership-scope declaration (72%). New `tests/security-controls.test.js` (24 cases) covers them
+  directly: every `select:false` path proven absent from `toJSON` **including when force-loaded
+  with `.select('+field')`**, a test that **fails if any model is ever added without
+  `declareScope()`**, error responses proven to carry only `{message, requestId}` with no parser
+  stack or driver name, and the auth surface proven to give an **identical** answer for a wrong
+  password, an unknown user, a wrong portal and a deactivated account.
+  **Also verified clean:** every route carries an access-control declaration (full audit table); no
+  `findById`, no swallowed `catch {}`, no stray `process.env` outside config, no missing `await` on
+  the audit/sync/push calls.
+  🧪 **One of my own assertions was too blunt** and is worth recording: a test scanned the login
+  response for the substring `"otp"` and flagged `method: 'otp'` — the second-factor NAME the client
+  needs in order to prompt, not a code. Replaced with an exact-key-set assertion plus a check that
+  the freshly-issued challenge's `codeHash` appears nowhere in the body.
+- **2026-08-01** — 🔥 **FCM credential wired and VERIFIED LIVE against Google. 524/524 still green.**
+  Owner supplied the `mpx-global` service account; it is base64'd into `.env` as
+  `FIREBASE_SERVICE_ACCOUNT_JSON`, the downloaded `.json` was deleted, and the key was never printed.
+  **Live proof without a device:** a send to a deliberately bogus token authenticated with Google in
+  **561 ms** and came back rejected — and the code correctly classified it as a **dead token**
+  (`deadTokens: 1`), which exercises the cleanup path end to end. Credential → SDK init → auth →
+  send → dead-token detection all confirmed.
+  🔴 **ROTATE BEFORE PRODUCTION.** The `.json` was downloaded **into the repo directory** (untracked
+  but **not** gitignored — a plain `git add .` would have committed a live signing key) and its
+  contents passed through a chat transcript. By `secrets-and-hygiene.md` that is **compromised**.
+  Recorded in `docs/Note.md`'s close checklist. `.gitignore` now blocks `*firebase-adminsdk*.json`,
+  `*service-account*.json`, `*serviceAccountKey*.json` and `gcp-*.json` so the file cannot be
+  committed by accident again.
+  **Two fixes the live test surfaced:** *(1)* `sendToTokens` initialised the Firebase SDK **before**
+  checking whether there were any recipients — pure waste on the common path, since most sends go to
+  a counterparty with no device registered. Empty-list check moved first. *(2)* `tests/setup.js` now
+  **forces push OFF for the whole suite** regardless of `.env`: with a real credential present the
+  tests would otherwise behave differently on a machine that has one, and a test run could reach out
+  to Google. Tests that exercise push mock `push.client.js` outright; everything else must see an
+  inert layer.
+- **2026-08-01** — **M4 COMPLETE — E, F, G and H built. 524/524 green** (457 → +67), lint clean.
+  Enquiry & Chat is now end to end: enquiry → thread → messaging → moderation → live delivery → push.
+  **M4-E · admin moderation.** `GET/POST /admin/conversations*`, `conversationFreeze.service.js`,
+  `adminConversations.service.js`. **M4-30 proved as a re-derivation, not a toggle:** unblocking a
+  thread whose product is still taken down leaves it frozen, and so does unblocking one whose
+  product row has been **purged entirely** — without that branch the unblock would cheerfully
+  reopen a thread for a listing that no longer exists. **M4-29 proved both ways:** takedown-then-block
+  keeps the takedown label, block-then-takedown keeps the block. Staff reads of a thread and of its
+  messages are **audited identically for employees and superadmins** (M4-34), while the list is
+  deliberately not (G11).
+  **M4-F · cross-wiring into M2.** Takedown freezes every thread on the product with a system
+  message that points the buyer elsewhere (M4-21); restore re-derives rather than blanket-unfreezes;
+  the purge writes **nothing** to any conversation and the red label is derived at read time (C5);
+  and **M4-20 is pinned** — a seller's own `inactive`/`archive` leaves threads completely untouched.
+  M2's own behaviour re-verified unchanged (status untouched, `takedownCount` increment-only,
+  draft/archived takedowns still refused).
+  🔴 **REAL BUG FOUND IN M4-G — `socket.io` silently drops events sent before a listener exists.**
+  The `connection` handler was `async` and registered its listeners **after** `await`-ing the
+  room-join query. A client that connected and sent immediately had its first message vanish: no
+  handler, no ack, no error. It presented as nine flaky tests that each passed in isolation, which
+  is exactly what a timing window looks like — but a real user would experience it as *"sometimes my
+  first message just doesn't send"*. Handlers are now registered synchronously and the room-join is
+  a promise the broadcast awaits, so the sender is reliably in their own room.
+  **M4-G · sockets, tested against a real server with real clients.** Handshake auth; **an
+  already-open socket stops sending the moment `tokenVersion` is bumped** (the §7.2 build note — a
+  handshake check alone cannot do this); admin joins **no** room by default and, even after
+  `conversation:open`, still cannot speak; the same three §7.3 guards apply because the socket calls
+  the one send service rather than re-implementing them; freeze is pushed on block, takedown and
+  restore (§7.4); and reconnect replay is **capped** — a long absence returns `truncated` and sends
+  the client to REST rather than firehosing history down a socket (G9).
+  **M4-H · FCM, the approved narrow slice.** `POST/DELETE /me/devices` with upsert semantics (G10 —
+  a device changes hands and FCM reuses the token), dead-token cleanup, and sends on exactly two
+  events. **D-N1 held under test:** a push carries company + product and **never** the message text,
+  the note or the structured fields — it lands on a lock screen, and hiding commercial detail is the
+  reason this module exists. **D-N2/D-N3:** every active user of the counterparty org, minus the
+  sender, minus anyone already watching the thread. **Two failure modes pinned:** a push failure does
+  **not** fail the message send (fire-and-forget by construction), and with no credential configured
+  the whole layer is **inert** — no crash, no 5xx, nothing attempted.
+  **New dependencies** (all flagged in the build plan and approved): `socket.io`,
+  `@socket.io/redis-adapter`, `firebase-admin`, plus `socket.io-client` as a dev dependency.
+  `FIREBASE_SERVICE_ACCOUNT_JSON` (base64) is optional by design.
+- **2026-08-01** — **M4-D BUILT — message sending. 457/457 green** (435 → +22), lint clean.
+  `POST /conversations/:id/messages` plus `message.service.js` and a `messageLimiter` (60/min per
+  user — M4-5 controls how many THREADS exist and says nothing about writes inside one, so without
+  it an open thread is an unbounded write endpoint).
+  **One send path, not three.** The service is written so M4-G's socket handler and M4-F's freeze
+  notices call the same function rather than re-implementing the checks — three copies of an access
+  check is how one of them ends up missing a case.
+  **The three §7.3 guards, each with its own tests:** *(1)* **party** — an outsider gets 404 (never
+  403, which would confirm the thread exists) and writes nothing; **admin can read but cannot
+  speak**, stated explicitly rather than left to fall out of scoping. *(2)* **frozen** — both sides
+  refused with 409 for `takedown` and for `blocked`, while **reading stays fully open** (M4-22), and
+  unfreezing restores writes. *(3)* **200 characters, user sends only** — the cap lives in the route
+  validator, so exactly 200 passes and 201 fails, while **the composed first enquiry message and
+  system messages are exempt and both proved to exceed 200 and still be accepted**. That last pair
+  is the C1 regression: a `maxlength: 200` on the model would have rejected the thread's own opening
+  line on every enquiry whose composed message ran long.
+  **`senderType` is derived from the caller's role, never read from the body** — a test sends
+  `senderType: 'system'` with a forged `senderOrgId`, `senderUserId` and `conversationId` and
+  confirms every one is ignored, so a buyer cannot post as the platform.
+  **UX consistency carried over from M4-C:** the sender's own `lastReadAt` is stamped on send, or
+  they would watch their own message come back flagged unread; a **system** notice deliberately does
+  NOT mark either side read, so both parties see that it arrived.
+  Also pinned: messages are unreachable for edit/delete through any route (M4-13), hostile bodies
+  (script tags, JSON operators, path traversal, emoji, newlines) are stored as plain text, and a
+  Mongo operator as the body is refused rather than coerced.
+- **2026-08-01** — **M4-C BUILT — thread reads. 425/425 green** (401 → +24), lint clean.
+  Six endpoints (`GET /conversations`, `/conversations/unread-count`,
+  `/conversations/by-product/:productId`, `/conversations/:id`, `/conversations/:id/messages`,
+  `POST /conversations/:id/read`) plus `views/conversation.view.js`, `conversation.service.js` and
+  their validators.
+  **The three plan hazards, all handled:** *(G1/G2)* the party projection is an exact key set with
+  `blockedBy`, `blockedAt`, `frozenReason`, `parties` and both raw org ids absent — M4-25 gives both
+  parties the block REASON and never the admin behind it, the same rule as §A9's
+  `takedown.byUserId`; and a message carries only `senderType`, never `senderUserId`, because M4-17
+  says threads show company names and never person names. *(G5)* list search branches on the input —
+  an ObjectId takes an exact `$or` on the two org ids, anything else takes `$text` — because native
+  `$text` must be the first `$match` and MongoDB refuses it inside an `$or`, so §8.4's "three names
+  and two ids" is **not expressible as one query**. *(G6/G7)* the cursor is `(lastMessageAt, _id)`
+  and is proven stable by a test that forces every row to share one timestamp; unread is a derived
+  boolean per row plus **one** aggregate for the badge, with a test asserting no counter field
+  exists anywhere.
+  **Scoping subtlety worth recording:** the list scopes by **role + org**, not by `parties` alone.
+  Under A21 one Organisation can hold both a buyer and an exporter side, and `{ parties: orgId }`
+  would then surface that company's *selling* conversations inside its *buyer* portal. §8.4's split
+  is right and is not redundant with B1.
+  **UX bug found while wiring unread:** the buyer who had just written the enquiry saw their own new
+  thread flagged unread, because `buyerLastReadAt` was never set at creation. Now stamped from the
+  same instant as `lastMessageAt` (the comparison is strict `>`), so the buyer's is read and the
+  seller's is not — which is exactly the "exporter sees it unread, highlighted" step in the flow
+  diagram.
+  **M4-19/V3 honoured:** labels are `{tone, text}`, never a bare colour — verified for live, taken
+  down (yellow), blocked (red) and purged (red, derived at read time from the product row being gone
+  per C5, with the title still composed from `productNameSnapshot` and no link to a page that no
+  longer exists). **M4-32 pinned:** a distinctive word inside a message body does not surface in
+  list search.
+- **2026-08-01** — **M4-B BUILT — enquiry creation (`POST /inquiries`). 394/394 green** (372 → +22),
+  lint clean. The single entry point into the whole chat module: one call creates
+  Inquiry → Conversation → message #1 (the buyer's composed ask) → message #2 (the platform welcome),
+  in that fixed order (M4-10), and drops the buyer straight into the thread (M4-35 — there is no
+  enquiry inbox). New: `inquiry.validators.js`, `inquiry.service.js`, `inquiries.controller.js`,
+  `inquiry.routes.js`, and an `enquiryLimiter` (20/hour per user — M4-27 deliberately lets a blocked
+  buyer open threads on other products, which makes spraying enquiries the obvious abuse path).
+  **Guards, each with a test that fails without it:** 🔴 **F4 self-enquiry (M4-39)** — A21 lets one
+  Organisation hold both a buyer and an exporter side, so a company enquiring on its own product is
+  genuinely reachable and **the schema cannot express it**; this service check is the only thing
+  stopping it. Buyer-account-only (`requireRole('buyer')` **plus** the org's `buyerSide` flag, since a
+  superadmin passes the role gate and the platform org must never open a thread). Product must be
+  **publicly visible** — reuses `getPublicProduct()` so draft / inactive / archived / taken-down /
+  dead-category all 404 exactly as they do in search, and can never drift from it.
+  **M4-5 under concurrency:** five simultaneous first enquiries resolve to **one** thread with no
+  500 — the pre-check handles the common case and the unique index handles the race, with the loser
+  handed the winner's thread (V7). **V6 compensation:** four writes with no transaction (standalone
+  Mongo, no replica set), so a failure mid-way rolls back by hand — a test asserts a rejected
+  enquiry leaves zero Inquiry, zero Conversation and zero Message rather than an orphan or a
+  permanently blank thread.
+  **Locked field sets enforced (O2):** unknown keys are **rejected, not stripped** — `fields` lands
+  in a Mixed path, so a silently dropped typo would lose the buyer's requirement with no error; a
+  service field on a goods product (and vice versa) is refused; and an amount without a currency is
+  refused as ambiguous, the same rule §A27.1 enforces on the search side.
+  🧹 **ESLint's own A6 rule caught two unscoped `findById` calls** in the service and was obeyed
+  rather than suppressed — the Inquiry attached to an already-owned Conversation is now still read
+  ownership-scoped, because "the caller owns the parent" is an assumption once a second query is
+  involved.
+- **2026-08-01** — **Cross-module ADVERSARIAL security pass (M1+M2+M3+M4). 372/372 green**
+  (347 → +25), lint clean, three consecutive full-suite runs. New
+  `tests/security-adversarial.test.js` — written as attacks, not feature tests.
+  **Result: no new defects found.** Every attack was repelled by controls already in place, which
+  is the honest outcome and is worth recording as evidence rather than dressed up as a fix list.
+  **What was attacked:** *mass assignment* of the internal search denorms — `sellerVerified`
+  (drives the verified ranking boost and the opt-in verified facet), `searchKeywords` (IS the search
+  corpus), `sellerCountry`, `categoryType`, `topCategoryId`, plus `status` to skip §A1's draft-first
+  rule and `exporterOrgId` to plant a listing in another company — all stripped by the validator's
+  field allowlist, ownership taken from the token; *self-lifting a takedown* through both the edit
+  and the status path; *cross-tenant IDOR* on read/edit/publish/delete and on another buyer's saved
+  row; *token forgery* — `alg=none`, a token signed with the refresh secret, an expired token, a
+  valid signature over a non-existent user, a **stale `tokenVersion` after a password change**, and
+  **login-pending/access `typ` confusion**; *privilege escalation* — a self-declared
+  `role: superadmin` and `permissions` in the signup body, an exporter reaching staff routes, an
+  employee granting themselves permissions, and an employee using a permission they were not
+  granted; *injection* — prototype pollution (`__proto__`/`constructor`/`prototype`), an operator
+  object as a password, an object as an attribute value (it reaches an indexed, M3-queried path),
+  and duplicated query params; *data exposure* — a 14-field forbidden list asserted absent across
+  five public surfaces, §A9's rule that a seller sees their takedown reason but never the acting
+  admin, and auth responses carrying no hash/2FA secret/tokenVersion; *error hygiene* — no stack,
+  driver name, connection string or `CastError` in any 4xx/5xx body.
+  🧪 **Two of the tests were initially too weak and were tightened**, which matters more than the
+  pass count: they used `if (status === 201) … else expect(400)`, an assertion that passes either
+  way. Worse, the mass-assignment payload contained a **dotted key** (`takedown.isDown`), which
+  `rejectMongoOperators` rejects *before the validator runs* — so the test would have gone green
+  having never exercised the stripping it existed to prove. Split into a definitive
+  "succeeds and stores clean" case and a separate dotted-key rejection case.
+  📌 Also corrected: a test targeted `GET /products/:id`, which **does not exist** — the seller's own
+  view is the `/products/mine` list, so §A9 is now verified where it actually renders.
+- **2026-08-01** — **M4-A BUILT (models + indexes) and exhaustively tested. 347/347 green**
+  (307 → +40), lint clean. Four models: `Inquiry` fleshed out from its skeleton, plus new
+  `Conversation`, `Message`, `DeviceToken`; two new permissions (`conversation:read`,
+  `conversation:block`) and four new enums.
+  🔴 **REAL HOLE FOUND AND FIXED — `bulkWrite` bypasses Mongoose query middleware.** The
+  append-only guards on `Message` (M4-13: *"sent messages can never be edited or deleted, by
+  anyone"*) block ten query operations — and **every one of them was blind to `bulkWrite`**.
+  Verified, not assumed: `Message.bulkWrite([{updateOne: …}])` rewrote a message body to "HACKED"
+  and `bulkWrite([{deleteOne: …}])` deleted the row outright. This is a realistic path, not a
+  theoretical one — **`searchSync.service.js` already uses `bulkWrite` in this codebase**, so it is
+  exactly what the next person reaches for. **The same hole existed on `AuditLog`**, which is
+  tracker **C10** and `security-baseline` rule 5. Both models now block `bulkWrite` via a schema
+  static that rejects. **Tracker: C10** (audit trail append-only) — evidence is
+  `tests/m4-models-exhaustive.test.js`.
+  **Exhaustive M4-A coverage (40 cases):** all 13 mutation routes into `Message` refused
+  individually (updateOne/updateMany/replaceOne/findOneAndUpdate/findOneAndReplace/
+  findByIdAndUpdate/deleteOne/deleteMany/findOneAndDelete/findByIdAndDelete/Query.updateOne/
+  bulkWrite×2) with the body verified untouched after each; document `.save()` and `.deleteOne()`;
+  insert paths still work; required fields, enum boundaries and defaults on all four models;
+  `parties` derivation with the platform excluded (M4-2); exactly one text index (§8.3/A26);
+  `frozenReason` rejecting `purged` (C5); the thread surviving a hard-deleted product (M4-22); and
+  the scoping declarations.
+  📌 **Two limits recorded as tests rather than left implicit:** the **raw driver** (`.collection.*`)
+  bypasses Mongoose entirely — no schema can promise otherwise, so the durable guarantee for
+  append-only data remains the database grant (a deployment step); and the **model does not stop a
+  self-enquiry** (`buyerOrgId === exporterOrgId` is structurally valid since A21 lets one
+  Organisation hold both sides) — **F4/M4-39 is a service-layer guard and the only thing preventing
+  it**, so M4-B must carry it.
+- **2026-07-31** — **M4 (Enquiry & Chat) plan read end-to-end; scope resolved; build plan written at
+  `build-plans/m4/backend-plan.md`. No code yet.**
+  🔴 **Landmine found and fixed — the "Module 4" numbering trap.** `.claude/rules/scope-guard.md`
+  (always-loaded, highest priority) listed *"Quotation & negotiation (Module 4)"* as deferred, so any
+  session asked to build `modules-in-detailed/m4` would have **red-alerted and refused — wrongly**.
+  There are **two numbering systems**: the quote's 8 modules vs the `modules-in-detailed/` build
+  milestones, and they do not line up. **`m4` is Enquiry & Chat = the quote's Module 3 (chat half),
+  which is month-1 IN SCOPE** — confirmed by `month1-not-doing.md` line 91 and by A2's parenthetical
+  *"buyer khud enquiry+chat month 1 me hai"*. Quotation is the deferred one. Added a numbering table
+  to `scope-guard.md` so the false alarm cannot recur.
+  ✅ **Owner approved two items into month 1 (explicit confirmation after a red alert):**
+  *(1)* **FCM push**, narrow slice only — `firebase-admin`, `DeviceToken` register/unregister,
+  dead-token cleanup, and sends on **two M4 events** (new enquiry → seller, new message →
+  counterparty). This is a **schedule** change, not a scope change: notifications are quote Module 8,
+  already inside Phase 1. The **rest of Module 8 stays deferred and still red-alert guarded** (email,
+  WhatsApp, `Notification` model / in-app centre, admin per-type toggles, delivery tracking + retry,
+  and push on any non-M4 event). Carve-out recorded in `scope-guard.md`, `remind.md`,
+  `month1-not-doing.md` A3 and `Note.md` D5 — all four in the same pass, per the decision-change
+  doctrine. *(2)* **Socket reconnect recovery** — needed no alert (it sat only in `m4.md` §13's own
+  month-2 list, never in a scope bucket), deviation recorded.
+  **Six contradictions found inside the M4 plan itself**, resolved in the build plan — the sharpest:
+  §4's Message table says `body max 200` while **M4-12** exempts the composed first message, so a
+  model-level cap would have **rejected the thread's own opening message** (cap moves to the route
+  boundary, user sends only); `m4.png` still shows an **Atlas Search index** (§A26 reversed it to
+  native `$text`); and **M4-22** (red label at purge) vs **M4-29** (`frozenReason` never overwritten)
+  — resolved by deriving the purged label at read time rather than writing to every conversation.
+  ✅ **Both `m4.md` §14 open items now LOCKED by the owner** — the welcome-message wording (the
+  proposed text, which deliberately avoids the "complete your deal" phrasing m4.md flagged as
+  pushing deals off-platform against the Phase-2 escrow model) and the goods/services enquiry field
+  sets (mirroring `Product`'s own split). Owner also confirmed **C4**: seller archive/inactive
+  changes nothing on a thread; the red label is the 180-day purge alone.
+  🔎 **Plan then re-read critically before any code — 12 gaps found and covered.** Four were
+  data-exposure or security: **`blockedBy` would have leaked the acting admin to both parties**
+  (M4-25 grants them the *reason*, not the *who* — same rule as A9's `takedown.byUserId`);
+  **`senderUserId` would have leaked a person's identity** into a module whose own M4-17 says
+  *company names, never person names*; **`Message` has no owner field** so it cannot use
+  `ownershipFilter` and must be scoped *through* its Conversation; and enquiry creation was missing
+  both its **buyer-only guard** and its **product-availability check** (a buyer could have opened a
+  thread on a draft or taken-down product). Six were correctness: the **`$text` + org-id search
+  trap** M3 already paid for (`$text` must be the first `$match` and cannot sit inside `$or`, so
+  "name OR id" needs two branches), an unstable cursor without an `_id` tiebreaker, an **N+1 unread
+  count**, no source for the product page's *Create enquiry / Open chat* button state (solved
+  without touching the public product projection), an **unbounded reconnect replay**, and
+  `DeviceToken` needing upsert rather than insert semantics. Two were specification detail (audit
+  scope, rate-limit numbers). The plan also gained the **endpoint table, the whitelist projections
+  and a full test plan** — none of which the first draft had.
+  🧾 **Then a second, systematic verification pass — walking M4-1…M4-39 one at a time — found 11
+  more.** Three were plan decisions the build plan simply had **no implementation for**: **M4-1**
+  (the platform's presence must be visible in the thread header / participant list, not only in the
+  opening message — nothing carried it, so a `participants` block was added while still keeping the
+  platform out of `parties`), **M4-13** (*"sent messages can never be edited or deleted, by anyone"* —
+  the absence of a route is not enforcement, so `Message` becomes append-only at the model layer like
+  `AuditLog`), and **M4-19** (*"colour never carries meaning alone"* — the plan carried a bare
+  `yellow`/`red`, which is precisely what that decision forbids; labels now pair tone **with text**).
+  Three were mistakes in the plan itself: it named **the wrong helper** for the single-product
+  availability check (`buildPublicProductFilter` is the *list* builder taking `{category, seller}`;
+  the correct one is `getPublicProduct`), it gave the admin-block endpoint an **incoherent guard**
+  (`conversation:read` *and* `requireRole('superadmin')` — the permission adds nothing when
+  superadmin is all-access), and it dropped `Inquiry.categoryId` that the existing skeleton carries.
+  Three were real build hazards: **enquiry creation is four writes with no transaction** on
+  standalone MongoDB, so it needs M1's compensation pattern or a failure mid-way leaves an orphan
+  Inquiry or a permanently blank thread; the **unique-index race** must return the existing thread
+  rather than a raw 500; and **`withPartiesScope` silently injects `isActive`**, a second competing
+  notion of "switched off" beside `frozen` (decision: present but never read or written). Plus the
+  reconnect socket events (§11 is a closed list and has none) and a missing **M4-32** test.
+  🚫 **Owner override of M4-38 (same day):** M4-38 said employees get **read permission only** in
+  month 1. Owner decided chat block/unblock must be **grantable to employees** too, so the catalogue
+  gains **two** strings — `conversation:read` and `conversation:block` — instead of a hard superadmin
+  gate. One permission covers both directions (M4-24 makes a block reversible; a moderator who can
+  freeze but not unfreeze only creates escalations). Still default-deny and granted per employee,
+  never blanket; the **employee panel UI remains month 2** (A2), so grants go through the existing
+  superadmin-only `PATCH /admin/employees/:id/permissions`. Marked superseded in `m4.md` M4-38.
 - **2026-07-31** — 🧠 **AI SEARCH SYSTEM PROMPT REWRITTEN so any phrasing still produces a query
   that FINDS something** (owner's call, chosen over echoing `priceIntent` or hand-patching the MOQ
   rule). Rewritten `buildSystemPrompt()` in `aiSearch.service.js`; **no schema, no endpoint and no

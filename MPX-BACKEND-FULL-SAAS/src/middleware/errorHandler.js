@@ -1,16 +1,23 @@
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 import { ErrorLog } from '../models/ErrorLog.js';
+import { redactSecrets } from '../utils/redact.js';
 
 // A19: persist 5xx errors to the `errorLogs` collection (90-day TTL).
 // Fire-and-forget — a logging failure must NEVER affect the response — and the
 // exclusion list is enforced by construction: only these shaped fields are ever
 // written (no bodies, no headers, no KYC/tokens/OTPs/contact).
+//
+// F5 — `message` and `stack` are the two fields we do NOT control the shape of:
+// they come from whatever threw. A driver error quotes its own connection string,
+// which in production carries the database password. Since F5's viewer shows both
+// to `errorlog:read`, they are redacted here, at the write site, so the secret
+// never reaches the collection at all (see utils/redact.js).
 export function persistErrorLog({ err, req, statusCode }) {
   return ErrorLog.create({
     statusCode,
-    message: err?.message,
-    stack: err?.stack,
+    message: redactSecrets(err?.message),
+    stack: redactSecrets(err?.stack),
     route: req.originalUrl,
     method: req.method,
     requestId: req.id,

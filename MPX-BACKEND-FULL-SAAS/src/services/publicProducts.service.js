@@ -10,8 +10,10 @@ import { buildAvailabilityFilter, buildPublicProductFilter } from './search.quer
 // not taken down, and sitting in an active leaf under an active top. B7: no
 // verification filter of any kind.
 //
-// Known, accepted gap (F1-B): a BLOCKED org's products stay visible here until
-// the FINALIZE products-cascade lands — deliberately no org.isActive filter.
+// ✅ The old "blocked org's products stay visible" gap is CLOSED (F1-B,
+// 2026-08-01): the cascade takes those products down, so the shared
+// availability filter already excludes them. Still no org.isActive join here —
+// see the note in search.query.js for why that stays out.
 
 // §A27.4: browse compiles its filter through the SHARED builder, so the
 // availability rules can never drift from search. Its param set stays exactly

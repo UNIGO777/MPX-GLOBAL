@@ -2,6 +2,7 @@ import { Organisation } from '../models/Organisation.js';
 import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
+import { startBlockCascade, startUnblockCascade } from './orgBlockCascade.service.js';
 
 /**
  * F1-A — the org-level block cascade (A21 Step 5).
@@ -108,6 +109,12 @@ export async function blockOrganisation({ id, reason, actor, meta }) {
     meta,
   });
 
+  // F1-B — the catalogue and chat half. Started, NOT awaited (owner decision):
+  // the account half above has already killed every session, which is the part
+  // that must be instant. Progress is recorded on `blockCascade` so the console
+  // can say whether the listings are actually hidden yet.
+  startBlockCascade(org._id);
+
   return { org, usersCascaded: cascade.modifiedCount };
 }
 
@@ -150,6 +157,9 @@ export async function unblockOrganisation({ id, reason, actor, meta }) {
     after: { isActive: true, ...(reason ? { reason } : {}), usersRestored: restored.modifiedCount },
     meta,
   });
+
+  // F1-B — restores ONLY what the block cascade switched off (open point 1).
+  startUnblockCascade(org._id);
 
   return { org, usersRestored: restored.modifiedCount };
 }

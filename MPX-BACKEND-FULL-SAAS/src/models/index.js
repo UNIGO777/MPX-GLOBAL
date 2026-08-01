@@ -11,7 +11,12 @@ export { CategoryAttribute } from './CategoryAttribute.js';
 export { Product } from './Product.js';
 export { SavedItem } from './SavedItem.js';
 
+// M4 · Enquiry & Chat
 export { Inquiry } from './Inquiry.js';
+export { Conversation } from './Conversation.js';
+export { Message } from './Message.js';
+export { DeviceToken } from './DeviceToken.js';
+
 export { Quotation } from './Quotation.js';
 export { Deal } from './Deal.js';
 export { Contract } from './Contract.js';
@@ -35,7 +40,11 @@ export { Incentive } from './Incentive.js';
 export { Investment } from './Investment.js';
 export { PremiumApplication } from './PremiumApplication.js';
 export { Subscription } from './Subscription.js';
+// ⚠️ `Banner` is an empty unused skeleton that predates FINALIZE F5b. The real
+// landing content lives in `FeaturedItem` (which covers banners too). Left in
+// place rather than deleted — removing it is the owner's call.
 export { Banner } from './Banner.js';
 export { CmsPage } from './CmsPage.js';
+export { FeaturedItem } from './FeaturedItem.js';
 
 export { SCOPE, ownershipFilter, scopedFilter } from './scoping.js';
