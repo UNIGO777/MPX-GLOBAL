@@ -1,0 +1,1279 @@
+<!DOCTYPE html><html class="scroll-smooth" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MPX Global - Sourcing Smarter</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "error": "#ba1a1a",
+                "tertiary": "#0e0300",
+                "primary-container": "#1A2E8F",
+                "tertiary-fixed": "#ffdcc6",
+                "on-surface-variant": "#44474e",
+                "primary-fixed": "#d8e2ff",
+                "secondary-fixed-dim": "#afc6ff",
+                "surface-container-high": "#e9e7eb",
+                "surface-tint": "#4d5e83",
+                "surface-container-highest": "#e4e2e5",
+                "secondary": "#435d96",
+                "tertiary-fixed-dim": "#f5ba93",
+                "secondary-fixed": "#d9e2ff",
+                "tertiary-container": "#351600",
+                "surface-bright": "#EAEEFF",
+                "on-primary": "#ffffff",
+                "surface-container": "#efedf0",
+                "primary": "#000517",
+                "on-primary-container": "#7586ad",
+                "surface-container-lowest": "#ffffff",
+                "on-tertiary": "#ffffff",
+                "on-secondary-fixed": "#001944",
+                "on-tertiary-fixed": "#301400",
+                "error-container": "#ffdad6",
+                "on-surface": "#1b1b1e",
+                "on-primary-fixed-variant": "#35466a",
+                "inverse-surface": "#303033",
+                "background": "#EAEEFF",
+                "outline-variant": "#c5c6cf",
+                "on-error": "#ffffff",
+                "on-secondary-container": "#314b83",
+                "outline": "#75777f",
+                "surface-dim": "#dbd9dd",
+                "inverse-primary": "#b5c6f0",
+                "on-secondary": "#ffffff",
+                "on-background": "#1b1b1e",
+                "surface-variant": "#e4e2e5",
+                "surface-container-low": "#f5f3f6",
+                "primary-fixed-dim": "#b5c6f0",
+                "on-tertiary-container": "#ae7b59",
+                "on-primary-fixed": "#061b3c",
+                "on-secondary-fixed-variant": "#2a457d",
+                "on-error-container": "#93000a",
+                "on-tertiary-fixed-variant": "#653d20",
+                "surface": "#EAEEFF",
+                "inverse-on-surface": "#f2f0f3",
+                "secondary-container": "#a4bdfd",
+                "brand-bg": "#EAEEFF",
+                "brand-accent": "#2A4DE0",
+                "brand-navy": "#1A2E8F",
+                "accent-blue": "#2A4DE0",
+                "slate-gray": "#5A6B85",
+                "navy": "#1A2E8F"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "2xl": "1.25rem",
+                "full": "9999px",
+                "20": "20px",
+                "card": "20px"
+        },
+        "spacing": {
+                "lg": "40px",
+                "container-max": "1440px",
+                "base": "4px",
+                "sm": "16px",
+                "md": "24px",
+                "xl": "64px",
+                "xs": "8px",
+                "gutter": "24px"
+        },
+        "fontFamily": {
+                "label-md": [
+                        "Inter", "sans-serif"
+                ],
+                "display-lg-mobile": [
+                        "Inter", "sans-serif"
+                ],
+                "display-lg": [
+                        "Inter", "sans-serif"
+                ],
+                "headline-lg": [
+                        "Inter", "sans-serif"
+                ],
+                "body-lg": [
+                        "Inter", "sans-serif"
+                ],
+                "headline-md": [
+                        "Inter", "sans-serif"
+                ],
+                "body-md": [
+                        "Inter", "sans-serif"
+                ],
+                "caption": [
+                        "Inter", "sans-serif"
+                ]
+        },
+        "fontSize": {
+                "label-md": [
+                        "14px",
+                        {
+                                "lineHeight": "1",
+                                "letterSpacing": "0.01em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "display-lg-mobile": [
+                        "32px",
+                        {
+                                "lineHeight": "1.2",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "1.1",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "1.2",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "1.6",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "1.3",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "1.5",
+                                "fontWeight": "400"
+                        }
+                ],
+                "caption": [
+                        "12px",
+                        {
+                                "lineHeight": "1.4",
+                                "fontWeight": "500"
+                        }
+                ]
+        },
+        "boxShadow": {
+            "ambient": "0 20px 40px -10px rgba(10, 30, 63, 0.08)",
+            "ambient-hover": "0 30px 50px -12px rgba(10, 30, 63, 0.12)",
+            "soft": "0 10px 40px -10px rgba(10, 30, 63, 0.08)"
+        }
+},
+    },
+  }
+</script>
+<style>
+  .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .text-glow-blue {
+      text-shadow: 0 0 20px rgba(42, 77, 224, 0.4);
+  }
+  .dashed-connector {
+      background-image: linear-gradient(to right, #c5c6cf 40%, rgba(255, 255, 255, 0) 20%);
+      background-position: bottom;
+      background-size: 8px 1px;
+      background-repeat: repeat-x;
+  }
+  .step-arrow::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: -4px;
+      width: 0; 
+      height: 0; 
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: 6px solid #c5c6cf;
+  }
+  .custom-shadow {
+      box-shadow: 0 20px 40px rgba(10, 30, 63, 0.08);
+  }
+  .accent-text { color: #2A4DE0; }
+  .navy-bg { background-color: #1A2E8F; }
+  .slate-text { color: #5A6B85; }
+  .verified-text { color: #1FAF5B; }
+  .verified-bg { background-color: #e8f7ee; }
+  .soft-border { border-color: #e2e8f0; }
+  
+  .bg-soft-blue-tint { background-color: #EAEEFF; }
+  .text-deep-navy { color: #1A2E8F; }
+  .text-bright-accent-blue { color: #2A4DE0; }
+  .card-pale-sky { background-color: #E7F0FF; }
+  .card-pale-mint { background-color: #E7F7EF; }
+  .card-pale-periwinkle { background-color: #ECEBFF; }
+  .card-radius { border-radius: 20px; }
+  .soft-hover-shadow:hover { box-shadow: 0 12px 24px rgba(0, 5, 23, 0.12); }
+  
+  .glow-effect {
+      box-shadow: 0 0 60px 10px rgba(42, 77, 224, 0.15);
+  }
+  .float-animation {
+      animation: float 6s ease-in-out infinite;
+  }
+  .float-animation-delayed {
+      animation: float 6s ease-in-out 2s infinite;
+  }
+  @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+      100% { transform: translateY(0px); }
+  }
+  
+  .accordion-content {
+      transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      padding-top: 0;
+      padding-bottom: 0;
+  }
+  .accordion-content.active {
+      max-height: 200px;
+      opacity: 1;
+      padding-top: 16px;
+      padding-bottom: 16px;
+  }
+  .accordion-icon {
+      transition: transform 0.3s ease;
+  }
+  .accordion-icon.active {
+      transform: rotate(180deg);
+  }
+</style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased overflow-x-hidden selection:bg-secondary selection:text-on-secondary flex flex-col min-h-screen">
+<!-- Announcement Bar -->
+<div class="bg-primary-container text-on-primary py-xs px-sm md:px-gutter flex justify-center items-center gap-sm">
+<span class="font-label-md text-label-md">NOW LIVE: Onboarding verified suppliers across 20+ categories</span>
+<a class="inline-block bg-on-primary text-primary-container px-sm py-base rounded-full font-label-md text-caption hover:bg-surface-variant transition-colors" href="#">
+            Get Early Access
+        </a>
+</div>
+<!-- Header (Shared Component: TopAppBar) -->
+<header class="bg-surface-container-lowest shadow-sm docked full-width top-0 sticky z-50">
+<div class="flex justify-between items-center w-full px-md h-xl max-w-container-max mx-auto">
+<!-- Brand -->
+<div class="flex items-center gap-xs">
+<img alt="MPX Global Logo" class="h-16 w-auto object-contain ml-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBt-Xh-YET5BIGq-jyUgToQ1Lz0rjmqUMvRml3MCeC2MfFrzf1IK3wAAlvCglFxsvnvx0bFLAmeytv25MICfjJP36ZrPQTtTO-pxkGNS5kcUQAfXPWkNJ64IM5DyhcqNHzQrA-bdmqyPt1rFEtyLwchcpiiIILDbFjWumGWZX-rL-8_q3g1GEWbNDLioWjOsFut9BR-f0KKHkcibNWhrz7L75YKGPy2hPQr0lkzSfrIIW9YvPWMKgul3vJKGbtKLqSuhqZY3pTOnYY">
+
+</div>
+<!-- Navigation -->
+<nav class="hidden lg:flex items-center gap-gutter">
+<a class="text-on-surface-variant font-body-md hover:text-secondary transition-colors duration-200" href="#how-it-works">How it Works</a>
+<a class="text-on-surface-variant font-body-md hover:text-secondary transition-colors duration-200" href="#categories">Categories</a>
+<a class="text-on-surface-variant font-body-md hover:text-secondary transition-colors duration-200" href="#buyers">For Buyers</a>
+<a class="text-on-surface-variant font-body-md hover:text-secondary transition-colors duration-200" href="#sellers">For Sellers</a>
+<a class="text-on-surface-variant font-body-md hover:text-secondary transition-colors duration-200" href="#resources">Resources</a>
+</nav>
+<!-- Actions -->
+<div class="hidden lg:flex items-center gap-sm">
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-secondary transition-colors" href="#">Sign In</a>
+<a class="bg-primary text-on-primary px-gutter py-xs rounded-full font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm" href="#">Get Started</a>
+</div>
+<!-- Mobile Menu Toggle -->
+<button aria-label="Menu" class="lg:hidden text-primary p-xs">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<main class="flex-grow">
+<!-- 1. Hero Section -->
+<section class="bg-secondary-fixed relative overflow-hidden py-xl lg:py-24">
+<!-- Decorative gradient -->
+<div class="absolute inset-0 bg-gradient-to-br from-transparent to-surface-tint opacity-10 pointer-events-none"></div>
+<div class="max-w-container-max mx-auto px-gutter grid grid-cols-1 lg:grid-cols-2 gap-xl items-center relative z-10">
+<!-- Left Content -->
+<div class="flex flex-col gap-md max-w-2xl">
+<div class="inline-flex items-center bg-surface-container-lowest/50 border border-secondary-container rounded-full px-sm py-base w-fit gap-xs">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-md text-caption text-on-surface-variant tracking-wider uppercase">B2B Import &amp; Export Marketplace</span>
+</div>
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg text-primary">
+                        Find Verified Suppliers. <br>
+<span class="text-[#2A4DE0] text-glow-blue">Close Deals Faster.</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl">
+                        The intelligent command center for global trade. Connect with vetted manufacturers and streamline your entire procurement process in one secure platform.
+                    </p>
+<!-- AI Search Bar -->
+<div class="bg-surface-container-lowest rounded-full p-xs flex items-center shadow-lg shadow-primary-container/5 border border-surface-container-high w-full max-w-lg mt-sm">
+<div class="pl-sm text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined">magic_button</span>
+</div>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md text-on-surface px-sm py-xs outline-none w-full" placeholder="I'm looking for 'Industrial grade textiles in Vietnam'..." type="text">
+<button class="bg-[#2A4DE0] text-white p-xs rounded-full hover:bg-secondary-container transition-colors flex items-center justify-center aspect-square h-10 w-10">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+<div class="flex flex-wrap items-center gap-sm mt-xs">
+<a class="bg-primary text-on-primary px-gutter py-sm rounded-full font-label-md text-label-md hover:bg-primary-container transition-colors shadow-md hover:shadow-lg" href="#">Start Buying</a>
+<a class="bg-transparent text-primary border border-primary px-gutter py-sm rounded-full font-label-md text-label-md hover:bg-surface-container-lowest transition-colors" href="#">Sell on MPX Global</a>
+</div>
+</div>
+<!-- Right Content (UI Mockup) -->
+<div class="hidden lg:block relative">
+<!-- Glassy Card -->
+<div class="bg-[#2340C4] rounded-xl p-md shadow-2xl shadow-primary/20 border border-white/10 relative overflow-hidden isolate transform rotate-2 hover:rotate-0 transition-transform duration-500">
+<!-- Shimmer effect -->
+<div class="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 pointer-events-none"></div>
+<!-- Mockup Header -->
+<div class="flex items-center justify-between mb-sm pb-sm border-b border-white/10">
+<div class="flex items-center gap-xs text-white/90">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">Supplier Match Results</span>
+</div>
+<span class="bg-green-500/20 text-green-400 px-xs py-base rounded-full font-label-md text-caption flex items-center gap-base">
+<span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Live
+                            </span>
+</div>
+<!-- Mockup List -->
+<div class="space-y-sm">
+<!-- Item 1 -->
+<div class="bg-white/5 rounded-lg p-sm border border-white/10 flex items-start gap-sm backdrop-blur-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-container overflow-hidden shrink-0" data-alt="A macro shot of highly technical, modern industrial machinery components in a pristine factory setting. High-key lighting, cool tones, emphasizing precision and global manufacturing standards." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDviJxR_0QLh1Qi8HNJP6lcwxI1wQ6XDEnL5O2ZwShit3zeBVzBv8U57KsXltJGOHzc-duV2IP6KSQS5SRiJM4cFi9fqMd7sD79iQNlbqsqEemnTC7MrrymIhv09bpLpuf1vgcwPJCkrfGSFnfySW1BcMGsXQcbYG6laNBZz5vjCZI4IlbVz9seqgW23rYBZMaAnlApXQxygLoDD4LrbnOzWczwuqa3Fc0V25s9clWabcpcAOcpQbx9awBHPuUeF3g2h8iPxe8Q-ZY'); background-size: cover;"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h3 class="text-white font-label-md text-label-md">Apex Industrial Components</h3>
+<span class="text-blue-300 bg-blue-500/20 px-xs py-base rounded text-caption font-label-md">98% Match</span>
+</div>
+<p class="text-white/60 text-caption mt-base">Shenzhen, China • ISO 9001</p>
+<div class="flex gap-xs mt-xs">
+<span class="text-xs text-white/80 bg-white/10 px-2 py-0.5 rounded-full">Machinery</span>
+<span class="text-xs text-white/80 bg-white/10 px-2 py-0.5 rounded-full">Verified</span>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="bg-white/5 rounded-lg p-sm border border-white/10 flex items-start gap-sm backdrop-blur-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-container overflow-hidden shrink-0" data-alt="A detailed view of premium woven textiles stacked neatly in a modern warehouse. Clean white lighting, focusing on the texture and high quality of the materials for global export." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBzjQ2Z7WHE7Dxwt-c_Y9x6SU8_HL17rirBqX0ov5dTNTIepU2LDXk_QSYmrkq0l9JJTztS2nxcN6eg2Y3TjuEiaMeqoJ-olPtLj0KkTdB3goEbynXeuRKMIVYRVhxo_S33qM7TR0PHOhshhmWWTDt0qIUsWE1HexRD7F-Vpe8VVW8HOxW9yL7EETRtJySQDSiII_fct1jOxkAhVQLhmmiPDuO167QP8iBAZEm5gNxEG3yIuPFiOGZebqMSe2ijknT0YDH5lOE8bb0'); background-size: cover;"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h3 class="text-white font-label-md text-label-md">Global Weave Textiles Ltd.</h3>
+<span class="text-blue-300 bg-blue-500/20 px-xs py-base rounded text-caption font-label-md">94% Match</span>
+</div>
+<p class="text-white/60 text-caption mt-base">Dhaka, Bangladesh • Sedex</p>
+<div class="flex gap-xs mt-xs">
+<span class="text-xs text-white/80 bg-white/10 px-2 py-0.5 rounded-full">Textiles</span>
+<span class="text-xs text-white/80 bg-white/10 px-2 py-0.5 rounded-full">Verified</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Decorative element -->
+<div class="absolute -bottom-xl -right-xl w-64 h-64 bg-secondary/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
+</div>
+</div>
+</section>
+<!-- Trust Bar -->
+<section class="bg-surface-container-lowest border-y border-surface-container py-md">
+<div class="max-w-container-max mx-auto px-gutter">
+<p class="text-center font-label-md text-caption text-on-surface-variant uppercase tracking-wider mb-md">Built for trusted global trade</p>
+<div class="flex flex-wrap justify-center gap-md md:gap-lg">
+<div class="flex items-center gap-xs bg-surface-container-low px-sm py-xs rounded-full border border-surface-variant">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="font-label-md text-label-md text-on-surface">Human-Verified Sellers</span>
+</div>
+<div class="flex items-center gap-xs bg-surface-container-low px-sm py-xs rounded-full border border-surface-variant">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span class="font-label-md text-label-md text-on-surface">Real-Time Chat</span>
+</div>
+<div class="flex items-center gap-xs bg-surface-container-low px-sm py-xs rounded-full border border-surface-variant">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">manage_search</span>
+<span class="font-label-md text-label-md text-on-surface">AI-Assisted Search</span>
+</div>
+<div class="flex items-center gap-xs bg-surface-container-low px-sm py-xs rounded-full border border-surface-variant">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">devices</span>
+<span class="font-label-md text-label-md text-on-surface">Web + Mobile App</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Sourcing Categories Section -->
+<section class="w-full py-xl md:py-24 bg-surface-container-lowest px-md" id="categories">
+<div class="max-w-container-max mx-auto flex flex-col items-center">
+<!-- Header -->
+<div class="text-center mb-lg md:mb-16">
+<h2 class="font-display-lg text-display-lg text-primary mb-sm">
+                Browse by <span class="text-[#2A4DE0]">Category</span>
+</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+                Find specialized suppliers across top global industries.
+            </p>
+</div>
+<!-- Categories Grid -->
+<div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-lg md:gap-xl">
+<!-- Raw Materials -->
+<div class="flex flex-col gap-sm bg-surface-container-low p-md rounded-2xl border border-surface-variant hover:border-[#2A4DE0]/30 transition-colors">
+<div class="flex items-center gap-xs text-primary mb-xs">
+<div class="w-10 h-10 rounded-lg bg-[#2A4DE0]/10 flex items-center justify-center text-[#2A4DE0]">
+<span class="material-symbols-outlined text-[24px]">inventory_2</span>
+</div>
+<span class="font-headline-md text-[20px] font-bold">Raw Materials</span>
+</div>
+<div class="flex flex-col gap-sm pl-2 border-l-2 border-surface-variant/50 ml-4">
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Textiles &amp; Fabrics <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Chemicals <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Agriculture <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Metals &amp; Ores <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Consumer Goods -->
+<div class="flex flex-col gap-sm bg-surface-container-low p-md rounded-2xl border border-surface-variant hover:border-[#2A4DE0]/30 transition-colors">
+<div class="flex items-center gap-xs text-primary mb-xs">
+<div class="w-10 h-10 rounded-lg bg-[#2A4DE0]/10 flex items-center justify-center text-[#2A4DE0]">
+<span class="material-symbols-outlined text-[24px]">shopping_bag</span>
+</div>
+<span class="font-headline-md text-[20px] font-bold">Consumer Goods</span>
+</div>
+<div class="flex flex-col gap-sm pl-2 border-l-2 border-surface-variant/50 ml-4">
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Electronics <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Home &amp; Garden <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Apparel <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Beauty &amp; Care <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Industrial Equipment -->
+<div class="flex flex-col gap-sm bg-surface-container-low p-md rounded-2xl border border-surface-variant hover:border-[#2A4DE0]/30 transition-colors">
+<div class="flex items-center gap-xs text-primary mb-xs">
+<div class="w-10 h-10 rounded-lg bg-[#2A4DE0]/10 flex items-center justify-center text-[#2A4DE0]">
+<span class="material-symbols-outlined text-[24px]">precision_manufacturing</span>
+</div>
+<span class="font-headline-md text-[20px] font-bold">Industrial Equipment</span>
+</div>
+<div class="flex flex-col gap-sm pl-2 border-l-2 border-surface-variant/50 ml-4">
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Heavy Machinery <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Tools &amp; Hardware <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Power Systems <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+<a class="text-body-md text-on-surface-variant hover:text-[#2A4DE0] transition-colors flex items-center justify-between group" href="#">
+                        Construction <span class="material-symbols-outlined text-[16px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<div class="mt-lg">
+<a class="inline-flex items-center gap-xs font-label-md text-label-md text-[#2A4DE0] hover:text-primary transition-colors" href="#all-categories">
+                View all categories <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- 2. How it Works Section -->
+<section class="w-full bg-brand-bg py-xl md:py-24 px-md relative overflow-hidden" id="how-it-works">
+<div class="max-w-container-max mx-auto flex flex-col items-center">
+<!-- Header Section -->
+<div class="text-center mb-lg md:mb-16">
+<span class="inline-block mb-sm font-label-md text-label-md text-brand-accent tracking-widest uppercase">
+                    HOW IT WORKS
+                </span>
+<h2 class="font-display-lg text-display-lg text-brand-navy mb-lg">
+                    One platform. <span class="text-brand-accent">Two clear journeys.</span>
+</h2>
+<!-- Toggle -->
+<div class="inline-flex items-center p-1 bg-surface-container-highest rounded-full border border-outline-variant shadow-sm relative z-10">
+<button class="px-lg py-sm rounded-full bg-brand-navy text-on-primary font-label-md text-label-md transition-all duration-200">
+                        For Buyers
+                    </button>
+<button class="px-lg py-sm rounded-full text-on-surface-variant font-label-md text-label-md hover:text-brand-navy transition-colors duration-200">
+                        For Sellers
+                    </button>
+</div>
+</div>
+<!-- Steps Container -->
+<div class="w-full relative max-w-6xl mx-auto">
+<!-- Connecting Line (Desktop) -->
+<div class="hidden md:block absolute top-[52px] left-[12%] right-[12%] h-[1px] dashed-connector z-0 pointer-events-none">
+<!-- Arrows -->
+<div class="absolute left-1/3 w-full h-full step-arrow"></div>
+<div class="absolute left-2/3 w-full h-full step-arrow"></div>
+</div>
+<!-- Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-md md:gap-lg relative z-10">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest rounded-2xl p-md border border-surface-variant shadow-ambient hover:shadow-ambient-hover transition-shadow duration-300 flex flex-col items-center text-center group">
+<div class="w-16 h-16 rounded-full bg-brand-accent flex items-center justify-center text-on-primary mb-md shadow-md relative">
+<span class="absolute -top-2 -right-2 w-6 h-6 bg-brand-navy text-on-primary rounded-full font-label-md text-[12px] flex items-center justify-center border-2 border-surface-container-lowest">1</span>
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 0;">search</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-brand-navy mb-xs">Discover verified suppliers</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Browse thousands of human-verified global exporters.</p>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest rounded-2xl p-md border border-surface-variant shadow-ambient hover:shadow-ambient-hover transition-shadow duration-300 flex flex-col items-center text-center group">
+<div class="w-16 h-16 rounded-full bg-brand-accent flex items-center justify-center text-on-primary mb-md shadow-md relative">
+<span class="absolute -top-2 -right-2 w-6 h-6 bg-brand-navy text-on-primary rounded-full font-label-md text-[12px] flex items-center justify-center border-2 border-surface-container-lowest">2</span>
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 0;">description</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-brand-navy mb-xs">Send an enquiry / RFQ</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Request quotes and specifications with a single click.</p>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest rounded-2xl p-md border border-surface-variant shadow-ambient hover:shadow-ambient-hover transition-shadow duration-300 flex flex-col items-center text-center group">
+<div class="w-16 h-16 rounded-full bg-brand-accent flex items-center justify-center text-on-primary mb-md shadow-md relative">
+<span class="absolute -top-2 -right-2 w-6 h-6 bg-brand-navy text-on-primary rounded-full font-label-md text-[12px] flex items-center justify-center border-2 border-surface-container-lowest">3</span>
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 0;">forum</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-brand-navy mb-xs">Chat in real time</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Communicate directly with suppliers via our secure platform.</p>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest rounded-2xl p-md border border-surface-variant shadow-ambient hover:shadow-ambient-hover transition-shadow duration-300 flex flex-col items-center text-center group">
+<div class="w-16 h-16 rounded-full bg-brand-accent flex items-center justify-center text-on-primary mb-md shadow-md relative">
+<span class="absolute -top-2 -right-2 w-6 h-6 bg-brand-navy text-on-primary rounded-full font-label-md text-[12px] flex items-center justify-center border-2 border-surface-container-lowest">4</span>
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 0;">payments</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-brand-navy mb-xs">Get a quote &amp; negotiate</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Finalize terms and close deals with formal digital quotations.</p>
+</div>
+</div>
+</div>
+<!-- Bottom Muted Text -->
+<div class="mt-lg pt-md border-t border-outline-variant/30 text-center max-w-3xl mx-auto">
+<p class="font-caption text-caption text-on-surface-variant flex items-center justify-center gap-2 flex-wrap">
+<span class="font-bold text-brand-navy">For Sellers:</span> 
+                    Register 
+                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span> 
+                    Get verified 
+                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span> 
+                    Publish catalogue 
+                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span> 
+                    Receive enquiries &amp; quote.
+                </p>
+</div>
+</div>
+</section>
+<!-- 3. Platform Features Section -->
+<section class="w-full py-xl md:py-24 bg-surface-container-lowest flex items-center justify-center px-gutter">
+<div class="w-full max-w-container-max mx-auto flex flex-col items-center">
+<!-- Header -->
+<div class="text-center mb-lg w-full max-w-3xl">
+<span class="font-label-md text-label-md accent-text uppercase tracking-widest block mb-sm">THE MPX PLATFORM</span>
+<h2 class="font-display-lg text-display-lg text-primary">Everything you need to discover, connect and deal.</h2>
+</div>
+<!-- Horizontal Tab Bar -->
+<div class="flex flex-wrap justify-center gap-xs mb-xl">
+<button class="navy-bg text-on-primary font-label-md text-label-md px-lg py-sm rounded-full transition-colors">AI Search</button>
+<button class="slate-text hover:bg-surface-container hover:text-primary font-label-md text-label-md px-lg py-sm rounded-full transition-colors">Verified Sellers</button>
+<button class="slate-text hover:bg-surface-container hover:text-primary font-label-md text-label-md px-lg py-sm rounded-full transition-colors">Real-Time Chat</button>
+<button class="slate-text hover:bg-surface-container hover:text-primary font-label-md text-label-md px-lg py-sm rounded-full transition-colors">Catalogue</button>
+<button class="slate-text hover:bg-surface-container hover:text-primary font-label-md text-label-md px-lg py-sm rounded-full transition-colors">Quotations</button>
+</div>
+<!-- Content Area -->
+<div class="w-full max-w-5xl bg-surface-container-lowest rounded-2xl border soft-border custom-shadow flex flex-col md:flex-row overflow-hidden">
+<!-- Left Half: Feature Details -->
+<div class="w-full md:w-5/12 p-xl flex flex-col justify-center border-r soft-border bg-surface-container-lowest">
+<div class="mb-lg">
+<h3 class="font-headline-lg text-headline-lg text-primary mb-sm">AI-Assisted Search</h3>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Find the perfect global partners in seconds using natural language.</p>
+</div>
+<ul class="space-y-md">
+<li class="flex items-start gap-sm">
+<span class="material-symbols-outlined verified-text" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Context-aware intent matching</span>
+</li>
+<li class="flex items-start gap-sm">
+<span class="material-symbols-outlined verified-text" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Cross-lingual catalogue translation</span>
+</li>
+<li class="flex items-start gap-sm">
+<span class="material-symbols-outlined verified-text" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Automated capability scoring</span>
+</li>
+</ul>
+</div>
+<!-- Right Half: UI Mockup -->
+<div class="w-full md:w-7/12 p-lg bg-surface-container-low flex flex-col justify-center">
+<div class="bg-surface-container-lowest rounded-xl border soft-border custom-shadow p-md flex flex-col gap-md h-full">
+<!-- Search Input Mockup -->
+<div class="flex items-center gap-sm p-sm rounded-lg border border-primary-container/20 bg-surface-container-lowest">
+<span class="material-symbols-outlined slate-text">search</span>
+<span class="font-body-md text-body-md text-primary font-medium w-full">I need an Australian food importer</span>
+<span class="material-symbols-outlined accent-text">mic</span>
+</div>
+<!-- AI Response Area -->
+<div class="flex-1 flex flex-col gap-sm">
+<span class="font-caption text-caption slate-text uppercase tracking-wider">Top AI Matches</span>
+<!-- Result Card 1 -->
+<div class="flex items-center justify-between p-sm rounded-lg border soft-border bg-surface-container-lowest hover:border-secondary/50 transition-colors cursor-pointer">
+<div class="flex flex-col gap-base">
+<span class="font-label-md text-label-md text-primary">Pacific Foods Direct Ltd.</span>
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined verified-text text-[14px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-caption text-caption verified-text">Verified</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-headline-md text-headline-md accent-text">98%</span>
+<span class="font-caption text-caption slate-text">Match</span>
+</div>
+</div>
+<!-- Result Card 2 -->
+<div class="flex items-center justify-between p-sm rounded-lg border soft-border bg-surface-container-lowest hover:border-secondary/50 transition-colors cursor-pointer">
+<div class="flex flex-col gap-base">
+<span class="font-label-md text-label-md text-primary">Aussie Imports Global</span>
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined verified-text text-[14px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-caption text-caption verified-text">Verified</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-headline-md text-headline-md accent-text">92%</span>
+<span class="font-caption text-caption slate-text">Match</span>
+</div>
+</div>
+<!-- Result Card 3 -->
+<div class="flex items-center justify-between p-sm rounded-lg border soft-border bg-surface-container-lowest hover:border-secondary/50 transition-colors cursor-pointer opacity-80">
+<div class="flex flex-col gap-base">
+<span class="font-label-md text-label-md text-primary">Oceania Trade Partners</span>
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined verified-text text-[14px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-caption text-caption verified-text">Verified</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-headline-md text-headline-md accent-text">85%</span>
+<span class="font-caption text-caption slate-text">Match</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Trust & Verification Highlight Section -->
+<section class="bg-soft-blue-tint py-xl md:py-24 px-gutter w-full flex items-center justify-center">
+<div class="max-w-container-max mx-auto w-full">
+<!-- Section Header -->
+<div class="text-center mb-xl">
+<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-deep-navy max-w-3xl mx-auto">
+                    Built on <span class="text-bright-accent-blue">trust</span>, not guesswork.
+                </h2>
+</div>
+<!-- Feature Cards Grid (Bento-inspired) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<!-- Card 1: Human-Verified Sellers -->
+<div class="card-pale-sky card-radius p-lg flex flex-col h-full border border-surface-variant/50 transition-all duration-300 soft-hover-shadow group">
+<div class="mb-md">
+<h3 class="font-headline-md text-headline-md text-deep-navy mb-xs">Human-Verified Sellers</h3>
+<p class="font-body-md text-body-md text-slate-gray">Every exporter undergoes a rigorous multi-point verification process.</p>
+</div>
+<!-- Mock UI: Verification Queue -->
+<div class="mt-auto bg-surface-container-lowest rounded-xl p-md ambient-shadow border border-surface-variant relative overflow-hidden">
+<!-- Decorative gradient blob -->
+<div class="absolute -right-8 -top-8 w-24 h-24 bg-primary-container opacity-5 rounded-full blur-2xl"></div>
+<div class="flex items-center justify-between mb-sm pb-sm border-b border-surface-variant">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">person</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary">Acme Industrial Parts</span>
+<span class="font-caption text-caption text-on-surface-variant">ID: 8492-X</span>
+</div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center bg-surface p-2 rounded-lg">
+<span class="font-caption text-caption text-on-surface-variant">Business License</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
+</div>
+<div class="flex justify-between items-center bg-surface p-2 rounded-lg border border-[#c4ebd3] relative">
+<!-- Prominent Green Approved Badge -->
+<div class="absolute -right-2 -top-2 bg-[#12b76a] text-white rounded-full p-1 shadow-sm flex items-center justify-center z-10 animate-pulse">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+</div>
+<span class="font-caption text-caption text-primary font-medium">Financial Solvency</span>
+<span class="material-symbols-outlined text-[16px] text-[#12b76a]">check_circle</span>
+</div>
+<div class="flex justify-between items-center bg-surface p-2 rounded-lg">
+<span class="font-caption text-caption text-on-surface-variant">Facility Inspection</span>
+<span class="text-xs text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded-full">Pending</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2: AI-Assisted Search -->
+<div class="card-pale-mint card-radius p-lg flex flex-col h-full border border-surface-variant/50 transition-all duration-300 soft-hover-shadow group">
+<div class="mb-md">
+<h3 class="font-headline-md text-headline-md text-deep-navy mb-xs">AI-Assisted Search</h3>
+<p class="font-body-md text-body-md text-slate-gray">Find the exact partners you need using natural language discovery.</p>
+</div>
+<!-- Mock UI: Search & AI Reply -->
+<div class="mt-auto bg-surface-container-lowest rounded-xl p-md ambient-shadow border border-surface-variant">
+<!-- Search Box -->
+<div class="relative mb-md">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+</div>
+<div class="w-full pl-10 pr-4 py-3 bg-surface border border-outline-variant rounded-full font-body-md text-body-md text-primary flex items-center shadow-sm">
+<span class="typing-animation text-sm">"ISO certified steel suppliers in EU..."</span>
+</div>
+</div>
+<!-- AI Reply Snippet -->
+<div class="bg-surface-container-low rounded-lg p-sm border border-surface-variant">
+<div class="flex items-center gap-xs mb-2">
+<span class="material-symbols-outlined text-[18px] text-bright-accent-blue" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-md text-label-md text-primary">Copilot</span>
+</div>
+<p class="font-caption text-caption text-on-surface-variant mb-3 leading-relaxed">
+                                Found 4 ISO-9001 certified steel manufacturers in Germany and Poland with capacity for Q3.
+                            </p>
+<!-- Mini Result Cards -->
+<div class="flex gap-2 overflow-hidden">
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-2 flex-shrink-0 w-32">
+<div class="font-caption text-caption text-primary font-medium truncate">Munich Steelworks</div>
+<div class="text-[10px] text-[#12b76a] mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">workspace_premium</span> ISO-9001</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-2 flex-shrink-0 w-32">
+<div class="font-caption text-caption text-primary font-medium truncate">Krakow Metals</div>
+<div class="text-[10px] text-[#12b76a] mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">workspace_premium</span> ISO-9001</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Real-Time Chat & Quotes -->
+<div class="card-pale-periwinkle card-radius p-lg flex flex-col h-full border border-surface-variant/50 transition-all duration-300 soft-hover-shadow group">
+<div class="mb-md">
+<h3 class="font-headline-md text-headline-md text-deep-navy mb-xs">Real-Time Chat &amp; Quotes</h3>
+<p class="font-body-md text-body-md text-slate-gray">Negotiate terms and finalize deals within a secure, integrated environment.</p>
+</div>
+<!-- Mock UI: Chat Thread & Quote -->
+<div class="mt-auto bg-surface-container-lowest rounded-xl p-md ambient-shadow border border-surface-variant flex flex-col gap-sm">
+<!-- Chat Bubble Received -->
+<div class="flex gap-2 self-start w-10/12">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex-shrink-0 mt-1 flex items-center justify-center">
+<span class="font-caption text-caption text-on-secondary-container font-bold text-[10px]">S</span>
+</div>
+<div class="bg-surface-container-low rounded-2xl rounded-tl-none p-3 text-sm text-on-surface-variant border border-surface-variant">
+                                We can fulfill the 50k unit order by next month. Here is the formal quote.
+                            </div>
+</div>
+<!-- Digital Quotation Card -->
+<div class="ml-8 mr-4 bg-surface rounded-lg border border-outline-variant p-3 shadow-sm">
+<div class="flex justify-between items-center mb-2 pb-2 border-b border-surface-variant">
+<span class="font-label-md text-label-md text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">request_quote</span> Quote #Q-8821
+                                </span>
+<span class="text-xs bg-[#e0e7ff] text-[#3730a3] px-2 py-0.5 rounded-full font-medium">Valid 7 days</span>
+</div>
+<div class="grid grid-cols-2 gap-2 mb-3">
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-wider">Quantity</span>
+<span class="font-caption text-caption text-primary font-medium">50,000</span>
+</div>
+<div class="flex flex-col text-right">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-wider">Unit Price</span>
+<span class="font-caption text-caption text-primary font-medium">$4.20</span>
+</div>
+</div>
+<div class="flex justify-between items-end mb-3 bg-surface-container-low p-2 rounded">
+<span class="font-caption text-caption text-on-surface-variant">Total Value</span>
+<span class="font-label-md text-label-md text-primary font-bold">$210,000.00</span>
+</div>
+<div class="flex gap-2 mt-2">
+<button class="flex-1 bg-surface border border-outline-variant text-primary font-caption text-caption py-1.5 rounded-full hover:bg-surface-container transition-colors">Negotiate</button>
+<button class="flex-1 bg-[#2A4DE0] text-white font-caption text-caption py-1.5 rounded-full shadow-sm hover:bg-blue-700 transition-colors">Accept</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. Why MPX Benefits Section -->
+<section class="w-full py-xl md:py-24 px-md lg:px-lg max-w-container-max mx-auto bg-surface-container-lowest">
+<!-- Header -->
+<div class="text-center mb-xl">
+<h2 class="font-display-lg text-display-lg text-navy">
+                Global sourcing, without the <span class="text-accent-blue">friction</span>.
+            </h2>
+</div>
+<!-- Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest rounded-card p-md shadow-soft border border-outline-variant/30 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+<div class="mb-lg h-[120px] w-full flex items-center justify-center bg-surface-bright rounded-lg">
+<!-- Placeholder for illustration -->
+<svg class="w-24 h-24" fill="none" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<circle cx="50" cy="50" r="40" stroke="#1A2E8F" stroke-width="2"></circle>
+<path d="M30 50L45 65L70 35" stroke="#2A4DE0" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"></path>
+</svg>
+</div>
+<h3 class="font-headline-md text-headline-md text-navy mb-xs">Not sure who to trust?</h3>
+<p class="font-body-md text-body-md text-slate-gray mt-auto">Every supplier is human-verified before going live.</p>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest rounded-card p-md shadow-soft border border-outline-variant/30 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+<div class="mb-lg h-[120px] w-full flex items-center justify-center bg-surface-bright rounded-lg">
+<!-- Placeholder for illustration -->
+<svg class="w-24 h-24" fill="none" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<rect height="60" rx="10" stroke="#1A2E8F" stroke-width="2" width="60" x="20" y="20"></rect>
+<path d="M40 50H60M40 60H50" stroke="#2A4DE0" stroke-linecap="round" stroke-width="3"></path>
+<circle cx="70" cy="70" fill="#2A4DE0" r="15"></circle>
+<path d="M65 70L75 70M70 65L70 75" stroke="white" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+<h3 class="font-headline-md text-headline-md text-navy mb-xs">Can't find the right supplier?</h3>
+<p class="font-body-md text-body-md text-slate-gray mt-auto">AI search understands plain language.</p>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest rounded-card p-md shadow-soft border border-outline-variant/30 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+<div class="mb-lg h-[120px] w-full flex items-center justify-center bg-surface-bright rounded-lg">
+<!-- Placeholder for illustration -->
+<svg class="w-24 h-24" fill="none" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<path d="M20 40C20 28.9543 28.9543 20 40 20H60C71.0457 20 80 28.9543 80 40V50C80 61.0457 71.0457 70 60 70H45L25 85V70C21.9056 67.2281 20 63.3082 20 59V40Z" stroke="#1A2E8F" stroke-width="2"></path>
+<path d="M40 45H60M40 55H50" stroke="#2A4DE0" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+</div>
+<h3 class="font-headline-md text-headline-md text-navy mb-xs">Deals stuck in email chains?</h3>
+<p class="font-body-md text-body-md text-slate-gray mt-auto">Enquiries, chat and quotes in one place.</p>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest rounded-card p-md shadow-soft border border-outline-variant/30 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+<div class="mb-lg h-[120px] w-full flex items-center justify-center bg-surface-bright rounded-lg">
+<!-- Placeholder for illustration -->
+<svg class="w-24 h-24" fill="none" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<rect height="70" rx="6" stroke="#1A2E8F" stroke-width="2" width="40" x="30" y="15"></rect>
+<circle cx="50" cy="75" fill="#2A4DE0" r="3"></circle>
+<path d="M40 45L60 30" stroke="#2A4DE0" stroke-linecap="round" stroke-width="3"></path>
+<path d="M40 55L50 48" stroke="#2A4DE0" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+</div>
+<h3 class="font-headline-md text-headline-md text-navy mb-xs">Always on the move?</h3>
+<p class="font-body-md text-body-md text-slate-gray mt-auto">A full mobile app for buyers and sellers.</p>
+</div>
+</div>
+</section>
+<!-- 6. Mobile App Section -->
+<section class="bg-[#1A2E8F] w-full py-xl md:py-[120px] relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-br from-[#1A2E8F] to-[#061b3c] opacity-80 z-0"></div>
+<div class="absolute top-0 right-0 w-[800px] h-[800px] bg-accent-blue/5 rounded-full blur-[120px] z-0 pointer-events-none transform translate-x-1/3 -translate-y-1/3"></div>
+<div class="max-w-container-max mx-auto px-md md:px-lg relative z-10">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-xl md:gap-[80px] items-center">
+<div class="flex flex-col gap-lg order-2 lg:order-1">
+<div class="flex flex-col gap-sm">
+<h2 class="font-display-lg text-display-lg text-white max-w-xl">
+                            The whole marketplace, in your <span class="text-[#2A4DE0]">pocket.</span>
+</h2>
+<p class="font-body-lg text-body-lg text-on-primary-container max-w-lg mt-md">
+                            Our mobile app and web platform share a single, robust backend. Experience seamless, real-time synchronization of products, enquiries, and high-stakes B2B chat across all your devices.
+                        </p>
+</div>
+<ul class="flex flex-col gap-sm">
+<li class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-[#2A4DE0]/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[#2A4DE0] text-[20px]">check</span>
+</div>
+<span class="font-body-md text-body-md text-white">Search with AI-assisted search</span>
+</li>
+<li class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-[#2A4DE0]/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[#2A4DE0] text-[20px]">check</span>
+</div>
+<span class="font-body-md text-body-md text-white">Real-time chat</span>
+</li>
+<li class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-[#2A4DE0]/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[#2A4DE0] text-[20px]">check</span>
+</div>
+<span class="font-body-md text-body-md text-white">Manage your catalogue from your phone</span>
+</li>
+<li class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-[#2A4DE0]/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[#2A4DE0] text-[20px]">check</span>
+</div>
+<span class="font-body-md text-body-md text-white">Push notifications</span>
+</li>
+</ul>
+<div class="flex flex-wrap gap-md mt-sm">
+<button class="bg-surface-container-lowest/10 hover:bg-surface-container-lowest/20 border border-surface-container-lowest/20 rounded-lg px-md py-sm flex items-center gap-sm transition-all duration-300">
+<span class="material-symbols-outlined text-white text-[28px]" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<div class="flex flex-col items-start">
+<span class="text-[10px] text-white/70 uppercase tracking-wider font-semibold">GET IT ON</span>
+<span class="font-label-md text-label-md text-white">Google Play</span>
+</div>
+</button>
+<button class="bg-surface-container-lowest/10 hover:bg-surface-container-lowest/20 border border-surface-container-lowest/20 rounded-lg px-md py-sm flex items-center gap-sm transition-all duration-300">
+<span class="material-symbols-outlined text-white text-[28px]" style="font-variation-settings: 'FILL' 1;">file_download</span>
+<div class="flex flex-col items-start">
+<span class="text-[10px] text-white/70 uppercase tracking-wider font-semibold">Download on the</span>
+<span class="font-label-md text-label-md text-white">App Store</span>
+</div>
+</button>
+</div>
+</div>
+<div class="relative order-1 lg:order-2 h-[500px] md:h-[600px] flex items-center justify-center perspective-1000">
+<div class="absolute left-[10%] top-[15%] w-[45%] aspect-[9/19] rounded-[2.5rem] bg-surface-container-lowest border-[8px] border-surface-container-lowest/10 shadow-2xl overflow-hidden float-animation glow-effect z-20 transform -rotate-6">
+<img class="w-full h-full object-cover" data-alt="A sleek, modern mobile application interface showing a B2B product discovery screen. High quality, detailed product images with clean typography on a crisp white background. The aesthetic is professional, high-tech, and corporate modernist, reflecting global trade logistics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOPAmTF3y5WiFSv-uqoydsvG0Yn-mjfCdQ4QYDOEDJWnAjGrixAS62d_7Ze5VbNCiW4qMfvGQUSMokRppGh0n2x-WRQwV3Ch6mVXI0LBRw-EDfQdmvrj-drtSjYr8_38MQQRBEIeRCodDp-faLj2bi3THMEmdvh7Dn2YwfndR0lAFb2E6FqU74AgIp3zTxny0GE-x4-y5DvLb-vpEMqb5c2bv3PJ3UR-5isXl56lqF82MDYnFOq_0ujYKLLcox_wE0ON_wOxHsbuI">
+</div>
+<div class="absolute right-[10%] top-[25%] w-[45%] aspect-[9/19] rounded-[2.5rem] bg-surface-container-lowest border-[8px] border-surface-container-lowest/10 shadow-2xl overflow-hidden float-animation-delayed glow-effect z-10 transform rotate-6 translate-z-[-50px]">
+<img class="w-full h-full object-cover" data-alt="A sophisticated mobile application interface showing a B2B seller catalogue and a real-time chat window. The design features a crisp white canvas with subtle pale slate borders and deep navy accents. The mood is efficient, organized, and powerful, suited for enterprise logistics managers." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGGYroX7OGVsSgb3hent-YaXZq7x5jDxpq_AoHBSBZg5b27FDrAK5W4YrTrz7vLd-fge0CMmbgipeJp9Pxk8w2aruROaAAqLlhp-UZuWq5imIAoul1FlAmgbhBDFVgaEmenOkGeavr-UyWkNdb6ty4lruyAnYIDn0mYfMAjWw3VRAq0QjwwrrA_99c5RSxUwGGzC-mBD2qjmmVTPj4aVPh2cbMIh4uSLr7RXMVilwYJCcosr-dDImJ655okJAWdnZYmv2cPdtMZMk">
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 7. Testimonials Section -->
+<section class="w-full bg-custom-soft-blue py-xl px-gutter md:px-lg lg:py-24 relative overflow-hidden">
+<!-- Optional Ambient Gradient Detail for High-Tech feel -->
+<div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/20 to-transparent"></div>
+<div class="max-w-container-max mx-auto relative z-10">
+<!-- Header -->
+<div class="text-center mb-lg md:mb-xl flex flex-col items-center">
+<span class="text-custom-accent-blue font-label-md text-label-md tracking-[0.15em] uppercase mb-sm block">
+                    TRUSTED BY TRADERS
+                </span>
+<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary max-w-3xl">
+                    What buyers and sellers <span class="text-custom-accent-blue">say</span>.
+                </h2>
+</div>
+<!-- Masonry-style Grid -->
+<!-- Using columns for Masonry layout in CSS -->
+<div class="columns-1 md:columns-2 lg:columns-3 gap-md space-y-md">
+<!-- Card 1 -->
+<div class="break-inside-avoid bg-surface-container-lowest rounded-20 p-md border border-outline-variant/30 shadow-ambient transition-shadow duration-300 hover:shadow-ambient-hover">
+<div class="flex items-center gap-sm mb-md">
+<img class="w-[56px] h-[56px] rounded-full object-cover border-2 border-surface-container-low" data-alt="A professional headshot of an Indian businessman in his late 30s, wearing a crisp white shirt and a dark navy blazer, smiling confidently. The background is a slightly blurred, modern, bright office environment with natural daylight. High-tech B2B aesthetic, corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfGqYhLgp9S84IYcbK-qhS0XHC1WZ_fZAWXdvmc3BgFnn9btOeP027tsF-DhDmNeul08WGDPM1RDeroWeSVZrIcVnO7Rshbng_cYyNklKPIewiNtiKxnNF_z0JIjc7iyB4T5PqfvVINg6hlLdL9nmYT20vJ-Ka4xebxm4m_VUFUWqSHSFygvNf0-iRnwMjW24pU45igd8WsxdA-pRLP6b9iNcM--iDA-UKDn5GOqLqmcz7vmmSgg3pNq1pQbLagV6Eh-FQXgJxsKI">
+<div>
+<h3 class="font-headline-md text-[18px] text-primary">Aarav Sharma</h3>
+<p class="font-caption text-caption text-on-surface-variant">Exporter, Surat, India</p>
+</div>
+</div>
+<div class="flex gap-[2px] mb-sm text-custom-accent-blue">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                        "The platform's verification processes and secure escrow have transformed how we handle international orders. We've expanded our reach to Europe with zero payment defaults."
+                    </p>
+</div>
+<!-- Card 2 -->
+<div class="break-inside-avoid bg-surface-container-lowest rounded-20 p-md border border-outline-variant/30 shadow-ambient transition-shadow duration-300 hover:shadow-ambient-hover">
+<div class="flex items-center gap-sm mb-md">
+<img class="w-[56px] h-[56px] rounded-full object-cover border-2 border-surface-container-low" data-alt="A professional headshot of a Middle Eastern businesswoman in her 40s, wearing elegant professional attire, with a warm, composed expression. The background implies a sophisticated high-rise office overlooking Dubai, blurred softly. High-tech B2B aesthetic, light modern lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhsu0OCEe7sPnP-bUrqyt1kqEUljeIFZ-9HDPg6gPGIjOq7dQCtatKgaxWCGfng8bZvW8dnbze-vJgFdm4YInbMwzwjCw7OJeJwBX8ylQTJESQ4RZ9c85I_9BoY1r-DlhuihI9nrPrdAxAZ1gfOHMDcg_iDvDps7DPX4WDaIepoVLAsYM6RJ8rkaoQegvaB7y5KBkIX85SfZ7CuZVV7lbZqd36UB14xfx_pPGGJjH66dLnHfaP_X5KPinjC9S2fK0DaD03k55-x54">
+<div>
+<h3 class="font-headline-md text-[18px] text-primary">Sarah Jenkins</h3>
+<p class="font-caption text-caption text-on-surface-variant">Importer, Dubai, UAE</p>
+</div>
+</div>
+<div class="flex gap-[2px] mb-sm text-custom-accent-blue">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                        "Sourcing heavy machinery used to be a logistical nightmare involving endless emails. Now, the dashboard provides complete visibility over our shipments, saving us weeks of negotiation."
+                    </p>
+</div>
+<!-- Card 3 -->
+<div class="break-inside-avoid bg-surface-container-lowest rounded-20 p-md border border-outline-variant/30 shadow-ambient transition-shadow duration-300 hover:shadow-ambient-hover">
+<div class="flex items-center gap-sm mb-md">
+<img class="w-[56px] h-[56px] rounded-full object-cover border-2 border-surface-container-low" data-alt="A professional headshot of a Chinese businessman in his 50s, wearing a modern dark suit, looking authoritative yet approachable. The background is a clean, bright, industrial-tech office setting, soft and out of focus. Corporate modernism style, cool white light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1yH_RuMDqh-Lmbb_0qiXO8W_wPJFhQQMomWpTB0aPL5gKoVC63294mm8UHD4VNyJ_sa1pLN_hDzMe3ejDfwpK7sfNBlrzv7a0saVIMm-dvHyJ_kLUg7HMuPhrRQg9OrHOM8m7ooq-juLYt938w35XY4rd3pjm82yb8M9llnpqk0eaSFR71D9zUsc87RYPeZdJaZcAxKIFz48z984DE5pgFqtCt4LCwo9tpWWoczg1TZThghGOzr3NgKlN5PQkiE1WwW9zkzM6vBg">
+<div>
+<h3 class="font-headline-md text-[18px] text-primary">Chen Wei</h3>
+<p class="font-caption text-caption text-on-surface-variant">Manufacturer, Shenzhen, China</p>
+</div>
+</div>
+<div class="flex gap-[2px] mb-sm text-custom-accent-blue">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                        "The analytics tools integrated into our seller profile allowed us to optimize our production runs based on real-time global demand trends. It's a game changer for manufacturing."
+                    </p>
+</div>
+<!-- Card 4 -->
+<div class="break-inside-avoid bg-surface-container-lowest rounded-20 p-md border border-outline-variant/30 shadow-ambient transition-shadow duration-300 hover:shadow-ambient-hover">
+<div class="flex items-center gap-sm mb-md">
+<img class="w-[56px] h-[56px] rounded-full object-cover border-2 border-surface-container-low" data-alt="A professional headshot of an African American male logistics manager in his early 40s, wearing a sharp grey suit, smiling slightly. The background features subtle architectural lines of a modern corporate HQ, brightly lit. Premium B2B corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1YBMKOxj-JNveREPGMOTRJju2HAMz851jmO91WPKWdz_wePmiM2e8sQE0bSK-7e1hqc3X-3rvCeDuqLrb-aqSaeD-SIjyNiW9qjCADi3AdEQlMXL2NSvtu2LQMJxGHodWj53Ea5BU3bH7Jhj2iiGfFf8242VLLqkpc7jwz5zeEycd1QwqjC2zzm7Q9UXjeiePwy1iwDckLZxSo2QAtxgVZaWDbQyjdECcobOnWeUY0a_fS3yP-Hs6e9P53hRao0ZOAIi3mQr8zIA">
+<div>
+<h3 class="font-headline-md text-[18px] text-primary">Marcus Thorne</h3>
+<p class="font-caption text-caption text-on-surface-variant">Logistics Director, Rotterdam, NL</p>
+</div>
+</div>
+<div class="flex gap-[2px] mb-sm text-custom-accent-blue">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                        "Integration with our existing ERP was seamless. The API handles thousands of transactions securely, maintaining the high-tech precision our operations demand."
+                    </p>
+</div>
+<!-- Card 5 -->
+<div class="break-inside-avoid bg-surface-container-lowest rounded-20 p-md border border-outline-variant/30 shadow-ambient transition-shadow duration-300 hover:shadow-ambient-hover">
+<div class="flex items-center gap-sm mb-md">
+<img class="w-[56px] h-[56px] rounded-full object-cover border-2 border-surface-container-low" data-alt="A professional headshot of a European female trader in her 30s, blonde hair, wearing a navy blazer, looking confident directly at the camera. The setting is a minimalist, brightly lit trading floor or modern office in soft focus. High contrast corporate photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwiAOVXDeh9QlXqCq4p39j0b_vFIyz7cLiD8EluTKQ-QBf3nemTofW5ysaGX-0H4Jh4fhwSJM4D35td6bY7C_5jpjWmGTW_iU3xajtzfBFJGGUaymQI8sZ_01QZIFuwa9fOyNWBSq7WEZtqIYplDzPck8VYOPmj30imiZAiF1PCfFVGf-ln4uRnF6sM0rlYK9qQtnek9gB2roekvkS1NnmI66ZkHzqLH4FXfozJ2OborF-J05WWXE5AnmAldAGLf-Vyagi29ehIe4">
+<div>
+<h3 class="font-headline-md text-[18px] text-primary">Elena Rostova</h3>
+<p class="font-caption text-caption text-on-surface-variant">Commodities Trader, London, UK</p>
+</div>
+</div>
+<div class="flex gap-[2px] mb-sm text-custom-accent-blue">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                        "The transparency is unmatched. Being able to verify supplier credentials and track shipping milestones in one unified dashboard gives me total control over large volume purchases."
+                    </p>
+</div>
+<!-- Card 6 -->
+<div class="break-inside-avoid bg-surface-container-lowest rounded-20 p-md border border-outline-variant/30 shadow-ambient transition-shadow duration-300 hover:shadow-ambient-hover">
+<div class="flex items-center gap-sm mb-md">
+<img class="w-[56px] h-[56px] rounded-full object-cover border-2 border-surface-container-low" data-alt="A professional headshot of a Hispanic male entrepreneur in his late 20s, neatly groomed, wearing a smart casual light blue shirt, smiling warmly. The background is a modern, light-filled co-working space or corporate office. Clean, crisp B2B styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzBbDm88eTaGJbXvXjjyJ15TKniEzwXJ6BsG0XtmH9yzqEeo7pGRiqocoIG_299gLHt3yGcrRtIEHRplAF8s9nBY8lxFDL_iHAF_4LLuWjR0jZN6mbQBu6kmSCBY_dunRpVZu34BZEUA7MQM9xUjYeqvC2Y5Uh822cGYikFRLFEQpl33bruafnz_hufedNWH9sh7LhmRVEN721Y58Dkm1qoU9-PNKp-TQ5QRMZVTVLjarAz-6EH40YSVmEcCXxBFWjvClHetOxKZs">
+<div>
+<h3 class="font-headline-md text-[18px] text-primary">Carlos Mendez</h3>
+<p class="font-caption text-caption text-on-surface-variant">Wholesaler, Bogota, Colombia</p>
+</div>
+</div>
+<div class="flex gap-[2px] mb-sm text-custom-accent-blue">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                        "As a growing business, the financial tools and trade credit features have allowed us to scale rapidly without compromising our cash flow. Truly an institutional-grade platform."
+                    </p>
+</div>
+</div>
+</div>
+</section>
+<!-- 8. FAQ Section -->
+<section class="w-full max-w-container-max mx-auto px-md md:px-lg py-xl md:py-24 flex flex-col items-center justify-center">
+<div class="w-full max-w-3xl">
+<div class="text-center mb-lg">
+<h2 class="font-display-lg-mobile md:font-display-lg text-primary-container">
+                    Frequently asked <span class="text-accent-blue">questions</span>
+</h2>
+<p class="mt-sm font-body-lg text-on-surface-variant max-w-2xl mx-auto">
+                    Everything you need to know about navigating the world's premier B2B global trade platform.
+                </p>
+</div>
+<div class="border-t border-outline-variant/30 divide-y divide-outline-variant/30">
+<!-- FAQ Item 1 (Expanded Default) -->
+<div class="py-md group">
+<button class="flex w-full items-center justify-between text-left focus:outline-none" onclick="toggleAccordion(this)">
+<span class="font-headline-md text-primary-container group-hover:text-accent-blue transition-colors duration-200">What is MPX Global?</span>
+<span class="material-symbols-outlined accordion-icon active text-primary-container group-hover:text-accent-blue transition-colors duration-200" data-icon="remove">remove</span>
+</button>
+<div class="accordion-content active font-body-md text-on-surface-variant pr-lg">
+<p class="">MPX Global is a premier B2B marketplace engineered for seamless global trade. We connect verified buyers and sellers in a high-trust environment, leveraging cutting-edge technology and rigorous compliance standards to facilitate efficient, secure, and scalable international transactions.</p>
+</div>
+</div>
+<!-- FAQ Item 2 -->
+<div class="py-md group">
+<button class="flex w-full items-center justify-between text-left focus:outline-none" onclick="toggleAccordion(this)">
+<span class="font-headline-md text-primary-container group-hover:text-accent-blue transition-colors duration-200">How does seller verification work?</span>
+<span class="material-symbols-outlined accordion-icon text-primary-container group-hover:text-accent-blue transition-colors duration-200" data-icon="add">add</span>
+</button>
+<div class="accordion-content font-body-md text-on-surface-variant pr-lg">
+<p class="">Our seller verification is a multi-tiered process involving rigorous business identity checks, financial stability assessments, and compliance audits to ensure a secure trading environment.</p>
+</div>
+</div>
+<!-- FAQ Item 3 -->
+<div class="py-md group">
+<button class="flex w-full items-center justify-between text-left focus:outline-none" onclick="toggleAccordion(this)">
+<span class="font-headline-md text-primary-container group-hover:text-accent-blue transition-colors duration-200">Is there a fee to join as a buyer?</span>
+<span class="material-symbols-outlined accordion-icon text-primary-container group-hover:text-accent-blue transition-colors duration-200" data-icon="add">add</span>
+</button>
+<div class="accordion-content font-body-md text-on-surface-variant pr-lg">
+<p class="">Joining as a standard buyer on MPX Global is currently free. We offer premium enterprise tiers with advanced analytics and dedicated support for large-volume procurement teams.</p>
+</div>
+</div>
+<!-- FAQ Item 4 -->
+<div class="py-md group">
+<button class="flex w-full items-center justify-between text-left focus:outline-none" onclick="toggleAccordion(this)">
+<span class="font-headline-md text-primary-container group-hover:text-accent-blue transition-colors duration-200">How does the AI search work?</span>
+<span class="material-symbols-outlined accordion-icon text-primary-container group-hover:text-accent-blue transition-colors duration-200" data-icon="add">add</span>
+</button>
+<div class="accordion-content font-body-md text-on-surface-variant pr-lg">
+<p class="">Our AI-driven search engine utilizes natural language processing and deep learning algorithms to match your exact procurement needs with the most relevant global suppliers, reducing discovery time by up to 60%.</p>
+</div>
+</div>
+<!-- FAQ Item 5 -->
+<div class="py-md group">
+<button class="flex w-full items-center justify-between text-left focus:outline-none" onclick="toggleAccordion(this)">
+<span class="font-headline-md text-primary-container group-hover:text-accent-blue transition-colors duration-200">Is there a mobile app?</span>
+<span class="material-symbols-outlined accordion-icon text-primary-container group-hover:text-accent-blue transition-colors duration-200" data-icon="add">add</span>
+</button>
+<div class="accordion-content font-body-md text-on-surface-variant pr-lg">
+<p class="">Yes, MPX Global offers a comprehensive mobile application for both iOS and Android, allowing you to manage negotiations, track shipments, and communicate with partners on the go.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 9. Final CTA Banner Section -->
+<section class="w-full max-w-container-max mx-auto px-md py-xl md:py-24">
+<div class="w-full bg-[#2340C4] rounded-[20px] p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-2xl">
+<!-- Ambient Glows -->
+<div class="absolute -top-32 -left-32 w-96 h-96 bg-[#2A4DE0] opacity-20 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="absolute -bottom-32 -right-32 w-96 h-96 bg-[#2A4DE0] opacity-20 rounded-full blur-[100px] pointer-events-none"></div>
+<!-- Left Content -->
+<div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left z-10 max-w-2xl">
+<h2 class="font-bold text-4xl md:text-5xl text-white mb-6 leading-tight tracking-tight">
+          Start sourcing <span class="text-[#2A4DE0]">smarter</span> today.
+        </h2>
+<p class="text-lg md:text-xl text-white/90 mb-10 max-w-lg leading-relaxed">
+          Join thousands of verified global traders on the world's most secure B2B marketplace.
+        </p>
+<div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+<button class="w-full sm:w-auto px-8 py-3.5 bg-white text-[#2340C4] font-semibold text-sm rounded-full hover:bg-gray-100 transition-colors duration-200 shadow-lg whitespace-nowrap">
+            Join as Buyer
+          </button>
+<button class="w-full sm:w-auto px-8 py-3.5 border-2 border-white/80 text-white font-semibold text-sm rounded-full hover:bg-white/10 transition-colors duration-200 whitespace-nowrap">
+            Join as Seller
+          </button>
+</div>
+</div>
+<!-- Right Illustration (Glassy UI) -->
+<div class="flex-1 w-full max-w-md relative z-10 hidden md:block">
+<div class="relative w-full aspect-[4/3] rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-2xl p-5 overflow-hidden group hover:-translate-y-2 transition-transform duration-500">
+<!-- Mockup Header -->
+<div class="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-[#2A4DE0]/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#2A4DE0]">rocket_launch</span>
+</div>
+<div class="flex items-center gap-2"><span class="text-white font-bold text-sm">Marketplace Activity</span><div class="flex items-center gap-1 px-2 py-0.5 bg-green-500/20 rounded-full"><div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div><span class="text-[10px] font-bold text-green-500 uppercase tracking-wider">Live</span></div></div>
+</div>
+<div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><span class="material-symbols-outlined text-white text-lg">search</span></div>
+</div>
+<!-- Mockup List Items -->
+<div class="space-y-4"><!-- Item 1: Active Trade -->
+<div class="flex items-center gap-4 p-3 rounded-xl bg-white/10 border border-white/10 hover:bg-white/20 transition-colors"><div class="w-12 h-12 rounded-lg bg-white/20 flex-shrink-0 flex items-center justify-center"><span class="material-symbols-outlined text-white/60">precision_manufacturing</span></div><div class="flex-1"><div class="text-white font-semibold text-sm">Industrial Steel Pipes</div><div class="text-white/60 text-[11px]">1,200 Units • Hamburg, DE</div></div><div class="px-3 py-1.5 rounded-lg bg-[#2A4DE0]/40 border border-white/10"><span class="text-white text-[10px] font-bold uppercase">View Quote</span></div></div>
+<!-- Item 2: Pending Order -->
+<div class="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5"><div class="w-12 h-12 rounded-lg bg-white/10 flex-shrink-0 flex items-center justify-center"><span class="material-symbols-outlined text-white/40">memory</span></div><div class="flex-1"><div class="text-white/90 font-semibold text-sm">Electronic Components</div><div class="text-white/40 text-[11px]">5,000 Units • Shenzhen, CN</div></div><div class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/5"><span class="text-white/60 text-[10px] font-bold uppercase">Details</span></div></div>
+<!-- Item 3: Completed Transaction -->
+<div class="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5"><div class="w-12 h-12 rounded-lg bg-white/10 flex-shrink-0 flex items-center justify-center"><span class="material-symbols-outlined text-white/40">checkroom</span></div><div class="flex-1"><div class="text-white/90 font-semibold text-sm">Raw Textile Materials</div><div class="text-white/40 text-[11px]">800 Rolls • Mumbai, IN</div></div><div class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/5"><span class="text-white/60 text-[10px] font-bold uppercase">Details</span></div></div>
+<!-- Item 4: New Listing -->
+<div class="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5 opacity-60"><div class="w-12 h-12 rounded-lg bg-white/10 flex-shrink-0 flex items-center justify-center"><span class="material-symbols-outlined text-white/40">agriculture</span></div><div class="flex-1"><div class="text-white/90 font-semibold text-sm">Organic Coffee Beans</div><div class="text-white/40 text-[11px]">200 Bags • Santos, BR</div></div><div class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/5"><span class="text-white/60 text-[10px] font-bold uppercase">Details</span></div></div></div>
+<!-- Chart Gradient Overlay -->
+<div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-[#2A4DE0]/20 to-transparent pointer-events-none"></div>
+<!-- Floating Badge -->
+<div class="absolute -right-6 -top-6 bg-white p-4 rounded-xl shadow-2xl border border-gray-100 flex items-center gap-2.5 animate-bounce" style="animation-duration: 4s;">
+<span class="material-symbols-outlined text-green-500 fill-1 text-2xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-sm font-bold text-gray-800 tracking-wide uppercase">Verified</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- 10. Footer -->
+<footer class="bg-primary text-on-primary w-full px-lg py-xl flex flex-col md:flex-row justify-between gap-xl max-w-container-max mx-auto mt-auto border-t border-primary-container">
+<div class="flex flex-col gap-sm max-w-xs">
+<div class="text-headline-md font-headline-md font-bold text-on-primary flex items-center gap-xs">
+<img alt="MPX Global Logo" class="h-[56px] w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBt-Xh-YET5BIGq-jyUgToQ1Lz0rjmqUMvRml3MCeC2MfFrzf1IK3wAAlvCglFxsvnvx0bFLAmeytv25MICfjJP36ZrPQTtTO-pxkGNS5kcUQAfXPWkNJ64IM5DyhcqNHzQrA-bdmqyPt1rFEtyLwchcpiiIILDbFjWumGWZX-rL-8_q3g1GEWbNDLioWjOsFut9BR-f0KKHkcibNWhrz7L75YKGPy2hPQr0lkzSfrIIW9YvPWMKgul3vJKGbtKLqSuhqZY3pTOnYY">
+                MPX Global
+            </div>
+<p class="font-body-md text-body-md text-on-primary-fixed-variant mt-sm">The leading B2B marketplace connecting verified global buyers and sellers.</p>
+<p class="font-body-md text-caption text-on-primary-fixed-variant mt-auto pt-md">© 2024 MPX Global. All rights reserved.</p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-xl flex-1">
+<div class="flex flex-col gap-sm">
+<h4 class="font-label-md text-label-md text-on-primary mb-xs">Marketplace</h4>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">Categories</a>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">For Buyers</a>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">For Sellers</a>
+</div>
+<div class="flex flex-col gap-sm">
+<h4 class="font-label-md text-label-md text-on-primary mb-xs">Company</h4>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">About Us</a>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">Careers</a>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">Contact</a>
+</div>
+<div class="flex flex-col gap-sm">
+<h4 class="font-label-md text-label-md text-on-primary mb-xs">Resources</h4>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">Blog</a>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">Help Center</a>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">Trade Guides</a>
+</div>
+<div class="flex flex-col gap-sm">
+<h4 class="font-label-md text-label-md text-on-primary mb-xs">Legal</h4>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors" href="#">Terms of Service</a>
+</div>
+</div>
+</footer>
+<script>
+    function toggleAccordion(button) {
+        const content = button.nextElementSibling;
+        const icon = button.querySelector('.accordion-icon');
+        const isActive = content.classList.contains('active');
+
+        if (!isActive) {
+            content.classList.add('active');
+            icon.classList.add('active');
+            icon.textContent = 'remove';
+        } else {
+            content.classList.remove('active');
+            icon.classList.remove('active');
+            icon.textContent = 'add';
+        }
+    }
+</script>
+
+
+</body></html>

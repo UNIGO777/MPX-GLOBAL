@@ -1,3 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  body {
+    @apply bg-surface-subtle font-sans text-ink-900;
+  }
+  /* Accessible focus — never outline:none without a replacement.
+     Text inputs/selects/textareas own their focus treatment inside
+     inputClasses() (DESIGN.md: accent border + soft glow, no offset halo);
+     the offset ring here is ONLY for click targets. A global *:focus-visible
+     ring double-ringed every field — the systemic drift found 2026-08-01. */
+  *:focus-visible {
+    @apply outline-none;
+  }
+  :where(a, button, [role='button'], input[type='checkbox'], input[type='radio'], input[type='file'], summary):focus-visible {
+    @apply ring-2 ring-primary-600 ring-offset-2 ring-offset-surface-subtle;
+  }
+}

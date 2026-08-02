@@ -1,0 +1,573 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Buyer Registration | MPX GLOBAL</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:wght@600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom scrollbar for the right panel */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #C5C6CF;
+            border-radius: 10px;
+        }
+
+        /* Responsive height for full-screen layout */
+        .split-layout {
+            height: 100vh;
+        }
+        @media (max-width: 767px) {
+            .split-layout {
+                height: auto;
+                min-height: 100vh;
+            }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-container": "#e60000",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#e3c281",
+                        "surface-container-lowest": "#100e0a",
+                        "surface-container-high": "#2d2a25",
+                        "surface": "#16130f",
+                        "error-container": "#93000a",
+                        "tertiary-fixed": "#dbe1ff",
+                        "surface-variant": "#38342f",
+                        "outline": "#998f81",
+                        "on-primary-fixed": "#261a00",
+                        "on-surface-variant": "#d0c5b5",
+                        "on-secondary-fixed-variant": "#930100",
+                        "primary": "#e5c483",
+                        "surface-container-low": "#1e1b17",
+                        "surface-dim": "#16130f",
+                        "on-tertiary-container": "#334065",
+                        "on-error": "#690005",
+                        "on-primary-container": "#533d07",
+                        "inverse-surface": "#e9e1da",
+                        "error": "#ffb4ab",
+                        "secondary": "#ffb4a8",
+                        "on-secondary-container": "#fff6f5",
+                        "inverse-primary": "#735b24",
+                        "on-secondary": "#690000",
+                        "on-secondary-fixed": "#410000",
+                        "on-primary": "#402d00",
+                        "tertiary-container": "#9facd8",
+                        "on-surface": "#e9e1da",
+                        "tertiary-fixed-dim": "#b8c5f2",
+                        "on-background": "#e9e1da",
+                        "tertiary": "#bac7f5",
+                        "surface-bright": "#3c3933",
+                        "background": "#16130f",
+                        "surface-tint": "#e3c281",
+                        "on-tertiary": "#222f54",
+                        "primary-container": "#c8a96a",
+                        "on-tertiary-fixed-variant": "#38456b",
+                        "on-tertiary-fixed": "#0b1a3d",
+                        "surface-container": "#221f1b",
+                        "on-primary-fixed-variant": "#5a430e",
+                        "outline-variant": "#4d463a",
+                        "inverse-on-surface": "#33302b",
+                        "surface-container-highest": "#38342f",
+                        "secondary-fixed": "#ffdad4",
+                        "primary-fixed": "#ffdf9f",
+                        "secondary-fixed-dim": "#ffb4a8",
+                        "mpx-blue": "#1A2E8F",
+                        "mpx-glow": "#2A4DE0",
+                        "mpx-card": "#2340C4",
+                        "mpx-green": "#12B76A"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "grid-columns": "12",
+                        "stack-sm": "8px",
+                        "margin-mobile": "24px",
+                        "gutter": "32px",
+                        "stack-md": "24px",
+                        "stack-lg": "64px",
+                        "margin-desktop": "80px"
+                    },
+                    fontFamily: {
+                        "headline-sm": ["Playfair Display"],
+                        "button": ["Inter"],
+                        "display-lg-mobile": ["Playfair Display"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Playfair Display"],
+                        "eyebrow": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "body-lg": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-sm": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "button": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "display-lg-mobile": ["44px", {"lineHeight": "52px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-lg": ["72px", {"lineHeight": "84px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "eyebrow": ["12px", {"lineHeight": "16px", "letterSpacing": "0.15em", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-md": ["48px", {"lineHeight": "56px", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-[#EAEEFF] md:bg-white overflow-x-hidden font-body-md text-body-md antialiased">
+<main class="split-layout flex flex-col md:flex-row w-full overflow-hidden">
+<!-- Left Panel: Brand & Value Prop (45%) -->
+<section class="hidden md:flex md:w-[40%] lg:w-[45%] bg-mpx-blue p-10 lg:p-16 flex-col justify-between relative overflow-hidden">
+<!-- Radial Glow -->
+<div class="absolute -bottom-20 -right-20 w-[400px] h-[400px] bg-mpx-glow opacity-15 rounded-full blur-[80px]"></div>
+<!-- Top Brand -->
+<div class="relative z-10">
+<span class="text-white text-[20px] font-bold tracking-tight">MPX Global</span>
+</div>
+<!-- Middle Content -->
+<div class="relative z-10 max-w-lg space-y-10">
+<div class="space-y-4">
+<h1 class="text-white text-[36px] font-bold leading-tight">Source directly from Indian exporters.</h1>
+<p class="text-white/80 text-[18px] leading-relaxed">Create a buyer account and start finding suppliers today. It's free, and you can use the platform straight away.</p>
+</div>
+<ul class="space-y-4">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-mpx-green" style="font-variation-settings: 'wght' 600;">check_circle</span>
+<span class="text-white text-[15px] font-medium">Verified suppliers carry a visible tick</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-mpx-green" style="font-variation-settings: 'wght' 600;">check_circle</span>
+<span class="text-white text-[15px] font-medium">Message exporters directly, no middlemen</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-mpx-green" style="font-variation-settings: 'wght' 600;">check_circle</span>
+<span class="text-white text-[15px] font-medium">Suppliers across 20+ export categories</span>
+</li>
+</ul>
+<!-- Decorative Card -->
+<div class="pt-8 flex justify-start">
+<div class="bg-mpx-card w-[340px] p-6 rounded-[12px] rotate-2 shadow-2xl transition-transform hover:rotate-0 duration-500 cursor-default border border-white/10">
+<div class="flex items-center gap-4">
+<div class="w-11 h-11 bg-white/20 rounded-lg flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A clean professional headshot of a textile industry professional in India, high contrast, warm editorial lighting, corporate photography style for a B2B platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk7bdjsO56l5ILD5s90f8N63Gu_6QJm_hDsF5e_09fU_Jq5oVtKvLtzUWYSmJeOj06fcunD9C-PwFPsP4co9DEXr_dyf9sYEUT_Mh0QQh98pV_JMmvUcyPJOG8YaikZFDwNZXmnWuhyAHEFA9Z3qj0oP3fldlX3_7gir5t--yxI_QMeM95QnREPi1mREoLki6_NokfuTKVVtDNlMqRUvTg9s0PtCbntxtB0rjikluq_en5LzQh8E4l">
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h3 class="text-white text-[15px] font-semibold">Tirupur Knitwear Exports</h3>
+<div class="bg-mpx-green/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-mpx-green text-[12px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="text-mpx-green text-[10px] font-bold uppercase tracking-wider">Verified</span>
+</div>
+</div>
+<p class="text-white/60 text-[13px]">Tirupur, India</p>
+</div>
+</div>
+<div class="mt-4 flex gap-2">
+<div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+<div class="bg-mpx-green h-full w-[85%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Note -->
+<div class="relative z-10">
+<p class="text-white/60 text-[13px]">Already trading with India? You'll feel at home.</p>
+</div>
+</section>
+<!-- Right Panel: Registration Form (55%) -->
+<section class="flex-1 bg-white md:bg-white overflow-y-auto custom-scrollbar flex justify-center py-12 md:py-20 px-4">
+<div class="w-full max-w-[400px] bg-white md:bg-transparent p-8 md:p-0 rounded-2xl md:rounded-none shadow-xl md:shadow-none">
+<div class="mb-10 text-left">
+<h2 class="text-[28px] font-semibold text-[#000517] leading-tight mb-2">Create your buyer account</h2>
+<p class="text-[16px] font-normal text-[#5A6B85]">Free to join. Start finding suppliers right away.</p>
+</div>
+<form class="space-y-6" onsubmit="return false;">
+<!-- Full Name -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Full name</label>
+<input class="w-full h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none" placeholder="John Doe" type="text">
+</div>
+<!-- Email -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Email</label>
+<input class="w-full h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none" placeholder="john@company.com" type="email">
+</div>
+<!-- Mobile -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Mobile</label>
+<div class="flex gap-3">
+<div class="w-[110px] relative">
+<select class="w-full h-[44px] pl-4 pr-8 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow appearance-none bg-white">
+<option>+971</option>
+<option>+91</option>
+<option>+1</option>
+<option>+44</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-[#5A6B85] pointer-events-none">expand_more</span>
+</div>
+<input class="flex-1 h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none" placeholder="50 123 4567" type="tel">
+</div>
+<p class="text-[12px] text-[#5A6B85]">We'll send a sign-in code to this number.</p>
+</div>
+<!-- Password -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Password</label>
+<div class="relative">
+<input class="w-full h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none pr-12" type="password" value="StrongPassword123">
+<button class="absolute right-3 top-2.5 text-[#5A6B85]" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+<!-- Strength Meter -->
+<div class="pt-2 space-y-2">
+<div class="flex gap-1">
+<div class="h-1 flex-1 bg-mpx-green rounded-full"></div>
+<div class="h-1 flex-1 bg-mpx-green rounded-full"></div>
+<div class="h-1 flex-1 bg-mpx-green rounded-full"></div>
+<div class="h-1 flex-1 bg-mpx-green rounded-full"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-mpx-green text-[13px] font-semibold">Strong</span>
+<span class="text-[12px] text-[#5A6B85]">At least 8 characters.</span>
+</div>
+</div>
+</div>
+<!-- Confirm Password -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Confirm password</label>
+<div class="relative">
+<input class="w-full h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none" placeholder="••••••••" type="password">
+</div>
+</div>
+<!-- Company Name -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Company name</label>
+<input class="w-full h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none" placeholder="Global Trade LLC" type="text">
+</div>
+<!-- Country -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Country</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-[#5A6B85] text-[20px]">search</span>
+<div class="flex items-center w-full h-[44px] pl-10 pr-4 rounded-[8px] border-[#C5C6CF] border-1 focus-within:ring-2 focus-within:ring-mpx-glow/20 focus-within:border-mpx-glow cursor-pointer transition-all">
+<span class="mr-2">🇦🇪</span>
+<span class="text-[#000517]">United Arab Emirates</span>
+<span class="material-symbols-outlined ml-auto text-[#5A6B85]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full h-[48px] bg-mpx-glow text-white text-[16px] font-semibold rounded-full hover:bg-[#1A3DBC] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-8 shadow-lg shadow-mpx-glow/20">
+                        Create account
+                        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<!-- Footer -->
+<p class="text-center text-[14px] text-[#5A6B85] pt-4">
+                        Already have an account? 
+                        <a class="text-mpx-glow font-semibold hover:underline" href="#">Sign in</a>
+</p>
+</form>
+<!-- Privacy Policy Note -->
+<p class="mt-12 text-[12px] text-[#5A6B85]/60 text-center">
+                    By creating an account, you agree to our Terms of Service and Privacy Policy. MPX Global ensures your data is protected with enterprise-grade security.
+                </p>
+</div>
+</section>
+</main>
+<main class="split-layout flex flex-col md:flex-row w-full overflow-hidden border-t-4 border-mpx-glow">
+<!-- Left Panel: Brand & Value Prop (45%) -->
+<section class="hidden md:flex md:w-[40%] lg:w-[45%] bg-mpx-blue p-10 lg:p-16 flex-col justify-between relative overflow-hidden">
+<!-- Radial Glow -->
+<div class="absolute -bottom-20 -right-20 w-[400px] h-[400px] bg-mpx-glow opacity-15 rounded-full blur-[80px]"></div>
+<!-- Top Brand -->
+<div class="relative z-10">
+<span class="text-white text-[20px] font-bold tracking-tight">MPX Global</span>
+</div>
+<!-- Middle Content -->
+<div class="relative z-10 max-w-lg space-y-10">
+<div class="space-y-4">
+<h1 class="text-white text-[36px] font-bold leading-tight">Source directly from Indian exporters.</h1>
+<p class="text-white/80 text-[18px] leading-relaxed">Create a buyer account and start finding suppliers today. It's free, and you can use the platform straight away.</p>
+</div>
+<ul class="space-y-4">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-mpx-green" style="font-variation-settings: 'wght' 600;">check_circle</span>
+<span class="text-white text-[15px] font-medium">Verified suppliers carry a visible tick</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-mpx-green" style="font-variation-settings: 'wght' 600;">check_circle</span>
+<span class="text-white text-[15px] font-medium">Message exporters directly, no middlemen</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-mpx-green" style="font-variation-settings: 'wght' 600;">check_circle</span>
+<span class="text-white text-[15px] font-medium">Suppliers across 20+ export categories</span>
+</li>
+</ul>
+<!-- Decorative Card -->
+<div class="pt-8 flex justify-start">
+<div class="bg-mpx-card w-[340px] p-6 rounded-[12px] rotate-2 shadow-2xl transition-transform hover:rotate-0 duration-500 cursor-default border border-white/10">
+<div class="flex items-center gap-4">
+<div class="w-11 h-11 bg-white/20 rounded-lg flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk7bdjsO56l5ILD5s90f8N63Gu_6QJm_hDsF5e_09fU_Jq5oVtKvLtzUWYSmJeOj06fcunD9C-PwFPsP4co9DEXr_dyf9sYEUT_Mh0QQh98pV_JMmvUcyPJOG8YaikZFDwNZXmnWuhyAHEFA9Z3qj0oP3fldlX3_7gir5t--yxI_QMeM95QnREPi1mREoLki6_NokfuTKVVtDNlMqRUvTg9s0PtCbntxtB0rjikluq_en5LzQh8E4l">
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h3 class="text-white text-[15px] font-semibold">Tirupur Knitwear Exports</h3>
+<div class="bg-mpx-green/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-mpx-green text-[12px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="text-mpx-green text-[10px] font-bold uppercase tracking-wider">Verified</span>
+</div>
+</div>
+<p class="text-white/60 text-[13px]">Tirupur, India</p>
+</div>
+</div>
+<div class="mt-4 flex gap-2">
+<div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+<div class="bg-mpx-green h-full w-[85%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Note -->
+<div class="relative z-10">
+<p class="text-white/60 text-[13px]">Already trading with India? You'll feel at home.</p>
+</div>
+</section>
+<!-- Right Panel: Error Registration Form (55%) -->
+<section class="flex-1 bg-white md:bg-white overflow-y-auto custom-scrollbar flex justify-center py-12 md:py-20 px-4">
+<div class="w-full max-w-[400px] bg-white md:bg-transparent p-8 md:p-0 rounded-2xl md:rounded-none shadow-xl md:shadow-none">
+<div class="mb-10 text-left">
+<h2 class="text-[28px] font-semibold text-[#000517] leading-tight mb-2">Create your buyer account</h2>
+<p class="text-[16px] font-normal text-[#5A6B85]">Free to join. Start finding suppliers right away.</p>
+</div>
+<form class="space-y-6" onsubmit="return false;">
+<!-- Full Name -->
+<div class="mb-6 p-3 rounded-[8px] border border-[#D92D20] bg-[#FEECEA] flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#D92D20] text-[20px]">warning</span>
+<span class="text-[14px] font-medium text-[#D92D20]">An account with this email or mobile already exists.</span>
+</div>
+<a class="text-[14px] font-semibold text-[#D92D20] underline ml-7" href="#">Sign in instead</a>
+</div><div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Full name</label>
+<input class="w-full h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none" placeholder="John Doe" type="text">
+</div>
+<!-- Email -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Email</label>
+<input class="w-full h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none" placeholder="john@company.com" style="border-color: rgb(217, 45, 32);" type="email">
+</div>
+<!-- Mobile -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Mobile</label>
+<div class="flex gap-3">
+<div class="w-[110px] relative">
+<select class="w-full h-[44px] pl-4 pr-8 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow appearance-none bg-white">
+<option>+971</option>
+<option>+91</option>
+<option>+1</option>
+<option>+44</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-[#5A6B85] pointer-events-none">expand_more</span>
+</div>
+<input class="flex-1 h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none" placeholder="50 123 4567" style="border-color: rgb(217, 45, 32);" type="tel">
+</div>
+<p class="text-[12px] text-[#5A6B85]">We'll send a sign-in code to this number.</p>
+</div>
+<!-- Password -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Password</label>
+<div class="relative">
+<input class="w-full h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none pr-12" type="password" value="StrongPassword123">
+<button class="absolute right-3 top-2.5 text-[#5A6B85]" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+<!-- Strength Meter -->
+<div class="pt-2 space-y-2">
+<div class="flex gap-1">
+<div class="h-1 flex-1 bg-mpx-green rounded-full"></div>
+<div class="h-1 flex-1 bg-mpx-green rounded-full"></div>
+<div class="h-1 flex-1 bg-mpx-green rounded-full"></div>
+<div class="h-1 flex-1 bg-mpx-green rounded-full"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-mpx-green text-[13px] font-semibold">Strong</span>
+<span class="text-[12px] text-[#5A6B85]">At least 8 characters.</span>
+</div>
+</div>
+</div>
+<!-- Confirm Password -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Confirm password</label>
+<div class="relative">
+<input class="w-full h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none" placeholder="••••••••" type="password">
+</div>
+</div>
+<!-- Company Name -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Company name</label>
+<input class="w-full h-[44px] px-4 rounded-[8px] border-[#C5C6CF] border-1 focus:ring-2 focus:ring-mpx-glow/20 focus:border-mpx-glow transition-all outline-none" placeholder="Global Trade LLC" type="text">
+</div>
+<!-- Country -->
+<div class="space-y-2">
+<label class="text-[14px] font-medium text-[#000517]">Country</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-[#5A6B85] text-[20px]">search</span>
+<div class="flex items-center w-full h-[44px] pl-10 pr-4 rounded-[8px] border-[#C5C6CF] border-1 focus-within:ring-2 focus-within:ring-mpx-glow/20 focus-within:border-mpx-glow cursor-pointer transition-all">
+<span class="mr-2">🇦🇪</span>
+<span class="text-[#000517]">United Arab Emirates</span>
+<span class="material-symbols-outlined ml-auto text-[#5A6B85]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full h-[48px] bg-mpx-glow text-white text-[16px] font-semibold rounded-full hover:bg-[#1A3DBC] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-8 shadow-lg shadow-mpx-glow/20">
+                        Create account
+                        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<!-- Footer -->
+<p class="text-center text-[14px] text-[#5A6B85] pt-4">
+                        Already have an account? 
+                        <a class="text-mpx-glow font-semibold hover:underline" href="#">Sign in</a>
+</p>
+</form>
+<!-- Privacy Policy Note -->
+<p class="mt-12 text-[12px] text-[#5A6B85]/60 text-center">
+                    By creating an account, you agree to our Terms of Service and Privacy Policy. MPX Global ensures your data is protected with enterprise-grade security.
+                </p>
+</div>
+</section>
+</main>
+<!-- SECTION 3: SUCCESS STATE -->
+<main class="split-layout flex flex-col md:flex-row w-full overflow-hidden border-t-4 border-mpx-green">
+<!-- Left Panel: Identical Brand & Value Prop -->
+<section class="hidden md:flex md:w-[40%] lg:w-[45%] bg-mpx-blue p-10 lg:p-16 flex-col justify-between relative overflow-hidden">
+<!-- Radial Glow -->
+<div class="absolute -bottom-20 -right-20 w-[400px] h-[400px] bg-mpx-glow opacity-15 rounded-full blur-[80px]"></div>
+<!-- Top Brand -->
+<div class="relative z-10">
+<span class="text-white text-[20px] font-bold tracking-tight">MPX Global</span>
+</div>
+<!-- Middle Content -->
+<div class="relative z-10 max-w-lg space-y-10">
+<div class="space-y-4">
+<h1 class="text-white text-[36px] font-bold leading-tight">Source directly from Indian exporters.</h1>
+<p class="text-white/80 text-[18px] leading-relaxed">Create a buyer account and start finding suppliers today. It's free, and you can use the platform straight away.</p>
+</div>
+<ul class="space-y-4">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-mpx-green" style="font-variation-settings: 'wght' 600;">check_circle</span>
+<span class="text-white text-[15px] font-medium">Verified suppliers carry a visible tick</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-mpx-green" style="font-variation-settings: 'wght' 600;">check_circle</span>
+<span class="text-white text-[15px] font-medium">Message exporters directly, no middlemen</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-mpx-green" style="font-variation-settings: 'wght' 600;">check_circle</span>
+<span class="text-white text-[15px] font-medium">Suppliers across 20+ export categories</span>
+</li>
+</ul>
+<!-- Decorative Card -->
+<div class="pt-8 flex justify-start">
+<div class="bg-mpx-card w-[340px] p-6 rounded-[12px] rotate-2 shadow-2xl transition-transform hover:rotate-0 duration-500 cursor-default border border-white/10">
+<div class="flex items-center gap-4">
+<div class="w-11 h-11 bg-white/20 rounded-lg flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk7bdjsO56l5ILD5s90f8N63Gu_6QJm_hDsF5e_09fU_Jq5oVtKvLtzUWYSmJeOj06fcunD9C-PwFPsP4co9DEXr_dyf9sYEUT_Mh0QQh98pV_JMmvUcyPJOG8YaikZFDwNZXmnWuhyAHEFA9Z3qj0oP3fldlX3_7gir5t--yxI_QMeM95QnREPi1mREoLki6_NokfuTKVVtDNlMqRUvTg9s0PtCbntxtB0rjikluq_en5LzQh8E4l">
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h3 class="text-white text-[15px] font-semibold">Tirupur Knitwear Exports</h3>
+<div class="bg-mpx-green/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-mpx-green text-[12px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="text-mpx-green text-[10px] font-bold uppercase tracking-wider">Verified</span>
+</div>
+</div>
+<p class="text-white/60 text-[13px]">Tirupur, India</p>
+</div>
+</div>
+<div class="mt-4 flex gap-2">
+<div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+<div class="bg-mpx-green h-full w-[85%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Note -->
+<div class="relative z-10">
+<p class="text-white/60 text-[13px]">Already trading with India? You'll feel at home.</p>
+</div>
+</section>
+<!-- Right Panel: Success Confirmation (Centered) -->
+<section class="flex-1 bg-white overflow-y-auto custom-scrollbar flex items-center justify-center py-12 md:py-20 px-4">
+<div class="w-full max-w-[340px] text-center flex flex-col items-center">
+<!-- Badge -->
+<div class="w-14 h-14 bg-[#E8F7EE] rounded-full flex items-center justify-center mb-5">
+<span class="material-symbols-outlined text-mpx-green text-[32px]" style="font-variation-settings: 'wght' 600;">check</span>
+</div>
+<!-- Content -->
+<h2 class="text-[24px] font-semibold text-[#000517] leading-tight mb-3">You're in.</h2>
+<p class="text-[15px] font-normal text-[#5A6B85] leading-relaxed mb-8">
+                Your buyer account is ready to use. Start browsing suppliers now.
+            </p>
+<!-- Primary Action -->
+<a class="w-full h-[48px] bg-[#2A4DE0] text-white text-[16px] font-semibold rounded-full hover:bg-[#1A3DBC] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#2A4DE0]/20" href="#">
+                Go to your dashboard
+                <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</a>
+</div>
+</section>
+</main>
+<script>
+        // Simple micro-interaction for input focusing
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('scale-[1.01]');
+                input.parentElement.style.transition = 'all 0.2s ease-out';
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('scale-[1.01]');
+            });
+        });
+
+        // Toggle password visibility
+        document.querySelectorAll('button .material-symbols-outlined').forEach(btn => {
+            if (btn.textContent === 'visibility' || btn.textContent === 'visibility_off') {
+                btn.parentElement.addEventListener('click', function() {
+                    const input = this.closest('.relative').querySelector('input');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        this.querySelector('.material-symbols-outlined').textContent = 'visibility_off';
+                    } else {
+                        input.type = 'password';
+                        this.querySelector('.material-symbols-outlined').textContent = 'visibility';
+                    }
+                });
+            }
+        });
+    </script>
+
+
+</body></html>

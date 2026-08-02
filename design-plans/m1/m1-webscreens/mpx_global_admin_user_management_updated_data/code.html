@@ -1,0 +1,466 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>User Management | MPX Global</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#ffdad6",
+                    "secondary-fixed": "#ffdad4",
+                    "on-background": "#e9e1da",
+                    "inverse-surface": "#e9e1da",
+                    "tertiary": "#bac7f5",
+                    "surface-dim": "#16130f",
+                    "on-surface": "#e9e1da",
+                    "on-surface-variant": "#d0c5b5",
+                    "secondary-container": "#e60000",
+                    "on-tertiary-container": "#334065",
+                    "on-secondary-fixed": "#410000",
+                    "background": "#16130f",
+                    "primary-fixed-dim": "#e3c281",
+                    "inverse-primary": "#735b24",
+                    "on-secondary-container": "#fff6f5",
+                    "outline-variant": "#4d463a",
+                    "tertiary-container": "#9facd8",
+                    "primary-container": "#c8a96a",
+                    "on-tertiary": "#222f54",
+                    "on-tertiary-fixed-variant": "#38456b",
+                    "on-error": "#690005",
+                    "surface-container-highest": "#38342f",
+                    "surface": "#16130f",
+                    "error": "#ffb4ab",
+                    "surface-variant": "#38342f",
+                    "on-secondary": "#690000",
+                    "error-container": "#93000a",
+                    "tertiary-fixed": "#dbe1ff",
+                    "on-primary-fixed-variant": "#5a430e",
+                    "on-primary": "#402d00",
+                    "surface-container-lowest": "#100e0a",
+                    "on-primary-fixed": "#261a00",
+                    "surface-container": "#221f1b",
+                    "on-secondary-fixed-variant": "#930100",
+                    "surface-container-high": "#2d2a25",
+                    "secondary-fixed-dim": "#ffb4a8",
+                    "primary-fixed": "#ffdf9f",
+                    "on-tertiary-fixed": "#0b1a3d",
+                    "inverse-on-surface": "#33302b",
+                    "surface-tint": "#e3c281",
+                    "surface-bright": "#3c3933",
+                    "surface-container-low": "#1e1b17",
+                    "outline": "#998f81",
+                    "primary": "#e5c483",
+                    "secondary": "#ffb4a8",
+                    "tertiary-fixed-dim": "#b8c5f2",
+                    "on-primary-container": "#533d07",
+                    // Specific Application Shell Overrides (Navy/Blue Theme)
+                    "mpx-navy": "#1A2E8F",
+                    "mpx-bg": "#EAEEFF",
+                    "mpx-text": "#000517",
+                    "mpx-subtext": "#5A6B85",
+                    "mpx-border": "#C5C6CF"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px",
+                    "content": "32px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "display-lg-mobile": ["Playfair Display"],
+                    "eyebrow": ["Inter"],
+                    "button": ["Inter"],
+                    "headline-sm": ["Playfair Display"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Playfair Display"],
+                    "display-lg": ["Playfair Display"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .sidebar-active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid white;
+        }
+        .content-inset-shadow {
+            box-shadow: inset 10px 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-mpx-navy min-h-screen flex overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-[260px] bg-mpx-navy flex flex-col flex-shrink-0 text-white h-screen">
+<div class="h-[88px] flex items-center px-8">
+<h1 class="text-[24px] font-[700] tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 px-4 mt-4 space-y-1">
+<div class="px-4 py-3 opacity-50 flex items-center gap-3 cursor-not-allowed">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+<span class="text-[10px] bg-white/20 px-1.5 py-0.5 rounded ml-auto">SOON</span>
+</div>
+<a class="px-4 py-3 sidebar-active flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">person</span>
+<span class="text-sm font-semibold">Users</span>
+</a>
+<a class="px-4 py-3 opacity-70 hover:opacity-100 flex items-center gap-3 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[20px]">verified_user</span>
+<span class="text-sm font-medium">Verification</span>
+</a>
+<a class="px-4 py-3 opacity-70 hover:opacity-100 flex items-center gap-3 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+<span class="text-sm font-medium">Employees</span>
+</a>
+<div class="h-8"></div> <!-- 32px space -->
+<div class="px-4 py-3 opacity-50 flex items-center gap-3 cursor-not-allowed">
+<span class="material-symbols-outlined text-[20px]">list_alt</span>
+<span class="text-sm font-medium">Audit log</span>
+<span class="text-[10px] bg-white/20 px-1.5 py-0.5 rounded ml-auto">SOON</span>
+</div>
+<a class="px-4 py-3 opacity-70 hover:opacity-100 flex items-center gap-3 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Cluster -->
+<div class="flex-1 flex flex-col min-w-0 bg-mpx-navy">
+<!-- Top Bar -->
+<header class="h-[88px] flex items-center justify-end px-12 bg-mpx-navy">
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="text-[14px] font-[600] text-white">Priya Menon</p>
+<p class="text-[12px] font-[400] text-white/70">Super Admin · MPX Global</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-bold text-white text-sm">
+                    PM
+                </div>
+<button class="ml-4 p-2 text-white/70 hover:text-white transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 bg-mpx-bg rounded-tl-content overflow-y-auto content-inset-shadow custom-scrollbar">
+<div class="max-w-[1360px] mx-auto p-12">
+<!-- Page Header -->
+<div class="mb-8 flex items-end justify-between">
+<div>
+<h2 class="text-[32px] font-[700] text-mpx-text leading-tight">Users</h2>
+<p class="text-[15px] font-[400] text-mpx-subtext mt-1">Every account on the platform — buyers, exporters and staff.</p>
+</div>
+<div class="text-[13px] font-[400] text-[#667085] pb-1">
+                        1,248 accounts
+                    </div>
+</div>
+<!-- Filter Bar Card -->
+<section class="bg-white rounded-xl border border-mpx-border p-5 mb-6 flex flex-wrap items-center gap-6">
+<div class="flex-1 min-w-[300px]">
+<label class="block text-[12px] font-[600] text-[#667085] uppercase mb-1.5">Starts with...</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-mpx-subtext text-lg">search</span>
+<input class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-mpx-border text-sm focus:ring-2 focus:ring-mpx-navy/20 outline-none" placeholder="Name, email or mobile" type="text">
+</div>
+</div>
+<div class="w-[180px]">
+<label class="block text-[12px] font-[600] text-[#667085] uppercase mb-1.5">Role</label>
+<select class="w-full px-3 py-2.5 rounded-lg border border-mpx-border text-sm focus:ring-2 focus:ring-mpx-navy/20 outline-none appearance-none bg-no-repeat bg-[right_12px_center] cursor-pointer">
+<option>All roles</option>
+<option>Buyer</option>
+<option>Exporter</option>
+<option>Staff</option>
+</select>
+</div>
+<div class="w-[200px]">
+<label class="block text-[12px] font-[600] text-[#667085] uppercase mb-1.5">Verification</label>
+<select class="w-full px-3 py-2.5 rounded-lg border border-mpx-border text-sm focus:ring-2 focus:ring-mpx-navy/20 outline-none appearance-none bg-no-repeat bg-[right_12px_center] cursor-pointer">
+<option>All statuses</option>
+<option>Verified</option>
+<option>In review</option>
+<option>Needs attention</option>
+</select>
+</div>
+<div class="self-end pb-3">
+<button class="text-sm font-medium text-mpx-navy hover:underline">Clear filters</button>
+</div>
+</section>
+<!-- Data Table Container -->
+<div class="bg-white rounded-xl border border-mpx-border overflow-hidden relative">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[1200px]">
+<thead class="bg-[#F2F4F7] h-12">
+<tr>
+<th class="px-6 text-[12px] font-[600] uppercase text-[#667085] w-[220px] sticky left-0 z-10 bg-[#F2F4F7]" style="background-color: rgb(242, 244, 247); border-right: 1px solid rgb(197, 198, 207); box-shadow: rgba(0, 0, 0, 0.06) 8px 0px 8px -4px; z-index: 20;">Name</th>
+<th class="px-6 text-[12px] font-[600] uppercase text-[#667085] w-[240px]">Email</th>
+<th class="px-6 text-[12px] font-[600] uppercase text-[#667085] w-[180px]" style="width: 190px; white-space: nowrap;">Mobile</th>
+<th class="px-6 text-[12px] font-[600] uppercase text-[#667085] w-[140px]">Role</th>
+<th class="px-6 text-[12px] font-[600] uppercase text-[#667085] w-[180px]" style="width: 190px;">Verification</th>
+<th class="px-6 text-[12px] font-[600] uppercase text-[#667085] w-[100px]">Active</th>
+<th class="px-6 text-[12px] font-[600] uppercase text-[#667085] w-[130px]">Joined</th>
+<th class="px-6 text-[12px] font-[600] uppercase text-[#667085] w-[64px]"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#F2F4F7]"><!-- Row 1: Rajesh Kumar -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4 sticky left-0 z-10 bg-inherit" style="background-color: rgb(255, 255, 255); border-right: 1px solid rgb(197, 198, 207); box-shadow: rgba(0, 0, 0, 0.06) 8px 0px 8px -4px; z-index: 20;">
+<div class="flex flex-col">
+<span class="text-[14px] font-[600] text-[#000517]">Rajesh Kumar</span>
+<span class="text-[12px] font-[400] text-[#667085]">Tirupur Knitwear Exports</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">rajesh@tirupurknit.in</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext" style="white-space: nowrap;">+91 98765 43210</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Exporter</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 whitespace-nowrap">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Verified
+    </span>
+</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Yes</span></td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">12 Jan 2026</td>
+<td class="px-6 py-4 text-right">
+<button class="text-mpx-subtext hover:text-mpx-text"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2: Sarah Jenkins -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4 sticky left-0 z-10 bg-inherit" style="background-color: rgb(255, 255, 255); border-right: 1px solid rgb(197, 198, 207); box-shadow: rgba(0, 0, 0, 0.06) 8px 0px 8px -4px; z-index: 20;">
+<div class="flex flex-col">
+<span class="text-[14px] font-[600] text-[#000517]">Sarah Jenkins</span>
+<span class="text-[12px] font-[400] text-[#667085]">Al Noor Trading LLC</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">sarah@alnoor.ae</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext" style="white-space: nowrap;">+971 50 123 4567</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Buyer</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400 whitespace-nowrap"></span> Not submitted
+    </span>
+</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Yes</span></td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">04 Feb 2026</td>
+<td class="px-6 py-4 text-right">
+<button class="text-mpx-subtext hover:text-mpx-text"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3: Priya Nair (With Open Menu) -->
+<tr class="bg-slate-50 relative z-10">
+<td class="px-6 py-4 sticky left-0 z-10 bg-inherit" style="background-color: rgb(255, 255, 255); border-right: 1px solid rgb(197, 198, 207); box-shadow: rgba(0, 0, 0, 0.06) 8px 0px 8px -4px; z-index: 20;">
+<div class="flex flex-col">
+<span class="text-[14px] font-[600] text-[#000517]">Priya Nair</span>
+<span class="text-[12px] font-[400] text-[#667085]">Kochi Spice Exports</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">priya@kochispice.in</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext" style="white-space: nowrap;">+91 94472 11908</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Exporter</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500 whitespace-nowrap"></span> In review
+    </span>
+</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Yes</span></td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">18 Feb 2026</td>
+<td class="px-6 py-4 text-right relative">
+<button class="text-mpx-navy"><span class="material-symbols-outlined">more_vert</span></button>
+<div class="absolute right-4 top-12 w-[220px] bg-white border border-mpx-border shadow-xl rounded-lg text-left overflow-hidden z-20">
+<button class="w-full px-4 py-3 text-sm text-mpx-text hover:bg-slate-50 flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-mpx-subtext">visibility</span> View details
+      </button>
+<button class="w-full px-4 py-3 text-sm text-mpx-text hover:bg-slate-50 flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-mpx-subtext">rate_review</span> Review verification
+      </button>
+<button class="w-full px-4 py-3 text-sm text-mpx-text hover:bg-slate-50 flex items-center gap-3">
+<span class="material-symbols-outlined text-lg text-mpx-subtext">description</span> View KYC documents
+      </button>
+<div class="h-px bg-[#F2F4F7]"></div>
+<button class="w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 font-semibold">
+<span class="material-symbols-outlined text-lg">person_off</span> Deactivate
+      </button>
+</div>
+</td>
+</tr>
+<!-- Row 4: Marcus Thorne -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4 sticky left-0 z-10 bg-inherit" style="background-color: rgb(255, 255, 255); border-right: 1px solid rgb(197, 198, 207); box-shadow: rgba(0, 0, 0, 0.06) 8px 0px 8px -4px; z-index: 20;">
+<div class="flex flex-col">
+<span class="text-[14px] font-[600] text-[#000517]">Marcus Thorne</span>
+<span class="text-[12px] font-[400] text-[#667085]">Rotterdam Sourcing BV</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">m.thorne@rsourcing.nl</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext" style="white-space: nowrap;">+31 6 2244 8890</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Buyer</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 whitespace-nowrap">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Verified
+    </span>
+</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Yes</span></td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">22 Feb 2026</td>
+<td class="px-6 py-4 text-right">
+<button class="text-mpx-subtext hover:text-mpx-text"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 5: Anil Deshpande -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4 sticky left-0 z-10 bg-inherit" style="background-color: rgb(255, 255, 255); border-right: 1px solid rgb(197, 198, 207); box-shadow: rgba(0, 0, 0, 0.06) 8px 0px 8px -4px; z-index: 20;">
+<div class="flex flex-col">
+<span class="text-[14px] font-[600] text-[#000517]">Anil Deshpande</span>
+<span class="text-[12px] font-[400] text-[#667085]">Sangli Organics</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">anil@sangliorganics.in</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext" style="white-space: nowrap;">+91 90280 33471</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Exporter</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500 whitespace-nowrap"></span> Needs attention
+    </span>
+</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Yes</span></td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">01 Mar 2026</td>
+<td class="px-6 py-4 text-right">
+<button class="text-mpx-subtext hover:text-mpx-text"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 6: Fatima Al Rashid -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4 sticky left-0 z-10 bg-inherit" style="background-color: rgb(255, 255, 255); border-right: 1px solid rgb(197, 198, 207); box-shadow: rgba(0, 0, 0, 0.06) 8px 0px 8px -4px; z-index: 20;">
+<div class="flex flex-col">
+<span class="text-[14px] font-[600] text-[#000517]">Fatima Al Rashid</span>
+<span class="text-[12px] font-[400] text-[#667085]">Gulf Import Partners</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">fatima@gulfimport.ae</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext" style="white-space: nowrap;">+971 55 908 3322</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Buyer</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400 whitespace-nowrap"></span> Not submitted
+    </span>
+</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[600] text-red-600">No</span></td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">03 Mar 2026</td>
+<td class="px-6 py-4 text-right">
+<button class="text-mpx-subtext hover:text-mpx-text"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 7: Vikram Shah -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4 sticky left-0 z-10 bg-inherit" style="background-color: rgb(255, 255, 255); border-right: 1px solid rgb(197, 198, 207); box-shadow: rgba(0, 0, 0, 0.06) 8px 0px 8px -4px; z-index: 20;">
+<div class="flex flex-col">
+<span class="text-[14px] font-[600] text-[#000517]">Vikram Shah</span>
+<span class="text-[12px] font-[400] text-[#667085]">MPX Global</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">vikram@mpxglobal.com</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext" style="white-space: nowrap;">+91 99870 12345</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Employee</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400 whitespace-nowrap"></span> Not submitted
+    </span>
+</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Yes</span></td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">10 Mar 2026</td>
+<td class="px-6 py-4 text-right">
+<button class="text-mpx-subtext hover:text-mpx-text"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 8: Priya Menon -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4 sticky left-0 z-10 bg-inherit" style="background-color: rgb(255, 255, 255); border-right: 1px solid rgb(197, 198, 207); box-shadow: rgba(0, 0, 0, 0.06) 8px 0px 8px -4px; z-index: 20;">
+<div class="flex flex-col">
+<span class="text-[14px] font-[600] text-[#000517]">Priya Menon</span>
+<span class="text-[12px] font-[400] text-[#667085]">MPX Global</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">priya.menon@mpxglobal.com</td>
+<td class="px-6 py-4 text-sm text-mpx-subtext" style="white-space: nowrap;">+91 98200 55512</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Super Admin</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400 whitespace-nowrap"></span> Not submitted
+    </span>
+</td>
+<td class="px-6 py-4"><span class="text-[14px] font-[400] text-[#000517]">Yes</span></td>
+<td class="px-6 py-4 text-sm text-mpx-subtext">02 Jan 2026</td>
+<td class="px-6 py-4 text-right">
+<button class="text-mpx-subtext hover:text-mpx-text"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr></tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<footer class="h-16 border-t border-[#F2F4F7] flex items-center justify-between px-6 bg-white">
+<div class="text-sm text-mpx-subtext">
+                            Showing <span class="font-semibold text-mpx-text">1–20</span> of <span class="font-semibold text-mpx-text">1,248</span>
+</div>
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2">
+<span class="text-sm text-mpx-subtext">Rows per page</span>
+<select class="text-sm font-semibold border-none bg-transparent focus:ring-0 cursor-pointer">
+<option>20</option>
+<option>50</option>
+<option>100</option>
+</select>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-50 disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-lg">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-mpx-navy text-white text-sm font-semibold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-50 text-sm font-medium text-mpx-subtext">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-50 text-sm font-medium text-mpx-subtext">3</button>
+<span class="px-2 text-mpx-subtext">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-50 text-sm font-medium text-mpx-subtext">63</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-50">
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+</footer>
+</div>
+</div>
+</main>
+</div>
+<!-- Interaction Script -->
+<script>
+        // Simple micro-interactions for table row hover and menu simulations
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', (e) => {
+                // If clicked on action button, logic would go here
+            });
+        });
+    </script>
+
+
+</body></html>

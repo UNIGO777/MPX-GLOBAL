@@ -1,0 +1,1164 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MPX Global | Document Upload</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Playfair Display', serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Custom scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #C5C6CF;
+            border-radius: 4px;
+            border: 2px solid #FFFFFF;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5A6B85;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2A4DE0",
+                        "primary-dark": "#2340C4",
+                        "surface": "#FFFFFF",
+                        "background-alt": "#EAEEFF",
+                        "neutral-bg": "#F2F4F7",
+                        "border-subtle": "#C5C6CF",
+                        "text-main": "#000517",
+                        "text-muted": "#5A6B85",
+                        "text-caption": "#667085",
+                        "error": "#D92D20",
+                        "success": "#12B76A",
+                        "shell-bg": "#1A2E8F"
+                    },
+                    borderRadius: {
+                        "card": "16px",
+                        "pill": "9999px"
+                    },
+                    spacing: {
+                        "margin-desktop": "40px",
+                        "sidebar-w": "260px",
+                        "header-h": "88px"
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-text-main min-h-screen bg-shell-bg overflow-x-hidden">
+<!-- SECTION 1: BUSINESS ACCOUNT TYPE -->
+<div class="flex w-full min-h-screen bg-shell-bg overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-[260px] flex-shrink-0 flex flex-col text-white" style="background-color: #1A2E8F;">
+<div class="h-header-h flex items-center px-8 shrink-0">
+<span class="text-[24px] font-bold font-heading tracking-tight text-white">MPX Global</span>
+</div>
+<nav class="flex-1 py-4 px-4 space-y-2">
+<!-- Dashboard - DISABLED -->
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-[14px] font-medium text-white/50">Dashboard</span>
+</div>
+<span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+</div>
+<!-- Verification - ACTIVE -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white font-semibold transition-all shadow-inner" href="#">
+<span class="material-symbols-outlined filled-icon">verified_user</span>
+<span class="text-[14px]">Verification</span>
+</a>
+<!-- Products - DISABLED -->
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[14px] font-medium text-white/50">Products</span>
+</div>
+<span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+</div>
+<!-- Enquiries - DISABLED -->
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">question_answer</span>
+<span class="text-[14px] font-medium text-white/50">Enquiries</span>
+</div>
+<span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+</div>
+<!-- Chat - DISABLED -->
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-[14px] font-medium text-white/50">Chat</span>
+</div>
+<span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+</div>
+<!-- Settings - INACTIVE -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/5 transition-all mt-8" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[14px] font-medium">Settings</span>
+</a>
+</nav>
+</aside>
+<div class="flex-1 flex flex-col">
+<!-- Unified Top Bar -->
+<header class="h-header-h flex items-center justify-end px-10 text-white z-30" style="background-color: #1A2E8F;">
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="text-[14px] font-semibold text-white leading-tight">Rajesh Kumar</p>
+<p class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+<span class="text-[14px] font-bold text-white">RK</span>
+</div>
+<button class="ml-2 hover:text-white transition-colors text-white">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 bg-background-alt rounded-tl-[32px] overflow-y-auto relative shadow-[-4px_-4px_24px_rgba(0,0,0,0.15)]">
+<div class="p-12 w-full max-w-[960px] mx-auto space-y-10 pb-20">
+<!-- Breadcrumb & Header -->
+<section class="space-y-4">
+<a class="inline-flex items-center text-primary font-medium hover:underline group text-[14px]" href="#">
+<span class="material-symbols-outlined text-[18px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                        Back to verification status
+                    </a>
+<div class="space-y-2">
+<h1 class="text-[40px] font-bold text-text-main tracking-tight font-heading">Get verified</h1>
+<p class="text-text-muted text-[16px]">Send your business documents so our team can check them.</p>
+</div>
+</section>
+<!-- Explainer Panel -->
+<section class="bg-white p-6 rounded-card flex gap-5 items-start border border-border-subtle shadow-sm">
+<div class="w-10 h-10 rounded-full bg-background-alt flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary">info</span>
+</div>
+<div class="space-y-1.5 pt-1">
+<h3 class="font-bold text-text-main text-[16px] font-heading">Why this matters</h3>
+<p class="text-text-muted text-[14px] leading-relaxed">Until you're verified you can keep three products live at a time. Once our team approves your documents, a verified tick appears on your profile and the limit is removed. Your profile stays public throughout.</p>
+</div>
+</section>
+<!-- Main Upload Card -->
+<div class="bg-white rounded-card border border-border-subtle shadow-md p-10 space-y-10">
+<!-- Section: Account Type -->
+<div class="space-y-5">
+<h2 class="text-[20px] font-bold text-text-main font-heading">Your account type</h2>
+<div class="flex items-center gap-6">
+<div class="w-[240px] h-[48px] bg-neutral-bg rounded-xl border border-border-subtle px-4 flex items-center gap-3 text-text-main font-medium">
+<span class="material-symbols-outlined text-text-caption text-[20px]">corporate_fare</span>
+                                Business
+                            </div>
+<div class="flex items-center gap-2 text-text-caption">
+<span class="material-symbols-outlined text-text-caption text-[18px]">lock</span>
+<span class="text-[13px]">Set when you signed up. Contact support to change it.</span>
+</div>
+</div>
+</div>
+<hr class="border-border-subtle">
+<!-- Section: Documents -->
+<div class="space-y-8">
+<div class="space-y-2">
+<h2 class="text-[20px] font-bold text-text-main font-heading">Your documents</h2>
+<p class="text-text-muted text-[14px]">PDF, JPG or PNG. Up to 10 MB per file. Send at least one document.</p>
+</div>
+<!-- Document Rows Container -->
+<div class="space-y-5">
+<!-- Row 1: Filled -->
+<div class="grid grid-cols-[1fr_2fr_48px] gap-4 items-start">
+<div class="space-y-2">
+<label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">Document Type</label>
+<select class="w-full h-[48px] rounded-xl border-border-subtle focus:ring-primary focus:border-primary text-[14px] text-text-main shadow-sm">
+<option selected="">Company registration</option>
+<option>VAT / Tax Certificate</option>
+<option>Export License</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">File</label>
+<div class="h-[48px] border border-success bg-[#E8F7EE] rounded-xl px-4 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="material-symbols-outlined text-success text-[20px] filled-icon">check_circle</span>
+<span class="text-[14px] text-text-main truncate font-medium">incorporation-certificate.pdf</span>
+<span class="text-[12px] text-text-caption shrink-0">(2.1 MB)</span>
+</div>
+</div>
+</div>
+<div class="pt-[28px]">
+<button class="w-[48px] h-[48px] flex items-center justify-center text-error hover:bg-error/10 rounded-xl transition-colors border border-transparent hover:border-error/20">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+<!-- Row 2: Empty -->
+<div class="grid grid-cols-[1fr_2fr_48px] gap-4 items-start">
+<div class="space-y-2">
+<label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">Document Type</label>
+<select class="w-full h-[48px] rounded-xl border-border-subtle focus:ring-primary focus:border-primary text-[14px] text-text-muted shadow-sm">
+<option>Choose type</option>
+<option>VAT / Tax Certificate</option>
+<option>Export License</option>
+<option>Bank Reference Letter</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">File</label>
+<div class="h-[48px] border-2 border-dashed border-primary bg-background-alt rounded-xl px-4 flex items-center justify-center cursor-pointer hover:bg-primary/5 transition-all group">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">upload_file</span>
+<span class="text-[14px] text-primary font-semibold">Drop a file or browse</span>
+</div>
+</div>
+</div>
+<div class="pt-[28px]">
+<button class="w-[48px] h-[48px] flex items-center justify-center text-text-caption hover:bg-neutral-bg rounded-xl transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Add Button -->
+<button class="inline-flex items-center gap-2 px-5 h-[48px] rounded-xl bg-neutral-bg text-text-main font-semibold text-[14px] hover:bg-border-subtle/50 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                            Add another document
+                        </button>
+</div>
+</div>
+<!-- Action Row -->
+<div class="flex items-center justify-end gap-4 pt-6">
+<button class="px-8 h-[52px] rounded-pill bg-white text-text-main font-semibold border border-border-subtle hover:bg-neutral-bg transition-colors shadow-sm">
+                        Cancel
+                    </button>
+<button class="px-8 h-[52px] rounded-pill bg-primary text-white font-semibold shadow-lg shadow-primary/30 hover:bg-primary-dark transition-all transform active:scale-95 flex items-center justify-center gap-2 group">
+                        Submit for review
+                        <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">send</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- SPACER FOR SEAMLESS STACKING -->
+<div class="h-[100px] bg-white w-full"></div>
+<!-- SECTION 2: INDIVIDUAL ACCOUNT TYPE -->
+<div class="flex w-full min-h-screen bg-shell-bg overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-[260px] flex-shrink-0 flex flex-col text-white" style="background-color: #1A2E8F;">
+<div class="h-header-h flex items-center px-8 shrink-0">
+<span class="text-[24px] font-bold font-heading tracking-tight text-white">MPX Global</span>
+</div>
+<nav class="flex-1 py-4 px-4 space-y-2">
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-[14px] font-medium text-white/50">Dashboard</span>
+</div>
+<span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white font-semibold transition-all shadow-inner" href="#">
+<span class="material-symbols-outlined filled-icon">verified_user</span>
+<span class="text-[14px]">Verification</span>
+</a>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[14px] font-medium text-white/50">Products</span>
+</div>
+<span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+</div>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">question_answer</span>
+<span class="text-[14px] font-medium text-white/50">Enquiries</span>
+</div>
+<span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+</div>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-[14px] font-medium text-white/50">Chat</span>
+</div>
+<span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/5 transition-all mt-8" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[14px] font-medium">Settings</span>
+</a>
+</nav>
+</aside>
+<div class="flex-1 flex flex-col">
+<!-- Unified Top Bar -->
+<header class="h-header-h flex items-center justify-end px-10 text-white z-30" style="background-color: #1A2E8F;">
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="text-[14px] font-semibold text-white leading-tight">Rajesh Kumar</p>
+<p class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+<span class="text-[14px] font-bold text-white">RK</span>
+</div>
+<button class="ml-2 hover:text-white transition-colors text-white">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 bg-background-alt rounded-tl-[32px] overflow-y-auto relative shadow-[-4px_-4px_24px_rgba(0,0,0,0.15)]">
+<div class="p-12 w-full max-w-[960px] mx-auto space-y-10 pb-20">
+<!-- Breadcrumb & Header -->
+<section class="space-y-4">
+<a class="inline-flex items-center text-primary font-medium hover:underline group text-[14px]" href="#">
+<span class="material-symbols-outlined text-[18px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                        Back to verification status
+                    </a>
+<div class="space-y-2">
+<h1 class="text-[40px] font-bold text-text-main tracking-tight font-heading">Get verified</h1>
+<p class="text-text-muted text-[16px]">Send your personal documents so our team can check them.</p>
+</div>
+</section>
+<!-- Explainer Panel -->
+<section class="bg-white p-6 rounded-card flex gap-5 items-start border border-border-subtle shadow-sm">
+<div class="w-10 h-10 rounded-full bg-background-alt flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary">info</span>
+</div>
+<div class="space-y-1.5 pt-1">
+<h3 class="font-bold text-text-main text-[16px] font-heading">Why this matters</h3>
+<p class="text-text-muted text-[14px] leading-relaxed">Until you're verified you can keep three products live at a time. Once our team approves your documents, a verified tick appears on your profile and the limit is removed. Your profile stays public throughout.</p>
+</div>
+</section>
+<!-- Main Upload Card -->
+<div class="bg-white rounded-card border border-border-subtle shadow-md p-10 space-y-10">
+<!-- Section: Account Type (INDIVIDUAL) -->
+<div class="space-y-5">
+<h2 class="text-[20px] font-bold text-text-main font-heading">Your account type</h2>
+<div class="flex items-center gap-6">
+<div class="w-[240px] h-[48px] bg-neutral-bg rounded-xl border border-border-subtle px-4 flex items-center gap-3 text-text-main font-medium">
+<span class="material-symbols-outlined text-text-caption text-[20px]">person</span>
+                                Individual
+                            </div>
+<div class="flex items-center gap-2 text-text-caption">
+<span class="material-symbols-outlined text-text-caption text-[18px]">lock</span>
+<span class="text-[13px]">Set when you signed up. Contact support to change it — this is why we ask for personal ID below rather than business documents.</span>
+</div>
+</div>
+</div>
+<hr class="border-border-subtle">
+<!-- Section: Documents -->
+<div class="space-y-8">
+<div class="space-y-2">
+<h2 class="text-[20px] font-bold text-text-main font-heading">Your documents</h2>
+<p class="text-text-muted text-[14px]">PDF, JPG or PNG. Up to 10 MB per file. Send at least one document.</p>
+</div>
+<!-- Document Rows Container -->
+<div class="space-y-5">
+<!-- Row 1: Filled (PAN) -->
+<div class="grid grid-cols-[1fr_2fr_48px] gap-4 items-start">
+<div class="space-y-2">
+<label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">Document Type</label>
+<select class="w-full h-[48px] rounded-xl border-border-subtle focus:ring-primary focus:border-primary text-[14px] text-text-main shadow-sm">
+<option selected="">PAN</option>
+<option>Aadhar Card</option>
+<option>Passport</option>
+<option>Driving License</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">File</label>
+<div class="h-[48px] border border-success bg-[#E8F7EE] rounded-xl px-4 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="material-symbols-outlined text-success text-[20px] filled-icon">check_circle</span>
+<span class="text-[14px] text-text-main truncate font-medium">pan-card.jpg</span>
+<span class="text-[12px] text-text-caption shrink-0">(820 KB)</span>
+</div>
+</div>
+</div>
+<div class="pt-[28px]">
+<button class="w-[48px] h-[48px] flex items-center justify-center text-error hover:bg-error/10 rounded-xl transition-colors border border-transparent hover:border-error/20">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+<!-- Row 2: Empty -->
+<div class="grid grid-cols-[1fr_2fr_48px] gap-4 items-start">
+<div class="space-y-2">
+<label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">Document Type</label>
+<select class="w-full h-[48px] rounded-xl border-border-subtle focus:ring-primary focus:border-primary text-[14px] text-text-muted shadow-sm">
+<option>Choose type</option>
+<option>Aadhar Card</option>
+<option>Passport</option>
+<option>Bank Statement</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">File</label>
+<div class="h-[48px] border-2 border-dashed border-primary bg-background-alt rounded-xl px-4 flex items-center justify-center cursor-pointer hover:bg-primary/5 transition-all group">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">upload_file</span>
+<span class="text-[14px] text-primary font-semibold">Drop a file or browse</span>
+</div>
+</div>
+</div>
+<div class="pt-[28px]">
+<button class="w-[48px] h-[48px] flex items-center justify-center text-text-caption hover:bg-neutral-bg rounded-xl transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Add Button -->
+<button class="inline-flex items-center gap-2 px-5 h-[48px] rounded-xl bg-neutral-bg text-text-main font-semibold text-[14px] hover:bg-border-subtle/50 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                            Add another document
+                        </button>
+</div>
+</div>
+<!-- Action Row -->
+<div class="flex items-center justify-end gap-4 pt-6">
+<button class="px-8 h-[52px] rounded-pill bg-white text-text-main font-semibold border border-border-subtle hover:bg-neutral-bg transition-colors shadow-sm">
+                        Cancel
+                    </button>
+<button class="px-8 h-[52px] rounded-pill bg-primary text-white font-semibold shadow-lg shadow-primary/30 hover:bg-primary-dark transition-all transform active:scale-95 flex items-center justify-center gap-2 group">
+                        Submit for review
+                        <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">send</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Visual feedback for file hover
+        const dropzones = document.querySelectorAll('.border-dashed');
+        dropzones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('bg-primary/10');
+            });
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('bg-primary/10');
+            });
+        });
+
+        // Button click active states
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('mousedown', () => btn.classList.add('scale-95'));
+            btn.addEventListener('mouseup', () => btn.classList.remove('scale-95'));
+            btn.addEventListener('mouseleave', () => btn.classList.remove('scale-95'));
+        });
+    });
+</script>
+
+
+<!-- SPACER FOR SEAMLESS STACKING -->
+<div class="h-[100px] bg-white w-full"></div>
+<!-- SECTION 3: EMPTY FIRST SUBMISSION STATE -->
+<div class="flex w-full min-h-screen bg-shell-bg overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-[260px] flex-shrink-0 flex flex-col text-white" style="background-color: #1A2E8F;">
+        <div class="h-header-h flex items-center px-8 shrink-0">
+            <span class="text-[24px] font-bold font-heading tracking-tight text-white">MPX Global</span>
+        </div>
+        <nav class="flex-1 py-4 px-4 space-y-2">
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span class="text-[14px] font-medium text-white/50">Dashboard</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white font-semibold transition-all shadow-inner" href="#">
+                <span class="material-symbols-outlined filled-icon">verified_user</span>
+                <span class="text-[14px]">Verification</span>
+            </a>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span class="text-[14px] font-medium text-white/50">Products</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">question_answer</span>
+                    <span class="text-[14px] font-medium text-white/50">Enquiries</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">chat</span>
+                    <span class="text-[14px] font-medium text-white/50">Chat</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/5 transition-all mt-8" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-[14px] font-medium">Settings</span>
+            </a>
+        </nav>
+    </aside>
+    <div class="flex-1 flex flex-col">
+        <!-- Unified Top Bar -->
+        <header class="h-header-h flex items-center justify-end px-10 text-white z-30" style="background-color: #1A2E8F;">
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-[14px] font-semibold text-white leading-tight">Rajesh Kumar</p>
+                    <p class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                    <span class="text-[14px] font-bold text-white">RK</span>
+                </div>
+                <button class="ml-2 hover:text-white transition-colors text-white">
+                    <span class="material-symbols-outlined">logout</span>
+                </button>
+            </div>
+        </header>
+        <!-- Main Content Area -->
+        <main class="flex-1 bg-background-alt rounded-tl-[32px] overflow-y-auto relative shadow-[-4px_-4px_24px_rgba(0,0,0,0.15)]">
+            <div class="p-12 w-full max-w-[960px] mx-auto space-y-10 pb-20">
+                <!-- Breadcrumb & Header -->
+                <section class="space-y-4">
+                    <a class="inline-flex items-center text-primary font-medium hover:underline group text-[14px]" href="#">
+                        <span class="material-symbols-outlined text-[18px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                        Back to verification status
+                    </a>
+                    <div class="space-y-2">
+                        <h1 class="text-[40px] font-bold text-text-main tracking-tight font-heading">Get verified</h1>
+                        <p class="text-text-muted text-[16px]">Send your business documents so our team can check them.</p>
+                    </div>
+                </section>
+                <!-- Explainer Panel -->
+                <section class="bg-white p-6 rounded-card flex gap-5 items-start border border-border-subtle shadow-sm">
+                    <div class="w-10 h-10 rounded-full bg-background-alt flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                    </div>
+                    <div class="space-y-1.5 pt-1">
+                        <h3 class="font-bold text-text-main text-[16px] font-heading">Why this matters</h3>
+                        <p class="text-text-muted text-[14px] leading-relaxed">Until you're verified you can keep three products live at a time. Once our team approves your documents, a verified tick appears on your profile and the limit is removed. Your profile stays public throughout.</p>
+                    </div>
+                </section>
+                <!-- Main Upload Card -->
+                <div class="bg-white rounded-card border border-border-subtle shadow-md p-10 space-y-10">
+                    <!-- Section: Account Type -->
+                    <div class="space-y-5">
+                        <h2 class="text-[20px] font-bold text-text-main font-heading">Your account type</h2>
+                        <div class="flex items-center gap-6">
+                            <div class="w-[240px] h-[48px] bg-neutral-bg rounded-xl border border-border-subtle px-4 flex items-center gap-3 text-text-main font-medium">
+                                <span class="material-symbols-outlined text-text-caption text-[20px]">corporate_fare</span>
+                                Business
+                            </div>
+                            <div class="flex items-center gap-2 text-text-caption">
+                                <span class="material-symbols-outlined text-text-caption text-[18px]">lock</span>
+                                <span class="text-[13px]">Set when you signed up. Contact support to change it.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="border-border-subtle">
+                    <!-- Section: Documents -->
+                    <div class="space-y-8">
+                        <div class="space-y-2">
+                            <h2 class="text-[20px] font-bold text-text-main font-heading">Your documents</h2>
+                            <p class="text-text-muted text-[14px]">PDF, JPG or PNG. Up to 10 MB per file. Send at least one document.</p>
+                        </div>
+                        <!-- Document Rows Container -->
+                        <div class="space-y-5">
+                            <!-- Single Empty Row -->
+                            <div class="grid grid-cols-[1fr_2fr_48px] gap-4 items-start">
+                                <div class="space-y-2">
+                                    <label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">Document Type</label>
+                                    <select class="w-full h-[48px] rounded-xl border-border-subtle focus:ring-primary focus:border-primary text-[16px] text-text-caption shadow-sm">
+                                        <option selected="">Choose type</option>
+                                        <option>VAT / Tax Certificate</option>
+                                        <option>Export License</option>
+                                        <option>Bank Reference Letter</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">File</label>
+                                    <div class="h-[44px] border border-dashed border-border-subtle bg-background-alt rounded-[8px] px-4 flex items-center justify-center cursor-pointer hover:bg-primary/5 transition-all group">
+                                        <div class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-primary text-[18px]">upload_file</span>
+                                            <div class="text-[14px] flex gap-1">
+                                                <span class="text-text-muted font-normal">Drop a file or </span>
+                                                <span class="text-primary font-medium underline">browse</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pt-[28px]">
+                                    <button class="w-[48px] h-[48px] flex items-center justify-center text-border-subtle cursor-not-allowed rounded-xl transition-colors" disabled="">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Add Button -->
+                        <button class="inline-flex items-center gap-2 px-5 h-[48px] rounded-xl bg-neutral-bg text-text-main font-semibold text-[14px] hover:bg-border-subtle/50 transition-colors shadow-sm">
+                            <span class="material-symbols-outlined text-[20px]">add</span>
+                            Add another document
+                        </button>
+                    </div>
+                </div>
+                <!-- Action Row -->
+                <div class="flex items-center justify-end gap-4 pt-6">
+                    <button class="px-8 h-[52px] rounded-pill bg-white text-text-main font-semibold border border-border-subtle hover:bg-neutral-bg transition-colors shadow-sm">
+                        Cancel
+                    </button>
+                    <button class="px-8 h-[52px] rounded-pill bg-border-subtle text-text-caption font-semibold shadow-sm cursor-not-allowed flex items-center justify-center gap-2" disabled="">
+                        Submit for review
+                        <span class="material-symbols-outlined text-[18px]">send</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div><!-- SPACER FOR SEAMLESS STACKING -->
+<div class="h-[100px] bg-white w-full"></div>
+<!-- SECTION 4: UPLOADING & ERROR STATES -->
+<div class="flex w-full min-h-screen bg-shell-bg overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-[260px] flex-shrink-0 flex flex-col text-white" style="background-color: #1A2E8F;">
+        <div class="h-header-h flex items-center px-8 shrink-0">
+            <span class="text-[24px] font-bold font-heading tracking-tight text-white">MPX Global</span>
+        </div>
+        <nav class="flex-1 py-4 px-4 space-y-2">
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span class="text-[14px] font-medium text-white/50">Dashboard</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white font-semibold transition-all shadow-inner" href="#">
+                <span class="material-symbols-outlined filled-icon">verified_user</span>
+                <span class="text-[14px]">Verification</span>
+            </a>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span class="text-[14px] font-medium text-white/50">Products</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">question_answer</span>
+                    <span class="text-[14px] font-medium text-white/50">Enquiries</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">chat</span>
+                    <span class="text-[14px] font-medium text-white/50">Chat</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/5 transition-all mt-8" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-[14px] font-medium">Settings</span>
+            </a>
+        </nav>
+    </aside>
+    <div class="flex-1 flex flex-col">
+        <!-- Unified Top Bar -->
+        <header class="h-header-h flex items-center justify-end px-10 text-white z-30" style="background-color: #1A2E8F;">
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-[14px] font-semibold text-white leading-tight">Rajesh Kumar</p>
+                    <p class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                    <span class="text-[14px] font-bold text-white">RK</span>
+                </div>
+                <button class="ml-2 hover:text-white transition-colors text-white">
+                    <span class="material-symbols-outlined">logout</span>
+                </button>
+            </div>
+        </header>
+        <!-- Main Content Area -->
+        <main class="flex-1 bg-background-alt rounded-tl-[32px] overflow-y-auto relative shadow-[-4px_-4px_24px_rgba(0,0,0,0.15)]">
+            <div class="p-12 w-full max-w-[960px] mx-auto space-y-10 pb-20">
+                <!-- Breadcrumb & Header -->
+                <section class="space-y-4">
+                    <a class="inline-flex items-center text-primary font-medium hover:underline group text-[14px]" href="#">
+                        <span class="material-symbols-outlined text-[18px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                        Back to verification status
+                    </a>
+                    <div class="space-y-2">
+                        <h1 class="text-[40px] font-bold text-text-main tracking-tight font-heading">Get verified</h1>
+                        <p class="text-text-muted text-[16px]">Send your business documents so our team can check them.</p>
+                    </div>
+                </section>
+                <!-- Explainer Panel -->
+                <section class="bg-white p-6 rounded-card flex gap-5 items-start border border-border-subtle shadow-sm">
+                    <div class="w-10 h-10 rounded-full bg-background-alt flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                    </div>
+                    <div class="space-y-1.5 pt-1">
+                        <h3 class="font-bold text-text-main text-[16px] font-heading">Why this matters</h3>
+                        <p class="text-text-muted text-[14px] leading-relaxed">Until you're verified you can keep three products live at a time. Once our team approves your documents, a verified tick appears on your profile and the limit is removed. Your profile stays public throughout.</p>
+                    </div>
+                </section>
+                <!-- Main Upload Card -->
+                <div class="bg-white rounded-card border border-border-subtle shadow-md p-10 space-y-10">
+                    <!-- Section: Account Type -->
+                    <div class="space-y-5">
+                        <h2 class="text-[20px] font-bold text-text-main font-heading">Your account type</h2>
+                        <div class="flex items-center gap-6">
+                            <div class="w-[240px] h-[48px] bg-neutral-bg rounded-xl border border-border-subtle px-4 flex items-center gap-3 text-text-main font-medium">
+                                <span class="material-symbols-outlined text-text-caption text-[20px]">corporate_fare</span>
+                                Business
+                            </div>
+                            <div class="flex items-center gap-2 text-text-caption">
+                                <span class="material-symbols-outlined text-text-caption text-[18px]">lock</span>
+                                <span class="text-[13px]">Set when you signed up. Contact support to change it.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="border-border-subtle">
+                    <!-- Section: Documents -->
+                    <div class="space-y-8">
+                        <div class="space-y-2">
+                            <h2 class="text-[20px] font-bold text-text-main font-heading">Your documents</h2>
+                            <p class="text-text-muted text-[14px]">PDF, JPG or PNG. Up to 10 MB per file. Send at least one document.</p>
+                        </div>
+                        <!-- Document Rows Container -->
+                        <div class="space-y-5">
+                            <!-- Row 1: UPLOADING -->
+                            <div class="grid grid-cols-[1fr_2fr_48px] gap-4 items-start">
+                                <div class="space-y-2">
+                                    <label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">Document Type</label>
+                                    <select class="w-full h-[48px] rounded-xl border-border-subtle focus:ring-primary focus:border-primary text-[14px] text-text-main shadow-sm">
+                                        <option selected="">GST Certificate</option>
+                                        <option>Company registration</option>
+                                        <option>VAT / Tax Certificate</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">File</label>
+                                    <div class="h-[52px] border border-border-subtle bg-white rounded-xl px-4 flex items-center justify-between shadow-sm relative overflow-hidden">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded bg-background-alt flex items-center justify-center shrink-0">
+                                                <span class="material-symbols-outlined text-primary text-[20px]">upload</span>
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span class="text-[14px] text-text-main font-semibold leading-tight">gst-certificate.pdf</span>
+                                                <span class="text-[12px] text-text-caption font-normal">4.8 MB · 41%</span>
+                                            </div>
+                                        </div>
+                                        <!-- Progress Track -->
+                                        <div class="absolute bottom-0 left-0 right-0 h-[3px] bg-[#C5C6CF]">
+                                            <div class="h-full bg-primary" style="width: 41%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pt-[28px]">
+                                    <button class="w-[48px] h-[48px] flex items-center justify-center text-text-caption hover:bg-neutral-bg rounded-xl transition-colors">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Row 2: ERROR -->
+                            <div class="grid grid-cols-[1fr_2fr_48px] gap-4 items-start">
+                                <div class="space-y-2">
+                                    <label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">Document Type</label>
+                                    <select class="w-full h-[48px] rounded-xl border-border-subtle focus:ring-primary focus:border-primary text-[14px] text-text-main shadow-sm">
+                                        <option selected="">Certificate</option>
+                                        <option>Export License</option>
+                                        <option>Bank Reference Letter</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[12px] font-semibold text-text-muted uppercase tracking-wider">File</label>
+                                    <div class="h-[52px] border border-error bg-[#FEECEA] rounded-xl px-4 flex items-center justify-between shadow-sm">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded bg-[#FEECEA] flex items-center justify-center shrink-0">
+                                                <span class="material-symbols-outlined text-error text-[20px]">warning</span>
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span class="text-[14px] text-text-main font-semibold leading-tight">factory-photo.tiff</span>
+                                                <span class="text-[12px] text-text-caption font-normal">22.6 MB</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 mt-1.5">
+                                        <span class="material-symbols-outlined text-error text-[14px]">error</span>
+                                        <span class="text-[13px] font-medium text-error">That file is too large and TIFF isn't supported. Use a PDF, JPG or PNG under 10 MB.</span>
+                                    </div>
+                                </div>
+                                <div class="pt-[28px]">
+                                    <button class="w-[48px] h-[48px] flex items-center justify-center text-error hover:bg-error/10 rounded-xl transition-colors">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Add Button -->
+                        <button class="inline-flex items-center gap-2 px-5 h-[48px] rounded-xl bg-neutral-bg text-text-main font-semibold text-[14px] hover:bg-border-subtle/50 transition-colors shadow-sm">
+                            <span class="material-symbols-outlined text-[20px]">add</span>
+                            Add another document
+                        </button>
+                    </div>
+                </div>
+                <!-- Action Row -->
+                <div class="flex items-center justify-end gap-4 pt-6">
+                    <button class="px-8 h-[52px] rounded-pill bg-white text-text-main font-semibold border border-border-subtle hover:bg-neutral-bg transition-colors shadow-sm">
+                        Cancel
+                    </button>
+                    <button class="px-8 h-[52px] rounded-pill bg-border-subtle text-text-caption font-semibold shadow-sm cursor-not-allowed flex items-center justify-center gap-2" disabled="">
+                        Submit for review
+                        <span class="material-symbols-outlined text-[18px]">send</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- SPACER FOR SEAMLESS STACKING -->
+<div class="h-[100px] bg-white w-full"></div>
+<!-- SECTION 5: IN REVIEW STATE -->
+<div class="flex w-full min-h-screen bg-shell-bg overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-[260px] flex-shrink-0 flex flex-col text-white" style="background-color: #1A2E8F;">
+        <div class="h-header-h flex items-center px-8 shrink-0">
+            <span class="text-[24px] font-bold font-heading tracking-tight text-white">MPX Global</span>
+        </div>
+        <nav class="flex-1 py-4 px-4 space-y-2">
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span class="text-[14px] font-medium text-white/50">Dashboard</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white font-semibold transition-all shadow-inner" href="#">
+                <span class="material-symbols-outlined filled-icon">verified_user</span>
+                <span class="text-[14px]">Verification</span>
+            </a>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span class="text-[14px] font-medium text-white/50">Products</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">question_answer</span>
+                    <span class="text-[14px] font-medium text-white/50">Enquiries</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">chat</span>
+                    <span class="text-[14px] font-medium text-white/50">Chat</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/5 transition-all mt-8" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-[14px] font-medium">Settings</span>
+            </a>
+        </nav>
+    </aside>
+    <div class="flex-1 flex flex-col">
+        <!-- Unified Top Bar -->
+        <header class="h-header-h flex items-center justify-end px-10 text-white z-30" style="background-color: #1A2E8F;">
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-[14px] font-semibold text-white leading-tight">Rajesh Kumar</p>
+                    <p class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                    <span class="text-[14px] font-bold text-white">RK</span>
+                </div>
+                <button class="ml-2 hover:text-white transition-colors text-white">
+                    <span class="material-symbols-outlined">logout</span>
+                </button>
+            </div>
+        </header>
+        <!-- Main Content Area -->
+        <main class="flex-1 bg-background-alt rounded-tl-[32px] overflow-y-auto relative shadow-[-4px_-4px_24px_rgba(0,0,0,0.15)]">
+            <div class="p-12 w-full max-w-[960px] mx-auto space-y-10 pb-20">
+                <!-- Breadcrumb & Header -->
+                <section class="space-y-4">
+                    <a class="inline-flex items-center text-primary font-medium hover:underline group text-[14px]" href="#">
+                        <span class="material-symbols-outlined text-[18px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                        Back to verification status
+                    </a>
+                    <div class="space-y-2">
+                        <h1 class="text-[40px] font-bold text-text-main tracking-tight font-heading">Verification</h1>
+                    </div>
+                </section>
+                <!-- In Review Card -->
+                <div class="bg-white rounded-[12px] border border-border-subtle p-8 text-left">
+                    <!-- Status Chip -->
+                    <div class="inline-flex items-center bg-[#FEF6E7] px-[10px] py-[5px] rounded-full">
+                        <div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+                        <span class="ml-[6px] text-[13px] font-semibold text-[#F79009]">In review</span>
+                    </div>
+                    <div class="mt-5">
+                        <h2 class="text-[20px] font-semibold text-text-main">Your documents are with our team</h2>
+                        <p class="mt-[10px] text-[15px] font-normal text-text-muted max-w-[560px]">We received them on 12 March 2026. There's nothing more to send for now — we'll email you when the review is done.</p>
+                    </div>
+                    <div class="mt-6">
+                        <button class="h-[44px] px-6 rounded-pill bg-white border border-border-subtle text-text-main text-[15px] font-semibold hover:bg-neutral-bg transition-colors">
+                            Back to verification status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div><!-- SPACER FOR SEAMLESS STACKING -->
+<div class="h-[100px] bg-white w-full"></div>
+<!-- SECTION 6: VERIFIED STATE -->
+<div class="flex w-full min-h-screen bg-shell-bg overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-[260px] flex-shrink-0 flex flex-col text-white" style="background-color: #1A2E8F;">
+        <div class="h-header-h flex items-center px-8 shrink-0">
+            <span class="text-[24px] font-bold font-heading tracking-tight text-white">MPX Global</span>
+        </div>
+        <nav class="flex-1 py-4 px-4 space-y-2">
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span class="text-[14px] font-medium text-white/50">Dashboard</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white font-semibold transition-all shadow-inner" href="#">
+                <span class="material-symbols-outlined filled-icon">verified_user</span>
+                <span class="text-[14px]">Verification</span>
+            </a>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span class="text-[14px] font-medium text-white/50">Products</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">question_answer</span>
+                    <span class="text-[14px] font-medium text-white/50">Enquiries</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">chat</span>
+                    <span class="text-[14px] font-medium text-white/50">Chat</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/5 transition-all mt-8" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-[14px] font-medium">Settings</span>
+            </a>
+        </nav>
+    </aside>
+    <div class="flex-1 flex flex-col">
+        <!-- Unified Top Bar -->
+        <header class="h-header-h flex items-center justify-end px-10 text-white z-30" style="background-color: #1A2E8F;">
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-[14px] font-semibold text-white leading-tight">Rajesh Kumar</p>
+                    <p class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                    <span class="text-[14px] font-bold text-white">RK</span>
+                </div>
+                <button class="ml-2 hover:text-white transition-colors text-white">
+                    <span class="material-symbols-outlined">logout</span>
+                </button>
+            </div>
+        </header>
+        <!-- Main Content Area -->
+        <main class="flex-1 bg-background-alt rounded-tl-[32px] overflow-y-auto relative shadow-[-4px_-4px_24px_rgba(0,0,0,0.15)]">
+            <div class="p-12 w-full max-w-[960px] mx-auto space-y-10 pb-20">
+                <!-- Breadcrumb & Header -->
+                <section class="space-y-4">
+                    <a class="inline-flex items-center text-primary font-medium hover:underline group text-[14px]" href="#">
+                        <span class="material-symbols-outlined text-[18px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                        Back to verification status
+                    </a>
+                    <div class="space-y-2">
+                        <h1 class="text-[40px] font-bold text-text-main tracking-tight font-heading">Verification</h1>
+                    </div>
+                </section>
+                <!-- Verified Card -->
+                <div class="bg-white rounded-[12px] border border-border-subtle p-8 text-left">
+                    <!-- Success Badge -->
+                    <div class="w-[48px] h-[48px] rounded-full bg-[#E8F7EE] flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined text-success text-[24px] filled-icon">check_circle</span>
+                    </div>
+                    <!-- Status Chip -->
+                    <div class="inline-flex items-center bg-[#E8F7EE] px-[10px] py-[5px] rounded-full">
+                        <span class="material-symbols-outlined text-success text-[14px] filled-icon">check_circle</span>
+                        <span class="ml-[6px] text-[13px] font-semibold text-success">Verified</span>
+                    </div>
+                    <div class="mt-5">
+                        <h2 class="text-[20px] font-semibold text-text-main">You're verified</h2>
+                        <p class="mt-[10px] text-[15px] font-normal text-text-muted max-w-[560px]">Your documents were approved on 18 March 2026. Your verified tick is live on your profile and your product limit has been removed.</p>
+                    </div>
+                    <div class="mt-6">
+                        <button class="h-[44px] px-6 rounded-pill bg-white border border-border-subtle text-text-main text-[15px] font-semibold hover:bg-neutral-bg transition-colors">
+                            Back to verification status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- SPACER FOR SEAMLESS STACKING -->
+<div class="h-[100px] bg-white w-full"></div>
+<!-- SECTION 7: SKELETON LOADING STATE -->
+<div class="flex w-full min-h-screen bg-shell-bg overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-[260px] flex-shrink-0 flex flex-col text-white" style="background-color: #1A2E8F;">
+        <div class="h-header-h flex items-center px-8 shrink-0">
+            <span class="text-[24px] font-bold font-heading tracking-tight text-white">MPX Global</span>
+        </div>
+        <nav class="flex-1 py-4 px-4 space-y-2">
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span class="text-[14px] font-medium text-white/50">Dashboard</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white font-semibold transition-all shadow-inner" href="#">
+                <span class="material-symbols-outlined filled-icon">verified_user</span>
+                <span class="text-[14px]">Verification</span>
+            </a>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span class="text-[14px] font-medium text-white/50">Products</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">question_answer</span>
+                    <span class="text-[14px] font-medium text-white/50">Enquiries</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined">chat</span>
+                    <span class="text-[14px] font-medium text-white/50">Chat</span>
+                </div>
+                <span class="text-[10px] font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+            </div>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/5 transition-all mt-8" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-[14px] font-medium">Settings</span>
+            </a>
+        </nav>
+    </aside>
+    <div class="flex-1 flex flex-col">
+        <!-- Unified Top Bar -->
+        <header class="h-header-h flex items-center justify-end px-10 text-white z-30" style="background-color: #1A2E8F;">
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-[14px] font-semibold text-white leading-tight">Rajesh Kumar</p>
+                    <p class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                    <span class="text-[14px] font-bold text-white">RK</span>
+                </div>
+                <button class="ml-2 hover:text-white transition-colors text-white">
+                    <span class="material-symbols-outlined">logout</span>
+                </button>
+            </div>
+        </header>
+        <!-- Main Content Area -->
+        <main class="flex-1 bg-background-alt rounded-tl-[32px] overflow-y-auto relative shadow-[-4px_-4px_24px_rgba(0,0,0,0.15)]">
+            <div class="p-12 w-full max-w-[960px] mx-auto space-y-10 pb-20">
+                <!-- Breadcrumb -->
+                <section class="space-y-4">
+                    <a class="inline-flex items-center text-primary font-medium hover:underline group text-[14px]" href="#">
+                        <span class="material-symbols-outlined text-[18px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                        Back to verification status
+                    </a>
+                </section>
+                <!-- Skeleton Content -->
+                <div class="space-y-10">
+                    <!-- Title & Subline -->
+                    <div class="space-y-[10px]">
+                        <div class="w-[240px] h-[32px] bg-[#E4E6EB] rounded-[6px]"></div>
+                        <div class="w-[420px] h-[16px] bg-[#E4E6EB] rounded-[6px]"></div>
+                    </div>
+                    <!-- Explainer Panel -->
+                    <div class="w-full h-[96px] bg-[#E4E6EB] rounded-[12px]"></div>
+                    <!-- Form Card -->
+                    <div class="bg-white rounded-[12px] border border-[#C5C6CF] p-6 space-y-8">
+                        <!-- Account Type Section -->
+                        <div class="space-y-4">
+                            <div class="w-[180px] h-[18px] bg-[#E4E6EB] rounded-[6px]"></div>
+                            <div class="w-[240px] h-[48px] bg-[#E4E6EB] rounded-[6px]"></div>
+                        </div>
+                        <!-- Divider -->
+                        <div class="w-full h-[1px] bg-[#C5C6CF]"></div>
+                        <!-- Documents Section -->
+                        <div class="space-y-6">
+                            <div class="w-[160px] h-[18px] bg-[#E4E6EB] rounded-[6px]"></div>
+                            <!-- Row 1 -->
+                            <div class="flex gap-4">
+                                <div class="w-[240px] h-[44px] bg-[#E4E6EB] rounded-[6px]"></div>
+                                <div class="flex-1 h-[44px] bg-[#E4E6EB] rounded-[6px]"></div>
+                            </div>
+                            <!-- Row 2 -->
+                            <div class="flex gap-4">
+                                <div class="w-[240px] h-[44px] bg-[#E4E6EB] rounded-[6px]"></div>
+                                <div class="flex-1 h-[44px] bg-[#E4E6EB] rounded-[6px]"></div>
+                            </div>
+                            <!-- Add Button -->
+                            <div class="w-[200px] h-[44px] bg-[#E4E6EB] rounded-[6px]"></div>
+                        </div>
+                    </div>
+                    <!-- Action Row -->
+                    <div class="flex justify-end gap-4">
+                        <div class="w-[120px] h-[44px] bg-[#E4E6EB] rounded-pill"></div>
+                        <div class="w-[200px] h-[44px] bg-[#E4E6EB] rounded-pill"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div></body></html>

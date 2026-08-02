@@ -1,0 +1,345 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MPX Global | Buyer Account</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#afc6ff",
+                        "tertiary-fixed": "#ffdcc6",
+                        "surface-tint": "#4d5e83",
+                        "background": "#fbf8fc",
+                        "on-tertiary-container": "#ae7b59",
+                        "outline-variant": "#c5c6cf",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#44474e",
+                        "surface": "#fbf8fc",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#0e0300",
+                        "secondary-fixed": "#d9e2ff",
+                        "on-surface": "#1b1b1e",
+                        "tertiary-fixed-dim": "#f5ba93",
+                        "surface-variant": "#e4e2e5",
+                        "surface-bright": "#fbf8fc",
+                        "on-secondary": "#ffffff",
+                        "outline": "#75777f",
+                        "surface-container": "#efedf0",
+                        "surface-container-low": "#f5f3f6",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e4e2e5",
+                        "on-background": "#1b1b1e",
+                        "inverse-on-surface": "#f2f0f3",
+                        "on-primary-fixed": "#061b3c",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#b5c6f0",
+                        "inverse-surface": "#303033",
+                        "secondary": "#435d96",
+                        "on-tertiary-fixed": "#301400",
+                        "on-tertiary-fixed-variant": "#653d20",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#a4bdfd",
+                        "on-secondary-fixed": "#001944",
+                        "on-secondary-container": "#314b83",
+                        "surface-dim": "#dbd9dd",
+                        "primary-container": "#0a1e3f",
+                        "tertiary-container": "#351600",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-container-high": "#e9e7eb",
+                        "on-secondary-fixed-variant": "#2a457d",
+                        "on-primary-fixed-variant": "#35466a",
+                        "on-primary-container": "#7586ad",
+                        "primary-fixed-dim": "#b5c6f0",
+                        "primary": "#000517",
+                        /* Brand Specific Colors */
+                        "mpx-navy": "#1A2E8F",
+                        "mpx-accent": "#2A4DE0",
+                        "mpx-canvas": "#EAEEFF",
+                        "mpx-slate": "#5A6B85",
+                        "mpx-neutral": "#667085",
+                        "mpx-neutral-tint": "#F2F4F7",
+                        "mpx-ink": "#000517"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "content": "32px",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "sm": "16px",
+                        "md": "24px",
+                        "xl": "64px",
+                        "gutter": "24px",
+                        "lg": "40px",
+                        "xs": "8px",
+                        "base": "4px",
+                        "container-max": "1440px"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar { width: 260px; height: 100vh; background-color: #1A2E8F; flex-shrink: 0; }
+        .top-bar { height: 88px; background-color: #1A2E8F; }
+        .main-content { background-color: #EAEEFF; height: calc(100vh - 88px); overflow-y: auto; }
+        .content-wrap { max-width: 860px; margin-left: 0; padding: 40px; }
+        .curved-edge { border-top-left-radius: 32px; }
+        .nav-active { background-color: rgba(255, 255, 255, 0.1); }
+        .nav-disabled { opacity: 0.5; cursor: not-allowed; }
+        .nav-soon { background-color: rgba(255, 255, 255, 0.15); font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1; }
+        
+        /* Custom Scrollbar for internal area */
+        .main-content::-webkit-scrollbar { width: 6px; }
+        .main-content::-webkit-scrollbar-track { background: transparent; }
+        .main-content::-webkit-scrollbar-thumb { background: rgba(0, 5, 23, 0.1); border-radius: 10px; }
+    </style>
+</head>
+<body class="flex flex-col bg-white">
+<!-- Shell 1: Not Submitted -->
+<div class="flex w-full h-screen bg-mpx-navy overflow-hidden">
+<aside class="sidebar flex flex-col">
+<div class="h-[88px] flex items-center px-sm">
+<span class="text-white font-bold text-[24px] tracking-tight pl-2">MPX Global</span>
+</div>
+<nav class="flex flex-col mt-4 px-2 space-y-1">
+<!-- Active State: Verification -->
+<a class="flex items-center justify-between px-4 py-3 text-white rounded-lg nav-active group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined icon-fill text-[20px]">verified_user</span>
+<span class="text-[15px] font-medium">Verification</span>
+</div>
+</a>
+<!-- Disabled: Search suppliers -->
+<div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">search</span>
+<span class="text-[15px] font-medium">Search suppliers</span>
+</div>
+<span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span>
+</div>
+<!-- Disabled: Enquiries -->
+<div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">request_quote</span>
+<span class="text-[15px] font-medium">Enquiries</span>
+</div>
+<span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span>
+</div>
+<!-- Disabled: Chat -->
+<div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+<span class="text-[15px] font-medium">Chat</span>
+</div>
+<span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span>
+</div>
+<div class="h-[32px]"></div>
+<!-- Inactive: Settings -->
+<a class="flex items-center px-4 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-all rounded-lg group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-[15px] font-medium">Settings</span>
+</div>
+</a>
+</nav>
+</aside>
+<!-- Main Stack -->
+<div class="flex flex-col flex-1 overflow-hidden">
+<!-- Top Bar -->
+<header class="top-bar flex items-center justify-end px-xl">
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="text-white text-[14px] font-semibold leading-none">Sarah Jenkins</p>
+<p class="text-white/70 text-[12px] font-normal mt-1">Buyer · Al Noor Trading LLC</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-mpx-accent flex items-center justify-center text-white text-[14px] font-bold">
+                    SJ
+                </div>
+<button class="ml-2 text-white/70 hover:text-white transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- Content Area -->
+<main class="main-content curved-edge shadow-2xl relative">
+<div class="content-wrap">
+<!-- Header Section -->
+<div class="mb-[32px]">
+<h1 class="text-[32px] font-bold text-mpx-ink">Welcome, Sarah</h1>
+<p class="text-[16px] text-mpx-slate mt-1">Al Noor Trading LLC · Dubai, United Arab Emirates</p>
+</div>
+<!-- Status Card -->
+<section class="bg-white rounded-[12px] border border-outline-variant p-[32px] shadow-sm max-w-[860px]">
+<div class="flex flex-col items-start gap-[24px]">
+<!-- Status Chip -->
+<div class="flex items-center gap-2 bg-mpx-neutral-tint px-3 py-1.5 rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-mpx-neutral"></span>
+<span class="text-[13px] font-semibold text-mpx-neutral">Not submitted</span>
+</div>
+<!-- Info Content -->
+<div class="space-y-4">
+<h2 class="text-[20px] font-semibold text-mpx-ink">You haven't sent any documents</h2>
+<p class="text-[15px] leading-relaxed text-mpx-slate">
+                                Verification is optional and your account already works in full. If you send your business documents, our team reviews them and adds a verified tick to your profile — suppliers use that tick to decide which enquiries to answer first.
+                            </p>
+</div>
+<!-- Action Button -->
+<button class="w-[200px] h-[44px] bg-mpx-accent hover:bg-opacity-90 active:scale-95 transition-all text-white font-semibold text-[15px] rounded-full flex items-center justify-center">
+                            Upload documents
+                        </button>
+</div>
+</section>
+</div>
+<!-- Optional atmospheric subtle gradient -->
+<div class="absolute bottom-0 right-0 w-[400px] h-[400px] pointer-events-none opacity-20" style="background: radial-gradient(circle at bottom right, #2A4DE0, transparent 70%);">
+</div>
+</main>
+</div>
+</div>
+<div class="h-[100px] w-full bg-white shrink-0"></div>
+<!-- Shell 2: In Review -->
+<div class="flex w-full h-screen bg-mpx-navy overflow-hidden">
+<aside class="sidebar flex flex-col">
+<div class="h-[88px] flex items-center px-sm">
+<span class="text-white font-bold text-[24px] tracking-tight pl-2">MPX Global</span>
+</div>
+<nav class="flex flex-col mt-4 px-2 space-y-1">
+<a class="flex items-center justify-between px-4 py-3 text-white rounded-lg nav-active group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined icon-fill text-[20px]">verified_user</span>
+<span class="text-[15px] font-medium">Verification</span>
+</div>
+</a>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">search</span>
+<span class="text-[15px] font-medium">Search suppliers</span>
+</div>
+<span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span>
+</div>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">request_quote</span>
+<span class="text-[15px] font-medium">Enquiries</span>
+</div>
+<span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span>
+</div>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+<span class="text-[15px] font-medium">Chat</span>
+</div>
+<span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span>
+</div>
+<div class="h-[32px]"></div>
+<a class="flex items-center px-4 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-all rounded-lg group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-[15px] font-medium">Settings</span>
+</div>
+</a>
+</nav>
+</aside>
+<div class="flex flex-col flex-1 overflow-hidden">
+<header class="top-bar flex items-center justify-end px-xl">
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="text-white text-[14px] font-semibold leading-none">Sarah Jenkins</p>
+<p class="text-white/70 text-[12px] font-normal mt-1">Buyer · Al Noor Trading LLC</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-mpx-accent flex items-center justify-center text-white text-[14px] font-bold">SJ</div>
+<button class="ml-2 text-white/70 hover:text-white transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<main class="main-content curved-edge shadow-2xl relative">
+<div class="content-wrap">
+<div class="mb-[32px]">
+<h1 class="text-[32px] font-bold text-mpx-ink">Welcome, Sarah</h1>
+<p class="text-[16px] text-mpx-slate mt-1">Al Noor Trading LLC · Dubai, United Arab Emirates</p>
+</div>
+<section class="bg-white rounded-[12px] border border-outline-variant p-[32px] shadow-sm max-w-[860px]">
+<div class="flex flex-col items-start">
+<div class="flex items-center gap-2 bg-[#FEF6E7] px-3 py-1.5 rounded-full mb-[24px]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#F79009]"></span>
+<span class="text-[13px] font-semibold text-[#F79009]">In review</span>
+</div>
+<div class="space-y-4">
+<h2 class="text-[20px] font-semibold text-mpx-ink">Your documents are with our team</h2>
+<p class="text-[15px] leading-relaxed text-mpx-slate">
+                                We received them on 12 March 2026. Reviews usually take two to three working days, and we'll email you as soon as it's done. You can keep using your account as normal in the meantime.
+                            </p>
+</div>
+<div class="w-full h-[1px] bg-[#C5C6CF] my-[28px]"></div>
+<div class="w-full">
+<h3 class="text-[16px] font-semibold text-[#000517] mb-1">What you sent</h3>
+<p class="text-[13px] font-normal text-[#5A6B85] mb-4">Your documents are private. We don't show them back to you here.</p>
+<div class="space-y-3">
+<div class="h-[64px] rounded-lg border border-[#C5C6CF] bg-white px-4 flex items-center gap-3">
+<div class="w-[32px] h-[32px] bg-[#F2F4F7] rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[#667085] text-[18px]">description</span>
+</div>
+<div>
+<p class="text-[14px] font-medium text-mpx-ink">Company registration</p>
+<p class="text-[12px] text-mpx-slate">Uploaded 12 Mar 2026</p>
+</div>
+</div>
+<div class="h-[64px] rounded-lg border border-[#C5C6CF] bg-white px-4 flex items-center gap-3">
+<div class="w-[32px] h-[32px] bg-[#F2F4F7] rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[#667085] text-[18px]">description</span>
+</div>
+<div>
+<p class="text-[14px] font-medium text-mpx-ink">GST / tax document</p>
+<p class="text-[12px] text-mpx-slate">Uploaded 12 Mar 2026</p>
+</div>
+</div>
+<div class="h-[64px] rounded-lg border border-[#C5C6CF] bg-white px-4 flex items-center gap-3">
+<div class="w-[32px] h-[32px] bg-[#F2F4F7] rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[#667085] text-[18px]">description</span>
+</div>
+<div>
+<p class="text-[14px] font-medium text-mpx-ink">Certificate</p>
+<p class="text-[12px] text-mpx-slate">Uploaded 12 Mar 2026</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('a, button').forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (el.classList.contains('nav-disabled')) return;
+                console.log('Interaction recorded on:', el.textContent.trim());
+            });
+        });
+    </script>
+
+
+<div class="h-[100px] w-full bg-white shrink-0"></div><div class="flex w-full h-screen bg-mpx-navy overflow-hidden"><aside class="sidebar flex flex-col"><div class="h-[88px] flex items-center px-sm"><span class="text-white font-bold text-[24px] tracking-tight pl-2">MPX Global</span></div><nav class="flex flex-col mt-4 px-2 space-y-1"><a class="flex items-center justify-between px-4 py-3 text-white rounded-lg nav-active group" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined icon-fill text-[20px]">verified_user</span><span class="text-[15px] font-medium">Verification</span></div></a><div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">search</span><span class="text-[15px] font-medium">Search suppliers</span></div><span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">request_quote</span><span class="text-[15px] font-medium">Enquiries</span></div><span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">chat_bubble</span><span class="text-[15px] font-medium">Chat</span></div><span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span></div><div class="h-[32px]"></div><a class="flex items-center px-4 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-all rounded-lg group" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">settings</span><span class="text-[15px] font-medium">Settings</span></div></a></nav></aside><div class="flex flex-col flex-1 overflow-hidden"><header class="top-bar flex items-center justify-end px-xl"><div class="flex items-center gap-4"><div class="text-right"><p class="text-white text-[14px] font-semibold leading-none">Sarah Jenkins</p><p class="text-white/70 text-[12px] font-normal mt-1">Buyer · Al Noor Trading LLC</p></div><div class="w-10 h-10 rounded-full bg-mpx-accent flex items-center justify-center text-white text-[14px] font-bold">SJ</div><button class="ml-2 text-white/70 hover:text-white transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><main class="main-content curved-edge shadow-2xl relative"><div class="content-wrap"><div class="mb-[32px]"><h1 class="text-[32px] font-bold text-mpx-ink">Welcome, Sarah</h1><div class="flex items-center gap-3 mt-1"><p class="text-[16px] text-mpx-slate">Al Noor Trading LLC · Dubai, United Arab Emirates</p><div class="flex items-center bg-[#E8F7EE] px-[10px] py-[5px] rounded-full"><span class="material-symbols-outlined text-[#12B76A] text-[16px]">check_circle</span><span class="ml-[6px] text-[13px] font-semibold text-[#12B76A]">Verified</span><span class="ml-[6px] text-[13px] font-normal text-[#12B76A]">since Mar 2026</span></div></div></div><section class="bg-white rounded-[12px] border border-outline-variant p-[32px] shadow-sm max-w-[860px]"><div class="flex flex-col items-start"><div class="flex items-center gap-2 bg-[#E8F7EE] px-3 py-1.5 rounded-full mb-[24px]"><span class="material-symbols-outlined text-[#12B76A] text-[14px]">check_circle</span><span class="text-[13px] font-semibold text-[#12B76A]">Verified</span></div><div class="space-y-4"><h2 class="text-[20px] font-semibold text-mpx-ink">You're verified</h2><p class="text-[15px] leading-relaxed text-mpx-slate">Your documents were approved on 18 March 2026. The verified tick now shows on your profile whenever you contact a supplier.</p></div><div class="w-full h-[1px] bg-[#C5C6CF] my-[28px]"></div><div class="w-full"><h3 class="text-[16px] font-semibold text-[#000517] mb-1">What you sent</h3><p class="text-[13px] font-normal text-[#5A6B85] mb-4">Your documents are private. We don't show them back to you here.</p><div class="space-y-3"><div class="h-[64px] rounded-lg border border-[#C5C6CF] bg-white px-4 flex items-center gap-3"><div class="w-[32px] h-[32px] bg-[#F2F4F7] rounded flex items-center justify-center"><span class="material-symbols-outlined text-[#667085] text-[18px]">description</span></div><div><p class="text-[14px] font-medium text-mpx-ink">Company registration</p><p class="text-[12px] text-mpx-slate">Uploaded 12 Mar 2026</p></div></div><div class="h-[64px] rounded-lg border border-[#C5C6CF] bg-white px-4 flex items-center gap-3"><div class="w-[32px] h-[32px] bg-[#F2F4F7] rounded flex items-center justify-center"><span class="material-symbols-outlined text-[#667085] text-[18px]">description</span></div><div><p class="text-[14px] font-medium text-mpx-ink">GST / tax document</p><p class="text-[12px] text-mpx-slate">Uploaded 12 Mar 2026</p></div></div><div class="h-[64px] rounded-lg border border-[#C5C6CF] bg-white px-4 flex items-center gap-3"><div class="w-[32px] h-[32px] bg-[#F2F4F7] rounded flex items-center justify-center"><span class="material-symbols-outlined text-[#667085] text-[18px]">description</span></div><div><p class="text-[14px] font-medium text-mpx-ink">Certificate</p><p class="text-[12px] text-mpx-slate">Uploaded 12 Mar 2026</p></div></div></div></div></div></section></div></main></div></div><div class="h-[100px] w-full bg-white shrink-0"></div><div class="flex w-full h-screen bg-mpx-navy overflow-hidden"><aside class="sidebar flex flex-col"><div class="h-[88px] flex items-center px-sm"><span class="text-white font-bold text-[24px] tracking-tight pl-2">MPX Global</span></div><nav class="flex flex-col mt-4 px-2 space-y-1"><a class="flex items-center justify-between px-4 py-3 text-white rounded-lg nav-active group" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined icon-fill text-[20px]">verified_user</span><span class="text-[15px] font-medium">Verification</span></div></a><div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">search</span><span class="text-[15px] font-medium">Search suppliers</span></div><span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">request_quote</span><span class="text-[15px] font-medium">Enquiries</span></div><span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">chat_bubble</span><span class="text-[15px] font-medium">Chat</span></div><span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span></div><div class="h-[32px]"></div><a class="flex items-center px-4 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-all rounded-lg group" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">settings</span><span class="text-[15px] font-medium">Settings</span></div></a></nav></aside><div class="flex flex-col flex-1 overflow-hidden"><header class="top-bar flex items-center justify-end px-xl"><div class="flex items-center gap-4"><div class="text-right"><p class="text-white text-[14px] font-semibold leading-none">Sarah Jenkins</p><p class="text-white/70 text-[12px] font-normal mt-1">Buyer · Al Noor Trading LLC</p></div><div class="w-10 h-10 rounded-full bg-mpx-accent flex items-center justify-center text-white text-[14px] font-bold">SJ</div><button class="ml-2 text-white/70 hover:text-white transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><main class="main-content curved-edge shadow-2xl relative"><div class="content-wrap"><div class="mb-[32px]"><h1 class="text-[32px] font-bold text-mpx-ink">Welcome, Sarah</h1><p class="text-[16px] text-mpx-slate mt-1">Al Noor Trading LLC · Dubai, United Arab Emirates</p></div><section class="bg-white rounded-[12px] border border-outline-variant p-[32px] shadow-sm max-w-[860px]"><div class="flex flex-col items-start"><div class="flex items-center gap-2 bg-[#FEECEA] px-3 py-1.5 rounded-full mb-[24px]"><span class="w-1.5 h-1.5 rounded-full bg-[#D92D20]"></span><span class="text-[13px] font-semibold text-[#D92D20]">Needs attention</span></div><div class="space-y-4"><h2 class="text-[20px] font-semibold text-mpx-ink">We couldn't verify your documents</h2><div class="bg-[#FEECEA] border-l-[3px] border-[#D92D20] rounded-r-lg p-5 mt-4"><p class="text-[15px] font-normal text-[#000517] leading-relaxed">The registration certificate you uploaded had expired in January. Please send a current certificate showing your company name and registration number, and make sure the whole page is visible in the scan.</p></div><p class="text-[13px] font-normal text-[#5A6B85] mt-3">Reviewed 14 March 2026</p></div><button class="w-[220px] h-[44px] bg-[#2A4DE0] text-white font-semibold text-[15px] rounded-full flex items-center justify-center mt-6 hover:bg-opacity-90 active:scale-95 transition-all">Upload new documents</button><div class="w-full h-[1px] bg-[#C5C6CF] my-[28px]"></div><div class="w-full"><h3 class="text-[16px] font-semibold text-[#000517] mb-1">What you sent</h3><p class="text-[13px] font-normal text-[#5A6B85] mb-4">Your documents are private. We don't show them back to you here.</p><div class="space-y-3"><div class="h-[64px] rounded-lg border border-[#C5C6CF] bg-white px-4 flex items-center gap-3"><div class="w-[32px] h-[32px] bg-[#F2F4F7] rounded flex items-center justify-center"><span class="material-symbols-outlined text-[#667085] text-[18px]">description</span></div><div><p class="text-[14px] font-medium text-mpx-ink">Company registration</p><p class="text-[12px] text-mpx-slate">Uploaded 12 Mar 2026</p></div></div><div class="h-[64px] rounded-lg border border-[#C5C6CF] bg-white px-4 flex items-center gap-3"><div class="w-[32px] h-[32px] bg-[#F2F4F7] rounded flex items-center justify-center"><span class="material-symbols-outlined text-[#667085] text-[18px]">description</span></div><div><p class="text-[14px] font-medium text-mpx-ink">GST / tax document</p><p class="text-[12px] text-mpx-slate">Uploaded 12 Mar 2026</p></div></div><div class="h-[64px] rounded-lg border border-[#C5C6CF] bg-white px-4 flex items-center gap-3"><div class="w-[32px] h-[32px] bg-[#F2F4F7] rounded flex items-center justify-center"><span class="material-symbols-outlined text-[#667085] text-[18px]">description</span></div><div><p class="text-[14px] font-medium text-mpx-ink">Certificate</p><p class="text-[12px] text-mpx-slate">Uploaded 12 Mar 2026</p></div></div></div></div></div></section></div></main></div></div>
+
+<div class="h-[100px] w-full bg-white shrink-0"></div><div class="flex w-full h-screen bg-mpx-navy overflow-hidden"><aside class="sidebar flex flex-col"><div class="h-[88px] flex items-center px-sm"><span class="text-white font-bold text-[24px] tracking-tight pl-2">MPX Global</span></div><nav class="flex flex-col mt-4 px-2 space-y-1"><a class="flex items-center justify-between px-4 py-3 text-white rounded-lg nav-active group" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined icon-fill text-[20px]">verified_user</span><span class="text-[15px] font-medium">Verification</span></div></a><div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">search</span><span class="text-[15px] font-medium">Search suppliers</span></div><span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">request_quote</span><span class="text-[15px] font-medium">Enquiries</span></div><span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 nav-disabled"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">chat_bubble</span><span class="text-[15px] font-medium">Chat</span></div><span class="nav-soon text-[10px] font-bold text-white uppercase tracking-wider">Soon</span></div><div class="h-[32px]"></div><a class="flex items-center px-4 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-all rounded-lg group" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">settings</span><span class="text-[15px] font-medium">Settings</span></div></a></nav></aside><div class="flex flex-col flex-1 overflow-hidden"><header class="top-bar flex items-center justify-end px-xl"><div class="flex items-center gap-4"><div class="text-right"><p class="text-white text-[14px] font-semibold leading-none">Sarah Jenkins</p><p class="text-white/70 text-[12px] font-normal mt-1">Buyer · Al Noor Trading LLC</p></div><div class="w-10 h-10 rounded-full bg-mpx-accent flex items-center justify-center text-white text-[14px] font-bold">SJ</div><button class="ml-2 text-white/70 hover:text-white transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><main class="main-content curved-edge shadow-2xl relative"><div class="content-wrap"><div class="mb-[32px]"><div class="bg-[#E4E6EB] w-[280px] h-[32px] rounded-[6px]"></div><div class="bg-[#E4E6EB] w-[360px] h-[16px] mt-3"></div></div><section class="bg-white rounded-[16px] border border-[#E0E2E7] p-[32px] shadow-sm max-w-[860px]"><div class="flex flex-col items-start gap-[24px]"><div class="bg-[#E4E6EB] w-[120px] h-[26px] rounded-full"></div><div class="space-y-4 w-full"><div class="bg-[#E4E6EB] w-[340px] h-[24px] rounded"></div><div class="space-y-3"><div class="bg-[#E4E6EB] w-full h-[16px] rounded"></div><div class="bg-[#E4E6EB] w-full h-[16px] rounded"></div><div class="bg-[#E4E6EB] w-[60%] h-[16px] rounded"></div></div></div><div class="bg-[#E4E6EB] w-[200px] h-[44px] rounded-[12px]"></div></div></section></div></main></div></div></body></html>

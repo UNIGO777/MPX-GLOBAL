@@ -1,0 +1,365 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MPX Global | Document Upload States</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "accent": "#2A4DE0",
+                        "shell-navy": "#1A2E8F",
+                        "canvas": "#EAEEFF",
+                        "card": "#FFFFFF",
+                        "border": "#C5C6CF",
+                        "ink": "#000517",
+                        "slate": "#5A6B85",
+                        "neutral-text": "#667085",
+                        "verified-green": "#12B76A",
+                        "verified-tint": "#E8F7EE",
+                        "danger": "#D92D20",
+                        "danger-tint": "#FEECEA",
+                        "neutral-tint": "#F2F4F7",
+                        "surface": "#16130f",
+                        "on-surface": "#e9e1da",
+                        "outline-variant": "#4d463a",
+                        "primary": "#e5c483",
+                        "on-primary": "#402d00",
+                        "surface-container-lowest": "#100e0a"
+                    },
+                    fontFamily: {
+                        "inter": ["Inter", "sans-serif"],
+                        "button": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "eyebrow": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    spacing: {
+                        "margin-mobile": "24px",
+                        "sidebar-width": "260px",
+                        "topbar-height": "88px"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #EAEEFF;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #C5C6CF;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #AAB0CF;
+        }
+    </style>
+</head>
+<body class="w-screen text-ink bg-white overflow-y-auto">
+<!-- State 1: Business Account Selection -->
+<div class="flex h-screen w-full overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-[260px] bg-shell-navy flex-shrink-0 flex flex-col h-full overflow-y-auto min-h-0 custom-scrollbar z-20">
+<div class="h-20 flex items-center px-8 flex-shrink-0">
+<span class="text-white font-bold text-xl tracking-tight">MPX Global</span>
+</div>
+<nav class="flex-1 px-4 mt-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white font-medium transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield_person</span>
+<span class="">Verification</span>
+</a>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">search</span>
+<span class="">Search suppliers</span>
+</div>
+<span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span>
+</div>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">assignment</span>
+<span class="">Enquiries</span>
+</div>
+<span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span>
+</div>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">chat</span>
+<span class="">Chat</span>
+</div>
+<span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-all mt-4" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="">Settings</span>
+</a>
+</nav>
+</aside>
+<div class="flex-1 flex flex-col h-full min-w-0 bg-shell-navy">
+<!-- Top Bar -->
+<header class="h-[88px] flex-shrink-0 bg-shell-navy flex items-center justify-end px-12 z-10">
+<div class="flex items-center gap-6">
+<div class="text-right">
+<p class="text-white font-semibold text-sm leading-tight">Sarah Jenkins</p>
+<p class="text-white/60 text-xs">Buyer · Al Noor Trading LLC</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-bold text-sm">SJ</div>
+<button class="text-white/70 hover:text-white transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- Content Area -->
+<main class="flex-1 bg-canvas rounded-tl-[32px] overflow-y-auto min-h-0 custom-scrollbar">
+<div class="max-w-[860px] mx-auto px-12 py-10">
+<a class="flex items-center gap-2 text-accent font-semibold text-sm mb-8 hover:underline group" href="#">
+<span class="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-1">arrow_back</span>
+                        Back to verification status
+                    </a>
+<div class="mb-8">
+<h1 class="text-[28px] font-bold text-ink leading-tight mb-2">Upload your documents</h1>
+<p class="text-slate text-base">Optional — this earns you a verified tick.</p>
+</div>
+<!-- Info Banner Section -->
+<div class="bg-[#F0F4FF] border border-[#D0DFFF] rounded-2xl p-6 mb-10 flex gap-4">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#1A2E8F] flex-shrink-0">
+<span class="material-symbols-outlined">info</span>
+</div>
+<div>
+<h3 class="text-[#1A2E8F] font-semibold text-base mb-1">You don't have to do this</h3>
+<p class="text-[#1A2E8F] text-sm leading-relaxed">Your account already works in full. Sending documents adds a verified tick to your profile, which helps suppliers take your enquiries seriously. You can do it now, later, or never.</p>
+</div>
+</div>
+<div class="bg-card border border-border rounded-2xl shadow-sm overflow-hidden mb-10">
+<div class="p-8">
+<h2 class="text-ink font-bold text-lg mb-6">What kind of account is this?</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Business Selected -->
+<div class="relative">
+<div class="flex items-center gap-4 p-4 border border-accent bg-[#EAEEFF] rounded-xl cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">business</span>
+</div>
+<div class="flex-1">
+<p class="text-ink font-semibold text-sm">Business</p>
+<p class="text-neutral-text text-xs">For registered companies</p>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-accent flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-accent"></div>
+</div>
+</div>
+</div>
+<!-- Individual Unselected -->
+<div class="relative">
+<div class="flex items-center gap-4 p-4 border border-border rounded-xl cursor-pointer hover:bg-neutral-tint transition-all opacity-60">
+<div class="w-10 h-10 rounded-full bg-slate/10 flex items-center justify-center text-slate">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div class="flex-1">
+<p class="text-ink font-semibold text-sm">Individual</p>
+<p class="text-neutral-text text-xs">For independent traders</p>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-border"></div>
+</div>
+</div>
+</div>
+</div>
+<hr class="border-border mx-8">
+<div class="p-8">
+<h2 class="text-ink font-bold text-lg mb-6">Your documents</h2>
+<div class="space-y-6">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate">GST / tax document</label>
+<div class="flex items-center gap-4 p-4 bg-verified-tint/50 border border-verified-green/20 rounded-xl">
+<div class="w-10 h-10 rounded bg-verified-green flex items-center justify-center text-white">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div class="flex-1">
+<p class="text-ink font-medium text-sm">gst-certificate.pdf</p>
+<p class="text-neutral-text text-xs">1.4 MB</p>
+</div>
+<button class="p-2 text-danger hover:bg-danger-tint rounded-lg transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+<button class="flex items-center gap-2 text-accent font-semibold text-sm hover:text-shell-navy transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+                                    Add another document
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- State 2: Individual Account Selection -->
+<div class="flex h-screen w-full overflow-hidden">
+<!-- Sidebar (Identical) -->
+<aside class="w-[260px] bg-shell-navy flex-shrink-0 flex flex-col h-full overflow-y-auto min-h-0 custom-scrollbar z-20">
+<div class="h-20 flex items-center px-8 flex-shrink-0">
+<span class="text-white font-bold text-xl tracking-tight">MPX Global</span>
+</div>
+<nav class="flex-1 px-4 mt-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white font-medium transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield_person</span>
+<span class="">Verification</span>
+</a>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">search</span>
+<span class="">Search suppliers</span>
+</div>
+<span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span>
+</div>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">assignment</span>
+<span class="">Enquiries</span>
+</div>
+<span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span>
+</div>
+<div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">chat</span>
+<span class="">Chat</span>
+</div>
+<span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-all mt-4" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="">Settings</span>
+</a>
+</nav>
+</aside>
+<div class="flex-1 flex flex-col h-full min-w-0 bg-shell-navy">
+<!-- Top Bar (Identical) -->
+<header class="h-[88px] flex-shrink-0 bg-shell-navy flex items-center justify-end px-12 z-10">
+<div class="flex items-center gap-6">
+<div class="text-right">
+<p class="text-white font-semibold text-sm leading-tight">Sarah Jenkins</p>
+<p class="text-white/60 text-xs">Buyer · Al Noor Trading LLC</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-bold text-sm">SJ</div>
+<button class="text-white/70 hover:text-white transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- Content Area -->
+<main class="flex-1 bg-canvas rounded-tl-[32px] overflow-y-auto min-h-0 custom-scrollbar">
+<div class="max-w-[860px] mx-auto px-12 py-10">
+<a class="flex items-center gap-2 text-accent font-semibold text-sm mb-8 hover:underline group" href="#">
+<span class="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-1">arrow_back</span>
+                        Back to verification status
+                    </a>
+<div class="mb-8">
+<h1 class="text-[28px] font-bold text-ink leading-tight mb-2">Upload your documents</h1>
+<p class="text-slate text-base">Optional — this earns you a verified tick.</p>
+</div>
+<!-- Info Banner Section -->
+<div class="bg-[#F0F4FF] border border-[#D0DFFF] rounded-2xl p-6 mb-10 flex gap-4">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#1A2E8F] flex-shrink-0">
+<span class="material-symbols-outlined">info</span>
+</div>
+<div>
+<h3 class="text-[#1A2E8F] font-semibold text-base mb-1">You don't have to do this</h3>
+<p class="text-[#1A2E8F] text-sm leading-relaxed">Your account already works in full. Sending documents adds a verified tick to your profile, which helps suppliers take your enquiries seriously. You can do it now, later, or never.</p>
+</div>
+</div>
+<div class="bg-card border border-border rounded-2xl shadow-sm overflow-hidden mb-10">
+<div class="p-8">
+<h2 class="text-ink font-bold text-lg mb-6">What kind of account is this?</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Business Unselected -->
+<div class="relative">
+<div class="flex items-center gap-4 p-4 border border-border rounded-xl cursor-pointer hover:bg-neutral-tint transition-all opacity-60">
+<div class="w-10 h-10 rounded-full bg-slate/10 flex items-center justify-center text-slate">
+<span class="material-symbols-outlined">business</span>
+</div>
+<div class="flex-1">
+<p class="text-ink font-semibold text-sm">Business</p>
+<p class="text-neutral-text text-xs">For registered companies</p>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-border"></div>
+</div>
+</div>
+<!-- Individual Selected -->
+<div class="relative">
+<div class="flex items-center gap-4 p-4 border border-accent bg-[#EAEEFF] rounded-xl cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<div class="flex-1">
+<p class="text-ink font-semibold text-sm">Individual</p>
+<p class="text-neutral-text text-xs">For independent traders</p>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-accent flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-accent"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<hr class="border-border mx-8">
+<div class="p-8">
+<h2 class="text-ink font-bold text-lg mb-6">Your documents</h2>
+<div class="space-y-6">
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<label class="text-sm font-semibold text-slate">PAN</label>
+<button class="text-accent text-xs font-semibold hover:underline">Change type</button>
+</div>
+<div class="flex items-center gap-4 p-4 bg-verified-tint/50 border border-verified-green/20 rounded-xl">
+<div class="w-10 h-10 rounded bg-verified-green flex items-center justify-center text-white">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div class="flex-1">
+<p class="text-ink font-medium text-sm">pan-card.jpg</p>
+<p class="text-neutral-text text-xs">820 KB</p>
+</div>
+<button class="p-2 text-danger hover:bg-danger-tint rounded-lg transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-2"><label class="text-sm font-semibold text-slate">Document type</label><div class="h-[44px] px-4 border border-border rounded-lg flex items-center justify-between bg-white cursor-pointer"><span class="text-[16px] text-ink">PAN</span><span class="material-symbols-outlined text-slate">expand_more</span></div></div>
+<button class="flex items-center gap-2 text-accent font-semibold text-sm hover:text-shell-navy transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+                                    Add another document
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+
+
+<div class="h-[100px] bg-white w-full"></div><div class="flex h-screen w-full overflow-hidden border-b-[100px] border-white"><aside class="w-[260px] bg-shell-navy flex-shrink-0 flex flex-col h-full overflow-y-auto min-h-0 custom-scrollbar z-20"><div class="h-20 flex items-center px-8 flex-shrink-0"><span class="text-white font-bold text-xl tracking-tight">MPX Global</span></div><nav class="flex-1 px-4 mt-4 space-y-1"><a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white font-medium transition-all" href="#"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield_person</span><span class="">Verification</span></a><div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group"><div class="flex items-center gap-3"><span class="material-symbols-outlined">search</span><span class="">Search suppliers</span></div><span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group"><div class="flex items-center gap-3"><span class="material-symbols-outlined">assignment</span><span class="">Enquiries</span></div><span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group"><div class="flex items-center gap-3"><span class="material-symbols-outlined">chat</span><span class="">Chat</span></div><span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><a class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-all mt-4" href="#"><span class="material-symbols-outlined">settings</span><span class="">Settings</span></a></nav></aside><div class="flex-1 flex flex-col h-full min-w-0 bg-shell-navy"><header class="h-[88px] flex-shrink-0 bg-shell-navy flex items-center justify-end px-12 z-10"><div class="flex items-center gap-6"><div class="text-right"><p class="text-white font-semibold text-sm leading-tight">Sarah Jenkins</p><p class="text-white/60 text-xs">Buyer · Al Noor Trading LLC</p></div><div class="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-bold text-sm">SJ</div><button class="text-white/70 hover:text-white transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><main class="flex-1 bg-canvas rounded-tl-[32px] overflow-y-auto min-h-0 custom-scrollbar"><div class="max-w-[860px] mx-auto px-12 py-10"><a class="flex items-center gap-2 text-accent font-semibold text-sm mb-8 hover:underline group" href="#"><span class="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-1">arrow_back</span>Back to verification status</a><div class="mb-8"><h1 class="text-[28px] font-bold text-ink leading-tight mb-2">Upload your documents</h1><p class="text-slate text-base">Optional — this earns you a verified tick.</p></div><div class="bg-card border border-border rounded-2xl shadow-sm overflow-hidden mb-10"><div class="p-8"><h2 class="text-ink font-bold text-lg mb-6">What kind of account is this?</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="relative"><div class="flex items-center gap-4 p-4 border border-accent bg-[#EAEEFF] rounded-xl cursor-pointer"><div class="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">business</span></div><div class="flex-1"><p class="text-ink font-semibold text-sm">Business</p><p class="text-neutral-text text-xs">For registered companies</p></div><div class="w-5 h-5 rounded-full border-2 border-accent flex items-center justify-center"><div class="w-2.5 h-2.5 rounded-full bg-accent"></div></div></div></div><div class="relative"><div class="flex items-center gap-4 p-4 border border-border rounded-xl cursor-pointer hover:bg-neutral-tint transition-all opacity-60"><div class="w-10 h-10 rounded-full bg-slate/10 flex items-center justify-center text-slate"><span class="material-symbols-outlined">person</span></div><div class="flex-1"><p class="text-ink font-semibold text-sm">Individual</p><p class="text-neutral-text text-xs">For independent traders</p></div><div class="w-5 h-5 rounded-full border-2 border-border"></div></div></div></div></div><hr class="border-border mx-8"><div class="p-8"><h2 class="text-ink font-bold text-lg mb-6">Your documents</h2><div class="space-y-6"><div class="flex flex-col gap-2"><label class="text-sm font-semibold text-slate">GST / tax document</label><div class="relative flex items-center gap-4 p-4 bg-[#EAEEFF] border border-[#D0DFFF] rounded-xl overflow-hidden"><div class="w-10 h-10 rounded bg-white flex items-center justify-center text-accent"><span class="material-symbols-outlined">upload</span></div><div class="flex-1"><p class="text-ink font-semibold text-sm">invoice-scan.pdf</p><p class="text-neutral-text text-xs">1.4 MB</p></div><button class="p-2 text-danger hover:bg-danger-tint rounded-lg transition-colors"><span class="material-symbols-outlined">delete</span></button><div class="absolute bottom-0 left-0 w-full h-[3px] bg-[#C5C6CF]"><div class="h-full bg-accent" style="width: 62%"></div></div></div></div><div class="flex flex-col gap-2"><label class="text-sm font-semibold text-slate">Certificate</label><div class="flex items-center gap-4 p-4 bg-danger-tint border border-danger rounded-xl"><div class="w-10 h-10 rounded bg-danger-tint flex items-center justify-center text-danger"><span class="material-symbols-outlined">warning</span></div><div class="flex-1"><p class="text-ink font-semibold text-sm">company-photo.tiff</p><p class="text-neutral-text text-xs">1.4 MB</p></div><button class="p-2 text-danger hover:bg-danger-tint rounded-lg transition-colors"><span class="material-symbols-outlined">delete</span></button></div><div class="flex items-center gap-1.5 mt-1.5"><span class="material-symbols-outlined text-danger text-sm">error</span><p class="text-[13px] font-medium text-danger">That file is too large and TIFF isn't supported. Use a PDF, JPG or PNG under 10 MB.</p></div></div><button class="flex items-center gap-2 text-accent font-semibold text-sm hover:text-shell-navy transition-colors"><span class="material-symbols-outlined">add_circle</span>Add another document</button><div class="pt-4"><button class="w-full py-3 bg-[#C5C6CF] text-neutral-text font-bold rounded-xl cursor-not-allowed">Submit for verification</button></div></div></div></div></div></main></div></div><div class="h-[100px] bg-white w-full"></div><div class="flex h-screen w-full overflow-hidden"><aside class="w-[260px] bg-shell-navy flex-shrink-0 flex flex-col h-full overflow-y-auto min-h-0 custom-scrollbar z-20"><div class="h-20 flex items-center px-8 flex-shrink-0"><span class="text-white font-bold text-xl tracking-tight">MPX Global</span></div><nav class="flex-1 px-4 mt-4 space-y-1"><a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white font-medium transition-all" href="#"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield_person</span><span class="">Verification</span></a><div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group"><div class="flex items-center gap-3"><span class="material-symbols-outlined">search</span><span class="">Search suppliers</span></div><span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group"><div class="flex items-center gap-3"><span class="material-symbols-outlined">assignment</span><span class="">Enquiries</span></div><span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group"><div class="flex items-center gap-3"><span class="material-symbols-outlined">chat</span><span class="">Chat</span></div><span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><a class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-all mt-4" href="#"><span class="material-symbols-outlined">settings</span><span class="">Settings</span></a></nav></aside><div class="flex-1 flex flex-col h-full min-w-0 bg-shell-navy"><header class="h-[88px] flex-shrink-0 bg-shell-navy flex items-center justify-end px-12 z-10"><div class="flex items-center gap-6"><div class="text-right"><p class="text-white font-semibold text-sm leading-tight">Sarah Jenkins</p><p class="text-white/60 text-xs">Buyer · Al Noor Trading LLC</p></div><div class="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-bold text-sm">SJ</div><button class="text-white/70 hover:text-white transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><main class="flex-1 bg-canvas rounded-tl-[32px] overflow-y-auto min-h-0 custom-scrollbar"><div class="max-w-[860px] mx-auto px-12 py-10"><a class="flex items-center gap-2 text-accent font-semibold text-sm mb-8 hover:underline group" href="#"><span class="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-1">arrow_back</span>Back to verification status</a><div class="mb-8"><h1 class="text-[28px] font-bold text-ink leading-tight mb-2">Your documents</h1></div><div class="bg-card border border-border rounded-xl p-8 flex flex-col items-center text-center"><div class="w-12 h-12 rounded-full bg-verified-tint flex items-center justify-center text-verified-green mb-4"><span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">check_circle</span></div><h2 class="text-[20px] font-semibold text-ink mb-2">You're verified</h2><p class="text-[15px] text-slate leading-relaxed max-w-[520px] mb-6">Your documents were approved on 18 March 2026 and your verified tick is showing on your profile. There's nothing more to send.</p><button class="h-[44px] px-6 bg-white border border-border text-ink text-[15px] font-semibold rounded-full hover:bg-neutral-tint transition-colors">Back to verification status</button></div></div></main></div></div>
+
+<div class="h-[100px] bg-white w-full"></div><div class="flex h-screen w-full overflow-hidden border-b-[100px] border-white"><aside class="w-[260px] bg-shell-navy flex-shrink-0 flex flex-col h-full overflow-y-auto min-h-0 custom-scrollbar z-20"><div class="h-20 flex items-center px-8 flex-shrink-0"><span class="text-white font-bold text-xl tracking-tight">MPX Global</span></div><nav class="flex-1 px-4 mt-4 space-y-1"><a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white font-medium transition-all" href="#"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield_person</span><span class="">Verification</span></a><div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group"><div class="flex items-center gap-3"><span class="material-symbols-outlined">search</span><span class="">Search suppliers</span></div><span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group"><div class="flex items-center gap-3"><span class="material-symbols-outlined">assignment</span><span class="">Enquiries</span></div><span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><div class="flex items-center justify-between px-4 py-3 text-white/50 cursor-not-allowed group"><div class="flex items-center gap-3"><span class="material-symbols-outlined">chat</span><span class="">Chat</span></div><span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><a class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-all mt-4" href="#"><span class="material-symbols-outlined">settings</span><span class="">Settings</span></a></nav></aside><div class="flex-1 flex flex-col h-full min-w-0 bg-shell-navy"><header class="h-[88px] flex-shrink-0 bg-shell-navy flex items-center justify-end px-12 z-10"><div class="flex items-center gap-6"><div class="text-right"><p class="text-white font-semibold text-sm leading-tight">Sarah Jenkins</p><p class="text-white/60 text-xs">Buyer · Al Noor Trading LLC</p></div><div class="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-bold text-sm">SJ</div><button class="text-white/70 hover:text-white transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><main class="flex-1 bg-canvas rounded-tl-[32px] overflow-y-auto min-h-0 custom-scrollbar"><div class="max-w-[860px] mx-auto px-12 py-10"><a class="flex items-center gap-2 text-accent font-semibold text-sm mb-8 hover:underline group" href="#"><span class="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-1">arrow_back</span>Back to verification status</a><div class="mb-8"><h1 class="text-[28px] font-bold text-ink leading-tight mb-2">Upload your documents</h1><p class="text-slate text-base">Optional — this earns you a verified tick.</p></div><div class="bg-[#F0F4FF] border border-[#D0DFFF] rounded-2xl p-6 mb-10 flex gap-4"><div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#1A2E8F] flex-shrink-0"><span class="material-symbols-outlined">info</span></div><div><h3 class="text-[#1A2E8F] font-semibold text-base mb-1">You don't have to do this</h3><p class="text-[#1A2E8F] text-sm leading-relaxed">Your account already works in full. Sending documents adds a verified tick to your profile, which helps suppliers take your enquiries seriously. You can do it now, later, or never.</p></div></div><div class="bg-card border border-border rounded-2xl shadow-sm overflow-hidden mb-10"><div class="p-8"><h2 class="text-ink font-bold text-lg mb-6">What kind of account is this?</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="relative"><div class="flex items-center gap-4 p-4 border border-accent bg-[#EAEEFF] rounded-xl cursor-pointer"><div class="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">business</span></div><div class="flex-1"><p class="text-ink font-semibold text-sm">Business</p><p class="text-neutral-text text-xs">For registered companies</p></div><div class="w-5 h-5 rounded-full border-2 border-accent flex items-center justify-center"><div class="w-2.5 h-2.5 rounded-full bg-accent"></div></div></div></div><div class="relative"><div class="flex items-center gap-4 p-4 border border-border rounded-xl cursor-pointer hover:bg-neutral-tint transition-all opacity-60"><div class="w-10 h-10 rounded-full bg-slate/10 flex items-center justify-center text-slate"><span class="material-symbols-outlined">person</span></div><div class="flex-1"><p class="text-ink font-semibold text-sm">Individual</p><p class="text-neutral-text text-xs">For independent traders</p></div><div class="w-5 h-5 rounded-full border-2 border-border"></div></div></div></div></div><hr class="border-border mx-8"><div class="p-8"><h2 class="text-ink font-bold text-lg mb-6">Your documents</h2><div class="space-y-6"><div class="grid grid-cols-[200px_1fr_44px] gap-4 items-end"><div class="flex flex-col gap-2"><label class="text-sm font-semibold text-slate">Document type</label><div class="h-[44px] px-4 border border-border rounded-lg flex items-center justify-between bg-white cursor-pointer"><span class="text-[16px] text-neutral-text">Choose type</span><span class="material-symbols-outlined text-slate">expand_more</span></div></div><div class="flex flex-col gap-2"><label class="text-sm font-semibold text-slate">File</label><div class="h-[44px] border border-dashed border-border bg-[#EAEEFF] rounded-lg flex items-center justify-center gap-2 cursor-pointer"><span class="material-symbols-outlined text-accent text-[18px]">upload</span><p class="text-sm text-slate">Drop a file or <span class="text-accent font-medium underline">browse</span></p></div></div><button class="h-[44px] w-[44px] flex items-center justify-center text-[#C5C6CF] cursor-not-allowed"><span class="material-symbols-outlined">delete</span></button></div><button class="flex items-center gap-2 text-accent font-semibold text-sm hover:text-shell-navy transition-colors"><span class="material-symbols-outlined">add_circle</span>Add another document</button><div class="pt-6 flex items-center gap-4"><button class="flex-1 h-12 bg-[#C5C6CF] text-neutral-text font-bold rounded-xl cursor-not-allowed">Submit for review</button><button class="px-6 h-12 text-slate font-semibold hover:text-ink transition-colors">Cancel</button></div></div></div></div></div></main></div></div>
+
+</body></html>

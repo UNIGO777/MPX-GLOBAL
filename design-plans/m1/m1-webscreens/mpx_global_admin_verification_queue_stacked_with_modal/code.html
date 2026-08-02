@@ -1,0 +1,825 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MPX Global | Verification Queue</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+                "mpx-navy": "#1A2E8F",
+                "mpx-accent": "#2A4DE0",
+                "mpx-ink": "#000517",
+                "mpx-slate": "#5A6B85",
+                "mpx-neutral": "#667085",
+                "mpx-canvas": "#EAEEFF",
+                "mpx-success": "#12B76A",
+                "mpx-danger": "#D92D20",
+                "border-light": "#C5C6CF"
+            },
+            borderRadius: {
+                "canvas": "32px"
+            },
+            fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #1A2E8F; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .filled-icon { font-variation-settings: 'FILL' 1; }
+        .canvas-shadow { box-shadow: inset 4px 4px 20px rgba(0, 0, 0, 0.05); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 10px; }
+        .sidebar-item { transition: all 0.2s ease; }
+    </style>
+</head>
+<body class="">
+<!-- Sidebar -->
+<div class="flex h-screen overflow-hidden"><aside class="w-[260px] flex-shrink-0 flex flex-col bg-mpx-navy py-8">
+<div class="px-6 mb-10">
+<h1 class="text-[24px] font-bold text-white tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<!-- Dashboard -->
+<div class="sidebar-item opacity-40 cursor-not-allowed flex items-center gap-3 px-4 py-3 rounded-lg group">
+<span class="material-symbols-outlined text-white">dashboard</span>
+<span class="text-[14px] font-medium text-white">Dashboard</span>
+<span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-bold uppercase tracking-wider">Soon</span>
+</div>
+<!-- Users -->
+<div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+<span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">group</span>
+<span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Users</span>
+</div>
+<!-- Verification (Active) -->
+<div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 cursor-pointer">
+<span class="material-symbols-outlined text-white filled-icon">verified_user</span>
+<span class="text-[14px] font-semibold text-white">Verification</span>
+</div>
+<!-- Employees -->
+<div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+<span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">badge</span>
+<span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Employees</span>
+</div>
+<div class="my-6"></div>
+<!-- Audit Log -->
+<div class="sidebar-item opacity-40 cursor-not-allowed flex items-center gap-3 px-4 py-3 rounded-lg group">
+<span class="material-symbols-outlined text-white">history_edu</span>
+<span class="text-[14px] font-medium text-white">Audit log</span>
+<span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-bold uppercase tracking-wider">Soon</span>
+</div>
+<!-- Settings -->
+<div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+<span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">settings</span>
+<span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Settings</span>
+</div>
+</nav>
+</aside><div class="flex-1 flex flex-col min-w-0">
+<!-- Top Bar -->
+<header class="h-[88px] flex items-center justify-end px-8 flex-shrink-0 bg-mpx-navy">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3 border-r border-white/10 pr-6">
+<div class="text-right">
+<div class="text-[14px] font-semibold text-white">Priya Menon</div>
+<div class="text-[12px] text-white/70">Super Admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-mpx-accent flex items-center justify-center text-white font-bold text-[14px]">
+                    PM
+                </div>
+</div>
+<button class="flex items-center text-white/70 hover:text-white transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- Content Area (Scrollable internally) -->
+<main class="flex-1 bg-mpx-canvas rounded-tl-canvas canvas-shadow flex flex-col overflow-hidden">
+<div class="flex-1 custom-scrollbar overflow-hidden">
+<div class="max-w-[1100px] mx-auto w-full px-12 py-12 flex flex-col h-full"><!-- Sticky Header -->
+<div class="sticky top-0 bg-mpx-canvas z-10 pt-12">
+<!-- Header -->
+<div class="mb-10">
+<h2 class="text-[32px] font-bold text-mpx-ink mb-1">Verification queue</h2>
+<p class="text-[15px] font-normal text-mpx-slate">Review submitted documents and decide who gets a verified tick.</p>
+</div>
+<!-- Tab Bar -->
+<div class="flex items-end gap-8 border-b border-border-light mb-4">
+<button class="pb-3 border-b-2 border-mpx-accent flex items-center gap-2">
+<span class="text-[14px] font-semibold text-mpx-accent">Exporters to verify</span>
+<span class="px-2 py-0.5 rounded-full bg-mpx-canvas text-[12px] font-bold text-mpx-accent border border-mpx-accent/20">12</span>
+</button>
+<button class="pb-3 border-b-2 border-transparent flex items-center gap-2 group hover:border-border-light transition-all">
+<span class="text-[14px] font-medium text-mpx-neutral group-hover:text-mpx-ink">Buyers to verify</span>
+<span class="px-2 py-0.5 rounded-full bg-[#F2F4F7] text-[12px] font-bold text-mpx-neutral">5</span>
+</button>
+</div>
+<!-- Sort Line -->
+<div class="mb-6">
+<span class="text-[13px] font-normal text-mpx-neutral">12 exporters awaiting review · oldest first</span>
+</div>
+</div>
+<!-- Scrollable Body -->
+<div class="flex-1 overflow-y-auto custom-scrollbar pb-12">
+<!-- Queue Grid -->
+<div class="flex flex-col gap-4">
+<!-- Card 1 -->
+<div class="bg-white rounded-[16px] border border-border-light p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-4 min-w-0 flex-1">
+<div class="flex items-center gap-3">
+<h3 class="text-[18px] font-semibold text-mpx-ink truncate">Priya Nair · Kochi Spice Exports</h3>
+<div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#FEF6E7] flex-shrink-0">
+<div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+<span class="text-[12px] font-semibold text-[#F79009]">Awaiting review</span>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Country</span>
+<span class="text-[14px] font-medium text-mpx-ink">India</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Entity Type</span>
+<span class="text-[14px] font-medium text-mpx-ink">Business</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Submitted</span>
+<span class="text-[14px] font-medium text-mpx-ink">12 Mar 2026</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-mpx-neutral">description</span>
+<span class="text-[14px] font-medium text-mpx-ink">3 documents</span>
+</div>
+</div>
+<div class="flex items-center gap-3 flex-shrink-0">
+<button class="h-11 px-6 rounded-full border border-border-light bg-white text-mpx-ink text-[15px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-[18px]">description</span>
+          View documents
+        </button>
+<button class="h-11 px-6 rounded-full border border-mpx-danger bg-white text-mpx-danger text-[15px] font-semibold hover:bg-red-50 transition-colors">
+          Reject
+        </button>
+<button class="h-11 px-6 rounded-full bg-mpx-success text-white text-[15px] font-semibold flex items-center gap-2 hover:brightness-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">check</span>
+          Verify
+        </button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-[16px] border border-border-light p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-4 min-w-0 flex-1">
+<div class="flex items-center gap-3">
+<h3 class="text-[18px] font-semibold text-mpx-ink truncate">Anil Deshpande · Sangli Organics</h3>
+<div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#FEF6E7] flex-shrink-0">
+<div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+<span class="text-[12px] font-semibold text-[#F79009]">Awaiting review</span>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Country</span>
+<span class="text-[14px] font-medium text-mpx-ink">India</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Entity Type</span>
+<span class="text-[14px] font-medium text-mpx-ink">Business</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Submitted</span>
+<span class="text-[14px] font-medium text-mpx-ink">13 Mar 2026</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-mpx-neutral">description</span>
+<span class="text-[14px] font-medium text-mpx-ink">2 documents</span>
+</div>
+</div>
+<div class="flex items-center gap-3 flex-shrink-0">
+<button class="h-11 px-6 rounded-full border border-border-light bg-white text-mpx-ink text-[15px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-[18px]">description</span>
+          View documents
+        </button>
+<button class="h-11 px-6 rounded-full border border-mpx-danger bg-white text-mpx-danger text-[15px] font-semibold hover:bg-red-50 transition-colors">
+          Reject
+        </button>
+<button class="h-11 px-6 rounded-full bg-mpx-success text-white text-[15px] font-semibold flex items-center gap-2 hover:brightness-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">check</span>
+          Verify
+        </button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-[16px] border border-border-light p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-4 min-w-0 flex-1">
+<div class="flex items-center gap-3">
+<h3 class="text-[18px] font-semibold text-mpx-ink truncate">Meera Krishnan · Coimbatore Cotton Mills</h3>
+<div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#FEF6E7] flex-shrink-0">
+<div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+<span class="text-[12px] font-semibold text-[#F79009]">Awaiting review</span>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Country</span>
+<span class="text-[14px] font-medium text-mpx-ink">India</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Entity Type</span>
+<span class="text-[14px] font-medium text-mpx-ink">Business</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Submitted</span>
+<span class="text-[14px] font-medium text-mpx-ink">14 Mar 2026</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-mpx-neutral">description</span>
+<span class="text-[14px] font-medium text-mpx-ink">4 documents</span>
+</div>
+</div>
+<div class="flex items-center gap-3 flex-shrink-0">
+<button class="h-11 px-6 rounded-full border border-border-light bg-white text-mpx-ink text-[15px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-[18px]">description</span>
+          View documents
+        </button>
+<button class="h-11 px-6 rounded-full border border-mpx-danger bg-white text-mpx-danger text-[15px] font-semibold hover:bg-red-50 transition-colors">
+          Reject
+        </button>
+<button class="h-11 px-6 rounded-full bg-mpx-success text-white text-[15px] font-semibold flex items-center gap-2 hover:brightness-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">check</span>
+          Verify
+        </button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white rounded-[16px] border border-border-light p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-4 min-w-0 flex-1">
+<div class="flex items-center gap-3">
+<h3 class="text-[18px] font-semibold text-mpx-ink truncate">Ravi Menon · Alleppey Coir Works</h3>
+<div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#FEF6E7] flex-shrink-0">
+<div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+<span class="text-[12px] font-semibold text-[#F79009]">Awaiting review</span>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Country</span>
+<span class="text-[14px] font-medium text-mpx-ink">India</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Entity Type</span>
+<span class="text-[14px] font-medium text-mpx-ink">Individual</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Submitted</span>
+<span class="text-[14px] font-medium text-mpx-ink">14 Mar 2026</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-mpx-neutral">description</span>
+<span class="text-[14px] font-medium text-mpx-ink">1 document</span>
+</div>
+</div>
+<div class="flex items-center gap-3 flex-shrink-0">
+<button class="h-11 px-6 rounded-full border border-border-light bg-white text-mpx-ink text-[15px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-[18px]">description</span>
+          View documents
+        </button>
+<button class="h-11 px-6 rounded-full border border-mpx-danger bg-white text-mpx-danger text-[15px] font-semibold hover:bg-red-50 transition-colors">
+          Reject
+        </button>
+<button class="h-11 px-6 rounded-full bg-mpx-success text-white text-[15px] font-semibold flex items-center gap-2 hover:brightness-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">check</span>
+          Verify
+        </button>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="bg-white rounded-[16px] border border-border-light p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-4 min-w-0 flex-1">
+<div class="flex items-center gap-3">
+<h3 class="text-[18px] font-semibold text-mpx-ink truncate">Suresh Patel · Rajkot Ceramics Ltd</h3>
+<div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#FEF6E7] flex-shrink-0">
+<div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+<span class="text-[12px] font-semibold text-[#F79009]">Awaiting review</span>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Country</span>
+<span class="text-[14px] font-medium text-mpx-ink">India</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Entity Type</span>
+<span class="text-[14px] font-medium text-mpx-ink">Business</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Submitted</span>
+<span class="text-[14px] font-medium text-mpx-ink">15 Mar 2026</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-mpx-neutral">description</span>
+<span class="text-[14px] font-medium text-mpx-ink">3 documents</span>
+</div>
+</div>
+<div class="flex items-center gap-3 flex-shrink-0">
+<button class="h-11 px-6 rounded-full border border-border-light bg-white text-mpx-ink text-[15px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-[18px]">description</span>
+          View documents
+        </button>
+<button class="h-11 px-6 rounded-full border border-mpx-danger bg-white text-mpx-danger text-[15px] font-semibold hover:bg-red-50 transition-colors">
+          Reject
+        </button>
+<button class="h-11 px-6 rounded-full bg-mpx-success text-white text-[15px] font-semibold flex items-center gap-2 hover:brightness-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">check</span>
+          Verify
+        </button>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="mt-12 flex justify-end items-center pt-8 border-t border-border-light/40">
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-border-light text-mpx-neutral hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-mpx-accent text-white text-[13px] font-bold">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-border-light text-mpx-neutral hover:bg-white transition-colors text-[13px] font-medium">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-border-light text-mpx-neutral hover:bg-white transition-colors text-[13px] font-medium">3</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-border-light text-mpx-neutral hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div></div>
+</div></main></div></div>
+<!-- Main Content Wrapper -->
+
+<!-- Second Copy -->
+<div class="h-[100px] bg-white w-full"></div><div class="flex h-screen overflow-hidden border-t-8 border-mpx-navy">
+<!-- Sidebar -->
+<aside class="w-[260px] flex-shrink-0 flex flex-col bg-mpx-navy py-8">
+<div class="px-6 mb-10">
+<h1 class="text-[24px] font-bold text-white tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<div class="sidebar-item opacity-40 cursor-not-allowed flex items-center gap-3 px-4 py-3 rounded-lg group">
+<span class="material-symbols-outlined text-white">dashboard</span>
+<span class="text-[14px] font-medium text-white">Dashboard</span>
+<span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-bold uppercase tracking-wider">Soon</span>
+</div>
+<div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+<span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">group</span>
+<span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Users</span>
+</div>
+<div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 cursor-pointer">
+<span class="material-symbols-outlined text-white filled-icon">verified_user</span>
+<span class="text-[14px] font-semibold text-white">Verification</span>
+</div>
+<div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+<span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">badge</span>
+<span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Employees</span>
+</div>
+<div class="my-6"></div>
+<div class="sidebar-item opacity-40 cursor-not-allowed flex items-center gap-3 px-4 py-3 rounded-lg group">
+<span class="material-symbols-outlined text-white">history_edu</span>
+<span class="text-[14px] font-medium text-white">Audit log</span>
+<span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-bold uppercase tracking-wider">Soon</span>
+</div>
+<div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+<span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">settings</span>
+<span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Settings</span>
+</div>
+</nav>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 relative">
+<!-- Top Bar -->
+<header class="h-[88px] flex items-center justify-end px-8 flex-shrink-0 bg-mpx-navy">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3 border-r border-white/10 pr-6">
+<div class="text-right">
+<div class="text-[14px] font-semibold text-white">Priya Menon</div>
+<div class="text-[12px] text-white/70">Super Admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-mpx-accent flex items-center justify-center text-white font-bold text-[14px]">PM</div>
+</div>
+<button class="flex items-center text-white/70 hover:text-white transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- Content Area with Overlay and Modal -->
+<main class="flex-1 bg-mpx-canvas rounded-tl-canvas canvas-shadow flex flex-col overflow-hidden relative">
+<!-- The Overlay -->
+<div class="absolute inset-0 bg-[#000517]/40 z-20 flex items-center justify-center">
+<!-- The Modal -->
+<div class="w-[520px] bg-white rounded-[16px] p-8 shadow-2xl">
+<h2 class="text-[20px] font-semibold text-mpx-ink">Reject verification for Priya Nair?</h2>
+<p class="mt-2 text-[14px] font-normal text-mpx-slate">Kochi Spice Exports · 3 documents submitted</p>
+<div class="mt-6">
+<label class="block text-[14px] font-semibold text-mpx-ink mb-1.5">Reason for rejection</label>
+<textarea class="w-full h-[120px] rounded-lg border border-border-light bg-white p-3 text-[14px] font-normal text-mpx-ink focus:ring-0 focus:border-mpx-accent outline-none resize-none">The GST certificate was cropped and the registration number wasn't visible. Please upload a full scan showing the entire document.</textarea>
+<div class="mt-1.5 flex justify-between items-center">
+<span class="text-[13px] font-normal text-mpx-slate">This is shown to the applicant — explain what they should fix.</span>
+<span class="text-[13px] font-normal text-mpx-neutral">118 / 500</span>
+</div>
+</div>
+<div class="mt-7 flex justify-end items-center gap-3">
+<button class="h-11 px-6 rounded-full border border-border-light bg-white text-mpx-ink text-[15px] font-semibold hover:bg-gray-50 transition-colors">Cancel</button>
+<button class="h-11 px-6 rounded-full bg-mpx-danger text-white text-[15px] font-semibold hover:brightness-95 transition-all">Reject with reason</button>
+</div>
+</div>
+</div>
+<!-- Background Content (Dimmed) -->
+<div class="flex-1 custom-scrollbar overflow-hidden">
+<div class="max-w-[1100px] mx-auto w-full px-12 py-12 flex flex-col h-full">
+<div class="sticky top-0 bg-mpx-canvas z-10 pt-12">
+<div class="mb-10">
+<h2 class="text-[32px] font-bold text-mpx-ink mb-1">Verification queue</h2>
+<p class="text-[15px] font-normal text-mpx-slate">Review submitted documents and decide who gets a verified tick.</p>
+</div>
+<div class="flex items-end gap-8 border-b border-border-light mb-4">
+<button class="pb-3 border-b-2 border-mpx-accent flex items-center gap-2">
+<span class="text-[14px] font-semibold text-mpx-accent">Exporters to verify</span>
+<span class="px-2 py-0.5 rounded-full bg-mpx-canvas text-[12px] font-bold text-mpx-accent border border-mpx-accent/20">12</span>
+</button>
+<button class="pb-3 border-b-2 border-transparent flex items-center gap-2 group hover:border-border-light transition-all">
+<span class="text-[14px] font-medium text-mpx-neutral group-hover:text-mpx-ink">Buyers to verify</span>
+<span class="px-2 py-0.5 rounded-full bg-[#F2F4F7] text-[12px] font-bold text-mpx-neutral">5</span>
+</button>
+</div>
+<div class="mb-6">
+<span class="text-[13px] font-normal text-mpx-neutral">12 exporters awaiting review · oldest first</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar pb-12">
+<div class="flex flex-col gap-4">
+<!-- Simplified Card 1 for background -->
+<div class="bg-white rounded-[16px] border border-border-light p-6 flex items-center justify-between shadow-sm">
+<div class="flex flex-col gap-4 min-w-0 flex-1">
+<div class="flex items-center gap-3">
+<h3 class="text-[18px] font-semibold text-mpx-ink truncate">Priya Nair · Kochi Spice Exports</h3>
+<div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#FEF6E7] flex-shrink-0">
+<div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+<span class="text-[12px] font-semibold text-[#F79009]">Awaiting review</span>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="flex flex-col"><span class="text-[12px] text-mpx-neutral uppercase">Country</span><span class="text-[14px] text-mpx-ink">India</span></div>
+<div class="flex flex-col"><span class="text-[12px] text-mpx-neutral uppercase">Entity Type</span><span class="text-[14px] text-mpx-ink">Business</span></div>
+<div class="flex flex-col"><span class="text-[12px] text-mpx-neutral uppercase">Submitted</span><span class="text-[14px] text-mpx-ink">12 Mar 2026</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+
+
+
+<!-- Spacer -->
+<div class="h-[100px] bg-white w-full"></div>
+
+<!-- Empty State Copy -->
+<div class="flex h-screen overflow-hidden border-t-8 border-mpx-navy">
+  <!-- Sidebar -->
+  <aside class="w-[260px] flex-shrink-0 flex flex-col bg-mpx-navy py-8">
+    <div class="px-6 mb-10">
+      <h1 class="text-[24px] font-bold text-white tracking-tight">MPX Global</h1>
+    </div>
+    <nav class="flex-1 px-4 space-y-1">
+      <div class="sidebar-item opacity-40 cursor-not-allowed flex items-center gap-3 px-4 py-3 rounded-lg group">
+        <span class="material-symbols-outlined text-white">dashboard</span>
+        <span class="text-[14px] font-medium text-white">Dashboard</span>
+        <span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-bold uppercase tracking-wider">Soon</span>
+      </div>
+      <div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+        <span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">group</span>
+        <span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Users</span>
+      </div>
+      <div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 cursor-pointer">
+        <span class="material-symbols-outlined text-white filled-icon">verified_user</span>
+        <span class="text-[14px] font-semibold text-white">Verification</span>
+      </div>
+      <div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+        <span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">badge</span>
+        <span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Employees</span>
+      </div>
+      <div class="my-6"></div>
+      <div class="sidebar-item opacity-40 cursor-not-allowed flex items-center gap-3 px-4 py-3 rounded-lg group">
+        <span class="material-symbols-outlined text-white">history_edu</span>
+        <span class="text-[14px] font-medium text-white">Audit log</span>
+        <span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-bold uppercase tracking-wider">Soon</span>
+      </div>
+      <div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+        <span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">settings</span>
+        <span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Settings</span>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Top Bar -->
+    <header class="h-[88px] flex items-center justify-end px-8 flex-shrink-0 bg-mpx-navy">
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-3 border-r border-white/10 pr-6">
+          <div class="text-right">
+            <div class="text-[14px] font-semibold text-white">Priya Menon</div>
+            <div class="text-[12px] text-white/70">Super Admin · MPX Global</div>
+          </div>
+          <div class="w-10 h-10 rounded-full bg-mpx-accent flex items-center justify-center text-white font-bold text-[14px]">PM</div>
+        </div>
+        <button class="flex items-center text-white/70 hover:text-white transition-colors">
+          <span class="material-symbols-outlined">logout</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <main class="flex-1 bg-mpx-canvas rounded-tl-canvas canvas-shadow flex flex-col overflow-hidden">
+      <div class="flex-1 custom-scrollbar overflow-hidden">
+        <div class="max-w-[1100px] mx-auto w-full px-12 py-12 flex flex-col h-full">
+          <!-- Sticky Header -->
+          <div class="sticky top-0 bg-mpx-canvas z-10 pt-12">
+            <div class="mb-10">
+              <h2 class="text-[32px] font-bold text-mpx-ink mb-1">Verification queue</h2>
+              <p class="text-[15px] font-normal text-mpx-slate">Review submitted documents and decide who gets a verified tick.</p>
+            </div>
+            <!-- Tab Bar -->
+            <div class="flex items-end gap-8 border-b border-border-light mb-4">
+              <button class="pb-3 border-b-2 border-mpx-accent flex items-center gap-2">
+                <span class="text-[14px] font-semibold text-mpx-accent">Exporters to verify</span>
+                <span class="px-2 py-0.5 rounded-full bg-mpx-canvas text-[12px] font-bold text-mpx-accent border border-mpx-accent/20">0</span>
+              </button>
+              <button class="pb-3 border-b-2 border-transparent flex items-center gap-2 group hover:border-border-light transition-all">
+                <span class="text-[14px] font-medium text-mpx-neutral group-hover:text-mpx-ink">Buyers to verify</span>
+                <span class="px-2 py-0.5 rounded-full bg-[#F2F4F7] text-[12px] font-bold text-mpx-neutral">5</span>
+              </button>
+            </div>
+            <!-- Sort Line -->
+            <div class="mb-6">
+              <span class="text-[13px] font-normal text-mpx-neutral">No exporters awaiting review</span>
+            </div>
+          </div>
+
+          <!-- Empty State Container -->
+          <div class="flex-1 flex flex-col items-center justify-center h-[400px] bg-white rounded-[16px] border border-border-light shadow-sm">
+            <div class="w-14 h-14 rounded-full bg-[#E8F7EE] flex items-center justify-center">
+              <span class="material-symbols-outlined text-[28px] text-mpx-success">check</span>
+            </div>
+            <div class="mt-6 text-center">
+              <h3 class="text-[20px] font-semibold text-mpx-ink">Nothing to review</h3>
+              <p class="mt-2 text-[15px] font-normal text-mpx-slate max-w-[420px] mx-auto">Every exporter in the queue has been reviewed. New submissions will appear here as they arrive.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Spacer -->
+<div class="h-[100px] bg-white w-full"></div>
+
+<!-- Third Copy: Already Decided State -->
+<div class="flex h-screen overflow-hidden border-t-8 border-mpx-navy">
+  <!-- Sidebar -->
+  <aside class="w-[260px] flex-shrink-0 flex flex-col bg-mpx-navy py-8">
+    <div class="px-6 mb-10">
+      <h1 class="text-[24px] font-bold text-white tracking-tight">MPX Global</h1>
+    </div>
+    <nav class="flex-1 px-4 space-y-1">
+      <div class="sidebar-item opacity-40 cursor-not-allowed flex items-center gap-3 px-4 py-3 rounded-lg group">
+        <span class="material-symbols-outlined text-white">dashboard</span>
+        <span class="text-[14px] font-medium text-white">Dashboard</span>
+        <span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-bold uppercase tracking-wider">Soon</span>
+      </div>
+      <div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+        <span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">group</span>
+        <span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Users</span>
+      </div>
+      <div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 cursor-pointer">
+        <span class="material-symbols-outlined text-white filled-icon">verified_user</span>
+        <span class="text-[14px] font-semibold text-white">Verification</span>
+      </div>
+      <div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+        <span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">badge</span>
+        <span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Employees</span>
+      </div>
+      <div class="my-6"></div>
+      <div class="sidebar-item opacity-40 cursor-not-allowed flex items-center gap-3 px-4 py-3 rounded-lg group">
+        <span class="material-symbols-outlined text-white">history_edu</span>
+        <span class="text-[14px] font-medium text-white">Audit log</span>
+        <span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-bold uppercase tracking-wider">Soon</span>
+      </div>
+      <div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer group hover:bg-white/5">
+        <span class="material-symbols-outlined text-white/70 group-hover:text-white transition-colors">settings</span>
+        <span class="text-[14px] font-medium text-white/70 group-hover:text-white transition-colors">Settings</span>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Top Bar -->
+    <header class="h-[88px] flex items-center justify-end px-8 flex-shrink-0 bg-mpx-navy">
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-3 border-r border-white/10 pr-6">
+          <div class="text-right">
+            <div class="text-[14px] font-semibold text-white">Priya Menon</div>
+            <div class="text-[12px] text-white/70">Super Admin · MPX Global</div>
+          </div>
+          <div class="w-10 h-10 rounded-full bg-mpx-accent flex items-center justify-center text-white font-bold text-[14px]">PM</div>
+        </div>
+        <button class="flex items-center text-white/70 hover:text-white transition-colors">
+          <span class="material-symbols-outlined">logout</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <main class="flex-1 bg-mpx-canvas rounded-tl-canvas canvas-shadow flex flex-col overflow-hidden">
+      <div class="flex-1 custom-scrollbar overflow-hidden">
+        <div class="max-w-[1100px] mx-auto w-full px-12 py-12 flex flex-col h-full">
+          <!-- Sticky Header -->
+          <div class="sticky top-0 bg-mpx-canvas z-10 pt-12">
+            <div class="mb-10">
+              <h2 class="text-[32px] font-bold text-mpx-ink mb-1">Verification queue</h2>
+              <p class="text-[15px] font-normal text-mpx-slate">Review submitted documents and decide who gets a verified tick.</p>
+            </div>
+            <!-- Tab Bar -->
+            <div class="flex items-end gap-8 border-b border-border-light mb-4">
+              <button class="pb-3 border-b-2 border-mpx-accent flex items-center gap-2">
+                <span class="text-[14px] font-semibold text-mpx-accent">Exporters to verify</span>
+                <span class="px-2 py-0.5 rounded-full bg-mpx-canvas text-[12px] font-bold text-mpx-accent border border-mpx-accent/20">12</span>
+              </button>
+              <button class="pb-3 border-b-2 border-transparent flex items-center gap-2 group hover:border-border-light transition-all">
+                <span class="text-[14px] font-medium text-mpx-neutral group-hover:text-mpx-ink">Buyers to verify</span>
+                <span class="px-2 py-0.5 rounded-full bg-[#F2F4F7] text-[12px] font-bold text-mpx-neutral">5</span>
+              </button>
+            </div>
+            <!-- Sort Line -->
+            <div class="mb-6">
+              <span class="text-[13px] font-normal text-mpx-neutral">12 exporters awaiting review · oldest first</span>
+            </div>
+          </div>
+
+          <!-- Scrollable Body -->
+          <div class="flex-1 overflow-y-auto custom-scrollbar pb-12">
+            <div class="flex flex-col gap-4">
+              <!-- Already Decided Notice Block (Replaces Card 1) -->
+              <div class="bg-[#F2F4F7] border border-[#C5C6CF] rounded-[16px] p-5 flex items-center gap-4">
+                <span class="material-symbols-outlined text-[20px] text-[#667085]">info</span>
+                <div class="flex-1">
+                  <div class="text-[15px] font-semibold text-[#000517]">This account is no longer awaiting review</div>
+                  <div class="text-[13px] text-[#5A6B85]">Someone else has already decided on it. Refresh to update the queue.</div>
+                </div>
+                <button class="h-10 px-4 rounded-full border border-[#C5C6CF] bg-white text-[#000517] text-[14px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors">
+                  <span class="material-symbols-outlined text-[18px]">refresh</span>
+                  Refresh
+                </button>
+              </div>
+
+              <!-- Card 2 -->
+              <div class="bg-white rounded-[16px] border border-border-light p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex flex-col gap-4 min-w-0 flex-1">
+                  <div class="flex items-center gap-3">
+                    <h3 class="text-[18px] font-semibold text-mpx-ink truncate">Anil Deshpande · Sangli Organics</h3>
+                    <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#FEF6E7] flex-shrink-0">
+                      <div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+                      <span class="text-[12px] font-semibold text-[#F79009]">Awaiting review</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-12">
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Country</span><span class="text-[14px] font-medium text-mpx-ink">India</span></div>
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Entity Type</span><span class="text-[14px] font-medium text-mpx-ink">Business</span></div>
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Submitted</span><span class="text-[14px] font-medium text-mpx-ink">13 Mar 2026</span></div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] text-mpx-neutral">description</span>
+                    <span class="text-[14px] font-medium text-mpx-ink">2 documents</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                  <button class="h-11 px-6 rounded-full border border-border-light bg-white text-mpx-ink text-[15px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors"><span class="material-symbols-outlined text-[18px]">description</span>View documents</button>
+                  <button class="h-11 px-6 rounded-full border border-mpx-danger bg-white text-mpx-danger text-[15px] font-semibold hover:bg-red-50 transition-colors">Reject</button>
+                  <button class="h-11 px-6 rounded-full bg-mpx-success text-white text-[15px] font-semibold flex items-center gap-2 hover:brightness-95 transition-all"><span class="material-symbols-outlined text-[18px]">check</span>Verify</button>
+                </div>
+              </div>
+
+              <!-- Card 3 -->
+              <div class="bg-white rounded-[16px] border border-border-light p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex flex-col gap-4 min-w-0 flex-1">
+                  <div class="flex items-center gap-3">
+                    <h3 class="text-[18px] font-semibold text-mpx-ink truncate">Meera Krishnan · Coimbatore Cotton Mills</h3>
+                    <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#FEF6E7] flex-shrink-0">
+                      <div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+                      <span class="text-[12px] font-semibold text-[#F79009]">Awaiting review</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-12">
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Country</span><span class="text-[14px] font-medium text-mpx-ink">India</span></div>
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Entity Type</span><span class="text-[14px] font-medium text-mpx-ink">Business</span></div>
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Submitted</span><span class="text-[14px] font-medium text-mpx-ink">14 Mar 2026</span></div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] text-mpx-neutral">description</span>
+                    <span class="text-[14px] font-medium text-mpx-ink">4 documents</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                  <button class="h-11 px-6 rounded-full border border-border-light bg-white text-mpx-ink text-[15px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors"><span class="material-symbols-outlined text-[18px]">description</span>View documents</button>
+                  <button class="h-11 px-6 rounded-full border border-mpx-danger bg-white text-mpx-danger text-[15px] font-semibold hover:bg-red-50 transition-colors">Reject</button>
+                  <button class="h-11 px-6 rounded-full bg-mpx-success text-white text-[15px] font-semibold flex items-center gap-2 hover:brightness-95 transition-all"><span class="material-symbols-outlined text-[18px]">check</span>Verify</button>
+                </div>
+              </div>
+
+              <!-- Card 4 -->
+              <div class="bg-white rounded-[16px] border border-border-light p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex flex-col gap-4 min-w-0 flex-1">
+                  <div class="flex items-center gap-3">
+                    <h3 class="text-[18px] font-semibold text-mpx-ink truncate">Ravi Menon · Alleppey Coir Works</h3>
+                    <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#FEF6E7] flex-shrink-0">
+                      <div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+                      <span class="text-[12px] font-semibold text-[#F79009]">Awaiting review</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-12">
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Country</span><span class="text-[14px] font-medium text-mpx-ink">India</span></div>
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Entity Type</span><span class="text-[14px] font-medium text-mpx-ink">Individual</span></div>
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Submitted</span><span class="text-[14px] font-medium text-mpx-ink">14 Mar 2026</span></div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] text-mpx-neutral">description</span>
+                    <span class="text-[14px] font-medium text-mpx-ink">1 document</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                  <button class="h-11 px-6 rounded-full border border-border-light bg-white text-mpx-ink text-[15px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors"><span class="material-symbols-outlined text-[18px]">description</span>View documents</button>
+                  <button class="h-11 px-6 rounded-full border border-mpx-danger bg-white text-mpx-danger text-[15px] font-semibold hover:bg-red-50 transition-colors">Reject</button>
+                  <button class="h-11 px-6 rounded-full bg-mpx-success text-white text-[15px] font-semibold flex items-center gap-2 hover:brightness-95 transition-all"><span class="material-symbols-outlined text-[18px]">check</span>Verify</button>
+                </div>
+              </div>
+
+              <!-- Card 5 -->
+              <div class="bg-white rounded-[16px] border border-border-light p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex flex-col gap-4 min-w-0 flex-1">
+                  <div class="flex items-center gap-3">
+                    <h3 class="text-[18px] font-semibold text-mpx-ink truncate">Suresh Patel · Rajkot Ceramics Ltd</h3>
+                    <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#FEF6E7] flex-shrink-0">
+                      <div class="w-2 h-2 rounded-full bg-[#F79009]"></div>
+                      <span class="text-[12px] font-semibold text-[#F79009]">Awaiting review</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-12">
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Country</span><span class="text-[14px] font-medium text-mpx-ink">India</span></div>
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Entity Type</span><span class="text-[14px] font-medium text-mpx-ink">Business</span></div>
+                    <div class="flex flex-col"><span class="text-[12px] font-medium text-mpx-neutral uppercase tracking-wide">Submitted</span><span class="text-[14px] font-medium text-mpx-ink">15 Mar 2026</span></div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] text-mpx-neutral">description</span>
+                    <span class="text-[14px] font-medium text-mpx-ink">3 documents</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                  <button class="h-11 px-6 rounded-full border border-border-light bg-white text-mpx-ink text-[15px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors"><span class="material-symbols-outlined text-[18px]">description</span>View documents</button>
+                  <button class="h-11 px-6 rounded-full border border-mpx-danger bg-white text-mpx-danger text-[15px] font-semibold hover:bg-red-50 transition-colors">Reject</button>
+                  <button class="h-11 px-6 rounded-full bg-mpx-success text-white text-[15px] font-semibold flex items-center gap-2 hover:brightness-95 transition-all"><span class="material-symbols-outlined text-[18px]">check</span>Verify</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-12 flex justify-end items-center pt-8 border-t border-border-light/40">
+              <div class="flex items-center gap-2">
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-border-light text-mpx-neutral hover:bg-white transition-colors">
+                  <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                </button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg bg-mpx-accent text-white text-[13px] font-bold">1</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-border-light text-mpx-neutral hover:bg-white transition-colors text-[13px] font-medium">2</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-border-light text-mpx-neutral hover:bg-white transition-colors text-[13px] font-medium">3</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-border-light text-mpx-neutral hover:bg-white transition-colors">
+                  <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div></body></html>

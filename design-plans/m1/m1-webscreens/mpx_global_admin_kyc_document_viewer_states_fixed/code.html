@@ -1,0 +1,326 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KYC Document Viewer | MPX Global</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container": "#221f1b", // Kept from config but will use custom overrides for this specific prompt
+              "primary-container": "#2A4DE0", // Royal Blue accent
+              "surface": "#1A2E8F", // Navy Shell
+              "background": "#EAEEFF", // Canvas Background
+              "on-surface": "#ffffff",
+              "outline": "#D1D5DB",
+              "primary": "#2A4DE0",
+              "secondary": "#1A2E8F",
+              "error": "#DC2626",
+              "success": "#059669",
+              "warning": "#D97706"
+            },
+            borderRadius: {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "2xl": "1rem",
+              "3xl": "32px",
+              "full": "9999px"
+            },
+            fontFamily: {
+              "sans": ["Inter", "sans-serif"],
+              "headline-sm": ["Inter", "sans-serif"],
+              "label-md": ["Inter", "sans-serif"],
+              "headline-md": ["Inter", "sans-serif"],
+              "display-lg": ["Inter", "sans-serif"],
+              "body-lg": ["Inter", "sans-serif"],
+              "eyebrow": ["Inter", "sans-serif"],
+              "body-md": ["Inter", "sans-serif"]
+            },
+            fontSize: {
+              "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+              "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+              "headline-md": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+              "display-lg": ["48px", {"lineHeight": "56px", "fontWeight": "700"}],
+              "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+              "eyebrow": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+              "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; margin: 0; }
+        .inset-shadow-canvas { box-shadow: inset 4px 4px 20px rgba(26, 46, 143, 0.08); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex flex-col w-full text-slate-900">
+<!-- WRAPPER FOR FIRST SHELL -->
+<div class="flex h-screen w-full bg-[#1A2E8F] shrink-0">
+<!-- SIDEBAR (Navy Shell) -->
+<aside class="w-[260px] flex-shrink-0 flex flex-col h-full bg-[#1A2E8F] text-white">
+<div class="h-[88px] flex items-center px-8">
+<span class="text-xl font-bold tracking-tight">MPX Global</span>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<!-- Dashboard (Soon) -->
+<div class="flex items-center gap-3 px-4 py-3 text-white/50 cursor-not-allowed text-sm font-medium">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="">Dashboard</span>
+<span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span>
+</div>
+<!-- Users -->
+<a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="">Users</span>
+</a>
+<!-- Verification (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 bg-[#2A4DE0] text-white rounded-lg transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="">Verification</span>
+</a>
+<!-- Employees -->
+<a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+<span class="">Employees</span>
+</a>
+<!-- Audit Log (Soon) -->
+<div class="flex items-center gap-3 px-4 py-3 text-white/50 cursor-not-allowed text-sm font-medium">
+<span class="material-symbols-outlined text-[20px]">history</span>
+<span class="">Audit log</span>
+<span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span>
+</div>
+<!-- Settings -->
+<a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="">Settings</span>
+</a>
+</nav>
+<div class="p-6 border-t border-white/10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#2A4DE0] flex items-center justify-center font-bold text-sm">PM</div>
+<div class="flex-1 overflow-hidden">
+<p class="text-sm font-semibold truncate">Priya Menon</p>
+<p class="text-xs text-white/50 truncate">Super Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- MAIN WRAPPER -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TOP BAR (Navy Top Bar) -->
+<header class="h-[88px] flex items-center justify-between px-10 bg-[#1A2E8F] text-white">
+<div class=""></div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3 group cursor-pointer">
+<span class="text-sm font-medium">Priya Menon</span>
+<div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">PM</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- CONTENT AREA (Canvas) -->
+<div class="flex-1 bg-[#EAEEFF] rounded-tl-3xl inset-shadow-canvas p-8 flex flex-col overflow-hidden">
+<!-- Back Link -->
+<a class="inline-flex items-center gap-2 text-[#2A4DE0] font-semibold hover:underline transition-all mb-4" href="#">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+<span class="">Back to verification queue</span>
+</a>
+<!-- Account Header Card (Pinned) -->
+<div class="bg-white rounded-2xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-6 mb-8 shrink-0">
+<div class="flex items-center gap-8">
+<div>
+<p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Applicant</p>
+<p class="text-lg font-bold text-slate-800">Priya Nair</p>
+</div>
+<div class="w-px h-10 bg-slate-100"></div>
+<div>
+<p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Entity</p>
+<p class="text-md font-medium text-slate-700">Business</p>
+</div>
+<div class="w-px h-10 bg-slate-100"></div>
+<div>
+<p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Country</p>
+<p class="text-md font-medium text-slate-700">India</p>
+</div>
+<div class="w-px h-10 bg-slate-100"></div>
+<div>
+<p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Submitted</p>
+<p class="text-md font-medium text-slate-700">12 Mar 2026</p>
+</div>
+<div class="w-px h-10 bg-slate-100"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400">description</span>
+<span class="text-md font-medium text-slate-700">3 files</span>
+</div>
+</div>
+<div class="bg-amber-50 text-amber-700 border border-amber-200 px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        Awaiting review
+                    </div>
+</div>
+<!-- Two-Column Workspace (Scrollable) -->
+<div class="flex gap-8 flex-1 min-h-0 overflow-hidden">
+<!-- Left Column: Documents Stack -->
+<div class="w-[300px] flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+<h3 class="text-slate-900 font-bold text-lg px-2">Documents (3)</h3>
+<div class="space-y-3">
+<!-- Item 1: Selected -->
+<div class="p-4 rounded-xl flex gap-4 cursor-pointer shadow-sm bg-white border-slate-100 border">
+<div class="w-10 h-10 rounded flex items-center justify-center shrink-0 bg-slate-100 text-slate-500">
+<span class="material-symbols-outlined">corporate_fare</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-sm font-bold text-slate-900 truncate">Company registration</p>
+<p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="p-4 rounded-xl bg-white border border-slate-100 flex gap-4 cursor-pointer hover:border-slate-300 transition-all shadow-sm">
+<div class="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-sm font-bold text-slate-900 truncate">GST / tax document</p>
+<p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="p-4 rounded-xl flex gap-4 cursor-pointer hover:border-slate-300 transition-all shadow-sm bg-[#EAEEFF] border-[#2A4DE0] border-2">
+<div class="w-10 h-10 rounded flex items-center justify-center shrink-0 bg-[#2A4DE0] text-white">
+<span class="material-symbols-outlined">workspace_premium</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-sm font-bold text-slate-900 truncate">Certificate</p>
+<p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p>
+</div>
+</div>
+</div>
+<!-- Privacy Note -->
+<div class="mt-auto bg-slate-900/5 p-4 rounded-xl flex items-start gap-3">
+<span class="material-symbols-outlined text-slate-600 mt-0.5">shield_person</span>
+<p class="text-xs text-slate-600 leading-relaxed">
+                                These documents are private. Your access to them is recorded for auditing and compliance purposes.
+                            </p>
+</div>
+</div>
+<!-- Right Column: Preview Pane -->
+<div class="flex-1 bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden flex flex-col">
+<!-- Preview Toolbar -->
+<div class="h-14 bg-[#F2F4F7] border-b border-slate-200 px-6 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400">description</span>
+<span class="" style="font-size: 13px; font-weight: 500; color: rgb(0, 5, 23);">Company registration</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 bg-white rounded border border-slate-200 p-1">
+<button class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-50 rounded">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+<span class="text-xs font-bold text-slate-500 px-2">100%</span>
+<button class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-50 rounded">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<button class="h-10 px-4 bg-white border border-slate-200 rounded-lg flex items-center gap-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"><span class="material-symbols-outlined text-[18px]">open_in_new</span>Open in new tab</button>
+</div>
+</div>
+<!-- Render Area -->
+<div class="flex-1 overflow-auto bg-slate-200/50 p-12 flex justify-center custom-scrollbar">
+<div class="w-[600px] bg-white shadow-2xl min-h-[840px] p-16 relative border border-slate-300">
+<!-- Placeholder Scanned Content -->
+<div class="space-y-8">
+<div class="flex justify-between items-start">
+<div class="w-24 h-24 bg-slate-100 flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-[48px] text-slate-300">account_balance</span>
+</div>
+<div class="text-right">
+<div class="h-4 w-48 bg-slate-200 mb-2 ml-auto"></div>
+<div class="h-3 w-32 bg-slate-100 ml-auto"></div>
+</div>
+</div>
+<div class="border-y-2 border-slate-200 py-6 text-center">
+<h2 class="text-2xl font-bold text-slate-400 tracking-widest uppercase">Certificate of Registration</h2>
+</div>
+<div class="space-y-4 pt-4">
+<div class="h-4 w-full bg-slate-100"></div>
+<div class="h-4 w-5/6 bg-slate-100"></div>
+<div class="h-4 w-full bg-slate-100"></div>
+<div class="h-4 w-2/3 bg-slate-100"></div>
+</div>
+<div class="grid grid-cols-2 gap-12 pt-12">
+<div class="space-y-2">
+<div class="h-2 w-24 bg-slate-200"></div>
+<div class="h-6 w-full bg-slate-50"></div>
+</div>
+<div class="space-y-2">
+<div class="h-2 w-24 bg-slate-200"></div>
+<div class="h-6 w-full bg-slate-50"></div>
+</div>
+</div>
+<div class="pt-24 flex justify-end">
+<div class="text-center">
+<div class="w-48 border-b-2 border-slate-200 mb-2"></div>
+<p class="text-[10px] text-slate-400 uppercase font-bold">Authorized Signatory</p>
+</div>
+</div>
+</div>
+<!-- Shadow overlay for scan texture -->
+<div class="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-multiply bg-[url('https://www.transparenttextures.com/patterns/paper.png')]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Decision Bar (Fixed at bottom of content area) -->
+<div class="bg-white rounded-2xl p-6 shadow-xl border border-slate-200 flex items-center justify-between shrink-0 mt-8">
+<div class="flex items-center gap-4 text-slate-500"><span class="material-symbols-outlined" style="font-size: 16px; color: rgb(102, 112, 133);">shield_person</span><p class="" style="font-size: 13px; font-weight: 400; color: rgb(102, 112, 133);">These documents are private. Your access to them is recorded.</p></div>
+<div class="flex items-center gap-4">
+<button class="h-[44px] px-8 rounded-xl border-2 border-error text-error font-bold hover:bg-error/5 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">close</span>
+                            Reject
+                        </button>
+<button class="h-[44px] px-10 rounded-xl bg-success text-white font-bold shadow-lg shadow-success/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"><span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span>Verify</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script>
+        // Simple micro-interaction for document items
+        const docItems = document.querySelectorAll('.w-\\[300px\\] .cursor-pointer');
+        docItems.forEach(item => {
+            item.addEventListener('click', () => {
+                docItems.forEach(i => {
+                    i.classList.remove('bg-[#EAEEFF]', 'border-[#2A4DE0]', 'border-2');
+                    i.classList.add('bg-white', 'border-slate-100', 'border');
+                    const iconBox = i.querySelector('.shrink-0');
+                    iconBox.classList.remove('bg-[#2A4DE0]', 'text-white');
+                    iconBox.classList.add('bg-slate-100', 'text-slate-500');
+                });
+                item.classList.add('bg-[#EAEEFF]', 'border-[#2A4DE0]', 'border-2');
+                item.classList.remove('bg-white', 'border-slate-100', 'border');
+                const activeIconBox = item.querySelector('.shrink-0');
+                activeIconBox.classList.add('bg-[#2A4DE0]', 'text-white');
+                activeIconBox.classList.remove('bg-slate-100', 'text-slate-500');
+            });
+        });
+    </script>
+<div class="flex h-screen w-full text-slate-900 mt-[100px] shrink-0 bg-[#1A2E8F]" id="expired-state-screen"><aside class="w-[260px] flex-shrink-0 flex flex-col h-full bg-[#1A2E8F] text-white"><div class="h-[88px] flex items-center px-8"><span class="text-xl font-bold tracking-tight">MPX Global</span></div><nav class="flex-1 px-4 space-y-2 mt-4"><div class="flex items-center gap-3 px-4 py-3 text-white/50 cursor-not-allowed text-sm font-medium"><span class="material-symbols-outlined text-[20px]">dashboard</span><span class="">Dashboard</span><span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="">Users</span></a><a class="flex items-center gap-3 px-4 py-3 bg-[#2A4DE0] text-white rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">verified_user</span><span class="">Verification</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="">Employees</span></a><div class="flex items-center gap-3 px-4 py-3 text-white/50 cursor-not-allowed text-sm font-medium"><span class="material-symbols-outlined text-[20px]">history</span><span class="">Audit log</span><span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="">Settings</span></a></nav><div class="p-6 border-t border-white/10"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#2A4DE0] flex items-center justify-center font-bold text-sm">PM</div><div class="flex-1 overflow-hidden"><p class="text-sm font-semibold truncate">Priya Menon</p><p class="text-xs text-white/50 truncate">Super Admin</p></div></div></div></aside><main class="flex-1 flex flex-col min-w-0"><header class="h-[88px] flex items-center justify-between px-10 bg-[#1A2E8F] text-white"><div></div><div class="flex items-center gap-6"><div class="flex items-center gap-3 group cursor-pointer"><span class="text-sm font-medium">Priya Menon</span><div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">PM</div></div><button class="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><div class="flex-1 bg-[#EAEEFF] rounded-tl-3xl inset-shadow-canvas p-8 flex flex-col overflow-hidden"><a class="inline-flex items-center gap-2 text-[#2A4DE0] font-semibold hover:underline transition-all mb-4" href="#"><span class="material-symbols-outlined text-[20px]">arrow_back</span><span class="">Back to verification queue</span></a><div class="bg-white rounded-2xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-6 mb-8 shrink-0"><div class="flex items-center gap-8"><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Applicant</p><p class="text-lg font-bold text-slate-800">Priya Nair</p></div><div class="w-px h-10 bg-slate-100"></div><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Entity</p><p class="text-md font-medium text-slate-700">Business</p></div><div class="w-px h-10 bg-slate-100"></div><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Country</p><p class="text-md font-medium text-slate-700">India</p></div><div class="w-px h-10 bg-slate-100"></div><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Submitted</p><p class="text-md font-medium text-slate-700">12 Mar 2026</p></div><div class="w-px h-10 bg-slate-100"></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-slate-400">description</span><span class="text-md font-medium text-slate-700">3 files</span></div></div><div class="bg-amber-50 text-amber-700 border border-amber-200 px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>Awaiting review</div></div><div class="flex gap-8 flex-1 min-h-0 overflow-hidden"><div class="w-[300px] flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2"><h3 class="text-slate-900 font-bold text-lg px-2">Documents (3)</h3><div class="space-y-3"><div class="p-4 rounded-xl bg-[#EAEEFF] border-2 border-[#2A4DE0] flex gap-4 cursor-pointer shadow-sm"><div class="w-10 h-10 rounded bg-[#2A4DE0] flex items-center justify-center text-white shrink-0"><span class="material-symbols-outlined">corporate_fare</span></div><div class="overflow-hidden"><p class="text-sm font-bold text-slate-900 truncate">Company registration</p><p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p></div></div><div class="p-4 rounded-xl bg-white border border-slate-100 flex gap-4 cursor-pointer hover:border-slate-300 transition-all shadow-sm"><div class="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-slate-500 shrink-0"><span class="material-symbols-outlined">receipt_long</span></div><div class="overflow-hidden"><p class="text-sm font-bold text-slate-900 truncate">GST / tax document</p><p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p></div></div><div class="p-4 rounded-xl bg-white border border-slate-100 flex gap-4 cursor-pointer hover:border-slate-300 transition-all shadow-sm"><div class="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-slate-500 shrink-0"><span class="material-symbols-outlined">workspace_premium</span></div><div class="overflow-hidden"><p class="text-sm font-bold text-slate-900 truncate">Certificate</p><p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p></div></div></div><div class="mt-auto bg-slate-900/5 p-4 rounded-xl flex items-start gap-3"><span class="material-symbols-outlined text-slate-600 mt-0.5">shield_person</span><p class="text-xs text-slate-600 leading-relaxed">These documents are private. Your access to them is recorded for auditing and compliance purposes.</p></div></div><div class="flex-1 bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden flex flex-col"><div class="h-14 bg-[#F2F4F7] border-b border-slate-200 px-6 flex items-center justify-between"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">description</span><span style="font-size: 13px; font-weight: 500; color: rgb(0, 5, 23);" class="">Company registration</span></div><div class="flex items-center gap-4"><div class="flex items-center gap-1 bg-white rounded border border-slate-200 p-1" style="color: #C5C6CF; opacity: 0.6; pointer-events: none;"><button class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-50 rounded"><span class="material-symbols-outlined text-[20px]">remove</span></button><span class="text-xs font-bold text-slate-500 px-2">100%</span><button class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-50 rounded"><span class="material-symbols-outlined text-[20px]">add</span></button></div><button class="h-10 px-4 bg-white border border-slate-200 rounded-lg flex items-center gap-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"><span class="material-symbols-outlined text-[18px]">open_in_new</span>Open in new tab</button></div></div><div class="flex-1 overflow-auto bg-slate-200/50 p-12 flex justify-center items-center custom-scrollbar"><div class="flex flex-col items-center text-center max-w-[360px]"><span class="material-symbols-outlined" style="font-size: 40px; color: #667085;">link_off</span><h2 class="mt-4 font-semibold" style="font-size: 16px; color: #000517;">This preview has expired</h2><p class="mt-2" style="font-size: 14px; font-weight: 400; color: #5A6B85;">Secure document links are short-lived for privacy. Reload to view it again.</p><button class="mt-5 h-[44px] px-6 bg-[#2A4DE0] text-white rounded-full font-semibold transition-all hover:brightness-110" style="font-size: 15px;">Reload document</button></div></div></div></div><div class="bg-white rounded-2xl p-6 shadow-xl border border-slate-200 flex items-center justify-between shrink-0 mt-8"><div class="flex items-center gap-4 text-slate-500"><span class="material-symbols-outlined" style="font-size: 16px; color: rgb(102, 112, 133);">shield_person</span><p style="font-size: 13px; font-weight: 400; color: rgb(102, 112, 133);" class="">These documents are private. Your access to them is recorded.</p></div><div class="flex items-center gap-4"><button class="h-[44px] px-8 rounded-xl border-2 border-error text-error font-bold hover:bg-error/5 transition-all flex items-center gap-2"><span class="material-symbols-outlined">close</span>Reject</button><button class="h-[44px] px-10 rounded-xl bg-success text-white font-bold shadow-lg shadow-success/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>Verify</button></div></div></div></main></div>
+
+<div class="flex h-screen w-full text-slate-900 mt-[100px] shrink-0 bg-[#1A2E8F]" id="gst-preview-screen"><aside class="w-[260px] flex-shrink-0 flex flex-col h-full bg-[#1A2E8F] text-white"><div class="h-[88px] flex items-center px-8"><span class="text-xl font-bold tracking-tight">MPX Global</span></div><nav class="flex-1 px-4 space-y-2 mt-4"><div class="flex items-center gap-3 px-4 py-3 text-white/50 cursor-not-allowed text-sm font-medium"><span class="material-symbols-outlined text-[20px]">dashboard</span><span class="">Dashboard</span><span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="">Users</span></a><a class="flex items-center gap-3 px-4 py-3 bg-[#2A4DE0] text-white rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">verified_user</span><span class="">Verification</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="">Employees</span></a><div class="flex items-center gap-3 px-4 py-3 text-white/50 cursor-not-allowed text-sm font-medium"><span class="material-symbols-outlined text-[20px]">history</span><span class="">Audit log</span><span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="">Settings</span></a></nav><div class="p-6 border-t border-white/10"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#2A4DE0] flex items-center justify-center font-bold text-sm">PM</div><div class="flex-1 overflow-hidden"><p class="text-sm font-semibold truncate">Priya Menon</p><p class="text-xs text-white/50 truncate">Super Admin</p></div></div></div></aside><main class="flex-1 flex flex-col min-w-0"><header class="h-[88px] flex items-center justify-between px-10 bg-[#1A2E8F] text-white"><div></div><div class="flex items-center gap-6"><div class="flex items-center gap-3 group cursor-pointer"><span class="text-sm font-medium">Priya Menon</span><div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">PM</div></div><button class="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><div class="flex-1 bg-[#EAEEFF] rounded-tl-3xl inset-shadow-canvas p-8 flex flex-col overflow-hidden"><a class="inline-flex items-center gap-2 text-[#2A4DE0] font-semibold hover:underline transition-all mb-4" href="#"><span class="material-symbols-outlined text-[20px]">arrow_back</span><span class="">Back to verification queue</span></a><div class="bg-white rounded-2xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-6 mb-8 shrink-0"><div class="flex items-center gap-8"><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Applicant</p><p class="text-lg font-bold text-slate-800">Priya Nair</p></div><div class="w-px h-10 bg-slate-100"></div><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Entity</p><p class="text-md font-medium text-slate-700">Business</p></div><div class="w-px h-10 bg-slate-100"></div><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Country</p><p class="text-md font-medium text-slate-700">India</p></div><div class="w-px h-10 bg-slate-100"></div><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Submitted</p><p class="text-md font-medium text-slate-700">12 Mar 2026</p></div><div class="w-px h-10 bg-slate-100"></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-slate-400">description</span><span class="text-md font-medium text-slate-700">3 files</span></div></div><div class="bg-amber-50 text-amber-700 border border-amber-200 px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>Awaiting review</div></div><div class="flex gap-8 flex-1 min-h-0 overflow-hidden"><div class="w-[300px] flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2"><h3 class="text-slate-900 font-bold text-lg px-2">Documents (3)</h3><div class="space-y-3"><div class="p-4 rounded-xl flex gap-4 cursor-pointer shadow-sm bg-white border-slate-100 border"><div class="w-10 h-10 rounded flex items-center justify-center shrink-0 bg-slate-100 text-slate-500"><span class="material-symbols-outlined">corporate_fare</span></div><div class="overflow-hidden"><p class="text-sm font-bold text-slate-900 truncate">Company registration</p><p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p></div></div><div class="p-4 rounded-xl bg-[#EAEEFF] border-[#2A4DE0] border flex gap-4 cursor-pointer shadow-sm"><div class="w-10 h-10 rounded bg-[#2A4DE0] flex items-center justify-center text-white shrink-0"><span class="material-symbols-outlined">receipt_long</span></div><div class="overflow-hidden"><p class="text-sm font-bold text-slate-900 truncate">GST / tax document</p><p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p></div></div><div class="p-4 rounded-xl flex gap-4 cursor-pointer hover:border-slate-300 transition-all shadow-sm bg-white border-slate-100 border"><div class="w-10 h-10 rounded flex items-center justify-center shrink-0 bg-slate-100 text-slate-500"><span class="material-symbols-outlined">workspace_premium</span></div><div class="overflow-hidden"><p class="text-sm font-bold text-slate-900 truncate">Certificate</p><p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p></div></div></div><div class="mt-auto bg-slate-900/5 p-4 rounded-xl flex items-start gap-3"><span class="material-symbols-outlined text-slate-600 mt-0.5">shield_person</span><p class="text-xs text-slate-600 leading-relaxed">These documents are private. Your access to them is recorded for auditing and compliance purposes.</p></div></div><div class="flex-1 bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden flex flex-col"><div class="h-14 bg-[#F2F4F7] border-b border-slate-200 px-6 flex items-center justify-between"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">description</span><span style="font-size: 13px; font-weight: 500; color: rgb(0, 5, 23);" class="">GST / tax document</span></div><div class="flex items-center gap-4"><div class="flex items-center gap-1 bg-white rounded border border-slate-200 p-1" style="color: #C5C6CF; opacity: 0.6; pointer-events: none;"><button class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-50 rounded"><span class="material-symbols-outlined text-[20px]">remove</span></button><span class="text-xs font-bold text-slate-500 px-2">100%</span><button class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-50 rounded"><span class="material-symbols-outlined text-[20px]">add</span></button></div><button class="h-10 px-4 bg-white border border-slate-200 rounded-lg flex items-center gap-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"><span class="material-symbols-outlined text-[18px]">open_in_new</span>Open in new tab</button></div></div><div class="flex-1 overflow-auto bg-slate-200/50 p-12 flex justify-center items-center custom-scrollbar"><div class="flex flex-col items-center text-center max-w-[360px]"><span class="material-symbols-outlined" style="font-size: 40px; color: #667085;">file_open</span><h2 class="mt-4 font-semibold" style="font-size: 16px; color: #000517;">This file can't be previewed here</h2><p class="mt-2" style="font-size: 14px; font-weight: 400; color: #5A6B85;">It's in a format we can't show inline. Open it in a new tab to view it.</p><button class="mt-5 h-[44px] px-6 bg-white border border-[#C5C6CF] text-[#000517] rounded-full font-semibold transition-all hover:bg-slate-50 flex items-center gap-2" style="font-size: 15px;"><span class="material-symbols-outlined text-[18px]">open_in_new</span>Open in new tab</button></div></div></div></div><div class="bg-white rounded-2xl p-6 shadow-xl border border-slate-200 flex items-center justify-between shrink-0 mt-8"><div class="flex items-center gap-4 text-slate-500"><span class="material-symbols-outlined" style="font-size: 16px; color: rgb(102, 112, 133);">shield_person</span><p style="font-size: 13px; font-weight: 400; color: rgb(102, 112, 133);" class="">These documents are private. Your access to them is recorded.</p></div><div class="flex items-center gap-4"><button class="h-[44px] px-8 rounded-xl border-2 border-error text-error font-bold hover:bg-error/5 transition-all flex items-center gap-2"><span class="material-symbols-outlined">close</span>Reject</button><button class="h-[44px] px-10 rounded-xl bg-success text-white font-bold shadow-lg shadow-success/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>Verify</button></div></div></div></main></div>
+
+
+
+<div class="h-[100px] bg-white w-full"></div><div class="flex h-screen w-full bg-[#1A2E8F] shrink-0" id="reject-modal-screen"><aside class="w-[260px] flex-shrink-0 flex flex-col h-full bg-[#1A2E8F] text-white"><div class="h-[88px] flex items-center px-8"><span class="text-xl font-bold tracking-tight">MPX Global</span></div><nav class="flex-1 px-4 space-y-2 mt-4"><div class="flex items-center gap-3 px-4 py-3 text-white/50 cursor-not-allowed text-sm font-medium"><span class="material-symbols-outlined text-[20px]">dashboard</span><span class="">Dashboard</span><span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="">Users</span></a><a class="flex items-center gap-3 px-4 py-3 bg-[#2A4DE0] text-white rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">verified_user</span><span class="">Verification</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="">Employees</span></a><div class="flex items-center gap-3 px-4 py-3 text-white/50 cursor-not-allowed text-sm font-medium"><span class="material-symbols-outlined text-[20px]">history</span><span class="">Audit log</span><span class="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Soon</span></div><a class="flex items-center gap-3 px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="">Settings</span></a></nav><div class="p-6 border-t border-white/10"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#2A4DE0] flex items-center justify-center font-bold text-sm">PM</div><div class="flex-1 overflow-hidden"><p class="text-sm font-semibold truncate">Priya Menon</p><p class="text-xs text-white/50 truncate">Super Admin</p></div></div></div></aside><main class="flex-1 flex flex-col min-w-0 relative"><header class="h-[88px] flex items-center justify-between px-10 bg-[#1A2E8F] text-white"><div></div><div class="flex items-center gap-6"><div class="flex items-center gap-3 group cursor-pointer"><span class="text-sm font-medium">Priya Menon</span><div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">PM</div></div><button class="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><div class="flex-1 bg-[#EAEEFF] rounded-tl-3xl inset-shadow-canvas p-8 flex flex-col overflow-hidden relative"><a class="inline-flex items-center gap-2 text-[#2A4DE0] font-semibold hover:underline transition-all mb-4" href="#"><span class="material-symbols-outlined text-[20px]">arrow_back</span><span class="">Back to verification queue</span></a><div class="bg-white rounded-2xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-6 mb-8 shrink-0"><div class="flex items-center gap-8"><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Applicant</p><p class="text-lg font-bold text-slate-800">Priya Nair</p></div><div class="w-px h-10 bg-slate-100"></div><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Entity</p><p class="text-md font-medium text-slate-700">Business</p></div><div class="w-px h-10 bg-slate-100"></div><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Country</p><p class="text-md font-medium text-slate-700">India</p></div><div class="w-px h-10 bg-slate-100"></div><div><p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Submitted</p><p class="text-md font-medium text-slate-700">12 Mar 2026</p></div><div class="w-px h-10 bg-slate-100"></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-slate-400">description</span><span class="text-md font-medium text-slate-700">3 files</span></div></div><div class="bg-amber-50 text-amber-700 border border-amber-200 px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>Awaiting review</div></div><div class="flex gap-8 flex-1 min-h-0 overflow-hidden"><div class="w-[300px] flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2"><h3 class="text-slate-900 font-bold text-lg px-2">Documents (3)</h3><div class="space-y-3"><div class="p-4 rounded-xl flex gap-4 cursor-pointer shadow-sm bg-white border-slate-100 border"><div class="w-10 h-10 rounded flex items-center justify-center shrink-0 bg-slate-100 text-slate-500"><span class="material-symbols-outlined">corporate_fare</span></div><div class="overflow-hidden"><p class="text-sm font-bold text-slate-900 truncate">Company registration</p><p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p></div></div><div class="p-4 rounded-xl bg-white border border-slate-100 flex gap-4 cursor-pointer hover:border-slate-300 transition-all shadow-sm"><div class="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-slate-500 shrink-0"><span class="material-symbols-outlined">receipt_long</span></div><div class="overflow-hidden"><p class="text-sm font-bold text-slate-900 truncate">GST / tax document</p><p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p></div></div><div class="p-4 rounded-xl flex gap-4 cursor-pointer hover:border-slate-300 transition-all shadow-sm bg-[#EAEEFF] border-[#2A4DE0] border-2"><div class="w-10 h-10 rounded flex items-center justify-center shrink-0 bg-[#2A4DE0] text-white"><span class="material-symbols-outlined">workspace_premium</span></div><div class="overflow-hidden"><p class="text-sm font-bold text-slate-900 truncate">Certificate</p><p class="text-xs text-slate-500 mt-0.5">Uploaded 12 Mar 2026</p></div></div></div><div class="mt-auto bg-slate-900/5 p-4 rounded-xl flex items-start gap-3"><span class="material-symbols-outlined text-slate-600 mt-0.5">shield_person</span><p class="text-xs text-slate-600 leading-relaxed">These documents are private. Your access to them is recorded for auditing and compliance purposes.</p></div></div><div class="flex-1 bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden flex flex-col"><div class="h-14 bg-[#F2F4F7] border-b border-slate-200 px-6 flex items-center justify-between"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">description</span><span style="font-size: 13px; font-weight: 500; color: rgb(0, 5, 23);" class="">Certificate</span></div><div class="flex items-center gap-4"><div class="flex items-center gap-1 bg-white rounded border border-slate-200 p-1"><button class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-50 rounded"><span class="material-symbols-outlined text-[20px]">remove</span></button><span class="text-xs font-bold text-slate-500 px-2">100%</span><button class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-50 rounded"><span class="material-symbols-outlined text-[20px]">add</span></button></div><button class="h-10 px-4 bg-white border border-slate-200 rounded-lg flex items-center gap-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"><span class="material-symbols-outlined text-[18px]">open_in_new</span>Open in new tab</button></div></div><div class="flex-1 overflow-auto bg-slate-200/50 p-12 flex justify-center custom-scrollbar"><div class="w-[600px] bg-white shadow-2xl min-h-[840px] p-16 relative border border-slate-300"><div class="space-y-8"><div class="flex justify-between items-start"><div class="w-24 h-24 bg-slate-100 flex items-center justify-center rounded"><span class="material-symbols-outlined text-[48px] text-slate-300">account_balance</span></div><div class="text-right"><div class="h-4 w-48 bg-slate-200 mb-2 ml-auto"></div><div class="h-3 w-32 bg-slate-100 ml-auto"></div></div></div><div class="border-y-2 border-slate-200 py-6 text-center"><h2 class="text-2xl font-bold text-slate-400 tracking-widest uppercase">Certificate of Registration</h2></div><div class="space-y-4 pt-4"><div class="h-4 w-full bg-slate-100"></div><div class="h-4 w-5/6 bg-slate-100"></div><div class="h-4 w-full bg-slate-100"></div><div class="h-4 w-2/3 bg-slate-100"></div></div><div class="grid grid-cols-2 gap-12 pt-12"><div class="space-y-2"><div class="h-2 w-24 bg-slate-200"></div><div class="h-6 w-full bg-slate-50"></div></div><div class="space-y-2"><div class="h-2 w-24 bg-slate-200"></div><div class="h-6 w-full bg-slate-50"></div></div></div><div class="pt-24 flex justify-end"><div class="text-center"><div class="w-48 border-b-2 border-slate-200 mb-2"></div><p class="text-[10px] text-slate-400 uppercase font-bold">Authorized Signatory</p></div></div></div><div class="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-multiply bg-[url('https://www.transparenttextures.com/patterns/paper.png')]"></div></div></div></div></div><div class="bg-white rounded-2xl p-6 shadow-xl border border-slate-200 flex items-center justify-between shrink-0 mt-8"><div class="flex items-center gap-4 text-slate-500"><span class="material-symbols-outlined" style="font-size: 16px; color: rgb(102, 112, 133);">shield_person</span><p style="font-size: 13px; font-weight: 400; color: rgb(102, 112, 133);" class="">These documents are private. Your access to them is recorded.</p></div><div class="flex items-center gap-4"><button class="h-[44px] px-8 rounded-xl border-2 border-error text-error font-bold hover:bg-error/5 transition-all flex items-center gap-2"><span class="material-symbols-outlined">close</span>Reject</button><button class="h-[44px] px-10 rounded-xl bg-success text-white font-bold shadow-lg shadow-success/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>Verify</button></div></div><div class="absolute inset-0 bg-[#000517]/40 flex items-center justify-center z-50"><div class="w-[520px] bg-white rounded-2xl p-8 shadow-2xl flex flex-col"><h2 class="text-[20px] font-semibold text-[#000517]">Reject verification for Priya Nair?</h2><p class="mt-2 text-[14px] font-normal text-[#5A6B85]">Kochi Spice Exports · 3 documents</p><label class="mt-6 text-[14px] font-semibold text-[#000517]">Reason for rejection</label><textarea class="mt-1.5 w-full h-[120px] rounded-lg border border-[#C5C6CF] bg-white p-3 text-[14px] font-normal text-[#000517] focus:outline-none focus:border-[#2A4DE0] resize-none">The GST certificate was cropped and the registration number wasn't visible. Please upload a full scan showing the entire document.</textarea><div class="mt-1.5 flex justify-between items-center"><p class="text-[13px] font-normal text-[#5A6B85]">This is shown to the applicant — explain what they should fix.</p><p class="text-[13px] font-normal text-[#667085]">118 / 500</p></div><div class="mt-7 flex justify-end gap-3"><button class="h-[44px] px-6 rounded-full border border-[#C5C6CF] bg-white text-[15px] font-semibold text-[#000517] hover:bg-slate-50 transition-colors">Cancel</button><button class="h-[44px] px-6 rounded-full bg-[#D92D20] text-[15px] font-semibold text-white hover:brightness-110 transition-all">Reject with reason</button></div></div></div></div></main></div></body></html>

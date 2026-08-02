@@ -12,7 +12,48 @@ Status legend: **Pending** = renders but does nothing real · **Done** = wired t
 
 | Date | Page / Component | Element (label) | What's missing / expected behaviour | Why deferred | Status |
 |------|------------------|-----------------|-------------------------------------|--------------|--------|
-| _—_ | _(none yet — no web frontend built)_ | | | | |
+| 2026-08-01 | `web/src/App.jsx` → `pages/Placeholder.jsx` | `/` root route ("Landing — arrives in build step 7") | Renders the real landing page (`pages/public/Landing.jsx`) | Screens land per build-plan §6 order; landing is step 7 | Done (step 7 shipped; Placeholder.jsx deleted) |
+| 2026-08-01 | `web/src/pages/public/Landing.jsx` hero | Hero search bar | Real `GET /public/search` once discovery screens ship | Visibly decorative (`aria-hidden`, non-interactive spans, "Search preview — opens with the catalogue" caption) | Pending |
+| 2026-08-01 | `web/src/pages/public/Landing.jsx` categories | Category group lists + "View all categories" | Category links → real browsable catalogue tree (M2/M3 web screens) | Rendered as STATIC text (no anchors — no dead links) + "Category browsing opens with the catalogue" note | Pending |
+| 2026-08-01 | `web/src/pages/public/Landing.jsx` mobile-app section | Google Play / App Store badges | Real store links once the apps are published | Rendered `aria-disabled` with "Coming soon on" labels — not clickable | Pending |
+| 2026-08-01 | `web/src/pages/public/Landing.jsx` footer | Company / Resources / Legal columns (About, Careers, Contact, Blog, Help Center, Trade Guides, Privacy, Terms) | Real pages | Rendered as static muted text, NOT links (no dead anchors). ⚠️ Privacy Policy + Terms pages will be needed before launch | Pending |
+| 2026-08-01 | `web/src/pages/public/Landing.jsx` | Testimonials section (mockup had 6 cards) | Real customer quotes | **DELIBERATELY NOT BUILT** — the mockup's testimonials were fabricated people praising unbuilt features (escrow, shipments, analytics). Publishing fake testimonials on a live page is a trust/legal problem. Add the section back when real quotes exist | Pending (owner decision) |
+| 2026-08-01 | `web/src/App.jsx` → `pages/Placeholder.jsx` | `/signin/staff` route (linked from SignIn footer "Staff sign-in") | Renders the real staff sign-in page (`pages/auth/StaffSignIn.jsx`) hitting `POST /auth/staff/login` | Staff auth pair is build-plan step 3; the party pair (step 2) shipped first | Done (step 3 shipped same day) |
+| 2026-08-01 | `web/src/pages/buyer/buyerNav.js` → `layouts/PortalLayout.jsx` sidebar | "Search suppliers" item | Buyer-side M3 discovery search screen | M3 web screens are outside the M1 set; rendered disabled with a "Soon" chip | Pending |
+| 2026-08-01 | `web/src/pages/buyer/buyerNav.js` → `layouts/PortalLayout.jsx` sidebar | "Enquiries" item | Buyer enquiry list (M4) | M4 web screens are outside the M1 set; disabled "Soon" chip | Pending |
+| 2026-08-01 | `web/src/pages/buyer/buyerNav.js` → `layouts/PortalLayout.jsx` sidebar | "Chat" item | Buyer chat threads (M4) | M4 web screens are outside the M1 set; disabled "Soon" chip | Pending |
+| 2026-08-01 | `web/src/pages/buyer/buyerNav.js` → `layouts/PortalLayout.jsx` sidebar | "Settings" item | Account settings (change password etc. — A22-adjacent) | No M1 mockup/screen for party settings; disabled "Soon" chip | Pending |
+| 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Dashboard" item | Exporter dashboard (later milestone) | Outside the M1 web set; disabled "Soon" chip | Pending |
+| 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Products" item | Exporter catalogue management (M2 web screens) | Outside the M1 web set; disabled "Soon" chip | Pending |
+| 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Enquiries" item | Exporter enquiry list (M4) | Outside the M1 web set; disabled "Soon" chip | Pending |
+| 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Chat" item | Exporter chat threads (M4) | Outside the M1 web set; disabled "Soon" chip | Pending |
+| 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Settings" item | Account/company settings (A22 company profile edit) | A22 endpoints unbuilt; disabled "Soon" chip | Pending |
+| 2026-08-01 | `web/src/layouts/AdminLayout.jsx` sidebar → `pages/admin/ComingSoon.jsx` | "Dashboard" item + `/admin/dashboard` route | Real dashboard screen (backend GET /admin/dashboard exists — M5) | Outside the M1 web screen set; "Soon" chip routes to the designed ComingSoon page | Pending |
+| 2026-08-01 | `web/src/layouts/AdminLayout.jsx` sidebar → `pages/admin/ComingSoon.jsx` | "Audit log" item + `/admin/audit` route | Real audit viewer screen (backend GET /admin/audit exists — M5-C) | Outside the M1 web screen set; "Soon" chip routes to ComingSoon | Pending |
+| 2026-08-01 | `web/src/layouts/AdminLayout.jsx` sidebar → `pages/admin/ComingSoon.jsx` | "Settings" item + `/admin/settings` route | Platform settings screen (no backend yet) | Outside the M1 web screen set; "Soon" chip routes to ComingSoon | Pending |
+| 2026-08-01 | `web/src/pages/admin/Employees.jsx` | Permissions column "—" + edit drawer opening unticked | Show the employee's CURRENT permission set after a reload | 🔴 Backend gap (plan §7.2, logged above as recommended follow-up #2): no endpoint returns another user's permissions; column fills only from create/edit responses this session | Pending (needs owner-approved backend endpoint) |
+
+---
+
+## 🔧 Recommended backend follow-ups (owner-approved to LOG, not build — 2026-08-01)
+
+Neither blocks the M1 web build; both were decided during plan approval. **Do not build
+either without a separate owner go-ahead** (both touch auth/permissions surfaces).
+
+1. **Refresh-token httpOnly cookie (plan §7.1).** The backend returns the refresh token in
+   the JSON body and sets no cookie; `web-frontend.md` forbids tokens in localStorage. The
+   web app therefore holds BOTH tokens **in memory only** (`web/src/auth/tokenStore.js`) —
+   a hard reload ends the session and returns the user to sign-in. The clean fix is
+   backend-side: set the refresh token as an `httpOnly; Secure; SameSite` cookie on
+   `POST /auth/verify-otp` + `POST /auth/refresh` (and read it from the cookie), then the
+   web client drops its in-memory copy. Auth-touching → plan-and-confirm first.
+2. **Employee current-permissions read (plan §7.2).** No endpoint returns an employee's
+   CURRENT permission set (`GET /admin/users` rows omit it; org detail deliberately
+   excludes it per m5-rules §8/V2). The Employees screen therefore shows "—" for
+   permissions it hasn't learned this session, and the edit drawer opens unticked with an
+   explicit "saving replaces the whole set" warning. Recommended: a superadmin-only read
+   (e.g. include `permissions` on `GET /admin/users/:id` when the target is an employee
+   and the caller is superadmin). Owner will decide separately.
 
 ---
 

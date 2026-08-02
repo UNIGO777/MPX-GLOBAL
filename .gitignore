@@ -28,5 +28,8 @@ dist/
 **/dist/
 .expo/
 
+# owner's local planning notes — deliberately untracked
+
+
 # OS / editor
 .DS_Store

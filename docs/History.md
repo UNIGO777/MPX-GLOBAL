@@ -162,6 +162,280 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-02** — **M2 Catalogue · design briefs written** — `my-plans/m2/web-screens-design.md`
+  (11 screens: public category browse / category listing / product detail / supplier profile,
+  exporter my-products + add + edit with dynamic per-category fields, admin category manager +
+  attribute manager + product monitoring/takedown + audit view) + `app-screens-design.md`
+  (7 screens, buyer + exporter only). Grounded against the SHIPPED M2 backend (validators quoted:
+  name 200 · desc 5,000 · images 5×5 MB JPG/PNG/WEBP · reason 3–500 · attr key/inputType
+  immutable) + Part A §A1–§A25: status = draft/active/inactive/archived with Blocked as an
+  overlay, delete = archive (terminal), one-way draft, D1/A10/A15 cap copy (taken-down products
+  free a slot), §A9 seller sees reason+date never who, §A20 top-image exception annotated.
+  Deferred kept out with sources: featured (F5), search/filters/save (M3), enquiry CTA (M4),
+  quotation (Bucket A), D6 unblock-request, D5 notifications. Gotchas flagged in the briefs'
+  gap tables: **buyer browse entry point unnamed** (no Browse tab in M1 nav — owner call),
+  audit-view permission undefined in M2 (M5's), top-category public listing page = M3/SEO call.
+- **2026-08-02** — **M3 Discovery & Search · design briefs written** — `my-plans/m3/web-screens-design.md`
+  (8 screens: landing discovery wiring incl. `GET /public/featured` strips, search results with
+  currency-scoped price filter + on-request toggle + narrow supplier mode, AI search modal with
+  fallback-renders-normally rule, category browse + top/leaf category pages, product detail, seller
+  public profile, buyer saved list; §8 = full SEO map — indexable vs noindex, slug/canonical/JSON-LD)
+  + `app-screens-design.md` (8 screens: search home, results, full-screen filter modal, AI modal,
+  category browse, product detail, seller profile, saved list; buyer+exporter only, exporter never
+  sees a save heart). Grounded against the SHIPPED M3 backend + `m3-public-projection.md` whitelist
+  (tick from `verified` boolean, no raw `kycStatus`, `website` never public). Gaps flagged: category
+  index route unnamed, seller SEO title template references cancelled "mainCategory", app guest-mode
+  undecided, enquiry buttons ledger-logged until M4, stale `kycStatus` tick line in `web-design.md`.
+- **2026-08-02** — **M4 Enquiry & Chat · design briefs written** — `my-plans/m4/web-screens-design.md`
+  (6 screens: product-page enquiry entry, enquiry form goods/service, role-aware chat list, chat
+  thread with all four frozen variants + live freeze/reconnect states, admin all-conversations,
+  admin chat viewer + block/unblock with M4-30 both-outcome unblock) + `app-screens-design.md`
+  (5 screens: enquiry entry, enquiry form, WhatsApp-style Chats tab, thread, FCM pre-permission
+  ask + tap→thread landing — the only approved D5 slice). Grounded against the BUILT backend
+  (frozenLabel `{tone,text}` pairs, locked system-message copy, `account` freeze from the F1-B
+  cascade, resync cap, D-N1 no-body push). Gotchas recorded in the briefs: account-freeze has
+  **no list label** (server sends `tone:none` — owner question), conversation payloads carry no
+  verified tick, and both briefs recommend collapsing the separate Enquiries/Chat nav
+  placeholders into one "Chats" item (M4-35 — needs owner sign-off, amends M1 nav/tab tables).
+  Quotation (Bucket A1) and the rest of D5 explicitly in "Do not design".
+- **2026-08-02** — **M5 Super Admin console · design briefs written** — `my-plans/m5/web-screens-design.md`
+  (13 screens: dashboard, org list/detail + block modal, product monitoring + takedown modal,
+  category tree + sub-category/attribute editor, conversations + read-only chat viewer, audit
+  viewer, plus FINALIZE F5a error log and F5b featured — the latter two cross-referenced to the
+  M6 brief, which now HAS an M5 host for its two org-detail deltas) + `app-screens-design.md`
+  (zero screens — admin is web-only per m5.md; party-side effects mapped to M1–M4 app briefs).
+  Grounded against the built backend (gates, filters, page caps, `blockReach.cascade`,
+  `reviewedSides`, "not captured" flags). §10 records the Employees-screen delta: permission
+  checkbox group grows to the 12-string catalogue; current-permissions read gap carried from
+  UiWebNotes. Do-not-design list: D4 TOTP, Bucket-A employee panel/tickets, D5 notification
+  controls, platform settings, trend charts, admin search, bulk takedown.
+- **2026-08-02** — **M6 FINALIZE · design briefs written** — `my-plans/m6-finalize/web-screens-design.md`
+  + `app-screens-design.md`. Deliberately small: M6 adds only the error-log viewer (`/admin/errors`,
+  `errorlog:read`), the featured-content manager (`/admin/featured`, `featured:manage`), landing
+  featured strips (`GET /public/featured`), and two M5 Organisation-detail deltas (F1 block
+  reason + cascade status; F3 "not captured" labels). App brief = zero screens (blocked-account /
+  frozen-chat behaviours cross-referenced to M1/M4 briefs). D4 TOTP screens listed as future-only
+  (ON HOLD); F6/F2/timed-suspension explicitly in "do not design". Gotcha recorded: banner artwork
+  spec (dimensions/aspect) is undecided, and no M5 web brief exists yet to host the two deltas.
+- **2026-08-01** — **WEB M1 · DESIGN-DRIFT FIX — root cause in the shared foundation, then a
+  screen-by-screen pass against the design images. Build green.** Owner reported uniform drift
+  (look + field activation) across all screens; diagnosis confirmed it was systemic, not
+  per-screen. **Foundation fixes (recovered every screen at once):** (1) `index.css` — the global
+  `*:focus-visible` offset ring double-ringed every input and haloed every control; now scoped to
+  click targets only, text fields own their focus via `inputClasses()` (accent border + soft
+  20%-alpha glow per DESIGN.md/mockups). (2) `Button` — disabled was washed-blue (read as live);
+  now the mockups' GREY (#C5C6CF/#667085) on filled variants + md size 44→48px + accent shadow +
+  `active:scale-[0.98]`. (3) `inputClasses` — error fields gain the `#FEECEA` tint (new
+  `danger.50` token). (4) `OtpInput` — 44px→56px boxes, mockup active-box ring treatment.
+  (5) Card radius sweep 16/12px→8px per DESIGN.md; Alert danger matched to the mockup error slot;
+  3 raw controls (Users search, 2 reject textareas) now consume `inputClasses`. **Screen pass
+  (corrupt screen.pngs — "FIFE Image failed to fetch" — fell back to the mockups' code.html as
+  the design source):** AuthLayout rebuilt to the approved split-pane (45% navy / WHITE right
+  pane, form at 400px with NO card chrome on desktop, 4px top accent bar; mobile = card on
+  canvas); auth headings 24→28px; **BuyerSignup → single column** in mockup field order;
+  **ExporterSignup fully rebuilt** as the step_1..3 wizard (top app bar + navy step-rail card
+  with green-tick progress + reassurance list + recessed footer strip) — businessProfile fields
+  stay DROPPED per the standing owner decision, so step-2's "Skip and create account" has nothing
+  to skip and isn't rendered (noted divergence); Otp actions restacked (full-width verify +
+  full-width grey resend pill + centred back link); **AdminLayout ink-900→brand NAVY** per the
+  admin mockups (260px sidebar, brand on top, 88px navy header); Users + Employees tables split
+  into the mockups' discrete columns (Email/Mobile/Active "Yes/No"); **VerificationQueue
+  accordion removed** — mockup cards are flat (title + amber "Awaiting review" chip + meta row +
+  actions), detail now eager-loads per card in parallel, tabs renamed "Exporters/Buyers to
+  verify"; KycViewer copy matched ("This preview has expired" / "Reload document" / "Documents
+  (N)"); both KYC uploads get the mockups' dashed **FileDrop** zone (new shared primitive, real
+  drag-and-drop) + "Submit for review" CTA. Screens now consume primitives exclusively.
+- **2026-08-01** — **WEB M1 · STEP 7 (LANDING PAGE) BUILT — the M1 web build's last screen; build
+  green; Placeholder.jsx deleted.** `pages/public/Landing.jsx` at `/`, faithful to
+  `royal_blue_premium_landing_page`: announcement bar · sticky header (anchor nav; Sign In /
+  Get Started → real auth routes) · hero (headline, decorative search preview with honest
+  caption, supplier-match visual using the house Tirupur example, Start Buying / Sell on MPX →
+  signups) · trust strip · categories (STATIC text lists — no dead links) · how-it-works with a
+  working buyer/seller journey toggle · platform tabs (4 real features; interactive) · trust
+  cards · why-MPX cards · navy mobile-app section (store badges "Coming soon", disabled) · FAQ
+  accordion (answers rewritten to truth) · CTA banner → signups · footer (live links only;
+  directory columns as static text). **Content honesty divergences from the mockup (flagged to
+  owner):** (1) all copy claiming unbuilt/Phase-2 features — escrow, shipment tracking,
+  analytics, trade credit, "formal digital quotations" — rewritten to Phase-1 truth; the
+  **"Quotations" platform tab is dropped** (Bucket A1); buyer journey step 4 is now "Deal with
+  confidence", seller journey ends at "Receive enquiries". (2) **Testimonials section NOT
+  built** — the mockup's 6 cards were fabricated people praising unbuilt features; logged in
+  UiWebNotes for the owner to fill with real quotes later. (3) FAQ "financial stability
+  assessments / compliance audits" claim → document-review truth; buyer answer states the
+  D3 truth (free, active from signup). 6 UiWebNotes rows updated/added (root route → Done; hero
+  search, category links, store badges, footer directory, testimonials → Pending). ⚠️ SEO note:
+  this is still a client-rendered SPA — per-route meta/SSG is future work (web-design.md wants
+  indexable public pages; the backend already serves sitemap/robots).
+- **2026-08-01** — **WEB M1 · STEP 6 (ADMIN CONSOLE) BUILT — 5 screens + own layout, build
+  green.** **AdminLayout** — its own shell (ink-900, "Admin console" tag), NOT PortalLayout;
+  sidebar filtered by server-supplied permissions via `can()` (superadmin sees all; hiding is
+  presentation — server re-checks); "Soon" items route to a designed ComingSoon page so a
+  one-permission employee still sees a finished console. **Users** (`user:read`) — prefix search
+  ("Starts with…", debounced), Role + Verification enum filters (pending="Not submitted" added;
+  mockup's "Staff" split into Employee/Super Admin), 20/50/100 pager, no-matches names the active
+  filters; Activate/Deactivate superadmin-only (hidden for employees) with deactivate confirm
+  modal + server refusals (self/superadmin-target/org-blocked) surfaced verbatim inline; no
+  company column (list projection omits it). **VerificationQueue** — org-centric (:id = ORG id),
+  two tabs with counts via `GET /admin/orgs?side=&verification=submitted`; card expand lazy-loads
+  `GET /admin/orgs/:id` (entityType · submitted date · doc count); Verify/Approve + Reject modal
+  (reason 3–500, counter, "shown to the applicant, word for word"); **409 → card flips to "no
+  longer awaiting review" + refresh**; decision buttons permission-gated per tab. **KycViewer**
+  (`kyc:view`, `/admin/verification/:orgId/kyc`) — doc list + preview (img/iframe by URL
+  extension, open-in-tab fallback); **signed URLs ~120s → auto-flip to "Preview expired" overlay
+  with Reload** (re-fetch = another audited access, said so on screen); verify/reject in place
+  when status is still `submitted` (side chosen from buyerSide/exporterSide flags). **Employees**
+  (superadmin-only route) — list via `?role=employee`; add drawer (temp password + crypto
+  Generate, grouped 14-permission checklist, least-privilege copy); created-once credentials
+  modal ("only time the password is shown", copy button); **honest degradation per owner
+  decision**: permissions column "—" unless learned from a create/edit response this session,
+  edit drawer opens UNTICKED with a warning that saving REPLACES the whole set — the missing
+  read endpoint stays logged in UiWebNotes, NOT built. **ComingSoon/NoAccess** designed pages.
+  Routes under `RequireAuth(/signin/staff) → RequireRole(staff)`, employees nested
+  superadmin-only. 4 new UiWebNotes rows (3 Soon areas + the permissions-column gap).
+- **2026-08-01** — **WEB M1 · STEP 5 (EXPORTER PANEL) BUILT — build green.** Reuses PortalLayout.
+  **VerificationStatus** (`/exporter`, home) — loads `GET /me/verification` + the org's own PUBLIC
+  profile (`GET /exporters/:orgId`, the only self-org source until A22) via `Promise.allSettled`:
+  the profile failing degrades the header to the person (like the buyer panel), never errors the
+  page; when present it gives the h1 company name, country + "Business/Individual account"
+  subline, and the top-bar `subline`. Four states with D1-true copy (unverified = 3-ACTIVE-product
+  LIMIT, not a gate — "your profile is already live"; verified = "limit has been removed"); amber
+  3-active-products callout on every non-verified state; rejection reason verbatim; "What you
+  sent" metadata list. **KycUpload + resubmit** (`/exporter/kyc`, ONE page) — differences from
+  buyer, contract-driven: **entityType READ-ONLY from signup and NEVER sent** (server uses the
+  signup value, mismatch 400s) — the account-type card only displays it; `submitted` REPLACES the
+  form with an in-review panel (mockup); `rejected` = same form under "Send new documents" + the
+  verbatim reason banner ("Reviewed <date> by the MPX verification team"), success confirms
+  **"Back in review"** vs first-submission "Documents sent". Same sequential per-row upload
+  mechanics as the buyer page (kept as its own file — second duplication, not yet generalised).
+  Routes under `RequireAuth → RequireRole(['exporter'])`. Five "Soon" sidebar items
+  (Dashboard/Products/Enquiries/Chat/Settings) logged as Pending rows in UiWebNotes.
+- **2026-08-01** — **WEB M1 · STEP 4 (BUYER PANEL) BUILT — build green.** **PortalLayout**
+  (`layouts/PortalLayout.jsx`) — shared navy shell for buyer AND exporter panels (admin gets its
+  own layout later — no entanglement): top bar (brand · person's name + role · initials · sign
+  out), sidebar (`nav` prop) that collapses to a horizontal strip on mobile; `soon` items render
+  disabled with a chip. **Header shows the PERSON, not the company** — a buyer's own Organisation
+  has no read endpoint until A22 (owner watch-item; no stub endpoint built); a panel that
+  legitimately has a company (exporter home via its public profile) passes `subline`.
+  **VerificationStatus** (`/buyer/verification`, buyer home) — four states off `GET
+  /me/verification` (pending/submitted/verified/rejected with D3-true copy: "your account already
+  works in full"), rejection reason VERBATIM in a danger panel, "What you sent" metadata list
+  (docType label + date — never the files), loading skeleton + ErrorState with requestId/retry.
+  **KycUpload** (`/buyer/kyc`) — optional-banner (pending only) · entity cards (buyer chooses;
+  LOCKED read-only once `verification.entityType` exists — server 400s a mismatch) · doc-type
+  selects offer ONLY the backend enum for the chosen entity · multi-row files, client pre-check
+  (type/10MB), **sequential uploads** (backend = one file per request) with per-row progress +
+  per-row verbatim server errors — a failed row never hides an earlier success; `entityType` sent
+  only on the first accepted upload · verified accounts short-circuit to a "nothing more to send"
+  panel (server would 409) · all-rows-done → confirmation panel. Routes under
+  `RequireAuth → RequireRole(['buyer'])`. Sidebar "Soon" items (Search suppliers/Enquiries/Chat/
+  Settings — M3/M4/A22 scope) logged as 4 Pending rows in UiWebNotes.
+- **2026-08-01** — **WEB M1 · STEP 3 (STAFF AUTH PAIR) BUILT — build green.** **StaffSignIn**
+  (`/signin/staff`) — its own page, zero entanglement with the party side: no portal control
+  (A21 — staff email exclusive), hits `POST /auth/staff/login`, no signup link (staff accounts
+  are superadmin-created), forgot link → `/forgot?staff=1` (the staff variant shipped in step 2).
+  Shares only the primitives + the step-2 Otp screen (`backTo: '/signin/staff'`). **ChangePassword**
+  (`/change-password`) — the blocking gate (no mockup existed; staff temp-password flow is
+  unusable without it): mounted under `RequireAuth` (anonymous hits → `/signin/staff` since the
+  temp-password gate is the only inbound flow today), forced copy when `mustChangePassword`,
+  client checks (≥8 chars, ≠ current, confirm match), server errors verbatim; success =
+  `applyNewTokens` (backend bumps tokenVersion + revokes all sessions and returns a fresh pair,
+  so the user continues without re-signing-in) → `roleHome`. "Sign out and start over" escape
+  hatch. Also verified per owner check: `completeSignIn` merges name/email from verify-otp's
+  curated user; `/auth/me` only contributes permissions + mustChangePassword — no blank names.
+  UiWebNotes `/signin/staff` placeholder row → Done.
+- **2026-08-01** — **WEB M1 · STEP 2 (PARTY AUTH PAIR) BUILT — 6 screens, routes wired, `npm run
+  build` green.** `web/src/pages/auth/`: **SignIn** (buyer+exporter share it — `PortalToggle` is
+  the A21 field change; server-verbatim error in ONE slot above the form, never per-field; →
+  `/otp` with `{loginToken, method, identifier, from, backTo}`) · **Otp** (ONE screen for party
+  login, staff login AND both signups — A21 §4a signup returns no session; 5:00 expiry + 60s
+  resend countdowns; destination masked client-side via `maskIdentifier` since the API never
+  returns it; "sign in again" → dead-session panel; "too many attempts" → locked; success →
+  `completeSignIn` → `mustChangePassword ? /change-password : from ?? roleHome`) · **Forgot** +
+  **Reset** (party portal toggle — backend REQUIRES `portal`, the mockup lacked it; `?staff=1`
+  variant hits the staff endpoints; neutral "if an account exists" copy; reset success states the
+  real behaviour: all other sessions revoked) · **BuyerSignup** (payload = `buyerSignup` validator
+  exactly; server `fields[]` → per-field errors via `fieldErrorMap`; 409 → "Sign in instead";
+  201 → straight to `/otp`) · **ExporterSignup** (3 steps, one route, state kept across
+  back/forward; step 2 = business name + country + entityType cards — **Registration number/Tax
+  ID/Year established DROPPED** per owner 2026-07-30, backend strips `businessProfile`; step 3
+  address optional AND skippable — skip submits without `address`; a server field error jumps back
+  to the owning step). Routes wired in `App.jsx`; `/signin/staff` renders a Placeholder until step
+  3 (logged in UiWebNotes). **Gotcha:** validator check confirmed mobile is
+  `{countryCode, number}` with `number` 4–15 chars digits — the client strips spaces/dashes before
+  send.
+- **2026-08-01** — **WEB M1 · STEP 1 (FOUNDATION) BUILT — first real frontend code.** Plan:
+  `my-plans/m1/web-build-plan.md` (owner-approved same day, with decisions: token storage =
+  in-memory interim · employee-permissions read = honest degradation · queue ordering accepted ·
+  **warning token pinned to `#F79009`** · exporter signup step 2 drops `businessProfile` fields).
+  Design source: `my-plans/m1/m1-webscreens/` — 19 Stitch mockups whose markup uses the
+  **royal-blue "Precision" tokens** (`#1A2E8F`/`#2A4DE0`/`#EAEEFF`), now in `tailwind.config.js`.
+  **Shipped:** Inter + base styles (global focus ring) · `lib/` (ISO countries via
+  `Intl.DisplayNames` + dial codes; **KYC doc-type mirror of the backend enum** — the mockups'
+  "VAT / Export License / Driving License" lists were invalid and are not offered; 14-string
+  permission-catalogue mirror; format helpers incl. client-side OTP destination masking — the
+  API never returns it) · `api/` (client with single-flight 401→refresh→retry that never
+  retries `/auth/*`; auth/kyc/admin endpoint modules matching the shipped validators exactly) ·
+  `auth/` (in-memory `tokenStore` with session-end notify; `AuthContext` merging verify-otp
+  identity + `/auth/me` permissions — me() carries no name/email, so both calls are needed;
+  `RequireAuth` with the `mustChangePassword` intercept; `RequireRole` wrong-role→own-home;
+  `roleHome` incl. employee first-permitted-screen order) · 18 ui primitives (Button/pill,
+  Field/Input/Password+strength, Mobile pair, searchable CountrySelect, Checkbox, **OtpInput**
+  with paste-across, StatusChip four-state vocabulary, VerifiedTick — tick-or-nothing, Alert,
+  Modal/Drawer with focus trap + Esc, Skeleton/Empty/Error(requestId ref), Pagination capped at
+  100, inline SVG icon set — no icon-font dependency) · `AuthLayout` (navy narrative split-pane)
+  · **dev-only `/styleguide`** rendering every primitive in every state for owner review (gated
+  on `import.meta.env.DEV`, absent from builds). Dead scaffolding removed
+  (`ProtectedRoute.jsx`, `api/endpoints.js`). `npm run build` clean (213 KB js / 72 KB gz).
+  **UiWebNotes:** placeholder `/` route logged + the two owner-approved backend follow-ups
+  recorded (refresh-token httpOnly cookie; superadmin employee-permissions read).
+  ⏸ **Paused for owner review before step 2 (party auth pair)** — per instruction, check-ins at
+  every numbered build step.
+- **2026-08-01** — **COVERAGE-DRIVEN TEST PASS — 6 new files, +90 tests. 847/847 green** (757 →
+  +90), lint clean, 57 test files. Coverage measured for the second time ever
+  (`@vitest/coverage-v8`): **statements 89.55% → 92.51%, branches 78.97% → 81.65%, functions
+  92.74% → 96.09%, lines 91.32% → 94.27%**. Gaps were found by measurement + a route/endpoint
+  census, not by guesswork — the app has **93 endpoints** and three had *zero* test references.
+  **New files:** `m1-auth-session` (19 — `/auth/logout`, the full `/auth/change-password`
+  behaviour, `/auth/resend-otp`, and the never-tested `/auth/staff/forgot-password` +
+  `/auth/staff/reset-password` pair, including both cross-portal refusals) · `m3-ai-quota` (12 —
+  the per-org daily AI cap, which was in M3's own definition of done with nothing behind it) ·
+  `m2-image-refs` (16 — `verifyImageFile` + **`isOwnCloudinaryUrl`**, the check that stops a
+  forged `{url, publicId}` pair pointing a listing at someone else's asset) ·
+  `d4-twofactor-backup-codes` (13 — A4's "hashed, single use", untested because D4 is on hold) ·
+  `m4-push-client` (14 — dead-token classification and the inert-when-unconfigured promise;
+  `m4-push` mocks this module wholesale, so the transport itself was 12.9% covered) ·
+  `security-optional-auth` (16 — every bad-token path on the one public route that must
+  downgrade to guest instead of 401).
+  🔴 **REAL FIX — the test suite was making live, billable OpenAI calls.** `tests/setup.js`
+  forces Firebase off "so a test run cannot reach out to Google", but the same reasoning was
+  never applied to `OPENAI_API_KEY`, which is now a real key in `.env`. Both AI suites happen to
+  mock `ai.client.js`, so it went unnoticed — the first new test to hit `/search/ai` without
+  mocking made a real API call and got a non-deterministic answer. `setup.js` now forces it off
+  too; no coverage lost, since nothing depends on the live key.
+  🔴 **FINDING, NOT FIXED (needs an owner decision — it changes auth): `POST /auth/logout` does
+  not end the session it claims to end.** `auth-sessions.md` A7 says `tokenVersion` is bumped on
+  "password change, role change, deactivation **and logout**", and `M1-01-backend-steps.md` step
+  11 says logout "increments tokenVersion, revokes the refresh **family**". The shipped
+  `logout()` does neither — it revokes only the single presented refresh token, so the ACCESS
+  token keeps working for up to 15 minutes afterwards and other tokens in the family stay live.
+  On a shared computer "log out" does not log you out. Pinned by a **KNOWN GAP** test that
+  asserts today's behaviour, so implementing the documented control fails it deliberately rather
+  than silently.
+  🧭 **Smaller finding, not fixed:** `invalidateDidYouMeanCache()` has **no production caller**.
+  The M3 plan (M3-G) says it should be invalidated by the same admin category writes that already
+  call `invalidateLeafCache()` — four sites in `category.service.js` call the latter, none call
+  the former. Impact is bounded to the 30-second TTL rather than the plan's feared
+  "only after a restart", so it is minor. (`invalidateSitemapCache()` is also uncalled, but a
+  1-hour TTL is a stated design choice and `m3-seo-rules` §5 permits "regenerate on a schedule",
+  so that one is not a defect.)
+  ⚙️ **Local env:** this machine had no Mongo or Redis, so `mongodb-community` + `redis` were
+  installed via Homebrew. Redis 8's stock `redis.conf` fails to boot on macOS because it
+  `loadmodule`s four bundled modules that the bottle does not ship — the four lines are commented
+  out (backup at `/usr/local/etc/redis.conf.bak`).
+  ⚠️ **Two harness notes:** a full run takes **~9–12 minutes** here (`fileParallelism: false`),
+  and under v8 coverage instrumentation `m2-seed` exceeded the 30s `testTimeout` — the seed makes
+  ~1,500 sequential round trips, so coverage runs need `--testTimeout=200000`. Not a product
+  defect, but the second seed test then fails as a cascade of the first, which reads misleadingly.
 - **2026-08-01** — **FINALIZE F5b BUILT — featured landing content. 757/757 green** (723 → +34),
   lint clean, 51 test files. **Owner reversed the morning's "month 2" decision** — the landing page
   needs it now. ✅ **Not a scope change and not a change request:** `scope-of-work.md` Module 5
@@ -1287,6 +1561,22 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   `Other-category-feilds.png`) and the Form-Fields HTML's "Other — seller picks" badge carry
   pre-Part-A designs (`type: either`, `resolvedType`, status without `archived`, Featured content,
   manual goods/service pick) — the .md files + Part A win; images are visual aids only.
+- **2026-07-30** — **DESIGN DOC: `my-plans/m1/app-screens-design.md` realigned to `m1.md` (15 → 17
+  screens).** The brief predated §A21/§A22 and described a product we are no longer building.
+  Three structural corrections: **(1) §A21 portals** — the "one shared login, no role selector"
+  screen is gone; portal is chosen on the welcome screen and scopes sign-in + sign-up, same email
+  may hold one buyer + one exporter, wrong-portal login shows the generic "Invalid credentials"
+  with **no** switch hint. **(2) §A21 two-step signup** — the two single-shot signup forms are
+  replaced by shared step-1 (account) → OTP → step-2 (company: **claim** an existing Organisation
+  or create new), with the claim/decline consequences spelled out on-screen. **(3) §A22 company
+  profile** — two new screens (buyer small; exporter + logo/description + public-page preview),
+  including the locked-field treatment, the change-anyway confirmation, and the verified→`submitted`
+  demotion, which also added a new "back in review, *not* rejected" state to the two verification
+  screens. **Removed:** the exporter signup "Business details" step — the backend already strips
+  `businessProfile` at signup (owner decision, same date), so it was drawing a discarded form.
+  **Gotcha for whoever picks this up:** `my-plans/m1/web-screens-design.md` is **still stale** — its
+  screens 2, 3, 6, 9 describe the pre-A21 shared login and single-step signup, and it has no
+  company-profile screens. Flagged in both docs, not yet fixed.
 - **2026-07-30** — **CODE: all audit findings fixed (owner-confirmed) — 126/126 green (+5), lint
   clean.** Owner decisions: `businessProfile` **removed from exporter signup** (A5 — captured at
   verification, not signup; zod strips it, so senders get 201 and nothing is stored — the

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global | Employee Management States</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2A4DE0",
+                        "navy-shell": "#1A2E8F",
+                        "canvas": "#EAEEFF",
+                        "surface": "#FFFFFF",
+                        "on-surface": "#000517",
+                        "on-surface-variant": "#5A6B85",
+                        "outline": "#C5C6CF",
+                        "table-header": "#F2F4F7",
+                        "table-label": "#667085",
+                        "error-text": "#D92D20"
+                    },
+                    spacing: {
+                        "sidebar-width": "260px",
+                        "topbar-height": "88px",
+                        "margin-desktop": "80px",
+                        "stack-lg": "64px"
+                    },
+                    fontFamily: {
+                        "body": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "content-top": "32px"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #EAEEFF;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #C5C6CF;
+            border-radius: 10px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .active-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Scoped shell layouts to prevent mixing */
+        .app-shell {
+            position: relative;
+            width: 100%;
+            height: 900px;
+            overflow: hidden;
+            background-color: #1A2E8F;
+            display: flex;
+        }
+        .app-sidebar {
+            width: 260px;
+            height: 100%;
+            flex-shrink: 0;
+            background-color: #1A2E8F;
+            display: flex;
+            flex-col: column;
+        }
+        .app-main {
+            flex-grow: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .app-header {
+            height: 88px;
+            width: 100%;
+            background-color: #1A2E8F;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 40px;
+        }
+        .app-content {
+            flex-grow: 1;
+            background-color: #EAEEFF;
+            border-top-left-radius: 32px;
+            position: relative;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="antialiased">
+<!-- SECTION 1: Default State -->
+<div class="app-shell shadow-2xl">
+<!-- Sidebar -->
+<aside class="app-sidebar text-white flex flex-col">
+<div class="h-[88px] flex items-center px-8 flex-shrink-0">
+<span class="text-xl font-semibold tracking-tight">MPX Global</span>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1">
+<a class="flex items-center justify-between px-4 py-3 text-white/60 hover:text-white transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[15px] font-medium">Dashboard</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded whitespace-nowrap">Soon</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[15px] font-medium">Users</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="text-[15px] font-medium">Verification</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined active-icon">badge</span>
+<span class="text-[15px] font-semibold">Employees</span>
+</a>
+<a class="flex items-center justify-between px-4 py-3 text-white/60 hover:text-white transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-[15px] font-medium">Audit log</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded whitespace-nowrap">Soon</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[15px] font-medium">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main -->
+<div class="app-main">
+<header class="app-header text-white">
+<div class="flex items-center gap-6">
+<div class="text-right">
+<p class="text-[15px] font-semibold leading-tight">Priya Menon</p>
+<p class="text-[13px] text-white/60 font-medium">Super Admin · MPX Global</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-[14px] font-bold tracking-tight">PM</div>
+<button class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<main class="app-content">
+<div class="max-w-[1200px] mx-auto px-10 py-10">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+<div>
+<h1 class="text-[32px] font-bold text-on-surface tracking-tight">Employees</h1>
+<p class="text-[15px] text-on-surface-variant mt-1">Create staff accounts and manage what each person can do.</p>
+</div>
+<button class="bg-primary text-white px-8 py-3.5 rounded-full font-semibold text-[15px] flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined !text-xl">add</span>
+                        Add employee
+                    </button>
+</div>
+<div class="bg-surface rounded-xl border border-outline overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[900px]">
+<thead>
+<tr class="bg-table-header border-b border-outline">
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider" style="width: 200px;">Name</th>
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Email</th>
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Mobile</th>
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Permissions</th>
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Active</th>
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider text-right"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline">
+<tr class="h-[72px]">
+<td class="px-6 py-4"><span class="text-[15px] font-semibold text-on-surface">Vikram Shah</span></td>
+<td class="px-6 py-4"><span class="text-[15px] text-on-surface-variant">vikram@mpxglobal.com</span></td>
+<td class="px-6 py-4"><span class="text-[15px] text-on-surface-variant">+91 99870 12345</span></td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-2">
+<span class="bg-canvas text-primary text-[13px] font-semibold px-3 py-1 rounded-md">Verify exporters</span>
+<span class="bg-canvas text-primary text-[13px] font-semibold px-3 py-1 rounded-md">Approve buyers</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="text-[15px] font-semibold text-on-surface">Yes</span></td>
+<td class="px-6 py-4 text-right">
+<button class="w-11 h-11 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-full transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="h-[72px]">
+<td class="px-6 py-4"><span class="text-[15px] font-semibold text-on-surface">Deepa Iyer</span></td>
+<td class="px-6 py-4"><span class="text-[15px] text-on-surface-variant">deepa@mpxglobal.com</span></td>
+<td class="px-6 py-4"><span class="text-[15px] text-on-surface-variant">+91 98191 55420</span></td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-2">
+<span class="bg-canvas text-primary text-[13px] font-semibold px-3 py-1 rounded-md">View user directory</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="text-[15px] font-semibold text-on-surface">Yes</span></td>
+<td class="px-6 py-4 text-right">
+<button class="w-11 h-11 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-full transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="h-[72px]">
+<td class="px-6 py-4"><span class="text-[15px] font-semibold text-on-surface">Arjun Rao</span></td>
+<td class="px-6 py-4"><span class="text-[15px] text-on-surface-variant">arjun@mpxglobal.com</span></td>
+<td class="px-6 py-4"><span class="text-[15px] text-on-surface-variant">+91 90043 22178</span></td>
+<td class="px-6 py-4"><span class="text-[15px] text-table-label">No access yet</span></td>
+<td class="px-6 py-4"><span class="text-[15px] font-bold text-error-text">No</span></td>
+<td class="px-6 py-4 text-right">
+<button class="w-11 h-11 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-full transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p class="mt-6 text-on-surface-variant text-[14px]">Showing 3 employees</p>
+</div>
+</main>
+</div>
+</div>
+<!-- 100px VERTICAL WHITE GAP -->
+<div class="h-[100px] bg-white"></div>
+<!-- SECTION 2: Add Drawer State -->
+<div class="app-shell shadow-2xl">
+<!-- Sidebar (Untouched by overlay) -->
+<aside class="app-sidebar text-white flex flex-col z-[100]">
+<div class="h-[88px] flex items-center px-8 flex-shrink-0">
+<span class="text-xl font-semibold tracking-tight">MPX Global</span>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1">
+<a class="flex items-center justify-between px-4 py-3 text-white/60 hover:text-white transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[15px] font-medium">Dashboard</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded whitespace-nowrap">Soon</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[15px] font-medium">Users</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="text-[15px] font-medium">Verification</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined active-icon">badge</span>
+<span class="text-[15px] font-semibold">Employees</span>
+</a>
+<a class="flex items-center justify-between px-4 py-3 text-white/60 hover:text-white transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-[15px] font-medium">Audit log</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded whitespace-nowrap">Soon</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[15px] font-medium">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main -->
+<div class="app-main">
+<!-- Header (Untouched by overlay) -->
+<header class="app-header text-white z-[100]">
+<div class="flex items-center gap-6">
+<div class="text-right">
+<p class="text-[15px] font-semibold leading-tight">Priya Menon</p>
+<p class="text-[13px] text-white/60 font-medium">Super Admin · MPX Global</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-[14px] font-bold tracking-tight">PM</div>
+<button class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<main class="app-content relative">
+<!-- Content Overlay -->
+<div class="absolute inset-0 bg-[#000517]/40 z-[60]"></div>
+<!-- Background Content (under overlay) -->
+<div class="max-w-[1200px] mx-auto px-10 py-10">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+<div>
+<h1 class="text-[32px] font-bold text-on-surface tracking-tight">Employees</h1>
+<p class="text-[15px] text-on-surface-variant mt-1">Create staff accounts and manage what each person can do.</p>
+</div>
+<button class="bg-primary text-white px-8 py-3.5 rounded-full font-semibold text-[15px] flex items-center gap-2 opacity-50 cursor-default">
+<span class="material-symbols-outlined !text-xl">add</span>
+                        Add employee
+                    </button>
+</div>
+<div class="bg-surface rounded-xl border border-outline overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[900px]">
+<thead>
+<tr class="bg-table-header border-b border-outline">
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider" style="width: 200px;">Name</th>
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Email</th>
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Mobile</th>
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Permissions</th>
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Active</th>
+<th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider text-right"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline">
+<tr class="h-[72px]"><td class="px-6 py-4" colspan="6">...</td></tr>
+<tr class="h-[72px]"><td class="px-6 py-4" colspan="6">...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Side Drawer (Above overlay) -->
+<div class="absolute top-0 right-0 h-full w-[440px] bg-white border-l border-outline z-[110] p-8 flex flex-col custom-scrollbar overflow-y-auto">
+<div class="flex items-center justify-between mb-2">
+<h2 class="text-[20px] font-semibold text-on-surface">Add employee</h2>
+<button class="text-table-label hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+</div>
+<p class="text-[14px] text-on-surface-variant mb-7">They'll sign in with the temporary password you set, then choose their own.</p>
+<div class="space-y-5">
+<div class="flex flex-col gap-2">
+<label class="text-[14px] font-semibold text-on-surface">Full name</label>
+<input class="h-11 border border-outline rounded-lg px-4 w-full focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="e.g. John Doe" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[14px] font-semibold text-on-surface">Email</label>
+<input class="h-11 border border-outline rounded-lg px-4 w-full focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="e.g. john@mpxglobal.com" type="email"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[14px] font-semibold text-on-surface">Mobile</label>
+<div class="flex gap-2">
+<select class="w-[110px] h-11 border border-outline rounded-lg px-3 bg-white focus:ring-2 focus:ring-primary/20 outline-none"><option>+91</option></select>
+<input class="flex-1 h-11 border border-outline rounded-lg px-4 focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Number" type="tel"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[14px] font-semibold text-on-surface">Temporary password</label>
+<div class="flex gap-2">
+<input class="flex-1 h-11 border border-outline rounded-lg px-4 bg-gray-50 font-mono" readonly="" type="text" value="Kx7#mP2v"/>
+<button class="h-11 px-4 border border-outline rounded-lg font-semibold text-on-surface bg-white hover:bg-gray-50">Generate</button>
+</div>
+<p class="text-[13px] text-on-surface-variant">At least 8 characters. They'll be asked to change it at first sign-in.</p>
+</div>
+<div>
+<label class="text-[14px] font-semibold text-on-surface">Permissions</label>
+<p class="text-[13px] text-on-surface-variant mt-1.5 mb-3">Grant now or later.</p>
+<div class="space-y-1">
+<label class="flex items-center gap-3 p-2 hover:bg-canvas/30 rounded-lg cursor-pointer transition-colors">
+<input checked="" class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/>
+<div class="flex flex-col"><span class="text-[14px] font-medium text-on-surface">Approve buyers</span><span class="text-[12px] text-table-label">Decide on buyer verification</span></div>
+</label>
+<label class="flex items-center gap-3 p-2 hover:bg-canvas/30 rounded-lg cursor-pointer transition-colors">
+<input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/>
+<div class="flex flex-col"><span class="text-[14px] font-medium text-on-surface">Verify exporters</span><span class="text-[12px] text-table-label">Decide on exporter verification</span></div>
+</label>
+<label class="flex items-center gap-3 p-2 hover:bg-canvas/30 rounded-lg cursor-pointer transition-colors">
+<input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/>
+<div class="flex flex-col"><span class="text-[14px] font-medium text-on-surface">View user directory</span><span class="text-[12px] text-table-label">Read-only access to the user list</span></div>
+</label>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-8">
+<button class="w-full h-[48px] bg-primary text-white rounded-full font-semibold text-[15px] hover:bg-primary/90 transition-all active:scale-[0.98]">Create employee</button>
+</div>
+</div>
+</main>
+</div>
+</div>
+<div class="h-[100px] bg-white"></div>
+<script>
+    // Logic for the overflow menu simulation
+    document.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if (e.currentTarget.querySelector('.material-symbols-outlined')?.textContent === 'more_vert') {
+                e.currentTarget.classList.toggle('bg-canvas');
+            }
+        });
+    });
+</script>
+<div class="h-[100px] bg-white"></div><div class="app-shell shadow-2xl"><aside class="app-sidebar text-white flex flex-col z-[100]"><div class="h-[88px] flex items-center px-8 flex-shrink-0"><span class="text-xl font-semibold tracking-tight">MPX Global</span></div><nav class="flex-1 px-4 py-4 space-y-1"><a class="flex items-center justify-between px-4 py-3 text-white/60 hover:text-white transition-colors group" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined">dashboard</span><span class="text-[15px] font-medium">Dashboard</span></div><span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded whitespace-nowrap">Soon</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">group</span><span class="text-[15px] font-medium">Users</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified_user</span><span class="text-[15px] font-medium">Verification</span></a><a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined active-icon">badge</span><span class="text-[15px] font-semibold">Employees</span></a><a class="flex items-center justify-between px-4 py-3 text-white/60 hover:text-white transition-colors group" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined">receipt_long</span><span class="text-[15px] font-medium">Audit log</span></div><span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded whitespace-nowrap">Soon</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-[15px] font-medium">Settings</span></a></nav></aside><div class="app-main"><header class="app-header text-white z-[100]"><div class="flex items-center gap-6"><div class="text-right"><p class="text-[15px] font-semibold leading-tight">Priya Menon</p><p class="text-[13px] text-white/60 font-medium">Super Admin · MPX Global</p></div><div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-[14px] font-bold tracking-tight">PM</div><button class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><main class="app-content relative"><div class="absolute inset-0 bg-[#000517]/40 z-[60]"></div><div class="max-w-[1200px] mx-auto px-10 py-10"><div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10"><div><h1 class="text-[32px] font-bold text-on-surface tracking-tight">Employees</h1><p class="text-[15px] text-on-surface-variant mt-1">Create staff accounts and manage what each person can do.</p></div><button class="bg-primary text-white px-8 py-3.5 rounded-full font-semibold text-[15px] flex items-center gap-2 opacity-50 cursor-default"><span class="material-symbols-outlined !text-xl">add</span>Add employee</button></div><div class="bg-surface rounded-xl border border-outline overflow-hidden shadow-sm"><div class="overflow-x-auto"><table class="w-full text-left border-collapse min-w-[900px]"><thead><tr class="bg-table-header border-b border-outline"><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider" style="width: 200px;">Name</th><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Email</th><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Mobile</th><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Permissions</th><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Active</th><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider text-right"></th></tr></thead><tbody class="divide-y divide-outline"><tr class="h-[72px]"><td class="px-6 py-4" colspan="6">...</td></tr><tr class="h-[72px]"><td class="px-6 py-4" colspan="6">...</td></tr></tbody></table></div></div></div><div class="absolute top-0 right-0 h-full w-[440px] bg-white border-l border-outline z-[110] p-8 flex flex-col custom-scrollbar overflow-y-auto"><div class="flex items-center justify-end mb-2"><button class="text-table-label hover:text-on-surface"><span class="material-symbols-outlined">close</span></button></div><div class="flex flex-col items-start"><div class="w-14 h-14 rounded-full bg-[#E8F7EE] flex items-center justify-center mb-5"><span class="material-symbols-outlined text-[#12B76A] !text-[28px]">check</span></div><h2 class="text-[20px] font-semibold text-on-surface mb-[10px]">Employee created</h2><p class="text-[15px] text-on-surface-variant mb-[28px]">Arjun Rao's account is ready. Give them the temporary password below — this is the only time it's shown.</p><div class="w-full bg-[#F2F4F7] border border-[#C5C6CF] rounded-xl p-4 flex items-center justify-between mb-3"><span class="text-[18px] font-bold text-on-surface font-mono">Kx7#mP2v</span><button class="h-10 px-4 bg-white border border-[#C5C6CF] rounded-lg flex items-center gap-2 text-[14px] font-semibold text-on-surface hover:bg-gray-50 transition-colors"><span class="material-symbols-outlined !text-[18px]">content_copy</span>Copy</button></div><div class="w-full bg-[#FEF6E7] rounded-xl p-3 flex gap-3 mb-3"><span class="material-symbols-outlined text-[#F79009] !text-[16px] mt-0.5">warning</span><p class="text-[13px] font-medium text-on-surface">This password won't be shown again. Make sure you've copied it before closing.</p></div><p class="text-[13px] text-on-surface-variant mb-8">Arjun will be asked to set their own password the first time they sign in.</p><button class="w-full h-[48px] bg-primary text-white rounded-full font-semibold text-[15px] hover:bg-primary/90 transition-all active:scale-[0.98]">Done</button></div></div></main></div></div><div class="h-[100px] bg-white"></div><div class="app-shell shadow-2xl"><aside class="app-sidebar text-white flex flex-col z-[100]"><div class="h-[88px] flex items-center px-8 flex-shrink-0"><span class="text-xl font-semibold tracking-tight">MPX Global</span></div><nav class="flex-1 px-4 py-4 space-y-1"><a class="flex items-center justify-between px-4 py-3 text-white/60 hover:text-white transition-colors group" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined">dashboard</span><span class="text-[15px] font-medium">Dashboard</span></div><span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded whitespace-nowrap">Soon</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">group</span><span class="text-[15px] font-medium">Users</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified_user</span><span class="text-[15px] font-medium">Verification</span></a><a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined active-icon">badge</span><span class="text-[15px] font-semibold">Employees</span></a><a class="flex items-center justify-between px-4 py-3 text-white/60 hover:text-white transition-colors group" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined">receipt_long</span><span class="text-[15px] font-medium">Audit log</span></div><span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded whitespace-nowrap">Soon</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-[15px] font-medium">Settings</span></a></nav></aside><div class="app-main"><header class="app-header text-white z-[100]"><div class="flex items-center gap-6"><div class="text-right"><p class="text-[15px] font-semibold leading-tight">Priya Menon</p><p class="text-[13px] text-white/60 font-medium">Super Admin · MPX Global</p></div><div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-[14px] font-bold tracking-tight">PM</div><button class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"><span class="material-symbols-outlined">logout</span></button></div></header><main class="app-content relative"><div class="absolute inset-0 bg-[#000517]/40 z-[60]"></div><div class="max-w-[1200px] mx-auto px-10 py-10"><div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10"><div><h1 class="text-[32px] font-bold text-on-surface tracking-tight">Employees</h1><p class="text-[15px] text-on-surface-variant mt-1">Create staff accounts and manage what each person can do.</p></div><button class="bg-primary text-white px-8 py-3.5 rounded-full font-semibold text-[15px] flex items-center gap-2 opacity-50 cursor-default"><span class="material-symbols-outlined !text-xl">add</span>Add employee</button></div><div class="bg-surface rounded-xl border border-outline overflow-hidden shadow-sm"><div class="overflow-x-auto"><table class="w-full text-left border-collapse min-w-[900px]"><thead><tr class="bg-table-header border-b border-outline"><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider" style="width: 200px;">Name</th><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Email</th><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Mobile</th><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Permissions</th><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider">Active</th><th class="px-6 py-4 text-[12px] font-semibold text-table-label uppercase tracking-wider text-right"></th></tr></thead><tbody class="divide-y divide-outline"><tr class="h-[72px]"><td class="px-6 py-4" colspan="6">...</td></tr><tr class="h-[72px]"><td class="px-6 py-4" colspan="6">...</td></tr></tbody></table></div></div></div><div class="absolute top-0 right-0 h-full w-[440px] bg-white border-l border-outline z-[110] p-8 flex flex-col custom-scrollbar overflow-y-auto"><div class="flex items-center justify-between mb-1"><h2 class="text-[20px] font-semibold text-on-surface">Edit permissions</h2><button class="text-table-label hover:text-on-surface"><span class="material-symbols-outlined !text-[20px]">close</span></button></div><p class="text-[14px] text-on-surface-variant mb-6">Vikram Shah · vikram@mpxglobal.com</p><div class="bg-canvas rounded-xl p-4 flex gap-3 mb-6"><span class="material-symbols-outlined text-primary !text-[18px] mt-0.5">info</span><p class="text-[13px] font-medium text-on-surface">Ticking grants access, unticking removes it. This replaces their current permissions — untick everything for no access at all.</p></div><div class="space-y-0"><label class="flex items-center gap-3 h-11 hover:bg-canvas/30 rounded-lg cursor-pointer transition-colors px-2"><input checked="" class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/><div class="flex flex-col"><span class="text-[14px] font-semibold text-on-surface">Approve buyers</span><span class="text-[12px] font-medium text-on-surface-variant">Decide on buyer verification</span></div></label><label class="flex items-center gap-3 h-11 hover:bg-canvas/30 rounded-lg cursor-pointer transition-colors px-2"><input checked="" class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/><div class="flex flex-col"><span class="text-[14px] font-semibold text-on-surface">Verify exporters</span><span class="text-[12px] font-medium text-on-surface-variant">Decide on exporter verification</span></div></label><label class="flex items-center gap-3 h-11 hover:bg-canvas/30 rounded-lg cursor-pointer transition-colors px-2"><input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/><div class="flex flex-col"><span class="text-[14px] font-semibold text-on-surface">View user directory</span><span class="text-[12px] font-medium text-on-surface-variant">Read-only access to the user list</span></div></label></div><div class="mt-8 flex flex-col gap-3"><div class="flex gap-3"><button class="h-11 px-6 border border-outline rounded-full font-semibold text-[15px] text-on-surface bg-white hover:bg-gray-50 transition-all">Cancel</button><button class="flex-1 h-11 bg-primary text-white rounded-full font-semibold text-[15px] hover:bg-primary/90 transition-all">Save changes</button></div><p class="text-[13px] text-table-label">Changes take effect immediately — Vikram won't need to sign in again.</p></div></div></main></div></div></body></html>

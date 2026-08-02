@@ -12,45 +12,60 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Brand / primary — actions, links, active states
+        // Brand / primary — the ROYAL BLUE family every m1-webscreens mockup uses
+        // (History 1.13: client moved the landing blue to royal; DESIGN.md
+        // "MPX Global Precision"). primary-600 = accent (#2A4DE0) for actions,
+        // primary-700 = hover (#2340C4), primary-800 = brand navy (#1A2E8F)
+        // for the sidebar / hero panels.
         primary: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          DEFAULT: '#4f46e5',
+          50: '#EAEEFF',
+          100: '#DEE1FF',
+          200: '#C3CBFF',
+          300: '#9DAAF7',
+          400: '#6478EC',
+          500: '#3D5AE6',
+          600: '#2A4DE0',
+          700: '#2340C4',
+          800: '#1A2E8F',
+          900: '#131F66',
+          DEFAULT: '#2A4DE0',
         },
-        // Neutral ink — text and high-contrast surfaces
+        // Neutral ink — text (ink-900 = #000517, the mockups' "mpx-text")
         ink: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          DEFAULT: '#0f172a',
+          50: '#F7F8FB',
+          100: '#F2F4F7',
+          200: '#E2E4EC',
+          300: '#C5C6CF',
+          400: '#98A2B3',
+          500: '#667085',
+          600: '#5A6B85',
+          700: '#344054',
+          800: '#1A1B24',
+          900: '#000517',
+          DEFAULT: '#000517',
         },
-        // Surfaces — page/card backgrounds and borders
+        // Surfaces — canvas behind cards is the pale blue tint, cards are white,
+        // hairlines are the mockups' #C5C6CF
         surface: {
           DEFAULT: '#ffffff',
-          subtle: '#f8fafc',
-          border: '#e2e8f0',
+          subtle: '#EAEEFF',
+          border: '#C5C6CF',
         },
-        // Semantic — status & feedback
-        success: '#16a34a', // verified tick, approvals
-        warning: '#d97706', // pending / needs attention
-        danger: '#dc2626', // rejections, destructive actions
-        muted: '#64748b', // secondary/help text
+        // Semantic — status & feedback (verified green from the brand spec)
+        success: '#12B76A', // verified tick, approvals
+        warning: '#F79009', // in review / pending (locked token — owner, 2026-08-01)
+        danger: {
+          50: '#FEECEA', // error-field background tint (mockup convention)
+          DEFAULT: '#D92D20', // rejections, destructive actions
+        },
+        muted: '#5A6B85', // secondary/help text
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        // The one card shadow the Precision spec allows (soft, navy-tinted)
+        card: '0px 4px 20px rgba(0, 5, 23, 0.05)',
       },
     },
   },

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Verification Status - MPX Global</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container": "#eeedf9",
+                        "primary-container": "#2a4de0",
+                        "on-tertiary-fixed": "#00210e",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#dee1ff",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#66f29e",
+                        "surface-bright": "#fbf8ff",
+                        "primary": "#0032c3",
+                        "secondary-container": "#cfe1ff",
+                        "outline-variant": "#c4c5d8",
+                        "on-secondary-fixed": "#091c32",
+                        "surface-container-highest": "#e2e1ee",
+                        "on-surface-variant": "#444655",
+                        "on-primary": "#ffffff",
+                        "surface": "#fbf8ff",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#006d3c",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#53647d",
+                        "surface-dim": "#dad9e5",
+                        "on-surface": "#1a1b24",
+                        "on-primary-fixed": "#001158",
+                        "background": "#fbf8ff",
+                        "surface-tint": "#2a4de0",
+                        "outline": "#747687",
+                        "on-primary-container": "#d0d6ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#374860",
+                        "tertiary": "#00522c",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "surface-container-low": "#f4f2ff",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "secondary": "#4e5f79",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "secondary-fixed": "#d4e3ff",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e2e1ee",
+                        "surface-container-high": "#e8e7f3",
+                        "inverse-primary": "#b9c3ff",
+                        "on-background": "#1a1b24",
+                        "inverse-on-surface": "#f1effc",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2f3039",
+                        "tertiary-fixed": "#70fda7",
+                        // Brand Custom Overrides
+                        "brand-navy": "#1A2E8F",
+                        "brand-accent": "#2A4DE0",
+                        "brand-canvas": "#EAEEFF",
+                        "brand-border": "#C5C6CF",
+                        "brand-ink": "#000517",
+                        "brand-slate": "#5A6B85",
+                        "brand-neutral": "#667085",
+                        "brand-neutral-tint": "#F2F4F7",
+                        "brand-warning": "#F79009",
+                        "brand-warning-tint": "#FEF6E7"
+                    },
+                    fontFamily: {
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    spacing: {
+                        "gutter": "24px",
+                        "stack-lg": "32px",
+                        "card-padding": "40px"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        .inset-shadow-top-left {
+            box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.02);
+        }
+    </style>
+</head>
+<body class="bg-brand-navy flex flex-col min-h-screen overflow-y-auto">
+<div class="flex h-[100vh] flex-shrink-0">
+<!-- FIXED SIDEBAR -->
+<aside class="w-[260px] h-full bg-brand-navy flex flex-col flex-shrink-0">
+<div class="h-[88px] flex items-center px-6">
+<span class="text-white font-bold text-xl tracking-tight">MPX Global</span>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<!-- Dashboard -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[14px] font-medium">Dashboard</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Verification (ACTIVE) -->
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white cursor-default">
+<span class="material-symbols-outlined filled-icon">verified_user</span>
+<span class="text-[14px] font-semibold">Verification</span>
+</div>
+<!-- Products -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[14px] font-medium">Products</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Enquiries -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">mail</span>
+<span class="text-[14px] font-medium">Enquiries</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Chat -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-[14px] font-medium">Chat</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Settings -->
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 cursor-pointer transition-colors mt-12">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[14px] font-medium">Settings</span>
+</div>
+</nav>
+</aside>
+<!-- MAIN CONTENT WRAPPER -->
+<div class="flex-1 flex flex-col h-full relative">
+<!-- FIXED TOP BAR -->
+<header class="h-[88px] bg-brand-navy flex items-center justify-end px-10 gap-6">
+<div class="flex flex-col items-end">
+<span class="text-[14px] font-semibold text-white">Rajesh Kumar</span>
+<span class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center text-white font-bold text-sm">
+                RK
+            </div>
+<button class="text-white/70 hover:text-white transition-colors ml-2">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</header>
+<!-- CONTENT AREA -->
+<main class="flex-1 bg-brand-canvas rounded-tl-[32px] overflow-y-auto inset-shadow-top-left">
+<div class="max-w-[860px] mx-auto px-10 py-12 space-y-10">
+<!-- 1. Identity Block -->
+<header class="space-y-1">
+<h1 class="text-[32px] font-bold text-brand-ink">Tirupur Knitwear Exports</h1>
+<p class="text-[16px] font-normal text-brand-slate">Tirupur, India · Business account</p>
+</header>
+<!-- 2. Verification Status Card -->
+<section class="bg-white rounded-[12px] border border-brand-border p-[40px] space-y-6">
+<div class="inline-flex items-center gap-2 bg-brand-neutral-tint px-3 py-1 rounded-full">
+<span class="w-2 h-2 rounded-full bg-brand-neutral"></span>
+<span class="text-[13px] font-semibold text-brand-neutral">Not submitted</span>
+</div>
+<div class="space-y-4">
+<h2 class="text-[22px] font-semibold text-brand-ink leading-tight">Get verified to sell without limits</h2>
+<p class="text-[16px] font-normal text-brand-slate leading-relaxed max-w-[680px]">
+                            To unlock your full exporter profile and start receiving international inquiries, please complete the business verification process. You will need to provide your IEC registration and GST certificates for our compliance review.
+                        </p>
+</div>
+<button class="h-[48px] px-8 bg-brand-accent hover:bg-primary text-white text-[15px] font-semibold rounded-full transition-all active:scale-95">
+                        Start verification
+                    </button>
+</section>
+<!-- 3. Product Allowance Notice -->
+<section class="bg-brand-warning-tint rounded-[12px] p-6 flex gap-4">
+<div class="text-brand-warning">
+<span class="material-symbols-outlined filled-icon">info</span>
+</div>
+<div class="space-y-1">
+<h3 class="text-[15px] font-bold text-brand-ink">Your current limit: 3 active products</h3>
+<p class="text-[14px] font-normal text-brand-ink/80">Until you're verified you can keep up to three products live at a time. Verified exporters have no limit.</p>
+</div>
+</section>
+<!-- Spacer for sparse feel -->
+<div class="h-24"></div>
+</div>
+</main>
+</div>
+</div>
+<div class="h-[100px] w-full bg-white flex-shrink-0"></div>
+<div class="flex h-[100vh] flex-shrink-0">
+<!-- FIXED SIDEBAR -->
+<aside class="w-[260px] h-full bg-brand-navy flex flex-col flex-shrink-0">
+<div class="h-[88px] flex items-center px-6">
+<span class="text-white font-bold text-xl tracking-tight">MPX Global</span>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<!-- Dashboard -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[14px] font-medium">Dashboard</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Verification (ACTIVE) -->
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white cursor-default">
+<span class="material-symbols-outlined filled-icon">verified_user</span>
+<span class="text-[14px] font-semibold">Verification</span>
+</div>
+<!-- Products -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[14px] font-medium">Products</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Enquiries -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">mail</span>
+<span class="text-[14px] font-medium">Enquiries</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Chat -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-[14px] font-medium">Chat</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Settings -->
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 cursor-pointer transition-colors mt-12">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[14px] font-medium">Settings</span>
+</div>
+</nav>
+</aside>
+<!-- MAIN CONTENT WRAPPER -->
+<div class="flex-1 flex flex-col h-full relative">
+<!-- FIXED TOP BAR -->
+<header class="h-[88px] bg-brand-navy flex items-center justify-end px-10 gap-6">
+<div class="flex flex-col items-end">
+<span class="text-[14px] font-semibold text-white">Rajesh Kumar</span>
+<span class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center text-white font-bold text-sm">
+                RK
+            </div>
+<button class="text-white/70 hover:text-white transition-colors ml-2">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</header>
+<!-- CONTENT AREA -->
+<main class="flex-1 bg-brand-canvas rounded-tl-[32px] overflow-y-auto inset-shadow-top-left">
+<div class="max-w-[860px] mx-auto px-10 py-12 space-y-10">
+<!-- 1. Identity Block -->
+<header class="space-y-1">
+<h1 class="text-[32px] font-bold text-brand-ink">Tirupur Knitwear Exports</h1>
+<p class="text-[16px] font-normal text-brand-slate">Tirupur, India · Business account</p>
+</header>
+<!-- 2. Verification Status Card -->
+<section class="bg-white rounded-[12px] border border-brand-border p-[40px] space-y-6">
+<div class="inline-flex items-center gap-2 bg-[#FEF6E7] px-3 py-1 rounded-full">
+<span class="w-2 h-2 rounded-full bg-[#F79009]"></span>
+<span class="text-[13px] font-semibold text-[#F79009]">In review</span>
+</div>
+<div class="space-y-4">
+<h2 class="text-[22px] font-semibold text-brand-ink leading-tight">Your documents are with our team</h2>
+<p class="text-[16px] font-normal text-brand-slate leading-relaxed max-w-[680px]">
+                            We received them on 12 March 2026. Reviews usually take two to three working days. Your profile stays live while we check, and we'll email you as soon as it's done.
+                        </p>
+</div>
+<button class="h-[48px] px-8 bg-white border border-[#C5C6CF] hover:bg-gray-50 text-[#000517] text-[15px] font-semibold rounded-full transition-all active:scale-95">
+                        View what you sent
+                    </button>
+</section>
+<!-- 3. Product Allowance Notice -->
+<section class="bg-brand-warning-tint rounded-[12px] p-6 flex gap-4">
+<div class="text-brand-warning">
+<span class="material-symbols-outlined filled-icon">info</span>
+</div>
+<div class="space-y-1">
+<h3 class="text-[15px] font-bold text-brand-ink">Your current limit: 3 active products</h3>
+<p class="text-[14px] font-normal text-brand-ink/80">Until you're verified you can keep up to three products live at a time. Verified exporters have no limit.</p>
+</div>
+</section>
+<!-- Spacer for sparse feel -->
+<div class="h-24"></div>
+</div>
+</main>
+</div>
+</div><div class="h-[100px] w-full bg-white flex-shrink-0"></div><div class="flex h-[100vh] flex-shrink-0"><aside class="w-[260px] h-full bg-brand-navy flex flex-col flex-shrink-0"><div class="h-[88px] flex items-center px-6"><span class="text-white font-bold text-xl tracking-tight">MPX Global</span></div><nav class="flex-1 px-4 space-y-2 mt-4"><div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed group"><div class="flex items-center gap-3"><span class="material-symbols-outlined">dashboard</span><span class="text-[14px] font-medium">Dashboard</span></div><span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span></div><div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white cursor-default"><span class="material-symbols-outlined filled-icon">verified_user</span><span class="text-[14px] font-semibold">Verification</span></div><div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed"><div class="flex items-center gap-3"><span class="material-symbols-outlined">inventory_2</span><span class="text-[14px] font-medium">Products</span></div><span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span></div><div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed"><div class="flex items-center gap-3"><span class="material-symbols-outlined">mail</span><span class="text-[14px] font-medium">Enquiries</span></div><span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span></div><div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed"><div class="flex items-center gap-3"><span class="material-symbols-outlined">chat</span><span class="text-[14px] font-medium">Chat</span></div><span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span></div><div class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 cursor-pointer transition-colors mt-12"><span class="material-symbols-outlined">settings</span><span class="text-[14px] font-medium">Settings</span></div></nav></aside><div class="flex-1 flex flex-col h-full relative"><header class="h-[88px] bg-brand-navy flex items-center justify-end px-10 gap-6"><div class="flex flex-col items-end"><span class="text-[14px] font-semibold text-white">Rajesh Kumar</span><span class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</span></div><div class="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center text-white font-bold text-sm">RK</div><button class="text-white/70 hover:text-white transition-colors ml-2"><span class="material-symbols-outlined">logout</span></button></header><main class="flex-1 bg-brand-canvas rounded-tl-[32px] overflow-y-auto inset-shadow-top-left"><div class="max-w-[860px] mx-auto px-10 py-12 space-y-10"><header class="space-y-1"><h1 class="text-[32px] font-bold text-brand-ink">Tirupur Knitwear Exports</h1><div class="flex items-center gap-3"><p class="text-[16px] font-normal text-brand-slate">Tirupur, India · Business account</p><div class="flex items-center gap-1.5 bg-[#E8F7EE] px-[10px] py-[5px] rounded-full"><span class="material-symbols-outlined text-[#12B76A] !text-[16px] filled-icon">check_circle</span><span class="text-[13px] font-semibold text-[#12B76A]">Verified</span><span class="text-[13px] font-normal text-[#12B76A]">since Mar 2026</span></div></div></header><section class="bg-white rounded-[12px] border border-brand-border p-[40px] space-y-6"><div class="inline-flex items-center gap-2 bg-[#E8F7EE] px-3 py-1 rounded-full"><span class="material-symbols-outlined text-[#12B76A] !text-[16px] filled-icon">check_circle</span><span class="text-[13px] font-semibold text-[#12B76A]">Verified</span></div><div class="space-y-4"><h2 class="text-[22px] font-semibold text-brand-ink leading-tight">You're verified</h2><p class="text-[16px] font-normal text-brand-slate leading-relaxed max-w-[680px]">Your verified tick is live on your profile and your product limit has been removed. Buyers can see the tick when they browse your listings.</p></div></section><div class="h-24"></div></div></main></div></div>
+<!-- Fourth Copy: Needs Attention -->
+<div class="h-[100px] w-full bg-white flex-shrink-0"></div>
+<div class="flex h-[100vh] flex-shrink-0">
+<!-- FIXED SIDEBAR -->
+<aside class="w-[260px] h-full bg-brand-navy flex flex-col flex-shrink-0">
+<div class="h-[88px] flex items-center px-6">
+<span class="text-white font-bold text-xl tracking-tight">MPX Global</span>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<!-- Dashboard -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[14px] font-medium">Dashboard</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Verification (ACTIVE) -->
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white cursor-default">
+<span class="material-symbols-outlined filled-icon">verified_user</span>
+<span class="text-[14px] font-semibold">Verification</span>
+</div>
+<!-- Products -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[14px] font-medium">Products</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Enquiries -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">mail</span>
+<span class="text-[14px] font-medium">Enquiries</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Chat -->
+<div class="flex items-center justify-between px-4 py-3 rounded-lg text-white/40 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-[14px] font-medium">Chat</span>
+</div>
+<span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60 font-bold tracking-wider">SOON</span>
+</div>
+<!-- Settings -->
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 cursor-pointer transition-colors mt-12">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[14px] font-medium">Settings</span>
+</div>
+</nav>
+</aside>
+<!-- MAIN CONTENT WRAPPER -->
+<div class="flex-1 flex flex-col h-full relative">
+<!-- FIXED TOP BAR -->
+<header class="h-[88px] bg-brand-navy flex items-center justify-end px-10 gap-6">
+<div class="flex flex-col items-end">
+<span class="text-[14px] font-semibold text-white">Rajesh Kumar</span>
+<span class="text-[12px] font-normal text-white/70">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center text-white font-bold text-sm">
+                RK
+            </div>
+<button class="text-white/70 hover:text-white transition-colors ml-2">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</header>
+<!-- CONTENT AREA -->
+<main class="flex-1 bg-brand-canvas rounded-tl-[32px] overflow-y-auto inset-shadow-top-left">
+<div class="max-w-[860px] mx-auto px-10 py-12 space-y-10">
+<!-- 1. Identity Block -->
+<header class="space-y-1">
+<h1 class="text-[32px] font-bold text-brand-ink">Tirupur Knitwear Exports</h1>
+<p class="text-[16px] font-normal text-brand-slate">Tirupur, India · Business account</p>
+</header>
+<!-- 2. Verification Status Card -->
+<section class="bg-white rounded-[12px] border border-brand-border p-[40px] flex flex-col items-start">
+<div class="inline-flex items-center gap-2 bg-[#FEECEA] px-3 py-1 rounded-full mb-6">
+<span class="w-2 h-2 rounded-full bg-[#D92D20]"></span>
+<span class="text-[13px] font-semibold text-[#D92D20]">Needs attention</span>
+</div>
+<h2 class="text-[22px] font-semibold text-brand-ink leading-tight mb-4">We couldn't verify your documents</h2>
+<div class="bg-[#FEECEA] border-l-[3px] border-l-[#D92D20] rounded-r-[8px] p-[20px] mb-3">
+<p class="text-[16px] font-normal text-[#000517] leading-[1.6]">
+        The GST certificate you uploaded was cropped and the registration number wasn't visible. Please upload a full scan showing the entire document.
+    </p>
+</div>
+<p class="text-[13px] font-normal text-[#5A6B85] mb-7">Reviewed 14 March 2026</p>
+<button class="w-[240px] h-[48px] bg-[#2A4DE0] text-[#FFFFFF] font-semibold rounded-full hover:bg-primary transition-all active:scale-95 flex items-center justify-center">
+    Upload new documents
+</button>
+</section>
+<!-- 3. Product Allowance Notice -->
+<section class="bg-brand-warning-tint rounded-[12px] p-6 flex gap-4">
+<div class="text-brand-warning">
+<span class="material-symbols-outlined filled-icon">info</span>
+</div>
+<div class="space-y-1">
+<h3 class="text-[15px] font-bold text-brand-ink">Your current limit: 3 active products</h3>
+<p class="text-[14px] font-normal text-brand-ink/80">Until you're verified you can keep up to three products live at a time. Verified exporters have no limit.</p>
+</div>
+</section>
+<!-- Spacer for sparse feel -->
+<div class="h-24"></div>
+</div>
+</main>
+</div>
+</div>
+<!-- Micro-interaction script -->
+<script>
+        // Subtle hover states for the primary button
+        const mainBtn = document.querySelector('button.bg-brand-accent');
+        if (mainBtn) {
+            mainBtn.addEventListener('mouseenter', () => {
+                mainBtn.style.transform = 'translateY(-1px)';
+                mainBtn.style.boxShadow = '0 4px 12px rgba(42, 77, 224, 0.2)';
+            });
+            mainBtn.addEventListener('mouseleave', () => {
+                mainBtn.style.transform = 'translateY(0)';
+                mainBtn.style.boxShadow = 'none';
+            });
+        }
+    </script>
+</body></html>

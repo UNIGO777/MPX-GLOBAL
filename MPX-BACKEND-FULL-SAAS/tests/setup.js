@@ -37,6 +37,22 @@ process.env.JWT_REFRESH_SECRET =
 // so `env.js`'s optional() check reads it as absent.
 process.env.FIREBASE_SERVICE_ACCOUNT_JSON = '';
 
+/**
+ * 🔴 The SAME rule for the OpenAI key, for the same two reasons.
+ *
+ * A real `OPENAI_API_KEY` now lives in `.env`, and `isAiConfigured()` reads it
+ * directly — so any test that reaches `POST /search/ai` WITHOUT mocking
+ * `ai.client.js` makes a live, BILLABLE call to OpenAI and gets a
+ * non-deterministic answer. The two existing AI test files happen to mock the
+ * client, so this went unnoticed; the next one written would not have.
+ *
+ * Both AI suites mock `ai.client.js` outright (`isAiConfigured: () => true`),
+ * so forcing this off costs no coverage — it only removes the accidental path
+ * to a paid external service. Set to empty, not deleted, so `env.js`'s
+ * `optional()` check reads it as absent.
+ */
+process.env.OPENAI_API_KEY = '';
+
 import { beforeEach, afterAll } from 'vitest';
 import Redis from 'ioredis';
 
