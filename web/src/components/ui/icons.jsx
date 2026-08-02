@@ -1,6 +1,13 @@
+import { Shield } from 'lucide-react';
+
 /**
- * Minimal inline SVG icon set (1.5pt stroke, currentColor) — no icon-font
- * network dependency. Add here rather than importing an icon library.
+ * Minimal inline SVG icon set (1.8 stroke, currentColor) — no icon-font network
+ * dependency. Add here rather than importing an icon library, so every glyph in
+ * the app comes from one place and carries one stroke weight.
+ *
+ * `lucide-react` is allowed for individual glyphs (owner, 2026-08-02) — import
+ * the ONE icon needed and wrap it below to match this set's API and weight.
+ * Never `import * as icons`: that defeats tree-shaking and ships the pack.
  */
 function Svg({ children, className = 'h-5 w-5', ...rest }) {
   return (
@@ -25,6 +32,7 @@ export const CheckCircleIcon = (p) => (
   <Svg {...p}><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.5 2.5 4.5-5" /></Svg>
 );
 export const XIcon = (p) => <Svg {...p}><path d="M6 6l12 12M18 6L6 18" /></Svg>;
+export const MenuIcon = (p) => <Svg {...p}><path d="M4 7h16M4 12h16M4 17h16" /></Svg>;
 export const AlertIcon = (p) => (
   <Svg {...p}><path d="M12 9v4m0 4h.01M10.3 3.9L2.5 17.3a2 2 0 001.7 3h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" /></Svg>
 );
@@ -58,8 +66,12 @@ export const UserIcon = (p) => (
 export const UsersIcon = (p) => (
   <Svg {...p}><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.4 2.9-5.5 6.5-5.5s6.5 2.1 6.5 5.5" /><path d="M16 4.6a3.5 3.5 0 010 6.8M17.5 14.7c2.4.6 4 2.4 4 5.3" /></Svg>
 );
-export const ShieldIcon = (p) => (
-  <Svg {...p}><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z" /></Svg>
+// Lucide's shield, wrapped so it keeps this set's API and 1.8 stroke — swapping
+// the glyph without the wrapper would render it heavier than every icon beside
+// it (owner asked for lucide here, 2026-08-02). Only per-icon imports: the whole
+// pack must never be pulled in.
+export const ShieldIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Shield aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
 );
 export const DocIcon = (p) => (
   <Svg {...p}><path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V8z" /><path d="M14 3v5h5M9 13h6M9 17h6" /></Svg>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { authApi } from '../../api/auth.js';
+import { config } from '../../config.js';
 import { apiError } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
@@ -23,11 +24,14 @@ import { CheckCircleIcon } from '../../components/ui/icons.jsx';
  */
 export function Forgot() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [params] = useSearchParams();
   const staff = params.get('staff') === '1';
 
-  const [portal, setPortal] = useState('buyer');
-  const [identifier, setIdentifier] = useState('');
+  // Sign-in hands over what the user already chose and typed — making them
+  // pick the portal again invites a wrong choice, which silently sends nothing.
+  const [portal, setPortal] = useState(location.state?.portal ?? 'buyer');
+  const [identifier, setIdentifier] = useState(location.state?.identifier ?? '');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -64,9 +68,12 @@ export function Forgot() {
             <CheckCircleIcon className="h-6 w-6" />
           </div>
           <h2 className="text-[28px] font-bold text-ink-900">Check your messages</h2>
+          {/* The reset code IS an OTP (purpose: forgot_password), so it lives
+              exactly as long as any other — never state a longer window than
+              the server honours. */}
           <p className="mt-2 text-sm text-muted">
             If an account exists for that email or mobile, a reset code has been sent. The code is
-            valid for 10 minutes.
+            valid for {Math.round(config.otp.ttlSeconds / 60)} minutes.
           </p>
           <Button
             fullWidth
@@ -79,18 +86,29 @@ export function Forgot() {
           >
             Enter reset code
           </Button>
-          <Link to={backTo} className="mt-4 inline-block text-sm font-medium text-primary-600 hover:text-primary-700">
+          {/* A typo in the identifier used to be a dead end: the panel replaces
+              the form, and the neutral copy can't tell them they mistyped. */}
+          <button
+            type="button"
+            onClick={() => setSent(false)}
+            className="mt-4 block w-full text-sm font-medium text-primary-600 hover:text-primary-700"
+          >
+            Use a different email or mobile
+          </button>
+          <Link to={backTo} className="mt-4 inline-block text-sm font-medium text-ink-600 hover:text-ink-900">
             Back to sign in
           </Link>
         </div>
       ) : (
         <>
           <h2 className="text-[28px] font-bold text-ink-900">Reset your password</h2>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-2 text-sm text-muted">
             We&apos;ll send a 6-digit code to the email or mobile on your account.
           </p>
 
-          <form onSubmit={submit} noValidate className="mt-6 space-y-5">
+          {/* Same rhythm as the two sign-in screens — these four auth pages
+              must measure identically (owner, 2026-08-02). */}
+          <form onSubmit={submit} noValidate className="mt-5 space-y-4">
             {!staff && <PortalToggle value={portal} onChange={setPortal} disabled={loading} />}
             {error && <Alert tone="danger">{error}</Alert>}
 
@@ -98,19 +116,21 @@ export function Forgot() {
               label="Email or mobile"
               type="text"
               autoComplete="username"
-              placeholder="name@company.com"
+              placeholder="Enter email or phone number"
               helper="Mobile must include country code, e.g. +91 98765 43210"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               disabled={loading}
             />
 
-            <Button type="submit" fullWidth loading={loading}>
-              Send reset code
-            </Button>
+            <div className="pt-3">
+              <Button type="submit" fullWidth loading={loading}>
+                Send reset code
+              </Button>
+            </div>
           </form>
 
-          <p className="mt-6 text-center text-sm">
+          <p className="mt-7 border-t border-surface-border pt-5 text-center text-sm">
             <Link to={backTo} className="font-medium text-primary-600 hover:text-primary-700">
               Back to sign in
             </Link>

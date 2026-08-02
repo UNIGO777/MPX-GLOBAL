@@ -1,3 +1,5 @@
+import { config } from '../config.js';
+
 /**
  * Mirror of the backend's KYC enums (src/models/enums.js — KYC_DOC_TYPE +
  * KYC_DOCS_BY_ENTITY). The server is authoritative; these exist so the
@@ -28,17 +30,17 @@ export const ENTITY_LABELS = {
   individual: 'Individual',
 };
 
-// Client-side pre-check mirroring the server's magic-byte allowlist + 10 MB cap
+// Client-side pre-check mirroring the server's magic-byte allowlist + size cap
 // (kyc.storage.service.js). The server re-verifies by content — this only saves
 // the user a wasted upload.
-export const KYC_ACCEPT = '.pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp';
-export const KYC_MAX_BYTES = 10 * 1024 * 1024;
+export const KYC_ACCEPT = config.kyc.accept;
+export const KYC_MAX_BYTES = config.kyc.maxBytes;
 
 export function checkKycFile(file) {
   if (!file) return 'No file selected.';
   const okType = /(pdf|jpe?g|png|webp)$/i.test(file.name) || /(pdf|jpeg|png|webp)/.test(file.type);
   if (!okType || file.size > KYC_MAX_BYTES) {
-    return "That file type or size isn't supported. Use a PDF, JPG, PNG or WEBP under 10 MB.";
+    return `That file type or size isn't supported. Use a PDF, JPG, PNG or WEBP under ${config.kyc.maxMb} MB.`;
   }
   return null;
 }

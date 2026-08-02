@@ -1,10 +1,11 @@
+import { config } from '../../config.js';
 import { ChevronLeftIcon, ChevronRightIcon } from './icons.jsx';
 
 /**
- * Table footer pager: "1–20 of 1,248 · rows-per-page · prev/next". Rows per
- * page capped at 100 — the server's own hard cap.
+ * Table footer pager: "1–20 of 1,248 · rows-per-page · prev/next". The largest
+ * option must stay within the server's own hard cap (config.js).
  */
-const ROW_OPTIONS = [20, 50, 100];
+const ROW_OPTIONS = config.table.pageSizes;
 
 export function Pagination({ page, pageSize, total, onPage, onPageSize }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
@@ -15,7 +16,7 @@ export function Pagination({ page, pageSize, total, onPage, onPageSize }) {
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-surface-border px-4 py-3 text-sm text-muted">
       <p>
         Showing <span className="font-medium text-ink-800">{from}–{to}</span> of{' '}
-        <span className="font-medium text-ink-800">{total.toLocaleString('en-IN')}</span>
+        <span className="font-medium text-ink-800">{total.toLocaleString(config.locale.numbers)}</span>
       </p>
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2">

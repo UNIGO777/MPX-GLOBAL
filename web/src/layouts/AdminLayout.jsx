@@ -11,6 +11,7 @@ import {
   SettingsIcon,
   LogOutIcon,
 } from '../components/ui/icons.jsx';
+import { Logo } from '../components/ui/Logo.jsx';
 
 /**
  * Staff console shell per the admin mockups: NAVY (#1A2E8F) 260px sidebar with
@@ -66,7 +67,7 @@ export function AdminLayout({ children }) {
       {/* Sidebar — mockup: 260px navy, brand on top, SOON chips right-aligned */}
       <aside className="hidden w-[260px] shrink-0 flex-col bg-primary-800 text-white md:flex">
         <div className="flex h-[88px] items-center px-6">
-          <span className="text-lg font-bold tracking-tight">MPX Global</span>
+          <Logo size="lg" variant="light" />
         </div>
         <nav aria-label="Admin" className="mt-4 flex-1 space-y-1 px-4">
           {items.map(({ to, label, Icon, soon }) => (
@@ -96,7 +97,7 @@ export function AdminLayout({ children }) {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar — mockup: navy, user block right */}
         <header className="flex h-[88px] items-center justify-between bg-primary-800 px-4 sm:justify-end sm:px-12">
-          <span className="text-lg font-bold text-white md:hidden">MPX Global</span>
+          <Logo size="md" variant="light" className="md:hidden" />
           <div className="flex items-center gap-3">
             <div className="text-right">
               <p className="text-sm font-semibold leading-tight text-white">{user?.name}</p>

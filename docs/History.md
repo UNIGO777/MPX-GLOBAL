@@ -162,6 +162,33 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-02** — **WEB · env config extracted + real logo wired + Landing flow pass.**
+  **`web/.env` created** (gitignored; `.env.example` rewritten with every key documented and
+  blank values) and **`web/src/config.js`** added as the ONE place the app reads
+  `import.meta.env` — parsed with safe fallbacks. Moved out of code: API timeout, dev proxy
+  target + port, OTP TTL/resend cooldown, KYC max-MB + accept list, table page sizes, date/number
+  locales. `vite.config.js` now uses `loadEnv` (Node has no `import.meta.env`) and skips the
+  proxy when the base URL is absolute. **Gotcha:** four keys MIRROR server rules (OTP TTL, KYC
+  cap, page sizes) — the server is authoritative; drift makes the UI advertise a limit the API
+  won't enforce, so both env files carry that warning.
+  **Logo:** owner supplied `logo.png` (1000×1000, 61% empty padding, near-black "GLOBAL" that
+  vanished on the navy surfaces). Derived `public/logo-wordmark.png` (cropped 798×406) +
+  `logo-wordmark-light.png` (neutral ink → white, gold "MPX" untouched) and added
+  **`components/ui/Logo.jsx`** — the only place the lockup is built, sized by height with the
+  width derived so it can't stretch. Replaced all 8 text/`M`-tile lockups (admin sidebar + mobile
+  bar, portal bar, auth panel ×2, exporter signup, landing header + footer); favicon added.
+  **`web/Public/` → `web/public/`** via `git mv` — Vite's publicDir is lowercase, so the logo
+  would have 404'd on a Linux deploy while working on case-insensitive macOS.
+  **Landing (`/`) flow fixes:** header/hero/final CTAs were auth-blind (a signed-in user was sold
+  a signup) → they collapse to one "Go to your dashboard" → `roleHome`; **no mobile nav existed**
+  (section links were `hidden lg:flex`) → hamburger + disclosure panel (new shared `MenuIcon`);
+  `role="tab"` sets got arrow-key roving focus + linked `tabpanel`s; FAQ answers linked to their
+  triggers; `:target { scroll-margin-top }` so the sticky header stops swallowing anchors.
+  **Also:** the shared OTP screen hard-coded "Step 2 of 2" and "Back to sign in" for all four
+  inbound flows — now passed in as `step`/`backLabel`, and exporter signup's rail counts **4
+  steps** (OTP is the fourth) instead of claiming 3 and then asking for one more thing.
+  **Not done:** Landing still has no per-route title/meta/canonical/JSON-LD (SPA — needs
+  SSR/prerender; owner deferred), and no web tests exist for any of this.
 - **2026-08-02** — **M2 Catalogue · design briefs written** — `my-plans/m2/web-screens-design.md`
   (11 screens: public category browse / category listing / product detail / supplier profile,
   exporter my-products + add + edit with dynamic per-category fields, admin category manager +

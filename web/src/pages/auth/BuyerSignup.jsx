@@ -89,6 +89,7 @@ export function BuyerSignup() {
           method,
           identifier: form.email.trim(),
           backTo: '/signup/buyer',
+          backLabel: 'Back to signup',
           notice: "You're in. One last step — verify the code we just sent you.",
         },
       });

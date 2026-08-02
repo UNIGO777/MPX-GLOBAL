@@ -10,10 +10,12 @@ import { Input } from '../../components/ui/Input.jsx';
 import { MobileInput } from '../../components/ui/MobileInput.jsx';
 import { PasswordInput } from '../../components/ui/PasswordInput.jsx';
 import { CheckIcon } from '../../components/ui/icons.jsx';
+import { Logo } from '../../components/ui/Logo.jsx';
 import { fieldErrorMap } from './BuyerSignup.jsx';
 
 /**
- * Exporter signup — the 3-step wizard from the step_1..3 design images: white
+ * Exporter signup — the 3-step form wizard from the step_1..3 design images
+ * (the shared OTP screen is the fourth step the rail counts): white
  * top app bar ("Already have an account? · Sign in" pill), canvas background,
  * a NAVY step-rail card on the left (numbered circles → green ticks, OPTIONAL
  * chip on Address, reassurance list at the bottom) and the white form card on
@@ -32,10 +34,14 @@ const STEPS = [
   { title: 'Your address', sub: 'Optional — you can add this anytime from your profile.' },
 ];
 
+// Four steps, not three: the OTP screen is the fourth and the form must count
+// it, or the user hits "Step 3 of 3" and is then asked for one more thing.
+// It stays "upcoming" throughout — the form owns steps 0–2 only.
 const RAIL = [
   { label: 'Your account' },
   { label: 'Your business' },
   { label: 'Address', optional: true },
+  { label: 'Verify your email' },
 ];
 
 const REASSURANCE = [
@@ -127,6 +133,9 @@ export function ExporterSignup() {
           method,
           identifier: form.email.trim(),
           backTo: '/signup/exporter',
+          // The form counts 1–3 of 4; OTP is the fourth (see RAIL).
+          step: '4 of 4',
+          backLabel: 'Back to signup',
           notice: "You're in. One last step — verify the code we just sent you.",
         },
       });
@@ -156,11 +165,8 @@ export function ExporterSignup() {
     <div className="min-h-screen bg-surface-subtle">
       {/* Top app bar */}
       <header className="flex h-[72px] items-center justify-between bg-white px-4 shadow-sm sm:px-8">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-base font-bold text-white">
-            M
-          </span>
-          <span className="text-xl font-extrabold tracking-tight text-primary-800">MPX Global</span>
+        <Link to="/" aria-label="MPX Global — home">
+          <Logo size="md" />
         </Link>
         <div className="flex items-center gap-4">
           <span className="hidden text-sm text-ink-600 sm:block">Already have an account?</span>
@@ -177,7 +183,7 @@ export function ExporterSignup() {
         {/* Navy step rail */}
         <aside className="hidden rounded-xl bg-primary-800 p-8 text-white shadow-card lg:block">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary-200">
-            Step {step + 1} of 3
+            Step {step + 1} of 4
           </p>
           <h1 className="mt-2 text-[26px] font-bold leading-tight">Create your exporter account</h1>
 
@@ -231,7 +237,7 @@ export function ExporterSignup() {
         <section className="overflow-hidden rounded-xl bg-white shadow-card">
           <div className="border-b border-surface-border px-6 py-6 sm:px-10 sm:py-8">
             <p className="text-xs font-bold uppercase tracking-widest text-primary-600">
-              Step {step + 1} of 3
+              Step {step + 1} of 4
               {step === 2 && (
                 <span className="ml-2 rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-ink-600">
                   Optional

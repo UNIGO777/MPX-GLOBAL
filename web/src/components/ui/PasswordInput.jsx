@@ -26,7 +26,7 @@ export function PasswordInput({
               type={visible ? 'text' : 'password'}
               value={value}
               onChange={onChange}
-              className={inputClasses(hasError, 'pr-11')}
+              className={inputClasses(hasError, 'pr-12')}
               {...rest}
             />
             <button

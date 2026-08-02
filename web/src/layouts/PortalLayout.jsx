@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext.jsx';
 import { LogOutIcon } from '../components/ui/icons.jsx';
+import { Logo } from '../components/ui/Logo.jsx';
 
 /**
  * Shared shell for the buyer and exporter panels (the admin console gets its
@@ -39,7 +40,7 @@ export function PortalLayout({ nav, subline, children }) {
     <div className="min-h-screen bg-surface-subtle">
       {/* Top bar */}
       <header className="flex h-14 items-center justify-between bg-primary-800 px-4 sm:px-6">
-        <span className="text-lg font-bold text-white">MPX Global</span>
+        <Logo size="sm" variant="light" />
         <div className="flex items-center gap-3">
           <div className="hidden text-right sm:block">
             <p className="text-sm font-semibold leading-tight text-white">{user?.name}</p>

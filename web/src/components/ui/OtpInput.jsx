@@ -6,7 +6,7 @@ import { useRef } from 'react';
  * fires once when the sixth digit lands (auto-submit is fine, but callers keep
  * a visible button too — accessibility).
  */
-export function OtpInput({ length = 6, value, onChange, onComplete, disabled, error }) {
+export function OtpInput({ length = 6, value, onChange, onComplete, disabled, error, autoFocus }) {
   const refs = useRef([]);
   const digits = Array.from({ length }, (_, i) => value[i] ?? '');
 
@@ -48,6 +48,8 @@ export function OtpInput({ length = 6, value, onChange, onComplete, disabled, er
           }}
           type="text"
           inputMode="numeric"
+          // The code box is the only thing to do on this screen — land in it.
+          autoFocus={autoFocus && i === 0}
           autoComplete={i === 0 ? 'one-time-code' : 'off'}
           maxLength={length} // room for a full paste into any box
           value={digit}

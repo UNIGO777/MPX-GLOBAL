@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { tokenStore } from '../auth/tokenStore.js';
+import { config } from '../config.js';
 
 /**
  * The ONE API client. Components never call axios/fetch directly — endpoint
@@ -13,8 +14,8 @@ import { tokenStore } from '../auth/tokenStore.js';
  *    refresh itself fails, the session is over — clear and notify.
  */
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
-  timeout: 20000,
+  baseURL: config.api.baseUrl,
+  timeout: config.api.timeoutMs,
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -32,7 +33,7 @@ async function refreshSession() {
   const { data } = await axios.post(
     `${apiClient.defaults.baseURL}/auth/refresh`,
     { refreshToken },
-    { timeout: 20000 },
+    { timeout: config.api.timeoutMs },
   );
   tokenStore.setTokens(data);
   return data.accessToken;

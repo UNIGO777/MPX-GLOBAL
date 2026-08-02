@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { kycApi } from '../../api/kyc.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
+import { config } from '../../config.js';
 import { apiError, formatDate } from '../../lib/format.js';
 import {
   DOC_TYPE_LABELS,
@@ -268,7 +269,7 @@ export function KycUpload() {
       <section className="mt-5 rounded-lg border border-surface-border bg-white p-6 shadow-card">
         <h2 className="text-lg font-bold text-ink-900">Your documents</h2>
         <p className="mt-1 text-xs text-muted">
-          PDF, JPG, PNG or WEBP. Up to 10 MB per file. Send at least one document.
+          PDF, JPG, PNG or WEBP. Up to {config.kyc.maxMb} MB per file. Send at least one document.
         </p>
 
         <div className="mt-4 space-y-4">

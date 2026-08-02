@@ -1,20 +1,34 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Dev server proxies /api -> backend (default :3000). The backend mounts routes at root
-// (/auth, /employee, ...), so we strip the /api prefix on the way through. This keeps a clean
-// /api namespace inside the app and avoids CORS in development. Change `target` if the
-// backend PORT differs.
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+// Dev server proxies the API base path -> backend. The backend mounts routes at
+// root (/auth, /employee, ...), so the base path is stripped on the way through.
+// This keeps a clean /api namespace inside the app and avoids CORS in dev.
+//
+// Everything here comes from .env — `loadEnv` is needed because this file runs
+// in Node, where import.meta.env does not exist. Keys: see .env.example.
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
+  const basePath = env.VITE_API_BASE_URL || '/api';
+  const target = env.VITE_DEV_API_PROXY || 'http://localhost:3000';
+
+  return {
+    plugins: [react()],
+    server: {
+      port: Number(env.VITE_DEV_PORT) || 5173,
+      proxy: {
+        // Only a same-origin base path can be proxied; an absolute
+        // VITE_API_BASE_URL means the app talks to the API directly (CORS).
+        ...(basePath.startsWith('/')
+          ? {
+              [basePath]: {
+                target,
+                changeOrigin: true,
+                rewrite: (path) => path.replace(new RegExp(`^${basePath}`), ''),
+              },
+            }
+          : {}),
       },
     },
-  },
+  };
 });

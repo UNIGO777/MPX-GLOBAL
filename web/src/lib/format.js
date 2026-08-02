@@ -1,7 +1,13 @@
 // Small display helpers shared across screens.
 
-const DATE_FMT = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-const MONTH_FMT = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric' });
+import { config } from '../config.js';
+
+const DATE_FMT = new Intl.DateTimeFormat(config.locale.dates, {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+});
+const MONTH_FMT = new Intl.DateTimeFormat(config.locale.dates, { month: 'short', year: 'numeric' });
 
 export function formatDate(value) {
   if (!value) return '—';

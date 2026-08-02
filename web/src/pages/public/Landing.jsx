@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+
+import { useAuth } from '../../auth/AuthContext.jsx';
+import { roleHome } from '../../auth/roleHome.js';
 
 import {
   BoxIcon,
@@ -9,10 +12,13 @@ import {
   ChevronDownIcon,
   DocIcon,
   GlobeIcon,
+  MenuIcon,
   SearchIcon,
   ShieldIcon,
   UserIcon,
+  XIcon,
 } from '../../components/ui/icons.jsx';
+import { Logo } from '../../components/ui/Logo.jsx';
 
 /**
  * Public landing page (mockup: royal_blue_premium_landing_page). SEO surface —
@@ -147,50 +153,129 @@ function SectionHeading({ children, sub, id }) {
 const pill =
   'inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition-colors';
 
+const NAV_LINKS = [
+  { href: '#how-it-works', label: 'How it Works' },
+  { href: '#categories', label: 'Categories' },
+  { href: '#platform', label: 'Platform' },
+  { href: '#faq', label: 'FAQ' },
+];
+
+/**
+ * Roving-focus arrow keys for a `role="tablist"`. ARIA requires it: with
+ * role="tab" a screen-reader user expects arrows to move between tabs, and Tab
+ * to leave the set — without this the roles lie about the behaviour.
+ */
+function useTabKeys(keys, active, onSelect) {
+  const refs = useRef({});
+  const onKeyDown = (e) => {
+    const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    if (!delta) return;
+    e.preventDefault();
+    const next = keys[(keys.indexOf(active) + delta + keys.length) % keys.length];
+    onSelect(next);
+    refs.current[next]?.focus();
+  };
+  return { refs, onKeyDown };
+}
+
 /* ---------------------------------- page ---------------------------------- */
 
 export function Landing() {
+  const { user } = useAuth();
   const [journey, setJourney] = useState('buyer');
   const [tab, setTab] = useState('search');
   const [openFaq, setOpenFaq] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
   const activeTab = PLATFORM_TABS.find((t) => t.key === tab);
+
+  const journeyKeys = useTabKeys(['buyer', 'seller'], journey, setJourney);
+  const platformKeys = useTabKeys(
+    PLATFORM_TABS.map((t) => t.key),
+    tab,
+    setTab,
+  );
+
+  // A signed-in visitor landing here must not be sold a signup. Every marketing
+  // CTA collapses to one "continue where you left off" link instead.
+  const home = user ? roleHome(user) : null;
 
   return (
     <div className="bg-surface-subtle text-ink-900">
-      {/* Announcement bar */}
+      {/* Announcement bar — the signup nudge is dropped once you have an account */}
       <div className="flex flex-wrap items-center justify-center gap-3 bg-primary-800 px-4 py-2 text-white">
         <span className="text-xs font-semibold tracking-wide sm:text-sm">
           NOW LIVE: Onboarding verified suppliers across 20+ categories
         </span>
-        <Link
-          to="/signup/buyer"
-          className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary-800 hover:bg-primary-50"
-        >
-          Get Early Access
-        </Link>
+        {!user && (
+          <Link
+            to="/signup/buyer"
+            className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary-800 hover:bg-primary-50"
+          >
+            Get Early Access
+          </Link>
+        )}
       </div>
 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="text-xl font-extrabold tracking-tight text-primary-800">
-            MPX Global
+          <Link to="/" aria-label="MPX Global — home">
+            <Logo size="md" />
           </Link>
           <nav aria-label="Landing" className="hidden items-center gap-6 lg:flex">
-            <a href="#how-it-works" className="text-sm text-ink-600 hover:text-primary-700">How it Works</a>
-            <a href="#categories" className="text-sm text-ink-600 hover:text-primary-700">Categories</a>
-            <a href="#platform" className="text-sm text-ink-600 hover:text-primary-700">Platform</a>
-            <a href="#faq" className="text-sm text-ink-600 hover:text-primary-700">FAQ</a>
+            {NAV_LINKS.map(({ href, label }) => (
+              <a key={href} href={href} className="text-sm text-ink-600 hover:text-primary-700">
+                {label}
+              </a>
+            ))}
           </nav>
           <div className="flex items-center gap-3">
-            <Link to="/signin" className="text-sm font-semibold text-ink-600 hover:text-primary-700">
-              Sign In
-            </Link>
-            <Link to="/signup/buyer" className={`${pill} bg-ink-900 px-5 py-2 text-white hover:bg-primary-800`}>
-              Get Started
-            </Link>
+            {home ? (
+              <Link to={home} className={`${pill} bg-ink-900 px-5 py-2 text-white hover:bg-primary-800`}>
+                Go to your dashboard
+              </Link>
+            ) : (
+              <>
+                <Link to="/signin" className="text-sm font-semibold text-ink-600 hover:text-primary-700">
+                  Sign In
+                </Link>
+                <Link to="/signup/buyer" className={`${pill} bg-ink-900 px-5 py-2 text-white hover:bg-primary-800`}>
+                  Get Started
+                </Link>
+              </>
+            )}
+            {/* Below lg the section nav has nowhere to go — this is its only door. */}
+            <button
+              type="button"
+              aria-expanded={menuOpen}
+              aria-controls="landing-mobile-nav"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              onClick={() => setMenuOpen((o) => !o)}
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-700 hover:bg-surface-subtle lg:hidden"
+            >
+              {menuOpen ? <XIcon /> : <MenuIcon />}
+            </button>
           </div>
         </div>
+
+        {menuOpen && (
+          <nav
+            id="landing-mobile-nav"
+            aria-label="Landing sections"
+            className="border-t border-surface-border bg-white px-4 pb-4 lg:hidden"
+          >
+            {NAV_LINKS.map(({ href, label }) => (
+              <a
+                key={href}
+                href={href}
+                onClick={() => setMenuOpen(false)}
+                className="flex min-h-[44px] items-center border-b border-surface-border/60 text-sm font-medium text-ink-700 last:border-0 hover:text-primary-700"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+        )}
       </header>
 
       <main>
@@ -227,15 +312,23 @@ export function Landing() {
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/signup/buyer" className={`${pill} bg-ink-900 text-white shadow-md hover:bg-primary-800`}>
-                  Start Buying
-                </Link>
-                <Link
-                  to="/signup/exporter"
-                  className={`${pill} border border-ink-900 text-ink-900 hover:bg-white`}
-                >
-                  Sell on MPX Global
-                </Link>
+                {home ? (
+                  <Link to={home} className={`${pill} bg-ink-900 text-white shadow-md hover:bg-primary-800`}>
+                    Go to your dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link to="/signup/buyer" className={`${pill} bg-ink-900 text-white shadow-md hover:bg-primary-800`}>
+                      Start Buying
+                    </Link>
+                    <Link
+                      to="/signup/exporter"
+                      className={`${pill} border border-ink-900 text-ink-900 hover:bg-white`}
+                    >
+                      Sell on MPX Global
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
 
@@ -341,6 +434,7 @@ export function Landing() {
               <div
                 role="tablist"
                 aria-label="Journey"
+                onKeyDown={journeyKeys.onKeyDown}
                 className="inline-flex rounded-full border border-surface-border bg-white p-1 shadow-sm"
               >
                 {[
@@ -349,8 +443,12 @@ export function Landing() {
                 ].map((j) => (
                   <button
                     key={j.key}
+                    ref={(el) => (journeyKeys.refs.current[j.key] = el)}
                     role="tab"
+                    id={`journey-tab-${j.key}`}
+                    aria-controls="journey-panel"
                     aria-selected={journey === j.key}
+                    tabIndex={journey === j.key ? 0 : -1}
                     onClick={() => setJourney(j.key)}
                     className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-colors ${
                       journey === j.key ? 'bg-primary-800 text-white' : 'text-ink-600 hover:text-primary-800'
@@ -362,7 +460,12 @@ export function Landing() {
               </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-4">
+            <div
+              id="journey-panel"
+              role="tabpanel"
+              aria-labelledby={`journey-tab-${journey}`}
+              className="grid gap-6 md:grid-cols-4"
+            >
               {JOURNEYS[journey].map((step, i) => (
                 <div
                   key={step.title}
@@ -389,12 +492,21 @@ export function Landing() {
               The MPX <span className="text-primary-600">Platform</span>
             </SectionHeading>
 
-            <div role="tablist" aria-label="Platform features" className="mb-10 flex flex-wrap justify-center gap-2">
+            <div
+              role="tablist"
+              aria-label="Platform features"
+              onKeyDown={platformKeys.onKeyDown}
+              className="mb-10 flex flex-wrap justify-center gap-2"
+            >
               {PLATFORM_TABS.map((t) => (
                 <button
                   key={t.key}
+                  ref={(el) => (platformKeys.refs.current[t.key] = el)}
                   role="tab"
+                  id={`platform-tab-${t.key}`}
+                  aria-controls="platform-panel"
                   aria-selected={tab === t.key}
+                  tabIndex={tab === t.key ? 0 : -1}
                   onClick={() => setTab(t.key)}
                   className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
                     tab === t.key ? 'bg-primary-800 text-white' : 'text-ink-600 hover:bg-surface-subtle hover:text-ink-900'
@@ -405,7 +517,12 @@ export function Landing() {
               ))}
             </div>
 
-            <div className="mx-auto grid max-w-5xl overflow-hidden rounded-2xl border border-surface-border shadow-card md:grid-cols-[5fr_7fr]">
+            <div
+              id="platform-panel"
+              role="tabpanel"
+              aria-labelledby={`platform-tab-${tab}`}
+              className="mx-auto grid max-w-5xl overflow-hidden rounded-2xl border border-surface-border shadow-card md:grid-cols-[5fr_7fr]"
+            >
               <div className="flex flex-col justify-center border-b border-surface-border bg-white p-8 md:border-b-0 md:border-r md:p-12">
                 <h3 className="text-2xl font-semibold text-ink-900">{activeTab.title}</h3>
                 <p className="mt-3 text-base leading-relaxed text-ink-600">{activeTab.body}</p>
@@ -558,16 +675,27 @@ export function Landing() {
               <div key={f.q} className="py-5">
                 <button
                   type="button"
+                  id={`faq-q-${i}`}
                   aria-expanded={openFaq === i}
+                  aria-controls={`faq-a-${i}`}
                   onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
-                  className="flex w-full items-center justify-between gap-4 text-left"
+                  className="flex min-h-[44px] w-full items-center justify-between gap-4 text-left"
                 >
                   <span className="text-lg font-semibold text-primary-800">{f.q}</span>
                   <ChevronDownIcon
                     className={`h-5 w-5 shrink-0 text-primary-800 transition-transform ${openFaq === i ? 'rotate-180' : ''}`}
                   />
                 </button>
-                {openFaq === i && <p className="mt-3 pr-8 text-base leading-relaxed text-ink-600">{f.a}</p>}
+                {openFaq === i && (
+                  <p
+                    id={`faq-a-${i}`}
+                    role="region"
+                    aria-labelledby={`faq-q-${i}`}
+                    className="mt-3 pr-8 text-base leading-relaxed text-ink-600"
+                  >
+                    {f.a}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -586,15 +714,23 @@ export function Landing() {
                 Join verified Indian exporters and international buyers on one trusted marketplace.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link to="/signup/buyer" className={`${pill} w-full bg-white px-8 py-3.5 text-primary-700 hover:bg-primary-50 sm:w-auto`}>
-                  Join as Buyer
-                </Link>
-                <Link
-                  to="/signup/exporter"
-                  className={`${pill} w-full border-2 border-white/80 px-8 py-3.5 text-white hover:bg-white/10 sm:w-auto`}
-                >
-                  Join as Seller
-                </Link>
+                {home ? (
+                  <Link to={home} className={`${pill} w-full bg-white px-8 py-3.5 text-primary-700 hover:bg-primary-50 sm:w-auto`}>
+                    Go to your dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link to="/signup/buyer" className={`${pill} w-full bg-white px-8 py-3.5 text-primary-700 hover:bg-primary-50 sm:w-auto`}>
+                      Join as Buyer
+                    </Link>
+                    <Link
+                      to="/signup/exporter"
+                      className={`${pill} w-full border-2 border-white/80 px-8 py-3.5 text-white hover:bg-white/10 sm:w-auto`}
+                    >
+                      Join as Seller
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -605,7 +741,7 @@ export function Landing() {
       <footer className="bg-ink-900 px-4 py-14 text-white sm:px-6">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-12 md:flex-row">
           <div className="max-w-xs">
-            <p className="text-lg font-bold">MPX Global</p>
+            <Logo size="md" variant="light" />
             <p className="mt-3 text-sm text-white/60">
               The B2B marketplace connecting verified Indian exporters with international buyers.
             </p>
