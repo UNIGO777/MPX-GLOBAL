@@ -1,7 +1,17 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
+
+import { signupThroughOtp } from './helpers/signupFlow.js';
 import mongoose from 'mongoose';
 import Redis from 'ioredis';
+
+// A21 signup needs the real codes for BOTH channels.
+const { otpBox } = vi.hoisted(() => ({ otpBox: { byId: new Map() } }));
+vi.mock('../src/services/otp.sender.js', () => ({
+  sendOtp: async ({ identifier, code }) => {
+    otpBox.byId.set(identifier, code);
+  },
+}));
 
 import { createApp } from '../src/app.js';
 import '../src/models/index.js';
@@ -27,6 +37,7 @@ const buyerPayload = ({ email, cc = '+91', number }) => ({
   password: 'longpassword1',
   company: 'Buyer Co',
   country: 'IN',
+  role: 'buyer',
 });
 const exporterPayload = ({ email, cc = '+91', number }) => ({
   name: 'Exporter',
@@ -36,6 +47,7 @@ const exporterPayload = ({ email, cc = '+91', number }) => ({
   company: 'Exp Co',
   country: 'IN',
   entityType: 'business',
+  role: 'exporter',
 });
 
 async function makeSuperadmin() {
@@ -77,36 +89,30 @@ beforeEach(async () => {
 describe('A21 · uniqueness (compound email/mobile + role; staff exclusive)', () => {
   it('the same email may register a buyer AND an exporter account', async () => {
     const email = `dual_${uniq()}@example.com`;
-    const b = await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000001' }));
+    const b = await signupThroughOtp(app, otpBox, buyerPayload({ email, number: '9810000001' }));
     expect(b.status).toBe(201);
-    const e = await request(app).post('/auth/exporter/signup').send(exporterPayload({ email, number: '9820000002' }));
+    const e = await signupThroughOtp(app, otpBox, exporterPayload({ email, number: '9820000002' }));
     expect(e.status).toBe(201);
     expect(await User.countDocuments({ email })).toBe(2);
   });
 
   it('the same email may NOT register two accounts of the same role', async () => {
     const email = `same_${uniq()}@example.com`;
-    const b1 = await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000011' }));
+    const b1 = await signupThroughOtp(app, otpBox, buyerPayload({ email, number: '9810000011' }));
     expect(b1.status).toBe(201);
-    const b2 = await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000012' }));
+    const b2 = await signupThroughOtp(app, otpBox, buyerPayload({ email, number: '9810000012' }));
     expect(b2.status).toBe(409);
   });
 
   it('the same mobile may hold buyer + exporter, but not two of the same role', async () => {
     const number = '9830000021';
     // buyer + exporter share the mobile → ok
-    const b = await request(app)
-      .post('/auth/buyer/signup')
-      .send(buyerPayload({ email: `m1_${uniq()}@example.com`, number }));
+    const b = await signupThroughOtp(app, otpBox, buyerPayload({ email: `m1_${uniq()}@example.com`, number }));
     expect(b.status).toBe(201);
-    const e = await request(app)
-      .post('/auth/exporter/signup')
-      .send(exporterPayload({ email: `m2_${uniq()}@example.com`, number }));
+    const e = await signupThroughOtp(app, otpBox, exporterPayload({ email: `m2_${uniq()}@example.com`, number }));
     expect(e.status).toBe(201);
     // second buyer with the same mobile → conflict
-    const b2 = await request(app)
-      .post('/auth/buyer/signup')
-      .send(buyerPayload({ email: `m3_${uniq()}@example.com`, number }));
+    const b2 = await signupThroughOtp(app, otpBox, buyerPayload({ email: `m3_${uniq()}@example.com`, number }));
     expect(b2.status).toBe(409);
   });
 
@@ -117,7 +123,7 @@ describe('A21 · uniqueness (compound email/mobile + role; staff exclusive)', ()
     const partyEmail = `party_${uniq()}@example.com`;
     const partyNumber = '9840000031';
     expect(
-      (await request(app).post('/auth/buyer/signup').send(buyerPayload({ email: partyEmail, number: partyNumber })))
+      (await signupThroughOtp(app, otpBox, buyerPayload({ email: partyEmail, number: partyNumber })))
         .status,
     ).toBe(201);
 
@@ -142,14 +148,10 @@ describe('A21 · uniqueness (compound email/mobile + role; staff exclusive)', ()
       .send(employeePayload({ email: empEmail, number: empNumber }));
     expect(emp.status).toBe(201);
 
-    const buyerReuseStaffEmail = await request(app)
-      .post('/auth/buyer/signup')
-      .send(buyerPayload({ email: empEmail, number: '9870000042' }));
+    const buyerReuseStaffEmail = await signupThroughOtp(app, otpBox, buyerPayload({ email: empEmail, number: '9870000042' }));
     expect(buyerReuseStaffEmail.status).toBe(409);
 
-    const exporterReuseStaffMobile = await request(app)
-      .post('/auth/exporter/signup')
-      .send(exporterPayload({ email: `x_${uniq()}@example.com`, number: empNumber }));
+    const exporterReuseStaffMobile = await signupThroughOtp(app, otpBox, exporterPayload({ email: `x_${uniq()}@example.com`, number: empNumber }));
     expect(exporterReuseStaffMobile.status).toBe(409);
   });
 });

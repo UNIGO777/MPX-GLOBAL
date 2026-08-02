@@ -12,6 +12,7 @@ Status legend: **Pending** = renders but does nothing real · **Done** = wired t
 
 | Date | Page / Component | Element (label) | What's missing / expected behaviour | Why deferred | Status |
 |------|------------------|-----------------|-------------------------------------|--------------|--------|
+| 2026-08-03 | `web/src/pages/auth/SignupCompany.jsx` + `app/src/screens/auth/SignupCompanyScreen.jsx` | Organisation **claim** path (A21 "we found a company registered with this email") | Offer claim-vs-create against an existing Organisation; a claimed org carries its verification over (one KYC, one tick, one public profile) | No backend endpoint — `/auth/signup/complete` always CREATES. Claim is the remaining half of A21 and was out of scope for the verification fix | Pending |
 | 2026-08-01 | `web/src/App.jsx` → `pages/Placeholder.jsx` | `/` root route ("Landing — arrives in build step 7") | Renders the real landing page (`pages/public/Landing.jsx`) | Screens land per build-plan §6 order; landing is step 7 | Done (step 7 shipped; Placeholder.jsx deleted) |
 | 2026-08-01 | `web/src/pages/public/Landing.jsx` hero | Hero search bar | Real `GET /public/search` once discovery screens ship | Visibly decorative (`aria-hidden`, non-interactive spans, "Search preview — opens with the catalogue" caption) | Pending |
 | 2026-08-01 | `web/src/pages/public/Landing.jsx` categories | Category group lists + "View all categories" | Category links → real browsable catalogue tree (M2/M3 web screens) | Rendered as STATIC text (no anchors — no dead links) + "Category browsing opens with the catalogue" note | Pending |
@@ -32,6 +33,22 @@ Status legend: **Pending** = renders but does nothing real · **Done** = wired t
 | 2026-08-01 | `web/src/layouts/AdminLayout.jsx` sidebar → `pages/admin/ComingSoon.jsx` | "Audit log" item + `/admin/audit` route | Real audit viewer screen (backend GET /admin/audit exists — M5-C) | Outside the M1 web screen set; "Soon" chip routes to ComingSoon | Pending |
 | 2026-08-01 | `web/src/layouts/AdminLayout.jsx` sidebar → `pages/admin/ComingSoon.jsx` | "Settings" item + `/admin/settings` route | Platform settings screen (no backend yet) | Outside the M1 web screen set; "Soon" chip routes to ComingSoon | Pending |
 | 2026-08-01 | `web/src/pages/admin/Employees.jsx` | Permissions column "—" + edit drawer opening unticked | Show the employee's CURRENT permission set after a reload | 🔴 Backend gap (plan §7.2, logged above as recommended follow-up #2): no endpoint returns another user's permissions; column fills only from create/edit responses this session | Pending (needs owner-approved backend endpoint) |
+
+### 📱 Mobile app — M1 auth screens (2026-08-02)
+
+**Every control rendered on the seven app auth screens is wired to a real endpoint** — there
+are no dead buttons to log. The rows below record controls that appeared in the approved
+**mockups** but were deliberately **NOT built**, so the decisions are not lost.
+
+| Date | Page / Component | Element (label) | What's missing / expected behaviour | Why deferred | Status |
+|------|------------------|-----------------|-------------------------------------|--------------|--------|
+| 2026-08-02 | `app/src/screens/auth/LoginScreen.jsx` | "SSO" button (in mockup) | Enterprise SSO sign-in | **NOT BUILT** — no SSO/OAuth in Phase 1 scope and no backend endpoint. Would be a scope change | Not built (owner decision) |
+| 2026-08-02 | `app/src/screens/auth/LoginScreen.jsx` | "Biometric" button (in mockup) | Biometric sign-in | **NOT BUILT — deliberately.** `auth-app-steps.md` Step 6: biometrics gate app RE-ENTRY only and "a biometric success must never issue or extend a token on its own". A biometric button on a *fresh sign-in* screen implies exactly that. The re-entry unlock is still planned for the Profile screen | Not built (rule conflict) |
+| 2026-08-02 | `app/src/screens/auth/SignupAccountScreen.jsx` | "Google" / "Apple" social signup buttons (in mockup) | Social signup | **NOT BUILT** — no social auth in Phase 1 and no backend endpoint | Not built (owner decision) |
+| 2026-08-02 | `app/src/screens/auth/LoginScreen.jsx` | "Request Access" link (in mockup) | Buyer account request | **NOT BUILT** — implies a buyer approval gate. `docs/Note.md` **D3** guards against any buyer activation gate; a buyer is fully active from signup. Replaced with "Create account" | Not built (D3) |
+| 2026-08-02 | `app/src/screens/auth/LoginScreen.jsx` | "Secured by MPX Global 256-bit encryption" badge (in mockup) | — | **NOT BUILT** — an unverifiable marketing security claim. TLS is already enforced (G6); a badge asserting a specific cipher strength is not something the app can honestly attest | Not built |
+| 2026-08-02 | `app/src/screens/auth/SignupAccountScreen.jsx` | "I agree to the Terms of Service and Privacy Policy" checkbox (in mockup) | Record consent at signup | **NOT BUILT** — no backend field stores consent and no Terms/Privacy pages exist yet, so the checkbox would be theatre. ⚠️ **Owner decision needed before launch**: consent capture is usually a legal requirement | Pending (owner decision) |
+| 2026-08-02 | `app/src/screens/auth/SignupCompanyScreen.jsx` | Screen 8 **Path A · Claim an existing company** | "We found a company registered with this email" card → claim vs create new | 🔴 **BLOCKED — no backend.** There is no organisation lookup or claim endpoint (`auth.routes.js` has neither). Separately, the path as specified is an **account-enumeration surface**: it confirms to an anonymous caller that a company is registered to a given email. Needs an owner decision on the disclosure before it is designed, let alone built. Only Path B (create new) ships | Pending (blocked + needs security decision) |
 
 ---
 

@@ -16,6 +16,8 @@ import { KycUpload } from './pages/buyer/KycUpload.jsx';
 import { VerificationStatus as ExporterVerificationStatus } from './pages/exporter/VerificationStatus.jsx';
 import { KycUpload as ExporterKycUpload } from './pages/exporter/KycUpload.jsx';
 import { Otp } from './pages/auth/Otp.jsx';
+import { SignupVerify } from './pages/auth/SignupVerify.jsx';
+import { SignupCompany } from './pages/auth/SignupCompany.jsx';
 import { Forgot } from './pages/auth/Forgot.jsx';
 import { Reset } from './pages/auth/Reset.jsx';
 import { BuyerSignup } from './pages/auth/BuyerSignup.jsx';
@@ -87,6 +89,13 @@ export function App() {
           </Route>
 
           <Route path="/otp" element={<Otp />} />
+
+          {/* A21 signup steps 2-4. Outside RedirectIfAuthed for the same reason
+              /otp is: they finish the flow and redirect themselves, and the last
+              one issues the session. Each requires the signup token in router
+              state and sends a direct hit back to sign-in. */}
+          <Route path="/signup/verify" element={<SignupVerify />} />
+          <Route path="/signup/company" element={<SignupCompany />} />
 
           {/* Blocking gate — RequireAuth sends every signed-in mustChangePassword
               user here and nowhere else (mirrors the backend's authorize 403). */}

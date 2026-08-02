@@ -67,6 +67,12 @@ while any close-time security commitment remains unraised.
   step-1 → OTP → step-2 Organisation claim/create where exporter adds `entityType`; same
   email/mobile may hold one buyer + one exporter account; `resend-otp` + `change-password` flows
   exist; verified = tick from `kycStatus`). Details in `docs/Note.md` **S1** + build-prompt **A21**.
+  ⚠️ **Contract CHANGED 2026-08-03 — re-read before touching any signup screen.** Signup now
+  verifies **both the email and the mobile with SEPARATE codes**, and `/auth/buyer/signup` +
+  `/auth/exporter/signup` **no longer exist**. The flow is `POST /auth/signup/start` (identity
+  only — no company) → `/verify` per channel → `/complete` (company; the only call that creates
+  the account, and the only one that returns a session). Screens shipped for web and app on
+  2026-08-03; S1 was raised for them.
 - **A22 · Company profile screens (M1, new — S1 covers them too)** — buyer **and** exporter can view
   and edit their own `Organisation`; Organisation data is **not write-once at signup** (A21 creates,
   A22 edits — keep the field sets identical). Exporter screen also carries **logo + description**

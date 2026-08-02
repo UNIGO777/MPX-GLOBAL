@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
+
+import { signupThroughOtp } from './helpers/signupFlow.js';
 import mongoose from 'mongoose';
 import Redis from 'ioredis';
 
@@ -38,8 +40,14 @@ function makeBuyer() {
 }
 const e164 = (b) => `+91${b.mobile.number}`;
 
+// A21: signup is start → verify email → verify mobile → complete. The account
+// does not exist until the last call.
+const signupBuyer = (b, extra = {}) => signupThroughOtp(app, otpBox, { ...b, role: 'buyer', ...extra });
+const signupExporter = (b, extra = {}) =>
+  signupThroughOtp(app, otpBox, { ...b, role: 'exporter', entityType: 'business', ...extra });
+
 async function signupAndLogin(b) {
-  await request(app).post('/auth/buyer/signup').send(b);
+  await signupBuyer(b);
   const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password, portal: 'buyer' });
   const code = otpBox.byId.get(e164(b));
   const verify = await request(app)
@@ -73,9 +81,11 @@ beforeEach(async () => {
 describe('auth', () => {
   it('buyer signup: active immediately, no gate, no secrets leaked', async () => {
     const b = makeBuyer();
-    const res = await request(app).post('/auth/buyer/signup').send(b);
+    const res = await signupBuyer(b);
     expect(res.status).toBe(201);
     expect(res.body.user.role).toBe('buyer');
+    // D3 still holds: verification proves the address, it is not an approval
+    // gate — the buyer is fully active the moment the account is created.
     expect(res.body.user.isActive).toBe(true);
     expect(res.body.user.passwordHash).toBeUndefined();
     expect(JSON.stringify(res.body)).not.toContain(b.password);
@@ -88,12 +98,10 @@ describe('auth', () => {
   });
 
   it('exporter signup: extra fields (entityType + address) stored, kyc pending', async () => {
-    const b = {
-      ...makeBuyer(),
-      entityType: 'business',
+    const b = makeBuyer();
+    const res = await signupExporter(b, {
       address: { line1: '1 Trade St', city: 'Mumbai', state: 'MH', postalCode: '400001' },
-    };
-    const res = await request(app).post('/auth/exporter/signup').send(b);
+    });
     expect(res.status).toBe(201);
     expect(res.body.user.role).toBe('exporter');
     const org = await Organisation.findById(res.body.user.orgId);
@@ -105,38 +113,27 @@ describe('auth', () => {
     expect(org.address.city).toBe('Mumbai');
   });
 
-  it('exporter signup requires entityType', async () => {
-    const res = await request(app).post('/auth/exporter/signup').send({ ...makeBuyer() }); // no entityType
+  it('exporter signup requires entityType — enforced at the company step', async () => {
+    // A21 moved the company fields to step 2, so this is now refused at
+    // /complete rather than at the first call. The ROLE comes from the pending
+    // record, so a client cannot dodge it by reshaping the body.
+    const res = await signupExporter(makeBuyer(), { entityType: undefined });
     expect(res.status).toBe(400);
-    expect(res.body.error.fields.map((f) => f.field)).toContain('body.entityType');
   });
 
-  it('signup + verify-otp return a CURATED user view (no tokenVersion / internal flags)', async () => {
-    const b = makeBuyer();
-    const signup = await request(app).post('/auth/buyer/signup').send(b);
-    expect(signup.status).toBe(201);
-    expect(signup.body.user.id).toBeTruthy();
-    expect(signup.body.user).not.toHaveProperty('tokenVersion');
-    expect(signup.body.user).not.toHaveProperty('isEmailVerified');
-    expect(signup.body.user).not.toHaveProperty('permissions');
-
-    const code = otpBox.byId.get(e164(b));
-    const verify = await request(app)
-      .post('/auth/verify-otp')
-      .send({ loginToken: signup.body.loginToken, code });
-    expect(verify.status).toBe(200);
-    expect(verify.body.user.id).toBe(signup.body.user.id);
-    expect(verify.body.user).not.toHaveProperty('tokenVersion');
+  it('signup returns a CURATED user view (no tokenVersion / internal flags)', async () => {
+    const res = await signupBuyer(makeBuyer());
+    expect(res.status).toBe(201);
+    expect(res.body.user.id).toBeTruthy();
+    expect(res.body.user).not.toHaveProperty('tokenVersion');
+    expect(res.body.user).not.toHaveProperty('isEmailVerified');
+    expect(res.body.user).not.toHaveProperty('permissions');
   });
 
   it('exporter signup does NOT accept businessProfile (A5) — same regNo twice stores nothing, no 500', async () => {
     const bp = { registrationNumber: 'REG-DUP-1', taxId: 'TAX-1', establishedYear: 2001 };
-    const r1 = await request(app)
-      .post('/auth/exporter/signup')
-      .send({ ...makeBuyer(), entityType: 'business', businessProfile: bp });
-    const r2 = await request(app)
-      .post('/auth/exporter/signup')
-      .send({ ...makeBuyer(), entityType: 'business', businessProfile: bp });
+    const r1 = await signupExporter(makeBuyer(), { businessProfile: bp });
+    const r2 = await signupExporter(makeBuyer(), { businessProfile: bp });
     // Both succeed: the field is stripped at the boundary, so the (regNo, country)
     // unique index can never fire on a public signup (this used to be a raw 500).
     expect(r1.status).toBe(201);
@@ -146,8 +143,8 @@ describe('auth', () => {
   });
 
   it('two orgs with the same company name sign up cleanly with distinct slugs', async () => {
-    const r1 = await request(app).post('/auth/buyer/signup').send({ ...makeBuyer(), company: 'Same Name Traders' });
-    const r2 = await request(app).post('/auth/buyer/signup').send({ ...makeBuyer(), company: 'Same Name Traders' });
+    const r1 = await signupBuyer(makeBuyer(), { company: 'Same Name Traders' });
+    const r2 = await signupBuyer(makeBuyer(), { company: 'Same Name Traders' });
     expect(r1.status).toBe(201);
     expect(r2.status).toBe(201);
     const o1 = await Organisation.findById(r1.body.user.orgId);
@@ -157,38 +154,48 @@ describe('auth', () => {
     expect(o1.slug).not.toBe(o2.slug);
   });
 
-  it('A21 §4a: signup sends an OTP and returns NO session; verify-otp exchanges it for tokens', async () => {
+  it('A21: step 1 sends BOTH codes and issues NO session; complete yields the tokens', async () => {
     const b = makeBuyer();
-    const signup = await request(app).post('/auth/buyer/signup').send(b);
-    expect(signup.status).toBe(201);
-    expect(signup.body.loginToken).toBeTruthy();
-    expect(signup.body.method).toBe('otp');
-    // no usable session issued at signup
-    expect(signup.body.accessToken).toBeUndefined();
-    expect(signup.body.refreshToken).toBeUndefined();
+    const started = await request(app)
+      .post('/auth/signup/start')
+      .send({ name: b.name, email: b.email, mobile: b.mobile, password: b.password, role: 'buyer' });
 
-    // the OTP was actually sent (captured), and verify-otp (token-identified,
-    // using the SIGNUP loginToken — no separate login) yields the session
-    const code = otpBox.byId.get(e164(b));
-    expect(code).toMatch(/^\d{6}$/);
-    const verify = await request(app)
-      .post('/auth/verify-otp')
-      .send({ loginToken: signup.body.loginToken, code });
-    expect(verify.status).toBe(200);
-    expect(verify.body.accessToken).toBeTruthy();
-    expect(verify.body.refreshToken).toBeTruthy();
+    expect(started.status).toBe(201);
+    expect(started.body.signupToken).toBeTruthy();
+    // No session, and no account — this is the fix: nothing exists yet.
+    expect(started.body.accessToken).toBeUndefined();
+    expect(started.body.refreshToken).toBeUndefined();
+    expect(await Organisation.countDocuments({})).toBe(0);
+
+    // One code per channel, and they are distinct challenges.
+    expect(otpBox.byId.get(b.email.toLowerCase())).toMatch(/^\d{6}$/);
+    expect(otpBox.byId.get(e164(b))).toMatch(/^\d{6}$/);
+
+    const token = started.body.signupToken;
+    await request(app).post('/auth/signup/verify')
+      .send({ signupToken: token, channel: 'email', code: otpBox.byId.get(b.email.toLowerCase()) });
+    await request(app).post('/auth/signup/verify')
+      .send({ signupToken: token, channel: 'mobile', code: otpBox.byId.get(e164(b)) });
+
+    const done = await request(app).post('/auth/signup/complete')
+      .send({ signupToken: token, company: b.company, country: b.country });
+    expect(done.status).toBe(201);
+    expect(done.body.accessToken).toBeTruthy();
+    expect(done.body.refreshToken).toBeTruthy();
   });
 
-  it('duplicate email is rejected', async () => {
+  it('duplicate email is rejected at step 1 — before the caller proves two codes', async () => {
     const b = makeBuyer();
-    await request(app).post('/auth/buyer/signup').send(b);
-    const dup = await request(app).post('/auth/buyer/signup').send({ ...makeBuyer(), email: b.email });
+    await signupBuyer(b);
+    const dup = await request(app)
+      .post('/auth/signup/start')
+      .send({ ...makeBuyer(), email: b.email, role: 'buyer' });
     expect(dup.status).toBe(409);
   });
 
   it('wrong password and unknown user return the same generic 401', async () => {
     const b = makeBuyer();
-    await request(app).post('/auth/buyer/signup').send(b);
+    await signupBuyer(b);
     const wrong = await request(app).post('/auth/login').send({ identifier: b.email, password: 'wrongpassword9', portal: 'buyer' });
     const unknown = await request(app).post('/auth/login').send({ identifier: 'ghost@example.com', password: 'wrongpassword9', portal: 'buyer' });
     expect(wrong.status).toBe(401);
@@ -198,7 +205,7 @@ describe('auth', () => {
 
   it('login → OTP → tokens, then /auth/me works', async () => {
     const b = makeBuyer();
-    await request(app).post('/auth/buyer/signup').send(b);
+    await signupBuyer(b);
     const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password, portal: 'buyer' });
     expect(login.status).toBe(200);
     expect(login.body.method).toBe('otp');

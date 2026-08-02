@@ -8,52 +8,26 @@ import { PERMISSIONS } from '../config/permissions.js';
 
 const email = zString({ min: 3, max: 200 }).email();
 const password = zString({ min: 8, max: 200 });
-const country = zString({ min: 2, max: 2 });
 const mobile = z.object({
   countryCode: zString({ min: 1, max: 5 }),
   number: zString({ min: 4, max: 15 }),
 });
 const otpCode = zString({ min: 4, max: 12 });
 const opaqueToken = zString({ min: 10, max: 4096 });
-const entityType = z.enum(['business', 'individual']);
-const address = z.object({
-  line1: zString({ max: 200 }).optional(),
-  line2: zString({ max: 200 }).optional(),
-  city: zString({ max: 100 }).optional(),
-  state: zString({ max: 100 }).optional(),
-  postalCode: zString({ max: 20 }).optional(),
-});
 
-export const buyerSignup = {
-  body: z.object({
-    name: zString({ min: 1, max: 120 }),
-    email,
-    mobile,
-    password,
-    company: zString({ min: 1, max: 200 }),
-    country,
-  }),
-};
+// `country`, `entityType` and `address` moved to validators/signup.validators.js
+// with the signup endpoints — they are company fields, and A21 puts those in
+// step 2. Nothing left in this file captures them.
 
-export const exporterSignup = {
-  body: z.object({
-    name: zString({ min: 1, max: 120 }),
-    email,
-    mobile,
-    password,
-    company: zString({ min: 1, max: 200 }),
-    // Exporter-only extra fields (fields image): entity type (required — drives
-    // the KYC path) and a structured address.
-    // `businessProfile` (registrationNumber/taxId/establishedYear) is deliberately
-    // NOT accepted at signup (A5: the registration number is checked at
-    // verification time, and its unique index must not fire on a public signup —
-    // owner decision 2026-07-30). Unknown keys are stripped by zod, so sending it
-    // is harmless.
-    entityType,
-    country,
-    address: address.optional(),
-  }),
-};
+// `buyerSignup` / `exporterSignup` were removed with their endpoints (A21,
+// 2026-08-03) — see validators/signup.validators.js. The field RULES are
+// unchanged there; only the flow moved, so nothing about what a name, password
+// or address may contain was relaxed.
+//
+// `businessProfile` (registrationNumber / taxId / establishedYear) is still
+// deliberately NOT accepted anywhere in signup (A5: the registration number is
+// checked at verification time and its unique index must not fire on a public
+// signup — owner decision 2026-07-30).
 
 export const createEmployee = {
   body: z.object({

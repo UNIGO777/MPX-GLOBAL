@@ -20,7 +20,10 @@ import { recordAudit } from './audit.service.js';
 
 // --- helpers ------------------------------------------------------------------
 
-function normalizeMobile({ countryCode, number }) {
+// Exported for signup.service.js (A21). The identity rules must have exactly ONE
+// implementation — a second copy in the signup path is how buyer/exporter
+// coexistence and staff exclusivity drift apart.
+export function normalizeMobile({ countryCode, number }) {
   const cc = String(countryCode).replace(/\D/g, '');
   const num = String(number).replace(/\D/g, '');
   return { countryCode: `+${cc}`, number: num, e164: `+${cc}${num}` };
@@ -54,7 +57,7 @@ const isStaffRole = (r) => STAFF_ROLES.has(r);
 //  - staff (employee/superadmin) are EXCLUSIVE both ways — a staff identity may not
 //    coexist with ANY other account, and an email/mobile already used by a buyer or
 //    exporter may not be given to staff.
-async function assertIdentityAvailable({ email, e164, role }) {
+export async function assertIdentityAvailable({ email, e164, role }) {
   const existing = await User.find({
     $or: [{ email: String(email).trim().toLowerCase() }, { 'mobile.e164': e164 }],
   }).select('role');
@@ -95,7 +98,7 @@ async function createOrgHandlingDuplicates(org) {
 
 // Create org then user. No transactions on standalone Mongo, so compensate by
 // removing the org if the user insert loses a uniqueness race.
-async function createUserWithOrg({ org, user }) {
+export async function createUserWithOrg({ org, user }) {
   await assertIdentityAvailable({ email: user.email, e164: user.mobile.e164, role: user.role });
   const orgDoc = await createOrgHandlingDuplicates(org);
   try {
@@ -107,75 +110,20 @@ async function createUserWithOrg({ org, user }) {
 }
 
 // --- registration -------------------------------------------------------------
-
-async function auditSignup(user, meta) {
-  await recordAudit({
-    actor: { userId: user._id, role: user.role },
-    action: 'auth.signup',
-    entityType: 'User',
-    entityId: user._id,
-    orgId: user.orgId,
-    meta,
-  });
-}
-
-// A21 §4a: after a self-signup, issue an OTP by REUSING the login mechanism
-// (requestOtp + signLoginToken — no second OTP system) and return a login-pending
-// token. Signup returns NO session; the caller verifies the OTP at
-// /auth/verify-otp (token-identified) to exchange this token for tokens.
-async function issueSignupOtp(user) {
-  await requestOtp({ user, purpose: 'login', channel: 'mobile' });
-  return { user, loginToken: signLoginToken(user, 'otp'), method: 'otp' };
-}
-
-// Phase 1: buyer is active immediately; approval is status only, not a gate.
-export async function registerBuyer({ name, email, mobile, password, company, country, meta }) {
-  const mob = normalizeMobile(mobile);
-  const user = await createUserWithOrg({
-    org: { name: company, type: 'business', buyerSide: true, country, kycStatus: 'pending' },
-    user: {
-      name,
-      email: email.toLowerCase(),
-      mobile: mob,
-      passwordHash: await hashPassword(password),
-      role: 'buyer',
-      isActive: true,
-      mustChangePassword: false,
-    },
-  });
-  await auditSignup(user, meta);
-  return issueSignupOtp(user);
-}
-
-// Phase 1: exporter self-registers; profile public immediately, kycStatus pending.
-// Extra exporter fields (fields image): entityType (drives KYC path) + address.
-export async function registerExporter({
-  name,
-  email,
-  mobile,
-  password,
-  company,
-  country,
-  entityType,
-  address,
-  meta,
-}) {
-  const mob = normalizeMobile(mobile);
-  const user = await createUserWithOrg({
-    org: { name: company, type: 'business', exporterSide: true, country, entityType, address, kycStatus: 'pending' },
-    user: {
-      name,
-      email: email.toLowerCase(),
-      mobile: mob,
-      passwordHash: await hashPassword(password),
-      role: 'exporter',
-      isActive: true,
-      mustChangePassword: false,
-    },
-  });
-  await auditSignup(user, meta);
-  return issueSignupOtp(user);
-}
+//
+// 🔴 `registerBuyer` / `registerExporter` were REMOVED (A21 signup verification,
+// 2026-08-03). They created the User and the Organisation up front and only then
+// sent a single MOBILE otp — so an account existed, and an exporter's profile was
+// publicly live, before anyone had proved they owned either address. Because
+// `User` is uniquely indexed on `(email, role)` and `(mobile.e164, role)`, that
+// let a stranger's email or phone be burned permanently with no proof, locking
+// its real owner out of that role for good. Email was never verified at all.
+//
+// Self-registration now lives in `signup.service.js`: details are held in a
+// short-lived `PendingSignup`, BOTH channels are verified with separate codes,
+// and `users` / `organisations` are only written at the final step. The helpers
+// above (`assertIdentityAvailable`, `createUserWithOrg`, `normalizeMobile`) are
+// exported for it so the identity rules keep exactly one implementation.
 
 // Superadmin-created employee: generated-password account, so mustChangePassword
 // is set (enforced by authorize until they change it). Writes an audit entry.

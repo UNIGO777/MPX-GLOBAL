@@ -19,7 +19,14 @@ export const ORG_TYPE = ['business', 'platform'];
 export const KYC_STATUS = ['pending', 'submitted', 'verified', 'rejected'];
 
 // Purposes a transactional OTP can be issued for.
-export const OTP_PURPOSE = ['login', 'forgot_password'];
+//
+// ⚠️ `signup_email` and `signup_mobile` are deliberately SEPARATE purposes rather
+// than one `signup` purpose distinguished by channel. `requestOtp()` keeps only
+// one live challenge per (subject, purpose) — so a shared purpose would make each
+// new code silently destroy the other one and the flow could never complete.
+// Separate purposes also give each channel its own A3 lock (5 attempts → 15 min),
+// which is the behaviour we want: failing the email code must not lock the phone.
+export const OTP_PURPOSE = ['login', 'forgot_password', 'signup_email', 'signup_mobile'];
 
 // KYC entity type — drives the KYC document path (business docs vs personal ID).
 export const ENTITY_TYPE = ['business', 'individual'];

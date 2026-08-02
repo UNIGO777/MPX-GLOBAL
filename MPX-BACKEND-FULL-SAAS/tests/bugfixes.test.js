@@ -1,10 +1,18 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
+
+import { signupThroughOtp } from './helpers/signupFlow.js';
 import mongoose from 'mongoose';
 import Redis from 'ioredis';
 
-// Silence/capture OTP dispatch (no real provider in tests).
-vi.mock('../src/services/otp.sender.js', () => ({ sendOtp: async () => {} }));
+// Capture OTP dispatch (no real provider in tests). A21 signup needs the REAL
+// codes for both channels, so this file can no longer swallow them.
+const { otpBox } = vi.hoisted(() => ({ otpBox: { byId: new Map() } }));
+vi.mock('../src/services/otp.sender.js', () => ({
+  sendOtp: async ({ identifier, code }) => {
+    otpBox.byId.set(identifier, code);
+  },
+}));
 
 import { createApp } from '../src/app.js';
 import '../src/models/index.js';
@@ -31,6 +39,8 @@ function makeBuyer() {
   };
 }
 const e164 = (b) => `+91${b.mobile.number}`;
+// A21: signup is start → verify both channels → complete.
+const signupBuyer = (b) => signupThroughOtp(app, otpBox, { ...b, role: 'buyer' });
 const bearer = (t) => ({ Authorization: `Bearer ${t}` });
 
 beforeAll(async () => {
@@ -52,7 +62,7 @@ beforeEach(async () => {
 describe('bug fixes', () => {
   it('BUG-1: OTP lock survives a new login attempt (no reset)', async () => {
     const b = makeBuyer();
-    await request(app).post('/auth/buyer/signup').send(b);
+    await signupBuyer(b);
     const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password, portal: 'buyer' });
     const { loginToken } = login.body;
 
@@ -68,7 +78,7 @@ describe('bug fixes', () => {
 
   it('BUG-3: login by mobile digits (with country code, no "+") works', async () => {
     const b = makeBuyer();
-    await request(app).post('/auth/buyer/signup').send(b);
+    await signupBuyer(b);
     const digits = e164(b).replace('+', ''); // "919800000..."
     const res = await request(app).post('/auth/login').send({ identifier: digits, password: b.password, portal: 'buyer' });
     expect(res.status).toBe(200);
@@ -77,7 +87,7 @@ describe('bug fixes', () => {
 
   it('BUG-4: reset-password is refused on a deactivated account', async () => {
     const b = makeBuyer();
-    const signup = await request(app).post('/auth/buyer/signup').send(b);
+    const signup = await signupBuyer(b);
     await User.updateOne({ _id: signup.body.user.id ?? signup.body.user._id }, { $set: { isActive: false } });
 
     const res = await request(app)
@@ -88,25 +98,28 @@ describe('bug fixes', () => {
 
   it('BUG-7: refresh for a deactivated user 401s and revokes the family', async () => {
     const b = makeBuyer();
-    const signup = await request(app).post('/auth/buyer/signup').send(b);
+    const signup = await signupBuyer(b);
     const userId = signup.body.user.id ?? signup.body.user._id;
 
     // A real, active refresh token, then deactivate the user.
-    const { raw } = await startRefreshFamily({ userId, ip: '1.1.1.1', userAgent: 'test' });
+    const { raw, doc } = await startRefreshFamily({ userId, ip: '1.1.1.1', userAgent: 'test' });
     await User.updateOne({ _id: userId }, { $set: { isActive: false } });
 
     const res = await request(app).post('/auth/refresh').send({ refreshToken: raw });
     expect(res.status).toBe(401);
 
-    // The whole family is revoked — no live token left behind.
-    const tokens = await RefreshToken.find({ userId });
+    // Scoped to THIS family: A21's /signup/complete now issues a session of its
+    // own (both channels were just proved), so the user legitimately holds a
+    // second, untouched family. The guarantee under test is that the presented
+    // token's family dies — not that the user has no tokens anywhere.
+    const tokens = await RefreshToken.find({ userId, familyId: doc.familyId });
     expect(tokens.length).toBeGreaterThan(0);
     expect(tokens.every((t) => t.status === 'revoked')).toBe(true);
   });
 
   it('AUDIT: signup writes an auth.signup AuditLog row', async () => {
     const b = makeBuyer();
-    const signup = await request(app).post('/auth/buyer/signup').send(b);
+    const signup = await signupBuyer(b);
     const userId = signup.body.user.id ?? signup.body.user._id;
     const row = await AuditLog.findOne({ action: 'auth.signup', entityId: userId });
     expect(row).toBeTruthy();
@@ -115,7 +128,7 @@ describe('bug fixes', () => {
 
   it('AUDIT: refresh-token reuse writes an auth.refresh.reuse row', async () => {
     const b = makeBuyer();
-    const signup = await request(app).post('/auth/buyer/signup').send(b);
+    const signup = await signupBuyer(b);
     const userId = signup.body.user.id ?? signup.body.user._id;
     const { raw: rt1 } = await startRefreshFamily({ userId, ip: '1.1.1.1', userAgent: 'test' });
 
@@ -129,7 +142,7 @@ describe('bug fixes', () => {
 
   it('RESEND: resend-otp works with just the login token (no password)', async () => {
     const b = makeBuyer();
-    await request(app).post('/auth/buyer/signup').send(b);
+    await signupBuyer(b);
     const login = await request(app).post('/auth/login').send({ identifier: b.email, password: b.password, portal: 'buyer' });
     const res = await request(app).post('/auth/resend-otp').send({ loginToken: login.body.loginToken });
     expect(res.status).toBe(200);

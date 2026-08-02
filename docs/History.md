@@ -23,6 +23,8 @@ MPX-GLOBAL/
   M1-01-backend-steps.md     step-by-step backend prompts
   MPX-BACKEND-FULL-SAAS/     the backend (src/, tests/, package.json, .env[gitignored])
   web/                       web frontend (Vite+React+Tailwind); structure scaffolded (see changelog)
+  app/                       mobile app (React Native + Expo SDK 57); infra + M1 auth screens
+                             built and wired (B1 "Navy Canopy") — see changelog 2026-08-02
 ```
 
 ## 3. How to run (local)
@@ -39,6 +41,14 @@ MPX-GLOBAL/
   deploy**, see the index gotcha in §7.
 - **Current `MONGODB_URI` points at a test-only Atlas cluster** (`mongodb+srv://…`). Tests
   ignore it — they use a local `mpx_global_test` DB (`tests/setup.js`).
+
+**Mobile app (`app/`)** — `cd app && npm install`, then copy `.env.example` → `.env`.
+`EXPO_PUBLIC_API_BASE_URL` is the backend **root, no `/api` prefix** (the web's `/api` is a Vite
+dev-proxy convention that gets rewritten away; the app has no proxy). Use `http://localhost:3000`
+for the iOS simulator, `http://10.0.2.2:3000` for the Android emulator, and your machine's LAN IP
+for a physical device — `src/config/env.js` throws on any other cleartext host, and on **every**
+cleartext host in a release build. Scripts: `npm start` · `npm run ios` · `npm run android`.
+`npx expo-doctor` for a config check.
 
 ## 4. What's built
 **Express core** — `env.js` (zod-validated env, fail-fast), `logger.js` (pino + redaction),
@@ -162,6 +172,46 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-03** — 🔴 **SIGNUP SECURITY FIX — the account was being created BEFORE anything was
+  verified. 881/881 green** (757 → +124), 58 test files, lint clean, web builds, app bundles.
+  Plan: `build-plans/a21-signup-verification/plan.md`.
+  **What was wrong** (owner-reported, confirmed in code): `registerBuyer`/`registerExporter` wrote
+  the `User` **and** the `Organisation` with `isActive: true` and only THEN sent an OTP — nothing
+  depended on that code. **Email was never verified at all** (`channel: 'mobile'` only), and
+  `User.isEmailVerified` / `isMobileVerified` existed on the model but were written by nothing
+  except the superadmin seed. The signup OTP even reused `purpose: 'login'`, so "verification" was
+  really just first login.
+  🔴 **Why it mattered more than it looked:** `(email, role)` and `(mobile.e164, role)` are
+  **unique indexes**, so anyone could permanently burn a stranger's email or phone with no proof of
+  ownership — and the real owner could then never register for that role. An exporter's profile is
+  public from signup (B7), so a squatter also got a live public company page.
+  **The fix (A21, finally as written):** new short-lived **`PendingSignup`** holds step 1;
+  `/auth/signup/start` sends TWO codes; `/verify` (order-agnostic) proves each; `/complete` is the
+  first call that touches `users`/`organisations` and refuses unless both are verified, then issues
+  a session directly. The old `/auth/buyer/signup` + `/auth/exporter/signup` were **removed, not
+  deprecated** — leaving them mounted would have left the hole fully open.
+  ⚠️ **The trap that would have broken it silently:** `requestOtp()` deletes by
+  `(subject, purpose)`, so email and mobile sharing one purpose would make each new code destroy
+  the other and the flow could never finish. Hence separate `signup_email` / `signup_mobile`
+  purposes — which also give each channel its own A3 lock. A test pins this, and it was
+  **probe-verified**: collapsing the two purposes turns it red.
+  ⚠️ **Second trap, guarded in code:** Mongoose strips `undefined` from a query, so a subject
+  filter built as `{ userId: undefined, purpose }` collapses to `{ purpose }` and would let one
+  person's code verify another's account. `otp.service.js` now builds the filter explicitly and
+  throws when no subject is given.
+  🧭 **D3 raised and cleared by the owner:** self-verification is not the guarded buyer-approval
+  gate — no staff, no queue; a verified buyer is fully active immediately. **S1 raised** for the
+  auth screens.
+  **Web:** signup split into identity → verify (email then phone, two sequential screens, owner's
+  choice) → company. **App:** same, and `signupDraft` no longer holds a **password** at all — it
+  went to the server at step 1, so the plaintext stops travelling with the flow. `AuthContext`
+  gained `completeSignIn` so the OTP and signup paths share one definition of a signed-in user.
+  **Test migration:** 8 suites used the deleted endpoint as a fixture; a shared
+  `tests/helpers/signupFlow.js` drives the real 4-call flow instead of a shortcut. One assertion
+  legitimately changed meaning — BUG-7 now scopes "family revoked" to the presented token's family,
+  because `/complete` issues a session of its own.
+  🚧 **Not done:** Organisation **claim** (A21's "this company already exists") — `/complete`
+  always creates. Logged in `docs/UiWebNotes.md`.
 - **2026-08-02** — **WEB · env config extracted + real logo wired + Landing flow pass.**
   **`web/.env` created** (gitignored; `.env.example` rewritten with every key documented and
   blank values) and **`web/src/config.js`** added as the ONE place the app reads
@@ -189,6 +239,164 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   steps** (OTP is the fourth) instead of claiming 3 and then asking for one more thing.
   **Not done:** Landing still has no per-route title/meta/canonical/JSON-LD (SPA — needs
   SSR/prerender; owner deferred), and no web tests exist for any of this.
+- **2026-08-02** — **APP · ON-DEVICE TEST PASS (Mi A3, Android 11) — 4 bugs found and fixed.**
+  Dev build installed on a physical phone over wireless adb; backend + Metro run locally with the
+  dev OTP print captured to a log, which is what made the OTP success path testable.
+  **PASSED (11 on-device cases):** welcome/portal choice · login empty-form validation · login wrong
+  password · **login wrong PORTAL with the correct password → byte-identical "Invalid credentials."
+  (brief rule 1 holds end-to-end)** · login success → OTP · OTP correct code → buyer tabs · OTP wrong
+  code (error shown, boxes cleared, **no attempts counter** — rule 4) · OTP resend (new code issued,
+  expiry + cooldown reset) · session restore across a cold start · signup step-1 validation (empty,
+  invalid email, strength meter, 15-digit mobile cap).
+  ✅ **G1 EVIDENCE CAPTURED** — `run-as … cat shared_prefs/SecureStore.xml` shows both tokens as
+  **AES-GCM ciphertext** (`scheme: aes`, `tlen: 128`, Keystore alias `key_v1`) and a grep for
+  plaintext JWTs returns **0**. This is the `auth-app-steps.md` Step-8 acceptance test ("show me they
+  are not readable in app storage"). Android backup exclusion confirmed too (see previous entry).
+  **PASSED at API level** (exact screen payloads, device was disconnected): exporter signup with
+  `entityType` + `address` (201) · duplicate signup → 409 with a renderable message · **full reset
+  cycle** — forgot-password 200 → wrong code 401 → real code `{ok:true}` → old password now fails →
+  new password works · **forgot-password for a NON-EXISTENT account returns the byte-identical
+  200 message (no account-enumeration leak).**
+  **BUGS FIXED THIS PASS:**
+  (1) 🔴 **Tab icons rendered as tofu boxes (▯).** React Navigation draws a placeholder glyph when
+  `tabBarIcon` is absent — labels-only is not "no icon", it is a broken icon. Added
+  `navigation/tabIcon.jsx` (filled when focused, outline otherwise, so the active tab is signalled by
+  shape as well as colour).
+  (2) 🔴 **OTP screen sent users to the wrong inbox.** It echoed the typed email, but
+  `auth.service.js` passes `channel: 'mobile'` on EVERY path — login, signup and reset all SMS the
+  code. Copy now names the real channel; where the destination is known to be a mobile it is masked
+  and shown, and where the user identified by email we do not guess a number we were never given.
+  Signup passes the mobile it just collected.
+  (3) **Keyboard covered the primary button on Android.** `adjustResize` was set, but Expo draws
+  edge-to-edge so the window never shrinks — `behavior={undefined}` on Android did nothing. Now
+  `behavior="padding"` on both platforms in `NavyCanopy` + `ScreenContainer`.
+  (4) **Canopy spacing** (owner-reported): the sheet overlaps the canopy by `SHEET_RADIUS`, so a
+  `paddingBottom` of `spacing[8]` left only **4px** under the description line. Now
+  `spacing[12] + SHEET_RADIUS` → a real 48px gap on every canopy screen.
+  **Gotcha for future device runs:** launching via `am start -n …/.MainActivity` makes the dev build
+  look for Metro on **`localhost:8081` on the DEVICE**; `expo run:android` only worked because it
+  passed the LAN URL in the intent. Fixed durably by writing `debug_http_host` into the app's own
+  SharedPreferences (`run-as`), which survives without any `adb reverse`. ⚠️ `pm clear` wipes it.
+  ⚠️ Also: `adb shell input text` silently truncates at spaces (use `%s`), and taps drift while the
+  soft keyboard is open — both are automation artifacts, not app defects.
+  **STILL UNTESTED ON DEVICE** (wireless adb dropped; ports rotate on reconnect): signup **step 2**
+  (entity-type cards, country picker, address) rendering, signup success → OTP → exporter tabs, and
+  the forgot/reset **screens** (their APIs are verified above).
+  ⚠️ Dev-DB test accounts now include `appsmoke1/2@` and `apptest3/4@example.com`.
+- **2026-08-02** — **🔴 GOTCHA: the app CANNOT run in Expo Go — a development build is required.**
+  Expo Go reported "Project is incompatible with this version of Expo Go" (SDK 57). The version is
+  a red herring: **Expo Go runs a fixed prebuilt native shell and ignores every config plugin**, so
+  in Expo Go this project would silently lose `usesCleartextTraffic:false`, the iOS ATS block, the
+  `expo-secure-store` backup-exclusion rules and the `mpxglobal://` scheme — i.e. **G6 would not
+  exist**. Downgrading the SDK would not fix that. Use `npx expo run:android` (or an EAS dev build).
+  **Verified by inspecting a generated prebuild:** the release manifest carries
+  `android:usesCleartextTraffic="false"`, and `android/app/src/debug/AndroidManifest.xml` overrides
+  it to `"true"` via `tools:replace` — so **Metro and a local `http://` backend work in a debug
+  build while release builds still block cleartext.** No bypass flag was needed or added. Also
+  confirmed `expo-secure-store` ships `res/xml/secure_store_{backup,data_extraction}_rules.xml`
+  inside its own Android library (Gradle merges them), which `<exclude>`s the SecureStore from both
+  cloud backup and device transfer — the Android half of **G1**, alongside the iOS
+  `WHEN_UNLOCKED_THIS_DEVICE_ONLY`. The generated `android/` dir was deleted again to stay on CNG.
+  **Fixed a real gap prebuild surfaced:** `userInterfaceStyle: 'light'` was being ignored on Android
+  ("Install expo-system-ui to enable this feature") — the light-mode lock is a committed decision
+  (owner, 2026-07-30), so **`expo-system-ui` was added** and the warning is gone.
+  **Dev base URL depends on the target:** Android emulator needs `http://10.0.2.2:3000`
+  (`localhost` inside the emulator is the emulator itself), a physical device needs the machine's
+  LAN IP. `.env.example` documents all three.
+- **2026-08-02** — **MOBILE APP · M1 AUTH SCREENS BUILT AND WIRED (S1 cleared by owner).**
+  Direction **B1 "Navy Canopy"** chosen by the owner from the mockups (navy top third, white sheet
+  with a 28pt radius over it). 7 screens in `app/src/screens/auth/`: Splash · Welcome/portal choice ·
+  Login (portal-scoped) · OTP · Forgot password · Reset password · Signup step 1 + step 2. New
+  primitives: `NavyCanopy`, `BrandMark`, `MobileInput`, `CountryPicker`, `RadioCard`,
+  `PasswordStrength`, `FormError`, plus `utils/validation.js` (mirrors the server's limits, UX only)
+  and `utils/mask.js`.
+  **🔴 DEVIATION — signup ordering (owner-confirmed, this session).** The design brief's rule 3 says
+  step 1 → OTP → step 2 with company fields *behind* the OTP. The shipped backend has a **single**
+  `POST /auth/{buyer|exporter}/signup` that requires company + country (+ entityType/address for
+  exporters) up front and only issues the OTP in response; **there is no step-2 or organisation
+  endpoint**. So the two steps are preserved visually ("STEP 1 OF 2") and the OTP lands *after*
+  step 2. Owner picked this over building the A21 two-step in the backend first.
+  **🔴 NOT BUILT — screen 8 Path A (claim an existing company).** No organisation lookup or claim
+  route exists. Separately it is an **account-enumeration surface** — it would confirm to an
+  anonymous caller that a company is registered to a given email. Needs an owner decision on that
+  disclosure before it is designed. Only Path B (create new) ships. Logged in `UiWebNotes.md`.
+  **Mockup controls deliberately dropped** (all logged in `UiWebNotes.md`): SSO + Biometric buttons
+  on login (biometrics gate re-entry only and must never mint a token — `auth-app-steps` Step 6),
+  Google/Apple social signup (no backend), **"Request Access"** (implies a buyer gate — **D3**),
+  the "256-bit encryption" badge (unverifiable claim), and the Terms/Privacy checkbox (no consent
+  field server-side, no pages yet — ⚠️ **owner decision needed before launch**).
+  **Three bugs found and fixed during the build:**
+  (1) 🔴 `utils/errors.js` read `data.message`, but the backend answers `{ error: { message,
+  requestId } }` — **nested**. Every server message, including "Invalid credentials.", was being
+  replaced with the generic fallback. Confirmed against the live backend.
+  (2) 🔴 **Offline at launch logged the user out.** The restore treated any `/auth/me` failure as a
+  dead session and wiped the tokens — so a network blip permanently signed out a user whose stored
+  refresh token was still valid. Now an `offline`/`timeout` kind keeps the tokens and shows the
+  splash's offline+retry state (`restoreError` + `retryRestore`); only a server *refusal* clears.
+  (3) `AuthContext` read `user.organisation?.verified`, which `/auth/me` never returns — it answers
+  `{ userId, orgId, role, permissions, mustChangePassword }` with no name/email. Added
+  `api/normalizeUser.js` to merge the two different user shapes the backend returns (verify-otp
+  carries name/email but no permissions; `/auth/me` the reverse), and verify-otp now follows up with
+  `/auth/me`. Verification status lives on `GET /me/verification`, not `/auth/me`.
+  **Security note:** step 1's password is held in `screens/auth/signupDraft.js` (a module-scoped
+  variable, cleared on submit) rather than a navigation param — React Navigation params are part of
+  the serialisable state tree and a plaintext password does not belong there.
+  **Verified against the running backend** (mongo+redis+API up on :3000): buyer signup 201, exporter
+  signup with `entityType`+`address` 201, login → `loginToken`, verify-otp rejects a bad code,
+  resend-otp 200, forgot-password 200. **Wrong password and wrong portal return byte-identical
+  "Invalid credentials." (brief rule 1 holds).** iOS 976 / Android 971 modules bundle clean;
+  `expo-doctor` 20/20 — it caught a missing `expo-font` peer dep of `@expo/vector-icons` that would
+  have crashed outside Expo Go. ⚠️ Two smoke-test accounts (`appsmoke1/2@example.com`) were left in
+  the local dev DB. New deps: `@expo/vector-icons`, `expo-font`.
+- **2026-08-02** — **MOBILE APP SCAFFOLDED — `app/` created (Expo SDK 57, RN 0.86, React 19).**
+  `docs/auth-app-steps.md` Steps 1–4 built; **Steps 5–8 (the 17 auth/KYC screens) deliberately NOT
+  built — S1 needs owner sign-off first.** Structure: `src/{api,components,config,context,
+  navigation,screens,theme,utils}`. **Security layer:** `utils/secureStorage.js` wraps
+  `expo-secure-store` with `WHEN_UNLOCKED_THIS_DEVICE_ONLY` (**G1** — AsyncStorage is deliberately
+  NOT a dependency, so it cannot be reached for by reflex); `utils/logger.js` redacts by key
+  substring + scrubs JWT/Bearer/long-hex *values*, `debug`/`info` compile out via `__DEV__` (**G3**);
+  `config/env.js` refuses a non-HTTPS base URL unless `__DEV__` **and** loopback/RFC1918, paired with
+  iOS ATS `NSAllowsArbitraryLoads:false` + Android `usesCleartextTraffic:false` (**G6**).
+  `api/client.js` mirrors the web client but **single-flights the 401 refresh via a promise cleared
+  only in `.finally()`** — the backend revokes the whole token family on refresh-token reuse, so two
+  concurrent refreshes would sign the user out everywhere. `AuthContext` holds server-supplied
+  role/permissions **for rendering only** (**G9/G15**); no staff login and no approval/release
+  surface exist in the app at all (**web-only, server-enforced**).
+  **Deviations from `auth-app-steps.md` worth knowing:**
+  (1) 🔴 **Step 7's `Orders` (Bucket B) and `Quotations` (Bucket A1) tabs were NOT stubbed** —
+  `scope-guard.md` forbids scaffolding a bucketed item without explicit confirmation; that step's tab
+  list predates the buckets. Built tabs are Home · Search/Catalogue · Enquiries · Messages · Profile.
+  (2) Step 3 wanted `expo-constants` for env — done, but the base URL is the **backend root with no
+  `/api` prefix**: the web's `/api` is a Vite dev-proxy convention (`vite.config.js` rewrites it
+  away) and the app has no proxy. (3) Tabs are **label-only** — `@expo/vector-icons` is not bundled
+  in SDK 57 and adding a dep needs owner sign-off.
+  **Gotcha (security-relevant):** the first cut validated the base URL with `new URL()`. React
+  Native's `URL` is a partial shim whose **constructor never throws on malformed input** and whose
+  accessors are regex approximations that have changed between RN versions — unfit to decide whether
+  credentials may travel in cleartext. Replaced with an explicit scheme/authority parse that also
+  rejects credentials-in-URL; verified against 19 cases (`localhost.evil.com` and `172.32.x` both
+  correctly rejected). **Verified:** iOS + Android bundles clean (880 / 875 modules),
+  `expo-doctor` 20/20. New deps: `expo-secure-store`, `expo-local-authentication` (installed for
+  Step 6, not yet wired), `expo-constants`, `expo-build-properties`, `axios`,
+  `@react-navigation/{native,native-stack,bottom-tabs}`, `react-native-{safe-area-context,screens}`.
+- **2026-07-30** — **DESIGN (docs only): M1 app auth-screen prompt + two owner decisions recorded.**
+  New `design-plans/m1/app-auth-screens-prompt.md` — a self-contained prompt for the 8 launch/auth
+  mobile screens (splash, welcome/portal choice, login, OTP, forgot, reset, signup step 1, signup
+  step 2), carrying the §A21/§A22 hard rules a design tool would otherwise "improve" away: identical
+  "Invalid credentials" for wrong-portal, no portal selector on login, step-1→OTP→step-2, no
+  attempts-remaining counter, verified tick only, entity-type as cards. **Decision 1 — dark mode:
+  ❌ OUT for M1, light only** (owner). Recorded in `app-screens-design.md` §1.1, §10 item 2 and the
+  handover checklist, which all previously said "decide before design starts". **Decision 2 —
+  Direction B ("Brand Immersive", navy `#1A2E8F` full-bleed + white form sheets) selected** from the
+  four round-1 directions; a Round 2 block in the same file explores 3 variations of *how* the navy
+  is deployed (Navy Canopy · Full Immersion · Navy Arc). **Gotcha fixed:** `app-screens-design.md`
+  §1.1 listed the app primary as indigo `#4f46e5`, which web has **never** shipped — the live tokens
+  in `web/tailwind.config.js` are the **royal blue** family (`#2A4DE0` / `#2340C4` / navy `#1A2E8F`),
+  the client having moved the brand blue to royal. Designing to the brief alone would have produced
+  an app that didn't match web. Corrected, with a pointer to the config as the source of truth.
+  **Carried into Round 2 as a deliverable:** every variation must be stress-tested on a dense form
+  screen (exporter company profile), because the 8 auth screens are short and flatter a bold
+  treatment that the remaining 9 form-heavy screens will not.
 - **2026-08-02** — **M2 Catalogue · design briefs written** — `my-plans/m2/web-screens-design.md`
   (11 screens: public category browse / category listing / product detail / supplier profile,
   exporter my-products + add + edit with dynamic per-category fields, admin category manager +

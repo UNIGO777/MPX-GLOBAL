@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
+
+import { signupThroughOtp } from './helpers/signupFlow.js';
 import mongoose from 'mongoose';
 
 // Capture OTPs (M1 flow) + mock Cloudinary-backed storage (M2 uploads).
@@ -78,23 +80,19 @@ describe('M1 auth → M2 catalogue, end to end over real HTTP', () => {
     seq += 1;
     const mobileNo = `98${7000000 + seq}`;
     // --- M1: real signup + OTP exchange (no signAccessToken shortcut) ---------
-    const signup = await request(app).post('/auth/exporter/signup').send({
+    const signup = await signupThroughOtp(app, otpBox, {
       name: 'End ToEnd',
       email: `e2e_${Date.now()}@example.com`,
       mobile: { countryCode: '+91', number: mobileNo },
       password: 'longpassword1',
+      role: 'exporter',
       company: 'E2E Exports',
       country: 'IN',
       entityType: 'business',
     });
     expect(signup.status).toBe(201);
-    const code = otpBox.byId.get(`+91${mobileNo}`);
-    const verifyOtp = await request(app)
-      .post('/auth/verify-otp')
-      .send({ loginToken: signup.body.loginToken, code });
-    expect(verifyOtp.status).toBe(200);
-    const token = verifyOtp.body.accessToken;
-    const orgId = verifyOtp.body.user.orgId;
+    const token = signup.body.accessToken;
+    const orgId = signup.body.user.orgId;
 
     // --- M2: create (draft) → publish → public visibility ---------------------
     const created = await request(app)

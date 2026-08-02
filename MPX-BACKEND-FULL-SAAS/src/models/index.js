@@ -30,6 +30,7 @@ export { PayoutRequest } from './PayoutRequest.js';
 
 export { RefreshToken } from './RefreshToken.js';
 export { OtpChallenge } from './OtpChallenge.js';
+export { PendingSignup } from './PendingSignup.js';
 
 export { Notification } from './Notification.js';
 export { Ticket } from './Ticket.js';

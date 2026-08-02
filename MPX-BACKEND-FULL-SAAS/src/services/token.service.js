@@ -10,6 +10,13 @@ import { recordAudit } from './audit.service.js';
 
 const ACCESS_TYP = 'access';
 const LOGIN_PENDING_TYP = 'login_pending';
+const SIGNUP_PENDING_TYP = 'signup_pending';
+
+// A21 signup. Long enough to read an email, read an SMS and fill the company
+// step; short enough that an abandoned signup does not leave a usable handle
+// lying around. Kept equal to the PendingSignup TTL so the token and the record
+// it names can never outlive one another.
+export const SIGNUP_TOKEN_TTL_SECONDS = 60 * 60;
 
 // --- Access token (stateless JWT, 15 min) -------------------------------------
 
@@ -49,6 +56,33 @@ export function verifyLoginToken(token) {
     throw AppError.unauthorized('invalid login token', 'Login session expired. Please sign in again.');
   }
   if (payload.typ !== LOGIN_PENDING_TYP) throw AppError.unauthorized('wrong token type', 'Not authenticated.');
+  return payload;
+}
+
+// --- Signup-pending token: names an A21 PendingSignup while its two codes are
+// being proved. It is NOT a session, has no user behind it yet, and can access
+// nothing but the signup endpoints for that one pending record.
+
+export function signSignupToken(pendingSignup) {
+  return jwt.sign(
+    { sub: String(pendingSignup._id), typ: SIGNUP_PENDING_TYP },
+    env.JWT_ACCESS_SECRET,
+    { expiresIn: SIGNUP_TOKEN_TTL_SECONDS },
+  );
+}
+
+export function verifySignupToken(token) {
+  let payload;
+  try {
+    payload = jwt.verify(token, env.JWT_ACCESS_SECRET);
+  } catch {
+    throw AppError.unauthorized('invalid signup token', 'Signup session expired. Please start again.');
+  }
+  // Without this the type check would let an access or login token be presented
+  // here — they are signed with the same secret.
+  if (payload.typ !== SIGNUP_PENDING_TYP) {
+    throw AppError.unauthorized('wrong token type', 'Signup session expired. Please start again.');
+  }
   return payload;
 }
 

@@ -60,6 +60,15 @@ signup or login.
 - **Signup is two steps with OTP between them**, then an organisation step that either
   **claims** an existing Organisation or **creates** one. Signup does not create User +
   Organisation in a single call.
+- **Both the email AND the mobile are verified, with SEPARATE codes** (2026-08-03). Step 1
+  writes a short-lived **`PendingSignup`** — **no `User` and no `Organisation` exist** until
+  `POST /auth/signup/complete`, which refuses unless both channels are proved. This is not
+  cosmetic: `(email, role)` and `(mobile.e164, role)` are unique indexes, so creating the
+  account first let anyone permanently burn a stranger's address with no proof of ownership.
+  The two codes use **different OTP purposes** (`signup_email` / `signup_mobile`) because
+  `requestOtp` keeps one live challenge per (subject, purpose) — a shared purpose would make
+  each new code delete the other. 🚫 Organisation **claim** is still not built; complete always
+  creates.
 - **One company = one Organisation.** A claimed Organisation **carries its verification over** —
   no second KYC, one tick, one public profile. An Organisation may be buyer-side,
   exporter-side, or both, so `Organisation.type` is **not** the buyer/exporter discriminator.

@@ -1,7 +1,17 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
+
+import { signupThroughOtp } from './helpers/signupFlow.js';
 import mongoose from 'mongoose';
 import Redis from 'ioredis';
+
+// A21 signup needs the real codes for BOTH channels.
+const { otpBox } = vi.hoisted(() => ({ otpBox: { byId: new Map() } }));
+vi.mock('../src/services/otp.sender.js', () => ({
+  sendOtp: async ({ identifier, code }) => {
+    otpBox.byId.set(identifier, code);
+  },
+}));
 
 import { createApp } from '../src/app.js';
 import '../src/models/index.js';
@@ -25,12 +35,14 @@ const buyerPayload = ({ email, number }) => ({
   password: 'longpassword1',
   company: 'Buyer Co',
   country: 'IN',
+  role: 'buyer',
 });
 const exporterPayload = ({ email, number }) => ({
   ...buyerPayload({ email, number }),
   name: 'Exporter',
   company: 'Exp Co',
   entityType: 'business',
+  role: 'exporter',
 });
 
 async function makeStaffAccount(role = 'superadmin') {
@@ -69,8 +81,8 @@ const staffLogin = (body) => request(app).post('/auth/staff/login').send(body);
 describe('A21 · login portals', () => {
   it('a dual account: the portal selects which account logs in', async () => {
     const email = `dual_${uniq()}@example.com`;
-    await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000101' }));
-    await request(app).post('/auth/exporter/signup').send(exporterPayload({ email, number: '9820000102' }));
+    await signupThroughOtp(app, otpBox, buyerPayload({ email, number: '9810000101' }));
+    await signupThroughOtp(app, otpBox, exporterPayload({ email, number: '9820000102' }));
 
     expect((await login({ identifier: email, password: 'longpassword1', portal: 'buyer' })).status).toBe(200);
     expect((await login({ identifier: email, password: 'longpassword1', portal: 'exporter' })).status).toBe(200);
@@ -78,7 +90,7 @@ describe('A21 · login portals', () => {
 
   it('wrong portal returns the SAME "Invalid credentials" as a wrong password (no oracle)', async () => {
     const email = `buyeronly_${uniq()}@example.com`;
-    await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000111' }));
+    await signupThroughOtp(app, otpBox, buyerPayload({ email, number: '9810000111' }));
 
     expect((await login({ identifier: email, password: 'longpassword1', portal: 'buyer' })).status).toBe(200);
 
@@ -93,7 +105,7 @@ describe('A21 · login portals', () => {
 
   it('a missing portal on /auth/login is a 400 validation error', async () => {
     const email = `np_${uniq()}@example.com`;
-    await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000121' }));
+    await signupThroughOtp(app, otpBox, buyerPayload({ email, number: '9810000121' }));
     expect((await login({ identifier: email, password: 'longpassword1' })).status).toBe(400);
   });
 
@@ -106,14 +118,14 @@ describe('A21 · login portals', () => {
 
   it('a buyer/exporter cannot use the staff login endpoint', async () => {
     const email = `b_${uniq()}@example.com`;
-    await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000131' }));
+    await signupThroughOtp(app, otpBox, buyerPayload({ email, number: '9810000131' }));
     expect((await staffLogin({ identifier: email, password: 'longpassword1' })).status).toBe(401);
   });
 
   it('the OTP budget is portal-scoped: a buyer burning it does not lock the exporter on the same email', async () => {
     const email = `shared_${uniq()}@example.com`;
-    await request(app).post('/auth/buyer/signup').send(buyerPayload({ email, number: '9810000201' }));
-    await request(app).post('/auth/exporter/signup').send(exporterPayload({ email, number: '9820000202' }));
+    await signupThroughOtp(app, otpBox, buyerPayload({ email, number: '9810000201' }));
+    await signupThroughOtp(app, otpBox, exporterPayload({ email, number: '9820000202' }));
 
     // otpLimiter is 5 / 10min. Hit the buyer portal 6× → the 6th is 429 (budget spent).
     let last;

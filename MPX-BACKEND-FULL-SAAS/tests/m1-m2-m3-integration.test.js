@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
+
+import { signupThroughOtp } from './helpers/signupFlow.js';
 import mongoose from 'mongoose';
 import Redis from 'ioredis';
 
@@ -68,26 +70,29 @@ async function seedTree() {
   });
 }
 
-// Real M1 signup + OTP exchange — no token shortcuts.
+// Real A21 signup — start, verify BOTH channels, then complete. No shortcuts:
+// the account does not exist until the last call.
 async function signupAndLogin(role, extra = {}) {
   seq += 1;
   const number = `9${(700000000 + seq).toString()}`;
-  const body = {
+  // A21 signup is FOUR calls (start + two verifies + complete), so a journey
+  // that onboards several parties now spends the IP-keyed auth budget within a
+  // single test rather than across the file. Flush per signup — the same trade
+  // this file already makes: the limiters are proven in auth.test.js, and here
+  // they must not mask the behaviour under test.
+  await redis.flushdb();
+  const done = await signupThroughOtp(app, otpBox, {
     name: `${role} User`,
     email: `int_${Date.now()}_${seq}@example.com`,
     mobile: { countryCode: '+91', number },
     password: 'longpassword1',
+    role,
     company: extra.company ?? `${role} Company ${seq}`,
     country: 'IN',
     ...(role === 'exporter' ? { entityType: 'business' } : {}),
-  };
-  const signup = await request(app).post(`/auth/${role}/signup`).send(body);
-  expect(signup.status).toBe(201);
-
-  const code = otpBox.byId.get(`+91${number}`);
-  const verify = await request(app).post('/auth/verify-otp').send({ loginToken: signup.body.loginToken, code });
-  expect(verify.status).toBe(200);
-  return { token: verify.body.accessToken, user: verify.body.user, orgId: verify.body.user.orgId };
+  });
+  expect(done.status).toBe(201);
+  return { token: done.body.accessToken, user: done.body.user, orgId: done.body.user.orgId };
 }
 
 async function makeStaff(role, permissions = []) {

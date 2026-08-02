@@ -6,17 +6,23 @@ import { apiError } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
-import { CountrySelect } from '../../components/ui/CountrySelect.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { MobileInput } from '../../components/ui/MobileInput.jsx';
 import { PasswordInput } from '../../components/ui/PasswordInput.jsx';
 
 /**
- * Buyer signup — one page. Mockup: mpx_global_buyer_registration_states.
- * Payload mirrors auth.validators.js `buyerSignup` exactly: {name, email,
- * mobile{countryCode,number}, password, company, country}. A 201 returns
- * {user, loginToken, method} and NO session (A21 §4a) — so success goes
- * straight to /otp, same screen the logins use.
+ * Buyer signup · STEP 1 — identity only.
+ *
+ * A21 splits signup: this form takes name, email, phone and password and
+ * nothing about the company. The company moves to step 2 (`SignupCompany`),
+ * behind verification of BOTH channels.
+ *
+ * That ordering is the security fix, not a layout preference: signup used to
+ * create the User and the Organisation here, before anyone proved they owned
+ * the email or the phone. Because `(email, role)` and `(mobile, role)` are
+ * unique, that let a stranger's address be permanently taken. Now this call
+ * creates nothing — it only starts a short-lived pending signup and sends two
+ * codes.
  */
 
 /** `fields: [{field:'body.email', message}]` → `{email: message, ...}`. */
@@ -38,8 +44,6 @@ export function BuyerSignup() {
     mobile: { countryCode: '+91', number: '' },
     password: '',
     confirm: '',
-    company: '',
-    country: '',
   });
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState(null);
@@ -59,8 +63,6 @@ export function BuyerSignup() {
     if (!form.mobile.number.trim()) fe.mobile = 'Enter your mobile number.';
     if (form.password.length < 8) fe.password = 'At least 8 characters.';
     if (form.confirm !== form.password) fe.confirm = "Passwords don't match.";
-    if (!form.company.trim()) fe.company = 'Enter your company name.';
-    if (!form.country) fe.country = 'Choose your country.';
     return fe;
   };
 
@@ -75,22 +77,22 @@ export function BuyerSignup() {
     }
     setLoading(true);
     try {
-      const { loginToken, method } = await authApi.buyerSignup({
+      const started = await authApi.signupStart({
         name: form.name.trim(),
         email: form.email.trim(),
         mobile: { countryCode: form.mobile.countryCode, number: form.mobile.number.replace(/[\s-]/g, '') },
         password: form.password,
-        company: form.company.trim(),
-        country: form.country,
+        role: 'buyer',
       });
-      navigate('/otp', {
+      // `email` / `mobile` come back MASKED — the verify screen shows them but
+      // never holds the raw address.
+      navigate('/signup/verify', {
         state: {
-          loginToken,
-          method,
-          identifier: form.email.trim(),
-          backTo: '/signup/buyer',
-          backLabel: 'Back to signup',
-          notice: "You're in. One last step — verify the code we just sent you.",
+          signupToken: started.signupToken,
+          email: started.email,
+          mobile: started.mobile,
+          role: 'buyer',
+          signupPath: '/signup/buyer',
         },
       });
     } catch (err) {
@@ -130,8 +132,8 @@ export function BuyerSignup() {
           </Alert>
         )}
 
-        {/* Single column, mockup field order: name · email · mobile · password
-            · confirm · company · country. */}
+        {/* A21 step 1 is identity ONLY — name · email · mobile · password ·
+            confirm. Company and country moved to step 2, behind verification. */}
         <Input
           label="Full name"
           autoComplete="name"
@@ -177,25 +179,14 @@ export function BuyerSignup() {
           error={fieldErrors.confirm}
           disabled={loading}
         />
-        <Input
-          label="Company name"
-          autoComplete="organization"
-          placeholder="Global Trade LLC"
-          value={form.company}
-          onChange={set('company')}
-          error={fieldErrors.company}
-          disabled={loading}
-        />
-        <CountrySelect
-          value={form.country}
-          onChange={set('country')}
-          error={fieldErrors.country}
-          disabled={loading}
-        />
-
         <Button type="submit" fullWidth loading={loading} className="!mt-8">
-          Create account
+          Continue
         </Button>
+
+        <p className="text-center text-xs text-muted">
+          We&rsquo;ll send a code to your email and another to your phone. Both keep your account
+          yours.
+        </p>
 
         <p className="text-center text-sm text-muted">
           Already have an account?{' '}

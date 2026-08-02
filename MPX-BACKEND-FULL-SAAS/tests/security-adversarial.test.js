@@ -7,6 +7,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
+
+import { signupThroughOtp } from './helpers/signupFlow.js';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 
@@ -15,6 +17,14 @@ vi.mock('../src/services/image.storage.service.js', async (importOriginal) => ({
   verifyImageFile: vi.fn(),
   uploadPublicImage: vi.fn(),
   deletePublicImage: vi.fn(async () => {}),
+}));
+
+// A21 signup needs the real codes for BOTH channels.
+const { otpBox } = vi.hoisted(() => ({ otpBox: { byId: new Map() } }));
+vi.mock('../src/services/otp.sender.js', () => ({
+  sendOtp: async ({ identifier, code }) => {
+    otpBox.byId.set(identifier, code);
+  },
 }));
 
 const { createApp } = await import('../src/app.js');
@@ -281,14 +291,29 @@ describe('ATTACK · token forgery and confusion', () => {
 describe('ATTACK · privilege escalation', () => {
   it('a self-declared role in the signup body does not grant it', async () => {
     seq += 1;
-    const res = await request(app).post('/auth/buyer/signup').send({
+    const email = `sneaky_${Date.now()}@example.com`;
+    const base = {
       name: 'Sneaky',
-      email: `sneaky_${Date.now()}@example.com`,
+      email,
       mobile: { countryCode: '+91', number: `72${1000000 + seq}` },
       password: 'longpassword1',
+    };
+
+    // A21 made `role` a real signup field — so it is now constrained to the two
+    // party roles at the boundary. Claiming a staff role fails CLOSED at
+    // validation rather than being silently downgraded.
+    const escalate = await request(app)
+      .post('/auth/signup/start')
+      .send({ ...base, role: 'superadmin' });
+    expect(escalate.status).toBe(400);
+    expect(await User.countDocuments({ email })).toBe(0);
+
+    // And a permissions array in the body is still stripped, not honoured.
+    const res = await signupThroughOtp(app, otpBox, {
+      ...base,
+      role: 'buyer',
       company: 'Sneaky Co',
       country: 'AU',
-      role: 'superadmin',
       permissions: ['user:read', 'category:manage'],
     });
     expect(res.status).toBe(201);

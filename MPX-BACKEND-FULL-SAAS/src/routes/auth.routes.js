@@ -7,12 +7,29 @@ import { publicRoute } from '../config/routeGuard.js';
 import { authLimiter, otpLimiter, staffOtpLimiter, generalLimiter } from '../middleware/rateLimit.js';
 import * as ctrl from '../controllers/auth.controller.js';
 import * as V from '../validators/auth.validators.js';
+import * as signupCtrl from '../controllers/signup.controller.js';
+import * as SV from '../validators/signup.validators.js';
 
 export const authRouter = Router();
 
-// Self-registration (Phase 1: both roles self-register; no gate). Public.
-authRouter.post('/auth/buyer/signup', publicRoute, authLimiter, validate(V.buyerSignup), ctrl.buyerSignup);
-authRouter.post('/auth/exporter/signup', publicRoute, authLimiter, validate(V.exporterSignup), ctrl.exporterSignup);
+// --- A21 · self-registration, both channels verified before an account exists --
+//
+// 🔴 The old `/auth/buyer/signup` and `/auth/exporter/signup` are GONE, not
+// deprecated. They wrote the User and the Organisation before any verification,
+// which let anyone permanently burn a stranger's email or mobile (both are
+// uniquely indexed per role) with no proof of ownership. Leaving them mounted
+// "for compatibility" would have left that hole fully open, so they were removed
+// in the same change that replaced them.
+//
+// Step 1 holds the details in a short-lived PendingSignup and sends TWO codes;
+// nothing reaches `users` / `organisations` until /complete, and /complete
+// refuses unless BOTH channels are verified.
+authRouter.post('/auth/signup/start', publicRoute, otpLimiter, validate(SV.startSignup), signupCtrl.start);
+// Verify is token-identified and order-agnostic — the screens run email then
+// mobile, but the API deliberately does not encode that order.
+authRouter.post('/auth/signup/verify', publicRoute, authLimiter, validate(SV.verifySignup), signupCtrl.verify);
+authRouter.post('/auth/signup/resend', publicRoute, otpLimiter, validate(SV.resendSignup), signupCtrl.resend);
+authRouter.post('/auth/signup/complete', publicRoute, authLimiter, validate(SV.completeSignup), signupCtrl.complete);
 
 // Login → second factor → tokens. Public (identity is being established here).
 // A21: buyer/exporter use /auth/login with a `portal`; staff use /auth/staff/login

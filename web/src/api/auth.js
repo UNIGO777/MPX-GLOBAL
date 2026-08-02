@@ -6,9 +6,25 @@ import { apiClient } from './client.js';
  * do (A21: a staff email is exclusive).
  */
 export const authApi = {
-  // --- signup (A21 §4a: returns { user, loginToken, method } — NO session) ---
-  buyerSignup: (payload) => apiClient.post('/auth/buyer/signup', payload).then((r) => r.data),
-  exporterSignup: (payload) => apiClient.post('/auth/exporter/signup', payload).then((r) => r.data),
+  // --- signup (A21: two steps, BOTH channels verified before an account exists)
+  //
+  // The old one-shot `/auth/buyer/signup` is gone. It created the account before
+  // anyone proved they owned the email or the phone, which let a stranger's
+  // address be permanently taken. Nothing is created now until `signupComplete`.
+  //
+  // start → { signupToken, email, mobile (both MASKED), emailVerified, mobileVerified }
+  signupStart: ({ name, email, mobile, password, role }) =>
+    apiClient.post('/auth/signup/start', { name, email, mobile, password, role }).then((r) => r.data),
+  // Order-agnostic on the server; the screens run email then mobile.
+  signupVerify: ({ signupToken, channel, code }) =>
+    apiClient.post('/auth/signup/verify', { signupToken, channel, code }).then((r) => r.data),
+  signupResend: ({ signupToken, channel }) =>
+    apiClient.post('/auth/signup/resend', { signupToken, channel }).then((r) => r.data),
+  // The only call that creates anything — and the only one that returns a session.
+  signupComplete: ({ signupToken, company, country, entityType, address }) =>
+    apiClient
+      .post('/auth/signup/complete', { signupToken, company, country, entityType, address })
+      .then((r) => r.data),
 
   // --- login → OTP → tokens -------------------------------------------------
   login: ({ identifier, password, portal }) =>

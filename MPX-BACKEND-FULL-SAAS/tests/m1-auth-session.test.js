@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
+
+import { signupThroughOtp } from './helpers/signupFlow.js';
 import mongoose from 'mongoose';
 import Redis from 'ioredis';
 
@@ -49,10 +51,12 @@ function makeBuyer() {
   };
 }
 const e164 = (b) => `+91${b.mobile.number}`;
+// A21: signup is start → verify both channels → complete.
+const signupBuyer = (b) => signupThroughOtp(app, otpBox, { ...b, role: 'buyer' });
 
 /** signup → login → verify-otp. Returns { accessToken, refreshToken, user }. */
 async function signupAndLogin(b) {
-  await request(app).post('/auth/buyer/signup').send(b);
+  await signupBuyer(b);
   const login = await request(app)
     .post('/auth/login')
     .send({ identifier: b.email, password: b.password, portal: 'buyer' });
@@ -324,7 +328,7 @@ describe('POST /auth/change-password', () => {
 describe('POST /auth/resend-otp', () => {
   it('issues a NEW code and retires the previous one', async () => {
     const b = makeBuyer();
-    await request(app).post('/auth/buyer/signup').send(b);
+    await signupBuyer(b);
     otpBox.byId.clear();
 
     const login = await request(app)
@@ -364,7 +368,7 @@ describe('POST /auth/resend-otp', () => {
 
   it('cannot be used to reset a locked OTP challenge (the A3 durable lock)', async () => {
     const b = makeBuyer();
-    await request(app).post('/auth/buyer/signup').send(b);
+    await signupBuyer(b);
     const login = await request(app)
       .post('/auth/login')
       .send({ identifier: b.email, password: b.password, portal: 'buyer' });
@@ -464,7 +468,7 @@ describe('staff password reset (A21 — the staff portal has its own pair)', () 
 
   it('🔴 the two portals do not cross: a buyer cannot reset through the staff pair', async () => {
     const b = makeBuyer();
-    await request(app).post('/auth/buyer/signup').send(b);
+    await signupBuyer(b);
     otpBox.byId.clear();
 
     // The staff endpoint must not issue a code for a party account…

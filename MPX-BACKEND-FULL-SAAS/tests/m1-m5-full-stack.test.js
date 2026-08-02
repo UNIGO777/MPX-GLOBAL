@@ -8,11 +8,21 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
+
+import { signupThroughOtp } from './helpers/signupFlow.js';
 import mongoose from 'mongoose';
 
 vi.mock('../src/services/push.client.js', () => ({
   isPushConfigured: () => false,
   sendToTokens: vi.fn(async () => ({ successCount: 0, deadTokens: [] })),
+}));
+
+// A21 signup needs the real codes for BOTH channels.
+const { otpBox } = vi.hoisted(() => ({ otpBox: { byId: new Map() } }));
+vi.mock('../src/services/otp.sender.js', () => ({
+  sendOtp: async ({ identifier, code }) => {
+    otpBox.byId.set(identifier, code);
+  },
 }));
 
 const { createApp } = await import('../src/app.js');
@@ -403,11 +413,12 @@ describe('cross-module counts stay consistent with each other', () => {
     // directly, so without this there is no `auth.signup` row to find and the
     // coverage claim would be checking an action the test never performed.
     seq += 1;
-    await request(app).post('/auth/buyer/signup').send({
+    await signupThroughOtp(app, otpBox, {
       name: 'Fresh Buyer',
       email: `fresh_${Date.now()}@example.com`,
       mobile: { countryCode: '+91', number: `69${2000000 + seq}` },
       password: 'longpassword1',
+      role: 'buyer',
       company: `Fresh Imports ${seq}`,
       country: 'AU',
     });

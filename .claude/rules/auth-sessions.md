@@ -36,6 +36,19 @@ hashed. Rate limit per mobile, per email and per IP. Never return an OTP in a re
 never log one, never send one to an address supplied in the request rather than the one on
 the account.
 
+**Signup verifies BOTH channels (2026-08-03).** `POST /auth/signup/start` sends one code to the
+email and another to the mobile, and no account exists until both pass. Two rules make that work
+and must not be "simplified":
+
+- **They are separate OTP purposes** — `signup_email` and `signup_mobile`. `requestOtp()` keeps
+  only one live challenge per `(subject, purpose)`, so a single shared `signup` purpose would make
+  each new code silently delete the other and the flow could never complete. Separate purposes
+  also give each channel its own A3 lock — failing the email code must not lock the phone.
+- **The subject filter is built explicitly, never from an optional field.** Mongoose strips
+  `undefined` from a query, so `{ userId: undefined, purpose }` collapses to `{ purpose }` — which
+  matches every subject's challenge and would let one person's code verify another's account.
+  `otp.service.js` throws when neither a user nor a pendingSignup is supplied; keep it that way.
+
 ## Super Admin 2FA (A4)
 
 TOTP required for the Super Admin at login. Backup codes stored hashed, single use.

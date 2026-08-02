@@ -45,7 +45,11 @@ that, not around a file browser.
 **Match the web tokens** — same palette, same status colours, same type ramp adapted to mobile sizes.
 A buyer who signs up on web and logs in on the app should not feel they changed products.
 
-- `primary` (indigo `#4f46e5` — **starter value, brand not yet confirmed**) — actions, active tab
+- `primary` (**royal blue `#2A4DE0`**) — actions, active tab. Hover `#2340C4`; **brand navy
+  `#1A2E8F`** for hero panels; `#EAEEFF` tint for canvas/selected. *(Corrected 2026-07-30 — this
+  brief previously said indigo `#4f46e5`, which was never what web shipped. The live tokens are in
+  `web/tailwind.config.js`; the client moved the brand blue to royal. Token **names** are the
+  contract — if the owner confirms a different brand, swap the hex there and both surfaces follow.)*
 - `ink` (slate) — text
 - `surface` / `surface.subtle` / `surface.border` — backgrounds, dividers
 - `success` — verified tick, approvals · `warning` — in review · `danger` — rejections, destructive
@@ -67,8 +71,9 @@ phone pad, numeric for codes.
 **Two device sizes minimum:** a small phone (~375pt) and a large phone (~430pt). Nothing clipped,
 nothing unreachable behind the keyboard.
 
-**Dark mode: pick one and commit.** Either fully support it or lock the app to light. A half-done
-dark mode is worse than none. Decide before visual design starts — it doubles the artwork.
+**Dark mode: ✅ DECIDED — light mode only** (owner, 2026-07-30). The app is locked to light for M1.
+Do not design dark variants, a theme toggle, or reserve layout space for one. *(The rule this
+settles: a half-done dark mode is worse than none, and supporting it doubles the artwork.)*
 
 **Offline is a state you must draw.** Mobile networks drop. Every screen that loads data needs an
 offline message with a retry, never an endless spinner.
@@ -807,7 +812,7 @@ change password). Native back gestures must work.
 - [ ] Keyboard never covers a focused field or its primary button
 - [ ] Safe areas correct on notched devices, both platforms
 - [ ] Checked on a small (~375pt) and a large (~430pt) phone
-- [ ] Dark mode fully done or explicitly out of scope — not half
+- [x] Dark mode — **out of scope for M1, light only** (decided 2026-07-30); no dark variants drawn
 - [ ] Touch targets ≥ 44px; no hover-dependent affordances
 - [ ] Any control shown but not functional is visibly "coming soon"
 
@@ -846,10 +851,12 @@ If you want the business-details fields captured, they belong on the **company-p
 
 ### Still open
 
-1. **Brand palette** — the tokens are professional placeholders. Confirm real brand colours before
-   final visual design, on both surfaces at once.
-2. **Dark mode — in or out for M1?** This roughly doubles the artwork if in. Needs answering before
-   design starts, not after.
+1. **Brand palette** — the app now states the **same royal-blue tokens web actually ships**
+   (`web/tailwind.config.js`, corrected here 2026-07-30). Those are still flagged in the web config
+   as "starter values — confirm the final brand palette with the owner before launch", so the open
+   part is only that final confirmation, and it applies to **both surfaces at once**.
+2. ✅ ~~**Dark mode — in or out for M1?**~~ — **CLOSED 2026-07-30: light mode only.** Out of scope
+   for M1; no dark variants, no theme toggle. (§1.1 updated.)
 3. **Placeholder tabs — show disabled, or hide until built?** (Recommendation: hide.)
 4. **Biometric unlock (screen 17) — in or out?** It isn't named in `m1.md` §7. It's a real
    improvement on a phone and cheap to design, but it is scope nobody has asked for.

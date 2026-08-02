@@ -25,25 +25,10 @@ function authUserView(user) {
   };
 }
 
-// A21 §4a: signup issues an OTP and returns a login-pending token — NOT a session.
-// A curated `user` view is returned for convenience; access/refresh tokens are
-// only issued after /auth/verify-otp succeeds.
-function signupResponse(res, { user, loginToken, method }) {
-  res.status(201).json({
-    user: authUserView(user),
-    loginToken,
-    method,
-    message: 'An OTP has been sent. Verify it to activate your session.',
-  });
-}
-
-export async function buyerSignup(req, res) {
-  signupResponse(res, await authService.registerBuyer({ ...req.body, meta: clientMeta(req) }));
-}
-
-export async function exporterSignup(req, res) {
-  signupResponse(res, await authService.registerExporter({ ...req.body, meta: clientMeta(req) }));
-}
+// Self-registration moved to `signup.controller.js` (A21, 2026-08-03): signup is
+// now two steps with BOTH the email and the mobile verified before any account
+// exists. The old single-call handlers were removed rather than deprecated —
+// see the note in auth.service.js for why leaving them mounted was not an option.
 
 export async function createEmployee(req, res) {
   const user = await authService.createEmployee({ actor: req.user, ...req.body, meta: clientMeta(req) });
