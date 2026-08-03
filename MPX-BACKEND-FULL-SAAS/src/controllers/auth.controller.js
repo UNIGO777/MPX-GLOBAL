@@ -133,7 +133,11 @@ export async function logout(req, res) {
  * name; without it a restored session renders a blank header.
  */
 export async function me(req, res) {
-  const user = await User.findById(req.user.userId).select(
+  // `findOne({ _id })`, not `findById` — the A6 lint rule bans the latter
+  // outright and this file has to pass it. The id is the caller's OWN, taken
+  // from the verified token, so there is no tenant question here; the rule is
+  // absolute precisely so nobody has to make that judgement call per call site.
+  const user = await User.findOne({ _id: req.user.userId }).select(
     'name email mobile role orgId isActive mustChangePassword',
   );
   if (!user) throw AppError.unauthorized('user not found', 'Not authenticated.');

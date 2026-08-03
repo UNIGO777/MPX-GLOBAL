@@ -5,6 +5,7 @@ import { connectDatabase, closeDatabase } from './config/database.js';
 import './models/index.js'; // register every model with mongoose
 import { schedulePurgeJob } from './jobs/purgeBlockedProducts.js';
 import { attachSocket, attachRedisAdapter } from './realtime/socket.js';
+import { isCloudinaryConfigured } from './config/cloudinary.js';
 
 // Connect to MongoDB before accepting traffic — a payments-adjacent service must
 // not serve requests without its database.
@@ -13,6 +14,31 @@ try {
 } catch (err) {
   logger.fatal({ err: { name: err.name, message: err.message } }, 'could not connect to mongodb; exiting');
   process.exit(1);
+}
+
+/**
+ * Storage has to be checked at BOOT, not at first upload.
+ *
+ * Without this the server looks perfectly healthy and the missing configuration
+ * only surfaces when a real user is standing in the KYC flow with their PAN card
+ * photographed — the worst possible moment to discover a deployment mistake, and
+ * one that reads to them as "this app is broken".
+ *
+ * Production REFUSES to start: KYC upload is a core path, and a production box
+ * that cannot store a document should never take traffic. Dev only warns, because
+ * most local work never touches the upload path and requiring keys would make the
+ * project unclonable.
+ */
+if (!isCloudinaryConfigured()) {
+  if (env.NODE_ENV === 'production') {
+    logger.fatal(
+      'CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET are not set — KYC and image uploads cannot work; exiting',
+    );
+    process.exit(1);
+  }
+  logger.warn(
+    'Cloudinary is not configured — KYC and image uploads will fail with 503 until CLOUDINARY_* are set in .env',
+  );
 }
 
 const app = createApp();

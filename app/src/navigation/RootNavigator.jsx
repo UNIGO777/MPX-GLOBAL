@@ -4,8 +4,7 @@ import { useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { SplashScreen } from '../screens/auth/SplashScreen.jsx';
 import { AuthNavigator } from './AuthNavigator.jsx';
-import { BuyerNavigator } from './BuyerNavigator.jsx';
-import { ExporterNavigator } from './ExporterNavigator.jsx';
+import { AppStack } from './AppStack.jsx';
 import { UnsupportedRoleScreen } from './UnsupportedRoleScreen.jsx';
 import { getLinking } from './linking.js';
 import { navigationTheme } from './navigationTheme.js';
@@ -42,11 +41,11 @@ export function RootNavigator() {
     <NavigationContainer theme={navigationTheme} linking={linking}>
       {!isAuthenticated ? (
         <AuthNavigator />
-      ) : role === 'buyer' ? (
-        <BuyerNavigator />
-      ) : role === 'exporter' ? (
-        <ExporterNavigator />
-      ) : (
+      ) : role === 'buyer' || role === 'exporter' ? (
+          // Verification lives in a stack ABOVE the role's tabs, so it can
+          // be pushed from the post-signup nudge or from Profile.
+          <AppStack role={role} />
+        ) : (
         <UnsupportedRoleScreen />
       )}
     </NavigationContainer>

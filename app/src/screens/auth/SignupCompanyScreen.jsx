@@ -13,6 +13,7 @@ import { colors, spacing, typography } from '../../theme/index.js';
 import { toAppError } from '../../utils/errors.js';
 import { collectErrors, validateCompany, validateCountry } from '../../utils/validation.js';
 import { signupDraft } from './signupDraft.js';
+import { postSignupPrompt } from '../kyc/postSignupPrompt.js';
 
 /**
  * Screen 8 · Signup step 2 — your company. Submits the whole signup.
@@ -52,6 +53,29 @@ export function SignupCompanyScreen({ navigation, route }) {
   const [submitting, setSubmitting] = useState(false);
 
   const setAddressField = (key) => (value) => setAddress((a) => ({ ...a, [key]: value }));
+
+  /**
+   * Clear a field's error the moment it is edited.
+   *
+   * Found on-device (2026-08-03): after a failed submit, filling the field left
+   * the red border and "Enter your company name." sitting under a field that now
+   * HAD a company name. An error that contradicts what the user just typed reads
+   * as the form being broken, so it has to go as soon as the input changes —
+   * validation still re-runs on submit.
+   */
+  const clearError = (key) => setErrors((e) => (e[key] ? { ...e, [key]: null } : e));
+  const onCompanyChange = (value) => {
+    setCompany(value);
+    clearError('company');
+  };
+  const onCountryChange = (value) => {
+    setCountry(value);
+    clearError('country');
+  };
+  const onEntityTypeChange = (value) => {
+    setEntityType(value);
+    clearError('entityType');
+  };
 
   /** Drops empty optional fields — the server strips unknown keys but not blanks. */
   const buildAddress = () => {
@@ -110,6 +134,11 @@ export function SignupCompanyScreen({ navigation, route }) {
       // The token has been spent; nothing about the signup should outlive it.
       signupDraft.clear();
 
+      // Ask the signed-in shell to show the verification nudge ONCE. It cannot
+      // be a navigate() from here: completeSignIn swaps the whole navigator and
+      // unmounts this screen.
+      postSignupPrompt.arm();
+
       // AuthContext flips isAuthenticated and RootNavigator takes over.
       await completeSignIn(result);
     } catch (error) {
@@ -142,7 +171,7 @@ export function SignupCompanyScreen({ navigation, route }) {
           label="Company name"
           leftIcon="business-outline"
           value={company}
-          onChangeText={setCompany}
+          onChangeText={onCompanyChange}
           placeholder="Registered business name"
           error={errors.company}
           autoCapitalize="words"
@@ -153,7 +182,7 @@ export function SignupCompanyScreen({ navigation, route }) {
         <CountryPicker
           label="Country"
           value={country}
-          onChange={setCountry}
+          onChange={onCountryChange}
           error={errors.country}
           disabled={submitting}
           required
@@ -176,7 +205,7 @@ export function SignupCompanyScreen({ navigation, route }) {
                   title="Business"
                   description="A registered company, firm or LLP"
                   selected={entityType === 'business'}
-                  onPress={() => setEntityType('business')}
+                  onPress={() => onEntityTypeChange('business')}
                   disabled={submitting}
                 />
                 <RadioCard
@@ -184,7 +213,7 @@ export function SignupCompanyScreen({ navigation, route }) {
                   title="Individual"
                   description="A sole proprietor trading in your own name"
                   selected={entityType === 'individual'}
-                  onPress={() => setEntityType('individual')}
+                  onPress={() => onEntityTypeChange('individual')}
                   disabled={submitting}
                 />
               </View>

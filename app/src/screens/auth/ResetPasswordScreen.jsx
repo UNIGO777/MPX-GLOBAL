@@ -168,6 +168,7 @@ export function ResetPasswordScreen({ navigation, route }) {
           leftIcon="lock-closed-outline"
           value={confirm}
           onChangeText={setConfirm}
+          placeholder="Re-enter your new password"
           secureTextEntry
           error={fieldErrors.confirm}
           autoCapitalize="none"
