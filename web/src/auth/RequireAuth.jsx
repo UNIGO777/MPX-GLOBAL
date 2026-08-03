@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from './AuthContext.jsx';
+import { RestoringSession } from './RestoringSession.jsx';
 
 /**
  * Route gate — UX only, never enforcement (the server re-checks every call).
@@ -11,8 +12,12 @@ import { useAuth } from './AuthContext.jsx';
  *   except that screen itself (mirrors the backend's authorize gate).
  */
 export function RequireAuth({ signin = '/signin' }) {
-  const { user } = useAuth();
+  const { user, restoring } = useAuth();
   const location = useLocation();
+
+  // Wait for the silent refresh to resolve. Redirecting during it would bounce
+  // a valid session to sign-in on every page load (A2).
+  if (restoring) return <RestoringSession />;
 
   if (!user) {
     return <Navigate to={signin} replace state={{ from: location.pathname }} />;

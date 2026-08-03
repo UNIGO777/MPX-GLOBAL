@@ -54,8 +54,31 @@ export function apiError(err, fallback = 'Something went wrong. Please try again
   const body = err?.response?.data?.error;
   return {
     message: body?.message ?? fallback,
+    // Stable discriminator (server's ERROR_CODES) for the few states the UI must
+    // react to. Branch on THIS, never on the wording of `message`.
+    code: body?.code ?? null,
     requestId: body?.requestId ?? null,
     fields: body?.fields ?? [],
     status: err?.response?.status ?? null,
   };
+}
+
+/** Mirror of the server's src/utils/errorCodes.js — keep the two in step. */
+export const ERROR_CODES = {
+  OTP_LOCKED: 'OTP_LOCKED',
+  LOGIN_SESSION_EXPIRED: 'LOGIN_SESSION_EXPIRED',
+  SIGNUP_SESSION_EXPIRED: 'SIGNUP_SESSION_EXPIRED',
+  REFRESH_TOKEN_MISSING: 'REFRESH_TOKEN_MISSING',
+  SESSION_EXPIRED: 'SESSION_EXPIRED',
+};
+
+/**
+ * True when an error is `code`, tolerating a server that predates the code field
+ * by falling back to the legacy prose match. The fallback is a migration
+ * shim — delete it once every environment returns codes.
+ */
+export function isErrorCode(err, code, legacyPattern) {
+  const { code: actual, message } = apiError(err, '');
+  if (actual) return actual === code;
+  return legacyPattern ? legacyPattern.test(message ?? '') : false;
 }

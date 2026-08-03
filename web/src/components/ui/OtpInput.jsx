@@ -59,11 +59,12 @@ export function OtpInput({ length = 6, value, onChange, onComplete, disabled, er
           onKeyDown={(e) => handleKeyDown(i, e)}
           onFocus={(e) => e.target.select()}
           className={[
-            // Mockup boxes are 56×56; the ACTIVE box gets the strong treatment
-            // (2px accent border + ring + offset) — the one place an offset
-            // ring is the approved design, so it lives here, not globally.
+            // Mockup boxes are 56×56. Focus is ONE treatment: a 2px accent
+            // border, no ring and no offset halo (owner, 2026-08-03) — the same
+            // convention every other field follows. The border IS the visible
+            // focus indicator, so outline-none still has a replacement.
             'h-14 w-12 rounded-lg border text-center text-2xl font-bold tabular-nums transition-all sm:w-14',
-            'focus:outline-none focus:border-2 focus:border-primary-600 focus:ring-2 focus:ring-primary-600 focus:ring-offset-2',
+            'focus:outline-none focus:border-2 focus:border-primary-600',
             'disabled:bg-ink-100 disabled:text-ink-500 disabled:cursor-not-allowed',
             error ? 'border-danger bg-danger-50' : 'border-surface-border bg-white',
           ].join(' ')}

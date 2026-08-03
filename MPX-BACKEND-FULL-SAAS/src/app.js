@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 import { env } from './config/env.js';
 import { AppError } from './utils/AppError.js';
@@ -83,6 +84,11 @@ export function createApp() {
       credentials: true,
     }),
   );
+
+  // Needed for the httpOnly refresh cookie (A2). Unsigned on purpose: the value
+  // is an opaque refresh token the server verifies against its hashed record
+  // anyway, so a cookie signature would add a second secret without a new check.
+  app.use(cookieParser());
 
   app.use(express.json({ limit: JSON_BODY_LIMIT }));
 

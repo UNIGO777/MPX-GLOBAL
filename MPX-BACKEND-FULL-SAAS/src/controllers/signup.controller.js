@@ -1,4 +1,5 @@
 import * as signupService from '../services/signup.service.js';
+import { isWebClient, refreshTokenForBody, setRefreshCookie } from '../utils/refreshCookie.js';
 
 // A21 · two-step signup. Step 1 and the two verify calls return ONLY progress —
 // never a session, never a user record, because at that point no account exists.
@@ -48,9 +49,12 @@ export async function complete(req, res) {
     ip: req.ip,
     userAgent: req.headers['user-agent'],
   });
+  // Signup ends in a real session, so it gets the same treatment as verify-otp:
+  // cookie for a browser (and no body token), body token for native (A2).
+  if (isWebClient(req)) setRefreshCookie(res, result.refreshToken);
   res.status(201).json({
     accessToken: result.accessToken,
-    refreshToken: result.refreshToken,
+    ...refreshTokenForBody(req, result.refreshToken),
     user: authUserView(result.user),
   });
 }

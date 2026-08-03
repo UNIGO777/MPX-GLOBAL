@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 
 import { useAuth } from './AuthContext.jsx';
+import { RestoringSession } from './RestoringSession.jsx';
 import { roleHome } from './roleHome.js';
 
 /**
@@ -15,7 +16,10 @@ import { roleHome } from './roleHome.js';
  * itself, so guarding it would race the redirect.
  */
 export function RedirectIfAuthed() {
-  const { user } = useAuth();
+  const { user, restoring } = useAuth();
+  // Same race, opposite direction: rendering the sign-in form before the silent
+  // refresh resolves would flash it at someone who is already signed in.
+  if (restoring) return <RestoringSession />;
   if (!user) return <Outlet />;
   return <Navigate to={user.mustChangePassword ? '/change-password' : roleHome(user)} replace />;
 }

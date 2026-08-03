@@ -4,6 +4,7 @@ import argon2 from 'argon2';
 
 import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
+import { ERROR_CODES } from '../utils/errorCodes.js';
 import { OtpChallenge } from '../models/OtpChallenge.js';
 import { sendOtp } from './otp.sender.js';
 
@@ -56,7 +57,7 @@ export async function requestOtp({ user, pendingSignup, purpose, channel = 'mobi
     lockedUntil: { $gt: new Date() },
   });
   if (locked) {
-    throw AppError.unauthorized('otp locked', 'Too many attempts. Please try again later.');
+    throw AppError.unauthorized('otp locked', 'Too many attempts. Please try again later.', ERROR_CODES.OTP_LOCKED);
   }
 
   // Only one live challenge per (subject, purpose). Signup's email and mobile
@@ -99,7 +100,7 @@ export async function verifyOtp({ userId, pendingSignupId, purpose, code }) {
 
   const now = Date.now();
   if (challenge.lockedUntil && challenge.lockedUntil.getTime() > now) {
-    throw AppError.unauthorized('otp locked', 'Too many attempts. Please try again later.');
+    throw AppError.unauthorized('otp locked', 'Too many attempts. Please try again later.', ERROR_CODES.OTP_LOCKED);
   }
   if (challenge.expiresAt.getTime() <= now) throw fail();
 

@@ -22,7 +22,8 @@ MPX-GLOBAL/
   docs/                      scope-of-work.md, Note.md (guards), History.md (this), build/quote
   M1-01-backend-steps.md     step-by-step backend prompts
   MPX-BACKEND-FULL-SAAS/     the backend (src/, tests/, package.json, .env[gitignored])
-  web/                       web frontend (Vite+React+Tailwind); structure scaffolded (see changelog)
+  web/                       web frontend (Vite+React+Tailwind); all M1 screens built, .env + src/config.js
+                             hold every tunable; admin console is a lazy-loaded chunk
   app/                       mobile app (React Native + Expo SDK 57); infra + M1 auth screens
                              built and wired (B1 "Navy Canopy") — see changelog 2026-08-02
 ```
@@ -143,6 +144,8 @@ button/link/control to `docs/UiWebNotes.md`), `remind.md` (D-item / out-of-scope
 `m3-seo.md` (M3 discovery-page SEO: slugs, meta/canonical/JSON-LD, sitemap/robots).
 
 ## 9. Tests
+**893 tests across 59 files** as of 2026-08-03 (the count below is the earlier M1–M3 snapshot;
+later milestones, the A21 signup rework and `a2-refresh-cookie` are additional).
 **287 tests across 30 files** (M1 auth/KYC/verification/user-management/route-guard, M2
 catalogue/products/moderation, M3 search/facets/saved/AI/SEO, plus an M1+M2+M3 integration file).
 `npm test` (needs a reachable Mongo + Redis). Tests use a local `mpx_global_test` DB; `tests/setup.js`
@@ -172,6 +175,70 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-03** — **🔴 A2 CLOSED FOR WEB · refresh token moved to an httpOnly cookie, plus a
+  machine-readable error `code`.** Owner-approved plan, built in the ordered phases (additive
+  first, removal last, verified between). **The catch that shaped the design: the same endpoints
+  serve the Expo app, which cannot use httpOnly cookies** — so this is a DUAL TRANSPORT, never a
+  swap. A browser identifies itself with `X-Client: web` + an allow-listed Origin and gets the
+  cookie **and no `refreshToken` in the body**; every other caller keeps the body token,
+  byte-identical. `src/utils/refreshCookie.js` owns it: `mpx_rt`, httpOnly · SameSite=Lax ·
+  `Path=/auth` · Secure in production only (a Secure cookie is dropped over plain http and would
+  break dev). Set on verify-otp, signup-complete, change-password and **every rotation**;
+  refresh/logout read **cookie first, body second**; logout clears it unconditionally.
+  **Frontend:** access token in memory, `AuthContext` gains `restoring` and calls
+  `/auth/refresh` on mount to restore silently; `RequireAuth`/`RedirectIfAuthed` render
+  `RestoringSession` while it resolves — **without that they bounce a valid session to
+  `/signin` on every page load**, which is the entire bug. Missing/expired cookie soft-fails to
+  anonymous with no error and no hanging spinner. `tokenStore` no longer has a refresh-token
+  field **at all** — `grep getRefreshToken src/` returns nothing, so no JS path can obtain one.
+  **Two edges found while wiring, both real:** (1) `/auth/me` returned no `name`/`email`, so a
+  restored session rendered a blank header — it now returns the same curated identity as
+  verify-otp (identity read on that endpoint only; `req.user` stays lean for audit/permissions);
+  (2) the **Vite proxy** would have broken the cookie in dev only — server scopes `Path=/auth`
+  but the browser calls `/api/auth/refresh`, so the cookie was stored and never sent →
+  `cookiePathRewrite` added to `vite.config.js`.
+  **Error envelope:** `src/utils/errorCodes.js` (`OTP_LOCKED`, `LOGIN_SESSION_EXPIRED`,
+  `SIGNUP_SESSION_EXPIRED`, `REFRESH_TOKEN_MISSING`, `SESSION_EXPIRED`) attached at 8 throw
+  sites; `code` is **omitted when unset** so the envelope is unchanged for most errors. `/otp`
+  and `/signup/verify` now branch on `code` instead of regex-matching English prose (a reword
+  used to silently disable the OTP lock UI); the prose match survives as a one-release shim in
+  `isErrorCode()`. **Tests: 893 pass** (+11 in `tests/a2-refresh-cookie.test.js`). The 6 existing
+  files asserting a body token needed **no** changes — they are native callers, which is the dual
+  transport proving itself. `signupThroughOtp` gained an optional `headers` arg (default = native).
+  **A7 re-verified** (rotation replaces the cookie; a rotated-away cookie is refused as reuse).
+  **New deps:** `cookie-parser` (backend), `lucide-react` (web, one glyph). Gotcha for the next
+  session: **do not "simplify" to cookie-only** — it passes a naive test suite and silently breaks
+  the mobile app.
+- **2026-08-03** — **WEB · screen-by-screen pass, routes 1–12 (auth + buyer home).** One route at a
+  time, each checked against its mockup markup and the live backend contract. **Real bugs found:**
+  the shared OTP screen hard-coded "Step 2 of 2" for all four inbound flows (exporter signup is 4
+  of 4) · `/forgot` promised a **10-minute** reset code the server expires in **5** (it reuses the
+  OTP TTL) and its confirmation implied email delivery when `forgotWithRole` hardcodes
+  `channel:'mobile'` — copy now states the truth (backend channel choice left as an owner
+  decision) · `/buyer/verification` labelled `kycSubmittedAt` as **"Reviewed"** when the payload
+  carries no review date at all (now "Sent"; exposing a real `reviewedAt` is an owner decision)
+  and rendered a **completely empty card** for an unknown status (now an honest fallback) ·
+  `/signup/buyer` had **no step indicator** while every other screen in the chain counts itself ·
+  `/reset` reddened the code boxes for password errors and offered no way to get a fresh code ·
+  OTP timers were tick-counters that drifted badly in a backgrounded tab (now deadline-based).
+  **Guards:** added `RedirectIfAuthed` — a signed-in user could open `/signin` and start a second
+  login; the session-expiry note was dead code (read from route state that nothing ever set, so
+  users were silently bounced) — now read from auth state. **Staff sign-in link removed from
+  `/signin`** (owner): the public page must not advertise the admin door.
+  🔴 **Invisible-class bug class, found twice and then killed at the source:** `success` and
+  `warning` were FLAT tokens and `danger` was `50`+DEFAULT only, so invented shades
+  (`bg-success-100`, `text-danger-600`) compiled to **nothing** — a success chip with no fill, an
+  error message in body colour, invisible exactly when they mattered. Swept twice (source scan +
+  built-JS-vs-built-CSS diff, scripts in the session scratchpad), then **gave all three real
+  50–900 scales with the anchors pinned** (`success`/`warning` 500=DEFAULT, `danger` 600=DEFAULT,
+  `danger-50` keeps the mockup tint `#FEECEA`, warning stays the locked `#F79009`) — zero visual
+  change, and there is no longer an invalid shade to write. `muted`/`surface` left flat (verified
+  unused at shades). **Admin console split into its own bundle** (`React.lazy`) — every admin
+  screen used to ship to anonymous landing-page visitors; ~39 kB raw out of the public download.
+  Defence-in-depth only: the server still enforces everything, and the route table + two guard
+  permission strings necessarily remain. **`react-router-dom` 6.26.1 → 6.30.4**; both remaining
+  advisories need MAJOR upgrades (react-router 7, vite 8) — neither is exploitable here (no SSR;
+  no URL-derived navigation target anywhere) — **deferred to the pre-production hygiene pass.**
 - **2026-08-03** — 🔴 **SIGNUP SECURITY FIX — the account was being created BEFORE anything was
   verified. 881/881 green** (757 → +124), 58 test files, lint clean, web builds, app bundles.
   Plan: `build-plans/a21-signup-verification/plan.md`.

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { authApi } from '../../api/auth.js';
@@ -59,6 +59,21 @@ export function SignupCompany() {
     setForm((f) => ({ ...f, address: { ...f.address, [key]: value } }));
   };
 
+  const entityRefs = useRef({});
+  const onEntityKeyDown = (e) => {
+    const delta = ['ArrowRight', 'ArrowDown'].includes(e.key)
+      ? 1
+      : ['ArrowLeft', 'ArrowUp'].includes(e.key)
+        ? -1
+        : 0;
+    if (!delta) return;
+    e.preventDefault();
+    const i = ENTITY_TYPES.findIndex((t) => t.value === form.entityType);
+    const next = ENTITY_TYPES[(Math.max(i, 0) + delta + ENTITY_TYPES.length) % ENTITY_TYPES.length];
+    set('entityType')(next.value);
+    entityRefs.current[next.value]?.focus();
+  };
+
   if (!flow.signupToken) return <Navigate to="/signin" replace />;
 
   const submit = async (e) => {
@@ -109,15 +124,15 @@ export function SignupCompany() {
       headline={isExporter ? 'Last step — tell us about your company.' : 'Last step — your company.'}
       sub="This is what buyers see, and what our team checks when you apply for the verified tick."
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+      <p className="text-[13px] font-semibold uppercase tracking-widest text-primary-600">
         Step {totalSteps} of {totalSteps}
       </p>
       <h2 className="mt-1 text-[28px] font-bold text-ink-900">Your company</h2>
-      <p className="mt-1 text-sm text-muted">
+      <p className="mt-2 text-sm text-muted">
         Email and phone verified. This is the last thing we need.
       </p>
 
-      <form onSubmit={submit} noValidate className="mt-6 space-y-5">
+      <form onSubmit={submit} noValidate className="mt-5 space-y-4">
         {error && <Alert tone="danger">{error}</Alert>}
 
         {sessionDead ? (
@@ -148,13 +163,24 @@ export function SignupCompany() {
                 <p className="text-xs text-muted">
                   This decides which documents we ask for when you apply for verification.
                 </p>
-                <div className="grid gap-3 sm:grid-cols-2">
+                {/* role="radio" promises radiogroup behaviour: one tab stop and
+                    arrows to move between options. Without the container role
+                    and roving focus, the markup described behaviour the cards
+                    did not have. */}
+                <div
+                  role="radiogroup"
+                  aria-label="Entity type"
+                  onKeyDown={onEntityKeyDown}
+                  className="grid gap-3 sm:grid-cols-2"
+                >
                   {ENTITY_TYPES.map(({ value, label, sub }) => (
                     <button
                       key={value}
+                      ref={(el) => (entityRefs.current[value] = el)}
                       type="button"
                       role="radio"
                       aria-checked={form.entityType === value}
+                      tabIndex={form.entityType === value || (!form.entityType && value === ENTITY_TYPES[0].value) ? 0 : -1}
                       onClick={() => set('entityType')(value)}
                       disabled={loading}
                       className={`rounded-2xl border-2 p-4 text-left transition-colors ${
@@ -168,8 +194,12 @@ export function SignupCompany() {
                     </button>
                   ))}
                 </div>
+                {/* `danger` is 50 + DEFAULT only — text-danger-600 compiled to
+                    nothing, so this error rendered in body colour, not red. */}
                 {fieldErrors.entityType && (
-                  <p className="text-sm text-danger-600">{fieldErrors.entityType}</p>
+                  <p className="text-sm text-danger" role="alert">
+                    {fieldErrors.entityType}
+                  </p>
                 )}
               </fieldset>
             )}
@@ -179,19 +209,23 @@ export function SignupCompany() {
                 <legend className="text-sm font-medium text-ink-800">
                   Address <span className="font-normal text-muted">(optional)</span>
                 </legend>
-                <Input label="Address line 1" value={form.address.line1} onChange={setAddress('line1')} disabled={loading} />
-                <Input label="Address line 2" value={form.address.line2} onChange={setAddress('line2')} disabled={loading} />
+                <Input label="Address line 1" autoComplete="address-line1" value={form.address.line1} onChange={setAddress('line1')} disabled={loading} />
+                <Input label="Address line 2" autoComplete="address-line2" value={form.address.line2} onChange={setAddress('line2')} disabled={loading} />
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Input label="City" value={form.address.city} onChange={setAddress('city')} disabled={loading} />
-                  <Input label="State" value={form.address.state} onChange={setAddress('state')} disabled={loading} />
+                  <Input label="City" autoComplete="address-level2" value={form.address.city} onChange={setAddress('city')} disabled={loading} />
+                  <Input label="State" autoComplete="address-level1" value={form.address.state} onChange={setAddress('state')} disabled={loading} />
                 </div>
-                <Input label="Postal code" value={form.address.postalCode} onChange={setAddress('postalCode')} disabled={loading} />
+                <Input label="Postal code" autoComplete="postal-code" value={form.address.postalCode} onChange={setAddress('postalCode')} disabled={loading} />
               </fieldset>
             )}
 
-            <Button type="submit" fullWidth loading={loading} className="!mt-8">
-              Create my account
-            </Button>
+            {/* pt-3, not an !important margin — same CTA spacing as every other
+                auth screen, and it survives a change to the form's space-y. */}
+            <div className="pt-3">
+              <Button type="submit" fullWidth loading={loading}>
+                Create my account
+              </Button>
+            </div>
           </>
         )}
       </form>

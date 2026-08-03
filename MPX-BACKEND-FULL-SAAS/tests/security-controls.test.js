@@ -195,8 +195,21 @@ describe('central error handler never leaks internals', () => {
     const res = await request(app).get('/no/such/route');
     expect(res.status).toBe(404);
     expect(Object.keys(res.body)).toEqual(['error']);
+    // No `code` here: it is omitted unless a throw site set one, so the envelope
+    // is unchanged for the vast majority of errors.
     expect(Object.keys(res.body.error).sort()).toEqual(['message', 'requestId']);
     expect(res.body.error.requestId).toBeTruthy();
+  });
+
+  it('a coded error adds ONLY `code` — still no stack, no internals', async () => {
+    // Refresh with nothing presented is the smallest coded error to provoke.
+    const res = await request(app).post('/auth/refresh').send({});
+    expect(res.status).toBe(401);
+    expect(Object.keys(res.body)).toEqual(['error']);
+    expect(Object.keys(res.body.error).sort()).toEqual(['code', 'message', 'requestId']);
+    // The code is a stable discriminator, never a leak of internal wording.
+    expect(res.body.error.code).toBe('REFRESH_TOKEN_MISSING');
+    expect(JSON.stringify(res.body)).not.toMatch(/at .*\.js:\d+|stack/i);
   });
 
   it('a 4xx writes NO errorLogs row; only 5xx is persisted (A19)', async () => {

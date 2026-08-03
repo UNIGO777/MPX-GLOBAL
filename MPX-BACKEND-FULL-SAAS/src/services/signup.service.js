@@ -1,6 +1,7 @@
 import { PendingSignup } from '../models/PendingSignup.js';
 import { OtpChallenge } from '../models/OtpChallenge.js';
 import { AppError } from '../utils/AppError.js';
+import { ERROR_CODES } from '../utils/errorCodes.js';
 import { hashPassword } from './password.service.js';
 import { requestOtp, verifyOtp } from './otp.service.js';
 import {
@@ -64,7 +65,7 @@ async function loadPending(signupToken) {
   if (!pending) {
     // The TTL removed it, or it was completed. Same message either way — this
     // must not become an oracle for "did that signup finish".
-    throw AppError.unauthorized('pending signup gone', 'Signup session expired. Please start again.');
+    throw AppError.unauthorized('pending signup gone', 'Signup session expired. Please start again.', ERROR_CODES.SIGNUP_SESSION_EXPIRED);
   }
   return pending;
 }

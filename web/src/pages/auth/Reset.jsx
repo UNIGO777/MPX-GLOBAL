@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { authApi } from '../../api/auth.js';
+import { config } from '../../config.js';
 import { apiError } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
@@ -31,6 +32,9 @@ export function Reset() {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState(null);
   const [mismatch, setMismatch] = useState(false);
+  // Tracked apart from `error`: a password-length complaint must not paint the
+  // code boxes red, which told the user the wrong field was wrong.
+  const [codeInvalid, setCodeInvalid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -40,8 +44,10 @@ export function Reset() {
     e.preventDefault();
     setError(null);
     setMismatch(false);
+    setCodeInvalid(false);
     if (!identifier.trim() || code.length !== 6 || !newPassword) {
       setError('Fill in the code and your new password.');
+      setCodeInvalid(code.length !== 6);
       return;
     }
     if (newPassword.length < 8) {
@@ -59,7 +65,10 @@ export function Reset() {
       else await authApi.resetPassword({ ...payload, portal });
       setDone(true);
     } catch (err) {
+      // The server answers the same way for a wrong code, an expired code and
+      // an unknown account — so the code is the field to flag and clear.
       setError(apiError(err, 'Invalid or expired code.').message);
+      setCodeInvalid(true);
       setCode('');
     } finally {
       setLoading(false);
@@ -88,11 +97,12 @@ export function Reset() {
       ) : (
         <>
           <h2 className="text-[28px] font-bold text-ink-900">Set a new password</h2>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-2 text-sm text-muted">
             Enter the code we sent you, then choose your new password.
           </p>
 
-          <form onSubmit={submit} noValidate className="mt-6 space-y-5">
+          {/* Same rhythm as the other auth screens (owner, 2026-08-02). */}
+          <form onSubmit={submit} noValidate className="mt-5 space-y-4">
             {!staff && <PortalToggle value={portal} onChange={setPortal} disabled={loading} />}
             {error && <Alert tone="danger">{error}</Alert>}
 
@@ -100,15 +110,37 @@ export function Reset() {
               label="Email or mobile"
               type="text"
               autoComplete="username"
+              placeholder="Enter email or phone number"
+              helper="Mobile must include country code, e.g. +91 98765 43210"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               disabled={loading}
             />
 
             <div className="space-y-2">
-              <span className="text-sm font-medium text-ink-800">Reset code</span>
-              <OtpInput value={code} onChange={setCode} disabled={loading} error={Boolean(error)} />
-              <p className="text-xs text-muted">Check your messages for the 6-digit code.</p>
+              <span className="text-sm font-medium text-ink-900">Reset code</span>
+              {/* Focus the code only when the identifier arrived prefilled from
+                  Forgot — on a cold hit, the identifier is what's needed first. */}
+              <OtpInput
+                autoFocus={Boolean(location.state?.identifier)}
+                value={code}
+                onChange={setCode}
+                disabled={loading}
+                error={codeInvalid}
+              />
+              {/* The code IS an OTP, so it dies on the same clock. There is no
+                  resend endpoint for this purpose (that one needs a loginToken),
+                  so a fresh code means walking back through Forgot. */}
+              <p className="text-[13px] font-medium text-ink-600">
+                Valid for {Math.round(config.otp.ttlSeconds / 60)} minutes.{' '}
+                <Link
+                  to={staff ? '/forgot?staff=1' : '/forgot'}
+                  state={{ portal: staff ? null : portal, identifier: identifier.trim() || undefined }}
+                  className="font-medium text-primary-600 hover:text-primary-700"
+                >
+                  Send a new code
+                </Link>
+              </p>
             </div>
 
             <PasswordInput
@@ -135,12 +167,14 @@ export function Reset() {
               disabled={loading}
             />
 
-            <Button type="submit" fullWidth loading={loading}>
-              Reset password
-            </Button>
+            <div className="pt-3">
+              <Button type="submit" fullWidth loading={loading}>
+                Reset password
+              </Button>
+            </div>
           </form>
 
-          <p className="mt-6 text-center text-sm">
+          <p className="mt-7 border-t border-surface-border pt-5 text-center text-sm">
             <Link to={backTo} className="font-medium text-primary-600 hover:text-primary-700">
               Back to sign in
             </Link>

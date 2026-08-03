@@ -51,13 +51,62 @@ export default {
           subtle: '#EAEEFF',
           border: '#C5C6CF',
         },
-        // Semantic — status & feedback (verified green from the brand spec)
-        success: '#12B76A', // verified tick, approvals
-        warning: '#F79009', // in review / pending (locked token — owner, 2026-08-01)
+        // Semantic — status & feedback.
+        //
+        // 🔴 These carry FULL 50–900 scales on purpose. They used to be flat (or
+        // `danger`, 50 + DEFAULT only), and a flat token silently swallows any
+        // invented shade: `bg-success-100` and `text-danger-600` compiled to
+        // NOTHING, so a success chip rendered with no fill and an error message
+        // rendered in body colour — invisible precisely when they mattered
+        // (found twice, 2026-08-02/03). A real scale means there is no longer an
+        // invalid shade to write.
+        //
+        // The anchors are unchanged, so nothing that already shipped moves:
+        //   success DEFAULT/500 = #12B76A (brand verified green)
+        //   warning DEFAULT/500 = #F79009 (LOCKED token — owner, 2026-07-31)
+        //   danger  DEFAULT/600 = #D92D20, danger-50 = #FEECEA (mockup tint)
+        // Surrounding steps follow the same ramp the mockups' palette uses.
+        success: {
+          50: '#ECFDF3',
+          100: '#D1FADF',
+          200: '#A6F4C5',
+          300: '#6CE9A6',
+          400: '#32D583',
+          500: '#12B76A',
+          600: '#039855',
+          700: '#027A48',
+          800: '#05603A',
+          900: '#054F31',
+          DEFAULT: '#12B76A', // verified tick, approvals
+        },
+        warning: {
+          50: '#FFFAEB',
+          100: '#FEF0C7',
+          200: '#FEDF89',
+          300: '#FEC84B',
+          400: '#FDB022',
+          500: '#F79009',
+          600: '#DC6803',
+          700: '#B54708',
+          800: '#93370D',
+          900: '#7A2E0E',
+          DEFAULT: '#F79009', // in review / pending (locked token — owner, 2026-08-01)
+        },
         danger: {
           50: '#FEECEA', // error-field background tint (mockup convention)
+          100: '#FEE4E2',
+          200: '#FECDCA',
+          300: '#FDA29B',
+          400: '#F97066',
+          500: '#F04438',
+          600: '#D92D20',
+          700: '#B42318',
+          800: '#912018',
+          900: '#7A271A',
           DEFAULT: '#D92D20', // rejections, destructive actions
         },
+        // Flat by design — only ever used at these exact keys, no shade is
+        // referenced anywhere (verified by sweep). Scale them if that changes.
         muted: '#5A6B85', // secondary/help text
       },
       fontFamily: {

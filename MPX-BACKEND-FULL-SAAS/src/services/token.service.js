@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 
 import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
+import { ERROR_CODES } from '../utils/errorCodes.js';
 import { RefreshToken } from '../models/RefreshToken.js';
 import { User } from '../models/User.js';
 import { recordAudit } from './audit.service.js';
@@ -53,7 +54,7 @@ export function verifyLoginToken(token) {
   try {
     payload = jwt.verify(token, env.JWT_ACCESS_SECRET);
   } catch {
-    throw AppError.unauthorized('invalid login token', 'Login session expired. Please sign in again.');
+    throw AppError.unauthorized('invalid login token', 'Login session expired. Please sign in again.', ERROR_CODES.LOGIN_SESSION_EXPIRED);
   }
   if (payload.typ !== LOGIN_PENDING_TYP) throw AppError.unauthorized('wrong token type', 'Not authenticated.');
   return payload;
@@ -76,12 +77,12 @@ export function verifySignupToken(token) {
   try {
     payload = jwt.verify(token, env.JWT_ACCESS_SECRET);
   } catch {
-    throw AppError.unauthorized('invalid signup token', 'Signup session expired. Please start again.');
+    throw AppError.unauthorized('invalid signup token', 'Signup session expired. Please start again.', ERROR_CODES.SIGNUP_SESSION_EXPIRED);
   }
   // Without this the type check would let an access or login token be presented
   // here — they are signed with the same secret.
   if (payload.typ !== SIGNUP_PENDING_TYP) {
-    throw AppError.unauthorized('wrong token type', 'Signup session expired. Please start again.');
+    throw AppError.unauthorized('wrong token type', 'Signup session expired. Please start again.', ERROR_CODES.SIGNUP_SESSION_EXPIRED);
   }
   return payload;
 }
@@ -136,7 +137,7 @@ export async function revokeAllUserTokens(userId) {
 // Rotate on use. Reuse of a non-active token = theft → revoke the whole family.
 export async function rotateRefreshToken({ presentedRaw, ip, userAgent, requestId }) {
   const current = await RefreshToken.findOne({ tokenHash: hashRefresh(presentedRaw) });
-  if (!current) throw AppError.unauthorized('unknown refresh token', 'Session invalid. Please sign in again.');
+  if (!current) throw AppError.unauthorized('unknown refresh token', 'Session invalid. Please sign in again.', ERROR_CODES.SESSION_EXPIRED);
 
   if (current.status !== 'active') {
     // Reuse of a rotated/revoked token = theft. Revoke the family and record it.
@@ -148,10 +149,10 @@ export async function rotateRefreshToken({ presentedRaw, ip, userAgent, requestI
       entityId: current.userId,
       meta: { ip, userAgent, requestId },
     });
-    throw AppError.unauthorized('refresh token reuse', 'Session invalid. Please sign in again.');
+    throw AppError.unauthorized('refresh token reuse', 'Session invalid. Please sign in again.', ERROR_CODES.SESSION_EXPIRED);
   }
   if (current.expiresAt.getTime() <= Date.now()) {
-    throw AppError.unauthorized('refresh token expired', 'Session expired. Please sign in again.');
+    throw AppError.unauthorized('refresh token expired', 'Session expired. Please sign in again.', ERROR_CODES.SESSION_EXPIRED);
   }
 
   // Validate the user is still active BEFORE issuing a new token — otherwise a

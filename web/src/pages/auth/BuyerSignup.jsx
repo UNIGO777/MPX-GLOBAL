@@ -114,10 +114,16 @@ export function BuyerSignup() {
       headline="Source directly from verified Indian exporters."
       sub="Create a buyer account and start finding suppliers today. It's free, and you can use the platform straight away."
     >
-      <h2 className="text-[28px] font-bold text-ink-900">Create your buyer account</h2>
-      <p className="mt-1 text-base text-muted">Free to join. Start finding suppliers right away.</p>
+      {/* Every other screen in this chain counts its step (SignupVerify 2 and 3,
+          SignupCompany 4) — starting the count at screen two left the buyer with
+          no idea the flow had further steps. Buyer = 4, exporter = 5. */}
+      <p className="text-[13px] font-semibold uppercase tracking-widest text-primary-600">
+        Step 1 of 4
+      </p>
+      <h2 className="mt-1 text-[28px] font-bold text-ink-900">Create your buyer account</h2>
+      <p className="mt-2 text-sm text-muted">Free to join. Start finding suppliers right away.</p>
 
-      <form onSubmit={submit} noValidate className="mt-6 space-y-5">
+      <form onSubmit={submit} noValidate className="mt-5 space-y-4">
         {error && (
           <Alert tone="danger">
             {error}
@@ -179,16 +185,20 @@ export function BuyerSignup() {
           error={fieldErrors.confirm}
           disabled={loading}
         />
-        <Button type="submit" fullWidth loading={loading} className="!mt-8">
-          Continue
-        </Button>
+        {/* pt-3 rather than an !important margin override — same CTA spacing as
+            every other auth screen, and it survives a change to the form's
+            space-y. */}
+        <div className="space-y-3 pt-3">
+          <Button type="submit" fullWidth loading={loading}>
+            Continue
+          </Button>
+          <p className="text-center text-xs text-muted">
+            We&rsquo;ll send a code to your email and another to your phone. Both keep your
+            account yours.
+          </p>
+        </div>
 
-        <p className="text-center text-xs text-muted">
-          We&rsquo;ll send a code to your email and another to your phone. Both keep your account
-          yours.
-        </p>
-
-        <p className="text-center text-sm text-muted">
+        <p className="mt-7 border-t border-surface-border pt-5 text-center text-sm text-muted">
           Already have an account?{' '}
           <Link to="/signin" className="font-semibold text-primary-600 hover:underline">
             Sign in

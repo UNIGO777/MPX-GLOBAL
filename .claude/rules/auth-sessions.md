@@ -24,6 +24,23 @@ plain digest like SHA-256. The hash never leaves the server in any response or l
 - Reuse of an already-rotated refresh token means theft — revoke the entire token family
 - Include `tokenVersion` in the JWT and compare it on every request
 
+**Transport is DUAL, and must stay dual (2026-08-03).** The same endpoints serve the web app and
+the Expo app, and React Native cannot use httpOnly cookies:
+
+- **Browser** — identifies itself with `X-Client: web` + an allow-listed Origin. It gets the
+  refresh token as an **httpOnly, SameSite=Lax, `Path=/auth` cookie** (Secure in production only —
+  a Secure cookie is dropped over plain http and breaks local dev), and **no `refreshToken` in the
+  response body**. That omission is the point: a cookie achieves nothing while a copy still ships
+  where a script can read it.
+- **Every other client** — unchanged: `refreshToken` in the body, no cookie.
+
+`src/utils/refreshCookie.js` owns all of it (`setRefreshCookie`, `clearRefreshCookie`,
+`readRefreshToken` — cookie first, body second — and `refreshTokenForBody`). Refresh and logout
+accept either transport; logout clears the cookie unconditionally.
+
+🔴 **Never "simplify" this to cookie-only.** It passes a naive test suite and silently breaks the
+mobile app. `tests/a2-refresh-cookie.test.js` asserts the native path explicitly for that reason.
+
 ## Sessions (A7)
 
 `tokenVersion` on the user document, incremented on password change, role change,

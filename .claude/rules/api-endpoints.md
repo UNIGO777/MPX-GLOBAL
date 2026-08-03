@@ -46,6 +46,14 @@ One central error handler. Return a generic message plus a request ID; log the d
 server-side against that ID. Never return a Mongo error, a stack trace, a collection name
 or a driver message to a client.
 
+**Envelope: `{ error: { message, code?, requestId } }`.** `code` comes from
+`src/utils/errorCodes.js` and is **omitted unless a throw site set one**, so its presence always
+means something. It exists because clients were branching on the English text of `message` — a
+reword then silently broke the UI (the OTP lock stopped disabling the form). Rules: a code is part
+of the API contract, so add but never rename or repurpose one; it carries **no** detail beyond the
+discriminator (no ids, counts or timing) and must stay as generic as `message` about whether an
+account exists. Only add one where a client genuinely behaves differently.
+
 ## File uploads (B6)
 
 Allowlist extensions, verify MIME against magic bytes with the `file-type` package, cap

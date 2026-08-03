@@ -38,7 +38,9 @@ export const authApi = {
 
   // --- session --------------------------------------------------------------
   me: () => apiClient.get('/auth/me').then((r) => r.data.user),
-  logout: ({ refreshToken }) => apiClient.post('/auth/logout', { refreshToken }).then((r) => r.data),
+  // Body token only while the server still issues one; the httpOnly cookie is
+  // what actually identifies the session for a browser.
+  logout: (payload = {}) => apiClient.post('/auth/logout', payload).then((r) => r.data),
   changePassword: ({ currentPassword, newPassword }) =>
     apiClient.post('/auth/change-password', { currentPassword, newPassword }).then((r) => r.data),
 

@@ -57,13 +57,14 @@ are no dead buttons to log. The rows below record controls that appeared in the 
 Neither blocks the M1 web build; both were decided during plan approval. **Do not build
 either without a separate owner go-ahead** (both touch auth/permissions surfaces).
 
-1. **Refresh-token httpOnly cookie (plan §7.1).** The backend returns the refresh token in
-   the JSON body and sets no cookie; `web-frontend.md` forbids tokens in localStorage. The
-   web app therefore holds BOTH tokens **in memory only** (`web/src/auth/tokenStore.js`) —
-   a hard reload ends the session and returns the user to sign-in. The clean fix is
-   backend-side: set the refresh token as an `httpOnly; Secure; SameSite` cookie on
-   `POST /auth/verify-otp` + `POST /auth/refresh` (and read it from the cookie), then the
-   web client drops its in-memory copy. Auth-touching → plan-and-confirm first.
+1. ✅ **DONE 2026-08-03 — Refresh-token httpOnly cookie (plan §7.1).** Built to an
+   owner-approved plan in ordered phases. The refresh token is now an **httpOnly,
+   SameSite=Lax, `Path=/auth` cookie** (Secure in production) and is **omitted from the
+   response body for browsers**; the web app keeps only the access token in memory and
+   silently restores the session on load via `POST /auth/refresh`. A hard reload no longer
+   signs anyone out. 🔴 **Native clients still receive the body token** — the transport is
+   deliberately dual because Expo cannot use httpOnly cookies; see `auth-sessions.md` A2 and
+   `tests/a2-refresh-cookie.test.js`. Closes tracker **A2** for web.
 2. **Employee current-permissions read (plan §7.2).** No endpoint returns an employee's
    CURRENT permission set (`GET /admin/users` rows omit it; org detail deliberately
    excludes it per m5-rules §8/V2). The Employees screen therefore shows "—" for

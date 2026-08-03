@@ -1,17 +1,19 @@
 /**
- * In-memory token holder — the ONLY place tokens live.
+ * In-memory ACCESS token holder — the only token this app ever holds (A2).
  *
- * 🔴 Deliberate interim (owner decision 2026-08-01, plan §7.1): the backend
- * returns the refresh token in the response body and sets no cookie, and
- * `web-frontend.md` forbids any token in localStorage/sessionStorage. So both
- * tokens are held in memory only, which means a hard reload ends the session
- * and returns the user to sign-in. The proper fix — an httpOnly cookie set by
- * the backend — is logged in docs/UiWebNotes.md as a follow-up and must not be
- * worked around here by persisting a token anywhere a script can read.
+ * 🔴 The refresh token is deliberately absent. The server sets it as an
+ * httpOnly, SameSite=Lax cookie scoped to /auth, so JavaScript cannot read it —
+ * not from storage, not from the response that created the session, not via
+ * XSS. That is the whole point; do not reintroduce a field for it, and never
+ * persist the access token to localStorage/sessionStorage either
+ * (web-frontend.md).
+ *
+ * A reload therefore starts with no access token and recovers the session by
+ * calling /auth/refresh, which the browser accompanies with the cookie —
+ * see AuthContext's restore effect.
  */
 
 let accessToken = null;
-let refreshToken = null;
 
 // AuthContext registers a listener so an expired/unrecoverable session clears
 // React state too (the api client can't reach React on its own).
@@ -19,14 +21,12 @@ let onSessionEnd = null;
 
 export const tokenStore = {
   getAccessToken: () => accessToken,
-  getRefreshToken: () => refreshToken,
-  setTokens({ accessToken: at, refreshToken: rt }) {
+  /** Ignores anything but the access token — see the note above. */
+  setTokens({ accessToken: at }) {
     accessToken = at ?? null;
-    refreshToken = rt ?? null;
   },
   clear() {
     accessToken = null;
-    refreshToken = null;
   },
   hasSession: () => Boolean(accessToken),
   setOnSessionEnd(fn) {

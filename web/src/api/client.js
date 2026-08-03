@@ -16,6 +16,12 @@ import { config } from '../config.js';
 export const apiClient = axios.create({
   baseURL: config.api.baseUrl,
   timeout: config.api.timeoutMs,
+  // The refresh token lives in an httpOnly cookie (A2). `withCredentials` is
+  // what makes the browser attach it, and `X-Client: web` is what tells the
+  // server to issue one — plus a CSRF second layer, since a cross-site form
+  // cannot set a custom header without a preflight.
+  withCredentials: true,
+  headers: { 'X-Client': 'web' },
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -26,14 +32,25 @@ apiClient.interceptors.request.use((config) => {
 
 let refreshInFlight = null;
 
-async function refreshSession() {
-  const refreshToken = tokenStore.getRefreshToken();
-  if (!refreshToken) throw new Error('no refresh token');
+/**
+ * Exchange the refresh token for a new access token.
+ *
+ * The refresh token travels only as the httpOnly cookie, so there is nothing to
+ * send and nothing for a script to steal. This is what makes a reload
+ * survivable (A2).
+ */
+export async function refreshSession() {
   // Raw axios on purpose: the interceptor below must never recurse into itself.
+  // No body: the httpOnly cookie IS the credential, which is exactly why this
+  // works on a cold page load with nothing in memory.
   const { data } = await axios.post(
     `${apiClient.defaults.baseURL}/auth/refresh`,
-    { refreshToken },
-    { timeout: config.api.timeoutMs },
+    {},
+    {
+      timeout: config.api.timeoutMs,
+      withCredentials: true,
+      headers: { 'X-Client': 'web' },
+    },
   );
   tokenStore.setTokens(data);
   return data.accessToken;
@@ -48,7 +65,10 @@ apiClient.interceptors.response.use(
     // Only a 401 on a normal call, with a session to refresh, is recoverable.
     // Auth endpoints answer 401 as a real answer (bad credentials, bad OTP) —
     // never retry those.
-    if (response?.status !== 401 || config?._retried || isAuthPath || !tokenStore.getRefreshToken()) {
+    // Gate on "do we believe a session exists", NOT on holding a refresh token:
+    // once the token lives only in the httpOnly cookie there is nothing in
+    // memory to check, and testing for one would disable refresh entirely.
+    if (response?.status !== 401 || config?._retried || isAuthPath || !tokenStore.hasSession()) {
       return Promise.reject(error);
     }
 

@@ -70,12 +70,16 @@ export const resendOtp = {
   body: z.object({ loginToken: opaqueToken }),
 };
 
+// A21/A2: the token may arrive in the httpOnly cookie (browser) OR the body
+// (native). It is therefore OPTIONAL at the schema level and the controller
+// rejects "neither" with REFRESH_TOKEN_MISSING — the shape check still applies
+// to whatever the body does carry.
 export const refresh = {
-  body: z.object({ refreshToken: opaqueToken }),
+  body: z.object({ refreshToken: opaqueToken.optional() }),
 };
 
 export const logout = {
-  body: z.object({ refreshToken: opaqueToken }),
+  body: z.object({ refreshToken: opaqueToken.optional() }),
 };
 
 export const forgotPassword = {

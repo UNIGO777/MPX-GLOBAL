@@ -5,7 +5,7 @@ import { authApi } from '../../api/auth.js';
 import { config } from '../../config.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { roleHome } from '../../auth/roleHome.js';
-import { apiError, maskIdentifier } from '../../lib/format.js';
+import { ERROR_CODES, apiError, isErrorCode, maskIdentifier } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -39,6 +39,7 @@ export function Otp() {
   const [loginToken, setLoginToken] = useState(flow.loginToken);
   const [code, setCode] = useState('');
   const [error, setError] = useState(null);
+  const [errorCode, setErrorCode] = useState(null);
   const [notice, setNotice] = useState(flow.notice ?? null);
   const [loading, setLoading] = useState(false);
   const [sessionDead, setSessionDead] = useState(false);
@@ -75,12 +76,14 @@ export function Otp() {
         navigate(flow.from ?? roleHome(user), { replace: true });
       }
     } catch (err) {
-      const { message } = apiError(err, 'Invalid or expired code.');
+      const { message, code } = apiError(err, 'Invalid or expired code.');
       // The login-pending token lives 5 minutes; once it dies the only path is
       // starting over — say so instead of an endlessly failing code box.
-      if (/sign in again/i.test(message)) {
+      // Branch on the CODE; the prose match is a shim for servers without it.
+      if (isErrorCode(err, ERROR_CODES.LOGIN_SESSION_EXPIRED, /sign in again/i)) {
         setSessionDead(true);
       }
+      setErrorCode(code);
       setError(message);
       setCode('');
       setLoading(false);
@@ -99,13 +102,14 @@ export function Otp() {
       setExpiresAt(Date.now() + OTP_TTL_SECONDS * 1000);
       setResendAt(Date.now() + RESEND_COOLDOWN_SECONDS * 1000);
     } catch (err) {
-      const { message } = apiError(err, 'Could not resend the code.');
-      if (/sign in again/i.test(message)) setSessionDead(true);
+      const { message, code } = apiError(err, 'Could not resend the code.');
+      if (isErrorCode(err, ERROR_CODES.LOGIN_SESSION_EXPIRED, /sign in again/i)) setSessionDead(true);
+      setErrorCode(code);
       setError(message);
     }
   };
 
-  const locked = /too many attempts/i.test(error ?? '');
+  const locked = errorCode ? errorCode === ERROR_CODES.OTP_LOCKED : /too many attempts/i.test(error ?? '');
   const backTo = flow.backTo ?? '/signin';
   const backLabel = flow.backLabel ?? 'Back to sign in';
 
@@ -114,16 +118,19 @@ export function Otp() {
       headline="One quick check, and you're in."
       sub="We send a code every time you sign in, so your account stays yours even if your password gets out."
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+      {/* Mockup eyebrow: 13px, ACCENT blue, uppercase, widest tracking — it is
+          a progress marker, not muted secondary text. */}
+      <p className="text-[13px] font-semibold uppercase tracking-widest text-primary-600">
         Step {flow.step ?? '2 of 2'}
       </p>
       <h2 className="mt-1 text-[28px] font-bold text-ink-900">Enter your code</h2>
-      <p className="mt-1 text-sm text-muted">
+      <p className="mt-2 text-sm text-muted">
         We sent a 6-digit code to{' '}
         <span className="font-medium text-ink-800">{maskIdentifier(flow.identifier)}</span>
       </p>
 
-      <div className="mt-6 space-y-5">
+      {/* Same rhythm as the other auth screens (owner, 2026-08-02). */}
+      <div className="mt-5 space-y-4">
         {notice && !error && <Alert tone="success">{notice}</Alert>}
         {error && <Alert tone="danger">{error}</Alert>}
 
@@ -143,29 +150,33 @@ export function Otp() {
                 disabled={loading || locked}
                 error={Boolean(error)}
               />
-              <p className="text-xs text-muted" aria-live="polite">
+              <p className="text-[13px] font-medium text-ink-600" aria-live="polite">
                 {expiresIn > 0 ? `Code expires in ${mmss(expiresIn)}` : 'That code has expired. Request a new one.'}
               </p>
             </div>
 
-            <Button fullWidth loading={loading} disabled={code.length !== 6 || locked} onClick={() => verify()}>
-              Verify and continue
-            </Button>
+            {/* Mockup groups the two pills tighter than the gap that separates
+                them from the code boxes (mb-lg → space-y-md). */}
+            <div className="space-y-3 pt-2">
+              <Button fullWidth loading={loading} disabled={code.length !== 6 || locked} onClick={() => verify()}>
+                Verify and continue
+              </Button>
 
-            {/* Mockup: resend is a full-width pill under the CTA — grey while
-                cooling down, accent when live. */}
-            <button
-              type="button"
-              onClick={resend}
-              disabled={resendIn > 0 || locked}
-              className={`h-12 w-full rounded-full text-sm font-medium transition-all ${
-                resendIn > 0 || locked
-                  ? 'cursor-not-allowed bg-ink-100 text-ink-500'
-                  : 'bg-primary-800 text-white hover:bg-primary-700 active:scale-[0.98]'
-              }`}
-            >
-              {resendIn > 0 ? `Didn't get it? Resend in ${resendIn}s` : "Didn't get it? Resend code"}
-            </button>
+              {/* Resend is a full-width pill under the CTA — grey while cooling
+                  down, navy when live. */}
+              <button
+                type="button"
+                onClick={resend}
+                disabled={resendIn > 0 || locked}
+                className={`h-12 w-full rounded-full text-sm font-medium transition-all ${
+                  resendIn > 0 || locked
+                    ? 'cursor-not-allowed bg-ink-100 text-ink-500'
+                    : 'bg-primary-800 text-white hover:bg-primary-700 active:scale-[0.98]'
+                }`}
+              >
+                {resendIn > 0 ? `Didn't get it? Resend in ${resendIn}s` : "Didn't get it? Resend code"}
+              </button>
+            </div>
 
             <p className="text-center">
               <Link

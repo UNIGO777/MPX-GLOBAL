@@ -3,7 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { authApi } from '../../api/auth.js';
 import { config } from '../../config.js';
-import { apiError } from '../../lib/format.js';
+import { ERROR_CODES, apiError, isErrorCode } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -40,6 +40,7 @@ export function SignupVerify() {
   const [channel, setChannel] = useState('email');
   const [code, setCode] = useState('');
   const [error, setError] = useState(null);
+  const [errorCode, setErrorCode] = useState(null);
   const [notice, setNotice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [sessionDead, setSessionDead] = useState(false);
@@ -93,12 +94,18 @@ export function SignupVerify() {
         navigate(flow.next ?? '/signup/company', { replace: true, state: flow });
         return;
       }
-      if (isEmail && state.emailVerified) advance();
+      // The SERVER owns which channels are done. Advancing only on the email
+      // branch meant a success the server reported any other way (a resumed
+      // session, a retry after a dropped response) left the screen sitting
+      // there with a stale code and no feedback at all.
+      if (channel === 'email' && state.emailVerified) advance();
+      else setCode('');
     } catch (err) {
-      const { message } = apiError(err, 'Invalid or expired code.');
+      const { message, code } = apiError(err, 'Invalid or expired code.');
+      setErrorCode(code);
       // The signup session has its own lifetime; once it dies the only way
       // forward is starting over, so say that instead of a failing code box.
-      if (/start again/i.test(message)) setSessionDead(true);
+      if (isErrorCode(err, ERROR_CODES.SIGNUP_SESSION_EXPIRED, /start again/i)) setSessionDead(true);
       setError(message);
       setCode('');
       setLoading(false);
@@ -117,13 +124,14 @@ export function SignupVerify() {
       setExpiresAt(Date.now() + OTP_TTL_SECONDS * 1000);
       setResendAt(Date.now() + RESEND_COOLDOWN_SECONDS * 1000);
     } catch (err) {
-      const { message } = apiError(err, 'Could not resend the code.');
-      if (/start again/i.test(message)) setSessionDead(true);
+      const { message, code } = apiError(err, 'Could not resend the code.');
+      setErrorCode(code);
+      if (isErrorCode(err, ERROR_CODES.SIGNUP_SESSION_EXPIRED, /start again/i)) setSessionDead(true);
       setError(message);
     }
   };
 
-  const locked = /too many attempts/i.test(error ?? '');
+  const locked = errorCode ? errorCode === ERROR_CODES.OTP_LOCKED : /too many attempts/i.test(error ?? '');
   const backTo = flow.signupPath ?? '/signup/buyer';
   // Exporter signup carries an extra company step, so its rails are longer.
   const totalSteps = flow.role === 'exporter' ? 5 : 4;
@@ -134,13 +142,13 @@ export function SignupVerify() {
       headline="Two quick checks, and your account is yours."
       sub="We verify both your email and your phone at signup, so nobody can register an account in your name."
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+      <p className="text-[13px] font-semibold uppercase tracking-widest text-primary-600">
         Step {stepNumber} of {totalSteps}
       </p>
       <h2 className="mt-1 text-[28px] font-bold text-ink-900">
         {isEmail ? 'Verify your email' : 'Verify your phone'}
       </h2>
-      <p className="mt-1 text-sm text-muted">
+      <p className="mt-2 text-sm text-muted">
         We sent a 6-digit code to <span className="font-medium text-ink-800">{target}</span>
       </p>
 
@@ -149,7 +157,10 @@ export function SignupVerify() {
       <ol className="mt-4 flex gap-2 text-xs font-medium" aria-label="Verification progress">
         <li
           className={`flex-1 rounded-full px-3 py-1.5 text-center ${
-            isEmail ? 'bg-primary-100 text-primary-800' : 'bg-success-100 text-success-800'
+            // `success` is a FLAT token in tailwind.config, not a scale —
+            // bg-success-100/text-success-800 compiled to nothing, so the
+            // completed step rendered with no fill at all.
+            isEmail ? 'bg-primary-100 text-primary-800' : 'bg-emerald-50 text-success'
           }`}
         >
           {isEmail ? '1. Email' : '1. Email ✓'}
@@ -163,7 +174,8 @@ export function SignupVerify() {
         </li>
       </ol>
 
-      <div className="mt-6 space-y-5">
+      {/* Same rhythm as the other auth screens (owner, 2026-08-02). */}
+      <div className="mt-5 space-y-4">
         {notice && !error && <Alert tone="success">{notice}</Alert>}
         {error && <Alert tone="danger">{error}</Alert>}
 
@@ -188,34 +200,40 @@ export function SignupVerify() {
                 disabled={loading || locked}
                 error={Boolean(error)}
               />
-              <p className="text-xs text-muted" aria-live="polite">
+              <p className="text-[13px] font-medium text-ink-600" aria-live="polite">
                 {expiresIn > 0
                   ? `Code expires in ${mmss(expiresIn)}`
                   : 'That code has expired. Request a new one.'}
               </p>
             </div>
 
-            <Button
-              fullWidth
-              loading={loading}
-              disabled={code.length !== 6 || locked}
-              onClick={() => verify()}
-            >
-              {isEmail ? 'Verify email' : 'Verify phone'}
-            </Button>
+            {/* The two pills group tighter to each other than to the code boxes
+                — same treatment as the login OTP screen. */}
+            <div className="space-y-3 pt-2">
+              <Button
+                fullWidth
+                loading={loading}
+                disabled={code.length !== 6 || locked}
+                onClick={() => verify()}
+              >
+                {isEmail ? 'Verify email' : 'Verify phone'}
+              </Button>
 
-            <button
-              type="button"
-              onClick={resend}
-              disabled={resendIn > 0 || locked}
-              className={`h-12 w-full rounded-full text-sm font-medium transition-all ${
-                resendIn > 0 || locked
-                  ? 'cursor-not-allowed bg-ink-100 text-ink-500'
-                  : 'bg-primary-800 text-white hover:bg-primary-700 active:scale-[0.98]'
-              }`}
-            >
-              {resendIn > 0 ? `Didn't get it? Resend in ${resendIn}s` : "Didn't get it? Resend code"}
-            </button>
+              <button
+                type="button"
+                onClick={resend}
+                disabled={resendIn > 0 || locked}
+                className={`h-12 w-full rounded-full text-sm font-medium transition-all ${
+                  resendIn > 0 || locked
+                    ? 'cursor-not-allowed bg-ink-100 text-ink-500'
+                    : 'bg-primary-800 text-white hover:bg-primary-700 active:scale-[0.98]'
+                }`}
+              >
+                {resendIn > 0
+                  ? `Didn't get it? Resend in ${resendIn}s`
+                  : "Didn't get it? Resend code"}
+              </button>
+            </div>
 
             {/* Locking one channel does not lock the other, so the phone step is
                 still reachable after five bad email codes. */}

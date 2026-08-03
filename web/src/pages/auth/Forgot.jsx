@@ -60,7 +60,7 @@ export function Forgot() {
   return (
     <AuthLayout
       headline="Locked out? Let's fix that."
-      sub="Tell us the email or mobile number on your account and we'll send a code to set a new password."
+      sub="Tell us the email or mobile number on your account and we'll text you a code to set a new password."
     >
       {sent ? (
         <div className="text-center">
@@ -72,8 +72,9 @@ export function Forgot() {
               exactly as long as any other — never state a longer window than
               the server honours. */}
           <p className="mt-2 text-sm text-muted">
-            If an account exists for that email or mobile, a reset code has been sent. The code is
-            valid for {Math.round(config.otp.ttlSeconds / 60)} minutes.
+            If an account exists for that email or mobile, we&apos;ve texted a reset code to the
+            mobile number on it. The code is valid for{' '}
+            {Math.round(config.otp.ttlSeconds / 60)} minutes.
           </p>
           <Button
             fullWidth
@@ -102,8 +103,12 @@ export function Forgot() {
       ) : (
         <>
           <h2 className="text-[28px] font-bold text-ink-900">Reset your password</h2>
+          {/* Delivery is SMS-only: forgotWithRole() hardcodes channel:'mobile'.
+              You may IDENTIFY yourself with either, but the code is texted —
+              saying "email or mobile" here sent people to an empty inbox. */}
           <p className="mt-2 text-sm text-muted">
-            We&apos;ll send a 6-digit code to the email or mobile on your account.
+            Tell us the email or mobile on your account. We&apos;ll text a 6-digit code to the
+            mobile number registered to it.
           </p>
 
           {/* Same rhythm as the two sign-in screens — these four auth pages

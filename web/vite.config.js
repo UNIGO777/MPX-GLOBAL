@@ -25,6 +25,12 @@ export default defineConfig(({ mode }) => {
                 target,
                 changeOrigin: true,
                 rewrite: (path) => path.replace(new RegExp(`^${basePath}`), ''),
+                // 🔴 The refresh cookie is scoped `Path=/auth` by the server, but
+                // through this proxy the browser calls `/api/auth/refresh` — a
+                // path mismatch means the cookie is stored and then NEVER sent,
+                // so silent restore would fail in dev only, with no error to see.
+                // Rewrite the Set-Cookie path to match the proxied prefix.
+                cookiePathRewrite: { '/auth': `${basePath}/auth` },
               },
             }
           : {}),

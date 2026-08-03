@@ -69,5 +69,16 @@ export function errorHandler(err, req, res, _next) {
     return _next(err);
   }
 
-  res.status(statusCode).json({ error: { message: clientMessage, requestId } });
+  // `code` is a STABLE machine-readable discriminator for the few states a client
+  // must react to differently (an OTP lock disables the form; a dead login session
+  // offers "start over"). It exists because the web app was matching on the
+  // English prose of `message` — reword the copy and that UI silently stops
+  // working. Null unless a throw site set one; never a stack, never internals.
+  const code = err instanceof AppError ? err.code : undefined;
+  res.status(statusCode).json({
+    // `code` is OMITTED rather than sent as null when a throw site set none —
+    // the envelope stays exactly as it was for the vast majority of errors, and
+    // its presence always means something.
+    error: { message: clientMessage, ...(code ? { code } : {}), requestId },
+  });
 }

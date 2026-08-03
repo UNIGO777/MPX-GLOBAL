@@ -1,4 +1,14 @@
 import * as authService from '../services/auth.service.js';
+import { User } from '../models/User.js';
+import { AppError } from '../utils/AppError.js';
+import { ERROR_CODES } from '../utils/errorCodes.js';
+import {
+  clearRefreshCookie,
+  isWebClient,
+  readRefreshToken,
+  refreshTokenForBody,
+  setRefreshCookie,
+} from '../utils/refreshCookie.js';
 
 // Async handlers: Express 5 forwards a rejected promise to the central error
 // handler, so no try/catch wrapper is needed here.
@@ -59,7 +69,15 @@ export async function staffLogin(req, res) {
 
 export async function verifyOtp(req, res) {
   const result = await authService.completeLogin({ ...req.body, ...clientMeta(req) });
-  res.json({ accessToken: result.accessToken, refreshToken: result.refreshToken, user: authUserView(result.user) });
+  // Browser → the refresh token goes ONLY into the httpOnly cookie and is
+  // omitted from the body, so no script on the page can ever read it (A2).
+  // Native clients still receive it in the body — see refreshTokenForBody.
+  if (isWebClient(req)) setRefreshCookie(res, result.refreshToken);
+  res.json({
+    accessToken: result.accessToken,
+    ...refreshTokenForBody(req, result.refreshToken),
+    user: authUserView(result.user),
+  });
 }
 
 export async function resendOtp(req, res) {
@@ -68,18 +86,58 @@ export async function resendOtp(req, res) {
 }
 
 export async function refresh(req, res) {
-  const tokens = await authService.refresh({ ...req.body, ...clientMeta(req) });
-  res.json(tokens);
+  // Cookie first, body second. A browser sends the cookie automatically; native
+  // clients keep sending the body token.
+  const refreshToken = readRefreshToken(req);
+  if (!refreshToken) {
+    throw AppError.unauthorized(
+      'no refresh token presented',
+      'Session expired. Please sign in again.',
+      ERROR_CODES.REFRESH_TOKEN_MISSING,
+    );
+  }
+  const tokens = await authService.refresh({ refreshToken, ...clientMeta(req) });
+  // Rotation issues a NEW refresh token — the cookie must be replaced or the
+  // next refresh presents a rotated-away token and reads as theft (A7).
+  if (isWebClient(req)) setRefreshCookie(res, tokens.refreshToken);
+  res.json({ accessToken: tokens.accessToken, ...refreshTokenForBody(req, tokens.refreshToken) });
 }
 
 export async function logout(req, res) {
-  await authService.logout(req.body);
+  const refreshToken = readRefreshToken(req);
+  // Clear the cookie FIRST and unconditionally — the header survives even if the
+  // call then errors, so a logout never leaves a live cookie behind.
+  clearRefreshCookie(res);
+  // Presenting neither cookie nor body token stays a 400, exactly as when the
+  // validator required it: this is a malformed call, not an anonymous one.
+  if (!refreshToken) {
+    throw AppError.badRequest(
+      'no refresh token presented',
+      'Invalid request.',
+      ERROR_CODES.REFRESH_TOKEN_MISSING,
+    );
+  }
+  await authService.logout({ refreshToken });
   res.json({ ok: true });
 }
 
-// Server-authoritative identity of the caller (from authenticate, DB-sourced).
-export function me(req, res) {
-  res.json({ user: req.user });
+/**
+ * Server-authoritative identity of the caller.
+ *
+ * Returns the SAME curated shape as verify-otp, on purpose. `authenticate` keeps
+ * `req.user` deliberately lean (ids, role, permissions) because every route and
+ * every audit row uses it — so identity is read here, on this one endpoint.
+ *
+ * A2: this is what makes a reload survivable. After a silent refresh there is no
+ * verify-otp response to merge, so /auth/me is the ONLY source of the user's
+ * name; without it a restored session renders a blank header.
+ */
+export async function me(req, res) {
+  const user = await User.findById(req.user.userId).select(
+    'name email mobile role orgId isActive mustChangePassword',
+  );
+  if (!user) throw AppError.unauthorized('user not found', 'Not authenticated.');
+  res.json({ user: { ...authUserView(user), permissions: req.user.permissions ?? [] } });
 }
 
 export async function forgotPassword(req, res) {
@@ -104,5 +162,8 @@ export async function staffResetPassword(req, res) {
 
 export async function changePassword(req, res) {
   const tokens = await authService.changePassword({ userId: req.user.userId, ...req.body, ...clientMeta(req) });
-  res.json(tokens);
+  // A password change revokes every session and issues a fresh pair — the
+  // cookie must follow, or the browser keeps a token that was just revoked.
+  if (isWebClient(req)) setRefreshCookie(res, tokens.refreshToken);
+  res.json({ accessToken: tokens.accessToken, ...refreshTokenForBody(req, tokens.refreshToken) });
 }

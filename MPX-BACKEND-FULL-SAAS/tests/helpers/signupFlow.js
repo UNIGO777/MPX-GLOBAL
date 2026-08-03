@@ -19,9 +19,13 @@ export async function signupThroughOtp(
   app,
   otpBox,
   { name, email, mobile, password, role, company, country, entityType, address },
+  // Optional request headers (e.g. the web client's X-Client/Origin pair, which
+  // decides cookie vs body refresh token). Defaults to none = a native client.
+  headers = {},
 ) {
   const started = await request(app)
     .post('/auth/signup/start')
+    .set(headers)
     .send({ name, email, mobile, password, role });
 
   const signupToken = started.body.signupToken;
@@ -44,5 +48,6 @@ export async function signupThroughOtp(
 
   return request(app)
     .post('/auth/signup/complete')
+    .set(headers)
     .send({ signupToken, company, country, entityType, address });
 }
