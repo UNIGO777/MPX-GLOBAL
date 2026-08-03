@@ -25,7 +25,8 @@ export function WelcomeScreen({ navigation }) {
     <View style={[styles.root, { paddingTop: insets.top + spacing[8] }]}>
       <View style={styles.header}>
         <BrandMark size={72} />
-        <Text style={styles.brand}>MPX Global</Text>
+        {/* No text lockup here — BrandMark already carries the
+            wordmark, so repeating it printed the name twice. */}
         <Text style={styles.tagline}>
           The trusted B2B network connecting Indian exporters with international buyers.
         </Text>

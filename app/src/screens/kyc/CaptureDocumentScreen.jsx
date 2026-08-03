@@ -87,9 +87,17 @@ export function CaptureDocumentScreen({ navigation, route }) {
         // server rejects a mismatch against an exporter's signup value.
         entityType,
       });
-      // One upload puts the whole organisation into review — land back on the
-      // hub, which refetches on focus and shows the new state.
-      navigation.navigate('KycHub');
+      // One upload puts the whole organisation into review, so the steps that
+      // led here are DONE and must not stay in history.
+      //
+      // A plain navigate() left them on the stack: pressing back from the hub
+      // dropped the user onto the capture screen they had just finished, ready
+      // to re-upload a document that was already in. Resetting rebuilds the
+      // stack as Tabs → Hub, so back goes where it should — out of the flow.
+      navigation.reset({
+        index: 1,
+        routes: [{ name: 'Tabs' }, { name: 'KycHub' }],
+      });
     } catch (err) {
       setError(toAppError(err));
     } finally {
