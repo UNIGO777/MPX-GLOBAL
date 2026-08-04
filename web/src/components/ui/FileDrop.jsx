@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 
-import { UploadIcon } from './icons.jsx';
+import { FileIcon, UploadIcon } from './icons.jsx';
+import { formatBytes } from '../../lib/format.js';
 
 /**
  * The upload mockups' per-row file control: a dashed drop zone on the canvas
@@ -43,19 +44,34 @@ export function FileDrop({ file, accept, disabled, onPick }) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
-        className={`flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-dashed text-sm transition-colors ${
-          dragging
-            ? 'border-primary-600 bg-primary-50 text-primary-700'
-            : 'border-surface-border bg-surface-subtle text-ink-600 hover:border-ink-400'
-        } disabled:cursor-not-allowed disabled:opacity-60`}
+        className={`flex w-full items-center gap-3 rounded-lg border text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+          file
+            ? // Chosen: a solid row so the FILENAME is the thing you read.
+              'h-11 border-solid border-success-300 bg-success-50 px-2.5 text-left'
+            : `h-11 justify-center border-dashed px-3 ${
+                dragging
+                  ? 'border-primary-600 bg-primary-50 text-primary-700'
+                  : 'border-surface-border bg-surface-subtle text-ink-600 hover:border-ink-400'
+              }`
+        }`}
       >
-        <UploadIcon className="h-4 w-4" />
         {file ? (
-          <span className="truncate font-medium text-ink-900">{file.name}</span>
+          <>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-success-600 text-white">
+              <FileIcon className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1 truncate font-semibold text-ink-900" title={file.name}>
+              {file.name}
+            </span>
+            <span className="shrink-0 text-xs text-muted">{formatBytes(file.size)}</span>
+          </>
         ) : (
-          <span>
-            Drop a file or <span className="font-semibold text-primary-600 underline">browse</span>
-          </span>
+          <>
+            <UploadIcon className="h-4 w-4" />
+            <span>
+              Drop a file or <span className="font-semibold text-primary-600 underline">browse</span>
+            </span>
+          </>
         )}
       </button>
     </>

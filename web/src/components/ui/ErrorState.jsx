@@ -11,12 +11,14 @@ export function ErrorState({
   message = 'Something went wrong at our end. Try again, and if it keeps happening send this reference to support.',
   requestId,
   onRetry,
+  icon: Icon = AlertIcon,
   className = '',
 }) {
   return (
     <div className={`flex flex-col items-center px-6 py-12 text-center ${className}`}>
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-danger">
-        <AlertIcon className="h-6 w-6" />
+      {/* Design draws the glyph bare in danger red — no medallion. */}
+      <div className="mb-4 text-danger">
+        <Icon className="h-9 w-9" />
       </div>
       <h3 className="text-base font-semibold text-ink-900">{title}</h3>
       <p className="mt-1.5 max-w-md text-sm text-muted">{message}</p>

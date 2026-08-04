@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { authApi } from '../../api/auth.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
-import { roleHome } from '../../auth/roleHome.js';
+import { isStaff, roleHome } from '../../auth/roleHome.js';
 import { apiError } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
@@ -65,8 +65,12 @@ export function ChangePassword() {
   };
 
   const startOver = async () => {
+    // This screen is reachable by ANY signed-in role, not just staff — a buyer
+    // changing their password voluntarily must not be dropped on the staff
+    // portal, where their credentials would be refused.
+    const signin = isStaff(user) ? '/signin/staff' : '/signin';
     await signOut();
-    navigate('/signin/staff', { replace: true });
+    navigate(signin, { replace: true });
   };
 
   return (
@@ -75,13 +79,13 @@ export function ChangePassword() {
       sub="Temporary passwords are single-use by design — pick your own and every other session signs out."
     >
       <h2 className="text-[28px] font-bold text-ink-900">Set a new password</h2>
-      <p className="mt-1 text-sm text-muted">
+      <p className="mt-2 text-sm text-muted">
         {forced
           ? `You're signed in with a temporary password${user?.name ? `, ${user.name}` : ''}. Choose your own to continue — nothing else is accessible until you do.`
           : 'Choose a new password. Your other sessions will be signed out.'}
       </p>
 
-      <form onSubmit={submit} noValidate className="mt-6 space-y-5">
+      <form onSubmit={submit} noValidate className="mt-5 space-y-4">
         {error && <Alert tone="danger">{error}</Alert>}
 
         <PasswordInput
@@ -117,12 +121,14 @@ export function ChangePassword() {
           disabled={loading}
         />
 
-        <Button type="submit" fullWidth loading={loading}>
-          Change password and continue
-        </Button>
+        <div className="pt-3">
+          <Button type="submit" fullWidth loading={loading}>
+            Change password and continue
+          </Button>
+        </div>
       </form>
 
-      <p className="mt-6 text-center text-sm">
+      <p className="mt-7 border-t border-surface-border pt-5 text-center text-sm">
         <button
           type="button"
           onClick={startOver}

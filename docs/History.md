@@ -175,6 +175,108 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-04** — **EMPLOYEE PERMISSIONS READ BUILT (owner-approved) — closes the last M1 admin
+  gap. 26/26 in `userManagement.test.js`, web build green.** `GET /admin/users` now returns each
+  **employee's** granted `permissions` **to a superadmin only**. Shape: the controller computes
+  `includePermissions: req.user.role === 'superadmin'` and the aggregation emits the field via
+  `$cond` on `role === 'employee'`, else `$$REMOVE` — so buyer/exporter/superadmin rows are
+  byte-identical to before and nothing new leaks. **Why the role is re-checked in the controller:**
+  the route's guard is `user:read`, which an EMPLOYEE can hold, so the permission gate alone would
+  have handed one employee its colleagues' grants (m5-rules §8). No new route, no new grantable
+  permission, no change to the write path. **Tests pin all three guarantees:** superadmin sees the
+  set · an employee holding `user:read` sees no `permissions` key on any row · non-employee rows
+  never carry it even for a superadmin. **Frontend:** the Employees table fills its Permissions
+  column from the list, the edit drawer **pre-ticks the real current set** (fresher create/edit
+  responses still win until the next load), and the "can't be shown" warning is replaced by the
+  design's info note — saving still REPLACES the set, which the copy now states plainly. Ledger
+  rows in `UiWebNotes.md` closed (recommended follow-up #2 → BUILT).
+- **2026-08-03** — **ADMIN CONSOLE · Employees + KYC viewer rebuilt against their design images
+  (the last two admin screens that had never been image-verified). Build green.**
+  **Employees:** 32px header + "Create staff accounts and manage what each person can do." ·
+  "+ Add employee" · permissions render as **blue chips** per row (were "·"-joined text), "No
+  access yet" when the set is known-empty, "—" only when unknown (the standing backend gap) ·
+  footer is "Showing N employees" until the list outgrows a page, then the pager · add-drawer now
+  matches the design: **flat permission checklist with no group headings** (new `PERMISSION_LIST`,
+  new `plain` Checkbox variant), "Grant now or later.", a **"Generate" button beside** the
+  temporary-password field (was a text link inside it), and the design's placeholders.
+  **KYC viewer:** "← Back to verification queue" · **applicant summary bar** (Applicant / Entity /
+  Country / Submitted / N files / status chip) — name, country and submitted date come from
+  `GET /admin/orgs/:id`, fetched with `Promise.allSettled` so a reviewer holding only `kyc:view`
+  still sees the documents with those cells blank · document list is now **cards** with an icon
+  tile and "Uploaded <date>", selected one ringed · privacy note under the list · preview header
+  gains **"Open in new tab"** · **decision bar moved below both columns** with a red-outline
+  **✕ Reject** and a green **✓ Verify**, alongside "Your access to them is recorded".
+  ⚠️ **Not built:** the design's zoom control (− 100% +) in the preview header — real zoom, not
+  worth faking; no dead control was rendered.
+- **2026-08-03** — **BUYER KYC UPLOAD (`/buyer/kyc`) rebuilt against the real design image.**
+  Owner-reported: the delete button escaped its box and the top banner copy was wrong. Both were
+  symptoms of the wrong row/page structure. Now per the image: **"← Back to verification status"
+  link at the TOP** (was a button at the bottom) · 32px h1 + "Optional — this earns you a verified
+  tick." · info banner with a white icon medallion, bold **"You don't have to do this"** and the
+  design's exact body ending "You can do it now, later, or never." · **ONE card** holds the account
+  kind AND the documents (was two cards), split by a rule · entity options are radio cards with an
+  icon tile and a **radio circle on the right** · each document is a label row ("PAN" + **"Change
+  type"** link) above a **tinted file row** — green when chosen, blue with a **progress bar pinned
+  to the row's bottom edge** while uploading, red on error — with the **trash button INSIDE the
+  row** (`shrink-0`), which is the reported overflow · `Document type` select appears under the row
+  and collapses once a type is picked · "⊕ Add another document" link. New `formatBytes()` renders
+  the design's "820 KB / 1.4 MB" size line. The exporter upload shared the same overflowing grid;
+  its row is now flex with a `min-w-0` dropzone cell and a `shrink-0` trash — **that screen still
+  needs its own pass against `exporter_verification_stacked_states`.**
+- **2026-08-03** — **DESIGN IMAGES RECOVERED (13 of 18) + first two admin screens rebuilt against
+  them. Build green.** The owner re-exported the corrupt screenshots; all 13 are now installed as
+  `design-plans/m1/m1-webscreens/*/screen.png` at their native **1280px** width (which confirms
+  the design viewport and the 260/88/32 shell numbers). **Still corrupt / markup-only: sign-in,
+  password recovery, password reset, buyer registration, landing.**
+  **Users (`/admin/users`) rebuilt to the image:** right-aligned "N accounts" count · filter CARD
+  with uppercase `STARTS WITH… / ROLE / VERIFICATION` labels and a "Clear filters" link (the
+  search placeholder is now just "Name, email or mobile" — the label carries the prefix rule) ·
+  shaded uppercase table header · "All statuses" wording · empty state = search-off glyph +
+  "No accounts match those filters" + copy that names the live filters + Clear-filters pill ·
+  error state = cloud-off glyph + "We couldn't load the directory" · numbered pagination
+  (‹ 1 2 3 … 63 ›) · deactivate confirm is now the design's CENTRED dialog (medallion icon, no
+  ✕, centred buttons) with the design's copy. **Verification queue rebuilt:** underline tabs with
+  count chips (were pills) · "N exporters awaiting review" meta line · flat cards with an amber
+  "Awaiting review" chip, COUNTRY/ENTITY TYPE/SUBMITTED meta and a documents line · **Verify is
+  GREEN** (new `success` Button variant) with a tick, Reject is a red outline · a 409 now raises a
+  page-level "no longer awaiting review" banner with Refresh (was a per-card flip) · reject modal
+  copy matched ("Reason for rejection", "explain what they should fix", `n / 500`).
+  Shared primitives updated for the design: `Modal` gained a `centered` confirm shape, `EmptyState`
+  and `ErrorState` now draw bare glyphs (no medallion) with a bolder title, `Pagination` gained
+  numbered pages. 🔴 **One shell divergence to decide:** the admin image gives the active sidebar
+  row a 4px white LEFT BAR; the buyer/exporter images use a plain rounded pill. The shell is
+  locked to the pill (2 of 3 consoles, and it is the shell the owner reviewed) — say the word to
+  switch to the bar everywhere.
+- **2026-08-03** — **WEB · SHELL LOCKED + SIDEBAR DIVIDER (owner).** `ConsoleShell` now takes
+  **no styling props at all** — sidebar, bar, curve, canvas, padding and the 1360 wrap are the
+  same on every screen of every console; **only `children` changes**. The per-console width knob
+  (`wrapClass`) is gone: the panels' 860px measure moved into `PortalLayout` (content, not shell)
+  and wide admin tables use the full wrap. A **hairline rule** (`border-white/15`) now sits above
+  the sidebar's last group in place of the design's bare 32px gap — above **Settings** on the
+  buyer and exporter panels, and above **Audit log** on the admin console, which is where that
+  design puts its group break (Settings sits inside that group). Flag renamed
+  `spacerBefore` → `dividerBefore`.
+- **2026-08-03** — **WEB · ONE STANDARD DASHBOARD SHELL — `ConsoleShell` (owner: "the dashboard
+  design is standard everywhere, admin buyer and seller"). Build green.** Verified against the
+  design FILES (`design-plans/m1/m1-webscreens/*/code.html` — the folder moved from `my-plans/`):
+  all three panels declare identical chrome, so the buyer/exporter `PortalLayout` and the staff
+  `AdminLayout` are now thin wrappers over one shell. **Spec taken verbatim from the design CSS:**
+  `.sidebar {width:260px; height:100vh; #1A2E8F}` · `.top-bar {height:88px}` ·
+  `.main-content {#EAEEFF; overflow-y:auto}` · `.curved-edge {border-top-left-radius:32px}` +
+  inset shadow · content wrap `max-w-[860px] p-10` (admin widens to `max-w-[1360px] mx-auto p-12`
+  for its tables). Nav rows `px-4 py-3 gap-3 text-[15px]`, 20px icons, active `bg-white/10`,
+  SOON badge `bg-white/15 ml-auto`, an explicit **32px spacer** before the last group.
+  **Structural fix:** the wordmark belongs to an 88px block INSIDE the sidebar and the top bar is
+  identity-only and `justify-end` — both navy, so they read as one bar. The old build put the
+  logo in a 56px full-width header with a 224px sidebar and no curved edge, which is why the
+  shell looked wrong on every panel at once. Settings now renders per the design (dimmed,
+  **no SOON badge**) with a 32px gap above it; admin Dashboard/Audit log are non-interactive SOON
+  rows and Settings is the one real link (→ ComingSoon). Buyer verification card aligned to the
+  design: 12px radius, 32px padding, 32px header block, 200×44 CTA pill. ⚠️ **Gotcha for the
+  owner:** the screenshot supplied for review did NOT come from the code on disk (it renders an
+  88px bar / 260px sidebar / curved edge that `PortalLayout.jsx` never contained, and git was
+  clean) — the running Vite dev server is serving something newer than the repo. Restart it and
+  hard-reload before judging this change.
 - **2026-08-03** — **🔴 A2 CLOSED FOR WEB · refresh token moved to an httpOnly cookie, plus a
   machine-readable error `code`.** Owner-approved plan, built in the ordered phases (additive
   first, removal last, verified between). **The catch that shaped the design: the same endpoints

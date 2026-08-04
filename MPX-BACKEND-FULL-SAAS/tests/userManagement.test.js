@@ -355,3 +355,46 @@ describe('employee permission assignment (M1-F)', () => {
     expect(revoke.body.user.permissions).toEqual([]);
   });
 });
+
+describe('GET /admin/users — employee permissions on the row (owner-approved 2026-08-04)', () => {
+  it('gives a SUPERADMIN each employee\'s granted set', async () => {
+    const { token } = await makeUser('superadmin');
+    await makeUser('employee', { permissions: ['user:read', 'kyc:view'] });
+
+    const res = await request(app)
+      .get('/admin/users?role=employee')
+      .set(bearer(token))
+      .expect(200);
+
+    const row = res.body.rows.find((r) => Array.isArray(r.permissions));
+    expect(row).toBeTruthy();
+    expect(row.permissions.sort()).toEqual(['kyc:view', 'user:read']);
+  });
+
+  it('NEVER gives an employee holding user:read another employee\'s set', async () => {
+    const { token } = await makeUser('employee', { permissions: ['user:read'] });
+    await makeUser('employee', { permissions: ['buyer:approve', 'exporter:verify'] });
+
+    const res = await request(app)
+      .get('/admin/users?role=employee')
+      .set(bearer(token))
+      .expect(200);
+
+    expect(res.body.rows.length).toBeGreaterThan(0);
+    for (const row of res.body.rows) {
+      expect(row).not.toHaveProperty('permissions');
+    }
+  });
+
+  it('never attaches the field to non-employee rows, even for a superadmin', async () => {
+    const { token } = await makeUser('superadmin');
+    await makeUser('buyer');
+    await makeUser('exporter');
+
+    const res = await request(app).get('/admin/users').set(bearer(token)).expect(200);
+
+    for (const row of res.body.rows.filter((r) => r.role !== 'employee')) {
+      expect(row).not.toHaveProperty('permissions');
+    }
+  });
+});

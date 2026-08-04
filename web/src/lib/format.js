@@ -63,6 +63,22 @@ export function apiError(err, fallback = 'Something went wrong. Please try again
   };
 }
 
+/**
+ * `fields: [{field:'body.email', message}]` → `{email: message, ...}`.
+ *
+ * Lives here, next to `apiError` which surfaces `fields`, rather than inside a
+ * page — three screens use it, and importing a helper from a sibling page
+ * couples two routes that otherwise share nothing.
+ */
+export function fieldErrorMap(fields) {
+  const map = {};
+  for (const f of fields ?? []) {
+    const key = String(f.field ?? '').replace(/^body\./, '');
+    if (!map[key]) map[key] = f.message;
+  }
+  return map;
+}
+
 /** Mirror of the server's src/utils/errorCodes.js — keep the two in step. */
 export const ERROR_CODES = {
   OTP_LOCKED: 'OTP_LOCKED',
@@ -81,4 +97,13 @@ export function isErrorCode(err, code, legacyPattern) {
   const { code: actual, message } = apiError(err, '');
   if (actual) return actual === code;
   return legacyPattern ? legacyPattern.test(message ?? '') : false;
+}
+
+/** "820 KB" / "1.4 MB" — the file-size line in the upload rows. */
+export function formatBytes(bytes) {
+  if (!Number.isFinite(bytes)) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${Math.round(kb)} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
 }

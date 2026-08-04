@@ -188,6 +188,19 @@ describe('A2 · refresh cookie (web) alongside body token (native)', () => {
     expect(replay.body.error.code).toBe('SESSION_EXPIRED');
   });
 
+  it('refresh has its OWN budget — it cannot starve OTP/reset endpoints', async () => {
+    // Burn well past authLimiter's 10-per-15-min with refresh calls...
+    for (let i = 0; i < 14; i++) {
+      await request(app).post('/auth/refresh').set(WEB).send({});
+    }
+    // ...then an endpoint on authLimiter must still be reachable. Before the
+    // split, this answered 429 and signup verification was dead in the water.
+    const res = await request(app)
+      .post('/auth/signup/verify')
+      .send({ signupToken: 'x'.repeat(40), channel: 'email', code: '123456' });
+    expect(res.status).not.toBe(429);
+  });
+
   it('errors carry a machine-readable code, not just prose', async () => {
     const res = await request(app).post('/auth/refresh').send({ refreshToken: 'x'.repeat(64) });
     expect(res.status).toBe(401);

@@ -7,19 +7,28 @@ import { XIcon } from './icons.jsx';
 export function Drawer({ open, onClose, title, subtitle, children, footer }) {
   const panelRef = useRef(null);
 
+  // `onClose` is an inline arrow at every call site, so it is a NEW function on
+  // every parent render. Keeping it in the dependency array re-ran this effect
+  // on each keystroke — the cleanup restored focus to the previously-focused
+  // element and the re-run called panelRef.focus(), yanking the caret out of
+  // whatever field was being typed into. Hold it in a ref and depend on `open`
+  // alone, so the focus/scroll-lock setup happens once per opening.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!open) return undefined;
     const previouslyFocused = document.activeElement;
     panelRef.current?.focus();
     document.body.style.overflow = 'hidden';
-    const onKey = (e) => e.key === 'Escape' && onClose?.();
+    const onKey = (e) => e.key === 'Escape' && onCloseRef.current?.();
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
       previouslyFocused?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

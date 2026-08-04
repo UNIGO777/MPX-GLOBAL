@@ -1,5 +1,5 @@
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
-import { ClockIcon } from '../../components/ui/icons.jsx';
+import { ClockIcon, ShieldIcon } from '../../components/ui/icons.jsx';
 
 /**
  * Designed placeholder for admin areas outside the M1 web set (Dashboard,
@@ -9,7 +9,7 @@ import { ClockIcon } from '../../components/ui/icons.jsx';
 export function ComingSoon({ title, note }) {
   return (
     <AdminLayout>
-      <div className="mx-auto mt-12 max-w-md rounded-lg border border-surface-border bg-white p-8 text-center shadow-card">
+      <div className="mx-auto mt-12 max-w-md rounded-xl border border-surface-border bg-white p-8 text-center shadow-sm">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-700">
           <ClockIcon className="h-6 w-6" />
         </div>
@@ -26,8 +26,13 @@ export function ComingSoon({ title, note }) {
 export function NoAccess() {
   return (
     <AdminLayout>
-      <div className="mx-auto mt-12 max-w-md rounded-lg border border-surface-border bg-white p-8 text-center shadow-card">
-        <h1 className="text-xl font-bold text-ink-900">Nothing here for you yet</h1>
+      <div className="mx-auto mt-12 max-w-md rounded-xl border border-surface-border bg-white p-8 text-center shadow-sm">
+        {/* Same medallion as ComingSoon: this is a normal state for a narrowly
+            granted employee, not a failure, and a bare card reads as an error. */}
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+          <ShieldIcon className="h-6 w-6" />
+        </div>
+        <h1 className="mt-4 text-xl font-bold text-ink-900">Nothing here for you yet</h1>
         <p className="mt-2 text-sm text-muted">
           Your account is active, but none of the currently available admin areas are in your
           permissions. Ask a Super Admin to grant you access to the modules you need — changes take

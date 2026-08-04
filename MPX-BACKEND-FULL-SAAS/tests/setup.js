@@ -24,6 +24,13 @@ const testDbBase = process.env.MONGODB_TEST_DB || 'mpx_global_test';
 const workerId = process.env.VITEST_WORKER_ID ?? '0';
 process.env.MONGODB_URI = `mongodb://127.0.0.1:27017/${testDbBase}_w${workerId}`;
 process.env.REDIS_URL = 'redis://127.0.0.1:6379';
+
+// 🔴 Pin the Cloudinary cloud name. `isOwnCloudinaryUrl` verifies that an image
+// URL sits under `/<cloud>/`, and the fixtures build refs against `/demo/`. With
+// this unset the suite fell through to whatever the developer's .env held, so a
+// real cloud name silently failed 9 product tests with "untrusted image url" —
+// a green suite that depended on a local file. Tests must not read it.
+process.env.CLOUDINARY_CLOUD_NAME = 'demo';
 process.env.JWT_ACCESS_SECRET =
   process.env.JWT_ACCESS_SECRET || 'test_access_secret_at_least_32_chars_long_000';
 process.env.JWT_REFRESH_SECRET =

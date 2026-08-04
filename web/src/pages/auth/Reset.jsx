@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { authApi } from '../../api/auth.js';
 import { config } from '../../config.js';
@@ -10,7 +10,6 @@ import { Button } from '../../components/ui/Button.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { OtpInput } from '../../components/ui/OtpInput.jsx';
 import { PasswordInput } from '../../components/ui/PasswordInput.jsx';
-import { PortalToggle } from '../../components/ui/PortalToggle.jsx';
 import { CheckCircleIcon } from '../../components/ui/icons.jsx';
 
 /**
@@ -25,8 +24,14 @@ export function Reset() {
   const [params] = useSearchParams();
   const staff = params.get('staff') === '1';
 
-  const [portal, setPortal] = useState(location.state?.portal ?? 'buyer');
-  const [identifier, setIdentifier] = useState(location.state?.identifier ?? '');
+  // Both arrive from Forgot in router state. They are the ONLY way this screen
+  // knows which account the code belongs to, which is why their absence means
+  // there is nothing to reset (see the guard below).
+  const carriedPortal = location.state?.portal ?? null;
+  const carriedIdentifier = location.state?.identifier ?? null;
+  // Fixed by Forgot; there is no cold-hit path that could change it.
+  const portal = carriedPortal ?? 'buyer';
+  const [identifier, setIdentifier] = useState(carriedIdentifier ?? '');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -39,6 +44,15 @@ export function Reset() {
   const [done, setDone] = useState(false);
 
   const backTo = staff ? '/signin/staff' : '/signin';
+
+  // 🔴 No direct access. A reset code is issued against one portal + identifier
+  // pair by Forgot, and that pair travels in router state — so a cold hit (or a
+  // refresh, which drops the state) has no code context at all. Send them to
+  // request one rather than render a form whose values can only be wrong. Same
+  // rule as /otp and /signup/verify.
+  if (!carriedIdentifier) {
+    return <Navigate to={staff ? '/forgot?staff=1' : '/forgot'} replace />;
+  }
 
   const submit = async (e) => {
     e.preventDefault();
@@ -103,7 +117,30 @@ export function Reset() {
 
           {/* Same rhythm as the other auth screens (owner, 2026-08-02). */}
           <form onSubmit={submit} noValidate className="mt-5 space-y-4">
-            {!staff && <PortalToggle value={portal} onChange={setPortal} disabled={loading} />}
+            {/* The code was issued against one exact portal + identifier pair,
+                so neither can be changed here: switching either could only make
+                the lookup miss and return "Invalid or expired code", blaming the
+                code for what is really a wrong account. Arriving from Forgot the
+                portal is simply STATED and the identifier is shown disabled; on
+                a cold hit or refresh both are unknown, so both are editable. */}
+            {staff ? (
+              // Staff have no portal to choose — a staff email is exclusive
+              // (A21) — but say which console this is resetting, so someone who
+              // followed the wrong recovery link notices before spending a code.
+              <p className="text-[13px] text-muted">
+                Resetting the password for your{' '}
+                <span className="font-semibold text-ink-900">staff</span> account on the MPX Global
+                admin console.
+              </p>
+            ) : (
+              <p className="text-[13px] text-muted">
+                Resetting the password for your{' '}
+                <span className="font-semibold text-ink-900">
+                  {carriedPortal === 'exporter' ? 'Exporter' : 'Buyer'}
+                </span>{' '}
+                account.
+              </p>
+            )}
             {error && <Alert tone="danger">{error}</Alert>}
 
             <Input
@@ -114,15 +151,16 @@ export function Reset() {
               helper="Mobile must include country code, e.g. +91 98765 43210"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              disabled={loading}
+              disabled
             />
 
             <div className="space-y-2">
               <span className="text-sm font-medium text-ink-900">Reset code</span>
-              {/* Focus the code only when the identifier arrived prefilled from
-                  Forgot — on a cold hit, the identifier is what's needed first. */}
+              {/* Focus the code when the identifier came with us — on a cold
+                  hit the identifier field is what needs filling first. */}
               <OtpInput
-                autoFocus={Boolean(location.state?.identifier)}
+                label="Reset code"
+                autoFocus
                 value={code}
                 onChange={setCode}
                 disabled={loading}
@@ -174,8 +212,12 @@ export function Reset() {
             </div>
           </form>
 
+          {/* `replace` so leaving does not leave this screen — with the account
+              being recovered on display — sitting in history behind a Back
+              press. The code is single-use and short-lived, so returning here
+              grants nothing; this is about not showing the identifier again. */}
           <p className="mt-7 border-t border-surface-border pt-5 text-center text-sm">
-            <Link to={backTo} className="font-medium text-primary-600 hover:text-primary-700">
+            <Link to={backTo} replace className="font-medium text-primary-600 hover:text-primary-700">
               Back to sign in
             </Link>
           </p>

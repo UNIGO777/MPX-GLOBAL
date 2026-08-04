@@ -1,4 +1,5 @@
 import { KYC_STATUS_META } from '../../lib/format.js';
+import { CheckCircleIcon } from './icons.jsx';
 
 /**
  * The one status chip (§1.2 of the design doc). Colour never carries meaning
@@ -20,9 +21,14 @@ export function StatusChip({ status, label, tone }) {
   const chipTone = tone ?? meta?.tone ?? 'muted';
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-semibold ${TONES[chipTone]}`}
+      className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-semibold ${TONES[chipTone]}`}
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+      {/* Design: the verified state gets a tick, every other state a dot. */}
+      {chipTone === 'success' ? (
+        <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
+      ) : (
+        <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+      )}
       {text}
     </span>
   );

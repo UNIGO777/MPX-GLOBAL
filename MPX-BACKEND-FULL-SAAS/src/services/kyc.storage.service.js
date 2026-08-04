@@ -4,13 +4,14 @@ import { fileTypeFromBuffer } from 'file-type';
 
 import { cloudinary, isCloudinaryConfigured } from '../config/cloudinary.js';
 import { AppError } from '../utils/AppError.js';
+import { env } from '../config/env.js';
 
 // KYC documents are stored on Cloudinary as PRIVATE assets (see docs/Note.md close
 // checklist): a private asset has NO publicly-reachable URL — it can only be
 // fetched through a short-lived signed download URL we mint per request. We never
 // store or return a raw/public URL; only the Cloudinary public_id (storageKey).
 
-const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_BYTES = env.KYC_MAX_FILE_MB * 1024 * 1024; // KYC_MAX_FILE_MB
 
 // Allowlist by TRUE content type (magic bytes), not the client-supplied name/mime.
 const ALLOWED = new Map([
@@ -37,7 +38,7 @@ export async function verifyKycFile(buffer) {
     throw AppError.badRequest('empty file', 'No file was uploaded.');
   }
   if (buffer.length > MAX_BYTES) {
-    throw AppError.badRequest('file too large', 'File exceeds the 10 MB limit.');
+    throw AppError.badRequest('file too large', `File exceeds the ${env.KYC_MAX_FILE_MB} MB limit.`);
   }
   const sniffed = await fileTypeFromBuffer(buffer);
   const allowed = sniffed && ALLOWED.get(sniffed.mime);

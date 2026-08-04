@@ -62,6 +62,24 @@ export const authLimiter = buildLimiter({
   limit: 10,
 });
 
+// Refresh gets its OWN budget, deliberately separate from `authLimiter`.
+//
+// 🔴 Why: the browser now calls /auth/refresh on EVERY page load to restore the
+// session from the httpOnly cookie (A2). Sharing authLimiter's 10-per-15-min
+// with OTP verify, signup verify and password reset meant ordinary navigation
+// starved those endpoints — signup verification failed with "Too many requests"
+// after a handful of page loads, and a 429 on restore reads to the client as
+// "no session", silently signing the user out. Measured in a browser, 2026-08-04.
+//
+// A higher ceiling is safe here: the credential is an opaque 64-char rotating
+// token, not a guessable code, and theft is caught by reuse detection revoking
+// the family (A7) — not by counting attempts.
+export const refreshLimiter = buildLimiter({
+  prefix: 'rl:refresh:',
+  windowMs: 15 * MINUTE,
+  limit: 60,
+});
+
 // OTP endpoints — stricter, and keyed per identifier (email / mobile) rather
 // than only per IP, so an attacker rotating IPs still can't fan out OTP requests
 // against one account. Falls back to the IP when no identifier is present.

@@ -121,9 +121,9 @@ export function VerificationStatus() {
 
   return (
     <PortalLayout nav={BUYER_NAV}>
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      {/* Design: 32px header block, 32px title, 16px subline */}
+      <div className="mb-8 flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
-          {/* Mockup: 32px title, 16px subline */}
           <h1 className="text-[26px] font-bold text-ink-900 sm:text-[32px]">
             Welcome{firstName ? `, ${firstName}` : ''}
           </h1>
@@ -132,8 +132,8 @@ export function VerificationStatus() {
         {v?.kycStatus === 'verified' && <VerifiedTick verified verifiedAt={v.verifiedAt} />}
       </div>
 
-      {/* Mockup card: 860px cap, 16px radius, 32px padding */}
-      <section className="max-w-[860px] rounded-2xl border border-surface-border bg-white p-6 shadow-card sm:p-8">
+      {/* Design card: 860px cap, 12px radius, 32px padding, hairline + soft shadow */}
+      <section className="max-w-[860px] rounded-xl border border-surface-border bg-white p-6 shadow-sm sm:p-8">
         {loading && (
           <div className="space-y-4" role="status" aria-label="Loading verification status">
             <Skeleton className="h-6 w-24 rounded-full" />
@@ -171,8 +171,12 @@ export function VerificationStatus() {
               </p>
             )}
 
+            {/* Design CTA: 200×44 pill */}
             {state.cta && (
-              <Button className="mt-5" onClick={() => navigate('/buyer/kyc')}>
+              <Button
+                className="mt-6 h-11 w-[200px] px-0 text-[15px]"
+                onClick={() => navigate('/buyer/kyc')}
+              >
                 {state.cta}
               </Button>
             )}

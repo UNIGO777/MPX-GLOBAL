@@ -42,10 +42,15 @@ export const config = {
     resendCooldownSeconds: num(env.VITE_OTP_RESEND_COOLDOWN_SECONDS, 60),
   },
 
-  /** Mirrors the server's KYC upload allowlist + size cap. */
+  /**
+   * Mirrors the server's KYC upload allowlist + per-document size cap.
+   * ONE cap for buyer AND exporter — both portals post to the same endpoint,
+   * so `KYC_MAX_FILE_MB` on the server is what actually enforces it and this
+   * only drives what the user is told.
+   */
   kyc: {
-    maxBytes: num(env.VITE_KYC_MAX_MB, 10) * 1024 * 1024,
-    maxMb: num(env.VITE_KYC_MAX_MB, 10),
+    maxBytes: num(env.VITE_KYC_MAX_FILE_MB, 10) * 1024 * 1024,
+    maxMb: num(env.VITE_KYC_MAX_FILE_MB, 10),
     accept:
       env.VITE_KYC_ACCEPT ||
       '.pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp',

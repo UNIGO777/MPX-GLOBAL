@@ -1,18 +1,20 @@
 /**
  * The MPX Global wordmark — the ONLY place the brand lockup is built. Every
- * header, sidebar and auth panel renders this; nothing draws its own "M" tile
- * or types the name as text.
+ * header, sidebar and auth panel renders this; nothing draws its own tile or
+ * types the name as text.
  *
- * Two files, one mark: the supplied logo's "GLOBAL" is near-black, so it
- * vanishes on the navy surfaces (primary-800 sidebars, top bars, auth panel).
- * `variant="light"` swaps to a copy whose neutral ink is white — the gold "MPX"
- * is untouched in both.
+ * Two supplied variants, and the rule is simply background contrast
+ * (owner, 2026-08-03):
+ *   `variant="blue"`  → for WHITE / light surfaces (blue mark, black "GLOBAL")
+ *   `variant="white"` → for BLUE / dark surfaces (all white)
+ * Both are transparent PNGs, so neither shows a box on a tinted surface such as
+ * the canvas (#EAEEFF) behind the mobile auth card.
  *
- * Sizing is by HEIGHT only; width follows the 798x406 artwork so the mark can
- * never stretch, and both dimensions are set on the element to reserve space
- * before the image loads (no layout shift — web-design.md).
+ * Sizing is by HEIGHT only; width follows the artwork so the mark can never
+ * stretch, and both dimensions are set on the element to reserve space before
+ * the image loads (no layout shift — web-design.md).
  */
-const ASPECT = 798 / 406;
+const ASPECT = 800 / 407;
 
 const HEIGHTS = {
   sm: 24, // dense bars (portal top bar, 56px tall)
@@ -21,12 +23,17 @@ const HEIGHTS = {
   xl: 52, // auth panel brand
 };
 
-export function Logo({ size = 'md', variant = 'dark', className = '' }) {
+const SRC = {
+  blue: '/brand-logo-blue.png',
+  white: '/brand-logo-white.png',
+};
+
+export function Logo({ size = 'md', variant = 'blue', className = '' }) {
   const height = HEIGHTS[size] ?? HEIGHTS.md;
 
   return (
     <img
-      src={variant === 'light' ? '/logo-wordmark-light.png' : '/logo-wordmark.png'}
+      src={SRC[variant] ?? SRC.blue}
       alt="MPX Global"
       width={Math.round(height * ASPECT)}
       height={height}

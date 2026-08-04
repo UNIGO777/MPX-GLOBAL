@@ -4,7 +4,13 @@ import { validate } from '../middleware/validate.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/authorize.js';
 import { publicRoute } from '../config/routeGuard.js';
-import { authLimiter, otpLimiter, staffOtpLimiter, generalLimiter } from '../middleware/rateLimit.js';
+import {
+  authLimiter,
+  otpLimiter,
+  refreshLimiter,
+  staffOtpLimiter,
+  generalLimiter,
+} from '../middleware/rateLimit.js';
 import * as ctrl from '../controllers/auth.controller.js';
 import * as V from '../validators/auth.validators.js';
 import * as signupCtrl from '../controllers/signup.controller.js';
@@ -48,7 +54,7 @@ authRouter.get('/auth/me', authenticate, ctrl.me);
 authRouter.post('/auth/change-password', authenticate, validate(V.changePassword), ctrl.changePassword);
 
 // Session lifecycle. Refresh/logout present an opaque token, not an access token.
-authRouter.post('/auth/refresh', publicRoute, authLimiter, validate(V.refresh), ctrl.refresh);
+authRouter.post('/auth/refresh', publicRoute, refreshLimiter, validate(V.refresh), ctrl.refresh);
 authRouter.post('/auth/logout', publicRoute, generalLimiter, validate(V.logout), ctrl.logout);
 
 // Password reset via OTP. Public. A21: same portal split as login — party takes a

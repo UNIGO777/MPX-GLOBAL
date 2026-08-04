@@ -112,3 +112,43 @@ export const BoxIcon = (p) => (
 export const ListIcon = (p) => (
   <Svg {...p}><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01" /></Svg>
 );
+/** Empty-search state (design: "No accounts match those filters"). */
+export const SearchOffIcon = (p) => (
+  <Svg {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="M16.2 16.2L21 21" />
+    {/* Struck top-right to bottom-left, so the strike can't sit collinear with
+        the handle — the old glyph's stray stub read as a rendering fault. */}
+    <path d="M17.5 4.5L4.5 17.5" />
+  </Svg>
+);
+/** Load-failure state (design: "We couldn't load the directory"). */
+export const CloudOffIcon = (p) => (
+  <Svg {...p}>
+    <path d="M17 18H7a4 4 0 0 1-.7-7.94A6 6 0 0 1 16.5 8.5" />
+    <path d="M3 3l18 18" />
+  </Svg>
+);
+/** Row actions (⋮) — opens the per-row menu. */
+export const MoreVerticalIcon = (p) => (
+  <Svg {...p}>
+    <circle cx="12" cy="5" r="1" />
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="12" cy="19" r="1" />
+  </Svg>
+);
+/** Deactivate — a struck-through person. */
+export const SlashIcon = (p) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M5.6 5.6l12.8 12.8" />
+  </Svg>
+);
+/** Verification review — a badge with a tick (the row menu's decision entry). */
+export const BadgeCheckIcon = (p) => (
+  <Svg {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <circle cx="9" cy="11" r="2" />
+    <path d="M6 16c.6-1.3 1.7-2 3-2s2.4.7 3 2M15 10h4M15 13.5h3" />
+  </Svg>
+);

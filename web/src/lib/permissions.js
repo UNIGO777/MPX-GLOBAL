@@ -54,3 +54,9 @@ export const PERMISSION_GROUPS = [
 export const PERMISSION_LABELS = Object.fromEntries(
   PERMISSION_GROUPS.flatMap((g) => g.items.map((i) => [i.value, i.label])),
 );
+
+/**
+ * Flat, ordered catalogue — the design's employee drawer lists every
+ * permission in one column with no group headings, M1's trio first.
+ */
+export const PERMISSION_LIST = PERMISSION_GROUPS.flatMap((g) => g.items);

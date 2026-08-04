@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { authApi } from '../../api/auth.js';
-import { apiError } from '../../lib/format.js';
+import { apiError, fieldErrorMap } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -24,17 +24,6 @@ import { PasswordInput } from '../../components/ui/PasswordInput.jsx';
  * creates nothing — it only starts a short-lived pending signup and sends two
  * codes.
  */
-
-/** `fields: [{field:'body.email', message}]` → `{email: message, ...}`. */
-export function fieldErrorMap(fields) {
-  const map = {};
-  for (const f of fields ?? []) {
-    const key = String(f.field ?? '').replace(/^body\./, '');
-    if (!map[key]) map[key] = f.message;
-  }
-  return map;
-}
-
 export function BuyerSignup() {
   const navigate = useNavigate();
 
@@ -111,8 +100,14 @@ export function BuyerSignup() {
 
   return (
     <AuthLayout
-      headline="Source directly from verified Indian exporters."
+      headline="Source directly from Indian exporters."
       sub="Create a buyer account and start finding suppliers today. It's free, and you can use the platform straight away."
+      bullets={[
+        'Verified suppliers carry a visible tick',
+        'Message exporters directly, no middlemen',
+        'Suppliers across 20+ export categories',
+      ]}
+      footNote="Already trading with India? You'll feel at home."
     >
       {/* Every other screen in this chain counts its step (SignupVerify 2 and 3,
           SignupCompany 4) — starting the count at screen two left the buyer with
@@ -163,6 +158,7 @@ export function BuyerSignup() {
           value={form.mobile}
           onChange={set('mobile')}
           error={fieldErrors.mobile}
+          helper="We'll send a sign-in code to this number."
           disabled={loading}
         />
         <PasswordInput
@@ -207,6 +203,14 @@ export function BuyerSignup() {
           <Link to="/signup/exporter" className="font-semibold text-primary-600 hover:underline">
             Sign up as Exporter
           </Link>
+        </p>
+
+        {/* Design's closing fine print. Terms of Service and Privacy Policy are
+            NOT links — those pages don't exist yet, and a dead link here is
+            worse than plain text. Logged in docs/UiWebNotes.md. */}
+        <p className="text-center text-xs leading-relaxed text-ink-400">
+          By creating an account, you agree to our Terms of Service and Privacy Policy. MPX Global
+          ensures your data is protected with enterprise-grade security.
         </p>
       </form>
     </AuthLayout>

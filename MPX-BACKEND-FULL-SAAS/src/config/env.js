@@ -34,6 +34,10 @@ const envSchema = z.object({
   OTP_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   OTP_LOCK_SECONDS: z.coerce.number().int().positive().default(900),
   OTP_LENGTH: z.coerce.number().int().min(4).max(10).default(6),
+  // KYC document size cap, in megabytes. ONE source of truth: both the multer
+  // limit and the storage service read it, and the web client mirrors it for
+  // copy only (VITE_KYC_MAX_MB) — the server is what actually enforces it.
+  KYC_MAX_FILE_MB: z.coerce.number().int().positive().max(100).default(10),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().optional(),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().optional(),
   // Shared store for rate limiting so limits survive restarts and hold across

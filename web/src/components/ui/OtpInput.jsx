@@ -6,7 +6,19 @@ import { useRef } from 'react';
  * fires once when the sixth digit lands (auto-submit is fine, but callers keep
  * a visible button too — accessibility).
  */
-export function OtpInput({ length = 6, value, onChange, onComplete, disabled, error, autoFocus }) {
+export function OtpInput({
+  length = 6,
+  value,
+  onChange,
+  onComplete,
+  disabled,
+  error,
+  autoFocus,
+  // Must match the VISIBLE label above the boxes: a screen reader announcing
+  // "Verification code" while the page reads "Reset code" is two different
+  // names for one control.
+  label = 'Verification code',
+}) {
   const refs = useRef([]);
   const digits = Array.from({ length }, (_, i) => value[i] ?? '');
 
@@ -39,7 +51,7 @@ export function OtpInput({ length = 6, value, onChange, onComplete, disabled, er
   };
 
   return (
-    <div className="flex gap-2" role="group" aria-label="Verification code">
+    <div className="flex gap-2" role="group" aria-label={label}>
       {digits.map((digit, i) => (
         <input
           key={i}

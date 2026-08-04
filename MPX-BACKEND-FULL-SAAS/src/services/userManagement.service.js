@@ -15,9 +15,16 @@ function escapeRegex(input) {
 }
 
 // List + search the user directory, joined to each user's organisation for its
-// kycStatus. Curated projection only — passwordHash / permissions / tokens never
-// leave the aggregation. pageSize is already capped by the validator.
-export async function listUsers({ role, kycStatus, q, page, pageSize }) {
+// kycStatus. Curated projection only — passwordHash / tokens never leave the
+// aggregation. pageSize is already capped by the validator.
+//
+// `includePermissions` (owner-approved 2026-08-04) adds each EMPLOYEE's granted
+// set to its row. The caller passes it ONLY for a superadmin: permission sets
+// are governance data, and m5-rules §8 keeps them away from anyone else — a
+// granted employee holding `user:read` must never learn what its colleagues can
+// do. Non-employee rows never carry the field at all ($$REMOVE), so a buyer or
+// exporter row is byte-identical to before.
+export async function listUsers({ role, kycStatus, q, page, pageSize, includePermissions = false }) {
   const match = {};
   if (role) match.role = role;
   if (q) {
@@ -51,6 +58,17 @@ export async function listUsers({ role, kycStatus, q, page, pageSize }) {
               orgId: 1,
               kycStatus: '$org.kycStatus',
               createdAt: 1,
+              ...(includePermissions
+                ? {
+                    permissions: {
+                      $cond: [
+                        { $eq: ['$role', 'employee'] },
+                        { $ifNull: ['$permissions', []] },
+                        '$$REMOVE',
+                      ],
+                    },
+                  }
+                : {}),
             },
           },
         ],

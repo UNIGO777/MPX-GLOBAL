@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { adminApi } from '../../api/admin.js';
-import { apiError, formatDate } from '../../lib/format.js';
-import { PERMISSION_GROUPS, PERMISSION_LABELS } from '../../lib/permissions.js';
+import { config } from '../../config.js';
+import { apiError } from '../../lib/format.js';
+import { PERMISSION_LIST, PERMISSION_LABELS } from '../../lib/permissions.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -15,21 +16,24 @@ import { MobileInput } from '../../components/ui/MobileInput.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
-import { CopyIcon, RefreshIcon, UsersIcon } from '../../components/ui/icons.jsx';
+import { CheckCircleIcon, CopyIcon, InfoIcon, UsersIcon } from '../../components/ui/icons.jsx';
 
 /**
  * Employees (superadmin-only; mockup: admin_employees_edit_permissions_drawer).
  * List = GET /admin/users?role=employee. Create = POST /admin/employees.
  * Edit = PATCH /admin/employees/:id/permissions (REPLACES the whole set).
  *
- * 🔴 Honest degradation (owner decision, plan §7.2): NO endpoint returns an
- * employee's CURRENT permissions after a reload. So: the table's permission
- * column shows the set only when a create/edit response taught us it THIS
- * session, else "—"; the edit drawer opens UNTICKED with a visible warning
- * that saving replaces the whole set. The read endpoint is logged in
- * UiWebNotes as a recommended backend follow-up — NOT built unilaterally.
+ * ✅ Permissions ARE readable now (owner-approved 2026-08-04): `GET /admin/users`
+ * includes each employee's granted set **for a superadmin only** — the role is
+ * re-checked in the controller, not inferred from the route, because `user:read`
+ * is a grant an employee can hold. So the table shows the real set and the edit
+ * drawer opens PRE-TICKED from it. `knownPerms` only carries a fresher set from
+ * a create/edit response that has not been re-fetched yet.
+ *
+ * The "saving replaces the whole set" warning stays: PATCH is a REPLACE, not a
+ * merge, so unticking is how access is removed.
  */
-const PERMISSION_COUNT = PERMISSION_GROUPS.reduce((n, g) => n + g.items.length, 0);
+const PERMISSION_COUNT = PERMISSION_LIST.length;
 
 function generatePassword() {
   // Temp password the superadmin hands over; the employee must change it at
@@ -41,27 +45,19 @@ function generatePassword() {
 
 function PermissionChecklist({ value, onToggle, disabled }) {
   return (
-    <div className="space-y-4">
-      {PERMISSION_GROUPS.map((g) => (
-        <fieldset key={g.group}>
-          <legend className="text-xs font-semibold uppercase tracking-wide text-muted">
-            {g.group}
-          </legend>
-          <div className="mt-2 space-y-2">
-            {g.items.map((p) => (
-              <Checkbox
-                key={p.value}
-                label={p.label}
-                help={p.help}
-                checked={value.includes(p.value)}
-                disabled={disabled}
-                onChange={(checked) =>
-                  onToggle(checked ? [...value, p.value] : value.filter((v) => v !== p.value))
-                }
-              />
-            ))}
-          </div>
-        </fieldset>
+    <div className="space-y-1">
+      {PERMISSION_LIST.map((p) => (
+        <Checkbox
+          key={p.value}
+          plain
+          label={p.label}
+          help={p.help}
+          checked={value.includes(p.value)}
+          disabled={disabled}
+          onChange={(checked) =>
+            onToggle(checked ? [...value, p.value] : value.filter((v) => v !== p.value))
+          }
+        />
       ))}
     </div>
   );
@@ -77,13 +73,19 @@ const EMPTY_FORM = {
 
 export function Employees() {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(config.table.pageSizes[0]);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Permission sets learned from create/edit responses THIS session only.
+  // `GET /admin/users` now returns each employee's granted set to a superadmin
+  // (owner-approved 2026-08-04), so the list IS the source of truth. This map
+  // only holds fresher sets from a create/edit response, which have not been
+  // re-fetched yet.
   const [knownPerms, setKnownPerms] = useState({});
+
+  /** Freshest known set for a row, or null if the server sent none. */
+  const permsFor = (row) => knownPerms[row.id] ?? row.permissions ?? null;
 
   const [drawer, setDrawer] = useState(null); // {mode:'add'} | {mode:'edit', row}
   const [form, setForm] = useState(EMPTY_FORM);
@@ -94,6 +96,7 @@ export function Employees() {
   const [createdCreds, setCreatedCreds] = useState(null); // {name, email, password}
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState(null);
+  const [permsView, setPermsView] = useState(null); // {row, perms} for the (i) popup
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -124,9 +127,8 @@ export function Employees() {
   };
 
   const openEdit = (row) => {
-    // Honest degradation: no read endpoint for current permissions — start
-    // from what this session learned, else empty, with the warning visible.
-    setEditPerms(knownPerms[row.id] ?? []);
+    // Pre-ticked from the employee's real, current set.
+    setEditPerms(permsFor(row) ?? []);
     setDrawerError(null);
     setDrawer({ mode: 'edit', row });
   };
@@ -195,13 +197,14 @@ export function Employees() {
     <AdminLayout>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-ink-900">Employees</h1>
-          <p className="mt-1 text-sm text-muted">
-            Staff accounts and their granted permissions. Least privilege: grant only what each
-            person needs.
+          <h1 className="text-[32px] font-bold leading-tight text-ink-900">Employees</h1>
+          <p className="mt-1 text-[15px] text-muted">
+            Create staff accounts and manage what each person can do.
           </p>
         </div>
-        <Button onClick={openAdd}>Add employee</Button>
+        <Button onClick={openAdd}>
+          <span aria-hidden="true" className="text-lg leading-none">+</span> Add employee
+        </Button>
       </div>
 
       {toast && (
@@ -248,30 +251,51 @@ export function Employees() {
                 </thead>
                 <tbody className="divide-y divide-ink-100">
                   {rows.map((row) => {
-                    const perms = knownPerms[row.id];
+                    const perms = permsFor(row);
                     return (
                       <tr key={row.id} className="transition-colors hover:bg-ink-50">
                         <td className="px-6 py-4 font-semibold text-ink-900">{row.name}</td>
                         <td className="px-6 py-4 text-muted">{row.email}</td>
                         <td className="whitespace-nowrap px-6 py-4 text-muted">{row.mobile ?? '—'}</td>
-                        <td className="max-w-xs px-6 py-4">
-                          {perms ? (
-                            perms.length === 0 ? (
-                              <span className="text-muted">None granted</span>
-                            ) : (
-                              <span className="text-xs text-ink-800">
-                                {perms.map((p) => PERMISSION_LABELS[p] ?? p).join(' · ')}
-                              </span>
-                            )
-                          ) : (
-                            <span className="text-muted" title="Not known to this session — the server has no permissions-read endpoint yet">
+                        {/* One grant reads fine as a chip; several would wrap
+                            the row, so they collapse to a count with an (i)
+                            that opens the full list. */}
+                        <td className="whitespace-nowrap px-6 py-4">
+                          {!perms ? (
+                            <span className="text-muted" title="Not returned for this account">
                               —
+                            </span>
+                          ) : perms.length === 0 ? (
+                            <span className="text-muted">No access yet</span>
+                          ) : perms.length === 1 ? (
+                            <span className="inline-block whitespace-nowrap rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
+                              {PERMISSION_LABELS[perms[0]] ?? perms[0]}
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-2">
+                              <span className="whitespace-nowrap rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
+                                {perms.length} permissions
+                              </span>
+                              <button
+                                type="button"
+                                aria-label={`See all ${perms.length} permissions for ${row.name}`}
+                                title="See all permissions"
+                                onClick={() => setPermsView({ row, perms })}
+                                className="rounded-full p-1 text-ink-500 transition-colors hover:bg-primary-50 hover:text-primary-600"
+                              >
+                                <InfoIcon className="h-4 w-4" />
+                              </button>
                             </span>
                           )}
                         </td>
                         <td className="px-6 py-4 text-ink-900">{row.isActive ? 'Yes' : 'No'}</td>
                         <td className="px-6 py-4 text-right">
-                          <Button variant="secondary" size="sm" onClick={() => openEdit(row)}>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="whitespace-nowrap"
+                            onClick={() => openEdit(row)}
+                          >
                             Edit permissions
                           </Button>
                         </td>
@@ -281,21 +305,61 @@ export function Employees() {
                 </tbody>
               </table>
             </div>
-            <Pagination
-              page={page}
-              pageSize={pageSize}
-              total={data.total}
-              onPage={setPage}
-              onPageSize={(n) => {
-                setPageSize(n);
-                setPage(1);
-              }}
-            />
+            {/* Design shows a plain count; the pager only earns its place
+                once the staff list outgrows one page. */}
+            {data.total > pageSize ? (
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={data.total}
+                onPage={setPage}
+                onPageSize={(n) => {
+                  setPageSize(n);
+                  setPage(1);
+                }}
+              />
+            ) : (
+              <p className="border-t border-surface-border px-6 py-3 text-sm text-muted">
+                Showing {data.total} employee{data.total === 1 ? '' : 's'}
+              </p>
+            )}
           </>
         )}
       </div>
 
       {/* Add drawer */}
+      {/* Full list behind the (i) — label AND what each grant actually allows */}
+      <Modal
+        open={Boolean(permsView)}
+        onClose={() => setPermsView(null)}
+        title={`${permsView?.row?.name ?? 'Employee'} · permissions`}
+        footer={
+          <Button variant="secondary" onClick={() => setPermsView(null)}>
+            Close
+          </Button>
+        }
+      >
+        <p className="text-sm text-muted">
+          {permsView?.perms?.length} of {PERMISSION_COUNT} granted.
+        </p>
+        <ul className="mt-4 space-y-3">
+          {permsView?.perms?.map((pm) => {
+            const meta = PERMISSION_LIST.find((x) => x.value === pm);
+            return (
+              <li key={pm} className="flex items-start gap-3">
+                <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                <span>
+                  <span className="block text-[15px] font-semibold text-ink-900">
+                    {meta?.label ?? pm}
+                  </span>
+                  {meta?.help && <span className="block text-[13px] text-muted">{meta.help}</span>}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </Modal>
+
       <Drawer
         open={drawer?.mode === 'add'}
         onClose={() => !saving && setDrawer(null)}
@@ -321,39 +385,41 @@ export function Employees() {
               )}
             </Alert>
           )}
-          <Input label="Full name" value={form.name} onChange={setField('name')} disabled={saving} />
+          <Input label="Full name" placeholder="e.g. John Doe" value={form.name} onChange={setField('name')} disabled={saving} />
           <Input
-            label="Work email"
+            label="Email"
             type="email"
+            placeholder="e.g. john@mpxglobal.com"
             value={form.email}
             onChange={setField('email')}
             disabled={saving}
             helper="Staff emails are exclusive — they can't also hold a buyer or exporter account."
           />
           <MobileInput value={form.mobile} onChange={setField('mobile')} disabled={saving} />
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
           <Input
             label="Temporary password"
             value={form.password}
             onChange={setField('password')}
             disabled={saving}
-            helper="At least 8 characters. They must change it at first sign-in."
-            trailing={
-              <button
-                type="button"
-                onClick={() => setField('password')(generatePassword())}
-                className="inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
-              >
-                <RefreshIcon className="h-3.5 w-3.5" /> Generate
-              </button>
-            }
+            helper="At least 8 characters. They'll be asked to change it at first sign-in."
           />
+            </div>
+            <Button
+              variant="secondary"
+              className="mt-[26px] shrink-0"
+              disabled={saving}
+              onClick={() => setField('password')(generatePassword())}
+            >
+              Generate
+            </Button>
+          </div>
           <div>
             <p className="text-sm font-medium text-ink-800">
               Permissions ({form.permissions.length}/{PERMISSION_COUNT})
             </p>
-            <p className="mb-3 mt-0.5 text-xs text-muted">
-              Least privilege — grant only what this person needs. You can change this any time.
-            </p>
+            <p className="mb-3 mt-0.5 text-xs text-muted">Grant now or later.</p>
             <PermissionChecklist
               value={form.permissions}
               onToggle={(v) => setForm((f) => ({ ...f, permissions: v }))}
@@ -363,7 +429,7 @@ export function Employees() {
         </div>
       </Drawer>
 
-      {/* Edit-permissions drawer — opens UNTICKED (honest degradation) */}
+      {/* Edit-permissions drawer — opens pre-ticked from the employee's live set */}
       <Drawer
         open={drawer?.mode === 'edit'}
         onClose={() => !saving && setDrawer(null)}
@@ -389,13 +455,12 @@ export function Employees() {
               )}
             </Alert>
           )}
-          {!knownPerms[drawer?.row?.id] && (
-            <Alert tone="warning">
-              The current permission set can&apos;t be shown — the server has no way to read it back
-              yet. <strong>Saving replaces the whole set</strong> with exactly what you tick below,
-              so tick everything this employee should keep.
-            </Alert>
-          )}
+          {/* Ticked from the live set, but saving still REPLACES it — an
+              untick is a revoke, so say so rather than implying a merge. */}
+          <Alert tone="info">
+            Ticking grants access, unticking removes it. <strong>Saving replaces the whole
+            set</strong> — untick everything for no access at all.
+          </Alert>
           <PermissionChecklist value={editPerms} onToggle={setEditPerms} disabled={saving} />
         </div>
       </Drawer>

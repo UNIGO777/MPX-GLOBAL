@@ -4,13 +4,15 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/auth.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { roleHome } from '../../auth/roleHome.js';
-import { apiError } from '../../lib/format.js';
+import { ERROR_CODES, apiError, fieldErrorMap, isErrorCode } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { CountrySelect } from '../../components/ui/CountrySelect.jsx';
 import { Input } from '../../components/ui/Input.jsx';
-import { fieldErrorMap } from './BuyerSignup.jsx';
+import { CheckIcon, ChevronDownIcon } from '../../components/ui/icons.jsx';
+import { Select } from '../../components/ui/Select.jsx';
+import { statesFor } from '../../lib/states.js';
 
 /**
  * A21 · step 2 — the company. The LAST step, and the first that creates
@@ -25,9 +27,10 @@ import { fieldErrorMap } from './BuyerSignup.jsx';
  * This screen always creates a new Organisation, exactly as signup did before.
  * Claim is the remaining half of A21 — logged in docs/UiWebNotes.md.
  */
+// Wording per the exporter registration step-2 design image.
 const ENTITY_TYPES = [
-  { value: 'business', label: 'Registered business', sub: 'Company, LLP, partnership or firm' },
-  { value: 'individual', label: 'Individual', sub: 'Sole proprietor or individual exporter' },
+  { value: 'business', label: 'Business', sub: 'Registered company, firm or LLP' },
+  { value: 'individual', label: 'Individual', sub: 'Sole proprietor or individual seller' },
 ];
 
 export function SignupCompany() {
@@ -48,6 +51,9 @@ export function SignupCompany() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [sessionDead, setSessionDead] = useState(false);
+  // Design's closing state — shown instead of dropping the user straight in.
+  const [created, setCreated] = useState(null);
+  const [addressOpen, setAddressOpen] = useState(false);
 
   const set = (key) => (e) => {
     const value = e?.target ? e.target.value : e;
@@ -107,10 +113,11 @@ export function SignupCompany() {
       // `complete` returns a real session — both factors were just proved, so
       // there is no further code to enter.
       const user = await completeSignIn(result);
-      navigate(roleHome(user), { replace: true });
+      setCreated(user);
     } catch (err) {
       const { message, fields } = apiError(err, 'Could not create your account.');
-      if (/start again/i.test(message)) setSessionDead(true);
+      // Branch on the CODE; the prose match is only a shim for older servers.
+      if (isErrorCode(err, ERROR_CODES.SIGNUP_SESSION_EXPIRED, /start again/i)) setSessionDead(true);
       setFieldErrors(fieldErrorMap(fields));
       setError(message);
       setLoading(false);
@@ -118,9 +125,37 @@ export function SignupCompany() {
   };
 
   const totalSteps = isExporter ? 5 : 4;
+  const stateOptions = statesFor(form.country);
+
+  if (created) {
+    return (
+      <AuthLayout
+        headline={isExporter ? 'Last step — tell us about your company.' : 'Last step — your company.'}
+        sub="This is what buyers see, and what our team checks when you apply for the verified tick."
+      >
+        <div className="text-center">
+          <span className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-success-50 text-success">
+            <CheckIcon className="h-8 w-8" />
+          </span>
+          <h2 className="text-[28px] font-bold text-ink-900">You&apos;re in.</h2>
+          <p className="mx-auto mt-2 max-w-sm text-[15px] leading-relaxed text-muted">
+            Your {isExporter ? 'exporter' : 'buyer'} account is ready to use.{' '}
+            {isExporter ? 'Add your products and apply for the verified tick.' : 'Start browsing suppliers now.'}
+          </p>
+          <Button
+            className="mt-8"
+            onClick={() => navigate(roleHome(created), { replace: true })}
+          >
+            Go to your dashboard →
+          </Button>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout
+      wide={isExporter}
       headline={isExporter ? 'Last step — tell us about your company.' : 'Last step — your company.'}
       sub="This is what buyers see, and what our team checks when you apply for the verified tick."
     >
@@ -150,17 +185,24 @@ export function SignupCompany() {
               error={fieldErrors.company}
               disabled={loading}
             />
+            {/* Required, so it sits with the company fields rather than inside
+                the optional address. Reading order is still country → state →
+                postal code. */}
             <CountrySelect
               value={form.country}
-              onChange={set('country')}
+              onChange={(code) => {
+                set('country')(code);
+                // A state from the previous country is meaningless here.
+                setForm((f) => ({ ...f, address: { ...f.address, state: '' } }));
+              }}
               error={fieldErrors.country}
               disabled={loading}
             />
 
             {isExporter && (
-              <fieldset className="space-y-2">
+              <fieldset className="space-y-2 pt-1">
                 <legend className="text-sm font-medium text-ink-800">Entity type</legend>
-                <p className="text-xs text-muted">
+                <p className="pb-1 text-xs text-muted">
                   This decides which documents we ask for when you apply for verification.
                 </p>
                 {/* role="radio" promises radiogroup behaviour: one tab stop and
@@ -183,14 +225,33 @@ export function SignupCompany() {
                       tabIndex={form.entityType === value || (!form.entityType && value === ENTITY_TYPES[0].value) ? 0 : -1}
                       onClick={() => set('entityType')(value)}
                       disabled={loading}
-                      className={`rounded-2xl border-2 p-4 text-left transition-colors ${
+                      className={`flex h-full items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
                         form.entityType === value
-                          ? 'border-primary-600 bg-primary-50'
-                          : 'border-ink-200 hover:border-ink-300'
+                          ? 'border-primary-600 bg-primary-50 ring-1 ring-primary-600'
+                          : 'border-surface-border bg-white hover:border-ink-400'
                       }`}
                     >
-                      <span className="block text-sm font-semibold text-ink-900">{label}</span>
-                      <span className="mt-0.5 block text-xs text-muted">{sub}</span>
+                      {/* Radio dot, as the step-2 design draws it */}
+                      <span
+                        aria-hidden="true"
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                          form.entityType === value ? 'border-primary-600' : 'border-ink-300'
+                        }`}
+                      >
+                        {form.entityType === value && (
+                          <span className="h-2.5 w-2.5 rounded-full bg-primary-600" />
+                        )}
+                      </span>
+                      <span className="min-w-0">
+                        <span
+                          className={`block text-sm font-bold ${
+                            form.entityType === value ? 'text-primary-700' : 'text-ink-900'
+                          }`}
+                        >
+                          {label}
+                        </span>
+                        <span className="mt-0.5 block text-xs leading-snug text-muted">{sub}</span>
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -204,27 +265,77 @@ export function SignupCompany() {
               </fieldset>
             )}
 
+            {/* Five optional fields used to out-bulk the three required ones.
+                Collapsed by default, so the step reads as "company, country,
+                entity type" — and the address is one click away. */}
             {isExporter && (
-              <fieldset className="space-y-3">
-                <legend className="text-sm font-medium text-ink-800">
-                  Address <span className="font-normal text-muted">(optional)</span>
-                </legend>
-                <Input label="Address line 1" autoComplete="address-line1" value={form.address.line1} onChange={setAddress('line1')} disabled={loading} />
-                <Input label="Address line 2" autoComplete="address-line2" value={form.address.line2} onChange={setAddress('line2')} disabled={loading} />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Input label="City" autoComplete="address-level2" value={form.address.city} onChange={setAddress('city')} disabled={loading} />
-                  <Input label="State" autoComplete="address-level1" value={form.address.state} onChange={setAddress('state')} disabled={loading} />
-                </div>
-                <Input label="Postal code" autoComplete="postal-code" value={form.address.postalCode} onChange={setAddress('postalCode')} disabled={loading} />
-              </fieldset>
+              <div className="overflow-hidden rounded-xl border border-surface-border">
+                <button
+                  type="button"
+                  onClick={() => setAddressOpen((o) => !o)}
+                  aria-expanded={addressOpen}
+                  className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-ink-50"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-semibold text-ink-900">
+                      Business address
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted">
+                      Optional — you can add or change this later from your company profile.
+                    </span>
+                  </span>
+                  <ChevronDownIcon
+                    className={`h-5 w-5 shrink-0 text-ink-500 transition-transform ${addressOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {addressOpen && (
+                  <div className="space-y-4 border-t border-surface-border p-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {/* A real list where we have one; free text everywhere
+                          else — the server takes any string. */}
+                      {stateOptions ? (
+                        <Select
+                          label="State"
+                          optional
+                          value={form.address.state}
+                          onChange={setAddress('state')}
+                          disabled={loading}
+                          options={[
+                            { value: '', label: 'Choose a state' },
+                            ...stateOptions.map((s) => ({ value: s, label: s })),
+                          ]}
+                        />
+                      ) : (
+                        <Input
+                          label="State"
+                          optional
+                          autoComplete="address-level1"
+                          placeholder="Enter state"
+                          value={form.address.state}
+                          onChange={setAddress('state')}
+                          disabled={loading}
+                        />
+                      )}
+                      <Input label="Postal code" optional autoComplete="postal-code" placeholder="PIN code" value={form.address.postalCode} onChange={setAddress('postalCode')} disabled={loading} />
+                    </div>
+                    <Input label="City" optional autoComplete="address-level2" placeholder="Enter city" value={form.address.city} onChange={setAddress('city')} disabled={loading} />
+                    <Input label="Address line 1" optional autoComplete="address-line1" placeholder="Street, building name" value={form.address.line1} onChange={setAddress('line1')} disabled={loading} />
+                    <Input label="Address line 2" optional autoComplete="address-line2" placeholder="Apartment, suite, unit" value={form.address.line2} onChange={setAddress('line2')} disabled={loading} />
+                  </div>
+                )}
+              </div>
             )}
 
-            {/* pt-3, not an !important margin — same CTA spacing as every other
-                auth screen, and it survives a change to the form's space-y. */}
-            <div className="pt-3">
+            {/* Same CTA spacing as every other auth screen, and it survives a
+                change to the form's space-y. */}
+            <div className="space-y-3 border-t border-surface-border pt-6">
               <Button type="submit" fullWidth loading={loading}>
                 Create my account
               </Button>
+              <p className="text-center text-xs text-muted">
+                Your profile goes live straight away — verification comes later.
+              </p>
             </div>
           </>
         )}

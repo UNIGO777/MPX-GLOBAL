@@ -34,7 +34,14 @@ function userView(user) {
 
 export async function listUsers(req, res) {
   // Rows are already curated by the aggregation projection (safe to return as-is).
-  const result = await svc.listUsers(req.validated.query);
+  // Employees' granted permissions ride along for a SUPERADMIN only — this is the
+  // read that lets the Employees screen show a set and pre-tick its editor
+  // instead of guessing. The route's own guard is `user:read`, which employees
+  // can hold, so the role is re-checked here rather than inferred from the route.
+  const result = await svc.listUsers({
+    ...req.validated.query,
+    includePermissions: req.user.role === 'superadmin',
+  });
   res.json(result);
 }
 

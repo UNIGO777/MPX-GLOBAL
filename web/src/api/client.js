@@ -39,7 +39,20 @@ let refreshInFlight = null;
  * send and nothing for a script to steal. This is what makes a reload
  * survivable (A2).
  */
-export async function refreshSession() {
+export function refreshSession() {
+  // 🔴 SINGLE-FLIGHT, and it must live here rather than at the call sites.
+  // Refresh ROTATES the token: two concurrent calls mean the second presents
+  // the one the first just rotated away, which the server correctly treats as
+  // theft and answers by revoking the whole family (A7) — killing the session
+  // it was trying to restore. React StrictMode double-invokes effects in dev,
+  // so the mount-time restore hit this every single load.
+  refreshInFlight = refreshInFlight ?? doRefresh().finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
+}
+
+async function doRefresh() {
   // Raw axios on purpose: the interceptor below must never recurse into itself.
   // No body: the httpOnly cookie IS the credential, which is exactly why this
   // works on a cold page load with nothing in memory.
@@ -73,15 +86,12 @@ apiClient.interceptors.response.use(
     }
 
     try {
-      refreshInFlight = refreshInFlight ?? refreshSession();
-      const accessToken = await refreshInFlight;
-      refreshInFlight = null;
+      const accessToken = await refreshSession();
 
       config._retried = true;
       config.headers.Authorization = `Bearer ${accessToken}`;
       return apiClient(config);
     } catch (refreshError) {
-      refreshInFlight = null;
       tokenStore.endSession(); // refresh failed → the session is genuinely over
       return Promise.reject(refreshError);
     }

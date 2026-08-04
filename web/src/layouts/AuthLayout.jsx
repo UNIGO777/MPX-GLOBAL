@@ -11,23 +11,43 @@ import { Logo } from '../components/ui/Logo.jsx';
  * the form becomes a white shadowed card on the canvas tint. A 4px accent bar
  * runs across the top (every auth mockup carries it).
  */
-export function AuthLayout({ headline, sub, wide = false, children }) {
+export function AuthLayout({
+  headline,
+  sub,
+  // Optional narrative extras — the buyer-signup design adds a green-ticked
+  // benefit list and its own closing line; the shorter screens pass neither.
+  bullets,
+  footNote = 'Trusted by exporters and buyers across 20+ categories.',
+  wide = false,
+  children,
+}) {
   return (
-    <div className="flex min-h-screen w-full border-t-4 border-primary-600">
+    <div className="flex h-screen w-full overflow-hidden border-t-4 border-primary-600">
       {/* Narrative panel */}
-      <aside className="relative hidden w-[45%] flex-col justify-between overflow-hidden bg-primary-800 p-12 text-white lg:flex xl:p-16">
+      <aside className="relative hidden h-full w-[45%] shrink-0 flex-col justify-between overflow-hidden bg-primary-800 p-12 text-white lg:flex xl:p-16">
         {/* Mockup: radial glow at BOTTOM right, not top (code.html .mpx-left-panel) */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-primary-600/30 blur-3xl"
         />
         <Link to="/" className="relative z-10 inline-block" aria-label="MPX Global — home">
-          <Logo size="lg" variant="light" />
+          <Logo size="lg" variant="white" />
         </Link>
 
         <div className="relative z-10 max-w-lg">
           <h1 className="text-[36px] font-bold leading-tight">{headline}</h1>
           {sub && <p className="mt-4 text-[18px] font-normal leading-relaxed opacity-80">{sub}</p>}
+
+          {bullets?.length > 0 && (
+            <ul className="mt-8 space-y-3">
+              {bullets.map((line) => (
+                <li key={line} className="flex items-start gap-3 text-[15px]">
+                  <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+                  {line}
+                </li>
+              ))}
+            </ul>
+          )}
 
           {/* Supplier teaser card — mockup .teaser-card: SOLID primary-700 with a
               hairline white border and a 2° tilt, not a translucent blur panel. */}
@@ -50,18 +70,19 @@ export function AuthLayout({ headline, sub, wide = false, children }) {
           </div>
         </div>
 
-        <p className="relative z-10 text-[13px] font-medium text-white/60">
-          Trusted by exporters and buyers across 20+ categories.
-        </p>
+        <p className="relative z-10 text-[13px] font-medium text-white/60">{footNote}</p>
       </aside>
 
-      {/* Form pane — white on desktop, canvas + card on mobile */}
-      <main className="flex flex-1 flex-col items-center justify-center bg-surface-subtle p-4 md:p-8 lg:bg-white">
+      {/* Form pane — the ONLY scroller, so the narrative panel stays pinned on
+          long steps (the company step runs past the fold). `justify-center`
+          would clip the top of an over-tall form, so it only centres when the
+          content actually fits. */}
+      <main className="flex flex-1 flex-col items-center overflow-y-auto bg-surface-subtle p-4 md:p-8 lg:bg-white">
         <Link to="/" className="mb-8 lg:hidden" aria-label="MPX Global — home">
           <Logo size="lg" />
         </Link>
         <div
-          className={`w-full ${wide ? 'max-w-[480px]' : 'max-w-[400px]'} rounded-2xl bg-white p-8 shadow-xl lg:rounded-none lg:p-0 lg:shadow-none`}
+          className={`my-auto w-full ${wide ? 'max-w-[480px]' : 'max-w-[400px]'} rounded-2xl bg-white p-8 shadow-xl lg:rounded-none lg:p-0 lg:shadow-none`}
         >
           {children}
         </div>

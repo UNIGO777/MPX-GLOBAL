@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { authApi } from '../../api/auth.js';
-import { apiError } from '../../lib/format.js';
+import { apiError, fieldErrorMap } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { MobileInput } from '../../components/ui/MobileInput.jsx';
 import { PasswordInput } from '../../components/ui/PasswordInput.jsx';
-import { fieldErrorMap } from './BuyerSignup.jsx';
 
 /**
  * Exporter signup · STEP 1 — identity only.
@@ -106,13 +105,15 @@ export function ExporterSignup() {
       headline="Sell to buyers worldwide, from India."
       sub="List your products, get found by serious importers, and earn the verified tick buyers filter for."
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted">Step 1 of 5</p>
+      <p className="text-[13px] font-semibold uppercase tracking-widest text-primary-600">
+        Step 1 of 5
+      </p>
       <h2 className="mt-1 text-[28px] font-bold text-ink-900">Create your exporter account</h2>
-      <p className="mt-1 text-base text-muted">
+      <p className="mt-2 text-sm text-muted">
         Start with your details — your company comes next.
       </p>
 
-      <form onSubmit={submit} noValidate className="mt-6 space-y-5">
+      <form onSubmit={submit} noValidate className="mt-5 space-y-4">
         {error && (
           <Alert tone="danger">
             {error}
@@ -173,16 +174,19 @@ export function ExporterSignup() {
           disabled={loading}
         />
 
-        <Button type="submit" fullWidth loading={loading} className="!mt-8">
-          Continue
-        </Button>
+        {/* pt-3 rather than an !important margin — same CTA spacing as every
+            other auth screen, and it survives a change to the form's space-y. */}
+        <div className="space-y-3 pt-3">
+          <Button type="submit" fullWidth loading={loading}>
+            Continue
+          </Button>
+          <p className="text-center text-xs text-muted">
+            We&rsquo;ll send a code to your email and another to your phone. Both keep your
+            account yours.
+          </p>
+        </div>
 
-        <p className="text-center text-xs text-muted">
-          We&rsquo;ll send a code to your email and another to your phone. Both keep your account
-          yours.
-        </p>
-
-        <p className="text-center text-sm text-muted">
+        <p className="mt-7 border-t border-surface-border pt-5 text-center text-sm text-muted">
           Already have an account?{' '}
           <Link to="/signin" className="font-semibold text-primary-600 hover:underline">
             Sign in

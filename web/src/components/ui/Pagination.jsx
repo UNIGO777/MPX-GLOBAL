@@ -7,6 +7,19 @@ import { ChevronLeftIcon, ChevronRightIcon } from './icons.jsx';
  */
 const ROW_OPTIONS = config.table.pageSizes;
 
+/** 1 2 3 … 63 — leading pages, an ellipsis, then the last (design's shape). */
+function pageList(page, pages) {
+  if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1);
+  const near = [page - 1, page, page + 1].filter((n) => n > 1 && n < pages);
+  const set = [...new Set([1, 2, 3, ...near, pages])].sort((a, b) => a - b);
+  const out = [];
+  set.forEach((n, i) => {
+    if (i > 0 && n - set[i - 1] > 1) out.push('…');
+    out.push(n);
+  });
+  return out;
+}
+
 export function Pagination({ page, pageSize, total, onPage, onPageSize }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -31,6 +44,7 @@ export function Pagination({ page, pageSize, total, onPage, onPageSize }) {
             ))}
           </select>
         </label>
+        {/* Design: ‹ 1 2 3 … 63 › — current page is a filled navy square */}
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -41,9 +55,26 @@ export function Pagination({ page, pageSize, total, onPage, onPageSize }) {
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
-          <span className="min-w-16 text-center text-ink-800">
-            {page} / {pages}
-          </span>
+          {pageList(page, pages).map((n, i) =>
+            n === '…' ? (
+              <span key={`gap-${i}`} className="px-1 text-ink-400">
+                …
+              </span>
+            ) : (
+              <button
+                key={n}
+                type="button"
+                onClick={() => onPage(n)}
+                aria-current={n === page ? 'page' : undefined}
+                aria-label={`Page ${n}`}
+                className={`h-8 min-w-8 rounded-md px-2 text-sm font-medium ${
+                  n === page ? 'bg-primary-800 text-white' : 'text-ink-800 hover:bg-ink-100'
+                }`}
+              >
+                {n}
+              </button>
+            ),
+          )}
           <button
             type="button"
             onClick={() => onPage(page + 1)}

@@ -5,6 +5,7 @@ import { adminApi } from '../../api/admin.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
 import { apiError, formatDate } from '../../lib/format.js';
+import { countryName } from '../../lib/countries.js';
 import { DOC_TYPE_LABELS, ENTITY_LABELS } from '../../lib/kycDocTypes.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
@@ -16,11 +17,14 @@ import { Skeleton } from '../../components/ui/Skeleton.jsx';
 import { inputClasses } from '../../components/ui/Field.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
 import {
+  CheckCircleIcon,
   ChevronLeftIcon,
   DocIcon,
   ExternalIcon,
   FileIcon,
   RefreshIcon,
+  ShieldIcon,
+  XIcon,
 } from '../../components/ui/icons.jsx';
 
 /**
@@ -35,8 +39,25 @@ import {
  * Verify/Reject: same employee endpoints as the queue, permission-gated per
  * side; a decision here is only offered while the org is `submitted`.
  */
-const isImage = (url) => /\.(jpe?g|png|webp)(\?|$)/i.test(url);
-const isPdf = (url) => /\.pdf(\?|$)/i.test(url);
+/**
+ * Cloudinary's `private_download_url` has NO extension in the path — it is
+ *   .../image/download?...&format=pdf&...&signature=...
+ * so sniffing the path sent every document to the "can't be previewed" branch.
+ * Read the `format` param first; fall back to a path extension for any other
+ * URL shape (a direct asset URL, or a future storage provider).
+ */
+const IMAGE_FORMATS = ['jpg', 'jpeg', 'png', 'webp'];
+
+function fileFormat(url) {
+  if (!url) return null;
+  const fromParam = /[?&]format=([a-z0-9]+)/i.exec(url);
+  if (fromParam) return fromParam[1].toLowerCase();
+  const fromPath = /\.([a-z0-9]+)(?:[?#]|$)/i.exec(url);
+  return fromPath ? fromPath[1].toLowerCase() : null;
+}
+
+const isImage = (url) => IMAGE_FORMATS.includes(fileFormat(url));
+const isPdf = (url) => fileFormat(url) === 'pdf';
 
 export function KycViewer() {
   const { orgId } = useParams();
@@ -53,14 +74,22 @@ export function KycViewer() {
   const [actionError, setActionError] = useState(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState('');
+  // Applicant name / country / submitted date live on the org record, not on
+  // the KYC payload. Needs `organisation:read`, so it degrades to blank cells.
+  const [org, setOrg] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     setExpired(false);
     try {
-      const result = await adminApi.orgKycDocuments(orgId);
-      setData(result);
+      const [kyc, detail] = await Promise.allSettled([
+        adminApi.orgKycDocuments(orgId),
+        adminApi.getOrg(orgId),
+      ]);
+      if (kyc.status === 'rejected') throw kyc.reason;
+      setData(kyc.value);
+      setOrg(detail.status === 'fulfilled' ? detail.value : null);
       setSelected(0);
     } catch (err) {
       setError(apiError(err));
@@ -123,32 +152,44 @@ export function KycViewer() {
 
   return (
     <AdminLayout>
-      <div className="mb-6">
-        <Link
-          to="/admin/verification"
-          className="inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
-        >
-          <ChevronLeftIcon className="h-4 w-4" /> Back to queue
-        </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold text-ink-900">KYC documents</h1>
-          {data && <StatusChip status={data.kycStatus} />}
-          {data?.entityType && (
-            <span className="text-sm text-muted">{ENTITY_LABELS[data.entityType]} account</span>
-          )}
-        </div>
-        <p className="mt-1 text-sm text-muted">
-          Access to these documents is recorded — every view writes an audit entry.
+      <Link
+        to="/admin/verification"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700"
+      >
+        <ChevronLeftIcon className="h-4 w-4" /> Back to verification queue
+      </Link>
+
+      {/* Applicant summary bar. Name / country / submitted come from the org
+          record, which needs `organisation:read` — a reviewer holding only
+          `kyc:view` still sees the documents, just with those cells blank. */}
+      <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border border-surface-border bg-white px-6 py-4 shadow-sm">
+        {[
+          { k: 'Applicant', v: org?.header?.name },
+          { k: 'Entity', v: data?.entityType ? ENTITY_LABELS[data.entityType] : null },
+          { k: 'Country', v: countryName(org?.company?.country) },
+          { k: 'Submitted', v: org?.verification?.submittedAt ? formatDate(org.verification.submittedAt) : null },
+        ].map(({ k, v }) => (
+          <div key={k} className="border-surface-border pr-8 [&:not(:last-child)]:border-r">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">{k}</p>
+            <p className="mt-0.5 text-[15px] font-semibold text-ink-900">{v || '—'}</p>
+          </div>
+        ))}
+        <p className="flex items-center gap-2 text-[15px] text-ink-900">
+          <DocIcon className="h-4 w-4 text-ink-500" />
+          {docs.length} file{docs.length === 1 ? '' : 's'}
         </p>
+        <span className="ml-auto">
+          {data && <StatusChip status={data.kycStatus} />}
+        </span>
       </div>
 
       {decidedNote && (
-        <div className="mb-4 max-w-3xl">
+        <div className="mt-4">
           <Alert tone="info">{decidedNote}</Alert>
         </div>
       )}
       {actionError && (
-        <div className="mb-4 max-w-3xl">
+        <div className="mt-4">
           <Alert tone="danger">
             {actionError.message}
             {actionError.requestId && (
@@ -159,20 +200,20 @@ export function KycViewer() {
       )}
 
       {loading && (
-        <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+        <div className="mt-6 grid gap-5 lg:grid-cols-[320px_1fr]">
           <Skeleton className="h-64 rounded-xl" />
           <Skeleton className="h-96 rounded-xl" />
         </div>
       )}
 
       {!loading && error && (
-        <div className="max-w-3xl rounded-lg border border-surface-border bg-white shadow-card">
+        <div className="mt-6 rounded-xl border border-surface-border bg-white shadow-sm">
           <ErrorState message={error.message} requestId={error.requestId} onRetry={load} />
         </div>
       )}
 
       {!loading && !error && docs.length === 0 && (
-        <div className="max-w-3xl rounded-lg border border-surface-border bg-white shadow-card">
+        <div className="mt-6 rounded-xl border border-surface-border bg-white shadow-sm">
           <EmptyState icon={DocIcon} title="No documents">
             This company hasn&apos;t uploaded any KYC documents yet.
           </EmptyState>
@@ -180,102 +221,151 @@ export function KycViewer() {
       )}
 
       {!loading && !error && docs.length > 0 && (
-        <div className="grid items-start gap-4 lg:grid-cols-[280px_1fr]">
-          {/* Document list */}
-          <div className="rounded-lg border border-surface-border bg-white p-3 shadow-card">
-            <h2 className="px-3 pb-2 pt-1 text-sm font-semibold text-ink-900">
-              Documents ({docs.length})
-            </h2>
-            <ul className="space-y-1">
-              {docs.map((d, i) => (
-                <li key={`${d.docType}-${d.uploadedAt}-${i}`}>
-                  <button
-                    type="button"
-                    onClick={() => setSelected(i)}
-                    aria-current={selected === i || undefined}
-                    className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm ${
-                      selected === i ? 'bg-primary-50 font-medium text-primary-800' : 'text-ink-800 hover:bg-ink-50'
-                    }`}
-                  >
-                    <FileIcon className="h-4 w-4 shrink-0" />
-                    <span className="min-w-0">
-                      <span className="block truncate">{DOC_TYPE_LABELS[d.docType] ?? d.docType}</span>
-                      <span className="block text-xs font-normal text-muted">
-                        Uploaded {formatDate(d.uploadedAt)}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+        <>
+          <div className="mt-6 grid items-start gap-5 lg:grid-cols-[320px_1fr]">
+            {/* Document list */}
+            <div>
+              <h2 className="text-lg font-bold text-ink-900">Documents ({docs.length})</h2>
+              <ul className="mt-3 space-y-3">
+                {docs.map((d, i) => {
+                  const on = selected === i;
+                  return (
+                    <li key={`${d.docType}-${d.uploadedAt}-${i}`}>
+                      <button
+                        type="button"
+                        onClick={() => setSelected(i)}
+                        aria-current={on || undefined}
+                        className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors ${
+                          on
+                            ? 'border-primary-600 bg-white ring-1 ring-primary-600'
+                            : 'border-surface-border bg-white hover:border-ink-400'
+                        }`}
+                      >
+                        <span
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                            on ? 'bg-primary-600 text-white' : 'bg-ink-100 text-ink-500'
+                          }`}
+                        >
+                          <FileIcon className="h-5 w-5" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-[15px] font-bold text-ink-900">
+                            {DOC_TYPE_LABELS[d.docType] ?? d.docType}
+                          </span>
+                          <span className="block text-[13px] text-muted">
+                            Uploaded {formatDate(d.uploadedAt)}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
 
-            {canDecide && (
-              <div className="mt-3 space-y-2 border-t border-surface-border pt-3">
-                <Button fullWidth size="sm" loading={processing} onClick={() => decide('approve')}>
-                  {decidableSide === 'exporter' ? 'Verify company' : 'Approve buyer'}
-                </Button>
+              <p className="mt-4 flex items-start gap-2.5 rounded-xl bg-ink-100 p-4 text-[13px] leading-relaxed text-muted">
+                <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                These documents are private. Your access to them is recorded for auditing.
+              </p>
+            </div>
+
+            {/* Preview */}
+            <div className="overflow-hidden rounded-xl border border-surface-border bg-white shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border px-5 py-3">
+                <span className="flex items-center gap-2 text-[15px] font-semibold text-ink-900">
+                  <FileIcon className="h-4 w-4 text-ink-500" />
+                  {doc ? (DOC_TYPE_LABELS[doc.docType] ?? doc.docType) : ''}
+                </span>
+                {doc && !expired && (
+                  <a
+                    href={doc.signedUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex h-9 items-center gap-2 rounded-lg border border-surface-border px-4 text-sm font-semibold text-ink-900 hover:bg-ink-50"
+                  >
+                    <ExternalIcon className="h-4 w-4" /> Open in new tab
+                  </a>
+                )}
+              </div>
+
+              <div className="relative min-h-[420px] bg-ink-50">
+                {expired ? (
+                  <div className="flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
+                    <RefreshIcon className="h-8 w-8 text-ink-400" />
+                    <h3 className="mt-3 text-base font-semibold text-ink-900">
+                      This preview has expired
+                    </h3>
+                    <p className="mt-1 max-w-sm text-sm text-muted">
+                      Document links only live for a couple of minutes. Reload to fetch fresh ones —
+                      the access is recorded again.
+                    </p>
+                    <Button variant="secondary" size="sm" className="mt-4" onClick={load}>
+                      <RefreshIcon className="h-4 w-4" /> Reload document
+                    </Button>
+                  </div>
+                ) : doc && isImage(doc.signedUrl) ? (
+                  <img
+                    src={doc.signedUrl}
+                    alt={`${DOC_TYPE_LABELS[doc.docType] ?? doc.docType} document`}
+                    className="mx-auto max-h-[70vh] w-auto max-w-full p-4"
+                  />
+                ) : doc && isPdf(doc.signedUrl) ? (
+                  <iframe
+                    src={doc.signedUrl}
+                    title={DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
+                    className="h-[70vh] w-full"
+                  />
+                ) : doc ? (
+                  <div className="flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
+                    <FileIcon className="h-8 w-8 text-ink-400" />
+                    <h3 className="mt-3 text-base font-semibold text-ink-900">
+                      This file can&apos;t be previewed here
+                    </h3>
+                    <a
+                      href={doc.signedUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-4 inline-flex h-9 items-center gap-2 rounded-full border border-primary-800 px-4 text-sm font-semibold text-primary-800 hover:bg-primary-50"
+                    >
+                      <ExternalIcon className="h-4 w-4" /> Open in a new tab
+                    </a>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          {/* Decision bar (design puts it under both columns) */}
+          {canDecide && (
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-surface-border bg-white px-6 py-4 shadow-sm">
+              <p className="flex items-center gap-2.5 text-sm text-muted">
+                <ShieldIcon className="h-4 w-4 shrink-0" />
+                These documents are private. Your access to them is recorded.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
-                  fullWidth
                   variant="dangerOutline"
-                  size="sm"
                   disabled={processing}
                   onClick={() => {
                     setReason('');
                     setRejectOpen(true);
                   }}
                 >
-                  Reject
+                  <XIcon className="h-4 w-4" /> Reject
+                </Button>
+                <Button variant="success" loading={processing} onClick={() => decide('approve')}>
+                  <CheckCircleIcon className="h-4 w-4" />
+                  {decidableSide === 'exporter' ? 'Verify' : 'Approve'}
                 </Button>
               </div>
-            )}
-          </div>
-
-          {/* Preview */}
-          <div className="relative min-h-96 overflow-hidden rounded-lg border border-surface-border bg-white shadow-card">
-            {expired ? (
-              <div className="flex min-h-96 flex-col items-center justify-center p-8 text-center">
-                <RefreshIcon className="h-8 w-8 text-ink-400" />
-                <h2 className="mt-3 text-base font-semibold text-ink-900">This preview has expired</h2>
-                <p className="mt-1 max-w-sm text-sm text-muted">
-                  Document links only live for a couple of minutes. Reload to fetch fresh ones —
-                  the access is recorded again.
-                </p>
-                <Button variant="secondary" size="sm" className="mt-4" onClick={load}>
-                  <RefreshIcon className="h-4 w-4" /> Reload document
-                </Button>
-              </div>
-            ) : doc && isImage(doc.signedUrl) ? (
-              <img
-                src={doc.signedUrl}
-                alt={`${DOC_TYPE_LABELS[doc.docType] ?? doc.docType} document`}
-                className="mx-auto max-h-[70vh] w-auto max-w-full p-4"
-              />
-            ) : doc && isPdf(doc.signedUrl) ? (
-              <iframe src={doc.signedUrl} title={DOC_TYPE_LABELS[doc.docType] ?? doc.docType} className="h-[70vh] w-full" />
-            ) : doc ? (
-              <div className="flex min-h-96 flex-col items-center justify-center p-8 text-center">
-                <FileIcon className="h-8 w-8 text-ink-400" />
-                <h2 className="mt-3 text-base font-semibold text-ink-900">
-                  This file can&apos;t be previewed here
-                </h2>
-                <a
-                  href={doc.signedUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-full border border-primary-800 px-4 text-sm font-semibold text-primary-800 hover:bg-primary-50"
-                >
-                  <ExternalIcon className="h-4 w-4" /> Open in a new tab
-                </a>
-              </div>
-            ) : null}
-          </div>
-        </div>
+            </div>
+          )}
+        </>
       )}
 
       <Modal
         open={rejectOpen}
         onClose={() => setRejectOpen(false)}
-        title="Reject this submission?"
+        title={`Reject verification for ${org?.header?.name ?? 'this company'}?`}
         danger
         footer={
           <>
@@ -288,13 +378,13 @@ export function KycViewer() {
               loading={processing}
               onClick={() => decide('reject', reason.trim())}
             >
-              Reject with this reason
+              Reject with reason
             </Button>
           </>
         }
       >
-        <label htmlFor="kyc-reject-reason" className="block text-sm font-medium text-ink-800">
-          Reason
+        <label htmlFor="kyc-reject-reason" className="block text-sm font-semibold text-ink-900">
+          Reason for rejection
         </label>
         <textarea
           id="kyc-reject-reason"
@@ -303,11 +393,11 @@ export function KycViewer() {
           onChange={(e) => setReason(e.target.value)}
           maxLength={500}
           placeholder="Say exactly what was wrong and what to send instead."
-          className={inputClasses(false, 'mt-1.5 h-auto py-2')}
+          className={inputClasses(false, 'mt-2 h-auto py-2')}
         />
         <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
-          <span>This is shown to the applicant, word for word.</span>
-          <span>{reason.trim().length}/500</span>
+          <span>This is shown to the applicant — explain what they should fix.</span>
+          <span>{reason.trim().length} / 500</span>
         </div>
       </Modal>
     </AdminLayout>

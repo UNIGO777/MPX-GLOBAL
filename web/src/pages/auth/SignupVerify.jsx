@@ -190,6 +190,7 @@ export function SignupVerify() {
                 {isEmail ? 'Email verification code' : 'Phone verification code'}
               </span>
               <OtpInput
+                label={isEmail ? 'Email verification code' : 'Phone verification code'}
                 // Remount per channel so the boxes clear and focus moves to the
                 // new step rather than keeping the previous code's cursor.
                 key={channel}
