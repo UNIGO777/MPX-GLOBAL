@@ -6,7 +6,6 @@
 
   "rewrites": [
     {
-      "_comment": "API proxy. The browser only ever talks to THIS origin, so the refresh cookie is first-party — the only thing iOS/WebKit ITP accepts. MUST precede the SPA catch-all.",
       "source": "/api/:path*",
       "destination": "https://api.mpx.nxtgendigitals.com/:path*"
     },

@@ -175,6 +175,18 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-05** — **🔴 Vercel BUILD FAILED — `vercel.json` rejects unknown properties. Fixed.**
+  `The vercel.json schema validation failed: rewrites[0] should NOT have additional property
+  "_comment"`. The `_comment` key came in with `d8a0e88`: JSON has no comment syntax, and Vercel
+  validates `vercel.json` strictly — a rewrite object accepts only `source` / `destination` / `has`
+  / `missing` / `statusCode`. Removed it; the reasoning it carried (the `/api` proxy exists so the
+  refresh cookie is FIRST-PARTY, which is the only thing iOS/WebKit ITP keeps) already lives in
+  `web/.env.example` and in this log, so nothing was lost.
+  **Guard against a repeat:** every object in the file was checked against Vercel's allowed
+  property sets — top level, rewrites, header rules and header entries — and it is clean. Rewrite
+  ordering re-verified (`/api` first, SPA catch-all last) and the web build passes.
+  **Rule of thumb:** never annotate `vercel.json` inline. Put the "why" in `.env.example`, in the
+  code that reads the config, or here.
 - **2026-08-05** — **Pulled `d8a0e88` (first-party refresh cookie); merged, and fixed a test it
   brought in red.** Two sessions converged independently on the same `web/vercel.json` `/api/:path*`
   proxy — this session for **CORS/preview-URL** reasons (Vercel preview URLs change per deploy, so a
