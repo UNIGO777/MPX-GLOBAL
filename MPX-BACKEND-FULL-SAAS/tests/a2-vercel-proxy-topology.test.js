@@ -24,6 +24,17 @@ import mongoose from 'mongoose';
 // top-level assignment lands after app.js has read the env.
 const { otpBox } = vi.hoisted(() => {
   process.env.REFRESH_COOKIE_PATH = '/api/auth';
+  // The express stand-in below forwards every header the "browser" sent,
+  // INCLUDING `Origin` — so this file models a proxy that passes Origin through.
+  // Without allowlisting that origin the CORS guard answers 403 before any route
+  // runs, and all four assertions fail on the wrong thing.
+  //
+  // ⚠️ Whether Vercel actually forwards `Origin` upstream is still unconfirmed on
+  // the real deployment. If it does NOT (a rewrite is server-to-server and sends
+  // none), the API sees no Origin and is allowed through by the `!origin` branch
+  // — so production works either way, but only if the deployed `CORS_ORIGINS`
+  // lists the web origin for the case where it IS forwarded.
+  process.env.CORS_ORIGINS = 'https://mpx-global.vercel.app';
   return { otpBox: { byId: new Map() } };
 });
 vi.mock('../src/services/otp.sender.js', () => ({

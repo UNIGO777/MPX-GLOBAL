@@ -175,6 +175,24 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-05** — **Pulled `d8a0e88` (first-party refresh cookie); merged, and fixed a test it
+  brought in red.** Two sessions converged independently on the same `web/vercel.json` `/api/:path*`
+  proxy — this session for **CORS/preview-URL** reasons (Vercel preview URLs change per deploy, so a
+  `CORS_ORIGINS` allowlist can never cover them), the other for **iOS/WebKit ITP**, which only keeps
+  the refresh cookie if it is **first-party**. Both reasons are real and the config serves both; the
+  incoming version was a strict superset (it added the explanatory comment) so the local edit was
+  dropped rather than merged.
+  🔴 **`tests/a2-vercel-proxy-topology.test.js` arrived FAILING (4 tests).** It mounts the real app
+  under `/api` via an express stand-in to reproduce Vercel's prefix-stripping rewrite, and sends
+  `Origin: https://mpx-global.vercel.app` — but **`CORS_ORIGINS` is never set in the test env**, so
+  the CORS guard answered `403 "Origin not allowed."` before any route ran and every assertion failed
+  on the wrong thing (403≠200, 401≠403). Fixed by setting `process.env.CORS_ORIGINS` in the same
+  `vi.hoisted()` block that already sets `REFRESH_COOKIE_PATH` — it must be hoisted, because ESM
+  imports run before plain top-level statements and `app.js` reads the env at import time.
+  ⚠️ **Still unconfirmed on the real deployment:** whether Vercel forwards `Origin` upstream. If it
+  does not, the API sees none and the `!origin` branch allows it; if it does, the deployed
+  `CORS_ORIGINS` must list the web origin. **Setting it covers both cases** — worth doing regardless.
+  **Verified after merge:** backend **944 passed / 63 files**, lint clean; web builds clean.
 - **2026-08-04** — **WEB SESSION NOW SURVIVES RELOAD ON iOS — API proxied through the web origin
   so the refresh cookie is FIRST-PARTY. 111/111 auth tests green, web build green.**
   Topology was cross-site (`mpx-global.vercel.app` ↔ `api.mpx.nxtgendigitals.com`), so the refresh
@@ -221,12 +239,23 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   Crawlers look for them at the WEB origin, so serving them only from the API domain made them
   invisible. ⚠️ For the sitemap to emit correct URLs the backend's **`PUBLIC_WEB_URL` must be the
   web domain** — it interpolates `${PUBLIC_WEB_URL}/product/<slug>`.
-  🔴 **Deliberately NOT proxying `/api/*` through Vercel.** A proxy would remove the CORS work, but
-  every request would then reach the backend from Vercel's edge IPs — collapsing the per-IP auth/OTP
-  rate limits (**B7**) into a single bucket. Real client IPs are worth more than one env var. So the
-  web app must be configured with `VITE_API_BASE_URL=<api origin>` (it otherwise defaults to `/api`
-  and would call the Vercel domain), and **the Vercel domain must be added to the backend's
-  `CORS_ORIGINS`** — verified earlier that an unlisted origin gets `403 "Origin not allowed."`.
+  **`/api/:path*` IS proxied to the API** — `→ https://api.mpx.nxtgendigitals.com/:path*`, stripping
+  `/api` exactly as the Vite dev proxy does, so `VITE_API_BASE_URL` can stay unset and dev/prod
+  behave identically. Ordered BEFORE the SPA catch-all (first match wins) or `/api` would be served
+  `index.html` — which is what produced the deployed app's **`405 Method Not Allowed` on
+  `POST /api/auth/signup/start`**: unset base URL → `/api` default → catch-all → static file.
+  *(This reverses the first draft of this config, which avoided the proxy to keep real client IPs
+  for the per-IP rate limits (**B7**). The decider: **Vercel preview URLs change every deployment**,
+  so a `CORS_ORIGINS` allowlist can never cover them, and an unlisted origin is a hard
+  `403 "Origin not allowed."` — verified live on both the POST and the preflight.)*
+  ⚠️ **Rate-limit consequence of the proxy:** requests now arrive via Vercel's edge, so the app must
+  read the client IP from `X-Forwarded-For` across the EXTRA hop. If the server is also behind
+  nginx, **`TRUST_PROXY` needs to count both hops** — otherwise every web user shares one rate-limit
+  bucket and the auth/OTP limits stop limiting (exactly what `server.js` warns about).
+  ⚠️ **Unverified until deployed:** whether Vercel forwards the browser's `Origin` header upstream.
+  Browsers send `Origin` on same-origin POSTs, so if it is forwarded the backend will still 403.
+  Adding the stable Vercel production domain to `CORS_ORIGINS` fixes it either way and is worth
+  doing pre-emptively.
   **CSP verified against the real build, not guessed:** `dist/index.html` contains **no inline
   script**, so `script-src 'self'` is safe; the only external hosts anywhere in the source are
   Google Fonts, and Cloudinary is allowed for images. `style-src` keeps `'unsafe-inline'` — a
