@@ -90,7 +90,7 @@ attachSocket(server);
  */
 await attachRedisAdapter();
 
-// console.log("asdf")
+console.log("asdf")
 // Graceful shutdown: stop accepting connections, close the DB, then exit.
 // closeDatabase() is idempotent, so the database.js signal handler and this one
 // cooperate safely.
