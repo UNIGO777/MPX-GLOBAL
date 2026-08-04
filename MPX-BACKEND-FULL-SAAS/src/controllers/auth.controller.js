@@ -5,6 +5,7 @@ import { ERROR_CODES } from '../utils/errorCodes.js';
 import {
   clearRefreshCookie,
   isWebClient,
+  requireWebClientForCookie,
   readRefreshToken,
   refreshTokenForBody,
   setRefreshCookie,
@@ -86,6 +87,13 @@ export async function resendOtp(req, res) {
 }
 
 export async function refresh(req, res) {
+  // 🔴 CSRF. SameSite=None means a cross-site page can make the browser attach
+  // this cookie, so a cookie-borne call must prove it came from our own app.
+  // Body-token callers (the Expo app) are untouched — they carry no cookie.
+  if (!requireWebClientForCookie(req)) {
+    throw AppError.forbidden('cookie call without web-client header', 'Not allowed.');
+  }
+
   // Cookie first, body second. A browser sends the cookie automatically; native
   // clients keep sending the body token.
   const refreshToken = readRefreshToken(req);
@@ -104,6 +112,12 @@ export async function refresh(req, res) {
 }
 
 export async function logout(req, res) {
+  // Guard BEFORE clearing: a cross-site page must not be able to force a
+  // logout now that SameSite=None lets the cookie ride along. A call that
+  // fails this check is not our app, so it has nothing to clear.
+  if (!requireWebClientForCookie(req)) {
+    throw AppError.forbidden('cookie call without web-client header', 'Not allowed.');
+  }
   const refreshToken = readRefreshToken(req);
   // Clear the cookie FIRST and unconditionally — the header survives even if the
   // call then errors, so a logout never leaves a live cookie behind.

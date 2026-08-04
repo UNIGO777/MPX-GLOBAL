@@ -41,6 +41,11 @@ const envSchema = z.object({
   // lifetime — rotation does not extend it. (A dead `JWT_REFRESH_TTL` var was
   // removed 2026-07-30 — this is the ONLY refresh-lifetime knob.)
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
+  // PUBLIC path the browser uses to reach refresh/logout. Default '/auth' is the
+  // API's own path; behind a proxy that prefixes the route (Vercel serves
+  // /api/auth/refresh) set this to that public path, or the cookie is stored and
+  // then never sent. Must start with '/'.
+  REFRESH_COOKIE_PATH: z.string().startsWith('/').default('/auth'),
 
   // Feature integrations are optional until the step that wires each one, at
   // which point they should move up into the required set above.

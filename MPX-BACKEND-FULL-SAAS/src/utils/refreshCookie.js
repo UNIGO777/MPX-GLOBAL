@@ -13,48 +13,79 @@ import { env } from '../config/env.js';
  *
  * Attributes:
  *   httpOnly — JS can never read it, which is the entire point.
- *   sameSite 'lax' — production is same-site (API under the web origin), so Lax
- *     both works and blocks cross-site POSTs, i.e. CSRF cover for free. If the
- *     topology ever becomes genuinely cross-site this must become
- *     'none' + secure, and the X-Client header below becomes load-bearing.
+ *   sameSite 'lax' — the web app reaches this API through its OWN origin (a
+ *     Vercel rewrite today, a same-site subdomain later), so the cookie is
+ *     FIRST-PARTY and Lax is both sufficient and safer: it blocks cross-site
+ *     POSTs, i.e. CSRF cover for free.
+ *     🔴 Do NOT "fix" a cross-site setup by switching this to 'none'. That was
+ *     tried (2026-08-04) and only helps desktop Chrome — every iOS browser is
+ *     WebKit and blocks third-party cookies outright, whatever SameSite says.
+ *     The fix is always to make the cookie first-party, never to loosen this.
  *   secure — production only; a Secure cookie is not stored over plain http,
  *     which would break local dev against http://localhost.
- *   path '/auth' — sent only to refresh/logout, never on ordinary API calls.
+ *   path — REFRESH_COOKIE_PATH, default '/auth': sent only to refresh/logout,
+ *     never on ordinary API calls. It is configurable because a proxy prefixes
+ *     the public path (Vercel serves /api/auth/refresh), and a cookie scoped to
+ *     '/auth' would then be stored and never sent. Set it to the PUBLIC path.
  *   maxAge — the refresh token's own lifetime; rotation does not extend it.
  */
 export const REFRESH_COOKIE = 'mpx_rt';
 
-const COOKIE_PATH = '/auth';
+const COOKIE_PATH = env.REFRESH_COOKIE_PATH;
 
-/**
- * A browser we are willing to set a cookie for: the web client announces itself
- * with `X-Client: web` AND the request carries an allow-listed Origin (CORS has
- * already refused anything else). The custom header cannot be sent by a
- * cross-site form post without a preflight, so it is a second CSRF layer on top
- * of SameSite — free insurance if the topology ever changes.
- */
-export function isWebClient(req) {
-  return req.get('x-client') === 'web' && Boolean(req.get('origin'));
-}
-
-export function setRefreshCookie(res, refreshToken) {
-  res.cookie(REFRESH_COOKIE, refreshToken, {
+/** One source of truth — clearCookie must mirror setCookie exactly. */
+function cookieOptions() {
+  return {
     httpOnly: true,
     sameSite: 'lax',
     secure: env.NODE_ENV === 'production',
     path: COOKIE_PATH,
+  };
+}
+
+/**
+ * A browser we are willing to set a cookie for: it announces itself with
+ * `X-Client: web`. A cross-site request cannot set a custom header without a
+ * preflight, and CORS refuses that for any origin off the allow-list — so this
+ * header is the CSRF control, layered on top of SameSite=Lax.
+ *
+ * 🔴 Origin is deliberately NOT required. The web app now reaches us through its
+ * own origin (a Vercel rewrite), so the browser may omit Origin entirely and the
+ * API sees the call from the proxy's edge. Requiring it meant no cookie was ever
+ * issued — the session silently failed to persist.
+ */
+export function isWebClient(req) {
+  return req.get('x-client') === 'web';
+}
+
+/**
+ * CSRF guard for the cookie-bearing endpoints (refresh / logout).
+ *
+ * With SameSite=None the browser attaches the refresh cookie to a cross-site
+ * POST, so a drive-by page could otherwise force a rotation — it could not read
+ * the response (CORS), but rotation alone logs the victim out and can trip the
+ * reuse-detection that revokes the whole token family. A custom header cannot
+ * ride on a simple cross-site request: it forces a preflight, and the preflight
+ * is refused for any origin not on the allow-list.
+ *
+ * Only applies when the credential IS the cookie. A mobile client sends the
+ * token in the body, carries no cookie, and is unaffected.
+ */
+export function requireWebClientForCookie(req) {
+  const hasCookie = Boolean(req.cookies?.[REFRESH_COOKIE]);
+  return !hasCookie || isWebClient(req);
+}
+
+export function setRefreshCookie(res, refreshToken) {
+  res.cookie(REFRESH_COOKIE, refreshToken, {
+    ...cookieOptions(),
     maxAge: env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
   });
 }
 
 /** Must mirror the set options exactly or the browser keeps the old cookie. */
 export function clearRefreshCookie(res) {
-  res.clearCookie(REFRESH_COOKIE, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: env.NODE_ENV === 'production',
-    path: COOKIE_PATH,
-  });
+  res.clearCookie(REFRESH_COOKIE, cookieOptions());
 }
 
 /** Cookie first, body second — a stale body token must never win over the cookie. */

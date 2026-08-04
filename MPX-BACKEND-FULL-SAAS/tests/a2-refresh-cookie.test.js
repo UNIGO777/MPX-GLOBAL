@@ -27,6 +27,10 @@ import { REFRESH_COOKIE } from '../src/utils/refreshCookie.js';
 const app = createApp();
 let redis;
 let seq = 0;
+// Per-RUN suffix. The email carried Date.now() but the mobile did not, and
+// `(mobile, role)` is unique — so a second run against the same (never dropped)
+// test DB collided on signup and failed 9 cases with no obvious cause.
+const RUN = String(Date.now()).slice(-7);
 
 // A browser the server is willing to set a cookie for.
 const WEB = { 'X-Client': 'web', Origin: 'http://localhost:5173' };
@@ -36,7 +40,7 @@ const makeBuyer = () => {
   return {
     name: 'Cookie Buyer',
     email: `cookie_${Date.now()}_${seq}@example.com`,
-    mobile: { countryCode: '+91', number: `97${1000000 + seq}` },
+    mobile: { countryCode: '+91', number: `9${RUN}${seq}` },
     password: 'longpassword1',
     company: 'Cookie Co',
     country: 'IN',
@@ -206,5 +210,36 @@ describe('A2 · refresh cookie (web) alongside body token (native)', () => {
     expect(res.status).toBe(401);
     expect(res.body.error).toHaveProperty('code');
     expect(res.body.error).toHaveProperty('requestId');
+  });
+});
+
+describe('SameSite=None CSRF guard (owner-approved 2026-08-04)', () => {
+  it('refuses a COOKIE-borne refresh that lacks the web-client header', async () => {
+    const b = makeBuyer();
+    await signupThroughOtp(app, otpBox, { ...b, role: 'buyer' });
+    const cookie = refreshCookie(await login(b, WEB));
+    expect(cookie).toBeTruthy();
+
+    // A cross-site form post carries the cookie but cannot set X-Client.
+    await request(app).post('/auth/refresh').set('Cookie', cookie).send({}).expect(403);
+  });
+
+  it('still refreshes from a BODY token with no cookie (the Expo app)', async () => {
+    const b = makeBuyer();
+    await signupThroughOtp(app, otpBox, { ...b, role: 'buyer' });
+    const { refreshToken } = (await login(b)).body;
+    expect(refreshToken).toBeTruthy();
+
+    await request(app).post('/auth/refresh').send({ refreshToken }).expect(200);
+  });
+
+  it('refuses a COOKIE-borne logout without the header, leaving the session alive', async () => {
+    const b = makeBuyer();
+    await signupThroughOtp(app, otpBox, { ...b, role: 'buyer' });
+    const cookie = refreshCookie(await login(b, WEB));
+
+    await request(app).post('/auth/logout').set('Cookie', cookie).send({}).expect(403);
+    // The refused call must not have killed the session.
+    await request(app).post('/auth/refresh').set(WEB).set('Cookie', cookie).send({}).expect(200);
   });
 });

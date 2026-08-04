@@ -175,6 +175,43 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-04** — **WEB SESSION NOW SURVIVES RELOAD ON iOS — API proxied through the web origin
+  so the refresh cookie is FIRST-PARTY. 111/111 auth tests green, web build green.**
+  Topology was cross-site (`mpx-global.vercel.app` ↔ `api.mpx.nxtgendigitals.com`), so the refresh
+  cookie was a third-party cookie. Earlier today that was "fixed" with `SameSite=None; Secure` —
+  **which only helps desktop Chrome.** Apple requires every iOS browser to use WebKit, so Safari,
+  Chrome and Firefox on iPhone/iPad block third-party cookies outright regardless of SameSite;
+  desktop Safari and Firefox-strict too. No cookie attribute can fix that. Owner chose: **proxy
+  now, custom subdomain later.**
+  **Phase 1 (shipped):** `web/vercel.json` rewrites `/api/:path*` → the API **before** the SPA
+  catch-all; `web/src/config.js` now resolves the base URL to `/api` in EVERY mode (this also kills
+  the production 404 — the deployed bundle had a doubled `/api` prefix). Backend: `sameSite`
+  **reverted to `'lax'`** (first-party again, so Lax works *and* restores CSRF cover), cookie
+  `Path` is now **`REFRESH_COOKIE_PATH`** (default `/auth`; deployed backend sets `/api/auth`,
+  because through the proxy the browser calls `/api/auth/refresh` and a `/auth`-scoped cookie is
+  stored then never sent), and **`isWebClient()` no longer requires `Origin`** — behind a
+  same-origin proxy the browser may omit it and the API sees the call from Vercel's edge, so
+  requiring it meant no cookie was ever issued. `X-Client: web` remains the CSRF control and
+  `requireWebClientForCookie()` stays enforced on refresh/logout.
+  **Phase 2 (later, config-only):** point `app.nxtgendigitals.com` at Vercel → set
+  `VITE_API_BASE_URL` to the API origin, `REFRESH_COOKIE_PATH=/auth`, add the origin to
+  `CORS_ORIGINS`, delete the rewrite.
+  🔴 **Rejected:** moving the refresh token to `localStorage`/`sessionStorage` like the Expo app.
+  The app is safe because `expo-secure-store` is OS-encrypted and sandboxed; browser storage is
+  readable by any script on the page — that breaks tracker **A2** and `web-frontend.md`.
+  ✅ **Regression test for the DEPLOYED topology** (`tests/a2-vercel-proxy-topology.test.js`) —
+  every other cookie test calls the API directly, which is not how production works and could not
+  have caught this. Vercel's rewrite strips the `/api` prefix, and `express().use('/api', api)` has
+  identical semantics, so the real app is mounted under `/api` and driven through `request.agent()`
+  — superagent's cookie jar honours Domain/Path, so "would the browser send it back?" is answered by
+  the jar rather than by hand-attaching a header. Four cases: public-path scoping · **reload
+  survives** · cookie stays off ordinary `/api/me/*` calls · CSRF guard still fires. Proven to FAIL
+  under the old `Path=/auth` config (3 of 4 red, including reload), so it genuinely pins the bug.
+  🐛 Two test bugs fixed on the way: `a2-refresh-cookie.test.js` timestamped the email but not the
+  MOBILE (uniquely indexed) so the suite failed ~9 cases on every re-run against the never-dropped
+  test DB; and the new path test lives in its own file because `vi.resetModules()` recompiles the
+  Mongoose models (`OverwriteModelError`) — its env is set inside `vi.hoisted()`, since ESM imports
+  hoist above plain statements.
 - **2026-08-04** — **`web/vercel.json` added — SPA rewrites, security headers, asset caching,
   robots/sitemap proxy.** Set Vercel's **Root Directory to `web`**; build `npm run build` → `dist`.
   **SPA fallback** `/(.*) → /index.html` is required because the app uses `BrowserRouter` — without

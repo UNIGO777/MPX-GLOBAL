@@ -30,20 +30,23 @@ const list = (value, fallback) => {
 const env = import.meta.env;
 
 /**
- * Where the API lives, decided by build mode.
+ * Where the API lives: a SAME-ORIGIN path in every mode.
  *
- *   development → `/api`, a same-origin path the Vite dev server proxies to the
- *                 local backend (see vite.config.js). Same-origin means the
- *                 refresh cookie needs no CORS at all.
- *   production  → the real API origin. The browser then calls it directly, so
- *                 the server must list this app's origin in CORS_ORIGINS and
- *                 keep `credentials: true`, or the httpOnly refresh cookie
- *                 never travels.
+ *   development → Vite proxies `/api` to the local backend (vite.config.js).
+ *   production  → Vercel rewrites `/api/*` to the real API (vercel.json).
+ *
+ * 🔴 Deliberately NOT the API's own origin. The refresh token is an httpOnly
+ * cookie, and a cookie from another registrable domain is a THIRD-PARTY cookie:
+ * every iOS browser is WebKit and blocks those outright, so the session died on
+ * reload for every iPhone user. Routing through our own origin makes the cookie
+ * first-party, which is the only thing ITP accepts — and it lets the cookie stay
+ * `SameSite=Lax`, keeping CSRF cover.
  *
  * Not a secret — every URL in this bundle is public. `VITE_API_BASE_URL` still
- * overrides both, for a staging host or a local build against a remote API.
+ * overrides this, which is how the app moves to a same-site custom subdomain
+ * later (phase 2) with no code change.
  */
-const DEFAULT_API_BASE_URL = env.PROD ? 'https://api.mpx.nxtgendigitals.com' : '/api';
+const DEFAULT_API_BASE_URL = '/api';
 
 export const config = {
   api: {
