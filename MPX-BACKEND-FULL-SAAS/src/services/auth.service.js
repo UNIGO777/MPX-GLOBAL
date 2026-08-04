@@ -17,6 +17,7 @@ import {
 import { requestOtp, verifyOtp } from './otp.service.js';
 import { verifyTotp } from './twofactor.service.js';
 import { recordAudit } from './audit.service.js';
+import { notifyPasswordChanged } from './emailNotifications.service.js';
 
 // --- helpers ------------------------------------------------------------------
 
@@ -276,6 +277,12 @@ export async function changePassword({ userId, currentPassword, newPassword, ip,
     orgId: fresh.orgId,
     meta: { ip, userAgent, requestId },
   });
+
+  // Security notice (D5 email carve-out, owner 2026-08-04). Fire-and-forget: the
+  // password is already changed and the sessions already revoked, so a mail
+  // failure must not turn a successful change into an error the user retries.
+  notifyPasswordChanged({ user: fresh });
+
   return { accessToken, refreshToken: raw };
 }
 
@@ -315,6 +322,11 @@ async function resetWithRole({ identifier, code, newPassword, roleFilter, ip, us
     orgId: user.orgId,
     meta: { ip, userAgent, requestId },
   });
+
+  // Security notice (D5 email carve-out, owner 2026-08-04). This is the mail
+  // that tells a victim someone else reset their password, so it goes out on the
+  // reset path too — not just the authenticated change path. Fire-and-forget.
+  notifyPasswordChanged({ user });
 }
 
 export function resetPassword({ identifier, code, newPassword, portal, ip, userAgent, requestId }) {

@@ -6,6 +6,7 @@ import './models/index.js'; // register every model with mongoose
 import { schedulePurgeJob } from './jobs/purgeBlockedProducts.js';
 import { attachSocket, attachRedisAdapter } from './realtime/socket.js';
 import { isCloudinaryConfigured } from './config/cloudinary.js';
+import { describeOtpTransports } from './services/otp.sender.js';
 
 // Connect to MongoDB before accepting traffic — a payments-adjacent service must
 // not serve requests without its database.
@@ -48,6 +49,10 @@ schedulePurgeJob();
 
 const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'MPX Global backend listening');
+  // Which OTP transports are actually live. Logged at boot so a deploy missing
+  // its SMS key or SMTP password is visible immediately, rather than at some
+  // user's first failed login.
+  logger.info(describeOtpTransports(), 'otp delivery transports');
 });
 
 // M4-G — live delivery rides on the same HTTP server. §7.1: only new messages

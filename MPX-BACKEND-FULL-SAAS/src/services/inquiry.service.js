@@ -8,6 +8,7 @@ import { logger } from '../utils/logger.js';
 import { getPublicProduct } from './publicProducts.service.js';
 import { resolveInquiryFields } from '../validators/inquiry.validators.js';
 import { notifyNewEnquiry } from './push.service.js';
+import { notifyNewEnquiryEmail } from './emailNotifications.service.js';
 
 /**
  * M4-B — enquiry creation. The only way a buyer and a seller ever start talking.
@@ -219,6 +220,9 @@ export async function createInquiry({ user, productId, note, fields, meta }) {
   // M4-H — the seller learns someone is interested. Fire-and-forget (never
   // awaited): an enquiry must be created even if push is down or unconfigured.
   notifyNewEnquiry({ conversation, buyerOrgName: buyerOrg.name });
+  // Same event over email (D5 carve-out, owner 2026-08-04) — a seller who has
+  // not installed the app still hears about it. Same fire-and-forget contract.
+  notifyNewEnquiryEmail({ conversation, buyerOrgName: buyerOrg.name });
 
   return { inquiry, conversation, created: true, meta };
 }

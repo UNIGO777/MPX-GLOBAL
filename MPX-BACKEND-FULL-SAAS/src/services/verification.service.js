@@ -2,6 +2,7 @@ import { Organisation } from '../models/Organisation.js';
 import { Product } from '../models/Product.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
+import { notifyVerificationResult } from './emailNotifications.service.js';
 
 // Platform-staff operation: an employee (or the superadmin) reviews organisations
 // they do NOT own, so access is governed by PERMISSION (RBAC), not org-ownership. The org is
@@ -70,6 +71,17 @@ async function reviewOrg({ orgId, sideFlag, toStatus, reason, actor, action, met
     before,
     after: { kycStatus: toStatus, ...(reason ? { reason } : {}) },
     meta,
+  });
+
+  // Tell the owner their status changed (D5 email carve-out, owner 2026-08-04).
+  // NOT awaited and cannot throw: the decision and its audit record are already
+  // committed, and a mail server outage must not fail an employee's review.
+  // `sideFlag` picks who to write to — the buyer-side or exporter-side owner.
+  notifyVerificationResult({
+    org,
+    role: sideFlag === 'exporterSide' ? 'exporter' : 'buyer',
+    approved: toStatus === 'verified',
+    reason,
   });
 
   return org;

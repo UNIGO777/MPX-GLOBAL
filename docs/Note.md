@@ -107,19 +107,29 @@ Do not start the screens without surfacing this alert.
   or opt-in. *(Mandatory locks a superadmin out permanently if they lose both the authenticator
   and the backup codes — opt-in until the owner has enrolled is the safer first step.)*
 
-## D5 · Notifications (all types, incl. WhatsApp)  ⏸ ON HOLD — **except FCM push (carved out)**
+## D5 · Notifications (all types, incl. WhatsApp)  ⏸ ON HOLD — **except FCM push + EMAIL (carved out)**
 > ✅ **2026-07-31 — owner explicitly approved FCM push into month 1**, built inside M4. Schedule
 > change only (Module 8 is already Phase 1), **not** a scope change. Approved slice: `firebase-admin`,
 > `DeviceToken` register/unregister, dead-token cleanup, and sends on **two M4 events only** —
-> new enquiry → seller, new message → counterparty. Everything else in D5 stays ON HOLD.
-- Module 8 not wired: ~~push (Firebase)~~ *(see carve-out above)*, email, **WhatsApp**, in-app
-  centre. No notification is sent on any **non-M4** event (signup, approve/verify/reject,
-  quotation) — and email/WhatsApp are sent on nothing at all.
+> new enquiry → seller, new message → counterparty.
+>
+> ✅ **2026-08-04 — owner explicitly approved EMAIL out of D5.** Alert was raised (email
+> notifications are a named D5/Bucket-A3 item) and the owner chose "OTP by email + general email
+> notifications", which is the override. **Built so far:** SMTP transport (`email.provider.js`,
+> `nodemailer`) and **OTP delivery by email**. ⚠️ **The non-OTP notification EVENTS are approved but
+> NOT yet built** — which events, and their copy, still need the owner's list (see
+> `docs/History.md` 2026-08-04). Do not invent them.
+>
+> 🔴 **Still ON HOLD and still needing an alert:** **WhatsApp**, the `Notification` model / in-app
+> centre, admin per-type enable-disable, and delivery tracking + retry.
 - **WhatsApp** additionally depends on external template approval (outside the build). Build later.
-- **Interim (dev only):** since no SMS/email provider exists, OTP codes are **printed to the
-  terminal in dev/test** (`otp.sender.js`), **hard-gated to non-production**. This is a
-  temporary dev affordance — **remove/replace it when real OTP delivery is wired** (OTP must
-  never be logged in production — auth-sessions A3).
+- ✅ **REAL OTP DELIVERY IS WIRED (2026-08-04)** — Fast2SMS for SMS, SMTP for email.
+  🔴 **Fast2SMS is INDIA-ONLY**, so any non-`+91` number falls back to email. Buyer login is
+  OTP-gated and buyers are international, which makes SMTP **load-bearing, not optional**.
+- **Interim (dev only):** the terminal OTP print in `otp.sender.js` now fires **only when no real
+  transport could deliver**, and remains hard-gated to non-production. It is still a temporary dev
+  affordance — **remove it once delivery is proven in staging** (OTP must never be logged in
+  production — auth-sessions A3).
 
 ## D6 · Seller "request unblock" for a taken-down product  ⏸ ON HOLD (build ~1 month later)
 - **What the owner asked for (recorded 2026-07-28):** jab admin ek product **takedown** kar de,

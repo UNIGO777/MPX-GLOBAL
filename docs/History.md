@@ -175,6 +175,93 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-04** — **Email template: brand LOGO (hybrid), reversing "no remote image".** Owner
+  approved (option B). Uploaded both brand marks to Cloudinary (`mpx/brand/logo-colored`,
+  `logo-white`, public); URLs in `.env` (`EMAIL_LOGO_URL`, `EMAIL_LOGO_WHITE_URL`) + `.env.example`
+  + `env.js` (optional). `emailTemplate.js`: WHITE logo `<img>` on the navy canopy, COLOURED above
+  the footer, each via a Cloudinary `e_trim` transform, **with the text wordmark as `alt`** so
+  image-blocking clients still show "MPX GLOBAL"; unset env → text-only fallback. Updated the two
+  email-test `<img>` assertions: the escaping test now asserts a hostile `<img>` is **escaped**
+  (`&lt;img`) — security intact; the branded-layout test now asserts the logo `<img>` + `alt` are
+  present. Stale 🔴 "no remote image" comment rewritten to the hybrid decision. Test email sent to
+  the owner's Gmail (SMTP accepted). **934/934 green, lint clean.**
+- **2026-08-04** — **REAL OTP DELIVERY WIRED — Fast2SMS (SMS) + SMTP (email).** Replaces the
+  dev-only terminal print. New: `services/sms.provider.js` (Fast2SMS, global `fetch`, **no new
+  dep**), `services/email.provider.js` (**new dep: `nodemailer`** — the standard Node SMTP client,
+  no practical alternative for Hostinger SMTP), and a rewritten `services/otp.sender.js` that routes
+  between them. `describeOtpTransports()` logs live transports at boot so a deploy missing a key is
+  visible immediately instead of at a user's first login.
+  🔴 **SCOPE — D5 override recorded.** Email notifications are a named D5 / Bucket-A3 item; the
+  alert was raised and the **owner explicitly approved "OTP by email + general email
+  notifications"**. Ledger updated (`docs/Note.md` D5). **Built: SMTP transport + OTP-by-email.
+  NOT built: the non-OTP notification events** — approved in principle but the event list and copy
+  are still owed by the owner, and inventing them would be guessing. WhatsApp, the `Notification`
+  model / in-app centre, admin per-type toggles and delivery-tracking/retry all remain deferred.
+  🔴 **BIGGEST FINDING — Fast2SMS is INDIA-ONLY.** Its `numbers` parameter takes 10-digit Indian
+  MSISDNs. Exporters are Indian so SMS suits them, but **buyers are international and buyer login is
+  OTP-gated** — an international buyer's code cannot travel over SMS at all. `otp.sender.js`
+  therefore falls back to **email for any non-`+91` number**, which makes SMTP **load-bearing rather
+  than optional**. Guarded by `canDeliverTo()` and a regression test; do NOT "simplify" it by
+  stripping the country code and posting the number as if it were Indian.
+  **Owner decision applied:** `FAST2SMS_OTP_LENGTH` / `FAST2SMS_OTP_EXPIRY` were **dropped** —
+  `OTP_LENGTH` and `OTP_TTL_SECONDS` stay the single source of truth for the A3 control (6 digits /
+  5 min) and the message text is rendered FROM them, so an SMS can never advertise an expiry the
+  server does not honour. If those two vars are still in `.env` they are ignored; delete them.
+  **Security posture:** delivery failure **throws** rather than returning quietly — a warn-and-return
+  leaves the user on a code screen forever and makes a broken deploy look healthy. No OTP reaches a
+  log, an error message or a stack (asserted by tests); SMTP logs only the message id + recipient
+  **domain**, never the local part; `requireTLS` + TLS 1.2 minimum so credentials never cross the
+  wire in the clear; the dev terminal print now fires only when no real transport could deliver.
+  **Verified:** 19 new tests in `tests/otp-delivery.test.js` (India-only routing incl. the
+  international-buyer regression, email fallback, production-throws, and three no-leak assertions) —
+  **full suite 916 passed / 60 files.**
+  ✅ **`.env` is NOT tracked in git** (only `.env.example` files are), so the live Fast2SMS/SMTP
+  credentials are not committed. ⚠️ `.env` WAS committed historically in `a486611` with test-only
+  values — those still need rotating before production (already on the close checklist).
+  **CREDENTIALS VERIFIED LIVE:** Hostinger SMTP connect+auth **SUCCESS** (`verifyEmailTransport()`,
+  no send), and the Fast2SMS key validated against the read-only `/dev/wallet` endpoint (**valid**,
+  balance ₹40.20).
+  ✅ **END-TO-END DELIVERY PROVEN (2026-08-04)** — a real OTP was sent through `sendOtp()` to a live
+  handset (+91 70006 10047, Fast2SMS request id `Su4XcfXDhA4mjMY`) and to a live inbox
+  (naman13399@gmail.com). Both arrived.
+  🔴 **ROUTE CORRECTED — `route=otp`, NOT `route=dlt`.** The first implementation used the DLT route
+  and the live gateway answered **"Invalid Sender ID"**: DLT additionally requires an approved
+  `sender_id` this account does not have. Probing all three routes showed `otp` and `q` both
+  accepted; **`otp` was chosen** because it is purpose-built for codes and is **DND-exempt** — a
+  login code blocked by DND is a locked-out user. `FAST2SMS_OTP_ID` is now **unused** (kept in the
+  schema/.env so the value is not lost, and it becomes relevant only if a DLT sender id is approved).
+  **Consequence:** the OTP route renders Fast2SMS's own fixed wording, so the **expiry cannot be put
+  in the SMS** — only the code is sent. The EMAIL template still states the expiry. A regression
+  test asserts `route=otp`, code-only variables, a bare 10-digit `numbers`, and no template/sender
+  id, so nobody switches it back without a sender id.
+  ⚠️ **HOSTINGER OUTBOUND RATE LIMIT — a production capacity risk, not a bug.** The first email
+  attempt failed with `451 4.7.1 Ratelimit "hostinger_out_ratelimit" exceeded`; a retry minutes
+  later succeeded, so the config is correct and the limit is transient. But shared Hostinger SMTP
+  has a low daily/burst cap, and **email is the OTP fallback for international buyers** — so hitting
+  that cap locks non-Indian buyers out of login. There is no retry layer (delivery tracking + retry
+  is still deferred in D5). Raise the sending limit or move to a dedicated transactional provider
+  before launch.
+- **2026-08-04** — **EMAIL NOTIFICATIONS BUILT — the four events the owner approved out of D5.**
+  New `services/emailNotifications.service.js`. Events + hook sites:
+  **exporter/buyer verified or rejected** (`verification.service.js` `reviewOrg`) ·
+  **welcome on signup** (`signup.service.js` `completeSignup`) ·
+  **password changed** (`auth.service.js` — BOTH `changePassword` and the `resetWithRole` path, so
+  the mail that tells a victim someone else reset their password actually goes out) ·
+  **new enquiry → exporter** (`inquiry.service.js`, alongside the existing M4 push).
+  🔴 **Fire-and-forget by construction**, mirroring `push.service.js`: every export swallows its own
+  errors into a log line and nothing throws, because a mail outage must never fail the action that
+  triggered it — an exporter gets verified whether or not Hostinger is reachable. (Deliberately the
+  OPPOSITE posture to `otp.sender.js`, which must throw: there the user is waiting on the code.)
+  **Copy rules encoded and tested:** brief rule 7 — a buyer is "active right now" and the copy may
+  never imply an approval gate (**D3**); a rejected exporter's profile "stays live" and is never
+  described as hidden. A **rejection reason is owner-only** and appears solely in mail addressed to
+  that owner. The password notice carries **no code and no link** (safe to read while under attack);
+  the enquiry mail carries no commercial detail (D-N1) — who and what, nothing more.
+  **Verified:** 12 new tests in `tests/email-notifications.test.js` — **full suite 928 passed / 61
+  files**, lint clean.
+  🔴 **Still deferred, still needing an alert:** WhatsApp, the `Notification` model / in-app centre,
+  admin per-type enable-disable, delivery tracking + retry, and the quote's "employee email alert on
+  new **quotation**" (quotation is Bucket A1).
 - **2026-08-04** — **EMPLOYEE PERMISSIONS READ BUILT (owner-approved) — closes the last M1 admin
   gap. 26/26 in `userManagement.test.js`, web build green.** `GET /admin/users` now returns each
   **employee's** granted `permissions` **to a superadmin only**. Shape: the controller computes

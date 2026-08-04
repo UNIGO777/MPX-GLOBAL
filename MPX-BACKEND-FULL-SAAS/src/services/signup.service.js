@@ -13,6 +13,7 @@ import {
 } from './token.service.js';
 import { recordAudit } from './audit.service.js';
 import { assertIdentityAvailable, createUserWithOrg, normalizeMobile } from './auth.service.js';
+import { notifyWelcome } from './emailNotifications.service.js';
 
 /**
  * A21 · signup, with BOTH the email and the mobile proved before an account
@@ -247,6 +248,12 @@ export async function completeSignup({
     after: { emailVerified: true, mobileVerified: true },
     meta,
   });
+
+  // Welcome mail (D5 email carve-out, owner 2026-08-04). Fire-and-forget: the
+  // account exists and is usable, so a mail failure must not fail signup.
+  // Copy rule 7 lives in the template — a buyer is active immediately, an
+  // exporter is public immediately without a tick.
+  notifyWelcome({ user, org: { name: company } });
 
   // Both factors were just proved, so a session is issued directly. Asking for a
   // third code here would be pure friction.
