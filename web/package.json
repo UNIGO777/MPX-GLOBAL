@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:live": "VITE_API_BASE_URL=https://api.mpx.nxtgendigitals.com vite"
   },
   "dependencies": {
     "axios": "^1.7.5",

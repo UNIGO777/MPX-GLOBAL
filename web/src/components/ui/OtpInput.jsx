@@ -51,7 +51,7 @@ export function OtpInput({
   };
 
   return (
-    <div className="flex gap-2" role="group" aria-label={label}>
+    <div className="flex w-full gap-2" role="group" aria-label={label}>
       {digits.map((digit, i) => (
         <input
           key={i}
@@ -71,11 +71,13 @@ export function OtpInput({
           onKeyDown={(e) => handleKeyDown(i, e)}
           onFocus={(e) => e.target.select()}
           className={[
-            // Mockup boxes are 56×56. Focus is ONE treatment: a 2px accent
-            // border, no ring and no offset halo (owner, 2026-08-03) — the same
-            // convention every other field follows. The border IS the visible
-            // focus indicator, so outline-none still has a replacement.
-            'h-14 w-12 rounded-lg border text-center text-2xl font-bold tabular-nums transition-all sm:w-14',
+            // Mockup boxes are 56×56 — but FLUID, not fixed. The auth card is
+            // max-w-[400px] with p-8 until lg, leaving 336px inside, so six
+            // fixed 56px boxes plus gaps (376px) spilled out of the card
+            // between 640–900px, and the 48px variant spilled on a 390px
+            // phone. flex-1 lets them shrink to fit any container; the cap
+            // keeps the design's 56px wherever there is room.
+            'h-14 min-w-0 flex-1 basis-0 max-w-[56px] rounded-lg border text-center text-2xl font-bold tabular-nums transition-all',
             'focus:outline-none focus:border-2 focus:border-primary-600',
             'disabled:bg-ink-100 disabled:text-ink-500 disabled:cursor-not-allowed',
             error ? 'border-danger bg-danger-50' : 'border-surface-border bg-white',
