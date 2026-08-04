@@ -1,6 +1,7 @@
 import { PendingSignup } from '../models/PendingSignup.js';
 import { OtpChallenge } from '../models/OtpChallenge.js';
 import { AppError } from '../utils/AppError.js';
+import { logger } from '../utils/logger.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
 import { hashPassword } from './password.service.js';
 import { requestOtp, verifyOtp } from './otp.service.js';
@@ -103,8 +104,45 @@ export async function startSignup({ name, email, mobile, password, role, meta })
 
   // Two independent challenges under two different purposes — see OTP_PURPOSE in
   // models/enums.js for why a shared purpose would make them cancel each other.
-  await requestOtp({ pendingSignup: pending, purpose: CHANNEL_PURPOSE.email, channel: 'email' });
-  await requestOtp({ pendingSignup: pending, purpose: CHANNEL_PURPOSE.mobile, channel: 'mobile' });
+  //
+  // 🔴 DELIVERY IS PER-CHANNEL AND MUST NOT BE ALL-OR-NOTHING. These were two
+  // bare awaits, so a single provider outage — an SMTP failure in production —
+  // threw out of the whole request: the pending record was already written, the
+  // mobile code was never even attempted, and the caller got a 500 with no way
+  // forward. One provider having a bad minute must not stop people signing up.
+  //
+  // So: try both, and judge on the results. The codes are STORED before the send
+  // is attempted, so a channel that failed to deliver can still be retried from
+  // the verify screen's resend button.
+  const delivery = await Promise.allSettled([
+    requestOtp({ pendingSignup: pending, purpose: CHANNEL_PURPOSE.email, channel: 'email' }),
+    requestOtp({ pendingSignup: pending, purpose: CHANNEL_PURPOSE.mobile, channel: 'mobile' }),
+  ]);
+
+  for (const [i, result] of delivery.entries()) {
+    if (result.status === 'rejected') {
+      logger.error(
+        {
+          channel: i === 0 ? 'email' : 'mobile',
+          // Shaped, never the raw error: a provider error can quote its own
+          // credentials or the recipient address.
+          err: { name: result.reason?.name, message: result.reason?.message },
+        },
+        'signup otp delivery failed; the code is stored and can be resent',
+      );
+    }
+  }
+
+  // Both channels down is the one case the user genuinely cannot work around —
+  // they would land on the verify screen with no codes and no idea why. Fail
+  // honestly, and remove the pending record rather than leaving an orphan behind.
+  if (delivery.every((r) => r.status === 'rejected')) {
+    await PendingSignup.deleteOne({ _id: pending._id });
+    throw new AppError('otp delivery failed on every channel', {
+      statusCode: 503,
+      clientMessage: "We couldn't send your verification codes. Please try again in a moment.",
+    });
+  }
 
   await recordAudit({
     actor: { userId: null, role: null },

@@ -175,6 +175,79 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-04** — **`web/vercel.json` added — SPA rewrites, security headers, asset caching,
+  robots/sitemap proxy.** Set Vercel's **Root Directory to `web`**; build `npm run build` → `dist`.
+  **SPA fallback** `/(.*) → /index.html` is required because the app uses `BrowserRouter` — without
+  it a direct hit on `/signin` 404s. Vercel checks the filesystem before rewrites, so hashed assets
+  and `favicon.png` still serve directly.
+  **`/robots.txt` and `/sitemap.xml` are rewritten to the API**, which owns both (`public.routes.js`).
+  Crawlers look for them at the WEB origin, so serving them only from the API domain made them
+  invisible. ⚠️ For the sitemap to emit correct URLs the backend's **`PUBLIC_WEB_URL` must be the
+  web domain** — it interpolates `${PUBLIC_WEB_URL}/product/<slug>`.
+  🔴 **Deliberately NOT proxying `/api/*` through Vercel.** A proxy would remove the CORS work, but
+  every request would then reach the backend from Vercel's edge IPs — collapsing the per-IP auth/OTP
+  rate limits (**B7**) into a single bucket. Real client IPs are worth more than one env var. So the
+  web app must be configured with `VITE_API_BASE_URL=<api origin>` (it otherwise defaults to `/api`
+  and would call the Vercel domain), and **the Vercel domain must be added to the backend's
+  `CORS_ORIGINS`** — verified earlier that an unlisted origin gets `403 "Origin not allowed."`.
+  **CSP verified against the real build, not guessed:** `dist/index.html` contains **no inline
+  script**, so `script-src 'self'` is safe; the only external hosts anywhere in the source are
+  Google Fonts, and Cloudinary is allowed for images. `style-src` keeps `'unsafe-inline'` — a
+  deliberate concession for React inline styles; everything else is locked down
+  (`frame-ancestors 'none'`, `object-src 'none'`, `base-uri`/`form-action 'self'`).
+  ⚠️ **SEO gap unchanged and NOT fixable by this config:** `web-design.md` requires landing/product/
+  category pages to be indexable, and a purely client-rendered SPA indexes poorly. That needs
+  SSR/SSG or prerendering — still outstanding.
+- **2026-08-04** — **SMS switched to Fast2SMS's OTP API (`/dev/otp/send`) — the right endpoint all
+  along.** The owner supplied a working reference implementation from another project, which
+  revealed that `FAST2SMS_OTP_ID` / `_EXPIRY` / `_LENGTH` belong to Fast2SMS's **OTP API**, a
+  different product from the `bulkV2` SMS API this integration was first built against. Earlier
+  guesses (`route=dlt` → *"Invalid Sender ID"*, then `route=otp` on bulkV2) were both working around
+  the wrong endpoint.
+  **Now:** `POST https://www.fast2sms.com/dev/otp/send`, JSON body
+  `{ mobile, otp_id, otp_expiry, otp_length, otp }`, `authorization: <key>`. `isSmsConfigured()`
+  requires **both** the key and the template id, so a half-configured deploy reports SMS unavailable
+  instead of failing at a user's first login.
+  **Owner's "server stays authoritative" decision preserved:** the endpoint *does* accept
+  `otp_expiry` and `otp_length`, but they are **DERIVED** from `OTP_TTL_SECONDS` and `OTP_LENGTH`
+  rather than read from `FAST2SMS_OTP_*` env vars — so the SMS can never advertise a validity window
+  the server does not honour. Asserted by a test.
+  **Established empirically against the live gateway (not assumed):** bare **10-digit** mobile works
+  (`return:true`); `+91…` also works but the bare form matches the reference; an **11-digit US number
+  is rejected with "The mobile must be 10 digits."** — which **confirms the India-only constraint**
+  and keeps the email fallback for international buyers load-bearing. The US probe used the
+  **555-01xx reserved-for-fiction range**, so no real number was texted.
+  Also handled: Fast2SMS answers **HTTP 200 with `return:false`** for some rejections, so status
+  alone is not trusted — a test locks that in.
+  **Verified end-to-end:** a real OTP delivered through `sendOtp()` to +91 70006 10047
+  (request id `OFO2DTqOo14Q9jG`). Tests rewritten for the new endpoint (23 in
+  `otp-delivery.test.js`); **full suite 936 passed / 61 files**, lint clean.
+  ⚠️ `tests/f1b-block-cascade.test.js` failed once in a parallel run and passed in isolation and on
+  re-run — it deliberately closes the Mongo client to simulate a failed cascade, so it is
+  timing-sensitive under parallel workers. **Flaky, not a regression** — worth stabilising later.
+- **2026-08-04** — **🔴 APP GOTCHA FIXED: changing `app/.env` did nothing — `extra` is baked into the
+  APK at NATIVE BUILD time.** After repointing the app at the deployed API
+  (`https://api.mpx.nxtgendigitals.com`) every request failed as **"You're offline"**, while the
+  phone's own `curl` reached that API fine (401, `tls=0`). Restarting Metro with `--clear` did not
+  help, and the served bundle *did* contain the new URL.
+  **Root cause:** `app/src/config/env.js` read `Constants.expoConfig.extra.apiBaseUrl`. In a
+  prebuild / dev-client APK, `expo-constants` resolves `app.config.js` when the NATIVE app is built
+  and embeds the result in the binary — so `extra` still held `http://192.168.1.9:3000` (the old
+  local backend, by then stopped). The error message was literally true.
+  **Fix:** read **`process.env.EXPO_PUBLIC_API_BASE_URL` first**, with `extra` only as a fallback.
+  `EXPO_PUBLIC_*` is inlined by Metro at BUNDLE time, so a `.env` change now takes effect on the
+  next reload instead of requiring `npx expo run:android` again.
+  **How it was found (worth keeping):** a dev-only `logger.debug('request failed with no response')`
+  in `utils/errors.js` that reports `code` / `reason` / `url` / **`baseURL`**. "You're offline" is
+  the same message for DNS failure, refused connection, TLS rejection and wrong-host alike — the
+  baseURL is what separates them, and it printed the stale URL immediately after an hour of
+  network-layer theories. Kept (dev-only; compiles out of release).
+  **Verified on device:** login now returns a real **"Invalid credentials."** with a server request
+  id from the deployed backend.
+  ⚠️ **Separate finding, not the cause but real:** a request carrying an `Origin` header gets
+  **403 "Origin not allowed."** from production — correct behaviour (`app.js` allows *no* Origin for
+  native clients and allowlists browser origins), but worth knowing if a future client starts
+  sending one.
 - **2026-08-04** — **🔴 DEPLOY GOTCHA FIXED: `.env` was ignored under PM2 — dotenv resolves from
   `process.cwd()`, not from the app.** On the VPS the backend crash-looped with
   `MONGODB_URI / JWT_ACCESS_SECRET / JWT_REFRESH_SECRET: expected string, received undefined`

@@ -9,6 +9,8 @@
  *    Never branch the UI on a guess about which one it was.
  */
 
+import { logger } from './logger.js';
+
 export const ERROR_KIND = {
   offline: 'offline',
   timeout: 'timeout',
@@ -38,6 +40,19 @@ export function toAppError(error) {
   // spinning forever (auth-app-steps Step 3.6).
   if (error?.response == null) {
     const isTimeout = error?.code === 'ECONNABORTED' || error?.code === 'ETIMEDOUT';
+
+    // Dev-only diagnostic. "You're offline" is otherwise undiagnosable: it is
+    // what the user sees for a DNS failure, a refused connection, a TLS
+    // rejection and a blocked-by-policy request alike. The underlying code and
+    // the URL are exactly what separates them, and both are non-sensitive —
+    // `logger` strips tokens anyway, and it compiles out of release builds.
+    logger.debug('request failed with no response', {
+      code: error?.code ?? null,
+      reason: error?.message ?? null,
+      url: error?.config?.url ?? null,
+      baseURL: error?.config?.baseURL ?? null,
+    });
+
     return {
       kind: isTimeout ? ERROR_KIND.timeout : ERROR_KIND.offline,
       message: isTimeout

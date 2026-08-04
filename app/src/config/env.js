@@ -20,7 +20,23 @@ import Constants from 'expo-constants';
  * check that decides whether credentials may travel in cleartext.
  */
 
+/**
+ * 🔴 `process.env.EXPO_PUBLIC_*` FIRST, `Constants.expoConfig.extra` only as a
+ * fallback. The order is the whole point (diagnosed on-device 2026-08-04):
+ *
+ * `extra` is resolved from app.config.js when the NATIVE APP IS BUILT and baked
+ * into the APK — so after changing `.env` the app kept using the previous API
+ * URL no matter how many times Metro was restarted with `--clear`, and every
+ * request failed as "You're offline" against a backend that was no longer
+ * running. Rebuilding the APK was the only way to move it.
+ *
+ * `EXPO_PUBLIC_*` is inlined by Metro at BUNDLE time instead, so a `.env` change
+ * now takes effect on the next reload. The `extra` fallback is kept so a build
+ * that ships without the inlined value still resolves.
+ */
 const extra = Constants.expoConfig?.extra ?? {};
+
+const configuredBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? extra.apiBaseUrl;
 
 const LOOPBACK_HOSTS = new Set([
   'localhost',
@@ -68,7 +84,7 @@ function isLocalDevHost(host) {
 }
 
 function resolveApiBaseUrl() {
-  const raw = typeof extra.apiBaseUrl === 'string' ? extra.apiBaseUrl.trim() : '';
+  const raw = typeof configuredBaseUrl === 'string' ? configuredBaseUrl.trim() : '';
 
   if (!raw) {
     throw new Error(
