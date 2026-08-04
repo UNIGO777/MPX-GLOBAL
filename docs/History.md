@@ -175,6 +175,29 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-04** — **🔴 APP GOTCHA FIXED: changing `app/.env` did nothing — `extra` is baked into the
+  APK at NATIVE BUILD time.** After repointing the app at the deployed API
+  (`https://api.mpx.nxtgendigitals.com`) every request failed as **"You're offline"**, while the
+  phone's own `curl` reached that API fine (401, `tls=0`). Restarting Metro with `--clear` did not
+  help, and the served bundle *did* contain the new URL.
+  **Root cause:** `app/src/config/env.js` read `Constants.expoConfig.extra.apiBaseUrl`. In a
+  prebuild / dev-client APK, `expo-constants` resolves `app.config.js` when the NATIVE app is built
+  and embeds the result in the binary — so `extra` still held `http://192.168.1.9:3000` (the old
+  local backend, by then stopped). The error message was literally true.
+  **Fix:** read **`process.env.EXPO_PUBLIC_API_BASE_URL` first**, with `extra` only as a fallback.
+  `EXPO_PUBLIC_*` is inlined by Metro at BUNDLE time, so a `.env` change now takes effect on the
+  next reload instead of requiring `npx expo run:android` again.
+  **How it was found (worth keeping):** a dev-only `logger.debug('request failed with no response')`
+  in `utils/errors.js` that reports `code` / `reason` / `url` / **`baseURL`**. "You're offline" is
+  the same message for DNS failure, refused connection, TLS rejection and wrong-host alike — the
+  baseURL is what separates them, and it printed the stale URL immediately after an hour of
+  network-layer theories. Kept (dev-only; compiles out of release).
+  **Verified on device:** login now returns a real **"Invalid credentials."** with a server request
+  id from the deployed backend.
+  ⚠️ **Separate finding, not the cause but real:** a request carrying an `Origin` header gets
+  **403 "Origin not allowed."** from production — correct behaviour (`app.js` allows *no* Origin for
+  native clients and allowlists browser origins), but worth knowing if a future client starts
+  sending one.
 - **2026-08-04** — **🔴 DEPLOY GOTCHA FIXED: `.env` was ignored under PM2 — dotenv resolves from
   `process.cwd()`, not from the app.** On the VPS the backend crash-looped with
   `MONGODB_URI / JWT_ACCESS_SECRET / JWT_REFRESH_SECRET: expected string, received undefined`
