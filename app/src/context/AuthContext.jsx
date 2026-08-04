@@ -116,8 +116,11 @@ export function AuthProvider({ children }) {
    * @returns {{ loginToken: string, method: string }}
    */
   const login = useCallback(async ({ identifier, password, portal }) => {
-    const { loginToken, method } = await authApi.login({ identifier, password, portal });
-    return { loginToken, method };
+    // `sentTo` is the server's MASK of where the code actually went (the mobile,
+    // always). Passed straight through so the OTP screen never has to infer the
+    // destination from what the user typed.
+    const { loginToken, method, sentTo } = await authApi.login({ identifier, password, portal });
+    return { loginToken, method, sentTo };
   }, []);
 
   /**

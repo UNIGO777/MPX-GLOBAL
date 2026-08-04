@@ -13,6 +13,8 @@ import {
   SIGNUP_TOKEN_TTL_SECONDS,
 } from './token.service.js';
 import { recordAudit } from './audit.service.js';
+// ONE mask definition, shared with login — see utils/mask.js.
+import { maskEmail, maskMobile } from '../utils/mask.js';
 import { assertIdentityAvailable, createUserWithOrg, normalizeMobile } from './auth.service.js';
 import { notifyWelcome } from './emailNotifications.service.js';
 
@@ -34,23 +36,6 @@ const CHANNEL_PURPOSE = Object.freeze({
   email: 'signup_email',
   mobile: 'signup_mobile',
 });
-
-/**
- * Show enough for the screen to say "we sent it to …" without reprinting the
- * whole address. The caller typed these values a moment ago, so this is a
- * shoulder-surfing courtesy rather than a secrecy boundary.
- */
-function maskEmail(email) {
-  const [local, domain] = String(email).split('@');
-  if (!domain) return '***';
-  const head = local.slice(0, 1);
-  return `${head}${'*'.repeat(Math.max(local.length - 1, 1))}@${domain}`;
-}
-
-function maskMobile(e164) {
-  const s = String(e164);
-  return `${s.slice(0, 3)}${'*'.repeat(Math.max(s.length - 5, 1))}${s.slice(-2)}`;
-}
 
 function stateOf(pending) {
   return {

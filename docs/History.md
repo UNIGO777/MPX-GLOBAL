@@ -175,6 +175,31 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-05** — **🔴 OTP screens said "sent to your EMAIL" while the code went to the PHONE —
+  fixed on web + app, with the masked destination now coming FROM THE SERVER.**
+  The login OTP has always gone to the mobile (`auth.service.js` passes `channel: 'mobile'` on
+  every path), but `web/src/pages/auth/Otp.jsx` rendered `maskIdentifier(flow.identifier)` — a
+  client-side mask of **whatever the user typed**. Anyone signing in with an email was told to check
+  their inbox for a code that only ever arrived by SMS. (Same defect was fixed in the Expo app on
+  2026-08-04; the web copy was still wrong.)
+  **New `src/utils/mask.js`** — ONE definition shared by signup and login so the two flows cannot
+  show the same number two different ways. `maskMobile()` now reveals **only the last 3 digits and
+  no country code**: `+919876500634 → *********634` (was `+91********01`, which showed the country
+  code and only hid the middle).
+  **`POST /auth/login` now returns `sentTo`** — the masked real destination — and the web + app OTP
+  screens render it instead of guessing. Web copy: "We sent a 6-digit code to your registered
+  mobile *********634".
+  🔴 **`forgot-password` deliberately does NOT return it.** There is no proof of ownership on that
+  endpoint, so attaching a masked number would turn its intentionally generic reply into an
+  account-enumeration oracle. Only login (password already verified) and signup (both channels
+  proved) may return a mask — stated in `utils/mask.js` so it is not "helpfully" added later.
+  **A guard test caught this change and was strengthened, not loosened:**
+  `security-controls.test.js` asserts the login response's EXACT key set, so adding a field failed
+  it by design. `sentTo` was added to the expected keys AND new assertions pin it to `/^\*+\d{3}$/`
+  with exactly 3 visible digits, so the field cannot quietly widen into a leak.
+  **Verified:** 6 new tests in `tests/mask.test.js` (incl. "reveals no more than 3 digits whatever
+  the length" and short/malformed input returning `******` rather than the value); backend
+  **950 passed / 64 files**, lint clean; web builds; app bundles (992 modules).
 - **2026-08-05** — **🔴 Vercel BUILD FAILED — `vercel.json` rejects unknown properties. Fixed.**
   `The vercel.json schema validation failed: rewrites[0] should NOT have additional property
   "_comment"`. The `_comment` key came in with `d8a0e88`: JSON has no comment syntax, and Vercel

@@ -18,6 +18,8 @@ import { requestOtp, verifyOtp } from './otp.service.js';
 import { verifyTotp } from './twofactor.service.js';
 import { recordAudit } from './audit.service.js';
 import { notifyPasswordChanged } from './emailNotifications.service.js';
+// ONE mask definition, shared with signup — see utils/mask.js.
+import { maskMobile } from '../utils/mask.js';
 
 // --- helpers ------------------------------------------------------------------
 
@@ -187,7 +189,17 @@ async function loginWithRole({ identifier, password, roleFilter }) {
   // requestOtp enforces a durable lock, so it may throw "too many attempts".
   const method = 'otp';
   await requestOtp({ user, purpose: 'login', channel: 'mobile' });
-  return { loginToken: signLoginToken(user, method), method };
+
+  // `sentTo` is the MASKED destination the code actually went to. The client
+  // used to render whatever identifier the user typed, which was wrong whenever
+  // they signed in with an email: the code always goes to the MOBILE
+  // (`channel: 'mobile'` on every path), so the screen sent people to their
+  // inbox to wait for something that would never arrive.
+  //
+  // Safe to return here and only here: the password has just been verified, so
+  // this is the account holder. `forgot-password` must NOT do this — it would
+  // become an account-enumeration oracle.
+  return { loginToken: signLoginToken(user, method), method, sentTo: maskMobile(user.mobile.e164) };
 }
 
 export function login({ identifier, password, portal }) {

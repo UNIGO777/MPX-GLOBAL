@@ -53,7 +53,7 @@ export function LoginScreen({ navigation, route }) {
 
     setSubmitting(true);
     try {
-      const { loginToken, method } = await login({
+      const { loginToken, method, sentTo } = await login({
         identifier: identifier.trim(),
         password,
         portal,
@@ -62,6 +62,8 @@ export function LoginScreen({ navigation, route }) {
       navigation.navigate('Otp', {
         loginToken,
         method,
+        // The server's mask of where the code really went — see OtpScreen.
+        sentTo,
         destination: identifier.trim(),
         context: 'login',
         portal,

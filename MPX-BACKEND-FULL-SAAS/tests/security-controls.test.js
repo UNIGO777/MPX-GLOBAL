@@ -320,8 +320,18 @@ describe('auth surface gives the SAME answer for every failure shape', () => {
     // An exact key set is the real guarantee — a substring scan for "otp" would
     // only flag `method: 'otp'`, which is the second-factor NAME the client needs
     // in order to prompt, not a code.
-    expect(Object.keys(res.body).sort()).toEqual(['loginToken', 'message', 'method'].sort());
+    expect(Object.keys(res.body).sort()).toEqual(
+      ['loginToken', 'message', 'method', 'sentTo'].sort(),
+    );
     expect(res.body.method).toBe('otp');
+
+    // `sentTo` tells the client WHERE the code went, because the code always goes
+    // to the mobile and a screen echoing the typed email sent people to the wrong
+    // place. It must stay a MASK: last 3 digits, no country code, and never the
+    // stored number — the password was verified, but this still ships to a client.
+    expect(res.body.sentTo).toMatch(/^\*+\d{3}$/);
+    expect(res.body.sentTo.replace(/\*/g, '')).toHaveLength(3);
+    expect(res.body.sentTo).not.toContain(user.mobile.e164);
 
     const blob = JSON.stringify(res.body);
     for (const leak of ['passwordHash', 'tokenVersion', 'codeHash', 'twoFactorSecret']) {

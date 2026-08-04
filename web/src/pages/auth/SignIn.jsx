@@ -48,7 +48,7 @@ export function SignIn() {
     setError(null);
     setLoading(true);
     try {
-      const { loginToken, method } = await authApi.login({
+      const { loginToken, method, sentTo } = await authApi.login({
         identifier: identifier.trim(),
         password,
         portal,
@@ -57,6 +57,10 @@ export function SignIn() {
         state: {
           loginToken,
           method,
+          // Where the code ACTUALLY went, masked by the server. Not the typed
+          // identifier: the code always goes to the mobile, so someone who
+          // signed in with an email was previously told to check their inbox.
+          sentTo,
           identifier: identifier.trim(),
           from: location.state?.from ?? null,
           backTo: '/signin',

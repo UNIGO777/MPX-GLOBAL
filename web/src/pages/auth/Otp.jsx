@@ -5,7 +5,7 @@ import { authApi } from '../../api/auth.js';
 import { config } from '../../config.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { roleHome } from '../../auth/roleHome.js';
-import { ERROR_CODES, apiError, isErrorCode, maskIdentifier } from '../../lib/format.js';
+import { ERROR_CODES, apiError, isErrorCode } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -124,9 +124,14 @@ export function Otp() {
         Step {flow.step ?? '2 of 2'}
       </p>
       <h2 className="mt-1 text-[28px] font-bold text-ink-900">Enter your code</h2>
+      {/* 🔴 The code goes to the MOBILE on every path (`channel: 'mobile'` in
+          auth.service.js), whatever the user typed to sign in. This used to
+          render `maskIdentifier(flow.identifier)` — so anyone signing in with an
+          email was told to check their inbox for a code sent to their phone.
+          `sentTo` is the server's mask of the real destination. */}
       <p className="mt-2 text-sm text-muted">
-        We sent a 6-digit code to{' '}
-        <span className="font-medium text-ink-800">{maskIdentifier(flow.identifier)}</span>
+        We sent a 6-digit code to your registered mobile{' '}
+        <span className="font-medium text-ink-800">{flow.sentTo ?? 'number'}</span>
       </p>
 
       {/* Same rhythm as the other auth screens (owner, 2026-08-02). */}

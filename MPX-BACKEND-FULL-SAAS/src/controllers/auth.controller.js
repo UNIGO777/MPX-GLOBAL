@@ -51,10 +51,14 @@ export async function createEmployee(req, res) {
   res.status(201).json({ user: { ...authUserView(user), permissions: user.permissions ?? [] } });
 }
 
-function loginResponse(res, { loginToken, method }) {
+function loginResponse(res, { loginToken, method, sentTo }) {
   res.json({
     loginToken,
     method,
+    // MASKED mobile (e.g. `*********634`) — the destination the code actually
+    // went to, so the client never has to guess from the typed identifier.
+    // Only the last 3 digits, and only after a verified password (utils/mask.js).
+    sentTo,
     message: method === 'otp' ? 'An OTP has been sent.' : 'Enter your authenticator code.',
   });
 }

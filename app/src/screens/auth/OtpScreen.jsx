@@ -39,7 +39,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 const EXPIRY_SECONDS = 5 * 60; // matches the backend's 5-minute OTP window
 
 export function OtpScreen({ navigation, route }) {
-  const { loginToken, destination, context = 'login' } = route.params ?? {};
+  const { loginToken, destination, sentTo, context = 'login' } = route.params ?? {};
   const { verifyOtp } = useAuth();
   const toast = useToast();
 
@@ -119,13 +119,15 @@ export function OtpScreen({ navigation, route }) {
   // user signed in with an email. Echoing the typed email here would send them
   // to their inbox to wait for something that will never arrive.
   //
-  // So: if we know the destination is a mobile, mask and show it. If the user
-  // identified themselves by email we do NOT know their number — and must not
-  // guess — so the copy names the channel without the value.
+  // Prefer `sentTo` — the SERVER's mask of the real destination (last 3 digits,
+  // e.g. `*********634`). It is authoritative, so no inference is needed.
+  // Falling back: a locally-masked mobile if that is what we hold, and finally
+  // a channel-only phrase — we must never guess a number we were not given.
   const destinationLabel =
-    destination && !String(destination).includes('@')
+    sentTo ??
+    (destination && !String(destination).includes('@')
       ? maskDestination(destination)
-      : 'the mobile number registered on your account';
+      : 'the mobile number registered on your account');
 
   return (
     <NavyCanopy
