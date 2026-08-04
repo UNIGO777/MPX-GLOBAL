@@ -175,6 +175,29 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-04** — **`web/vercel.json` added — SPA rewrites, security headers, asset caching,
+  robots/sitemap proxy.** Set Vercel's **Root Directory to `web`**; build `npm run build` → `dist`.
+  **SPA fallback** `/(.*) → /index.html` is required because the app uses `BrowserRouter` — without
+  it a direct hit on `/signin` 404s. Vercel checks the filesystem before rewrites, so hashed assets
+  and `favicon.png` still serve directly.
+  **`/robots.txt` and `/sitemap.xml` are rewritten to the API**, which owns both (`public.routes.js`).
+  Crawlers look for them at the WEB origin, so serving them only from the API domain made them
+  invisible. ⚠️ For the sitemap to emit correct URLs the backend's **`PUBLIC_WEB_URL` must be the
+  web domain** — it interpolates `${PUBLIC_WEB_URL}/product/<slug>`.
+  🔴 **Deliberately NOT proxying `/api/*` through Vercel.** A proxy would remove the CORS work, but
+  every request would then reach the backend from Vercel's edge IPs — collapsing the per-IP auth/OTP
+  rate limits (**B7**) into a single bucket. Real client IPs are worth more than one env var. So the
+  web app must be configured with `VITE_API_BASE_URL=<api origin>` (it otherwise defaults to `/api`
+  and would call the Vercel domain), and **the Vercel domain must be added to the backend's
+  `CORS_ORIGINS`** — verified earlier that an unlisted origin gets `403 "Origin not allowed."`.
+  **CSP verified against the real build, not guessed:** `dist/index.html` contains **no inline
+  script**, so `script-src 'self'` is safe; the only external hosts anywhere in the source are
+  Google Fonts, and Cloudinary is allowed for images. `style-src` keeps `'unsafe-inline'` — a
+  deliberate concession for React inline styles; everything else is locked down
+  (`frame-ancestors 'none'`, `object-src 'none'`, `base-uri`/`form-action 'self'`).
+  ⚠️ **SEO gap unchanged and NOT fixable by this config:** `web-design.md` requires landing/product/
+  category pages to be indexable, and a purely client-rendered SPA indexes poorly. That needs
+  SSR/SSG or prerendering — still outstanding.
 - **2026-08-04** — **SMS switched to Fast2SMS's OTP API (`/dev/otp/send`) — the right endpoint all
   along.** The owner supplied a working reference implementation from another project, which
   revealed that `FAST2SMS_OTP_ID` / `_EXPIRY` / `_LENGTH` belong to Fast2SMS's **OTP API**, a
