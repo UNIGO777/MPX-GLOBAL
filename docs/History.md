@@ -175,6 +175,33 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-04** — **SMS switched to Fast2SMS's OTP API (`/dev/otp/send`) — the right endpoint all
+  along.** The owner supplied a working reference implementation from another project, which
+  revealed that `FAST2SMS_OTP_ID` / `_EXPIRY` / `_LENGTH` belong to Fast2SMS's **OTP API**, a
+  different product from the `bulkV2` SMS API this integration was first built against. Earlier
+  guesses (`route=dlt` → *"Invalid Sender ID"*, then `route=otp` on bulkV2) were both working around
+  the wrong endpoint.
+  **Now:** `POST https://www.fast2sms.com/dev/otp/send`, JSON body
+  `{ mobile, otp_id, otp_expiry, otp_length, otp }`, `authorization: <key>`. `isSmsConfigured()`
+  requires **both** the key and the template id, so a half-configured deploy reports SMS unavailable
+  instead of failing at a user's first login.
+  **Owner's "server stays authoritative" decision preserved:** the endpoint *does* accept
+  `otp_expiry` and `otp_length`, but they are **DERIVED** from `OTP_TTL_SECONDS` and `OTP_LENGTH`
+  rather than read from `FAST2SMS_OTP_*` env vars — so the SMS can never advertise a validity window
+  the server does not honour. Asserted by a test.
+  **Established empirically against the live gateway (not assumed):** bare **10-digit** mobile works
+  (`return:true`); `+91…` also works but the bare form matches the reference; an **11-digit US number
+  is rejected with "The mobile must be 10 digits."** — which **confirms the India-only constraint**
+  and keeps the email fallback for international buyers load-bearing. The US probe used the
+  **555-01xx reserved-for-fiction range**, so no real number was texted.
+  Also handled: Fast2SMS answers **HTTP 200 with `return:false`** for some rejections, so status
+  alone is not trusted — a test locks that in.
+  **Verified end-to-end:** a real OTP delivered through `sendOtp()` to +91 70006 10047
+  (request id `OFO2DTqOo14Q9jG`). Tests rewritten for the new endpoint (23 in
+  `otp-delivery.test.js`); **full suite 936 passed / 61 files**, lint clean.
+  ⚠️ `tests/f1b-block-cascade.test.js` failed once in a parallel run and passed in isolation and on
+  re-run — it deliberately closes the Mongo client to simulate a failed cascade, so it is
+  timing-sensitive under parallel workers. **Flaky, not a regression** — worth stabilising later.
 - **2026-08-04** — **🔴 APP GOTCHA FIXED: changing `app/.env` did nothing — `extra` is baked into the
   APK at NATIVE BUILD time.** After repointing the app at the deployed API
   (`https://api.mpx.nxtgendigitals.com`) every request failed as **"You're offline"**, while the

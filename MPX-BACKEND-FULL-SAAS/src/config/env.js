@@ -93,21 +93,21 @@ const envSchema = z.object({
   // (dev prints to the terminal; production raises rather than silently
   // swallowing a code the user is waiting for). Same posture as OPENAI_API_KEY.
   FAST2SMS_API_KEY: z.string().optional(),
-  // ⚠️ CURRENTLY UNUSED. We send on Fast2SMS's `route=otp`, which uses their own
-  // approved OTP template and needs neither a template id nor a sender id — the
-  // DLT route answered "Invalid Sender ID" on this account (verified against the
-  // live gateway, 2026-08-04). Kept declared so an existing .env stays valid and
-  // so the id is not lost: it becomes relevant only if a DLT sender id is
-  // approved later, at which point `sms.provider.js` switches route and a
-  // FAST2SMS_SENDER_ID joins it.
+  // REQUIRED alongside the key: the OTP template id for Fast2SMS's **OTP API**
+  // (`/dev/otp/send`). That endpoint — not `bulkV2` — is what this integration
+  // uses; `bulkV2`'s DLT route answered "Invalid Sender ID" because it also
+  // needs an approved sender id this account lacks. `isSmsConfigured()` requires
+  // BOTH, so a half-configured deploy reports SMS as unavailable instead of
+  // failing at a user's first login.
   FAST2SMS_OTP_ID: z.string().optional(),
   //
   // ⚠️ There is deliberately NO FAST2SMS_OTP_LENGTH / FAST2SMS_OTP_EXPIRY
-  // (owner decision, 2026-08-04). `OTP_LENGTH` and `OTP_TTL_SECONDS` above are
-  // the single source of truth for A3's 6-digit / 5-minute control, and the SMS
-  // text is rendered FROM them — a second knob would let the message claim an
-  // expiry the server does not honour. If those vars are still in your .env they
-  // are ignored; delete them.
+  // (owner decision, 2026-08-04). The endpoint DOES take `otp_expiry` and
+  // `otp_length`, but they are DERIVED in `sms.provider.js` from `OTP_TTL_SECONDS`
+  // and `OTP_LENGTH` above, which stay the single source of truth for the A3
+  // control. A separate knob would let the SMS advertise a validity window the
+  // server does not honour. If those vars are still in your .env they are
+  // ignored; delete them.
 
   // SMTP — transactional email (OTP by email, and the notification events the
   // owner un-deferred from D5 on 2026-08-04).

@@ -60,10 +60,9 @@ export async function sendOtp({ channel, identifier, code, purpose }) {
   const smsDeliverable = channel === 'mobile' && isSmsConfigured() && canDeliverTo(identifier);
 
   if (smsDeliverable) {
-    // The OTP route's template takes the code only — it renders Fast2SMS's own
-    // approved wording, so the expiry cannot be injected here (see
-    // sms.provider.js). The email template still states it.
-    const { requestId } = await sendSms({ to: identifier, variables: [code] });
+    // The provider renders its own approved OTP template; expiry and length are
+    // derived from our settings inside sendSms (see sms.provider.js).
+    const { requestId } = await sendSms({ to: identifier, code });
     logger.info({ channel: 'sms', purpose, requestId }, 'otp dispatched');
     return;
   }

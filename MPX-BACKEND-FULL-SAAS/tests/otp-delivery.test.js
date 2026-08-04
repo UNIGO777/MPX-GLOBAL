@@ -164,13 +164,13 @@ describe('🔴 the code never leaks (A3 / security-baseline #4)', () => {
   });
 });
 
-describe('🔴 Fast2SMS route — locked to `otp`, proven against the live gateway', () => {
-  it('posts route=otp with the code only, and NO template/sender id', async () => {
-    // Regression guard. `route=dlt` was the first implementation and the live
-    // gateway answered **"Invalid Sender ID"** (2026-08-04) because DLT also
-    // needs an approved sender_id this account does not have. The OTP route
-    // needs neither, and is DND-exempt — a login code blocked by DND is a
-    // locked-out user. Do not switch back without a sender id.
+describe('🔴 Fast2SMS OTP API — endpoint and payload, proven against the live gateway', () => {
+  it('posts JSON to /dev/otp/send with a bare 10-digit mobile', async () => {
+    // Regression guard. The first implementation used `bulkV2` + `route=dlt` and
+    // the live gateway answered **"Invalid Sender ID"** — DLT also needs an
+    // approved sender id this account does not have. `/dev/otp/send` is a
+    // DIFFERENT product that renders the account's approved OTP template and
+    // needs no sender id. Verified live 2026-08-04.
     const actual = await vi.importActual('../src/services/sms.provider.js');
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
@@ -179,23 +179,58 @@ describe('🔴 Fast2SMS route — locked to `otp`, proven against the live gatew
       json: async () => ({ return: true, request_id: 'req_x' }),
     });
 
-    await actual.sendSms({ to: INDIAN, variables: [CODE] });
+    await actual.sendSms({ to: INDIAN, code: CODE });
 
-    const [, init] = fetchSpy.mock.calls[0];
-    const sent = new URLSearchParams(init.body.toString());
+    const [url, init] = fetchSpy.mock.calls[0];
+    expect(url).toBe('https://www.fast2sms.com/dev/otp/send');
+    expect(init.headers['content-type']).toBe('application/json');
 
-    expect(sent.get('route')).toBe('otp');
-    expect(sent.get('variables_values')).toBe(CODE);
-    expect(sent.get('numbers')).toBe('9876543210'); // bare 10-digit, not E.164
-    expect(sent.get('message')).toBeNull(); // no DLT template id
-    expect(sent.get('sender_id')).toBeNull();
+    const sent = JSON.parse(init.body);
+    expect(sent.mobile).toBe('9876543210'); // bare 10-digit, not E.164
+    expect(sent.otp).toBe(CODE);
+    expect(sent.otp_id).toBeTruthy();
+  });
+
+  it('🔴 derives otp_expiry/otp_length from the SERVER settings', async () => {
+    // The whole reason FAST2SMS_OTP_EXPIRY / _LENGTH were refused as env vars:
+    // the SMS must never advertise a window the server does not honour.
+    const actual = await vi.importActual('../src/services/sms.provider.js');
+    const { env } = await import('../src/config/env.js');
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ return: true }),
+    });
+
+    await actual.sendSms({ to: INDIAN, code: CODE });
+
+    const sent = JSON.parse(fetchSpy.mock.calls[0][1].body);
+    expect(sent.otp_length).toBe(env.OTP_LENGTH);
+    expect(sent.otp_expiry).toBe(Math.max(1, Math.round(env.OTP_TTL_SECONDS / 60)));
+  });
+
+  it('treats `return: false` as a failure even on HTTP 200', async () => {
+    // Fast2SMS answers 200 with `return:false` for some rejections; trusting the
+    // status alone would report a code as sent that never left.
+    const actual = await vi.importActual('../src/services/sms.provider.js');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ return: false, message: 'Invalid OTP ID' }),
+    });
+
+    await expect(actual.sendSms({ to: INDIAN, code: CODE })).rejects.toThrow(/rejected/i);
   });
 
   it('refuses to post an international number as if it were Indian', async () => {
+    // The gateway rejects 11-digit numbers with "The mobile must be 10 digits."
+    // (confirmed live) — stripping a country code to fit would silently send an
+    // international buyer's code nowhere.
     const actual = await vi.importActual('../src/services/sms.provider.js');
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-    await expect(actual.sendSms({ to: INTERNATIONAL, variables: [CODE] })).rejects.toThrow(
+    await expect(actual.sendSms({ to: INTERNATIONAL, code: CODE })).rejects.toThrow(
       /not an Indian mobile/i,
     );
     expect(fetchSpy).not.toHaveBeenCalled();
