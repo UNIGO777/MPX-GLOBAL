@@ -64,6 +64,30 @@
   (Part A §A9, **`byUserId` kabhi nahi**) — koi request/appeal endpoint nahi.
 - Full detail + build-time constraints: `docs/Note.md` **D6**.
 
+### A6 · Automated KYC document verification (Module 1 / 5 — verification)
+- **Owner ne 2026-08-03 ko "ek mahine baad" ke liye kaha** (~2026-09-03). Month 1 me nahi.
+- **Aaj kya hota hai:** upload pe sirf **magic-byte** check (`file-type`) hota hai — wo saabit karta
+  hai ki file sach me PDF/JPG/PNG/WEBP hai, **ye bilkul nahi ki usme document hai**. Koi bhi photo
+  pass ho jaayegi. Asli verification **insaan** karta hai — Employee `kyc:view` se signed URL khol
+  ke verify/reject karta hai. Wahi poora control hai, aur wo **kaam kar raha hai** — ye gap nahi,
+  design hai.
+- **Baad me kya add hoga (kamzor → mazboot):**
+  1. **OCR + format validation** — PAN `[A-Z]{5}[0-9]{4}[A-Z]`, GSTIN 15-char (usme chhupa PAN
+     company ke PAN se match), naam ka org-name se match. Galat tasveer pakadta hai, **forged
+     document nahi**.
+  2. **Government / aggregator API** — **GSTIN lookup pehle** (legal name + status wapas aata hai,
+     B2B exporters ke paas GST hota hi hai → sabse sasta, sabse zyada faayda). Phir PAN (Protean/
+     NSDL), CIN (MCA). Aggregators: Signzy · IDfy · Karza(Perfios) · HyperVerge · Digio.
+  3. **DigiLocker** — issuer-signed document, cryptographically verifiable. Sabse mazboot, sabse
+     bhaari. Realistically Phase 2.
+- ⚠️ **OCR akela mat lagana** — wo *bharosa* deta hai bina *suraksha* diye, aur reviewer dhyaan
+  dena kam kar dega. Uske saath verification ka koi asli source hona chahiye.
+- 🔴 **Ye scope change hai, koi bhi API lene se pehle client se baat:** nayi dependency + **per-
+  verification recurring cost** + vendor contract. Quote me "verification" hai, par wo **employee
+  manual review** hai — automated document verification kahin likha nahi.
+- 🔒 **Aadhaar ka compliance sawaal ISME NAHI hai** — wo alag aur pehle wali cheez hai, aur
+  `docs/Note.md` ki **project-close checklist** me hai. Ise is item ke saath mat taalna.
+
 ### A4 · Cross-cutting (close se pehle)
 - **TOTP 2FA (D4)** — bana hua par on-hold; close se pehle restore
 - App store submission, demo accounts, privacy policy / data-safety (M3)

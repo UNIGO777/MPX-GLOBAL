@@ -1,5 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
+import { ProfileScreen } from '../screens/ProfileScreen.jsx';
 import { makePlaceholder } from '../screens/PlaceholderScreen.jsx';
 import { screenHeaderOptions, tabBarOptions } from './navigationTheme.js';
 import { tabIcon } from './tabIcon.jsx';
@@ -56,12 +57,7 @@ export function ExporterNavigator() {
       <Tab.Screen
         name="ExporterProfile"
         options={{ title: 'Profile', tabBarLabel: 'Profile', tabBarIcon: tabIcon('person-circle') }}
-        component={makePlaceholder({
-          title: 'Profile',
-          module: '§A22 · Company profile & KYC',
-          milestone: 'M1',
-          note: 'Company profile, KYC document capture, biometric unlock toggle, change password and logout land here — after the S1 sign-off.',
-        })}
+        component={ProfileScreen}
       />
     </Tab.Navigator>
   );

@@ -168,6 +168,7 @@ export function SignupAccountScreen({ navigation, route }) {
           leftIcon="lock-closed-outline"
           value={form.confirm}
           onChangeText={set('confirm')}
+          placeholder="Re-enter your password"
           error={errors.confirm}
           secureTextEntry
           autoCapitalize="none"

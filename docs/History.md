@@ -277,6 +277,27 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   88px bar / 260px sidebar / curved edge that `PortalLayout.jsx` never contained, and git was
   clean) — the running Vite dev server is serving something newer than the repo. Restart it and
   hard-reload before judging this change.
+- **2026-08-03** — **KYC design prompt written; automated document verification DEFERRED to
+  ~2026-09-03 (owner).** New `design-plans/m1/app-kyc-screens-prompt.md` — 7 screens (post-signup
+  prompt · verification hub · entity type · document choice · capture/upload · submitted ·
+  resubmit) × 3 flow variations, written against the REAL contract (`/me/kyc/documents`,
+  `/me/verification`) so it cannot ask for fields the API does not return.
+  🔴 **The constraint the prompt exists to protect: KYC is NOT a gate.** A buyer is fully active
+  from signup and buyer KYC is optional (**D3**); an exporter is public from signup. So the popup
+  must be dismissible with "Not now" at equal weight, and no copy may imply a limited or pending
+  account. The one real consequence is the exporter's **3 active / 10 draft cap (D1)** — that is
+  what exporter copy leads with; buyer copy leads with trust, because a buyer has no limits.
+  Also banned in the prompt: any review ETA (we have none), any document thumbnail (KYC assets are
+  private and never returned), any "unverified" badge.
+  **Deferred (`month1-not-doing.md` A6):** OCR + format validation → GSTIN/PAN/CIN API →
+  DigiLocker. ⚠️ Today's magic-byte check proves a file is a real PDF/image, **not that it contains
+  a document** — the actual control is the Employee's manual review, and that is by design, not a
+  gap. Any third-party KYC API is a **scope change**: new dependency + per-verification recurring
+  cost.
+  🔒 **Split out deliberately, NOT deferred:** the **Aadhaar compliance question** went to
+  `docs/Note.md`'s project-close checklist instead. Storing Aadhaar images is legally restricted in
+  India even though our storage is technically correct (private, randomised id, signed URLs). It is
+  a decision to make before real users upload, not a feature to schedule.
 - **2026-08-03** — **🔴 A2 CLOSED FOR WEB · refresh token moved to an httpOnly cookie, plus a
   machine-readable error `code`.** Owner-approved plan, built in the ordered phases (additive
   first, removal last, verified between). **The catch that shaped the design: the same endpoints
@@ -341,6 +362,20 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   permission strings necessarily remain. **`react-router-dom` 6.26.1 → 6.30.4**; both remaining
   advisories need MAJOR upgrades (react-router 7, vite 8) — neither is exploitable here (no SSR;
   no URL-derived navigation target anywhere) — **deferred to the pre-production hygiene pass.**
+- **2026-08-03** — **APP · auth layout — navy header now STATIC, only the sheet scrolls** (owner
+  request). One change in `components/NavyCanopy.jsx` covers all 7 form screens (login, OTP,
+  forgot, reset, signup account / verify / company); `WelcomeScreen` got the same treatment
+  directly since it does not use the component.
+  ⚠️ **This REVERSES a documented decision, so the reasoning is preserved in the file rather than
+  deleted:** the canopy previously sat inside the ScrollView on purpose — it scrolled away when
+  the keyboard opened, keeping the focused input reachable on a 375pt phone ("verified on a
+  device"). With it static, the sheet gets a shorter viewport while the keyboard is up. It still
+  scrolls, so every field stays reachable — just a smaller window. **If it reads as cramped on
+  the Mi A3, the fix is to COMPACT the canopy while the keyboard is up (drop the subtitle, shrink
+  the title), not to put it back inside the scroll view.** That note is in the component.
+  **Gotcha worth keeping:** the rounded top + overlap live on a STATIC frame (`sheetFrame`,
+  `overflow: hidden`), not on the scrolling content — put the radius on the content and the first
+  swipe drags the curve away, leaving a square white block sitting over the navy.
 - **2026-08-03** — 🔴 **SIGNUP SECURITY FIX — the account was being created BEFORE anything was
   verified. 881/881 green** (757 → +124), 58 test files, lint clean, web builds, app bundles.
   Plan: `build-plans/a21-signup-verification/plan.md`.

@@ -47,7 +47,8 @@ export function SplashScreen({ offline = false, onRetry }) {
     <View style={styles.root}>
       <View style={styles.center}>
         <BrandMark />
-        <Text style={styles.brand}>MPX Global</Text>
+        {/* No text lockup here — BrandMark already carries the
+            wordmark, so repeating it printed the name twice. */}
         <Text style={styles.tagline}>INSTITUTIONAL B2B NETWORK</Text>
       </View>
 

@@ -144,7 +144,11 @@ export function SignupVerifyScreen({ navigation, route }) {
     <NavyCanopy
       eyebrow={isEmail ? 'STEP 2 OF 4' : 'STEP 3 OF 4'}
       title={isEmail ? 'Verify your email' : 'Verify your phone'}
-      subtitle={`We sent a ${CODE_LENGTH}-digit code to ${destinationLabel}`}
+      // The destination deliberately does NOT go in the canopy subtitle: this
+      // screen autofocuses the code boxes, so the keyboard is up from the moment
+      // it opens, and the canopy compacts its subtitle away. On a device that
+      // meant the user never saw WHERE the code was sent. It lives in the sheet
+      // below instead, where it is always visible.
       onBack={() => navigation.goBack()}
       footer={
         <Button
@@ -165,6 +169,14 @@ export function SignupVerifyScreen({ navigation, route }) {
           </Text>
           <Text style={[styles.step, !isEmail && styles.stepActive]}>2. Phone</Text>
         </View>
+
+        {/* Kept in the SHEET, not the canopy — the keyboard is always up on this
+            screen, and a compacted canopy would hide it. Already masked by the
+            server; the raw address never reaches the device. */}
+        <Text style={styles.destination}>
+          We sent a {CODE_LENGTH}-digit code to{' '}
+          <Text style={styles.destinationValue}>{destinationLabel}</Text>
+        </Text>
 
         <OtpInput
           // Remount per channel so the boxes clear and focus moves to the new
@@ -213,6 +225,8 @@ const styles = StyleSheet.create({
   body: { gap: spacing[4] },
   steps: { flexDirection: 'row', justifyContent: 'center', gap: spacing[3] },
   step: { ...typography.caption, color: colors.muted },
+  destination: { ...typography.caption, color: colors.ink[700], textAlign: 'center' },
+  destinationValue: { ...typography.label, color: colors.ink[900] },
   stepActive: { color: colors.primary[600] },
   stepDone: { color: colors.success ?? colors.primary[600] },
   countdown: { ...typography.caption, color: colors.muted, textAlign: 'center' },

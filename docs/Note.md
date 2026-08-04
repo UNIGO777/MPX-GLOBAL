@@ -187,6 +187,16 @@ Do not start the screens without surfacing this alert.
   (A19) IS a TTL index, so without this step nothing ever expires, and the uniqueness guarantees
   are indexes too. Use `npm run indexes:check` first — it is a true dry run and prints the drop
   list, which matters because `syncIndexes()` also drops indexes a schema no longer declares.
+- 🔒 **DECIDE THE AADHAAR QUESTION BEFORE GO-LIVE (raised 2026-08-03).** `aadhaar` is an accepted
+  `KYC_DOC_TYPE` for individuals, and we store the uploaded image. **Technically** it is handled
+  correctly — Cloudinary `type: 'private'`, randomised public_id, short-lived signed URLs, never a
+  public URL. **Legally is a separate question:** in India, storing Aadhaar copies is restricted —
+  UIDAI expects masked Aadhaar and limits storage by unlicensed entities. Three ways out, owner's
+  call: (a) **drop `aadhaar` from the doc list** — PAN / passport already satisfy individual KYC and
+  this is the cheapest fix; (b) accept **masked** Aadhaar only; (c) go through **DigiLocker /
+  offline eKYC** and never hold an image. ⚠️ Do **not** roll this into `month1-not-doing.md` **A6**
+  (automated document verification) — that is a deferred *feature*; this is a compliance decision
+  and it must be answered before real users upload anything.
 - **Secret-scan** (gitleaks / trufflehog) over git history once the repo has commits (E6).
 
 _(Append future close-time items here. Standing hygiene rules: `.claude/rules/secrets-and-hygiene.md`.)_
