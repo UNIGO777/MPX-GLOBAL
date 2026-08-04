@@ -1,5 +1,24 @@
-import 'dotenv/config';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import dotenv from 'dotenv';
 import { z } from 'zod';
+
+// 🔴 Resolve `.env` from the PACKAGE ROOT, not from `process.cwd()`.
+//
+// `import 'dotenv/config'` — what this used to be — looks for `.env` in the
+// CURRENT WORKING DIRECTORY. Under a process manager that is whatever directory
+// the manager happened to start in: PM2 launched from `/root` or from the repo
+// root gives cwd=/root, dotenv finds nothing, and the server dies with
+// "MONGODB_URI: expected string, received undefined" while a perfectly good
+// .env sits next to package.json. Diagnosed on the VPS, 2026-08-04.
+//
+// Anchoring to this file's own location makes the load independent of how the
+// process was started. `dotenv` still does NOT override variables already in
+// the real environment, so a container/PM2 `env` block keeps priority and
+// tests/setup.js keeps working.
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+dotenv.config({ path: path.join(packageRoot, '.env') });
 
 // Validate process.env once, at startup. If a required variable is missing or
 // malformed the process exits before the server can bind — a misconfigured

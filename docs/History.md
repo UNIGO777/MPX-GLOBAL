@@ -175,6 +175,21 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-04** — **🔴 DEPLOY GOTCHA FIXED: `.env` was ignored under PM2 — dotenv resolves from
+  `process.cwd()`, not from the app.** On the VPS the backend crash-looped with
+  `MONGODB_URI / JWT_ACCESS_SECRET / JWT_REFRESH_SECRET: expected string, received undefined`
+  **even though `.env` existed**. Cause: `src/config/env.js` opened with `import 'dotenv/config'`,
+  which looks for `.env` in the CURRENT WORKING DIRECTORY. PM2 starts the process from whatever
+  directory it was launched in (`/root`, or the repo root rather than `MPX-BACKEND-FULL-SAAS/`), so
+  dotenv found nothing while a perfectly good `.env` sat beside `package.json`.
+  **Fix:** resolve the path from the module's own location —
+  `path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')` + `dotenv.config({ path })`
+  — so loading no longer depends on how the process was started. dotenv still does **not** override
+  variables already present in the real environment, so a PM2/container `env` block keeps priority
+  and `tests/setup.js` (which pre-sets `process.env`) is unaffected.
+  **Verified:** loaded successfully with `cwd=/tmp` (reproducing the PM2 condition); full suite
+  **934 passed / 61 files**, lint clean. Deploy note: `pm2 restart <app> --update-env` after pulling,
+  and remember `.env` is gitignored so it must be placed on the server by hand.
 - **2026-08-04** — **Email template: brand LOGO (hybrid), reversing "no remote image".** Owner
   approved (option B). Uploaded both brand marks to Cloudinary (`mpx/brand/logo-colored`,
   `logo-white`, public); URLs in `.env` (`EMAIL_LOGO_URL`, `EMAIL_LOGO_WHITE_URL`) + `.env.example`
