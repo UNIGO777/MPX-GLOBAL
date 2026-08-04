@@ -66,7 +66,7 @@ function ChunkFallback() {
  * M1 set render the designed ComingSoon page (logged in docs/UiWebNotes.md).
  */
 export function App() {
-  console.log("asdf")
+  // console.log("asdf")
   return (
     <AuthProvider>
       <BrowserRouter>
