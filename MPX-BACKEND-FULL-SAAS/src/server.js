@@ -42,6 +42,25 @@ if (!isCloudinaryConfigured()) {
   );
 }
 
+/**
+ * Behind a reverse proxy, `TRUST_PROXY` is not optional in practice.
+ *
+ * Without it Express reports the PROXY's address as `req.ip`, so every visitor
+ * shares one rate-limit bucket — the per-IP limits on auth and OTP silently stop
+ * limiting anyone, which is the opposite of what B7 is for — and every audit row
+ * records nginx instead of the caller. express-rate-limit spots the mismatch and
+ * throws ERR_ERL_UNEXPECTED_X_FORWARDED_FOR, which is how this surfaced in
+ * production rather than as a quiet security hole.
+ *
+ * A warning, not a hard exit: a deployment with no proxy in front is legitimate,
+ * and refusing to boot would be wrong there.
+ */
+if (env.NODE_ENV === 'production' && env.TRUST_PROXY === undefined) {
+  logger.warn(
+    'TRUST_PROXY is not set. If anything proxies this server (nginx, a load balancer), req.ip is the PROXY — per-IP rate limits stop working and audit rows record the wrong address. Set TRUST_PROXY=1 for a single hop.',
+  );
+}
+
 const app = createApp();
 
 // A8 cleanup job (daily + boot catch-up; no-op in tests).
