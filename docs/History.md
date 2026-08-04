@@ -175,6 +175,26 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-05** — **🔴 KYC documents wouldn't render in the deployed admin panel — MY CSP blocked
+  them. Fixed.** DevTools showed the Cloudinary requests as `(blocked:csp)`, so it looked like a
+  Cloudinary problem; it was the `Content-Security-Policy` header added in `web/vercel.json`.
+  **Two mistakes in that policy:**
+  1. `img-src` allowed only `https://res.cloudinary.com`, but KYC links are signed with
+     `cloudinary.utils.private_download_url()` (`kyc.storage.service.js`), which issues them on
+     **`https://api.cloudinary.com`** — a different host. Added.
+  2. **No `frame-src` at all**, so it fell back to `default-src 'self'` and the PDF `<iframe
+     src={signedUrl}>` in `KycViewer.jsx` was blocked outright. Added
+     `frame-src https://api.cloudinary.com`.
+  **Deliberately NOT widened:** the `blob:…` rows in the same waterfall are **not ours** — there is
+  no `createObjectURL`, `Blob` or `Worker` anywhere in `web/src`, and their initiator is `VM203:1`
+  (injected/eval'd code, i.e. a browser extension). CSP blocking those is the policy working; do not
+  add `blob:` to `script-src` to make them go away.
+  **Why it only broke in production:** the CSP is a Vercel response header, so the Vite dev server
+  never sends it — the admin KYC viewer works locally and fails only once deployed.
+  **Guard against a third round:** every external resource the app actually uses is now asserted
+  against the policy (Google Fonts CSS + font, KYC image, KYC PDF iframe, product images, API) and
+  the restrictive directives are unchanged — `script-src 'self'`, `object-src 'none'`,
+  `frame-ancestors 'none'`, `base-uri`/`form-action 'self'`. Schema re-validated; web builds clean.
 - **2026-08-05** — **🔴 OTP screens said "sent to your EMAIL" while the code went to the PHONE —
   fixed on web + app, with the masked destination now coming FROM THE SERVER.**
   The login OTP has always gone to the mobile (`auth.service.js` passes `channel: 'mobile'` on
