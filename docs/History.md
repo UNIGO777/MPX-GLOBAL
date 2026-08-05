@@ -175,6 +175,19 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-05** — **Landing page made mobile-responsive** (`web/src/pages/public/Landing.jsx`).
+  The layout already stacked correctly at every breakpoint; the real gaps were the header bar and
+  touch targets. Header: logo + "Sign In" + "Get Started" + burger overflowed a 320–375px bar, so
+  below `sm` the "Sign In" link moves into the menu panel (as a full-width bordered button) and the
+  signed-in pill shortens to "Dashboard". Journey + Platform tab pills went from `py-2.5` (~40px)
+  to `inline-flex min-h-[44px] items-center` — `min-h` alone would have top-aligned the label.
+  Footer "Marketplace" links got `inline-block py-1.5` for a tappable box. Dense cards stepped
+  their padding down on mobile (platform panel, trust cards, final CTA) and the hero h1 now starts
+  at `text-3xl` before `sm:text-4xl md:text-5xl`. **Gotcha:** the phone mockups (`h-[480px]`,
+  absolutely positioned) and the hero's supplier-match card are already `hidden lg:*`, and the CTA's
+  negatively-offset blur blobs sit inside `overflow-hidden` — so none of them cause horizontal body
+  scroll. Verified by reading the markup + `npm run build`; **not** measured in a real viewport
+  (no headless browser in the repo).
 - **2026-08-05** — **🔴 KYC documents wouldn't render in the deployed admin panel — MY CSP blocked
   them. Fixed.** DevTools showed the Cloudinary requests as `(blocked:csp)`, so it looked like a
   Cloudinary problem; it was the `Content-Security-Policy` header added in `web/vercel.json`.

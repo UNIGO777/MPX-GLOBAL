@@ -229,17 +229,23 @@ export function Landing() {
               </a>
             ))}
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Logo + two actions + burger overflows a 320–375px bar, so below sm
+                the label shortens and "Sign In" moves into the menu panel. */}
             {home ? (
-              <Link to={home} className={`${pill} bg-ink-900 px-5 py-2 text-white hover:bg-primary-800`}>
-                Go to your dashboard
+              <Link to={home} className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-800 sm:px-5`}>
+                <span className="sm:hidden">Dashboard</span>
+                <span className="hidden sm:inline">Go to your dashboard</span>
               </Link>
             ) : (
               <>
-                <Link to="/signin" className="text-sm font-semibold text-ink-600 hover:text-primary-700">
+                <Link
+                  to="/signin"
+                  className="hidden text-sm font-semibold text-ink-600 hover:text-primary-700 sm:block"
+                >
                   Sign In
                 </Link>
-                <Link to="/signup/buyer" className={`${pill} bg-ink-900 px-5 py-2 text-white hover:bg-primary-800`}>
+                <Link to="/signup/buyer" className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-800 sm:px-5`}>
                   Get Started
                 </Link>
               </>
@@ -274,6 +280,16 @@ export function Landing() {
                 {label}
               </a>
             ))}
+            {/* Only below sm, where the header drops "Sign In". */}
+            {!home && (
+              <Link
+                to="/signin"
+                onClick={() => setMenuOpen(false)}
+                className="mt-3 flex min-h-[44px] items-center justify-center rounded-full border border-ink-900 text-sm font-semibold text-ink-900 sm:hidden"
+              >
+                Sign In
+              </Link>
+            )}
           </nav>
         )}
       </header>
@@ -287,7 +303,7 @@ export function Landing() {
                 <span className="h-2 w-2 rounded-full bg-primary-600" />
                 B2B Import &amp; Export Marketplace
               </span>
-              <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight md:text-5xl">
+              <h1 className="mt-5 text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
                 Find Verified Suppliers.
                 <br />
                 <span className="text-primary-600">Close Deals Faster.</span>
@@ -450,7 +466,7 @@ export function Landing() {
                     aria-selected={journey === j.key}
                     tabIndex={journey === j.key ? 0 : -1}
                     onClick={() => setJourney(j.key)}
-                    className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-colors ${
+                    className={`inline-flex min-h-[44px] items-center justify-center rounded-full px-5 text-sm font-semibold transition-colors sm:px-6 ${
                       journey === j.key ? 'bg-primary-800 text-white' : 'text-ink-600 hover:text-primary-800'
                     }`}
                   >
@@ -508,7 +524,7 @@ export function Landing() {
                   aria-selected={tab === t.key}
                   tabIndex={tab === t.key ? 0 : -1}
                   onClick={() => setTab(t.key)}
-                  className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
+                  className={`inline-flex min-h-[44px] items-center justify-center rounded-full px-4 text-sm font-semibold transition-colors sm:px-5 ${
                     tab === t.key ? 'bg-primary-800 text-white' : 'text-ink-600 hover:bg-surface-subtle hover:text-ink-900'
                   }`}
                 >
@@ -523,7 +539,7 @@ export function Landing() {
               aria-labelledby={`platform-tab-${tab}`}
               className="mx-auto grid max-w-5xl overflow-hidden rounded-2xl border border-surface-border shadow-card md:grid-cols-[5fr_7fr]"
             >
-              <div className="flex flex-col justify-center border-b border-surface-border bg-white p-8 md:border-b-0 md:border-r md:p-12">
+              <div className="flex flex-col justify-center border-b border-surface-border bg-white p-6 sm:p-8 md:border-b-0 md:border-r md:p-12">
                 <h3 className="text-2xl font-semibold text-ink-900">{activeTab.title}</h3>
                 <p className="mt-3 text-base leading-relaxed text-ink-600">{activeTab.body}</p>
                 <ul className="mt-6 space-y-3">
@@ -534,8 +550,8 @@ export function Landing() {
                   ))}
                 </ul>
               </div>
-              <div className="flex items-center justify-center bg-surface-subtle p-8" aria-hidden="true">
-                <div className="w-full max-w-md rounded-xl border border-surface-border bg-white p-5 shadow-card">
+              <div className="flex items-center justify-center bg-surface-subtle p-6 sm:p-8" aria-hidden="true">
+                <div className="w-full max-w-md rounded-xl border border-surface-border bg-white p-4 shadow-card sm:p-5">
                   <div className="flex items-center gap-2 rounded-lg border border-surface-border px-3 py-2.5 text-sm text-ink-600">
                     <SearchIcon className="h-4 w-4 text-ink-500" />
                     <span className="truncate">I need a cotton knitwear supplier…</span>
@@ -568,7 +584,7 @@ export function Landing() {
             </SectionHeading>
             <div className="grid gap-6 md:grid-cols-3">
               {TRUST_CARDS.map((c) => (
-                <div key={c.title} className={`rounded-[20px] border border-surface-border/50 p-8 ${c.tint}`}>
+                <div key={c.title} className={`rounded-[20px] border border-surface-border/50 p-6 sm:p-8 ${c.tint}`}>
                   <h3 className="text-xl font-semibold text-primary-800">{c.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-ink-600">{c.body}</p>
                 </div>
@@ -703,7 +719,7 @@ export function Landing() {
 
         {/* Final CTA */}
         <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 md:pb-24">
-          <div className="relative overflow-hidden rounded-[20px] bg-primary-700 p-10 shadow-2xl md:p-16">
+          <div className="relative overflow-hidden rounded-[20px] bg-primary-700 p-8 shadow-2xl sm:p-10 md:p-16">
             <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary-600 opacity-20 blur-[100px]" />
             <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-primary-600 opacity-20 blur-[100px]" />
             <div className="relative z-10 mx-auto max-w-2xl text-center">
@@ -750,10 +766,10 @@ export function Landing() {
           <div className="grid flex-1 grid-cols-2 gap-8 md:grid-cols-4">
             <div>
               <h4 className="mb-3 text-sm font-semibold">Marketplace</h4>
-              <ul className="space-y-2 text-sm text-white/60">
-                <li><a href="#categories" className="hover:text-white">Categories</a></li>
-                <li><Link to="/signup/buyer" className="hover:text-white">For Buyers</Link></li>
-                <li><Link to="/signup/exporter" className="hover:text-white">For Sellers</Link></li>
+              <ul className="space-y-1 text-sm text-white/60">
+                <li><a href="#categories" className="inline-block py-1.5 hover:text-white">Categories</a></li>
+                <li><Link to="/signup/buyer" className="inline-block py-1.5 hover:text-white">For Buyers</Link></li>
+                <li><Link to="/signup/exporter" className="inline-block py-1.5 hover:text-white">For Sellers</Link></li>
               </ul>
             </div>
             <div>
