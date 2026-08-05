@@ -175,6 +175,190 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-05** — **QA test documents written for a tester intern — `apptest.docx` +
+  `webtest.docx` at the repo root.** Plain-English, PASS/FAIL-table format (no jargon), covering
+  auth (portal choice, signup step-1 → email+mobile verify → step-2 company, login, wrong-portal
+  identical-message check, forgot/reset), the KYC profile-complete gate, document upload, and —
+  app only — the full §A22 company-profile lock/change-anyway/demotion flow with the exact UI
+  cues to check (lock icons, the consequence sheet's public-URL line, the dynamic save-button
+  label, the tick disappearing immediately). `webtest.docx` adds the three-portal split (buyer/
+  exporter share `/signin`, staff is `/signin/staff`, never merge them) and an admin section
+  (verification queue, approve/reject, **KYC document viewer must actually render** — ties back to
+  the CSP fix). Both end with a copy-per-issue bug-report table and an explicit instruction never
+  to write a password/OTP into it.
+  🔴 **Found while writing, not before: web has no path for a buyer to add a company address at
+  all.** Buyer signup captures no address field on either surface; the app's KYC gate routes an
+  incomplete profile to the Company Profile screen to fix it — but **that screen doesn't exist on
+  web**, and web's exporter signup only offers address as an optional, collapsed section. So a
+  buyer testing KYC upload purely on web will likely hit `PROFILE_INCOMPLETE` with **no UI path to
+  resolve it**. Not fixed (out of scope for a doc-writing task) — called out as a "🔴 known gap,
+  report the exact wording" item in `webtest.docx` §8 so the tester's finding confirms it rather
+  than reads as tester error, and flagged to the owner in the same turn.
+  **Hygiene:** generated with `python-docx` (already installed); verified programmatically that
+  neither file contains the seed superadmin values or the Mongo connection string from `.env` —
+  both documents instead tell the tester to get credentials from the owner via a separate channel.
+  ⏸ **Not yet verified on-device** — a screen render check of the new Profile screen (built the
+  previous session) is still pending a stable phone connection; wireless-debug port rotated twice
+  mid-session before a live check could complete.
+- **2026-08-05** — **Profile screen (screen 16) BUILT from the owner's approved mockups.** New
+  `screens/profile/ChangePasswordScreen.jsx`; `ProfileScreen.jsx` rewritten from a stub (identity
+  summary + sign-out only) to the full brief: identity block (avatar, name, email, mobile, a
+  **portal pill** — "Buyer account"/"Exporter account" — and a company-name pill with the shield
+  tick when verified) · Company profile + Verification rows previewing live status (verified tick
+  or the shared `KYC_STATUS_CHIP`) · Security → Change password · Notifications and Terms/Privacy
+  rendered **"Coming soon"** — no switch, no chevron, nothing that looks tappable, because none of
+  the three exist yet (checked: no Terms/Privacy page anywhere, app or web) · sign-out confirmation
+  naming the portal explicitly, matching mockup 2's copy ("This signs out of your Buyer account
+  only. Your other portal accounts will remain signed in.").
+  New shared `utils/kycStatus.js` (`KYC_STATUS_CHIP`) so Profile and Company Profile can't drift on
+  the same status's colour/label — `CompanyProfileScreen` switched onto it, its local copy deleted.
+  **Change password** wires the existing `POST /auth/change-password` (no backend change) through
+  `AuthContext.completeSignIn` — same helper OTP verification and A21 signup use — so the fresh
+  token pair the backend issues (it bumps `tokenVersion` and signs out every OTHER device) keeps
+  THIS device signed in without forcing a fresh OTP challenge.
+  🔴 **Biometric unlock deliberately excluded** — owner said not to build it in this pass. Not
+  merely hidden: no toggle is rendered at all, because a toggle with nothing behind it (screen 17,
+  the actual re-entry gate, is not built; `expo-local-authentication` is installed but unused)
+  would be exactly the "live-looking control that silently does nothing" this project's rules
+  forbid. Noted in-code so it isn't mistaken for an oversight when 17 is eventually built.
+  🔴 **Mockup showed different tab labels than what's shipped — flagged, not applied.** The
+  reference screenshots' tab bar reads "Market · Orders · Inbox · Profile"; the shipped tabs are
+  Home/Search/Enquiries/Messages (buyer) and Home/Catalogue/Enquiries/Messages (exporter). **Not
+  renamed** — out of this task's scope, and "Orders" specifically is a Bucket-B item that needs a
+  red-alert before touching. Left exactly as shipped; flagging for the owner's decision.
+  Header uses the navy canopy with **no back arrow** (a tab root, not a pushed screen) — visually
+  aligns Profile with Company Profile / Change Password rather than the plain-header placeholder
+  tabs, which was a deliberate reading of the mockup's canopy treatment (its literal back arrow +
+  "ImportExport" title + kebab menu were not reproduced — no defined destination for a tab-root
+  back button or the kebab, and the title is simply "Profile").
+  **Verified:** both platforms bundle clean (Android 996 / iOS 1001 modules); no backend touched
+  this pass, so the 968-test suite is unaffected. **Not yet seen on-device** — no phone connected
+  when this landed; needs a live check next session.
+- **2026-08-05** — **DESIGN (docs only): prompt written for screen 16 (Profile) + the tab bar
+  chrome.** New `design-plans/m1/app-profile-and-tabs-prompt.md`. Covers the full Profile screen
+  per the brief (identity block with the portal label, company-profile + verification rows with
+  live status previews, biometric toggle incl. the unavailable-on-device state, change-password
+  sub-screen with its full state table, the notifications placeholder that must look visibly
+  non-functional, about/sign-out) and the two bottom tab bars (buyer 5-tab / exporter 5-tab, one
+  visual component, active/inactive icon treatment matching the shipped `tabIcon.jsx` idiom).
+  🔴 **Flagged rather than silently resolved:** the brief recommends HIDING not-yet-working tabs;
+  the shipped app already shows all five, routing to an explicit "coming soon" placeholder. The
+  prompt designs for the shipped (shown, not hidden) model and says so, instead of quietly
+  redesigning around the brief's original recommendation.
+  Scope boundary stated explicitly: **screen 17 (biometric re-entry) is out of scope** — only the
+  on/off toggle inside Profile is covered; the native prompt screen is separate, not yet built.
+  Colour guardrail carried over verbatim (hue 226–232°, sat ≥ 65%, rejected-hex table). Verified:
+  every prescribed hex exists in `app/src/theme/colors.js` / `web/tailwind.config.js`; the only
+  other hex (`#000000`) appears solely in the rejected list.
+  No backend gap: identity/status data already comes from `/auth/me`, `/me/organisation`,
+  `/me/verification`; change-password already has a working endpoint. This is UI-only.
+- **2026-08-05** — **KYC PROFILE GATE BUILT (owner-confirmed flow): documents cannot be uploaded
+  until the company profile is complete — server-enforced.** Owner expected the gate on-device
+  ("complete your organization profile" before Verification) which settled the open address
+  question: **address IS required** (line1 + city + postalCode; line2/state optional).
+  **Server:** `isKycProfileComplete(org)` in `kyc.service.js` (name · country · address triple);
+  `submitKycDocument` refuses with **400 `PROFILE_INCOMPLETE`** (new stable code in
+  `errorCodes.js`) BEFORE the storage call; `GET /me/verification` now carries `profileComplete`
+  so clients can route without a second request. Rationale in-code: verification LOCKS the address,
+  so verifying an empty one means filling it later demotes the org — the old order punished
+  completing the profile. entityType keeps its existing resolution (wizard may still supply it).
+  **App:** `VerificationHubScreen` — when `profileComplete === false` the footer becomes
+  **"Complete company profile"** and routes to `CompanyProfile`, with an info note saying WHY
+  ("we check your documents against your company profile"). The redirect is UX; the 400 is the
+  enforcement.
+  **Tests:** `kyc.test.js` fixture now creates complete orgs (country + address) + 3 new gate tests
+  (incomplete → 400 with code and nothing stored · completing unblocks the same upload ·
+  `profileComplete` flag in /me/verification). **Full suite 968 passed / 65 files**, lint clean;
+  app bundles (994 modules). ⚠️ One suite run appeared to fail 57 files — it had been launched from
+  the repo ROOT, where vitest picks the wrong config/env; from `MPX-BACKEND-FULL-SAAS/` it is green.
+  Run tests from the package dir.
+  **On-device test setup note:** app `.env` was pointed at the LOCAL backend
+  (`http://192.168.1.9:3000`) because production does not have the A22/gate endpoints until the
+  owner deploys — flip back after deploying. Local backend was started with
+  `FAST2SMS_API_KEY='' SMTP_HOST=''` so the dev OTP print returns instead of real sends to fake
+  test numbers (real env vars beat dotenv — no `.env` edit needed).
+- **2026-08-05** — **§A22 BUILT END-TO-END — company profile (app screens 12 + 15 + 15.1) with the
+  lock/demotion rule server-side.** Owner approved the design and asked for build + backend.
+  **Backend (new):** `GET/PATCH /me/organisation` + `POST/DELETE /me/organisation/logo`
+  (`organisation.service/controller/validators`, `uploadLogo` middleware, routes on `me.routes.js`).
+  Rules enforced server-side: org always from the token (tenant root, never a param) · locked set =
+  name/country/address/entityType — **verified + changed locked field → `kycStatus` back to
+  `submitted`, `verifiedAt/By` cleared (same posture as reject), `sellerVerified` synced onto
+  products (§A23), append-only audit row** (`organisation.self_update`, field NAMES only, no
+  values) · exporter `entityType` immutable (400 any status) · buyer sets it until verified, then it
+  demotes like the rest · description exporter-only, 500 cap · logo is a PUBLIC Cloudinary asset
+  under `mpx/logos/<orgId>` (magic-byte, images-only, 5 MB, tight upload limiter), storefront fields
+  NEVER touch kycStatus · same-value saves never demote · **slug immutable through rename** (tested)
+  · empty PATCH is a 400. `website`/`businessProfile` deliberately not editable.
+  **App (new):** `screens/profile/CompanyProfileScreen.jsx` + `api/organisation.js`, wired from
+  Profile and `AppStack`. Implements the v2 model: two lives (ordinary unverified form / locked
+  verified rows) · three-beat change-anyway consent (locked row → consequence bottom-sheet with the
+  exact copy incl. the exporter "public web address stays the same" line → persistent warning
+  banner) · **unlocking free, leaving silently re-locks** · address unlocks as ONE block · dynamic
+  save label ("Save" vs "Save and re-submit for review") · demotion feedback = tick swap to
+  "In review" chip + toast, straight from the server's `demoted` flag · exporter storefront (logo
+  picker via existing expo-image-picker, description + counter) with the **public preview** rendering
+  only projection fields (logo/name/country/entityType chip/tick/description/`/supplier/slug`), the
+  bare-page empty state, and no status ever · discard-changes guard on back.
+  **Deliberate deviations from the owner's mocks:** no registration-number field (verification-time
+  data, same decision as signup) · no "4x more likely" marketing stat (unverifiable) · no
+  Orders/Shipments tabs from mock 4 (Bucket B) · fields prefilled (mock 1 showed placeholders).
+  **Verified:** backend **965 passed / 65 files** (15 new A22 tests incl. demotion+audit+product
+  sync, slug immutability, buyer/exporter boundaries, logo statuses), lint clean; app bundles
+  (994 modules).
+  ⏸ **KYC-gate ("complete profile before KYC") NOT built yet** — owner confirmed the direction but
+  the "is address required?" decision is still open; gate lands with that answer.
+- **2026-08-05** — **Company-profile design prompt REWRITTEN as v2** (owner asked for a deeper UX
+  pass; same file, full replacement). Field lists and product rules unchanged; what v2 adds is the
+  *model*: the two screens are named as different kinds of surface (buyer = admin utility, exporter
+  = storefront editor whose real job is motivation); fields are grouped into three classes —
+  storefront / legal identity / immutable — so the lock rule is learned spatially; the **address
+  block locks and unlocks as ONE unit** (five separate ceremonies for one fact was v1's worst UX);
+  **unlocking is free, saving is what costs** (backing out silently re-locks — stated so users
+  aren't afraid to look); the **save button label is dynamic** ("Save" for storefront-only edits vs
+  "Save and re-submit for review" when a locked field is dirty); demotion feedback lands in three
+  places at once; the preview sits directly beneath the storefront fields (cause-effect adjacency
+  is the motivation mechanism); plus a dirty-state discard guard and the §1.5 blurred app-switcher
+  frame, which v1 omitted. Colour guardrail kept verbatim (hue 226–232°, sat ≥ 65%, rejected-hex
+  table incl. `#8069BF`, self-check) and a new delivery self-check requires the four consent copy
+  strings verbatim and forbids preview fields beyond the §6 list.
+- **2026-08-05** — **🔴 STALE PALETTE FOUND AND FIXED — `design-plans/m3/app-screens-design.md` was
+  still telling designers the brand was indigo `#4f46e5`.** The M1 brief was corrected on 2026-07-30
+  but the fix never reached the M3 file, so any design tool given that document produced off-brand
+  screens. Corrected, and a sweep now confirms **every remaining mention of indigo across
+  `design-plans/` and `docs/` is explicitly labelled as wrong** — none prescribe it.
+  **Colour section of the company-profile prompt hardened after a tool output `#8069BF`** (a
+  lavender). Diagnosed numerically rather than by adjective: `#8069BF` is hue **256° / sat 40%**,
+  against the brand's **230° / 69%** (`#1A2E8F`) and **228° / 75%** (`#2A4DE0`) — 26° too violet AND
+  nearly half the saturation. The prompt now opens with a hard guardrail — **hue 226–232°,
+  saturation ≥ 65%** — names `#8069BF`, `#4f46e5` and `#6366f1` as rejected with their hues, bans
+  desaturated/pastel variants of our blue, and ends with a self-check: *list every hex you used and
+  confirm it appears verbatim in the prompt*.
+  **Verified:** all 30 prescribed hexes in the prompt exist in the shipped theme
+  (`app/src/theme/colors.js` + `web/tailwind.config.js`); the only other hex is `#000000`, which
+  appears solely in the forbidden list. Confirmed against the real UI too — the canopy renders
+  `primary[800]` and the primary button `primary[600]`/`[700]`.
+- **2026-08-05** — **DESIGN (docs only): prompt written for the last two unbuilt M1 app screens.**
+  New `design-plans/m1/app-company-profile-screens-prompt.md` — a self-contained brief for **screen
+  12 (buyer company profile)** and **screen 15 + 15.1 (exporter company profile + public preview)**,
+  the §A22 pair. Written against the shipped **B1 "Navy Canopy"** direction so the new screens match
+  the auth screens already in the app, not a fresh look.
+  **App M1 audit that prompted it — 11 of 17 screens done.** Built: splash · welcome · login · OTP ·
+  signup verify · forgot · reset · signup step 1 + 2 · KYC upload/resubmit flow (prompt → hub →
+  entity type → doc type → capture) · verification status · profile. **Outstanding: 12 and 15 (this
+  prompt) · 17 biometric unlock (only the `secureStorage` flag exists; `expo-local-authentication`
+  installed but unused) · 9 and 13 buyer/exporter home (still placeholders, arguably M2).** Partials:
+  signup step 2 has no claim path, and Profile lacks the biometric toggle, change-password and app
+  version the brief asks for.
+  **Hard rules carried into the prompt so a design tool cannot "improve" them away:** the
+  change-anyway flow as three beats (locked → consequence sheet → unlocked-with-warning, saving via
+  "Save and re-submit for review") · the tick disappearing immediately on demotion · **logo and
+  description never trigger re-review** · an unverified account must look completely ordinary · one
+  badge only (a tick, never a "not verified" chip) · exporter `entityType` read-only in every state ·
+  the preview mirrors `PUBLIC_FIELDS` exactly, shows country not street address, and never shows a
+  status or rejection reason · **the slug does not follow a rename**, which the rename sheet must say
+  out loud · `website` is internal and appears on no screen · "business type" stays CANCELLED.
+  ✅ No schema work: every field already exists on `Organisation`.
 - **2026-08-05** — **🔴 KYC documents wouldn't render in the deployed admin panel — MY CSP blocked
   them. Fixed.** DevTools showed the Cloudinary requests as `(blocked:csp)`, so it looked like a
   Cloudinary problem; it was the `Content-Security-Policy` header added in `web/vercel.json`.

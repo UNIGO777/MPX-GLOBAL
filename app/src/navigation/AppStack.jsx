@@ -9,6 +9,8 @@ import { EntityTypeScreen } from '../screens/kyc/EntityTypeScreen.jsx';
 import { DocumentTypeScreen } from '../screens/kyc/DocumentTypeScreen.jsx';
 import { CaptureDocumentScreen } from '../screens/kyc/CaptureDocumentScreen.jsx';
 import { withUnverifiedGuard } from '../screens/kyc/RequireUnverified.jsx';
+import { CompanyProfileScreen } from '../screens/profile/CompanyProfileScreen.jsx';
+import { ChangePasswordScreen } from '../screens/profile/ChangePasswordScreen.jsx';
 import { postSignupPrompt } from '../screens/kyc/postSignupPrompt.js';
 
 const Stack = createNativeStackNavigator();
@@ -45,6 +47,13 @@ export function AppStack({ role }) {
       <Stack.Screen name="KycPrompt" component={VerificationPromptScreen} />
 
       <Stack.Screen name="KycHub" component={VerificationHubScreen} />
+
+      {/* §A22 — company profile (view/edit + locks). Pushed from Profile. */}
+      <Stack.Screen name="CompanyProfile" component={CompanyProfileScreen} />
+
+      {/* Screen 16 sub-screen — pushed from Profile's Security section. */}
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+
       <Stack.Screen name="KycEntityType" component={withUnverifiedGuard(EntityTypeScreen)} />
       <Stack.Screen name="KycDocumentType" component={withUnverifiedGuard(DocumentTypeScreen)} />
       <Stack.Screen name="KycCapture" component={withUnverifiedGuard(CaptureDocumentScreen)} />

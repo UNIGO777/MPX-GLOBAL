@@ -25,4 +25,7 @@ export const ERROR_CODES = {
   REFRESH_TOKEN_MISSING: 'REFRESH_TOKEN_MISSING',
   /** Refresh token unknown, reused, expired or revoked — the session is over. */
   SESSION_EXPIRED: 'SESSION_EXPIRED',
+  /** KYC upload refused: the company profile is missing identity fields the
+   *  reviewer verifies against (A22 gate). Client routes to the profile screen. */
+  PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
 };

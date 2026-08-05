@@ -1,6 +1,7 @@
 import { Organisation } from '../models/Organisation.js';
 import { KYC_DOCS_BY_ENTITY } from '../models/enums.js';
 import { AppError } from '../utils/AppError.js';
+import { ERROR_CODES } from '../utils/errorCodes.js';
 import { recordAudit } from './audit.service.js';
 import { uploadKycDocument, signedKycUrl } from './kyc.storage.service.js';
 
@@ -14,6 +15,24 @@ const KYC_MAX_DOCS_PER_ORG = 20;
 // (req.user.orgId) — this is a self write, not a staff action. Status moves
 // pending|rejected|submitted → submitted (resubmit after rejection is the same
 // path). Once verified there is nothing to resubmit.
+/**
+ * §A22 gate (owner, 2026-08-05): documents are reviewed AGAINST the profile —
+ * name, country and address are what verification locks — so they must be
+ * complete BEFORE anything is uploaded. Without this, an org gets verified with
+ * an empty address and filling it in later demotes them: the flow would punish
+ * completing the profile. entityType is resolved separately below (the wizard
+ * may still supply it on first upload).
+ */
+export function isKycProfileComplete(org) {
+  return Boolean(
+    org.name?.trim() &&
+      org.country &&
+      org.address?.line1?.trim() &&
+      org.address?.city?.trim() &&
+      org.address?.postalCode?.trim(),
+  );
+}
+
 export async function submitKycDocument({ user, entityType, docType, buffer, meta }) {
   // Only the two self-registering roles have a KYC profile to submit.
   if (user.role !== 'buyer' && user.role !== 'exporter') {
@@ -23,6 +42,16 @@ export async function submitKycDocument({ user, entityType, docType, buffer, met
   // +kycDocuments (select:false) loaded ONLY to count — never returned.
   const org = await Organisation.findOne({ _id: user.orgId }).select('+kycDocuments');
   if (!org) throw AppError.notFound('org not found', 'Not found.');
+
+  // The A22 gate — server-side, because the app's redirect is UX, not access
+  // control. Stable code so the client can route to the profile screen.
+  if (!isKycProfileComplete(org)) {
+    throw AppError.badRequest(
+      'kyc profile incomplete',
+      'Complete your company profile before uploading documents.',
+      ERROR_CODES.PROFILE_INCOMPLETE,
+    );
+  }
 
   // Checked BEFORE the Cloudinary upload so a capped org costs no storage call.
   if ((org.kycDocuments?.length ?? 0) >= KYC_MAX_DOCS_PER_ORG) {

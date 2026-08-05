@@ -30,3 +30,29 @@ export function uploadKycDocument(req, res, next) {
     return next(AppError.badRequest('upload failed', 'Could not read the uploaded file.'));
   });
 }
+
+// Single-image upload for the exporter logo (§A22). Same in-memory + magic-byte
+// posture as KYC; tighter cap because a logo is a small square image, and the
+// storage service re-verifies type and size regardless.
+const LOGO_MAX_BYTES = 5 * 1024 * 1024;
+
+const parseLogo = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: LOGO_MAX_BYTES, files: 1 },
+}).single('logo');
+
+export function uploadLogo(req, res, next) {
+  parseLogo(req, res, (err) => {
+    if (!err) return next();
+    if (err instanceof multer.MulterError) {
+      const message =
+        err.code === 'LIMIT_FILE_SIZE'
+          ? 'Logo exceeds the 5 MB limit.'
+          : err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE'
+            ? 'Upload one image in the "logo" field.'
+            : 'Could not read the uploaded image.';
+      return next(AppError.badRequest(`upload: ${err.code}`, message));
+    }
+    return next(AppError.badRequest('upload failed', 'Could not read the uploaded image.'));
+  });
+}

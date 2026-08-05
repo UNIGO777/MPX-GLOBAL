@@ -37,6 +37,10 @@ async function makeUser(role, { entityType, kycStatus = 'pending', permissions =
     exporterSide: role === 'exporter',
     kycStatus,
     isActive,
+    // A22 gate: uploads are refused until the identity fields the reviewer
+    // verifies against are complete, so the fixture completes them.
+    country: 'IN',
+    address: { line1: '1 Test Street', city: 'Mumbai', postalCode: '400001' },
     ...(entityType ? { entityType } : {}),
   });
   const user = await User.create({
@@ -380,5 +384,42 @@ describe('A21 · public exporter read is side-based (M1-C)', () => {
     // still no leak of WHICH documents were filed, nor of the review state
     expect(soloRes.body.exporter).not.toHaveProperty('kycStatus');
     expect(soloRes.body.exporter).not.toHaveProperty('kycDocuments');
+  });
+});
+
+describe('🔴 A22 gate — uploads are refused until the profile is complete', () => {
+  it('missing address → 400 with PROFILE_INCOMPLETE, and nothing is stored', async () => {
+    const ex = await makeUser('exporter', { entityType: 'business' });
+    await Organisation.updateOne({ _id: ex.org._id }, { $unset: { address: 1 } });
+
+    const res = await upload(ex.token, { docType: 'registration' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('PROFILE_INCOMPLETE');
+
+    const org = await Organisation.findOne({ _id: ex.org._id }).select('+kycDocuments');
+    expect(org.kycDocuments?.length ?? 0).toBe(0);
+  });
+
+  it('completing the profile unblocks the same upload', async () => {
+    const ex = await makeUser('exporter', { entityType: 'business' });
+    await Organisation.updateOne({ _id: ex.org._id }, { $unset: { address: 1 } });
+    await upload(ex.token, { docType: 'registration' }).expect(400);
+
+    await Organisation.updateOne(
+      { _id: ex.org._id },
+      { $set: { address: { line1: '9 Dock Road', city: 'Mumbai', postalCode: '400002' } } },
+    );
+    const res = await upload(ex.token, { docType: 'registration' });
+    expect(res.status).toBe(201);
+  });
+
+  it('/me/verification reports profileComplete for the client gate', async () => {
+    const ex = await makeUser('exporter', { entityType: 'business' });
+    const full = await request(app).get('/me/verification').set(bearer(ex.token));
+    expect(full.body.verification.profileComplete).toBe(true);
+
+    await Organisation.updateOne({ _id: ex.org._id }, { $unset: { address: 1 } });
+    const bare = await request(app).get('/me/verification').set(bearer(ex.token));
+    expect(bare.body.verification.profileComplete).toBe(false);
   });
 });

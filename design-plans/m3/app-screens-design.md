@@ -47,9 +47,16 @@ internally.
 
 ### 1.1 Design foundations
 
-**Match the web tokens** — same palette (starter `primary` indigo `#4f46e5`, brand still
-unconfirmed), same status colours, same type ramp at mobile sizes. A buyer moving between web
-search and app search should see the same product, tick and price treatment.
+**Match the web tokens** — same palette, same status colours, same type ramp at mobile sizes. A
+buyer moving between web search and app search should see the same product, tick and price
+treatment.
+
+🔴 **`primary` is ROYAL BLUE `#2A4DE0`, with the navy `#1A2E8F` for immersive surfaces.** This line
+previously said indigo `#4f46e5`, which web has **never** shipped and the app does not use — the
+correction is recorded in `docs/History.md` (2026-07-30) but the wrong value survived here and will
+produce visibly off-brand screens if a design tool is fed this file. The live values are
+`web/tailwind.config.js` and `app/src/theme/colors.js`; a fuller table with the common wrong
+colours called out is in `design-plans/m1/app-company-profile-screens-prompt.md`.
 
 **Platform conventions.** iOS back-swipe + large titles; Android hardware back + ripple. The
 search stack must handle deep back-chains gracefully (results → product → seller → product…)

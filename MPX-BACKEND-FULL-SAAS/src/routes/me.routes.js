@@ -2,8 +2,10 @@ import { Router } from 'express';
 
 import { authenticate } from '../middleware/authenticate.js';
 import { validate } from '../middleware/validate.js';
-import { generalLimiter } from '../middleware/rateLimit.js';
-import { uploadKycDocument } from '../middleware/upload.js';
+import { generalLimiter, uploadLimiter } from '../middleware/rateLimit.js';
+import { uploadKycDocument, uploadLogo } from '../middleware/upload.js';
+import * as orgCtrl from '../controllers/organisation.controller.js';
+import * as OV from '../validators/organisation.validators.js';
 import * as ctrl from '../controllers/kyc.controller.js';
 import * as V from '../validators/kyc.validators.js';
 import * as DV from '../validators/device.validators.js';
@@ -33,3 +35,15 @@ meRouter.get('/me/verification', authenticate, ctrl.getMyVerification);
 // is an UPSERT because a device changes hands and FCM reuses the token.
 meRouter.post('/me/devices', authenticate, generalLimiter, validate(DV.registerDevice), deviceCtrl.register);
 meRouter.delete('/me/devices/:token', authenticate, generalLimiter, validate(DV.deviceTokenParam), deviceCtrl.unregister);
+
+// §A22 · self-service company profile. Owner-scoped by construction: the org id
+// comes from the token, never from a param. GET is the profile screen's load;
+// PATCH applies the lock/demotion rule (verified + locked-field change →
+// kycStatus back to `submitted`, audited) inside the service.
+meRouter.get('/me/organisation', authenticate, generalLimiter, orgCtrl.getMine);
+meRouter.patch('/me/organisation', authenticate, generalLimiter, validate(OV.updateMine), orgCtrl.updateMine);
+
+// Exporter logo — storefront content, never touches kycStatus. Dedicated tight
+// upload limiter (storage-abuse surface), multipart field `logo`, images only.
+meRouter.post('/me/organisation/logo', authenticate, uploadLimiter, uploadLogo, orgCtrl.setLogo);
+meRouter.delete('/me/organisation/logo', authenticate, generalLimiter, orgCtrl.removeLogo);

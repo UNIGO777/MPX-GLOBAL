@@ -78,7 +78,16 @@ export function VerificationHubScreen({ navigation }) {
   const atDocCap = documents.length >= KYC_MAX_DOCS;
   const canAddMore = !allDocsIn && !atDocCap;
 
+  // A22 gate (owner, 2026-08-05): documents are checked against the profile, so
+  // name/country/address must be complete before an upload is offered. The
+  // server refuses regardless (PROFILE_INCOMPLETE) — this routing is the UX.
+  const profileIncomplete = v ? v.profileComplete === false : false;
+
   const startFlow = () => {
+    if (profileIncomplete) {
+      navigation.navigate('CompanyProfile');
+      return;
+    }
     // Entity type is asked ONCE. An exporter chose it at signup, so they skip
     // straight to picking a document; a buyer has none and the upload would be
     // refused without it.
@@ -102,7 +111,7 @@ export function VerificationHubScreen({ navigation }) {
             // "Start verification" is only true BEFORE anything is sent. Once a
             // document is in, review has already started — saying "start" there
             // reads as though the upload did not register.
-            label={FOOTER_LABEL[status]}
+            label={profileIncomplete ? 'Complete company profile' : FOOTER_LABEL[status]}
             // Submitted: adding more is allowed and sometimes helps, but nothing
             // is required, so it must not look like an outstanding task.
             variant={status === 'submitted' ? 'secondary' : 'primary'}
@@ -123,6 +132,18 @@ export function VerificationHubScreen({ navigation }) {
         </View>
       ) : (
         <View style={styles.block}>
+          {/* A22 gate: say WHY the button leads to the profile, or it reads as
+              a wrong turn. Shown only while something is actually missing. */}
+          {profileIncomplete ? (
+            <View style={styles.gateNote}>
+              <Ionicons name="information-circle-outline" size={18} color={colors.primary[700]} />
+              <Text style={styles.gateNoteText}>
+                We check your documents against your company profile — complete your company
+                details and registered address first.
+              </Text>
+            </View>
+          ) : null}
+
           {/* Rejected: the reason first, because it is the only thing that
               matters. Framed as "one more thing needed", never as a failure. */}
           {status === 'rejected' && v.kycRejectionReason ? (
@@ -234,6 +255,15 @@ const SUBTITLES = {
 };
 
 const styles = StyleSheet.create({
+  gateNote: {
+    flexDirection: 'row',
+    gap: spacing[2],
+    alignItems: 'flex-start',
+    backgroundColor: colors.primary[50],
+    borderRadius: radii.md,
+    padding: spacing[3],
+  },
+  gateNoteText: { ...typography.caption, color: colors.primary[800], flex: 1 },
   centre: { paddingVertical: spacing[10], alignItems: 'center' },
   block: { gap: spacing[4] },
   flex1: { flex: 1 },

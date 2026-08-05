@@ -1,4 +1,5 @@
 import * as svc from '../services/kyc.service.js';
+import { isKycProfileComplete } from '../services/kyc.service.js';
 import { AppError } from '../utils/AppError.js';
 
 function meta(req) {
@@ -36,6 +37,9 @@ export async function getMyVerification(req, res) {
   res.json({
     verification: {
       kycStatus: org.kycStatus,
+      // A22 gate: false → the client sends the user to the company profile
+      // before offering an upload. The server enforces it regardless.
+      profileComplete: isKycProfileComplete(org),
       entityType: org.entityType ?? null,
       verifiedAt: org.verifiedAt ?? null,
       kycRejectionReason: org.kycStatus === 'rejected' ? (org.kycRejectionReason ?? null) : null,
