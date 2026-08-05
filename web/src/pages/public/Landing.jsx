@@ -297,7 +297,7 @@ export function Landing() {
       <main>
         {/* Hero */}
         <section className="relative overflow-hidden bg-primary-50 py-16 lg:py-24">
-          <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
             <div className="max-w-2xl">
               <span className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-ink-600">
                 <span className="h-2 w-2 rounded-full bg-primary-600" />
@@ -618,7 +618,7 @@ export function Landing() {
 
         {/* Mobile app */}
         <section className="relative overflow-hidden bg-primary-800 px-4 py-16 sm:px-6 md:py-24">
-          <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-2">
             <div>
               <h2 className="max-w-xl text-3xl font-bold text-white md:text-4xl">
                 The whole marketplace, in your <span className="text-primary-300">pocket.</span>

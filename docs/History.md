@@ -175,6 +175,28 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-05** — **Landing page hero + mobile-app section: mobile horizontal overflow fixed,
+  empirically verified with Playwright this time.** Root cause: `web/src/pages/public/Landing.jsx`
+  had two grid containers (hero section, mobile-app section) with `lg:grid-cols-2` but **no
+  base-breakpoint `grid-cols-1`** — with no explicit template, CSS Grid auto-sizes the implicit
+  column to its content's width instead of shrinking to the container, so the `max-w-2xl`/
+  `max-w-xl`/`max-w-lg` text children overflowed the 390px viewport by ~6-20px; the section's
+  `overflow-hidden` silently clipped it instead of showing a scrollbar, cutting off the hero
+  paragraph's trailing words and the decorative search bar's button — exactly what the owner's
+  screenshot showed. Fix: added `grid-cols-1` alongside `lg:grid-cols-2` on both grid containers
+  (`Landing.jsx` lines ~300 and ~621). **Verified empirically, not just by reading markup**: built
+  `web/` (`npm run build`), served `dist/` locally, used Playwright (headless Chromium, installed
+  this session) at a 390×844 viewport to (a) measure `document.documentElement.scrollWidth` vs
+  viewport width and the hero paragraph's bounding-rect before/after, (b) run a full-page DOM scan
+  for any element whose right edge exceeds the viewport, (c) screenshot both affected sections
+  before and after. Before: hero paragraph right edge at 412px in a 390px viewport, grid track
+  computed at 396px. After: `scrollWidth === clientWidth` (390 = 390) page-wide, hero paragraph
+  right edge at 374px, screenshots show full text wrapping cleanly with no clipping. One remaining
+  "offender" from the full-page scan (`-right-32 -bottom-32` decorative blurred circle) is an
+  intentionally-oversized background glow, clipped by its own `overflow-hidden` ancestor and
+  contributes no scrollable width — not a bug. This directly closes the gap flagged in the same
+  file's prior entry below: that "mobile-responsive" pass was reasoned from markup alone and never
+  actually rendered in a real viewport, which is exactly how this regression shipped.
 - **2026-08-05** — **QA test documents written for a tester intern — `apptest.docx` +
   `webtest.docx` at the repo root.** Plain-English, PASS/FAIL-table format (no jargon), covering
   auth (portal choice, signup step-1 → email+mobile verify → step-2 company, login, wrong-portal
