@@ -104,8 +104,12 @@ export const productIdParam = {
   params: z.object({ id: zObjectId() }),
 };
 
+// The seller's own list. Unlike the admin monitoring list this DOES expose
+// drafts and archived rows — they are the seller's own, and the list screen's
+// status tabs are exactly these four plus "All" (omit `status` for All).
 export const listMine = {
   query: z.object({
+    status: z.enum(['draft', 'active', 'inactive', 'archived']).optional(),
     page: z.coerce.number().int().min(1).default(1),
     pageSize: z.coerce.number().int().min(1).max(100).default(20),
   }),

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import { authApi } from '../api/auth.js';
 import { refreshSession } from '../api/client.js';
+import { clearQueryCache } from '../lib/queryClient.js';
 import { tokenStore } from './tokenStore.js';
 
 /**
@@ -95,6 +96,11 @@ export function AuthProvider({ children }) {
   const signOut = useCallback(async () => {
     tokenStore.clear();
     setUser(null);
+    // Every cached server response dies with the session — otherwise the next
+    // user to sign in on this browser sees the previous one's rows while their
+    // own queries are still in flight (`web-frontend.md`: reset sensitive state
+    // on logout).
+    clearQueryCache();
     try {
       // The cookie is the session, and only this call clears it server-side —
       // so it always runs, with nothing in the body.

@@ -7,6 +7,15 @@ import react from '@vitejs/plugin-react';
 //
 // Everything here comes from .env — `loadEnv` is needed because this file runs
 // in Node, where import.meta.env does not exist. Keys: see .env.example.
+//
+// 🔴 Both dev scripts MUST keep the proxy: `npm run dev` targets localhost:3000,
+// `npm run dev:live` targets the live API — but in BOTH the browser only ever
+// talks to localhost:5173, so the refresh cookie stays FIRST-PARTY. `dev:live`
+// used to set VITE_API_BASE_URL to the live origin instead, which switched the
+// proxy off (see the `startsWith('/')` guard below) and made every call
+// cross-site: a SameSite=Lax cookie is not sent on a cross-site XHR, so the
+// session silently died on every reload. Point dev:live at a different TARGET,
+// never at a different BASE PATH.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const basePath = env.VITE_API_BASE_URL || '/api';

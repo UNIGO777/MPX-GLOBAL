@@ -85,6 +85,18 @@ categoryRouter.post(
   validate(V.categoryIdParam),
   ctrl.uploadImage,
 );
+// The attribute manager's read. `category:read`, not `category:manage` — a
+// read-only employee sees the field list (web brief §7 permission map).
+// Unlike the public /categories/:idOrSlug/attributes this ignores `active`, so
+// a cascade-off sub's fields stay manageable, and it returns each attribute's
+// `id` so Edit/Delete below have a target.
+categoryRouter.get(
+  '/admin/categories/:id/attributes',
+  authenticate,
+  requirePermissions(PERMISSIONS.CATEGORY_READ),
+  validate(V.categoryIdParam),
+  ctrl.getAdminAttributes,
+);
 categoryRouter.post(
   '/admin/categories/:id/attributes',
   authenticate,

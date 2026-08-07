@@ -7,9 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "dev:live": "VITE_API_BASE_URL=https://api.mpx.nxtgendigitals.com vite"
+    "dev:live": "VITE_DEV_API_PROXY=https://api.mpx.nxtgendigitals.com vite"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
     "axios": "^1.7.5",
     "lucide-react": "^1.28.0",
     "react": "^18.3.1",

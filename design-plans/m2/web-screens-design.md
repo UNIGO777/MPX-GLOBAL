@@ -675,11 +675,24 @@ validation limits quoted (name 200 · description 5,000 · reason 3–500 · syn
 options ≤100 · attributes ≤50 · images 5×5 MB) are the enforced server values; error states
 should be designed against them, not invented thresholds.
 
+### ✅ The two reads these screens needed were added 2026-08-07
+
+Both were found by reading this brief against the shipped API, and both are now live:
+
+- **`GET /admin/categories/:id/attributes`** (`category:read`) — screen 9's data source. The public
+  attribute route could not serve it: it hides inactive categories, and it omits the attribute `id`
+  that Edit/Delete need. Returns `id` + `order`; refuses a top category.
+- **`GET /products/mine`** now takes `?status=` and returns `counts` (per-status, for the tabs) and
+  `caps` (`{verified:true}` when verified, else used/limit for live + drafts). 🔴 `caps.active.used`
+  excludes taken-down rows while `counts.active` does not — the meter reading "2 of 3" beside a Live
+  tab of 3 is **correct** (§A10, a block frees a slot) and both briefs' checklists require it.
+
 ### Still open
 
 1. **Brand palette** — unchanged from M1; confirm before final visual design.
-2. **Restore-over-cap** (backend-plan §5) — owner may later choose "restore returns as Hidden
-   when the seller is at cap"; if so, only screen 10's restore copy changes.
+2. ~~**Restore-over-cap**~~ — ✅ **DECIDED 2026-08-07 — owner: leave as-is.** A restore may put an
+   unverified seller at 4 live products; the state self-corrects. No warning is designed, and no
+   copy anywhere may promise the cap is never exceeded. Do not re-raise.
 3. **Top-40 synonyms content** — owner-authored list still pending; screen 8's synonyms input is
    the entry path when it arrives. Not a design blocker.
 4. **Category page for a TOP category** — this brief renders `/category/:slug` for subs and lets
@@ -701,8 +714,8 @@ here reserve space (left rail on screen 2, action slot on screens 3–4) but dra
 
 | Gap | Detail | What this brief did |
 |---|---|---|
-| **Buyer web entry point** | No doc names how a buyer reaches the catalogue from inside the buyer shell (the M1 buyer sidebar has Search/Enquiries "Soon" chips but no "Browse" item). | Assumed the public screens 1–4 double as the buyer-shell browse surface + landing links (§8). Needs an owner nod before the buyer sidebar gains a "Browse catalogue" item. |
-| **Audit-view permission** | M2.md names the audit screen but no permission string for it; §A25's four don't cover audit read. Backend's audit endpoint gating is defined in M5's spec, not M2. | Drew the screen; left its access rule to the M5 brief. Marked in §7. |
+| **Buyer web entry point** | No doc names how a buyer reaches the catalogue from inside the buyer shell (the M1 buyer sidebar has Search/Enquiries "Soon" chips but no "Browse" item). | Assumed the public screens 1–4 double as the buyer-shell browse surface + landing links (§8). ✅ **DECIDED 2026-08-07 — owner: leave it.** No "Browse catalogue" sidebar item; screens 1–4 stay reachable from public/landing links only. Do not re-raise. |
+| **Audit-view permission** | M2.md names the audit screen but no permission string for it; §A25's four don't cover audit read. Backend's audit endpoint gating is defined in M5's spec, not M2. | ✅ **RESOLVED — it is `audit:read`** (grantable; `routes/admin.routes.js`), shipped with M5 and deliberately separate from `organisation:read`. Screen 11 gates on it. |
 | **Admin "View" of a product** | Screen 10 gives staff a detail preview; no doc names a dedicated admin product-detail screen. | Kept it a preview drawer/modal of the public rendering, not a new screen. |
 | **Currency display for buyers** | Prices render in the seller's chosen ISO currency with no conversion (Phase 1 has none — §A27.1). No doc addresses buyer-side currency hinting. | Cards/detail show the raw currency code. Nothing else designed. |
 | **Sub-category image fallback** | §A11 says "sensible fallback" for missing sub images but no doc defines it. | Left to visual design: recommend the parent top's image, then a neutral tile. |

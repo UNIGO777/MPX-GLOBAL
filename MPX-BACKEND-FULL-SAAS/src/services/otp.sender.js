@@ -52,11 +52,40 @@ function emailBody({ code, purpose }) {
 }
 
 /**
+ * DEV ONLY — echo the code to the terminal so a developer can complete a login
+ * without a real SMS or inbox.
+ *
+ * 🔴 HARD-GATED to `NODE_ENV === 'development'`. Not "non-production": `test` is
+ * excluded too, or every suite run would print thousands of codes, and
+ * production is impossible by construction. If this ever prints on a deployed
+ * box, `NODE_ENV` is wrong and that is the bug.
+ *
+ * 🔴 `console.log`, deliberately, NOT the logger — and this is the one place the
+ * project's no-console rule is waived. The logger ships to files and
+ * aggregators; a code written there would outlive the terminal and become the
+ * exact A3 leak this file exists to prevent. stdout in a dev shell does not.
+ *
+ * Remove once delivery is proven in staging (`secrets-and-hygiene.md`: dev
+ * affordances must not survive to handover).
+ */
+function devPrintOtp({ identifier, code, purpose }) {
+  if (env.NODE_ENV !== 'development') return;
+  console.log(`\n🔑 [DEV OTP] ${purpose} for ${identifier}: ${code}  (dev only — never in production)\n`);
+}
+
+/**
  * @param {{ channel: 'mobile'|'email', identifier: string, code: string, purpose: string }} params
  *   `identifier` is the SUBJECT's own address, resolved by otp.service from the
  *   account record — never a request-supplied one.
  */
 export async function sendOtp({ channel, identifier, code, purpose }) {
+  // Printed BEFORE any transport is attempted, and regardless of whether one
+  // succeeds. Previously this was a last resort that only fired when nothing
+  // could deliver, so configuring SMTP silently took the code away from the
+  // terminal — and a provider outage left a developer with no code at all,
+  // which is precisely when they need one.
+  devPrintOtp({ identifier, code, purpose });
+
   const smsDeliverable = channel === 'mobile' && isSmsConfigured() && canDeliverTo(identifier);
 
   if (smsDeliverable) {
@@ -93,12 +122,10 @@ export async function sendOtp({ channel, identifier, code, purpose }) {
     throw new Error('otp delivery: no transport available');
   }
 
-  // DEV/TEST ONLY — unreachable in production (guarded above), and now only when
-  // no real transport could take the message, so a configured dev machine
-  // exercises the real provider instead of this.
-  // 🔴 Remove this branch once delivery is proven in staging
-  // (`secrets-and-hygiene.md`: dev affordances must not survive to handover).
-  console.log(`\n🔑 [DEV OTP] ${purpose} for ${identifier}: ${code}  (dev only — never in production)\n`);
+  // Non-production with no transport: the code was already printed above (in
+  // development), so there is nothing left to do but let the caller continue.
+  // Deliberately NOT a logger line — a "delivery failed" record must not tempt
+  // anyone into attaching the code to it.
 }
 
 /**

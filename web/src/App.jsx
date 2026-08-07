@@ -1,8 +1,11 @@
 import { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider } from './auth/AuthContext.jsx';
+import { queryClient } from './lib/queryClient.js';
 import { Landing } from './pages/public/Landing.jsx';
+import { NotFound } from './pages/public/NotFound.jsx';
 import { Styleguide } from './pages/Styleguide.jsx';
 import { Spinner } from './components/ui/Spinner.jsx';
 import { RequireAuth } from './auth/RequireAuth.jsx';
@@ -66,94 +69,101 @@ function ChunkFallback() {
  * M1 set render the designed ComingSoon page (logged in docs/UiWebNotes.md).
  */
 export function App() {
-  // console.log("asdf")
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* --- Public --- */}
-          <Route path="/" element={<Landing />} />
+    // Query cache OUTSIDE the auth provider: sign-out clears it (see
+    // AuthContext), and it must not be torn down and rebuilt by an auth
+    // re-render mid-flight.
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* --- Public --- */}
+            <Route path="/" element={<Landing />} />
 
-          {/* --- Party auth (buyer + exporter share screens; portal = the field change) ---
-                 All of these are for signed-OUT visitors: RedirectIfAuthed sends a live
-                 session to its own home instead of a second login. /otp is deliberately
-                 outside the guard — it completes the sign-in and redirects itself. */}
-          <Route element={<RedirectIfAuthed />}>
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/forgot" element={<Forgot />} />
-            <Route path="/reset" element={<Reset />} />
-            <Route path="/signup/buyer" element={<BuyerSignup />} />
-            <Route path="/signup/exporter" element={<ExporterSignup />} />
+            {/* --- Party auth (buyer + exporter share screens; portal = the field change) ---
+                   All of these are for signed-OUT visitors: RedirectIfAuthed sends a live
+                   session to its own home instead of a second login. /otp is deliberately
+                   outside the guard — it completes the sign-in and redirects itself. */}
+            <Route element={<RedirectIfAuthed />}>
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/forgot" element={<Forgot />} />
+              <Route path="/reset" element={<Reset />} />
+              <Route path="/signup/buyer" element={<BuyerSignup />} />
+              <Route path="/signup/exporter" element={<ExporterSignup />} />
 
-            {/* --- Staff auth (admin + employee share the page; no portal, no entanglement) --- */}
-            <Route path="/signin/staff" element={<StaffSignIn />} />
-          </Route>
-
-          <Route path="/otp" element={<Otp />} />
-
-          {/* A21 signup steps 2-4. Outside RedirectIfAuthed for the same reason
-              /otp is: they finish the flow and redirect themselves, and the last
-              one issues the session. Each requires the signup token in router
-              state and sends a direct hit back to sign-in. */}
-          <Route path="/signup/verify" element={<SignupVerify />} />
-          <Route path="/signup/company" element={<SignupCompany />} />
-
-          {/* Blocking gate — RequireAuth sends every signed-in mustChangePassword
-              user here and nowhere else (mirrors the backend's authorize 403). */}
-          {/* Anonymous direct hits go to the staff page: the only flow that
-              lands here today is the staff temp-password gate. */}
-          <Route element={<RequireAuth signin="/signin/staff" />}>
-            <Route path="/change-password" element={<ChangePassword />} />
-          </Route>
-
-          {/* --- Buyer panel --- */}
-          <Route element={<RequireAuth />}>
-            <Route element={<RequireRole roles={['buyer']} />}>
-              <Route path="/buyer/verification" element={<VerificationStatus />} />
-              <Route path="/buyer/kyc" element={<KycUpload />} />
+              {/* --- Staff auth (admin + employee share the page; no portal, no entanglement) --- */}
+              <Route path="/signin/staff" element={<StaffSignIn />} />
             </Route>
-          </Route>
 
-          {/* --- Exporter panel --- */}
-          <Route element={<RequireAuth />}>
-            <Route element={<RequireRole roles={['exporter']} />}>
-              <Route path="/exporter" element={<ExporterVerificationStatus />} />
-              <Route path="/exporter/kyc" element={<ExporterKycUpload />} />
+            <Route path="/otp" element={<Otp />} />
+
+            {/* A21 signup steps 2-4. Outside RedirectIfAuthed for the same reason
+                /otp is: they finish the flow and redirect themselves, and the last
+                one issues the session. Each requires the signup token in router
+                state and sends a direct hit back to sign-in. */}
+            <Route path="/signup/verify" element={<SignupVerify />} />
+            <Route path="/signup/company" element={<SignupCompany />} />
+
+            {/* Blocking gate — RequireAuth sends every signed-in mustChangePassword
+                user here and nowhere else (mirrors the backend's authorize 403). */}
+            {/* Anonymous direct hits go to the staff page: the only flow that
+                lands here today is the staff temp-password gate. */}
+            <Route element={<RequireAuth signin="/signin/staff" />}>
+              <Route path="/change-password" element={<ChangePassword />} />
             </Route>
-          </Route>
 
-          {/* --- Admin console (staff only; per-screen permissions are the
-                 server's — the sidebar merely hides what a 403 would refuse) --- */}
-          <Route element={<RequireAuth signin="/signin/staff" />}>
-            <Route element={<RequireRole roles={['employee', 'superadmin']} />}>
-              <Route
-                element={
-                  <Suspense fallback={<ChunkFallback />}>
-                    <Outlet />
-                  </Suspense>
-                }
-              >
-                <Route path="/admin/users" element={<Users />} />
-                <Route path="/admin/verification" element={<VerificationQueue />} />
-                <Route path="/admin/verification/:orgId/kyc" element={<KycViewer />} />
-                <Route element={<RequireRole roles={['superadmin']} />}>
-                  <Route path="/admin/employees" element={<Employees />} />
-                </Route>
-                <Route path="/admin/dashboard" element={<ComingSoon title="Dashboard" />} />
-                <Route path="/admin/audit" element={<ComingSoon title="Audit log" />} />
-                <Route path="/admin/settings" element={<ComingSoon title="Settings" />} />
-                <Route path="/admin/no-access" element={<NoAccess />} />
+            {/* --- Buyer panel --- */}
+            <Route element={<RequireAuth />}>
+              <Route element={<RequireRole roles={['buyer']} />}>
+                <Route path="/buyer/verification" element={<VerificationStatus />} />
+                <Route path="/buyer/kyc" element={<KycUpload />} />
               </Route>
             </Route>
-          </Route>
 
-          {/* Dev-only foundation review; never mounted in a production build. */}
-          {import.meta.env.DEV && <Route path="/styleguide" element={<Styleguide />} />}
+            {/* --- Exporter panel --- */}
+            <Route element={<RequireAuth />}>
+              <Route element={<RequireRole roles={['exporter']} />}>
+                <Route path="/exporter" element={<ExporterVerificationStatus />} />
+                <Route path="/exporter/kyc" element={<ExporterKycUpload />} />
+              </Route>
+            </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            {/* --- Admin console (staff only; per-screen permissions are the
+                   server's — the sidebar merely hides what a 403 would refuse) --- */}
+            <Route element={<RequireAuth signin="/signin/staff" />}>
+              <Route element={<RequireRole roles={['employee', 'superadmin']} />}>
+                <Route
+                  element={
+                    <Suspense fallback={<ChunkFallback />}>
+                      <Outlet />
+                    </Suspense>
+                  }
+                >
+                  <Route path="/admin/users" element={<Users />} />
+                  <Route path="/admin/verification" element={<VerificationQueue />} />
+                  <Route path="/admin/verification/:orgId/kyc" element={<KycViewer />} />
+                  <Route element={<RequireRole roles={['superadmin']} />}>
+                    <Route path="/admin/employees" element={<Employees />} />
+                  </Route>
+                  <Route path="/admin/dashboard" element={<ComingSoon title="Dashboard" />} />
+                  <Route path="/admin/audit" element={<ComingSoon title="Audit log" />} />
+                  <Route path="/admin/settings" element={<ComingSoon title="Settings" />} />
+                  <Route path="/admin/no-access" element={<NoAccess />} />
+                </Route>
+              </Route>
+            </Route>
+
+            {/* Dev-only foundation review; never mounted in a production build. */}
+            {import.meta.env.DEV && <Route path="/styleguide" element={<Styleguide />} />}
+
+            {/* 🔴 A real not-found page, NOT a redirect home. M2's public screens
+                need one designed state for every unavailable entity, and
+                m3-seo.md §6 requires dead public URLs to stop being indexable —
+                bouncing them to the homepage did neither. */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

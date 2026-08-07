@@ -450,8 +450,9 @@ JPG/PNG/WEBP) are enforced server values; design error states against them.
 3. **Offline draft handling depth** — this brief mandates "never silently lose text" but the
    choice between local hold-and-sync vs a clear offline block is an implementation-cost call;
    design the visible bar either way.
-4. **Restore-over-cap** (backend-plan §5, owner-pending) — invisible in the app except that cap
-   copy must not promise "never more than 3 live"; already worded accordingly.
+4. ~~**Restore-over-cap**~~ — ✅ **DECIDED 2026-08-07 — owner: leave as-is.** Invisible in the app
+   except that cap copy must not promise "never more than 3 live"; already worded accordingly.
+   Do not re-raise.
 
 ---
 
@@ -470,7 +471,7 @@ JPG/PNG/WEBP) are enforced server values; design error states against them.
 
 | Gap | Detail | What this brief did |
 |---|---|---|
-| **Buyer browse entry point** | M2.md §6.2 gives the buyer four browse screens, but the M1 tab bar (m1 app brief §8) has no Browse/Catalogue tab — only Home ✔, Search ⏳, Enquiries ⏳, Messages ⏳, Profile ✔. No doc names where screens 1–4 hang. | Flagged as the milestone's one structural decision: either a new **Browse** tab (recommended — it's the buyer's main job) or entry cards on Buyer home. **Not designed as a tab here; needs the owner's call** (m1's placeholder-tabs question is still open too). |
+| **Buyer browse entry point** | M2.md §6.2 gives the buyer four browse screens, but the M1 tab bar (m1 app brief §8) has no Browse/Catalogue tab — only Home ✔, Search ⏳, Enquiries ⏳, Messages ⏳, Profile ✔. No doc names where screens 1–4 hang. | ✅ **DECIDED 2026-08-07 — owner: leave it.** No Browse tab is added. Screens 1–4 keep no named tab-bar entry; revisit only if the owner reopens it. Do not re-raise. |
 | **Exporter own-product detail** | M2.md names list + add/edit + toggles; it never names a read-only "my product detail/preview" screen. | Not designed. Row tap opens edit (7); a "view as buyer" preview would be new scope — listed here, not drawn. |
 | **Category images at launch** | §A20: admin uploads arrive over time; no doc defines the app-side fallback look. | Fallback treated as the primary launch look on screens 1, 6; visual design decides the tile. |
 | **Currency for buyers** | Prices show the seller's ISO currency, no conversion in Phase 1 (§A27.1); no buyer-side currency aid is specified. | Raw currency code shown; nothing else designed. |

@@ -1,5 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
+import mongoose from 'mongoose';
+
 import { Product } from '../models/Product.js';
 import { Category } from '../models/Category.js';
 import { CategoryAttribute } from '../models/CategoryAttribute.js';
@@ -13,8 +15,29 @@ import { removeSavedForProduct } from './saved.service.js';
 
 // D1/A15 caps (unverified sellers). A10: taken-down products do NOT occupy an
 // active slot — the cap query excludes them explicitly.
-const MAX_ACTIVE_UNVERIFIED = 3;
-const MAX_DRAFTS_UNVERIFIED = 10;
+export const MAX_ACTIVE_UNVERIFIED = 3;
+export const MAX_DRAFTS_UNVERIFIED = 10;
+
+/**
+ * The two cap queries, defined ONCE.
+ *
+ * 🔴 They are shared by the ENFORCEMENT (assertActiveCap / assertDraftCap) and
+ * by the seller's cap meter (`listMine` summary). Two copies would drift, and
+ * the failure is nasty: a meter reading "2 of 3" beside a publish that 409s.
+ * Same reason `nearingPurgeFilter` exists in adminProducts.service.js.
+ *
+ * Note `activeCapFilter` excludes taken-down rows (§A10 — a block frees a slot)
+ * while the status TAB count does not. Those two numbers legitimately disagree,
+ * and the design brief requires it: a blocked product must visibly not consume
+ * a slot.
+ */
+export const activeCapFilter = (exporterOrgId) => ({
+  exporterOrgId,
+  status: 'active',
+  'takedown.isDown': { $ne: true },
+});
+
+export const draftCapFilter = (exporterOrgId) => ({ exporterOrgId, status: 'draft' });
 
 const GOODS_FIELDS = ['moq', 'unit', 'hsCode', 'countryOfOrigin', 'supplyAbility', 'leadTime', 'packaging', 'terms'];
 const SERVICE_FIELDS = ['engagementType', 'deliveryModel', 'teamSize', 'pricingModel', 'timeline'];
@@ -140,7 +163,7 @@ const isVerified = (org) => org.kycStatus === 'verified';
 
 async function assertDraftCap(org, exporterOrgId) {
   if (isVerified(org)) return;
-  const drafts = await Product.countDocuments({ exporterOrgId, status: 'draft' });
+  const drafts = await Product.countDocuments(draftCapFilter(exporterOrgId));
   if (drafts >= MAX_DRAFTS_UNVERIFIED) {
     throw AppError.conflict(
       'draft cap reached',
@@ -152,11 +175,7 @@ async function assertDraftCap(org, exporterOrgId) {
 // D1 + A10: cap counts ACTIVE rows only, taken-down excluded (a block frees a slot).
 async function assertActiveCap(org, exporterOrgId) {
   if (isVerified(org)) return;
-  const active = await Product.countDocuments({
-    exporterOrgId,
-    status: 'active',
-    'takedown.isDown': { $ne: true },
-  });
+  const active = await Product.countDocuments(activeCapFilter(exporterOrgId));
   if (active >= MAX_ACTIVE_UNVERIFIED) {
     throw AppError.conflict(
       'active cap reached',
@@ -399,14 +418,65 @@ export async function archiveProduct({ user, id, meta }) {
   return product;
 }
 
-export async function listMine({ user, page, pageSize }) {
-  const filter = { exporterOrgId: user.orgId };
-  const [rows, total] = await Promise.all([
+/**
+ * Per-status row counts for the list screen's tabs.
+ *
+ * These are RAW status counts — a taken-down product is still counted under the
+ * status it holds, because the design puts blocked rows inside their status tab
+ * wearing an overlay chip rather than in a tab of their own.
+ */
+async function statusCounts(exporterOrgId) {
+  // 🔴 Cast explicitly: `req.user.orgId` is a STRING (authenticate.js) and an
+  // aggregate `$match` does no schema casting — a raw string silently matches
+  // nothing and every tab would read 0.
+  const grouped = await Product.aggregate([
+    { $match: { exporterOrgId: new mongoose.Types.ObjectId(exporterOrgId) } },
+    { $group: { _id: '$status', count: { $sum: 1 } } },
+  ]);
+  // Default every status to 0 so a tab never renders `undefined`.
+  const counts = { all: 0, draft: 0, active: 0, inactive: 0, archived: 0 };
+  for (const { _id, count } of grouped) {
+    if (_id in counts) counts[_id] = count;
+    counts.all += count;
+  }
+  return counts;
+}
+
+/**
+ * The cap meter's numbers — D1/A15, and ONLY while unverified.
+ *
+ * A verified seller gets `{ verified: true }` and no figures at all: the briefs
+ * are explicit that a verified account shows no cap UI, and shipping limits
+ * would invite a client to render one.
+ */
+async function capState(exporterOrgId) {
+  const org = await Organisation.findOne({ _id: exporterOrgId }).select('kycStatus');
+  if (!org || isVerified(org)) return { verified: true };
+
+  const [active, drafts] = await Promise.all([
+    Product.countDocuments(activeCapFilter(exporterOrgId)),
+    Product.countDocuments(draftCapFilter(exporterOrgId)),
+  ]);
+  return {
+    verified: false,
+    active: { used: active, limit: MAX_ACTIVE_UNVERIFIED },
+    drafts: { used: drafts, limit: MAX_DRAFTS_UNVERIFIED },
+  };
+}
+
+// The seller's own list. `status` is optional — omitted means the "All" tab.
+// Counts and caps ride along on every page so the tabs and the meter can never
+// disagree with the rows, and so publishing refreshes all three in one call.
+export async function listMine({ user, status, page, pageSize }) {
+  const filter = { exporterOrgId: user.orgId, ...(status ? { status } : {}) };
+  const [rows, total, counts, caps] = await Promise.all([
     Product.find(filter)
       .sort({ createdAt: -1, _id: -1 })
       .skip((page - 1) * pageSize)
       .limit(pageSize),
     Product.countDocuments(filter),
+    statusCounts(user.orgId),
+    capState(user.orgId),
   ]);
-  return { rows, total, page, pageSize };
+  return { rows, total, page, pageSize, counts, caps };
 }

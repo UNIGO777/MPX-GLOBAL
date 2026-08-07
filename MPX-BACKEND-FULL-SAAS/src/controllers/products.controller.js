@@ -72,7 +72,12 @@ export async function archive(req, res) {
   res.json({ product: ownView(product) });
 }
 
+// `counts` drives the status tabs, `caps` the cap meter — both ride on every
+// page so a publish refreshes rows, tabs and meter in one call.
 export async function mine(req, res) {
-  const { rows, total, page, pageSize } = await svc.listMine({ user: req.user, ...req.validated.query });
-  res.json({ products: rows.map(ownView), total, page, pageSize });
+  const { rows, total, page, pageSize, counts, caps } = await svc.listMine({
+    user: req.user,
+    ...req.validated.query,
+  });
+  res.json({ products: rows.map(ownView), total, page, pageSize, counts, caps });
 }

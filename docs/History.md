@@ -175,6 +175,68 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-07** — **🔴 `npm run dev:live` was silently logging you out on every reload. Fixed.**
+  It set `VITE_API_BASE_URL=https://api.mpx.nxtgendigitals.com`, which **switches the Vite proxy off**
+  (`vite.config.js` only proxies a base path starting with `/`) — verified by invoking the config
+  directly: `dev:live` resolved to `proxy keys = []`. The browser then called the live API straight
+  from `http://localhost:5173`, so every request was **cross-site** and the `SameSite=Lax` refresh
+  cookie was never sent on the reload's refresh POST. Exactly the failure the Vercel proxy was built
+  to fix on 2026-08-04, reintroduced in dev. **Fix: point dev:live at a different proxy TARGET, not
+  a different BASE PATH** — `VITE_DEV_API_PROXY=https://api.mpx.nxtgendigitals.com vite`. The browser
+  now stays first-party on localhost:5173 and Vite forwards server-side, the same topology Vercel
+  runs in production, so dev:live is a faithful rehearsal of prod instead of a different shape.
+  Rationale written into `vite.config.js` so it is not "simplified" back.
+  **Not a problem, checked:** the live API's CORS already allows `http://localhost:5173` with
+  credentials (verified by preflight). ⚠️ **Caveat:** the live cookie is `Secure` (NODE_ENV=production).
+  Chrome and Firefox treat `http://localhost` as a trustworthy origin and store it; **Safari
+  historically does not**, so dev:live session persistence may still fail in Safari specifically.
+  Dev-only — production is unaffected, since there the page is https.
+- **2026-08-07** — **Dev OTP codes print to the terminal again, and the production gate is now
+  tested.** The print in `otp.sender.js` was a **last resort** — it only fired when no transport
+  could deliver — so configuring SMTP silently took the code away from the terminal, and a provider
+  outage left a developer with no code at all. It now runs **before** delivery is attempted and
+  regardless of the outcome. 🔴 **Gate tightened from "not production" to `NODE_ENV === 'development'`
+  exactly**: `test` is excluded too, or every suite run would print thousands of codes. Five new
+  cases in `tests/otp-delivery.test.js` pin it — prints in dev even when SMS succeeds, prints in dev
+  with nothing configured, **never** prints in production on either the success or the
+  nothing-could-deliver path, silent under test. **Gotcha:** `env` is frozen at import, so each case
+  re-imports the module under a different `NODE_ENV` (same pattern as the existing production-throw
+  test). Deliberately `console.log`, not the logger — the logger ships to files and aggregators
+  where a code would outlive the terminal and become the A3 leak this file exists to prevent.
+  ⚠️ Still a dev affordance: remove it before handover (`secrets-and-hygiene.md`).
+  **Test state:** 980/984 passing. The 4 failures are `tests/otp-delivery.test.js`'s live-gateway
+  group and are **environmental, not code** — `FAST2SMS_API_KEY` / `FAST2SMS_OTP_ID` are commented
+  out in `.env`; re-running that file with those two set gives **28/28**. M1 auth suites: 142/142.
+- **2026-08-07** — **M2 web build unblocked: two backend reads added, a real 404, TanStack Query in.**
+  Reading the M2 design briefs against the shipped API found four things that made screens
+  unbuildable as specified. Fixed:
+  **(1) `GET /admin/categories/:id/attributes`** (`category:read`) — screen 9's attribute manager had
+  no data source. The public `/categories/:idOrSlug/attributes` cannot serve it: it resolves through
+  `getPublicCategory`, so a deactivated sub (or any sub under a cascade-off top) 404s, and its view
+  omits the attribute `id` that `PATCH`/`DELETE :attrId` require — Edit/Delete had nothing to
+  address. New `adminAttributeView` adds `id` + `order`; **gotcha:** a *separate* view function on
+  purpose — the shared `attributeView` also serves the public route and `m3-public-projection.md`
+  keeps internal ids off public surfaces. Refuses a top category (§A16: fields live on the leaf).
+  **(2) `GET /products/mine`** gained `?status=` plus `counts` (per-status tabs) and `caps` (cap
+  meter). 🔴 **`caps.active.used` deliberately disagrees with `counts.active`** — the cap query
+  excludes taken-down rows (§A10, a block frees a slot), the tab count does not, so "2 of 3" beside
+  a Live tab of 3 is correct and required. The two cap filters are now exported from
+  `product.service.js` and shared by the enforcement *and* the meter so they cannot drift (same
+  reasoning as `nearingPurgeFilter`). **Gotcha:** `req.user.orgId` is a **string**, and an aggregate
+  `$match` does no schema casting — the counts pipeline must `new mongoose.Types.ObjectId(...)` or
+  every tab silently reads 0.
+  **(3) Web 404** — `App.jsx` catch-all was `<Navigate to="/">`; M2's public screens need one
+  designed not-found state and `m3-seo.md` §6 wants dead URLs de-indexed. New
+  `pages/public/NotFound.jsx` sets `robots: noindex` (the SPA still answers HTTP 200 — SSR deferred,
+  §8). It links only to `/` — `/categories` does not exist yet and a dead link is banned.
+  **(4) TanStack Query** added (owner-approved; offered deferral, chose now) — `lib/queryClient.js`,
+  provider outside `AuthProvider`, cache cleared on sign-out. **M1 screens deliberately stay on
+  their `useEffect` fetches**; new screens use Query. Two patterns coexisting is a recorded choice,
+  not drift. Bundle 352→382 kB (gzip 107→116).
+  **Owner decisions recorded in both M2 briefs:** restore-over-cap stays as-is, and the buyer
+  browse/entry point is **not** being added — both marked "do not re-raise".
+  Also corrected: the M2 web brief's "audit-view permission" gap — it is `audit:read`, shipped
+  with M5. Tests: m2-categories 17 ✓, m2-products 19 ✓.
 - **2026-08-05** — **Landing page hero + mobile-app section: mobile horizontal overflow fixed,
   empirically verified with Playwright this time.** Root cause: `web/src/pages/public/Landing.jsx`
   had two grid containers (hero section, mobile-app section) with `lg:grid-cols-2` but **no

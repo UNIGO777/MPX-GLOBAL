@@ -99,6 +99,29 @@ export async function getPublicCategoryAttributes(idOrSlug) {
 // Admin reads
 // ---------------------------------------------------------------------------
 
+/**
+ * The attribute manager's data source (m2 web screen 9).
+ *
+ * 🔴 Deliberately NOT `getPublicCategoryAttributes`. That one resolves through
+ * `getPublicCategory`, which requires the category AND its parent to be active —
+ * so the fields of a deactivated sub, or of any sub under a cascade-off top,
+ * would be unreachable by the exact screen that exists to manage them. An admin
+ * read sees every row, active or not.
+ *
+ * Tops are refused outright: §A16 puts `type` and attributes on the LEAF only,
+ * so a top has no fields to manage (same rule as `loadLeafCategory` in
+ * product.service.js).
+ */
+export async function getAdminCategoryAttributes(id) {
+  const cat = await Category.findOne({ _id: id }).lean();
+  if (!cat) throw AppError.notFound('category not found', 'Not found.');
+  if (cat.parentId == null) {
+    throw AppError.badRequest('top category has no attributes', 'Top categories have no fields.');
+  }
+  const attributes = await CategoryAttribute.find({ categoryId: cat._id }).sort({ order: 1, _id: 1 }).lean();
+  return { category: cat, attributes };
+}
+
 // Full tree INCLUDING inactive rows + prevActive + synonyms + attribute counts —
 // the m5 category-tree screen's data source (public reads hide all of that).
 export async function getAdminTree() {

@@ -460,6 +460,121 @@ describe('archive + frozen states (M2-E)', () => {
   });
 });
 
+// The seller list screen's tabs + cap meter come from this one call.
+describe('/products/mine status tabs, counts and cap meter', () => {
+  // Seeded directly: these assert the READ, not the write paths (which have
+  // their own cap tests above and would refuse to create this spread).
+  async function seedSpread(ex) {
+    const rows = [
+      { name: 'D1', status: 'draft' },
+      { name: 'D2', status: 'draft' },
+      { name: 'Live1', status: 'active' },
+      { name: 'Live2', status: 'active' },
+      { name: 'Hidden1', status: 'inactive' },
+      { name: 'Gone1', status: 'archived' },
+    ];
+    for (const r of rows) {
+      await Product.create({ exporterOrgId: ex.org._id, categoryId: goodsLeaf._id, ...r });
+    }
+  }
+
+  it('counts every status and sums to all', async () => {
+    const ex = await makeExporter();
+    await seedSpread(ex);
+
+    const res = await request(app).get('/products/mine').set(bearer(ex.token));
+    expect(res.status).toBe(200);
+    expect(res.body.counts).toEqual({ all: 6, draft: 2, active: 2, inactive: 1, archived: 1 });
+    expect(res.body.counts.all).toBe(
+      res.body.counts.draft + res.body.counts.active + res.body.counts.inactive + res.body.counts.archived,
+    );
+  });
+
+  it('the status filter returns only that status, and counts stay whole-list', async () => {
+    const ex = await makeExporter();
+    await seedSpread(ex);
+
+    const drafts = await request(app).get('/products/mine?status=draft').set(bearer(ex.token));
+    expect(drafts.status).toBe(200);
+    expect(drafts.body.products).toHaveLength(2);
+    expect(drafts.body.products.every((p) => p.status === 'draft')).toBe(true);
+    expect(drafts.body.total).toBe(2);
+    // The tabs must keep showing every tab's size while one tab is selected.
+    expect(drafts.body.counts.all).toBe(6);
+
+    const archived = await request(app).get('/products/mine?status=archived').set(bearer(ex.token));
+    expect(archived.body.products.map((p) => p.name)).toEqual(['Gone1']);
+
+    expect((await request(app).get('/products/mine?status=nonsense').set(bearer(ex.token))).status).toBe(400);
+  });
+
+  it('§A10: a taken-down product stays in its status COUNT but frees a cap SLOT', async () => {
+    const ex = await makeExporter();
+    for (let i = 0; i < 3; i += 1) {
+      await Product.create({
+        exporterOrgId: ex.org._id,
+        categoryId: goodsLeaf._id,
+        name: `Live ${i}`,
+        status: 'active',
+        ...(i === 0 ? { takedown: { isDown: true, reason: 'reported', at: new Date() } } : {}),
+      });
+    }
+
+    const res = await request(app).get('/products/mine').set(bearer(ex.token));
+    // The Live tab shows all three — a blocked product keeps its status.
+    expect(res.body.counts.active).toBe(3);
+    // The meter shows two — the block freed a slot, so publishing is allowed.
+    expect(res.body.caps).toMatchObject({ verified: false, active: { used: 2, limit: 3 } });
+
+    // And the meter agrees with what publish actually does.
+    const draft = await request(app).post('/products').set(bearer(ex.token)).send(validBody(ex.org._id));
+    const publish = await request(app)
+      .patch(`/products/${draft.body.product.id}/status`)
+      .set(bearer(ex.token))
+      .send({ status: 'active' });
+    expect(publish.status).toBe(200);
+  });
+
+  it('a verified seller gets no cap numbers at all', async () => {
+    const ex = await makeExporter({ verified: true });
+    await seedSpread(ex);
+
+    const res = await request(app).get('/products/mine').set(bearer(ex.token));
+    expect(res.body.caps).toEqual({ verified: true });
+    expect(res.body.counts.all).toBe(6); // tabs still work
+  });
+
+  it('draft usage tracks the 10-draft cap', async () => {
+    const ex = await makeExporter();
+    for (let i = 0; i < 4; i += 1) {
+      await Product.create({
+        exporterOrgId: ex.org._id,
+        categoryId: goodsLeaf._id,
+        name: `Draft ${i}`,
+        status: 'draft',
+      });
+    }
+    const res = await request(app).get('/products/mine').set(bearer(ex.token));
+    expect(res.body.caps.drafts).toEqual({ used: 4, limit: 10 });
+  });
+
+  it('counts and caps are scoped to the caller, never another seller', async () => {
+    const mine = await makeExporter();
+    const other = await makeExporter();
+    await seedSpread(other);
+    await Product.create({
+      exporterOrgId: mine.org._id,
+      categoryId: goodsLeaf._id,
+      name: 'Only mine',
+      status: 'draft',
+    });
+
+    const res = await request(app).get('/products/mine').set(bearer(mine.token));
+    expect(res.body.counts).toEqual({ all: 1, draft: 1, active: 0, inactive: 0, archived: 0 });
+    expect(res.body.caps.drafts.used).toBe(1);
+  });
+});
+
 describe('image upload endpoint (M2-E)', () => {
   it('returns refs for an exporter; a 6th file is rejected at the transport layer', async () => {
     const ex = await makeExporter();

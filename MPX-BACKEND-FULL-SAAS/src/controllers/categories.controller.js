@@ -22,6 +22,18 @@ function attributeView(attr) {
   };
 }
 
+// The staff view of an attribute: the form/facet shape PLUS the two fields the
+// manager screen cannot work without — `id` (the PATCH/DELETE :attrId target)
+// and `order` (the sort the admin edits).
+//
+// 🔴 A separate function on purpose. `attributeView` above also serves the
+// PUBLIC /categories/:idOrSlug/attributes, and m3-public-projection.md keeps
+// internal ids off public routes — so these two fields must never be folded
+// into it "to avoid duplication".
+function adminAttributeView(attr) {
+  return { ...attributeView(attr), id: String(attr._id), order: attr.order };
+}
+
 // Admin tree view — includes what the public projection deliberately hides
 // (inactive rows, prevActive, synonyms, order). Staff-only route; still a
 // curated shape, never raw documents.
@@ -78,6 +90,11 @@ export async function getAdminTree(_req, res) {
   res.json({
     categories: tree.map(({ top, subs }) => ({ ...adminCategoryView(top), subs: subs.map(adminCategoryView) })),
   });
+}
+
+export async function getAdminAttributes(req, res) {
+  const { category, attributes } = await svc.getAdminCategoryAttributes(req.params.id);
+  res.json({ category: adminCategoryView(category), attributes: attributes.map(adminAttributeView) });
 }
 
 export async function toggle(req, res) {

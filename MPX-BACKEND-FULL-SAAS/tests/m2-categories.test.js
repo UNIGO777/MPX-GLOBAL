@@ -354,3 +354,85 @@ describe('admin category endpoints (M2-D)', () => {
     expect(ok.status).toBe(201);
   });
 });
+
+// The attribute manager's read (web screen 9). It exists BECAUSE the public
+// attribute route cannot serve that screen: it hides inactive categories and
+// omits the attribute id the edit/delete routes need.
+describe('admin attribute read (GET /admin/categories/:id/attributes)', () => {
+  it('returns id + order, which the public route deliberately does not', async () => {
+    const { subA } = await makeTree();
+    const reader = await makeStaff('employee', ['category:read']);
+
+    const admin = await request(app)
+      .get(`/admin/categories/${subA._id}/attributes`)
+      .set(bearer(reader.token));
+    expect(admin.status).toBe(200);
+    expect(admin.body.attributes).toHaveLength(1);
+    expect(admin.body.attributes[0]).toMatchObject({ key: 'gsm', inputType: 'number', order: 1 });
+    expect(admin.body.attributes[0].id).toBeTruthy();
+
+    // The public shape must NOT have grown an internal id (m3-public-projection).
+    const publicRead = await request(app).get(`/categories/${subA._id}/attributes`);
+    expect(publicRead.status).toBe(200);
+    expect(publicRead.body.attributes[0].id).toBeUndefined();
+    expect(publicRead.body.attributes[0].order).toBeUndefined();
+  });
+
+  it('serves an INACTIVE sub and a sub under a cascade-off top — the public route 404s both', async () => {
+    const { offSub, offTop } = await makeTree();
+    const sa = await makeStaff('superadmin');
+    const hiddenSub = await Category.create({
+      name: 'Newsprint',
+      parentId: offTop._id,
+      type: 'goods',
+      order: 1,
+    });
+    await CategoryAttribute.create({
+      categoryId: offSub._id,
+      name: 'Weight',
+      key: 'weight',
+      inputType: 'number',
+      order: 1,
+    });
+
+    for (const id of [offSub._id, hiddenSub._id]) {
+      expect((await request(app).get(`/admin/categories/${id}/attributes`).set(bearer(sa.token))).status).toBe(200);
+      expect((await request(app).get(`/categories/${id}/attributes`)).status).toBe(404);
+    }
+  });
+
+  it('refuses a TOP category — §A16 puts fields on the leaf only', async () => {
+    const { top } = await makeTree();
+    const sa = await makeStaff('superadmin');
+    const res = await request(app).get(`/admin/categories/${top._id}/attributes`).set(bearer(sa.token));
+    expect(res.status).toBe(400);
+  });
+
+  it('needs category:read', async () => {
+    const { subA } = await makeTree();
+    const noPerm = await makeStaff('employee');
+    const res = await request(app).get(`/admin/categories/${subA._id}/attributes`).set(bearer(noPerm.token));
+    expect(res.status).toBe(403);
+  });
+
+  it('the returned id is what PATCH/DELETE :attrId accept — the round trip screen 9 makes', async () => {
+    const { subA } = await makeTree();
+    const sa = await makeStaff('superadmin');
+
+    const listed = await request(app).get(`/admin/categories/${subA._id}/attributes`).set(bearer(sa.token));
+    const { id } = listed.body.attributes[0];
+
+    const patched = await request(app)
+      .patch(`/admin/categories/${subA._id}/attributes/${id}`)
+      .set(bearer(sa.token))
+      .send({ name: 'Fabric GSM' });
+    expect(patched.status).toBe(200);
+    expect(patched.body.attribute.name).toBe('Fabric GSM');
+
+    const deleted = await request(app)
+      .delete(`/admin/categories/${subA._id}/attributes/${id}`)
+      .set(bearer(sa.token));
+    expect(deleted.status).toBe(200);
+    expect(await CategoryAttribute.countDocuments({ _id: id })).toBe(0);
+  });
+});
