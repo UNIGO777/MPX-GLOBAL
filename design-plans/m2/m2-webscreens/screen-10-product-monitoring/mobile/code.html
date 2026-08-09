@@ -1,0 +1,804 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=375, initial-scale=1.0" name="viewport">
+<title>MPX Global - Products</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#eeedf9",
+                        "primary-container": "#2a4de0",
+                        "tertiary-fixed": "#70fda7",
+                        "on-primary-container": "#d0d6ff",
+                        "tertiary": "#00522c",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#dad9e5",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "inverse-surface": "#2f3039",
+                        "on-primary-fixed": "#001158",
+                        "surface": "#fbf8ff",
+                        "on-secondary-container": "#53647d",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "primary": "#0032c3",
+                        "tertiary-container": "#006d3c",
+                        "surface-container-low": "#f4f2ff",
+                        "on-secondary-fixed-variant": "#374860",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "background": "#fbf8ff",
+                        "inverse-primary": "#b9c3ff",
+                        "primary-fixed": "#dee1ff",
+                        "on-tertiary-container": "#66f29e",
+                        "outline-variant": "#c4c5d8",
+                        "surface-variant": "#e2e1ee",
+                        "secondary-container": "#cfe1ff",
+                        "surface-container-highest": "#e2e1ee",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#00210e",
+                        "surface-bright": "#fbf8ff",
+                        "on-surface": "#1a1b24",
+                        "surface-tint": "#2a4de0",
+                        "on-surface-variant": "#444655",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "on-secondary-fixed": "#091c32",
+                        "secondary-fixed": "#d4e3ff",
+                        "on-background": "#1a1b24",
+                        "inverse-on-surface": "#f1effc",
+                        "secondary": "#4e5f79",
+                        "surface-container-high": "#e8e7f3",
+                        "error-container": "#ffdad6",
+                        "on-error": "#ffffff",
+                        "outline": "#747687",
+                        "royal-blue": "#2A4DE0",
+                        "navy-bar": "#1A2E8F",
+                        "canvas-bg": "#EAEEFF",
+                        "border-grey": "#C5C6CF",
+                        "success": "#12B76A",
+                        "warning": "#F79009",
+                        "danger": "#D92D20"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "card-padding": "40px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 4rem; }
+        .frame { width: 375px; background-color: #EAEEFF; overflow: hidden; position: relative; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .card-shadow { box-shadow: 0px 4px 20px rgba(0, 5, 23, 0.05); }
+        
+        /* Focus styles */
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #2A4DE0 !important; box-shadow: 0 0 0 2px rgba(42, 77, 224, 0.2) !important; }
+        
+        /* Custom Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #2A4DE0; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #2A4DE0; }
+        
+        /* Dialog overlay */
+        .dialog-overlay { position: absolute; inset: 0; background-color: rgba(26, 27, 36, 0.5); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-100">
+<!-- ============================================== -->
+<!-- FRAME 1: PRODUCT LIST                          -->
+<!-- ============================================== -->
+<div class="frame">
+<!-- TopAppBar -->
+<header class="bg-navy-bar text-white flex justify-between items-center px-4 h-16 w-full shrink-0">
+<button class="p-2 -ml-2 text-white">
+<svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><line x1="3" x2="21" y1="12" y2="12"></line><line x1="3" x2="21" y1="6" y2="6"></line><line x1="3" x2="21" y1="18" y2="18"></line></svg>
+</button>
+<div class="font-headline-md text-headline-md font-semibold tracking-tight">MPX Global</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/20 overflow-hidden shrink-0 -mr-1">
+<img class="w-full h-full object-cover" data-alt="A macro photograph of an abstract blue and white gradient sphere serving as an avatar placeholder. Studio lighting, soft shadows, high contrast, clean modern UI aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhKC9YnxZ5qgxuAS6GFqY1ZFj0ltHXD2f8ZSQHckYd-1VjFFYdmvXn5yAU3-7ZWqX7eQIdf2qJVmD6tfPOF6J60QXt19HIkuVynf8Qvc7SZrd9iNtW6u8F0D49PIBm1bd6j0U3xy1DsF1AEhDFgCaMJLK8roTluUmO3ktfdj04WAPHdmycmmQEWouo3tt5kVW_H-eI6-P0rUMFpGCs-IiEFzJFCfMc8zWi1JJqIqDwQ2f94r8khOCA">
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-[16px] py-6 flex flex-col gap-6">
+<!-- Header -->
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Products</h1>
+<!-- Filters Stack -->
+<div class="flex flex-col gap-3">
+<div class="relative w-full">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<svg fill="none" height="16" stroke="#747687" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16"><circle cx="11" cy="11" r="8"></circle><line x1="21" x2="16.65" y1="21" y2="16.65"></line></svg>
+</div>
+<input class="w-full pl-10 pr-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface placeholder-outline focus:ring-2 focus:ring-primary-container focus:border-primary-container transition-all" placeholder="Search product name" type="text">
+</div>
+<div class="relative w-full">
+<select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface appearance-none focus:ring-2 focus:ring-primary-container focus:border-primary-container transition-all">
+<option>Cotton fabric</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-outline">
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</div>
+</div>
+<div class="relative w-full">
+<select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface appearance-none focus:ring-2 focus:ring-primary-container focus:border-primary-container transition-all">
+<option>All statuses</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-outline">
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</div>
+</div>
+<div class="relative w-full">
+<select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface appearance-none focus:ring-2 focus:ring-primary-container focus:border-primary-container transition-all">
+<option>All sellers</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-outline">
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</div>
+</div>
+<div class="flex items-center justify-between w-full py-1">
+<span class="font-body-md text-body-md text-on-surface">Nearing purge</span>
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-outline-variant transition-transform duration-200" id="toggle" name="toggle" style="top: 2px; left: 2px;" type="checkbox">
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer border border-outline-variant transition-colors duration-200" for="toggle"></label>
+</div>
+</div>
+<button class="w-full text-center py-2 font-label-md text-label-md text-royal-blue hover:text-primary transition-colors">
+                    Clear filters
+                </button>
+</div>
+<!-- List -->
+<div class="flex flex-col gap-4">
+<!-- CARD 1 -->
+<div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+<div class="p-4 flex gap-3">
+<div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A close up flat lay photograph of rolled bright white combed cotton poplin fabric with a smooth finish, isolated on a minimal light grey surface. Studio lighting, soft shadows, crisp modern presentation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt6WCGFSIQQ_90AgKOpkALxv7VbnuDAYyX4gtn-aIfUVXHc_sJW1XrheuIOzeFEStcMhe24XfUxipAf2QHEVBdYy3esoMwK9nU06LqTy-DqB5VG_p5BaQenTIvg1XS7JoXMdphQ0Yk_kKVUAsnAV9kk85mec3rvL-wRlD4AsZAgu6VTC3TIOXwq96yIe-iV8WIAwtgAHOnA52nSuhJ343QxXi4c36bBjMQGIRuZOPOpWUufr714bcG">
+</div>
+<div class="flex flex-col gap-1 w-full">
+<h3 class="font-label-md text-label-md text-on-surface leading-tight">Combed Cotton Poplin Fabric</h3>
+<p class="font-body-md text-[13px] text-on-surface-variant">Tirupur Knitwear Exports</p>
+<div class="flex flex-wrap gap-2 mt-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+</div>
+<p class="font-body-md text-[12px] text-outline mt-1">Listed 12 Mar 2026</p>
+</div>
+</div>
+<div class="h-px bg-border-grey w-full"></div>
+<button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="inline-flex items-center gap-1">
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                            Actions
+                        </span>
+</button>
+</div>
+<!-- CARD 2 -->
+<div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+<div class="p-4 flex gap-3">
+<div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A close up studio photograph of a thick roll of raw white cotton cambric 60s thread count fabric, stacked cleanly on a minimal bright white background. High key lighting, sharp focus, professional B2B catalog style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSE9ZZ_GkjgjmZW89Rx561mZW_tlDBPQZN9pdAj-1x_l0cDavaKBTsrD4ikO8ylRK780xIq8HIasxQLX7yKU0nsvWIC2cjh1I0fyGtDUwQaBD7WpODmUABpdMUrzBQ_BuRRlNPWl-4GIJVNhqqpYjD7APM7gKvBdTNyoJfWHjet5ydmUemJw62LpPBSVLT1SNvzS4RVRCQE8WvsZaLEpAvhepug5kmp20uMMDZ1eFcxx5y-uK4WpBQ">
+</div>
+<div class="flex flex-col gap-1 w-full">
+<h3 class="font-label-md text-label-md text-on-surface leading-tight">Cotton Cambric Roll, 60s</h3>
+<p class="font-body-md text-[13px] text-on-surface-variant flex items-center justify-between">
+                                Erode Textile House
+                                <span class="text-danger font-semibold text-[12px]">3 takedowns</span>
+</p>
+<div class="flex flex-wrap gap-2 mt-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-on-error-container border border-danger/20">Taken down · 02 Mar 2026</span>
+</div>
+<p class="font-body-md text-[12px] text-warning font-medium mt-0.5">Purges in 24 days</p>
+<p class="font-body-md text-[12px] text-outline mt-0.5">Listed 02 Mar 2026</p>
+</div>
+</div>
+<div class="h-px bg-border-grey w-full"></div>
+<button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="inline-flex items-center gap-1">
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                            Actions
+                        </span>
+</button>
+</div>
+<!-- CARD 3 -->
+<div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+<div class="p-4 flex gap-3">
+<div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A macro studio shot of bright white bleached cotton twill fabric showing the distinct diagonal weave pattern. Minimalist aesthetic, high contrast lighting, clean white background, commercial photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAi2WoxRcw2lienp3m_Dt3-MpGlZPD3s13oUmjTy_UaqgoVIXWNaOcnfAe_wOvUfI2tMoFPnd_VXQZL8HjQ3ft-vcYxxV2ybMaYgydd8MtPpeNbGsNWosnO_g0eJGN4CAgOMNdwXQTDRbhkiKWqChMhXqLvA3hP59ACy9xHjVSSDMo8awPUd2Gh6bU_mMLs-cnVRDpxhYB0Z3gjsNdOlYtZPdWzQIfMi85Vw00lwrMBGV9nyALS9tiO">
+</div>
+<div class="flex flex-col gap-1 w-full">
+<h3 class="font-label-md text-label-md text-on-surface leading-tight">Bleached Cotton Twill</h3>
+<p class="font-body-md text-[13px] text-on-surface-variant">Surat Weaving Co</p>
+<div class="flex flex-wrap gap-2 mt-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-warning/10 text-warning border border-warning/20">Hidden</span>
+</div>
+<p class="font-body-md text-[12px] text-outline mt-1">Listed 28 Feb 2026</p>
+</div>
+</div>
+<div class="h-px bg-border-grey w-full"></div>
+<button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="inline-flex items-center gap-1">
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                            Actions
+                        </span>
+</button>
+</div>
+<!-- CARD 4 -->
+<div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+<div class="p-4 flex gap-3">
+<div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A flat lay photograph of folded yarn-dyed cotton check fabric featuring a classic navy and white grid pattern. Crisp natural lighting, sterile modern environment, highly detailed texture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBg0wQNjQbqIb_wY23UHa6rllAyI6bS6A-r0GuWbfknK-_3a-oE8tExBJwkMMJn6EJH9G-lAdDGJRcXv3G6Kq0chgs8HRa1itXRPxmLk0M-uGSIGcHYBl033RIzOIl7xu_qEPhJiUxrR369Uh7Db3HJeCIJuMF46W8eZEJohfa3Aac1YBqz_A36y3eDo36PJaOnLJtXnD0tespuiI-y6qUzFDf0U6E1tXiKdrn4b95kCDNbkFNx58N_">
+</div>
+<div class="flex flex-col gap-1 w-full">
+<h3 class="font-label-md text-label-md text-on-surface leading-tight">Yarn-Dyed Cotton Check</h3>
+<p class="font-body-md text-[13px] text-on-surface-variant">Ahmedabad Mills</p>
+<div class="flex flex-wrap gap-2 mt-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+</div>
+<p class="font-body-md text-[12px] text-outline mt-1">Listed 19 Feb 2026</p>
+</div>
+</div>
+<div class="h-px bg-border-grey w-full"></div>
+<button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="inline-flex items-center gap-1">
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                            Actions
+                        </span>
+</button>
+</div>
+<!-- CARD 5 -->
+<div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+<div class="p-4 flex gap-3">
+<div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A tight studio crop of heavy 12oz natural cotton canvas fabric, showcasing its thick, durable weave. Minimalist staging, soft diffused lighting, white background, raw industrial material aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwXzGorqH4S3Si1CjuHwugpuV_LeqrxINwi5TKYnJEhOsXTwAs-aVdlrkHLMMfJfBkX_ZBbF5Ge7gKOhaoS-hab2YM_96Eye2p4BDaHSJumzPCE9puw97t-BIlk894C4M33R1xyuFq4JOMnU5ivkt176UTScUdCl5541zA0vLOfNTQMw2Rm8qhTfBFgqulp5Si7jg39CYOGsNng6fdf6lO4bZy3EQs2socnDk4behL-7359eUJx4yP">
+</div>
+<div class="flex flex-col gap-1 w-full">
+<h3 class="font-label-md text-label-md text-on-surface leading-tight">Cotton Canvas 12oz</h3>
+<p class="font-body-md text-[13px] text-on-surface-variant">Panipat Home Textiles</p>
+<div class="flex flex-wrap gap-2 mt-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-on-error-container border border-danger/20">Taken down · 10 Sep 2025</span>
+</div>
+<p class="font-body-md text-[12px] text-danger font-medium mt-0.5">Purges in 4 days</p>
+<p class="font-body-md text-[12px] text-outline mt-0.5">Listed 10 Sep 2025</p>
+</div>
+</div>
+<div class="h-px bg-border-grey w-full"></div>
+<button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="inline-flex items-center gap-1">
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                            Actions
+                        </span>
+</button>
+</div>
+</div>
+<p class="text-center font-body-md text-[13px] text-outline pb-6">Showing 1–5 of 5</p>
+</main>
+</div>
+<!-- ============================================== -->
+<!-- FRAME 2: TAKE DOWN DIALOG                      -->
+<!-- ============================================== -->
+<div class="frame h-[812px]"> <!-- Fixed height to simulate device viewport for the overlay -->
+<!-- Background content (dimmed) - just drawing header to show context -->
+<header class="bg-navy-bar text-white flex justify-between items-center px-4 h-16 w-full shrink-0">
+<button class="p-2 -ml-2 text-white"><svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24"><line x1="3" x2="21" y1="12" y2="12"></line><line x1="3" x2="21" y1="6" y2="6"></line><line x1="3" x2="21" y1="18" y2="18"></line></svg></button>
+<div class="font-headline-md text-headline-md font-semibold tracking-tight">MPX Global</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/20"></div>
+</header>
+<div class="p-4"><div class="h-8 w-32 bg-surface-variant rounded"></div></div>
+<!-- Overlay & Dialog -->
+<div class="dialog-overlay">
+<div class="bg-white w-full max-w-[343px] rounded-lg border border-border-grey card-shadow flex flex-col p-6">
+<div class="flex flex-col items-center text-center mb-6">
+<div class="w-12 h-12 rounded-full bg-danger/10 flex items-center justify-center text-danger mb-4">
+<svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" x2="12" y1="9" y2="13"></line><line x1="12" x2="12.01" y1="17" y2="17"></line></svg>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface text-[20px] leading-tight">Take down Combed Cotton Poplin Fabric?</h2>
+</div>
+<div class="flex flex-col gap-1 mb-6">
+<div class="flex justify-between items-baseline mb-1">
+<label class="font-label-md text-label-md text-on-surface">Reason <span class="text-danger">*</span></label>
+<span class="font-body-md text-[12px] text-outline">0 / 500</span>
+</div>
+<textarea class="w-full px-3 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface placeholder-outline focus:ring-2 focus:ring-primary-container focus:border-primary-container resize-none" placeholder="Enter reason here..." rows="4"></textarea>
+<p class="font-body-md text-[12px] text-on-surface-variant mt-1 leading-snug">This is shown to the seller — say what's wrong and what would fix it.</p>
+</div>
+<div class="bg-danger/5 border border-danger/10 rounded-lg p-3 mb-6">
+<p class="font-body-md text-[13px] text-on-error-container leading-snug">The product disappears from the public catalogue immediately. The seller keeps it and sees this reason. If it stays blocked for 180 days it is permanently deleted.</p>
+</div>
+<div class="flex flex-col gap-3 w-full">
+<button class="w-full bg-danger hover:bg-[#B42318] text-white font-label-md text-label-md font-bold py-3 px-4 rounded-full transition-colors">
+                        Take down
+                    </button>
+<button class="w-full bg-transparent text-secondary hover:text-on-surface font-label-md text-label-md py-2 transition-colors">
+                        Cancel
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- ============================================== -->
+<!-- FRAME 3: RESTORE DIALOG                        -->
+<!-- ============================================== -->
+<div class="frame h-[812px]"> <!-- Fixed height to simulate device viewport for the overlay -->
+<!-- Background content (dimmed) -->
+<header class="bg-navy-bar text-white flex justify-between items-center px-4 h-16 w-full shrink-0">
+<button class="p-2 -ml-2 text-white"><svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24"><line x1="3" x2="21" y1="12" y2="12"></line><line x1="3" x2="21" y1="6" y2="6"></line><line x1="3" x2="21" y1="18" y2="18"></line></svg></button>
+<div class="font-headline-md text-headline-md font-semibold tracking-tight">MPX Global</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/20"></div>
+</header>
+<div class="p-4"><div class="h-8 w-32 bg-surface-variant rounded"></div></div>
+<!-- Overlay & Dialog -->
+<div class="dialog-overlay">
+<div class="bg-white w-full max-w-[343px] rounded-lg border border-border-grey card-shadow flex flex-col p-6">
+<div class="flex flex-col items-center text-center mb-6">
+<div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant mb-4 border border-outline-variant">
+<svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface text-[20px] leading-tight">Restore Cotton Cambric Roll, 60s?</h2>
+</div>
+<div class="mb-8 text-center">
+<p class="font-body-md text-[14px] text-on-surface-variant leading-relaxed">The product returns to exactly the state the seller left it in (live products go live again). The seller's takedown count is not reduced.</p>
+</div>
+<div class="flex flex-col gap-3 w-full">
+<button class="w-full bg-royal-blue hover:bg-[#2340C4] text-white font-label-md text-label-md font-bold py-3 px-4 rounded-full transition-colors">
+                        Restore
+                    </button>
+<button class="w-full bg-transparent text-secondary hover:text-on-surface font-label-md text-label-md py-2 transition-colors">
+                        Cancel
+                    </button>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- ============================================== -->
+<!-- FRAME 1: PRODUCT LIST                          -->
+<!-- ============================================== -->
+<div class="frame mt-8">
+  <header class="bg-navy-bar text-white flex justify-between items-center px-4 h-16 w-full shrink-0">
+    <button class="p-2 -ml-2 text-white">
+      <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><line x1="3" x2="21" y1="12" y2="12"></line><line x1="3" x2="21" y1="6" y2="6"></line><line x1="3" x2="21" y1="18" y2="18"></line></svg>
+    </button>
+    <div class="font-headline-md text-headline-md font-semibold tracking-tight">MPX Global</div>
+    <div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/20 overflow-hidden shrink-0 -mr-1">
+      <div class="w-full h-full bg-border-grey"></div>
+    </div>
+  </header>
+  <main class="px-[16px] py-6 flex flex-col gap-6">
+    <h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">Products</h1>
+    <div class="flex flex-col gap-3">
+      <div class="relative w-full">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg fill="none" height="16" stroke="#747687" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16"><circle cx="11" cy="11" r="8"></circle><line x1="21" x2="16.65" y1="21" y2="16.65"></line></svg>
+        </div>
+        <input class="w-full pl-10 pr-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface placeholder-outline" placeholder="Search product name" type="text">
+      </div>
+      <select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface">
+        <option>Cotton fabric</option>
+      </select>
+      <select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface">
+        <option>All statuses</option>
+      </select>
+      <select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface">
+        <option>All sellers</option>
+      </select>
+      <div class="flex items-center justify-between w-full py-1">
+        <span class="font-body-md text-body-md text-on-surface">Nearing purge</span>
+        <div class="relative inline-block w-10 mr-2 align-middle select-none">
+          <div class="block overflow-hidden h-6 rounded-full bg-surface-variant border border-outline-variant"></div>
+          <div class="absolute block w-5 h-5 rounded-full bg-white border-4 border-outline-variant" style="top: 2px; left: 2px;"></div>
+        </div>
+      </div>
+      <button class="w-full text-center py-2 font-label-md text-label-md text-royal-blue">Clear filters</button>
+    </div>
+    <div class="flex flex-col gap-4">
+      <div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+        <div class="p-4 flex gap-3">
+          <div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey"></div>
+          <div class="flex flex-col gap-1 w-full">
+            <h3 class="font-label-md text-label-md text-on-surface font-bold leading-tight">Combed Cotton Poplin Fabric</h3>
+            <p class="font-body-md text-[13px] text-on-surface-variant">Tirupur Knitwear Exports</p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+            </div>
+            <p class="font-body-md text-[12px] text-outline mt-1">Listed 12 Mar 2026</p>
+          </div>
+        </div>
+        <div class="h-px bg-border-grey w-full"></div>
+        <button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface">Actions</button>
+      </div>
+      <div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+        <div class="p-4 flex gap-3">
+          <div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey"></div>
+          <div class="flex flex-col gap-1 w-full">
+            <h3 class="font-label-md text-label-md text-on-surface font-bold leading-tight">Cotton Cambric Roll, 60s</h3>
+            <p class="font-body-md text-[13px] text-on-surface-variant flex items-center justify-between">
+              Erode Textile House
+              <span class="text-danger font-semibold text-[12px]">3 takedowns</span>
+            </p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-on-error-container border border-danger/20">Taken down · 02 Mar 2026</span>
+            </div>
+            <p class="font-body-md text-[12px] text-warning font-medium mt-0.5">Purges in 24 days</p>
+            <p class="font-body-md text-[12px] text-outline mt-0.5">Listed 02 Mar 2026</p>
+          </div>
+        </div>
+        <div class="h-px bg-border-grey w-full"></div>
+        <button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface">Actions</button>
+      </div>
+      <div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+        <div class="p-4 flex gap-3">
+          <div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey"></div>
+          <div class="flex flex-col gap-1 w-full">
+            <h3 class="font-label-md text-label-md text-on-surface font-bold leading-tight">Bleached Cotton Twill</h3>
+            <p class="font-body-md text-[13px] text-on-surface-variant">Surat Weaving Co</p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-warning/10 text-warning border border-warning/20">Hidden</span>
+            </div>
+            <p class="font-body-md text-[12px] text-outline mt-1">Listed 28 Feb 2026</p>
+          </div>
+        </div>
+        <div class="h-px bg-border-grey w-full"></div>
+        <button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface">Actions</button>
+      </div>
+      <div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+        <div class="p-4 flex gap-3">
+          <div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey"></div>
+          <div class="flex flex-col gap-1 w-full">
+            <h3 class="font-label-md text-label-md text-on-surface font-bold leading-tight">Yarn-Dyed Cotton Check</h3>
+            <p class="font-body-md text-[13px] text-on-surface-variant">Ahmedabad Mills</p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+            </div>
+            <p class="font-body-md text-[12px] text-outline mt-1">Listed 19 Feb 2026</p>
+          </div>
+        </div>
+        <div class="h-px bg-border-grey w-full"></div>
+        <button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface">Actions</button>
+      </div>
+      <div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+        <div class="p-4 flex gap-3">
+          <div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey"></div>
+          <div class="flex flex-col gap-1 w-full">
+            <h3 class="font-label-md text-label-md text-on-surface font-bold leading-tight">Cotton Canvas 12oz</h3>
+            <p class="font-body-md text-[13px] text-on-surface-variant">Panipat Home Textiles</p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-on-error-container border border-danger/20">Taken down · 10 Sep 2025</span>
+            </div>
+            <p class="font-body-md text-[12px] text-danger font-medium mt-0.5">Purges in 4 days</p>
+            <p class="font-body-md text-[12px] text-outline mt-0.5">Listed 10 Sep 2025</p>
+          </div>
+        </div>
+        <div class="h-px bg-border-grey w-full"></div>
+        <button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface">Actions</button>
+      </div>
+    </div>
+    <p class="text-center font-body-md text-[13px] text-outline pb-6">Showing 1–5 of 5</p>
+  </main>
+</div>
+
+<!-- ============================================== -->
+<!-- FRAME 2: TAKE DOWN DIALOG                      -->
+<!-- ============================================== -->
+<div class="frame h-[812px] mt-8">
+  <div class="dialog-overlay">
+    <div class="bg-white w-full max-w-[343px] rounded-lg border border-border-grey card-shadow flex flex-col p-6">
+      <div class="flex flex-col items-center text-center mb-6">
+        <div class="w-12 h-12 rounded-full bg-danger/10 flex items-center justify-center text-danger mb-4">
+          <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" x2="12" y1="9" y2="13"></line><line x1="12" x2="12.01" y1="17" y2="17"></line></svg>
+        </div>
+        <h2 class="font-headline-md text-headline-md text-on-surface text-[20px] leading-tight">Take down Combed Cotton Poplin Fabric?</h2>
+      </div>
+      <div class="flex flex-col gap-1 mb-6">
+        <div class="flex justify-between items-baseline mb-1">
+          <label class="font-label-md text-label-md text-on-surface">Reason <span class="text-danger">*</span></label>
+          <span class="font-body-md text-[12px] text-outline">0 / 500</span>
+        </div>
+        <textarea class="w-full px-3 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface placeholder-outline resize-none" placeholder="Enter reason here..." rows="4"></textarea>
+        <p class="font-body-md text-[12px] text-on-surface-variant mt-1 leading-snug">This is shown to the seller — say what's wrong and what would fix it.</p>
+      </div>
+      <div class="bg-danger/5 border border-danger/10 rounded-lg p-3 mb-6">
+        <p class="font-body-md text-[13px] text-on-error-container leading-snug">The product disappears from the public catalogue immediately. The seller keeps it and sees this reason. If it stays blocked for 180 days it is permanently deleted.</p>
+      </div>
+      <div class="flex flex-col gap-3 w-full">
+        <button class="w-full bg-danger text-white font-label-md text-label-md font-bold py-3 px-4 rounded-full">Take down</button>
+        <button class="w-full bg-transparent text-secondary font-label-md text-label-md py-2">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- FRAME 3: RESTORE DIALOG                        -->
+<!-- ============================================== -->
+<div class="frame h-[812px] mt-8">
+  <div class="dialog-overlay">
+    <div class="bg-white w-full max-w-[343px] rounded-lg border border-border-grey card-shadow flex flex-col p-6">
+      <div class="flex flex-col items-center text-center mb-6">
+        <div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant mb-4 border border-outline-variant">
+          <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+        </div>
+        <h2 class="font-headline-md text-headline-md text-on-surface text-[20px] leading-tight">Restore Cotton Cambric Roll, 60s?</h2>
+      </div>
+      <div class="mb-8 text-center">
+        <p class="font-body-md text-[14px] text-on-surface-variant leading-relaxed">The product returns to exactly the state the seller left it in (live products go live again). The seller's takedown count is not reduced.</p>
+      </div>
+      <div class="flex flex-col gap-3 w-full">
+        <button class="w-full bg-royal-blue text-white font-label-md text-label-md font-bold py-3 px-4 rounded-full">Restore</button>
+        <button class="w-full bg-transparent text-secondary font-label-md text-label-md py-2">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div><div class="frame mt-8 min-h-[812px] bg-canvas-bg">
+  <header class="bg-navy-bar text-white flex justify-between items-center px-4 h-16 w-full shrink-0">
+    <button class="p-2 -ml-2 text-white">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <div class="font-headline-md text-headline-md font-semibold tracking-tight">MPX Global</div>
+    <div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/20 overflow-hidden shrink-0 -mr-1">
+      <div class="w-full h-full bg-border-grey"></div>
+    </div>
+  </header>
+  <main class="px-4 py-6 flex flex-col gap-6">
+    <button class="flex items-center gap-1 text-royal-blue font-label-md">
+      <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+      Products
+    </button>
+    <h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">Cotton Cambric Roll, 60s</h1>
+    <div class="bg-white rounded-lg border border-border-grey p-4 flex flex-col gap-4">
+      <div class="flex gap-3 items-center">
+        <div class="w-16 h-16 rounded bg-surface-variant border border-border-grey shrink-0"></div>
+        <span class="font-label-md text-on-surface font-bold">Cotton Cambric Roll, 60s</span>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[12px] text-secondary font-medium">Seller</label>
+        <div class="flex items-center gap-2">
+          <span class="font-body-md text-on-surface">Erode Textile House</span>
+          <span class="bg-danger/10 text-danger text-[11px] font-bold px-2 py-0.5 rounded">3 takedowns</span>
+        </div>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[12px] text-secondary font-medium">Status</label>
+        <div class="flex gap-2">
+          <span class="bg-success/10 text-tertiary-container text-[11px] font-semibold px-2 py-0.5 rounded border border-success/20">Live</span>
+          <span class="bg-danger/10 text-on-error-container text-[11px] font-semibold px-2 py-0.5 rounded border border-danger/20">Taken down · 02 Mar 2026</span>
+        </div>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[12px] text-secondary font-medium">Taken down by</label>
+        <span class="font-body-md text-on-surface">Priya Sharma · 02 Mar 2026</span>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[12px] text-secondary font-medium">Reason</label>
+        <span class="font-body-md text-on-surface">Images do not match the product described</span>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[12px] text-secondary font-medium">Purge</label>
+        <span class="font-body-md text-warning font-medium">Purges in 24 days</span>
+      </div>
+    </div>
+    <div class="mt-auto pt-8">
+      <button class="w-full bg-royal-blue text-white font-label-md text-label-md font-bold py-3 px-4 rounded-full">Restore</button>
+    </div>
+  </main>
+</div><div class="frame mt-8 min-h-[812px] bg-canvas-bg">
+  <header class="bg-navy-bar text-white flex justify-between items-center px-4 h-16 w-full shrink-0">
+    <button class="p-2 -ml-2 text-white">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <div class="font-headline-md text-headline-md font-semibold tracking-tight">MPX Global</div>
+    <div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/20 overflow-hidden shrink-0 -mr-1">
+      <div class="w-full h-full bg-border-grey"></div>
+    </div>
+  </header>
+  <main class="px-4 py-6 flex flex-col gap-6">
+    <h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">Products</h1>
+    <div class="flex flex-col gap-3">
+      <div class="relative w-full">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-outline text-[20px]">search</span>
+        </div>
+        <input class="w-full pl-10 pr-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface placeholder-outline" placeholder="Search product name" type="text">
+      </div>
+      <select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface">
+        <option>Cotton fabric</option>
+      </select>
+      <select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface">
+        <option>All statuses</option>
+      </select>
+      <select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface">
+        <option>All sellers</option>
+      </select>
+      <div class="flex items-center justify-between w-full py-1">
+        <span class="font-body-md text-body-md text-on-surface">Nearing purge</span>
+        <div class="relative inline-block w-10 mr-2 align-middle select-none">
+          <div class="block overflow-hidden h-6 rounded-full bg-surface-variant border border-outline-variant"></div>
+          <div class="absolute block w-5 h-5 rounded-full bg-white border-4 border-outline-variant" style="top: 2px; left: 2px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+      <div class="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center text-outline mb-4">
+        <span class="material-symbols-outlined text-[32px]">search_off</span>
+      </div>
+      <h2 class="font-headline-md text-on-surface mb-2">No products match these filters</h2>
+      <p class="text-[13px] text-secondary mb-8">Category: Cotton fabric · Status: Blocked · Seller: Erode Textile House</p>
+      <button class="w-full bg-royal-blue text-white font-label-md text-label-md font-bold py-3 px-4 rounded-full">Clear filters</button>
+    </div>
+  </main>
+</div><div class="frame mt-8 min-h-[812px] bg-canvas-bg">
+  <header class="bg-navy-bar text-white flex justify-between items-center px-4 h-16 w-full shrink-0">
+    <button class="p-2 -ml-2 text-white">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <div class="font-headline-md text-headline-md font-semibold tracking-tight">MPX Global</div>
+    <div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/20 overflow-hidden shrink-0 -mr-1">
+      <div class="w-full h-full bg-border-grey"></div>
+    </div>
+  </header>
+  <main class="px-4 py-6 flex flex-col gap-6">
+    <h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">Products</h1>
+    <div class="flex flex-col gap-3">
+      <div class="relative w-full">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-outline text-[20px]">search</span>
+        </div>
+        <input class="w-full pl-10 pr-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface placeholder-outline" placeholder="Search product name" type="text">
+      </div>
+      <select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface">
+        <option>Cotton fabric</option>
+      </select>
+      <select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface">
+        <option>All statuses</option>
+      </select>
+      <select class="w-full px-4 py-2 bg-white border border-border-grey rounded-lg font-body-md text-body-md text-on-surface">
+        <option>All sellers</option>
+      </select>
+      <div class="flex items-center justify-between w-full py-1">
+        <span class="font-body-md text-body-md text-on-surface">Nearing purge</span>
+        <div class="relative inline-block w-10 mr-2 align-middle select-none">
+          <div class="block overflow-hidden h-6 rounded-full bg-surface-variant border border-outline-variant"></div>
+          <div class="absolute block w-5 h-5 rounded-full bg-white border-4 border-outline-variant" style="top: 2px; left: 2px;"></div>
+        </div>
+      </div>
+      <button class="w-full text-center py-2 font-label-md text-label-md text-royal-blue">Clear filters</button>
+    </div>
+    <div class="flex flex-col gap-4">
+      <div class="bg-surface-container-low border border-outline-variant rounded p-3 flex justify-between items-center">
+        <span class="text-[13px] text-on-surface">This product is no longer in that state</span>
+        <button class="text-royal-blue font-label-md text-[13px]">Refresh</button>
+      </div>
+      <div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+        <div class="p-4 flex gap-3">
+          <div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey"></div>
+          <div class="flex flex-col gap-1 w-full">
+            <h3 class="font-label-md text-label-md text-on-surface font-bold leading-tight">Combed Cotton Poplin Fabric</h3>
+            <p class="font-body-md text-[13px] text-on-surface-variant">Tirupur Knitwear Exports</p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+            </div>
+            <p class="font-body-md text-[12px] text-outline mt-1">Listed 12 Mar 2026</p>
+          </div>
+        </div>
+        <div class="h-px bg-border-grey w-full"></div>
+        <button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface">Actions</button>
+      </div>
+      <div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+        <div class="p-4 flex gap-3">
+          <div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey"></div>
+          <div class="flex flex-col gap-1 w-full">
+            <h3 class="font-label-md text-label-md text-on-surface font-bold leading-tight">Cotton Cambric Roll, 60s</h3>
+            <p class="font-body-md text-[13px] text-on-surface-variant flex items-center justify-between">
+              Erode Textile House
+              <span class="text-danger font-semibold text-[12px]">3 takedowns</span>
+            </p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-on-error-container border border-danger/20">Taken down · 02 Mar 2026</span>
+            </div>
+            <p class="font-body-md text-[12px] text-warning font-medium mt-0.5">Purges in 24 days</p>
+            <p class="font-body-md text-[12px] text-outline mt-0.5">Listed 02 Mar 2026</p>
+          </div>
+        </div>
+        <div class="h-px bg-border-grey w-full"></div>
+        <button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface">Actions</button>
+      </div>
+      <div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+        <div class="p-4 flex gap-3">
+          <div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey"></div>
+          <div class="flex flex-col gap-1 w-full">
+            <h3 class="font-label-md text-label-md text-on-surface font-bold leading-tight">Bleached Cotton Twill</h3>
+            <p class="font-body-md text-[13px] text-on-surface-variant">Surat Weaving Co</p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-warning/10 text-warning border border-warning/20">Hidden</span>
+            </div>
+            <p class="font-body-md text-[12px] text-outline mt-1">Listed 28 Feb 2026</p>
+          </div>
+        </div>
+        <div class="h-px bg-border-grey w-full"></div>
+        <button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface">Actions</button>
+      </div>
+      <div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+        <div class="p-4 flex gap-3">
+          <div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey"></div>
+          <div class="flex flex-col gap-1 w-full">
+            <h3 class="font-label-md text-label-md text-on-surface font-bold leading-tight">Yarn-Dyed Cotton Check</h3>
+            <p class="font-body-md text-[13px] text-on-surface-variant">Ahmedabad Mills</p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+            </div>
+            <p class="font-body-md text-[12px] text-outline mt-1">Listed 19 Feb 2026</p>
+          </div>
+        </div>
+        <div class="h-px bg-border-grey w-full"></div>
+        <button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface">Actions</button>
+      </div>
+      <div class="bg-white rounded-lg border border-border-grey card-shadow overflow-hidden flex flex-col">
+        <div class="p-4 flex gap-3">
+          <div class="w-16 h-16 rounded bg-surface-variant shrink-0 border border-border-grey"></div>
+          <div class="flex flex-col gap-1 w-full">
+            <h3 class="font-label-md text-label-md text-on-surface font-bold leading-tight">Cotton Canvas 12oz</h3>
+            <p class="font-body-md text-[13px] text-on-surface-variant">Panipat Home Textiles</p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-success/10 text-tertiary-container border border-success/20">Live</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-on-error-container border border-danger/20">Taken down · 10 Sep 2025</span>
+            </div>
+            <p class="font-body-md text-[12px] text-danger font-medium mt-0.5">Purges in 4 days</p>
+            <p class="font-body-md text-[12px] text-outline mt-0.5">Listed 10 Sep 2025</p>
+          </div>
+        </div>
+        <div class="h-px bg-border-grey w-full"></div>
+        <button class="w-full py-2.5 text-center font-label-md text-label-md text-on-surface">Actions</button>
+      </div>
+    </div>
+    <p class="text-center font-body-md text-[13px] text-outline pb-6">Showing 1–5 of 5</p>
+  </main>
+</div></body></html>

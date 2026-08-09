@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global - Admin Mobile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "outline-variant": "#c4c5d8",
+                  "inverse-on-surface": "#f1effc",
+                  "surface-container-high": "#e8e7f3",
+                  "error-container": "#ffdad6",
+                  "on-surface": "#1a1b24",
+                  "tertiary-fixed-dim": "#51df8e",
+                  "surface-container-low": "#f4f2ff",
+                  "surface-bright": "#fbf8ff",
+                  "secondary": "#4e5f79",
+                  "tertiary": "#00522c",
+                  "on-secondary": "#ffffff",
+                  "on-tertiary-fixed": "#00210e",
+                  "tertiary-container": "#006d3c",
+                  "surface": "#fbf8ff",
+                  "surface-tint": "#2a4de0",
+                  "inverse-surface": "#2f3039",
+                  "primary-fixed-dim": "#b9c3ff",
+                  "primary": "#0032c3",
+                  "on-tertiary-fixed-variant": "#00522c",
+                  "on-error": "#ffffff",
+                  "secondary-container": "#cfe1ff",
+                  "surface-variant": "#e2e1ee",
+                  "error": "#ba1a1a",
+                  "surface-container": "#eeedf9",
+                  "on-primary": "#ffffff",
+                  "surface-container-highest": "#e2e1ee",
+                  "on-tertiary": "#ffffff",
+                  "background": "#eaeeff",
+                  "tertiary-fixed": "#70fda7",
+                  "primary-fixed": "#dee1ff",
+                  "inverse-primary": "#b9c3ff",
+                  "secondary-fixed": "#d4e3ff",
+                  "on-secondary-fixed": "#091c32",
+                  "on-secondary-fixed-variant": "#374860",
+                  "surface-dim": "#dad9e5",
+                  "on-tertiary-container": "#66f29e",
+                  "primary-container": "#2a4de0",
+                  "surface-container-lowest": "#ffffff",
+                  "on-error-container": "#93000a",
+                  "outline": "#747687",
+                  "on-primary-fixed-variant": "#0032c3",
+                  "on-secondary-container": "#53647d",
+                  "on-surface-variant": "#444655",
+                  "on-background": "#1a1b24",
+                  "on-primary-container": "#d0d6ff",
+                  "secondary-fixed-dim": "#b6c8e5",
+                  "on-primary-fixed": "#001158"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "stack-lg": "32px",
+                  "stack-md": "16px",
+                  "container-max": "1200px",
+                  "gutter": "24px",
+                  "stack-sm": "8px",
+                  "card-padding": "40px",
+                  "unit": "4px"
+          },
+          "fontFamily": {
+                  "label-sm": ["Inter"],
+                  "headline-lg": ["Inter"],
+                  "headline-lg-mobile": ["Inter"],
+                  "body-md": ["Inter"],
+                  "label-md": ["Inter"],
+                  "display-lg": ["Inter"],
+                  "body-lg": ["Inter"],
+                  "headline-md": ["Inter"]
+          },
+          "fontSize": {
+                  "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                  "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                  "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                  "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                  "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                  "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                  "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                  "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+          }
+        },
+      }
+    }
+  </script>
+<style>
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #2a4de0;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #2a4de0;
+    }
+    body {
+      background-color: #f1effc;
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-body-md text-on-surface bg-inverse-on-surface antialiased flex flex-col items-center py-stack-lg gap-stack-lg">
+<!-- ========================================================= -->
+<!-- SCREEN 1: CATEGORY LIST                                   -->
+<!-- ========================================================= -->
+<div class="w-[375px] bg-background shadow-lg overflow-hidden shrink-0 relative flex flex-col pb-8">
+<header class="bg-[#1A2E8F] flex justify-between items-center px-4 h-16 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-headline-md font-headline-md font-bold text-white tracking-tight">MPX Global</div>
+<button class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 overflow-hidden shrink-0 border border-white/30">
+<span class="material-symbols-outlined text-white text-[20px]" style="font-variation-settings: 'FILL' 1;">person</span>
+</button>
+</header>
+<main class="flex-1 px-4 py-6 overflow-y-auto">
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface mb-6">Categories</h1>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden">
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md">TF</div>
+<div class="flex-1 min-w-0 pr-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Textiles, Fabrics &amp; Yarn</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">8 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md">AG</div>
+<div class="flex-1 min-w-0 pr-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Apparel &amp; Garments</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">12 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md">AF</div>
+<div class="flex-1 min-w-0 pr-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Agriculture &amp; Food Products</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">10 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md">CD</div>
+<div class="flex-1 min-w-0 pr-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Chemicals &amp; Dyes</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">7 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md">LF</div>
+<div class="flex-1 min-w-0 pr-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Leather &amp; Footwear</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">6 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group opacity-60 bg-surface-container-high/30" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md grayscale">HD</div>
+<div class="flex-1 min-w-0 pr-2">
+<div class="flex items-center gap-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Handicrafts &amp; Home Decor</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant shrink-0 uppercase tracking-wider">Inactive</span>
+</div>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">9 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-on-surface-variant transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md">EM</div>
+<div class="flex-1 min-w-0 pr-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Engineering &amp; Machinery</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">11 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md">GJ</div>
+<div class="flex-1 min-w-0 pr-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Gems &amp; Jewellery</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">5 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md">PH</div>
+<div class="flex-1 min-w-0 pr-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Pharmaceuticals &amp; Healthcare</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">8 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group opacity-60 bg-surface-container-high/30" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md grayscale">IT</div>
+<div class="flex-1 min-w-0 pr-2">
+<div class="flex items-center gap-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">IT, Software &amp; AI Services</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant shrink-0 uppercase tracking-wider">Inactive</span>
+</div>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">6 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-on-surface-variant transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md">PP</div>
+<div class="flex-1 min-w-0 pr-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Packaging &amp; Printing</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">7 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors shrink-0">chevron_right</span>
+</a>
+<a class="flex items-center px-4 py-4 border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 mr-4 text-on-surface font-label-md">OT</div>
+<div class="flex-1 min-w-0 pr-2">
+<p class="text-body-md font-body-md font-medium text-on-surface truncate">Other</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1 font-normal">2 sub-categories</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors shrink-0">chevron_right</span>
+</a>
+</div>
+</main>
+</div>
+<!-- ========================================================= -->
+<!-- SCREEN 2: CATEGORY DETAIL                                 -->
+<!-- ========================================================= -->
+<div class="w-[375px] bg-background shadow-lg overflow-hidden shrink-0 relative flex flex-col pb-8">
+<header class="bg-[#1A2E8F] flex justify-between items-center px-4 h-16 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-headline-md font-headline-md font-bold text-white tracking-tight">MPX Global</div>
+<button class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 overflow-hidden shrink-0 border border-white/30">
+<span class="material-symbols-outlined text-white text-[20px]" style="font-variation-settings: 'FILL' 1;">person</span>
+</button>
+</header>
+<main class="flex-1 px-4 py-6 overflow-y-auto">
+<a class="inline-flex items-center text-primary hover:text-on-primary-fixed-variant transition-colors mb-4 group" href="#">
+<span class="material-symbols-outlined text-[20px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+<span class="text-label-md font-label-md">Categories</span>
+</a>
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface mb-6 leading-tight">Textiles, Fabrics &amp; Yarn</h1>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5 mb-8 shadow-sm">
+<div class="flex items-center justify-between mb-6 pb-6 border-b border-outline-variant">
+<div class="text-body-md font-body-md font-medium text-on-surface">Active</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out border-[#2a4de0] translate-x-6" id="toggle1" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-primary-container cursor-pointer transition-colors duration-200 ease-in-out" for="toggle1"></label>
+</div>
+</div>
+<div class="mb-6">
+<label class="block text-label-md font-label-md text-on-surface mb-2">Category Image</label>
+<div class="flex items-start gap-4">
+<div class="w-20 h-20 rounded bg-surface-variant border border-outline-variant shrink-0 overflow-hidden relative">
+<img alt="" class="object-cover w-full h-full" data-alt="Close up high quality macro shot of finely woven cotton textile fabric with visible threads and soft natural lighting in a modern industrial setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYnrkn51RPjQje2VzT7oQgdvGaMTPP_t-EH-20wp_UIWxVMUc71WavWGFDW67w86B3g_qQNQ7xaCIiWFHVpxlFTmL2XxybDbXewq-sTYCk9aiSZOewVsUxMJCrTDoolCa32bTU4QfSSHNHxXdAAgig3REyZqB3BkYdKd3xHm694fH08CDJHW_khBJbUQGucg2VBWh7MCQVqvLwzRyRBBFKeyB5g09z1S2BxVVkaFIARtkE-wMG9Qdo"/>
+</div>
+<div class="flex-1 pt-1">
+<button class="px-4 py-1.5 rounded-full border border-outline-variant text-label-md font-label-md text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors mb-2">Replace image</button>
+<p class="text-[11px] text-outline leading-tight">1 image · 5 MB max<br/>JPG, PNG or WEBP</p>
+</div>
+</div>
+</div>
+<div class="mb-5">
+<label class="block text-label-md font-label-md text-on-surface mb-1.5">Name</label>
+<input class="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-body-md font-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow" type="text" value="Textiles, Fabrics &amp; Yarn"/>
+</div>
+<div class="mb-5">
+<label class="block text-label-md font-label-md text-on-surface mb-1.5">Display order</label>
+<input class="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-body-md font-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow" type="number" value="1"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface mb-1.5">Synonyms</label>
+<div class="flex flex-wrap gap-2 mb-2 p-2 min-h-[44px] bg-white border border-outline-variant rounded-lg focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent transition-shadow">
+<span class="inline-flex items-center px-2 py-1 rounded bg-secondary-container text-on-secondary-container text-label-sm font-label-sm font-normal">
+              textiles <button class="ml-1 text-on-secondary-container/70 hover:text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<span class="inline-flex items-center px-2 py-1 rounded bg-secondary-container text-on-secondary-container text-label-sm font-label-sm font-normal">
+              fabric <button class="ml-1 text-on-secondary-container/70 hover:text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<span class="inline-flex items-center px-2 py-1 rounded bg-secondary-container text-on-secondary-container text-label-sm font-label-sm font-normal">
+              kapda <button class="ml-1 text-on-secondary-container/70 hover:text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<span class="inline-flex items-center px-2 py-1 rounded bg-secondary-container text-on-secondary-container text-label-sm font-label-sm font-normal">
+              cloth <button class="ml-1 text-on-secondary-container/70 hover:text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<input class="flex-1 min-w-[100px] bg-transparent border-none p-0 text-body-md font-body-md text-on-surface focus:ring-0 placeholder:text-outline/70" placeholder="Add synonym..." type="text"/>
+</div>
+<p class="text-[12px] text-outline">Keywords buyers might type — e.g. medicine, pharma, dawai.</p>
+</div>
+</div>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-headline-md font-headline-md text-on-surface">Sub-categories</h2>
+</div>
+<div class="flex flex-col gap-3 mb-6">
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Cotton fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal mb-4 flex gap-3 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 1</span>
+<span>Fields: 6</span>
+</div>
+<div class="flex items-center gap-4 pt-3 border-t border-outline-variant border-dashed">
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Edit</a>
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Fields</a>
+<a class="text-error text-label-sm font-label-sm font-semibold hover:underline ml-auto" href="#">Delete</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Silk fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal mb-4 flex gap-3 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 2</span>
+<span>Fields: 6</span>
+</div>
+<div class="flex items-center gap-4 pt-3 border-t border-outline-variant border-dashed">
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Edit</a>
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Fields</a>
+<a class="text-error text-label-sm font-label-sm font-semibold hover:underline ml-auto" href="#">Delete</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Synthetic &amp; blended fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal mb-4 flex gap-3 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 3</span>
+<span>Fields: 5</span>
+</div>
+<div class="flex items-center gap-4 pt-3 border-t border-outline-variant border-dashed">
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Edit</a>
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Fields</a>
+<a class="text-error text-label-sm font-label-sm font-semibold hover:underline ml-auto" href="#">Delete</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Yarn &amp; thread</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal mb-4 flex gap-3 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 4</span>
+<span>Fields: 4</span>
+</div>
+<div class="flex items-center gap-4 pt-3 border-t border-outline-variant border-dashed">
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Edit</a>
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Fields</a>
+<a class="text-error text-label-sm font-label-sm font-semibold hover:underline ml-auto" href="#">Delete</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Home textiles</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal mb-4 flex gap-3 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 5</span>
+<span>Fields: 5</span>
+</div>
+<div class="flex items-center gap-4 pt-3 border-t border-outline-variant border-dashed">
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Edit</a>
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Fields</a>
+<a class="text-error text-label-sm font-label-sm font-semibold hover:underline ml-auto" href="#">Delete</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Dyed &amp; printed fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal mb-4 flex gap-3 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 6</span>
+<span>Fields: 6</span>
+</div>
+<div class="flex items-center gap-4 pt-3 border-t border-outline-variant border-dashed">
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Edit</a>
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Fields</a>
+<a class="text-error text-label-sm font-label-sm font-semibold hover:underline ml-auto" href="#">Delete</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative group overflow-hidden opacity-70 bg-surface-container-high/20">
+<div class="absolute top-0 left-0 w-1 h-full bg-outline-variant"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Denim</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-variant text-on-surface-variant text-[10px] font-semibold border border-outline-variant shrink-0 uppercase tracking-wider">Inactive</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal mb-4 flex gap-3 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 7</span>
+<span>Fields: 4</span>
+</div>
+<div class="flex items-center gap-4 pt-3 border-t border-outline-variant border-dashed">
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Edit</a>
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Fields</a>
+<a class="text-error text-label-sm font-label-sm font-semibold hover:underline ml-auto" href="#">Delete</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Non-woven fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal mb-4 flex gap-3 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 8</span>
+<span>Fields: 4</span>
+</div>
+<div class="flex items-center gap-4 pt-3 border-t border-outline-variant border-dashed">
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Edit</a>
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Fields</a>
+<a class="text-error text-label-sm font-label-sm font-semibold hover:underline ml-auto" href="#">Delete</a>
+</div>
+</div>
+</div>
+<p class="text-center text-label-sm font-label-sm text-outline mt-8 mb-4">Changes are recorded.</p>
+</main>
+</div>
+<!-- ========================================================= -->
+<!-- SCREEN 3: EDIT SUB-CATEGORY                               -->
+<!-- ========================================================= -->
+<div class="w-[375px] bg-background shadow-lg overflow-hidden shrink-0 relative flex flex-col pb-0 h-[812px]">
+<header class="bg-[#1A2E8F] flex justify-between items-center px-4 h-16 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-headline-md font-headline-md font-bold text-white tracking-tight">MPX Global</div>
+<button class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 overflow-hidden shrink-0 border border-white/30">
+<span class="material-symbols-outlined text-white text-[20px]" style="font-variation-settings: 'FILL' 1;">person</span>
+</button>
+</header>
+<main class="flex-1 px-4 py-6 overflow-y-auto flex flex-col">
+<a class="inline-flex items-center text-primary hover:text-on-primary-fixed-variant transition-colors mb-4 group" href="#">
+<span class="material-symbols-outlined text-[20px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+<span class="text-label-md font-label-md">Back</span>
+</a>
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface mb-6">Edit sub-category</h1>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5 mb-6 shadow-sm flex-1">
+<div class="mb-5">
+<label class="block text-label-md font-label-md text-on-surface mb-1.5 opacity-70">Parent</label>
+<div class="w-full px-3 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-md font-body-md text-on-surface-variant cursor-not-allowed">
+            Textiles, Fabrics &amp; Yarn
+          </div>
+</div>
+<div class="mb-5">
+<div class="flex justify-between items-baseline mb-1.5">
+<label class="block text-label-md font-label-md text-on-surface">Name</label>
+<span class="text-[11px] text-outline">max 120</span>
+</div>
+<input class="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-body-md font-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow" type="text" value="Cotton fabric"/>
+</div>
+<div class="mb-5">
+<label class="block text-label-md font-label-md text-on-surface mb-1.5 opacity-70">Slug</label>
+<div class="w-full px-3 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-md font-body-md text-on-surface-variant cursor-not-allowed">
+            cotton-fabric
+          </div>
+<p class="text-[12px] text-outline mt-1.5">The web address is fixed once created</p>
+</div>
+<div class="mb-5">
+<label class="block text-label-md font-label-md text-on-surface mb-1.5 opacity-70">Type</label>
+<div class="w-full px-3 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-md font-body-md text-on-surface-variant cursor-not-allowed flex justify-between items-center">
+<span>Goods</span>
+<span class="material-symbols-outlined text-outline text-[18px]">lock</span>
+</div>
+<p class="text-[12px] text-outline mt-1.5">Can't change: products exist in this category</p>
+</div>
+<div class="mb-5">
+<label class="block text-label-md font-label-md text-on-surface mb-1.5">Synonyms</label>
+<div class="flex flex-wrap gap-2 mb-2 p-2 min-h-[44px] bg-white border border-outline-variant rounded-lg focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent transition-shadow">
+<span class="inline-flex items-center px-2 py-1 rounded bg-secondary-container text-on-secondary-container text-label-sm font-label-sm font-normal">
+              cotton <button class="ml-1 text-on-secondary-container/70 hover:text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<span class="inline-flex items-center px-2 py-1 rounded bg-secondary-container text-on-secondary-container text-label-sm font-label-sm font-normal">
+              poplin <button class="ml-1 text-on-secondary-container/70 hover:text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<span class="inline-flex items-center px-2 py-1 rounded bg-secondary-container text-on-secondary-container text-label-sm font-label-sm font-normal">
+              woven <button class="ml-1 text-on-secondary-container/70 hover:text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<input class="flex-1 min-w-[100px] bg-transparent border-none p-0 text-body-md font-body-md text-on-surface focus:ring-0 placeholder:text-outline/70" placeholder="Add synonym..." type="text"/>
+</div>
+</div>
+<div class="mb-6">
+<label class="block text-label-md font-label-md text-on-surface mb-2">Thumbnail Image</label>
+<div class="flex items-start gap-4">
+<div class="w-16 h-16 rounded bg-surface-variant border border-outline-variant shrink-0 overflow-hidden relative">
+<img alt="" class="object-cover w-full h-full" data-alt="Close up high quality macro shot of pure white raw cotton textile fabric softly folded on a table with warm natural light highlighting the texture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAutIrqsz8c54NHBUUPAN1i9DTarukOLA77QL1vQKeYMF5Ie3ja5lqgiPKbsfjc7Y10K-2W64J1rd1D1F8hFjWCKFC1ZOvIoHuLT1kOBAfreg0g49qzeRszy50UzfPFuR-ZsdebeRHMmG4JDEZ7r1oj0pFE4_DzIG_B2cc0cxqA14lFdqTJVkG30qjT2REy_MlP4vC9otSGWrxxJokWnL8L6ys1-krk08DO1jaW5Q5zUfLm1lKsYtSM"/>
+</div>
+<div class="flex-1 pt-1">
+<button class="px-4 py-1.5 rounded-full border border-outline-variant text-label-md font-label-md text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors mb-2">Replace image</button>
+<p class="text-[11px] text-outline leading-tight">Max 2MB · Square ratio recommended</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<div class="bg-surface-container-lowest border-t border-outline-variant p-4 shrink-0 pb-8">
+<button class="w-full h-12 bg-[#2A4DE0] hover:bg-[#2340C4] text-white rounded-full text-label-md font-label-md font-semibold transition-colors mb-4 flex items-center justify-center">
+        Save
+      </button>
+<button class="w-full text-center text-label-md font-label-md text-secondary hover:text-on-surface transition-colors py-2">
+        Cancel
+      </button>
+</div>
+</div>
+<!-- ========================================================= -->
+<!-- SCREEN 6: READ-ONLY VARIANT                               -->
+<!-- ========================================================= -->
+<div class="w-[375px] bg-background shadow-lg overflow-hidden shrink-0 relative flex flex-col pb-8">
+<header class="bg-[#1A2E8F] flex justify-between items-center px-4 h-16 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-headline-md font-headline-md font-bold text-white tracking-tight">MPX Global</div>
+<button class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 overflow-hidden shrink-0 border border-white/30">
+<span class="material-symbols-outlined text-white text-[20px]" style="font-variation-settings: 'FILL' 1;">person</span>
+</button>
+</header>
+<main class="flex-1 px-4 py-6 overflow-y-auto">
+<a class="inline-flex items-center text-primary hover:text-on-primary-fixed-variant transition-colors mb-4 group" href="#">
+<span class="material-symbols-outlined text-[20px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+<span class="text-label-md font-label-md">Categories</span>
+</a>
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface mb-6 leading-tight">Textiles, Fabrics &amp; Yarn</h1>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5 mb-8 shadow-sm">
+<div class="flex items-center justify-between mb-6 pb-6 border-b border-outline-variant">
+<div>
+<div class="text-body-md font-body-md font-medium text-on-surface">Status</div>
+</div>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-label-sm font-label-sm font-bold uppercase tracking-wider">Active</span>
+</div>
+<div class="mb-6">
+<label class="block text-label-sm font-label-sm text-outline mb-2 uppercase tracking-wider">Category Image</label>
+<div class="w-full h-32 rounded bg-surface-variant border border-outline-variant overflow-hidden relative">
+<img alt="" class="object-cover w-full h-full" data-alt="Wide high quality shot of rolls of brightly colored textile fabrics stacked neatly in a warehouse with industrial clean lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOuhx9-ZGv6EUWp0sgJoG2LaN2r_706TtXAi8QB__ty2tPhfrsOm5GQA0WKX0JKp4RBs3rLA-0WK8cdduYnXEeoyk1HiJxpOFBVEUrqDS9hjnXV8oVLCmc_TWZzs6ZZqZE8fx1dxYYbfTcUe6IYozf-bMcfa9uuiNSA0tUWjGuhrd9t_1-fbPoKfW77VaIKlHXu1nPGfqIzlch4BWwuAk9Xn-2faY9eHBhBA-ZqI6Mqxesehvb9pHF"/>
+</div>
+</div>
+<div class="mb-5 pb-5 border-b border-outline-variant border-dashed">
+<label class="block text-label-sm font-label-sm text-outline mb-1 uppercase tracking-wider">Display order</label>
+<div class="text-body-md font-body-md text-on-surface">1</div>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-outline mb-2 uppercase tracking-wider">Synonyms</label>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md bg-secondary-container/50 text-on-secondary-container text-body-md font-body-md font-normal">textiles</span>
+<span class="inline-flex items-center px-2.5 py-1 rounded-md bg-secondary-container/50 text-on-secondary-container text-body-md font-body-md font-normal">fabric</span>
+<span class="inline-flex items-center px-2.5 py-1 rounded-md bg-secondary-container/50 text-on-secondary-container text-body-md font-body-md font-normal">kapda</span>
+<span class="inline-flex items-center px-2.5 py-1 rounded-md bg-secondary-container/50 text-on-secondary-container text-body-md font-body-md font-normal">cloth</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-headline-md font-headline-md text-on-surface">Sub-categories</h2>
+</div>
+<div class="flex flex-col gap-3 mb-6">
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Cotton fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal flex gap-4 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 1</span>
+<span>Fields: 6</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Silk fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal flex gap-4 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 2</span>
+<span>Fields: 6</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Synthetic &amp; blended fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal flex gap-4 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 3</span>
+<span>Fields: 5</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Yarn &amp; thread</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal flex gap-4 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 4</span>
+<span>Fields: 4</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Home textiles</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal flex gap-4 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 5</span>
+<span>Fields: 5</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Dyed &amp; printed fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal flex gap-4 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 6</span>
+<span>Fields: 6</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative overflow-hidden opacity-70 bg-surface-container-high/20">
+<div class="absolute top-0 left-0 w-1 h-full bg-outline-variant"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Denim</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-variant text-on-surface-variant text-[10px] font-semibold border border-outline-variant shrink-0 uppercase tracking-wider">Inactive</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal flex gap-4 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 7</span>
+<span>Fields: 4</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Non-woven fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal flex gap-4 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 8</span>
+<span>Fields: 4</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- ========================================================= -->
+<!-- ADD SCREEN: TURN OFF CONFIRMATION                         -->
+<!-- ========================================================= -->
+<div class="w-[375px] bg-background shadow-lg overflow-hidden shrink-0 relative flex flex-col pb-8 h-[812px]">
+<header class="bg-[#1A2E8F] flex justify-between items-center px-4 h-16 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-headline-md font-headline-md font-bold text-white tracking-tight">MPX Global</div>
+<button class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 overflow-hidden shrink-0 border border-white/30">
+<span class="material-symbols-outlined text-white text-[20px]" style="font-variation-settings: 'FILL' 1;">person</span>
+</button>
+</header>
+<main class="flex-1 overflow-hidden relative">
+<div class="absolute inset-0 bg-on-surface/40 z-10"></div>
+<div class="absolute bottom-0 left-0 right-0 bg-surface-container-lowest rounded-t-xl z-20 p-6 flex flex-col items-center shadow-lg">
+<div class="w-12 h-12 rounded-full bg-error-container text-on-error-container flex items-center justify-center mb-4">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<h2 class="text-headline-md font-headline-md text-on-surface mb-3 text-center">Turn off Textiles, Fabrics &amp; Yarn?</h2>
+<p class="text-body-md font-body-md text-on-surface-variant text-center mb-8">This hides Textiles, Fabrics &amp; Yarn and all 8 of its sub-categories from the catalogue. Every product in them disappears from public view until you reactivate. Sub-categories you had already switched off individually will stay off when you reactivate.</p>
+<button class="w-full h-12 bg-error hover:bg-[#93000a] text-on-error rounded-full text-label-md font-label-md font-semibold transition-colors mb-4 flex items-center justify-center">
+      Turn off category
+    </button>
+<button class="w-full text-center text-label-md font-label-md text-secondary hover:text-on-surface transition-colors py-2">
+      Cancel
+    </button>
+</div>
+</main>
+</div>
+<!-- ========================================================= -->
+<!-- ADD SCREEN: DELETE REFUSED                                -->
+<!-- ========================================================= -->
+<div class="w-[375px] bg-background shadow-lg overflow-hidden shrink-0 relative flex flex-col pb-8">
+<header class="bg-[#1A2E8F] flex justify-between items-center px-4 h-16 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-headline-md font-headline-md font-bold text-white tracking-tight">MPX Global</div>
+<button class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 overflow-hidden shrink-0 border border-white/30">
+<span class="material-symbols-outlined text-white text-[20px]" style="font-variation-settings: 'FILL' 1;">person</span>
+</button>
+</header>
+<main class="flex-1 px-4 py-6 overflow-y-auto">
+<a class="inline-flex items-center text-primary hover:text-on-primary-fixed-variant transition-colors mb-4 group" href="#">
+<span class="material-symbols-outlined text-[20px] mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+<span class="text-label-md font-label-md">Categories</span>
+</a>
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface mb-6 leading-tight">Textiles, Fabrics &amp; Yarn</h1>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5 mb-8 shadow-sm">
+<div class="flex items-center justify-between mb-6 pb-6 border-b border-outline-variant">
+<div class="text-body-md font-body-md font-medium text-on-surface">Active</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out border-[#2a4de0] translate-x-6" id="toggle2" name="toggle2" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-primary-container cursor-pointer transition-colors duration-200 ease-in-out" for="toggle2"></label>
+</div>
+</div>
+<div class="mb-6">
+<label class="block text-label-md font-label-md text-on-surface mb-2">Category Image</label>
+<div class="flex items-start gap-4">
+<div class="w-20 h-20 rounded bg-surface-variant border border-outline-variant shrink-0 overflow-hidden relative">
+<img alt="" class="object-cover w-full h-full" data-alt="Close up high quality macro shot of finely woven cotton textile fabric with visible threads and soft natural lighting in a modern industrial setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYnrkn51RPjQje2VzT7oQgdvGaMTPP_t-EH-20wp_UIWxVMUc71WavWGFDW67w86B3g_qQNQ7xaCIiWFHVpxlFTmL2XxybDbXewq-sTYCk9aiSZOewVsUxMJCrTDoolCa32bTU4QfSSHNHxXdAAgig3REyZqB3BkYdKd3xHm694fH08CDJHW_khBJbUQGucg2VBWh7MCQVqvLwzRyRBBFKeyB5g09z1S2BxVVkaFIARtkE-wMG9Qdo"/>
+</div>
+<div class="flex-1 pt-1">
+<button class="px-4 py-1.5 rounded-full border border-outline-variant text-label-md font-label-md text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors mb-2">Replace image</button>
+<p class="text-[11px] text-outline leading-tight">1 image · 5 MB max<br/>JPG, PNG or WEBP</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-error-container/40 border border-error-container rounded-lg p-4 mb-4">
+<p class="text-body-md font-body-md text-on-surface mb-3">Can't delete — 12 products use this category. Deactivate it instead.</p>
+<button class="w-full py-2 bg-error/10 hover:bg-error/20 text-error rounded-full text-label-md font-label-md font-semibold transition-colors">
+    Deactivate
+  </button>
+</div>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-headline-md font-headline-md text-on-surface">Sub-categories</h2>
+</div>
+<div class="flex flex-col gap-3 mb-6">
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 shadow-sm relative group overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-body-md font-body-md font-medium text-on-surface pr-8">Cotton fabric</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider shrink-0">Active</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant font-normal mb-4 flex gap-3 items-center">
+<span class="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container rounded text-[11px] font-medium">Goods</span>
+<span>Order: 1</span>
+<span>Fields: 6</span>
+</div>
+<div class="flex items-center gap-4 pt-3 border-t border-outline-variant border-dashed">
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Edit</a>
+<a class="text-primary text-label-sm font-label-sm font-semibold hover:underline" href="#">Fields</a>
+<a class="text-error text-label-sm font-label-sm font-semibold hover:underline ml-auto" href="#">Delete</a>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

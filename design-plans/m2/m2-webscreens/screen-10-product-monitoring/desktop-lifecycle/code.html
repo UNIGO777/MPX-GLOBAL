@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global - Products (7 Screens)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#dad9e5",
+                        "surface-bright": "#fbf8ff",
+                        "tertiary-fixed": "#70fda7",
+                        "surface-container-high": "#e8e7f3",
+                        "surface-container-highest": "#e2e1ee",
+                        "outline-variant": "#c4c5d8",
+                        "secondary-container": "#cfe1ff",
+                        "on-secondary-fixed": "#091c32",
+                        "inverse-primary": "#b9c3ff",
+                        "on-primary-container": "#d0d6ff",
+                        "on-secondary-container": "#53647d",
+                        "surface-variant": "#e2e1ee",
+                        "primary": "#0032c3",
+                        "background": "#fbf8ff",
+                        "on-surface-variant": "#444655",
+                        "outline": "#747687",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface": "#fbf8ff",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "secondary-fixed": "#d4e3ff",
+                        "surface-tint": "#2a4de0",
+                        "on-surface": "#1a1b24",
+                        "on-primary-fixed": "#001158",
+                        "on-background": "#1a1b24",
+                        "inverse-on-surface": "#f1effc",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#4e5f79",
+                        "surface-container-low": "#f4f2ff",
+                        "on-tertiary-container": "#66f29e",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "on-tertiary-fixed": "#00210e",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "tertiary": "#00522c",
+                        "surface-container": "#eeedf9",
+                        "tertiary-container": "#006d3c",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "on-secondary-fixed-variant": "#374860",
+                        "primary-container": "#2a4de0",
+                        "inverse-surface": "#2f3039",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#dee1ff",
+                        "nav-blue": "#1A2E8F"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .mpx-rounded-tl { border-top-left-radius: 32px; }
+        .frame-container { margin-bottom: 100px; position: relative; overflow: hidden; background: #f3f4f6;}
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+<!-- SVG Icons (Inline for rules) -->
+<svg style="display:none;">
+<defs>
+<symbol id="icon-more-vert" viewbox="0 0 24 24">
+<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="currentColor"></path>
+</symbol>
+<symbol id="icon-search" viewbox="0 0 24 24">
+<path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"></path>
+</symbol>
+<symbol id="icon-close" viewbox="0 0 24 24">
+<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"></path>
+</symbol>
+<symbol id="icon-search-off" viewbox="0 0 24 24">
+<path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"></path>
+<path d="M2.2 2.2l19.6 19.6-1.4 1.4-19.6-19.6 1.4-1.4z" fill="currentColor"></path>
+</symbol>
+</defs>
+</svg>
+<!-- ━━━━━━━━━━ FRAME 1: Base + Menu Row 1 ━━━━━━━━━━ -->
+<div class="frame-container w-full min-h-[900px] flex shadow-xl border-b-2 border-gray-300">
+<!-- Sidebar -->
+<aside class="w-[260px] bg-nav-blue text-white flex flex-col fixed h-full z-20">
+<div class="h-16 flex items-center px-6">
+<span class="font-bold text-xl tracking-tight">MPX Global</span>
+</div>
+<nav class="flex-1 py-4 flex flex-col gap-1 px-4">
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Verifications</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Users</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Categories</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-primary-container text-on-primary-container" href="#">Products</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Audit log</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Settings</a>
+</nav>
+<div class="p-4 mt-auto">
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors block" href="#">Sign out</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="ml-[260px] flex-1 flex flex-col min-h-screen bg-nav-blue">
+<!-- Top Bar -->
+<header class="h-16 flex justify-end items-center px-8 z-10 text-white">
+<div class="flex items-center gap-3">
+<div class="text-right">
+<div class="font-medium text-sm">Priya Menon</div>
+<div class="text-xs text-white/70">Super admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-white/20 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar placeholder image showing a professional woman's face, well-lit, neutral studio background, 400x400 resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuVYfc9BfkHLhK56TehlcmFLYbHaQIZCGQ2KxUl7N3xFHQkQzigVQXSkwFZrqaBWj-_tS-rMDxEsUMru5jfT_SfoGMbRmUeR3kPI3IFrAAQULE7-lL40NTfSw9yh4W76jMfiT9JmVZsYubxErukPBNd0MaOP-7K9JzsKuvLD8tnDqkEEhy1zR0U_uOLl4Ni2BrwuwGwkIWzf71Q9FzAwUytAEc4O0cFOt3ENeY_mZKLTHa1CwFCnKP"/>
+</div>
+</div>
+</header>
+<!-- White Panel Content -->
+<main class="flex-1 bg-white mpx-rounded-tl flex flex-col relative">
+<div class="p-8 pb-4">
+<h1 class="text-3xl font-bold text-gray-900 mb-8">Products</h1>
+<!-- Filter Bar -->
+<div class="flex flex-wrap items-center gap-4 mb-6">
+<div class="relative w-64">
+<svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" viewbox="0 0 24 24"><use href="#icon-search"></use></svg>
+<input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Search product name" type="text"/>
+</div>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]">
+<option>Cotton fabric</option>
+</select>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]">
+<option>All statuses</option>
+</select>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]">
+<option>All sellers</option>
+</select>
+<div class="flex items-center gap-2 ml-4">
+<span class="text-sm text-gray-600">Nearing purge</span>
+<button class="w-10 h-5 bg-gray-200 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-none">
+<span class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out"></span>
+</button>
+</div>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white ml-auto">
+<option>20</option>
+</select>
+<button class="text-sm font-medium text-primary hover:text-primary-fixed-variant transition-colors">Clear filters</button>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto border border-outline-variant rounded-lg relative">
+<table class="w-full text-left text-sm text-gray-700">
+<thead class="bg-gray-50 border-b border-outline-variant text-gray-500 font-medium">
+<tr>
+<th class="px-4 py-3 w-16">Image</th>
+<th class="px-4 py-3">Product</th>
+<th class="px-4 py-3">Seller</th>
+<th class="px-4 py-3">Category</th>
+<th class="px-4 py-3">Status</th>
+<th class="px-4 py-3">Listed</th>
+<th class="px-4 py-3 w-16 text-center">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-gray-50 relative">
+<td class="px-4 py-3">
+<div class="w-10 h-10 bg-gray-200 rounded">
+<img class="w-full h-full object-cover rounded" data-alt="A close-up studio shot of rolled combed cotton poplin fabric in crisp white, high resolution, clean white background, soft lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjqlUKSGGuANaULy-qc7Y2q9US1z2XtsifxrswaW9Mzl57oPP0m4wAHzKKzW16mvdkHfcVs3leu4Q_HZtrQIKeOUGOLUekcS2u_0ko34nhQvgAbj_UZJl-hgwmVBSpRl4vgbHMpQtZr8t1Y0HFje0Z2X_fwyNGN1z5F8K_Kce2tvhhUEC9kVh8yNpjKYW7B9QwVhQHTGmHqybEntZhVRkguMC6kn4SEGM2gbbdE_UkzhzXUtFSLtrf"/>
+</div>
+</td>
+<td class="px-4 py-3 font-medium text-gray-900">Combed Cotton Poplin Fabric</td>
+<td class="px-4 py-3">Tirupur Knitwear Exports</td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span>
+</td>
+<td class="px-4 py-3 text-gray-500">12 Mar 2026</td>
+<td class="px-4 py-3 text-center relative">
+<button class="p-1 rounded hover:bg-gray-200 text-gray-500"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button>
+<!-- OPEN MENU ON ROW 1 -->
+<div class="absolute right-8 top-8 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 text-left">
+<button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">View</button>
+<button class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium">Take down</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-gray-50">
+<td class="px-4 py-3">
+<div class="w-10 h-10 bg-gray-200 rounded">
+<img class="w-full h-full object-cover rounded" data-alt="A roll of fine cotton cambric fabric, neatly wound, studio lighting, detailed textile texture, isolated on light grey." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACBjnsEEhTpZImbw5Z46uvicEMhe2XFSOPj0mwqguMQTFlTh-fp1PaTSkP3Ty4STKIVoauwUEx6sEK1St30WBMd4zSQ4LSRDvWZB1fAqTzc306HUWYh4OzuTpTQpubf0024_lb4qcYNnh8T1txSXh1ifpI_z_mOhxEuMPYa780pUGjWmIMTgzMP0O5m3kRr9IeWX_VvvmEcgp5Iski9jbPmx17I5cQkNqLBrzTS0rfQu6dRHmVS3Q0"/>
+</div>
+</td>
+<td class="px-4 py-3 font-medium text-gray-900">Cotton Cambric Roll, 60s</td>
+<td class="px-4 py-3">
+<div>Erode Textile House</div>
+<span class="inline-flex items-center px-1.5 py-0.5 mt-1 rounded text-[10px] font-medium bg-red-100 text-red-800">3 takedowns</span>
+</td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3 flex flex-col gap-1 items-start">
+<div class="flex gap-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Taken down · 02 Mar 2026</span>
+</div>
+<span class="text-xs font-medium text-amber-600">Purges in 24 days</span>
+</td>
+<td class="px-4 py-3 text-gray-500">02 Mar 2026</td>
+<td class="px-4 py-3 text-center">
+<button class="p-1 rounded hover:bg-gray-200 text-gray-500"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-gray-50">
+<td class="px-4 py-3">
+<div class="w-10 h-10 bg-gray-200 rounded">
+<img class="w-full h-full object-cover rounded" data-alt="Folded stack of bleached cotton twill fabric, pristine white, subtle diagonal weave visible, professional lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCh84LVR-HyX-SG2SQvrm2af-fT3d1yNDAf_XOhzh-vkV2Qe9sl2ZA1Dv2IG8CTzS-ttS2CfSJ5ZwIS-Qw1y2HWBOPTKuIKPROo9KYKVdj-yiRumdh853YliuiFlyGBwz1i3Dbm_8KWV0e5PqaMzzvmW_wm7OSueaDM-AFSqnCkn0K1OQ9603STmIB2f8zpWMA_ABrOEXdOlcSB3PzhfmjInLa5ZEFBO_wfvJahO25cU32yRCwf1dju"/>
+</div>
+</td>
+<td class="px-4 py-3 font-medium text-gray-900">Bleached Cotton Twill</td>
+<td class="px-4 py-3">Surat Weaving Co</td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Hidden</span>
+</td>
+<td class="px-4 py-3 text-gray-500">28 Feb 2026</td>
+<td class="px-4 py-3 text-center">
+<button class="p-1 rounded hover:bg-gray-200 text-gray-500"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-gray-50">
+<td class="px-4 py-3">
+<div class="w-10 h-10 bg-gray-200 rounded">
+<img class="w-full h-full object-cover rounded" data-alt="Yarn-dyed cotton fabric featuring a classic check pattern in blue and white, draped naturally, high quality product shot." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCt8SIacJQaf6XHOIhkQw-1Aj41QBBMJlYav5Am9VOlnL1723njno061jtW00XwNj75NyryZkrzs86Z0Qie-0RL0SslrpGpKSg-F91MJhgpFg-IJi6p6OY7qeVCGG6ki5BQoecz5Vg3CewcOe3KsLhHOr2x0Cg8xMKLL6iwFzVudj-iZsXLNyO3LoiPz7M1q3_z5VJw713UAQIAoRCmKfcYx6p5SAxPGdpc9vajJWNRNKNRyLTvYpRq"/>
+</div>
+</td>
+<td class="px-4 py-3 font-medium text-gray-900">Yarn-Dyed Cotton Check</td>
+<td class="px-4 py-3">Ahmedabad Mills</td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span>
+</td>
+<td class="px-4 py-3 text-gray-500">19 Feb 2026</td>
+<td class="px-4 py-3 text-center">
+<button class="p-1 rounded hover:bg-gray-200 text-gray-500"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-gray-50">
+<td class="px-4 py-3">
+<div class="w-10 h-10 bg-gray-200 rounded">
+<img class="w-full h-full object-cover rounded" data-alt="Heavyweight 12oz cotton canvas fabric in natural unbleached color, rough texture visible, folded square shape, well lit." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdc0Plnn1vDjkNiz5GlqbXNDXRGYvNMyllGDfxMFGBtAqWKHhQCdYVO0YjGpO7fzRAhHhHTktZ0R0eIQVeN_IJ6icf7yVG_-5ZC34144wCimQHic9B0KIdnp7OCRA28xmh9pEoYRq3Mk_Dz6J6UMCtCcWKWOlxt3Wgui6GXZIMuxFWbEz4YpE0KJzs7oxO_sy9_gbVr3w41OptuXUtfofZ_2q3Dr1FJR508CCtoCWlqCTuZZiZT9Fn"/>
+</div>
+</td>
+<td class="px-4 py-3 font-medium text-gray-900">Cotton Canvas 12oz</td>
+<td class="px-4 py-3">Panipat Home Textiles</td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3 flex flex-col gap-1 items-start">
+<div class="flex gap-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Taken down · 10 Sep 2025</span>
+</div>
+<span class="text-xs font-medium text-red-600">Purges in 4 days</span>
+</td>
+<td class="px-4 py-3 text-gray-500">10 Sep 2025</td>
+<td class="px-4 py-3 text-center">
+<button class="p-1 rounded hover:bg-gray-200 text-gray-500"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="mt-4 text-sm text-gray-500 pb-8">
+                    Showing 1–5 of 5
+                </div>
+</div>
+</main>
+</div>
+</div>
+<!-- ━━━━━━━━━━ FRAME 2: Base + Menu Row 2 (Restore) ━━━━━━━━━━ -->
+<div class="frame-container w-full min-h-[900px] flex shadow-xl border-b-2 border-gray-300">
+<!-- Sidebar -->
+<aside class="w-[260px] bg-nav-blue text-white flex flex-col fixed h-full z-20">
+<div class="h-16 flex items-center px-6">
+<span class="font-bold text-xl tracking-tight">MPX Global</span>
+</div>
+<nav class="flex-1 py-4 flex flex-col gap-1 px-4">
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Verifications</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Users</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Categories</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-primary-container text-on-primary-container" href="#">Products</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Audit log</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Settings</a>
+</nav>
+<div class="p-4 mt-auto">
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors block" href="#">Sign out</a>
+</div>
+</aside>
+<div class="ml-[260px] flex-1 flex flex-col min-h-screen bg-nav-blue">
+<header class="h-16 flex justify-end items-center px-8 z-10 text-white">
+<div class="flex items-center gap-3">
+<div class="text-right">
+<div class="font-medium text-sm">Priya Menon</div>
+<div class="text-xs text-white/70">Super admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-white/20 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar placeholder image showing a professional woman's face, well-lit, neutral studio background, 400x400 resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCInIt361_Vrcj0aaaBsv7NYyh3c4HuNbAeKumN1ZP2BBPRCFksQc83Ci_2dmxw_v1UlfApTHDhtUI8TtkPlVM7wyDjErNZxBX4L74U8y3R0Z3wAcWFFT_Gy8fPG_ynAPV6dpRoajCHPv-mOFTCY6C5c5DXJ5wlY1i9f_lyeA6c4Ti6xuyPPGuTAopH_8BMa5a1A3PutYBW3P3lN0bM-nYwYjYgLh1dBsoHnJjz8ifv4g4XkSaes7Ez"/>
+</div>
+</div>
+</header>
+<main class="flex-1 bg-white mpx-rounded-tl flex flex-col relative">
+<div class="p-8 pb-4">
+<h1 class="text-3xl font-bold text-gray-900 mb-8">Products</h1>
+<!-- Same Filter Bar as Frame 1 -->
+<div class="flex flex-wrap items-center gap-4 mb-6 opacity-80 pointer-events-none">
+<div class="relative w-64"><input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg text-sm bg-gray-50" disabled="" placeholder="Search product name" type="text"/></div>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-gray-50 min-w-[140px]" disabled=""><option>Cotton fabric</option></select>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-gray-50 min-w-[140px]" disabled=""><option>All statuses</option></select>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-gray-50 min-w-[140px]" disabled=""><option>All sellers</option></select>
+<div class="flex items-center gap-2 ml-4"><span class="text-sm text-gray-600">Nearing purge</span><div class="w-10 h-5 bg-gray-200 rounded-full"></div></div>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-gray-50 ml-auto" disabled=""><option>20</option></select>
+<span class="text-sm font-medium text-gray-400">Clear filters</span>
+</div>
+<div class="overflow-x-auto border border-outline-variant rounded-lg relative">
+<table class="w-full text-left text-sm text-gray-700">
+<thead class="bg-gray-50 border-b border-outline-variant text-gray-500 font-medium">
+<tr>
+<th class="px-4 py-3 w-16">Image</th>
+<th class="px-4 py-3">Product</th>
+<th class="px-4 py-3">Seller</th>
+<th class="px-4 py-3">Category</th>
+<th class="px-4 py-3">Status</th>
+<th class="px-4 py-3">Listed</th>
+<th class="px-4 py-3 w-16 text-center">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="">
+<td class="px-4 py-3"><div class="w-10 h-10 bg-gray-200 rounded"></div></td>
+<td class="px-4 py-3 font-medium text-gray-900">Combed Cotton Poplin Fabric</td>
+<td class="px-4 py-3">Tirupur Knitwear Exports</td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span></td>
+<td class="px-4 py-3 text-gray-500">12 Mar 2026</td>
+<td class="px-4 py-3 text-center"><button class="p-1 text-gray-400"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button></td>
+</tr>
+<!-- Row 2 -->
+<tr class="bg-blue-50/30 relative">
+<td class="px-4 py-3">
+<div class="w-10 h-10 bg-gray-200 rounded">
+<img class="w-full h-full object-cover rounded" data-alt="A roll of fine cotton cambric fabric, neatly wound, studio lighting, detailed textile texture, isolated on light grey." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwnb77Il7DO2MD0xsSuFq6jDiMiqn8Q_5Mjpjy2c-XobotiIPwEJT8-N-mzoR6g_ebnf087IYegHfS--Ak7KloU7ai0ga0obQkJfjNyiyAu2zK12wbNf6zjahbkHHYk4tUSLOD_Q-wTGWI3_Pe9BWEHW5WVnp6vF_S7BYqYNcuqq-uD9-xnJ3swGmIrByx_cp-imgsGBSZG0hktqVbFsT09SnXjGgrg8my3eka-gZVJITq9TBj1uwv"/>
+</div>
+</td>
+<td class="px-4 py-3 font-medium text-gray-900">Cotton Cambric Roll, 60s</td>
+<td class="px-4 py-3">
+<div>Erode Textile House</div>
+<span class="inline-flex items-center px-1.5 py-0.5 mt-1 rounded text-[10px] font-medium bg-red-100 text-red-800">3 takedowns</span>
+</td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3 flex flex-col gap-1 items-start">
+<div class="flex gap-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Taken down · 02 Mar 2026</span>
+</div>
+<span class="text-xs font-medium text-amber-600">Purges in 24 days</span>
+</td>
+<td class="px-4 py-3 text-gray-500">02 Mar 2026</td>
+<td class="px-4 py-3 text-center relative z-10">
+<button class="p-1 rounded bg-gray-200 text-gray-700"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button>
+<!-- OPEN MENU ON ROW 2 -->
+<div class="absolute right-8 top-8 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 text-left">
+<button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">View</button>
+<button class="w-full text-left px-4 py-2 text-sm text-primary hover:bg-blue-50 font-medium">Restore</button>
+</div>
+</td>
+</tr>
+<!-- Filler Rows 3,4,5 minimized for brevity as they match Frame 1 -->
+<tr class="">
+<td class="px-4 py-3"><div class="w-10 h-10 bg-gray-200 rounded"></div></td>
+<td class="px-4 py-3 font-medium text-gray-900">Bleached Cotton Twill</td>
+<td class="px-4 py-3">Surat Weaving Co</td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Hidden</span></td>
+<td class="px-4 py-3 text-gray-500">28 Feb 2026</td>
+<td class="px-4 py-3 text-center"><button class="p-1 text-gray-400"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button></td>
+</tr>
+<tr class="">
+<td class="px-4 py-3"><div class="w-10 h-10 bg-gray-200 rounded"></div></td>
+<td class="px-4 py-3 font-medium text-gray-900">Yarn-Dyed Cotton Check</td>
+<td class="px-4 py-3">Ahmedabad Mills</td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span></td>
+<td class="px-4 py-3 text-gray-500">19 Feb 2026</td>
+<td class="px-4 py-3 text-center"><button class="p-1 text-gray-400"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button></td>
+</tr>
+<tr class="">
+<td class="px-4 py-3"><div class="w-10 h-10 bg-gray-200 rounded"></div></td>
+<td class="px-4 py-3 font-medium text-gray-900">Cotton Canvas 12oz</td>
+<td class="px-4 py-3">Panipat Home Textiles</td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3 flex flex-col gap-1 items-start">
+<div class="flex gap-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Taken down</span>
+</div>
+<span class="text-xs font-medium text-red-600">Purges in 4 days</span>
+</td>
+<td class="px-4 py-3 text-gray-500">10 Sep 2025</td>
+<td class="px-4 py-3 text-center"><button class="p-1 text-gray-400"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="mt-4 text-sm text-gray-500 pb-8">Showing 1–5 of 5</div>
+</div>
+<!-- SCRIM OVERLAY -->
+<!-- We don't need a full scrim here, just the dropdown is open. Scrim is for Dialogs in 3 and 4 -->
+</main>
+</div>
+</div>
+<!-- ━━━━━━━━━━ FRAME 3: Takedown Dialog ━━━━━━━━━━ -->
+<div class="frame-container w-full min-h-[900px] flex shadow-xl border-b-2 border-gray-300 relative">
+<!-- Background (Dimmed Base Screen) -->
+<aside class="w-[260px] bg-nav-blue text-white flex flex-col fixed h-full z-0 opacity-40">
+<div class="h-16 flex items-center px-6"><span class="font-bold text-xl tracking-tight">MPX Global</span></div>
+<nav class="flex-1 py-4 flex flex-col gap-1 px-4">
+<div class="px-4 py-2.5 rounded-lg text-sm font-medium bg-primary-container text-on-primary-container">Products</div>
+</nav>
+</aside>
+<div class="ml-[260px] flex-1 flex flex-col min-h-screen bg-nav-blue opacity-40">
+<header class="h-16 flex justify-end items-center px-8 text-white"><div class="font-medium text-sm">Priya Menon</div></header>
+<main class="flex-1 bg-white mpx-rounded-tl p-8"><h1 class="text-3xl font-bold text-gray-900">Products</h1></main>
+</div>
+<!-- Dark Scrim Overlay -->
+<div class="absolute inset-0 bg-gray-900/50 z-30 flex items-center justify-center p-4">
+<!-- Dialog -->
+<div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+<div class="p-6 pb-4">
+<h2 class="text-xl font-semibold text-gray-900 mb-4">Take down Combed Cotton Poplin Fabric?</h2>
+<div class="mb-5">
+<div class="flex justify-between items-center mb-1.5">
+<label class="text-sm font-medium text-gray-700">Reason <span class="text-error">*</span></label>
+<span class="text-xs text-gray-500">0 / 500</span>
+</div>
+<textarea class="w-full border border-outline-variant rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary min-h-[100px] resize-y" placeholder="Enter reason here..."></textarea>
+<p class="mt-1.5 text-xs text-gray-500">This is shown to the seller — say what's wrong and what would fix it.</p>
+</div>
+<div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
+                    The product disappears from the public catalogue immediately. The seller keeps it and sees this reason. If it stays blocked for 180 days it is permanently deleted.
+                </div>
+</div>
+<div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 rounded-b-xl">
+<button class="px-4 py-2 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">Cancel</button>
+<button class="px-6 py-2 rounded-full text-sm font-medium text-white bg-error hover:bg-error/90 transition-colors">Take down</button>
+</div>
+</div>
+</div>
+</div>
+<!-- ━━━━━━━━━━ FRAME 4: Restore Dialog ━━━━━━━━━━ -->
+<div class="frame-container w-full min-h-[900px] flex shadow-xl border-b-2 border-gray-300 relative">
+<!-- Background (Dimmed Base Screen) -->
+<aside class="w-[260px] bg-nav-blue text-white flex flex-col fixed h-full z-0 opacity-40">
+<div class="h-16 flex items-center px-6"><span class="font-bold text-xl tracking-tight">MPX Global</span></div>
+<nav class="flex-1 py-4 flex flex-col gap-1 px-4">
+<div class="px-4 py-2.5 rounded-lg text-sm font-medium bg-primary-container text-on-primary-container">Products</div>
+</nav>
+</aside>
+<div class="ml-[260px] flex-1 flex flex-col min-h-screen bg-nav-blue opacity-40">
+<header class="h-16 flex justify-end items-center px-8 text-white"><div class="font-medium text-sm">Priya Menon</div></header>
+<main class="flex-1 bg-white mpx-rounded-tl p-8"><h1 class="text-3xl font-bold text-gray-900">Products</h1></main>
+</div>
+<!-- Dark Scrim Overlay -->
+<div class="absolute inset-0 bg-gray-900/50 z-30 flex items-center justify-center p-4">
+<!-- Dialog -->
+<div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+<div class="p-6 pb-6">
+<h2 class="text-xl font-semibold text-gray-900 mb-3">Restore Cotton Cambric Roll, 60s?</h2>
+<p class="text-sm text-gray-600 leading-relaxed">
+                    The product returns to exactly the state the seller left it in (live products go live again). The seller's takedown count is not reduced.
+                </p>
+</div>
+<div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 rounded-b-xl">
+<button class="px-4 py-2 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">Cancel</button>
+<button class="px-6 py-2 rounded-full text-sm font-medium text-white bg-surface-tint hover:bg-primary transition-colors">Restore</button>
+</div>
+</div>
+</div>
+</div>
+<!-- ━━━━━━━━━━ FRAME 5: BLOCKED ROW DETAIL DRAWER ━━━━━━━━━━ -->
+<div class="frame-container w-full min-h-[900px] flex shadow-xl border-b-2 border-gray-300 relative overflow-hidden">
+<!-- Background (Dimmed Base Screen) -->
+<aside class="w-[260px] bg-nav-blue text-white flex flex-col fixed h-full z-0 opacity-40">
+<div class="h-16 flex items-center px-6"><span class="font-bold text-xl tracking-tight">MPX Global</span></div>
+<nav class="flex-1 py-4 flex flex-col gap-1 px-4">
+<div class="px-4 py-2.5 rounded-lg text-sm font-medium bg-primary-container text-on-primary-container">Products</div>
+</nav>
+</aside>
+<div class="ml-[260px] flex-1 flex flex-col min-h-screen bg-nav-blue opacity-40">
+<header class="h-16 flex justify-end items-center px-8 text-white"><div class="font-medium text-sm">Priya Menon</div></header>
+<main class="flex-1 bg-white mpx-rounded-tl p-8"><h1 class="text-3xl font-bold text-gray-900">Products</h1></main>
+</div>
+<!-- Dark Scrim Overlay -->
+<div class="absolute inset-0 bg-gray-900/50 z-30 flex"></div>
+<!-- Right Drawer -->
+<div class="absolute right-0 top-0 bottom-0 w-[400px] bg-white shadow-2xl z-40 flex flex-col h-full overflow-y-auto">
+<div class="flex items-center justify-between p-6 border-b border-gray-200">
+<h2 class="text-lg font-semibold text-gray-900">Cotton Cambric Roll, 60s</h2>
+<button class="text-gray-500 hover:text-gray-700 rounded-full p-1 transition-colors"><svg class="w-6 h-6"><use href="#icon-close"></use></svg></button>
+</div>
+<div class="p-6 flex-1 flex flex-col gap-6">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="A roll of fine cotton cambric fabric, neatly wound, studio lighting, detailed textile texture, isolated on light grey." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACBjnsEEhTpZImbw5Z46uvicEMhe2XFSOPj0mwqguMQTFlTh-fp1PaTSkP3Ty4STKIVoauwUEx6sEK1St30WBMd4zSQ4LSRDvWZB1fAqTzc306HUWYh4OzuTpTQpubf0024_lb4qcYNnh8T1txSXh1ifpI_z_mOhxEuMPYa780pUGjWmIMTgzMP0O5m3kRr9IeWX_VvvmEcgp5Iski9jbPmx17I5cQkNqLBrzTS0rfQu6dRHmVS3Q0"/>
+</div>
+<div class="font-medium text-gray-900 text-lg">Cotton Cambric Roll, 60s</div>
+</div>
+<div>
+<div class="text-sm text-gray-500 mb-1">Seller</div>
+<div class="text-sm font-medium text-gray-900 flex items-center gap-2">
+                            Erode Textile House
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800">3 takedowns</span>
+</div>
+</div>
+<div>
+<div class="text-sm text-gray-500 mb-1">Status</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Taken down · 02 Mar 2026</span>
+</div>
+</div>
+<div>
+<div class="text-sm text-gray-500 mb-1">Taken down by</div>
+<div class="text-sm font-medium text-gray-900">Priya Sharma · 02 Mar 2026</div>
+</div>
+<div>
+<div class="text-sm text-gray-500 mb-1">Reason</div>
+<div class="text-sm text-gray-900 leading-relaxed p-3 bg-gray-50 rounded-lg border border-gray-200">Images do not match the product described</div>
+</div>
+<div>
+<div class="text-sm text-gray-500 mb-1">Purge</div>
+<div class="text-sm font-medium text-amber-600">Purges in 24 days</div>
+</div>
+</div>
+<div class="p-6 border-t border-gray-200">
+<button class="w-full py-2.5 rounded-full text-sm font-medium text-white bg-primary hover:bg-primary-container transition-colors">Restore</button>
+</div>
+</div>
+</div>
+<!-- ━━━━━━━━━━ FRAME 6: NO MATCHES ━━━━━━━━━━ -->
+<div class="frame-container w-full min-h-[900px] flex shadow-xl border-b-2 border-gray-300">
+<aside class="w-[260px] bg-nav-blue text-white flex flex-col fixed h-full z-20">
+<div class="h-16 flex items-center px-6"><span class="font-bold text-xl tracking-tight">MPX Global</span></div>
+<nav class="flex-1 py-4 flex flex-col gap-1 px-4">
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Verifications</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Users</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Categories</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-primary-container text-on-primary-container" href="#">Products</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Audit log</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Settings</a>
+</nav>
+<div class="p-4 mt-auto"><a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors block" href="#">Sign out</a></div>
+</aside>
+<div class="ml-[260px] flex-1 flex flex-col min-h-screen bg-nav-blue">
+<header class="h-16 flex justify-end items-center px-8 z-10 text-white">
+<div class="flex items-center gap-3">
+<div class="text-right"><div class="font-medium text-sm">Priya Menon</div><div class="text-xs text-white/70">Super admin · MPX Global</div></div>
+<div class="w-10 h-10 rounded-full bg-white/20 overflow-hidden"><img class="w-full h-full object-cover" data-alt="" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuVYfc9BfkHLhK56TehlcmFLYbHaQIZCGQ2KxUl7N3xFHQkQzigVQXSkwFZrqaBWj-_tS-rMDxEsUMru5jfT_SfoGMbRmUeR3kPI3IFrAAQULE7-lL40NTfSw9yh4W76jMfiT9JmVZsYubxErukPBNd0MaOP-7K9JzsKuvLD8tnDqkEEhy1zR0U_uOLl4Ni2BrwuwGwkIWzf71Q9FzAwUytAEc4O0cFOt3ENeY_mZKLTHa1CwFCnKP"/></div>
+</div>
+</header>
+<main class="flex-1 bg-white mpx-rounded-tl flex flex-col relative p-8 pb-4">
+<h1 class="text-3xl font-bold text-gray-900 mb-8">Products</h1>
+<div class="flex flex-wrap items-center gap-4 mb-6">
+<div class="relative w-64"><svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" viewbox="0 0 24 24"><use href="#icon-search"></use></svg><input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Search product name" type="text"/></div>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]"><option>Cotton fabric</option></select>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]"><option>All statuses</option></select>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]"><option>All sellers</option></select>
+<div class="flex items-center gap-2 ml-4"><span class="text-sm text-gray-600">Nearing purge</span><button class="w-10 h-5 bg-gray-200 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-none"><span class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out"></span></button></div>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white ml-auto"><option>20</option></select>
+<button class="text-sm font-medium text-primary hover:text-primary-fixed-variant transition-colors">Clear filters</button>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center bg-gray-50/50 rounded-xl border border-dashed border-gray-300 py-24">
+<div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-6">
+<svg class="w-8 h-8"><use href="#icon-search-off"></use></svg>
+</div>
+<h2 class="text-lg font-semibold text-gray-900 mb-2">No products match these filters</h2>
+<p class="text-sm text-gray-500 mb-6">Category: Cotton fabric · Status: Blocked · Seller: Erode Textile House</p>
+<button class="px-5 py-2.5 rounded-full text-sm font-medium text-white bg-primary hover:bg-primary-container transition-colors">Clear filters</button>
+</div>
+</main>
+</div>
+</div>
+<!-- ━━━━━━━━━━ FRAME 7: ALREADY HANDLED ━━━━━━━━━━ -->
+<div class="frame-container w-full min-h-[900px] flex shadow-xl border-b-2 border-gray-300">
+<aside class="w-[260px] bg-nav-blue text-white flex flex-col fixed h-full z-20">
+<div class="h-16 flex items-center px-6"><span class="font-bold text-xl tracking-tight">MPX Global</span></div>
+<nav class="flex-1 py-4 flex flex-col gap-1 px-4">
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Verifications</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Users</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Categories</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-primary-container text-on-primary-container" href="#">Products</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Audit log</a>
+<a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors" href="#">Settings</a>
+</nav>
+<div class="p-4 mt-auto"><a class="px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors block" href="#">Sign out</a></div>
+</aside>
+<div class="ml-[260px] flex-1 flex flex-col min-h-screen bg-nav-blue">
+<header class="h-16 flex justify-end items-center px-8 z-10 text-white">
+<div class="flex items-center gap-3">
+<div class="text-right"><div class="font-medium text-sm">Priya Menon</div><div class="text-xs text-white/70">Super admin · MPX Global</div></div>
+<div class="w-10 h-10 rounded-full bg-white/20 overflow-hidden"><img class="w-full h-full object-cover" data-alt="" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuVYfc9BfkHLhK56TehlcmFLYbHaQIZCGQ2KxUl7N3xFHQkQzigVQXSkwFZrqaBWj-_tS-rMDxEsUMru5jfT_SfoGMbRmUeR3kPI3IFrAAQULE7-lL40NTfSw9yh4W76jMfiT9JmVZsYubxErukPBNd0MaOP-7K9JzsKuvLD8tnDqkEEhy1zR0U_uOLl4Ni2BrwuwGwkIWzf71Q9FzAwUytAEc4O0cFOt3ENeY_mZKLTHa1CwFCnKP"/></div>
+</div>
+</header>
+<main class="flex-1 bg-white mpx-rounded-tl flex flex-col relative p-8 pb-4">
+<h1 class="text-3xl font-bold text-gray-900 mb-8">Products</h1>
+<div class="flex flex-wrap items-center gap-4 mb-6">
+<div class="relative w-64"><svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" viewbox="0 0 24 24"><use href="#icon-search"></use></svg><input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Search product name" type="text"/></div>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]"><option>Cotton fabric</option></select>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]"><option>All statuses</option></select>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white min-w-[140px]"><option>All sellers</option></select>
+<div class="flex items-center gap-2 ml-4"><span class="text-sm text-gray-600">Nearing purge</span><button class="w-10 h-5 bg-gray-200 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-none"><span class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out"></span></button></div>
+<select class="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white ml-auto"><option>20</option></select>
+<button class="text-sm font-medium text-primary hover:text-primary-fixed-variant transition-colors">Clear filters</button>
+</div>
+<!-- Inline Notice -->
+<div class="mb-4 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 flex items-center justify-between shadow-sm">
+<span class="text-sm text-gray-700">This product is no longer in that state</span>
+<button class="text-sm font-medium text-primary hover:text-primary-fixed-variant transition-colors">Refresh</button>
+</div>
+<div class="overflow-x-auto border border-outline-variant rounded-lg relative">
+<table class="w-full text-left text-sm text-gray-700">
+<thead class="bg-gray-50 border-b border-outline-variant text-gray-500 font-medium">
+<tr><th class="px-4 py-3 w-16">Image</th><th class="px-4 py-3">Product</th><th class="px-4 py-3">Seller</th><th class="px-4 py-3">Category</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Listed</th><th class="px-4 py-3 w-16 text-center">Actions</th></tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-gray-50">
+<td class="px-4 py-3"><div class="w-10 h-10 bg-gray-200 rounded"><img class="w-full h-full object-cover rounded" data-alt="" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjqlUKSGGuANaULy-qc7Y2q9US1z2XtsifxrswaW9Mzl57oPP0m4wAHzKKzW16mvdkHfcVs3leu4Q_HZtrQIKeOUGOLUekcS2u_0ko34nhQvgAbj_UZJl-hgwmVBSpRl4vgbHMpQtZr8t1Y0HFje0Z2X_fwyNGN1z5F8K_Kce2tvhhUEC9kVh8yNpjKYW7B9QwVhQHTGmHqybEntZhVRkguMC6kn4SEGM2gbbdE_UkzhzXUtFSLtrf"/></div></td>
+<td class="px-4 py-3 font-medium text-gray-900">Combed Cotton Poplin Fabric</td>
+<td class="px-4 py-3">Tirupur Knitwear Exports</td><td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span></td>
+<td class="px-4 py-3 text-gray-500">12 Mar 2026</td><td class="px-4 py-3 text-center"><button class="p-1 rounded hover:bg-gray-200 text-gray-500"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button></td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-gray-50">
+<td class="px-4 py-3"><div class="w-10 h-10 bg-gray-200 rounded"><img class="w-full h-full object-cover rounded" data-alt="" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACBjnsEEhTpZImbw5Z46uvicEMhe2XFSOPj0mwqguMQTFlTh-fp1PaTSkP3Ty4STKIVoauwUEx6sEK1St30WBMd4zSQ4LSRDvWZB1fAqTzc306HUWYh4OzuTpTQpubf0024_lb4qcYNnh8T1txSXh1ifpI_z_mOhxEuMPYa780pUGjWmIMTgzMP0O5m3kRr9IeWX_VvvmEcgp5Iski9jbPmx17I5cQkNqLBrzTS0rfQu6dRHmVS3Q0"/></div></td>
+<td class="px-4 py-3 font-medium text-gray-900">Cotton Cambric Roll, 60s</td>
+<td class="px-4 py-3"><div>Erode Textile House</div><span class="inline-flex items-center px-1.5 py-0.5 mt-1 rounded text-[10px] font-medium bg-red-100 text-red-800">3 takedowns</span></td>
+<td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3 flex flex-col gap-1 items-start"><div class="flex gap-1"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Taken down · 02 Mar 2026</span></div><span class="text-xs font-medium text-amber-600">Purges in 24 days</span></td>
+<td class="px-4 py-3 text-gray-500">02 Mar 2026</td><td class="px-4 py-3 text-center"><button class="p-1 rounded hover:bg-gray-200 text-gray-500"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button></td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-gray-50">
+<td class="px-4 py-3"><div class="w-10 h-10 bg-gray-200 rounded"><img class="w-full h-full object-cover rounded" data-alt="" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCh84LVR-HyX-SG2SQvrm2af-fT3d1yNDAf_XOhzh-vkV2Qe9sl2ZA1Dv2IG8CTzS-ttS2CfSJ5ZwIS-Qw1y2HWBOPTKuIKPROo9KYKVdj-yiRumdh853YliuiFlyGBwz1i3Dbm_8KWV0e5PqaMzzvmW_wm7OSueaDM-AFSqnCkn0K1OQ9603STmIB2f8zpWMA_ABrOEXdOlcSB3PzhfmjInLa5ZEFBO_wfvJahO25cU32yRCwf1dju"/></div></td>
+<td class="px-4 py-3 font-medium text-gray-900">Bleached Cotton Twill</td><td class="px-4 py-3">Surat Weaving Co</td><td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Hidden</span></td>
+<td class="px-4 py-3 text-gray-500">28 Feb 2026</td><td class="px-4 py-3 text-center"><button class="p-1 rounded hover:bg-gray-200 text-gray-500"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button></td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-gray-50">
+<td class="px-4 py-3"><div class="w-10 h-10 bg-gray-200 rounded"><img class="w-full h-full object-cover rounded" data-alt="" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCt8SIacJQaf6XHOIhkQw-1Aj41QBBMJlYav5Am9VOlnL1723njno061jtW00XwNj75NyryZkrzs86Z0Qie-0RL0SslrpGpKSg-F91MJhgpFg-IJi6p6OY7qeVCGG6ki5BQoecz5Vg3CewcOe3KsLhHOr2x0Cg8xMKLL6iwFzVudj-iZsXLNyO3LoiPz7M1q3_z5VJw713UAQIAoRCmKfcYx6p5SAxPGdpc9vajJWNRNKNRyLTvYpRq"/></div></td>
+<td class="px-4 py-3 font-medium text-gray-900">Yarn-Dyed Cotton Check</td><td class="px-4 py-3">Ahmedabad Mills</td><td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span></td>
+<td class="px-4 py-3 text-gray-500">19 Feb 2026</td><td class="px-4 py-3 text-center"><button class="p-1 rounded hover:bg-gray-200 text-gray-500"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button></td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-gray-50">
+<td class="px-4 py-3"><div class="w-10 h-10 bg-gray-200 rounded"><img class="w-full h-full object-cover rounded" data-alt="" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdc0Plnn1vDjkNiz5GlqbXNDXRGYvNMyllGDfxMFGBtAqWKHhQCdYVO0YjGpO7fzRAhHhHTktZ0R0eIQVeN_IJ6icf7yVG_-5ZC34144wCimQHic9B0KIdnp7OCRA28xmh9pEoYRq3Mk_Dz6J6UMCtCcWKWOlxt3Wgui6GXZIMuxFWbEz4YpE0KJzs7oxO_sy9_gbVr3w41OptuXUtfofZ_2q3Dr1FJR508CCtoCWlqCTuZZiZT9Fn"/></div></td>
+<td class="px-4 py-3 font-medium text-gray-900">Cotton Canvas 12oz</td>
+<td class="px-4 py-3">Panipat Home Textiles</td><td class="px-4 py-3">Cotton fabric</td>
+<td class="px-4 py-3 flex flex-col gap-1 items-start"><div class="flex gap-1"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Live</span><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Taken down · 10 Sep 2025</span></div><span class="text-xs font-medium text-red-600">Purges in 4 days</span></td>
+<td class="px-4 py-3 text-gray-500">10 Sep 2025</td><td class="px-4 py-3 text-center"><button class="p-1 rounded hover:bg-gray-200 text-gray-500"><svg class="w-5 h-5"><use href="#icon-more-vert"></use></svg></button></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="mt-4 text-sm text-gray-500 pb-8">Showing 1–5 of 5</div>
+</main>
+</div>
+</div>
+</body></html>

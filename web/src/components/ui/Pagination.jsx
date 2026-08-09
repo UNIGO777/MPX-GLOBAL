@@ -2,8 +2,17 @@ import { config } from '../../config.js';
 import { ChevronLeftIcon, ChevronRightIcon } from './icons.jsx';
 
 /**
- * Table footer pager: "1–20 of 1,248 · rows-per-page · prev/next". The largest
- * option must stay within the server's own hard cap (config.js).
+ * Pager, in two shapes over ONE page-list implementation.
+ *
+ *  - **Admin table footer** (default): "1–20 of 1,248 · rows-per-page · prev/next".
+ *    The largest rows option must stay within the server's own hard cap (config.js).
+ *  - **Public catalogue grid** (`onPageSize` omitted): the rows-per-page control
+ *    disappears — a buyer has no reason to tune it, and the M2 designs do not
+ *    draw one. Pass `compact` to also drop the "Showing x–y" line and centre the
+ *    controls, which is the catalogue layout.
+ *
+ * Kept as one component on purpose: a second pager would duplicate `pageList`,
+ * and the two would drift the first time the ellipsis rule changed.
  */
 const ROW_OPTIONS = config.table.pageSizes;
 
@@ -20,18 +29,26 @@ function pageList(page, pages) {
   return out;
 }
 
-export function Pagination({ page, pageSize, total, onPage, onPageSize }) {
+export function Pagination({ page, pageSize, total, onPage, onPageSize, compact = false }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-surface-border px-4 py-3 text-sm text-muted">
+    <div
+      className={`flex flex-wrap items-center gap-3 py-3 text-sm text-muted ${
+        compact ? 'justify-center' : 'justify-between border-t border-surface-border px-4'
+      }`}
+    >
+      {!compact && (
       <p>
         Showing <span className="font-medium text-ink-800">{from}–{to}</span> of{' '}
         <span className="font-medium text-ink-800">{total.toLocaleString(config.locale.numbers)}</span>
       </p>
+      )}
       <div className="flex items-center gap-4">
+        {/* Public grids omit onPageSize — no control, not a disabled one. */}
+        {onPageSize && (
         <label className="flex items-center gap-2">
           Rows per page
           <select
@@ -44,6 +61,7 @@ export function Pagination({ page, pageSize, total, onPage, onPageSize }) {
             ))}
           </select>
         </label>
+        )}
         {/* Design: ‹ 1 2 3 … 63 › — current page is a filled navy square */}
         <div className="flex items-center gap-1">
           <button

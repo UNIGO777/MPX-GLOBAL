@@ -1,0 +1,194 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MPX Global - Browse Categories (Mobile)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-bright": "#fbf8ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "surface-container-high": "#e8e7f3",
+                      "on-primary-fixed": "#001158",
+                      "error": "#ba1a1a",
+                      "surface": "#fbf8ff",
+                      "primary-fixed": "#dee1ff",
+                      "inverse-on-surface": "#f1effc",
+                      "surface-variant": "#e2e1ee",
+                      "surface-container-highest": "#e2e1ee",
+                      "surface-container-low": "#f4f2ff",
+                      "tertiary-fixed": "#70fda7",
+                      "on-secondary-fixed-variant": "#374860",
+                      "tertiary-container": "#006d3c",
+                      "outline-variant": "#c4c5d8",
+                      "on-tertiary-fixed-variant": "#00522c",
+                      "inverse-primary": "#b9c3ff",
+                      "secondary-fixed": "#d4e3ff",
+                      "on-primary": "#ffffff",
+                      "secondary": "#4e5f79",
+                      "background": "#fbf8ff",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "primary": "#0032c3",
+                      "on-error": "#ffffff",
+                      "outline": "#747687",
+                      "on-secondary-container": "#53647d",
+                      "tertiary": "#00522c",
+                      "surface-dim": "#dad9e5",
+                      "surface-tint": "#2a4de0",
+                      "on-tertiary-container": "#66f29e",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#b6c8e5",
+                      "on-surface-variant": "#444655",
+                      "on-surface": "#1a1b24",
+                      "tertiary-fixed-dim": "#51df8e",
+                      "on-secondary-fixed": "#091c32",
+                      "on-primary-container": "#d0d6ff",
+                      "inverse-surface": "#2f3039",
+                      "primary-fixed-dim": "#b9c3ff",
+                      "on-background": "#1a1b24",
+                      "surface-container": "#eeedf9",
+                      "primary-container": "#2a4de0",
+                      "on-primary-fixed-variant": "#0032c3",
+                      "secondary-container": "#cfe1ff",
+                      "on-tertiary-fixed": "#00210e"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-max": "1200px",
+                      "unit": "4px",
+                      "stack-sm": "8px",
+                      "gutter": "24px",
+                      "stack-lg": "32px",
+                      "stack-md": "16px",
+                      "card-padding": "40px",
+                      "margin-mobile": "24px"
+              },
+              "fontFamily": {
+                      "display-lg": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #fbf8ff; }
+        .skeleton { animation: skeleton-loading 1s linear infinite alternate; }
+        @keyframes skeleton-loading {
+            0% { background-color: #e2e1ee; }
+            100% { background-color: #c4c5d8; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="text-on-surface antialiased bg-background">
+<!-- TopNavBar -->
+<header class="fixed w-full top-0 z-50 bg-surface-container-lowest backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex justify-between items-center px-margin-mobile py-4 w-full md:hidden">
+<div class="font-display-lg text-headline-lg-mobile tracking-tighter text-on-surface">MPX Global</div>
+<div class="flex items-center gap-4">
+<button aria-label="Menu" class="text-on-surface-variant hover:text-primary transition-colors duration-300">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-[80px] pb-[120px] px-margin-mobile w-full max-w-[375px] mx-auto md:hidden">
+<!-- Header Section -->
+<div class="mb-stack-lg mt-stack-md">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-stack-sm">Browse categories</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Find specialised suppliers across 40 industries.</p>
+</div>
+<!-- 1. Main 12-card list -->
+<div class="flex flex-col gap-stack-md w-full">
+<!-- Category Card 1 (Photo) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden relative bg-surface-container-highest"><div class="w-full h-full bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">AG</div></div><div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div><div class="absolute bottom-3 left-3"><span class="font-label-sm text-label-sm text-surface-container-lowest bg-on-surface/80 px-2 py-1 rounded backdrop-blur-sm">Agriculture</span></div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Agriculture</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Seeds &amp; plants, Grains &amp; cereals, Spices &amp; herbs</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">agriculture</span><span class="font-label-sm text-label-sm text-outline">10 sub-categories</span></div></div></div>
+<!-- Category Card 2 (Monogram) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">AG</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Apparel &amp; Garments</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Men's clothing, Women's clothing, Ethnic wear</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">checkroom</span><span class="font-label-sm text-label-sm text-outline">8 sub-categories</span></div></div></div>
+<!-- Category Card 3 (Photo) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">TF</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Textiles, Fabrics &amp; Yarn</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Cotton fabric, Silk fabric, Denim</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">texture</span><span class="font-label-sm text-label-sm text-outline">8 sub-categories</span></div></div></div>
+<!-- Category Card 4 (Monogram) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">LL</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Leather &amp; Leather Products</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Finished leather, Bags &amp; wallets, Belts</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">work</span><span class="font-label-sm text-label-sm text-outline">7 sub-categories</span></div></div></div>
+<!-- Category Card 5 (Monogram) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">FB</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Food &amp; Beverages</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Packaged food, Beverages, Dry fruits &amp; nuts</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">restaurant</span><span class="font-label-sm text-label-sm text-outline">8 sub-categories</span></div></div></div>
+<!-- Category Card 6 (Monogram) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">CD</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Chemicals, Dyes &amp; Solvents</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Industrial chemicals, Dyes &amp; pigments, Solvents</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">science</span><span class="font-label-sm text-label-sm text-outline">10 sub-categories</span></div></div></div>
+<!-- Category Card 7 (Photo) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">PM</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Pharmaceuticals &amp; Medical</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Formulations, Surgical instruments, Diagnostics</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">medical_services</span><span class="font-label-sm text-label-sm text-outline">7 sub-categories</span></div></div></div>
+<!-- Category Card 8 (Monogram) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">EE</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Electronics &amp; Electrical</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Consumer electronics, LED lighting, Wires &amp; cables</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">electrical_services</span><span class="font-label-sm text-label-sm text-outline">8 sub-categories</span></div></div></div>
+<!-- Category Card 9 (Monogram) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">IM</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Industrial Machinery &amp; Equipment</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Packaging machines, CNC &amp; machine tools</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">precision_manufacturing</span><span class="font-label-sm text-label-sm text-outline">9 sub-categories</span></div></div></div>
+<!-- Category Card 10 (Monogram) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">BC</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Building &amp; Construction</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">TMT bars &amp; steel, Cement, Tiles &amp; marble</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">foundation</span><span class="font-label-sm text-label-sm text-outline">9 sub-categories</span></div></div></div>
+<!-- Category Card 11 (Monogram) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">IT</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">IT, Software &amp; AI Services</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">AI/ML development, Cloud &amp; DevOps, Cybersecurity</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">terminal</span><span class="font-label-sm text-label-sm text-outline">9 sub-categories</span></div></div></div>
+<!-- Category Card 12 (Monogram) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,5,23,0.05)] cursor-pointer hover:border-primary-container transition-colors duration-200"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">OT</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Other</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Other goods, Other services</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">more_horiz</span><span class="font-label-sm text-label-sm text-outline">2 sub-categories</span></div></div></div>
+</div>
+<!-- 60px Spacer -->
+<div class="h-[60px] w-full"></div>
+<!-- 2. Loading Skeleton List -->
+<div class="flex flex-col gap-stack-md w-full opacity-70">
+<h3 class="font-label-md text-label-md text-outline uppercase tracking-wider mb-2">Loading State</h3>
+<!-- Skeleton Card 1 -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">AG</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Apparel &amp; Garments</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Men's clothing, Women's clothing, Ethnic wear</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">checkroom</span><span class="font-label-sm text-label-sm text-outline">8 sub-categories</span></div></div></div>
+<!-- Skeleton Card 2 -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 flex flex-col gap-4"><div class="w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/30"><div class="font-display-lg text-display-lg text-primary-fixed-dim">TF</div></div><div class="flex flex-col gap-2"><h2 class="font-headline-md text-headline-md text-on-surface">Textiles, Fabrics &amp; Yarn</h2><p class="font-body-md text-body-md text-on-surface-variant truncate">Cotton fabric, Silk fabric, Denim</p><div class="flex items-center gap-2 mt-1"><span class="material-symbols-outlined text-outline text-[16px]">texture</span><span class="font-label-sm text-label-sm text-outline">8 sub-categories</span></div></div></div>
+</div>
+<!-- 60px Spacer -->
+<div class="h-[60px] w-full"></div>
+<!-- 3. Empty State Panel -->
+<div class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-outline text-[48px] mb-4" style="font-variation-settings: 'FILL' 0;">inbox</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">No categories found</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">We couldn't find any categories matching your criteria at this time.</p>
+</div>
+<!-- 60px Spacer -->
+<div class="h-[60px] w-full"></div>
+<!-- 4. Error Panel -->
+<div class="w-full bg-error-container/30 border border-error-container rounded-lg p-6 flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-error text-[48px] mb-4" style="font-variation-settings: 'FILL' 1;">error</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Failed to load categories</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">We encountered a problem while retrieving the network data. Please check your connection and try again.</p>
+<button class="bg-primary-container text-on-primary rounded-full px-6 py-3 font-label-md text-label-md hover:bg-on-primary-fixed-variant transition-colors duration-200">
+                Try again
+            </button>
+</div>
+</main>
+<!-- Footer (Mobile only, simplified nav) -->
+<footer class="bg-on-primary-fixed w-full border-t border-outline-variant/30 py-stack-lg px-margin-mobile md:hidden"><div class="flex flex-col gap-stack-lg max-w-[375px] mx-auto"><div class="font-headline-sm text-headline-md text-surface-container-lowest">MPX Global</div><div class="grid grid-cols-2 gap-8"><div class="flex flex-col gap-4"><h4 class="font-label-md text-label-md text-surface-container-lowest uppercase tracking-wider">Marketplace</h4><div class="flex flex-col gap-2"><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">Categories</a><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">For Buyers</a><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">For Sellers</a></div></div><div class="flex flex-col gap-4"><h4 class="font-label-md text-label-md text-surface-container-lowest uppercase tracking-wider">Company</h4><div class="flex flex-col gap-2"><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">About Us</a><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">Careers</a><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">Contact</a></div></div><div class="flex flex-col gap-4"><h4 class="font-label-md text-label-md text-surface-container-lowest uppercase tracking-wider">Resources</h4><div class="flex flex-col gap-2"><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">Blog</a><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">Help Center</a><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">Trade Guides</a></div></div><div class="flex flex-col gap-4"><h4 class="font-label-md text-label-md text-surface-container-lowest uppercase tracking-wider">Legal</h4><div class="flex flex-col gap-2"><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">Privacy Policy</a><a class="font-body-md text-body-md text-surface-variant hover:text-surface-container-lowest transition-colors duration-200" href="#">Terms of Service</a></div></div></div><div class="font-body-md text-body-md text-surface-variant/70 pt-4 border-t border-surface-variant/20 mt-4">© 2026 MPX Global. All rights reserved.</div></div></footer>
+</body></html>

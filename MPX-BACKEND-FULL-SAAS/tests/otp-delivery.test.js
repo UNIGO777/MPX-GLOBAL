@@ -139,44 +139,89 @@ describe('failure posture', () => {
  * `env` is frozen at import, so each case re-imports the module under a
  * different NODE_ENV (same pattern as the production-throw case above).
  */
-describe('🔴 dev OTP terminal print is gated to development ONLY', () => {
-  async function sendUnder(nodeEnv, overrides = {}) {
+describe('🔴 dev OTP terminal print needs BOTH locks', () => {
+  const ORIGINAL_PRINT = process.env.OTP_DEV_PRINT;
+
+  afterEach(() => {
+    if (ORIGINAL_PRINT === undefined) delete process.env.OTP_DEV_PRINT;
+    else process.env.OTP_DEV_PRINT = ORIGINAL_PRINT;
+  });
+
+  // `devPrint: null` means "leave the variable unset". NOT `undefined` — a
+  // destructuring default fires on an explicitly-passed undefined, so
+  // `{ devPrint: undefined }` would silently become 'true' and the test would
+  // assert the opposite of what it claims (this exact bug, caught 2026-08-07).
+  async function sendUnder(nodeEnv, { devPrint = 'true', channel = 'mobile', ...overrides } = {}) {
     process.env.NODE_ENV = nodeEnv;
+    if (devPrint === null) delete process.env.OTP_DEV_PRINT;
+    else process.env.OTP_DEV_PRINT = devPrint;
     vi.resetModules();
     const { sendOtp: scoped } = await import('../src/services/otp.sender.js');
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
     Object.assign(sms, overrides.sms ?? {});
     Object.assign(email, overrides.email ?? {});
-    await scoped({ channel: 'mobile', identifier: INDIAN, code: CODE, purpose: 'login' }).catch(() => {});
+    const identifier = channel === 'email' ? EMAIL : INDIAN;
+    await scoped({ channel, identifier, code: CODE, purpose: 'login' }).catch(() => {});
     return spy;
   }
+
+  const printed = (spy) => spy.mock.calls.flat().join(' ').includes(CODE);
 
   it('prints in development EVEN WHEN a transport delivers successfully', async () => {
     // The regression this guards: the print used to be a last resort, so
     // configuring SMTP silently took the code away from the terminal.
     const spy = await sendUnder('development');
     expect(sms.send).toHaveBeenCalled();
-    expect(spy.mock.calls.flat().join(' ')).toContain(CODE);
+    expect(printed(spy)).toBe(true);
   });
 
   it('prints in development when NO transport is configured', async () => {
     const spy = await sendUnder('development', { sms: { configured: false }, email: { configured: false } });
-    expect(spy.mock.calls.flat().join(' ')).toContain(CODE);
+    expect(printed(spy)).toBe(true);
   });
 
-  it('🔴 NEVER prints in production — on the success path', async () => {
-    const spy = await sendUnder('production');
-    expect(spy.mock.calls.flat().join(' ')).not.toContain(CODE);
+  it('prints for the EMAIL channel too, not just mobile', async () => {
+    const spy = await sendUnder('development', { channel: 'email' });
+    expect(printed(spy)).toBe(true);
   });
 
-  it('🔴 NEVER prints in production — on the nothing-could-deliver path', async () => {
-    const spy = await sendUnder('production', { sms: { configured: false }, email: { configured: false } });
-    expect(spy.mock.calls.flat().join(' ')).not.toContain(CODE);
+  // 🔴 DEFAULT-DENY: only the exact string 'true' may enable this. Two footguns
+  // are pinned here — `z.coerce.boolean()` would make the string 'false' TRUE,
+  // and `z.enum(['true','false'])` would REJECT the blank value `.env.example`
+  // ships and kill the server at boot.
+  //
+  // "Unset" is not tested through the env var itself: env.js runs dotenv, which
+  // fills anything process.env does not already define, so deleting the key just
+  // lets the developer's own .env answer for it. Every non-'true' value below is
+  // equivalent to unset as far as the transform is concerned.
+  it.each([
+    ['empty string (what .env.example ships)', ''],
+    ['the literal false', 'false'],
+    ['wrong case', 'TRUE'],
+    ['a truthy-looking 1', '1'],
+    ['yes', 'yes'],
+  ])('🔴 lock 2: stays OFF for %s', async (_label, value) => {
+    const spy = await sendUnder('development', { devPrint: value });
+    expect(printed(spy)).toBe(false);
+  });
+
+  it('🔴 lock 1: NEVER prints in production, even with OTP_DEV_PRINT=true — success path', async () => {
+    const spy = await sendUnder('production', { devPrint: 'true' });
+    expect(printed(spy)).toBe(false);
+  });
+
+  it('🔴 lock 1: NEVER prints in production, even with OTP_DEV_PRINT=true — nothing-could-deliver path', async () => {
+    const spy = await sendUnder('production', {
+      devPrint: 'true',
+      sms: { configured: false },
+      email: { configured: false },
+    });
+    expect(printed(spy)).toBe(false);
   });
 
   it('stays silent under test, so suites do not print thousands of codes', async () => {
-    const spy = await sendUnder('test', { sms: { configured: false }, email: { configured: false } });
-    expect(spy.mock.calls.flat().join(' ')).not.toContain(CODE);
+    const spy = await sendUnder('test', { devPrint: 'true', sms: { configured: false }, email: { configured: false } });
+    expect(printed(spy)).toBe(false);
   });
 });
 

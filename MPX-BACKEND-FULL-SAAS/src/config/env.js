@@ -58,6 +58,24 @@ const envSchema = z.object({
   OTP_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   OTP_LOCK_SECONDS: z.coerce.number().int().positive().default(900),
   OTP_LENGTH: z.coerce.number().int().min(4).max(10).default(6),
+  // 🔴 Echo OTP codes to the terminal. DEV CONVENIENCE ONLY — it is the second
+  // of two independent locks (the first is NODE_ENV === 'development'), added
+  // 2026-08-07 after the live API was found running WITHOUT NODE_ENV=production:
+  // a single gate meant one missing variable on one server was enough to print
+  // real users' codes into production logs (A3 / security-baseline #4).
+  //
+  // DEFAULT-DENY: only the exact string 'true' enables it. Everything else —
+  // unset, empty, 'false', 'TRUE', '1', a typo — is OFF.
+  //
+  // 🔴 NOT z.coerce.boolean(): coercion treats the string "false" as TRUE, so
+  // `OTP_DEV_PRINT=false` would have switched the print ON.
+  // 🔴 NOT z.enum([...]) either: `.env.example` ships this key BLANK, so an enum
+  // would reject '' and take the whole server down at boot for anyone who copied
+  // the example file.
+  OTP_DEV_PRINT: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
   // KYC document size cap, in megabytes. ONE source of truth: both the multer
   // limit and the storage service read it, and the web client mirrors it for
   // copy only (VITE_KYC_MAX_MB) — the server is what actually enforces it.

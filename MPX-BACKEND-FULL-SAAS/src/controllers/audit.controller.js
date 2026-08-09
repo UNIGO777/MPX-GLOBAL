@@ -6,11 +6,10 @@ import { auditListView, auditDetailView } from '../views/audit.view.js';
 // refuses every mutation (rule 1).
 
 export async function list(req, res) {
-  const { rows, actorById, total, page, pageSize, actorFor } = await svc.listAuditEntries(
-    req.validated.query,
-  );
+  const { rows, actorById, total, page, pageSize, actorFor, targetNameFor } =
+    await svc.listAuditEntries(req.validated.query);
   res.json({
-    entries: rows.map((row) => auditListView(row, actorFor(row, actorById))),
+    entries: rows.map((row) => auditListView(row, actorFor(row, actorById), targetNameFor(row))),
     total,
     page,
     pageSize,
@@ -18,6 +17,6 @@ export async function list(req, res) {
 }
 
 export async function get(req, res) {
-  const { entry, actor } = await svc.getAuditEntry(req.params.id);
-  res.json({ entry: auditDetailView(entry, actor) });
+  const { entry, actor, targetName } = await svc.getAuditEntry(req.params.id);
+  res.json({ entry: auditDetailView(entry, actor, targetName) });
 }

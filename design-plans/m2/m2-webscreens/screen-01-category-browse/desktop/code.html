@@ -1,0 +1,235 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MPX Global - Browse Categories</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#006d3c",
+                    "surface-tint": "#2a4de0",
+                    "on-secondary-fixed": "#091c32",
+                    "secondary-container": "#cfe1ff",
+                    "surface-bright": "#fbf8ff",
+                    "on-primary-fixed": "#001158",
+                    "on-primary-fixed-variant": "#0032c3",
+                    "on-tertiary-fixed-variant": "#00522c",
+                    "surface-container": "#eeedf9",
+                    "on-background": "#1a1b24",
+                    "primary": "#2A4DE0",
+                    "tertiary-fixed": "#70fda7",
+                    "inverse-on-surface": "#f1effc",
+                    "surface-container-highest": "#e2e1ee",
+                    "secondary-fixed-dim": "#b6c8e5",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed-variant": "#374860",
+                    "on-surface-variant": "#444655",
+                    "secondary-fixed": "#d4e3ff",
+                    "primary-fixed-dim": "#b9c3ff",
+                    "error-container": "#ffdad6",
+                    "inverse-surface": "#1A2E8F",
+                    "primary-fixed": "#dee1ff",
+                    "on-error": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "surface-container-high": "#e8e7f3",
+                    "on-tertiary-container": "#66f29e",
+                    "on-surface": "#1a1b24",
+                    "surface-dim": "#dad9e5",
+                    "on-primary-container": "#d0d6ff",
+                    "inverse-primary": "#b9c3ff",
+                    "error": "#ba1a1a",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed-dim": "#51df8e",
+                    "outline-variant": "#c4c5d8",
+                    "surface-container-low": "#f4f2ff",
+                    "outline": "#747687",
+                    "surface-variant": "#e2e1ee",
+                    "secondary": "#4e5f79",
+                    "on-error-container": "#93000a",
+                    "surface": "#fbf8ff",
+                    "on-primary": "#ffffff",
+                    "background": "#fbf8ff",
+                    "on-tertiary-fixed": "#00210e",
+                    "primary-container": "#2a4de0",
+                    "tertiary": "#00522c",
+                    "on-secondary-container": "#53647d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "container-max": "1440px",
+                    "card-padding": "40px",
+                    "unit": "4px",
+                    "stack-lg": "32px",
+                    "stack-sm": "8px",
+                    "stack-md": "16px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .card-shadow {
+            box-shadow: 0px 4px 20px rgba(0, 5, 23, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-[#EAEEFF] text-on-background font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface font-headline-sm text-headline-sm font-label-lg text-label-lg docked full-width top-0 sticky border-b border-outline-variant dark:border-outline flat no shadows z-50">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-lg max-w-container-max mx-auto h-20">
+<div class="flex items-center gap-8">
+<a class="font-display-lg-mobile text-display-lg-mobile font-bold text-on-surface dark:text-on-surface" href="#">MPX Global</a>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-surface dark:text-on-surface-variant font-label-lg text-label-lg hover:text-primary transition-colors duration-200" href="#">How it Works</a>
+<a class="text-primary border-b-2 border-primary pb-1 font-label-lg text-label-lg hover:text-primary transition-colors duration-200" href="#">Categories</a>
+<a class="text-on-surface dark:text-on-surface-variant font-label-lg text-label-lg hover:text-primary transition-colors duration-200" href="#">Platform</a>
+<a class="text-on-surface dark:text-on-surface-variant font-label-lg text-label-lg hover:text-primary transition-colors duration-200" href="#">FAQ</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<a class="font-label-md text-label-md text-on-surface hover:text-primary transition-colors" href="#">Sign In</a>
+<button class="bg-[#2A4DE0] text-on-primary hover:bg-[#2340C4] transition-colors rounded-full px-6 py-2 font-label-md text-label-md">Get Started</button>
+</div>
+</div>
+</header>
+<main class="flex-grow w-full max-w-container-max mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24">
+<!-- MAIN VIEW -->
+<section class="mb-32">
+<!-- Hero -->
+<div class="text-center md:text-left mb-16 max-w-3xl">
+<h1 class="font-display-lg text-display-lg text-on-background mb-4">Browse categories</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Find specialised suppliers across 40 industries.</p>
+</div>
+<!-- Category Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-surface-variant shrink-0">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A highly detailed close-up shot of golden wheat stalks swaying in a sunny field, highlighting modern agricultural practices and premium crop quality. The lighting is bright and natural, reflecting a clean, high-end B2B aesthetic with high contrast and sharp focus, setting a professional tone." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0lNbUHljT2ZfxxdNuVKLx6IK_tZx8FzfggCEBQJ-ulQitOMsQXL9hxHME-N5q8ugSCJWt7QviArlWbUFoUwjuKxDir6Fb2XkCH5grehE1jvvcfg4FgSNXgCOiNmFImE1hCoXgPlEBMgnruYC0O5i3UCxJ3-JO6t-ivPdNjKi7E6OllebcXcYOQA1jO4EiB4x_Txb25vVhnHdHjRbnWUMUdF7I7IMsYqtCMlcGVc_ycdh_5JzB2Eu9">
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Agriculture</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">Seeds &amp; plants, Grains &amp; cereals, Spices &amp; herbs</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">10 sub-categories</p></div></div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-surface-variant shrink-0">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A sleek, modern rack of high-quality garments in a brightly lit, minimalist warehouse setting. The focus is on the textures and pristine condition of the apparel, illuminated by soft, diffused white light, emphasizing premium sourcing and a professional B2B environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNCHl8tMIQ4jhfZwOfQl0fElU9wpY-VH55pTQUdUjx2eWkcMakFlmBSZJ85JIUz7Kc0Tu45l9yJv1YgGZ7z4VT22EvERm1f3UatzsmwwpX8k9rxEpIO9SgL6ULMJJtmPnkSj1MPYX91fVkFjQMcCgUM6PysUgjxLpq8oYy3W_i7eshAWJ8-LpXUPNqXBF-uOiJlzvaaDKrgNs-sL1KwlU_lNQ2o3_rwVtvRfz0dGCdwmxLbz0grL84">
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Apparel &amp; Garments</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">Men's clothing, Women's clothing, Ethnic wear</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">8 sub-categories</p></div></div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-surface-variant shrink-0">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Macro photography of neatly stacked rolls of premium fabric and yarn spools in a clean, industrial environment. The lighting is crisp, highlighting the intricate weaves and vibrant yet professional color palette of the textiles. The scene conveys high-volume, high-quality manufacturing suitable for a high-end platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3YGFDpiLoKoyO9gMZTmRcRFsIyUdxoLdZW5tsDnenZGPjGYYj3ec5-4AtoT0TsxhOHspP2KQPtVcWGBgoZLQteLzQ4D-WuJQoGSVCrQEakLGKvX5NzWJs2zfu5lG8CJ4TgDUatAaEstfYgrfPqJ8RDFa7yMZF1-cyc6xTkjcJHjXpbVoqUGD2akAQFTI8OqCy8QS-VaI1WYf07MxGFoZdNuWA6XLAXb7XXDPo_vYna7ox5foxvNQc">
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Textiles, Fabrics &amp; Yarn</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">Cotton fabric, Silk fabric, Denim</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">8 sub-categories</p></div></div>
+</div>
+<!-- Card 4 (Placeholder) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-[#dee1ff] flex items-center justify-center shrink-0">
+<span class="font-display-lg text-display-lg text-[#2A4DE0] opacity-80 group-hover:scale-110 transition-transform duration-500">L</span>
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Leather &amp; Leather Products</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">Finished leather, Bags &amp; wallets, Belts</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">7 sub-categories</p></div></div>
+</div>
+<!-- Card 5 (Placeholder) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-[#dee1ff] flex items-center justify-center shrink-0">
+<span class="font-display-lg text-display-lg text-[#2A4DE0] opacity-80 group-hover:scale-110 transition-transform duration-500">F</span>
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Food &amp; Beverages</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">Packaged food, Beverages, Dry fruits &amp; nuts</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">8 sub-categories</p></div></div>
+</div>
+<!-- Card 6 (Placeholder) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-[#dee1ff] flex items-center justify-center shrink-0">
+<span class="font-display-lg text-display-lg text-[#2A4DE0] opacity-80 group-hover:scale-110 transition-transform duration-500">C</span>
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Chemicals, Dyes &amp; Solvents</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">Industrial chemicals, Dyes &amp; pigments, Solvents</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">10 sub-categories</p></div></div>
+</div>
+<!-- Card 7 (Placeholder) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-[#dee1ff] flex items-center justify-center shrink-0">
+<span class="font-display-lg text-display-lg text-[#2A4DE0] opacity-80 group-hover:scale-110 transition-transform duration-500">P</span>
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Pharmaceuticals &amp; Medical</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">Formulations, Surgical instruments, Diagnostics</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">7 sub-categories</p></div></div>
+</div>
+<!-- Card 8 (Placeholder) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-[#dee1ff] flex items-center justify-center shrink-0">
+<span class="font-display-lg text-display-lg text-[#2A4DE0] opacity-80 group-hover:scale-110 transition-transform duration-500">E</span>
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Electronics &amp; Electrical</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">Consumer electronics, LED lighting, Wires &amp; cables</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">8 sub-categories</p></div></div>
+</div>
+<!-- Card 9 (Placeholder) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-[#dee1ff] flex items-center justify-center shrink-0">
+<span class="font-display-lg text-display-lg text-[#2A4DE0] opacity-80 group-hover:scale-110 transition-transform duration-500">I</span>
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Industrial Machinery &amp; Equipment</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">Packaging machines, CNC &amp; machine tools</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">9 sub-categories</p></div></div>
+</div>
+<!-- Card 10 (Placeholder) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-[#dee1ff] flex items-center justify-center shrink-0">
+<span class="font-display-lg text-display-lg text-[#2A4DE0] opacity-80 group-hover:scale-110 transition-transform duration-500">B</span>
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Building &amp; Construction</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">TMT bars &amp; steel, Cement, Tiles &amp; marble</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">9 sub-categories</p></div></div>
+</div>
+<!-- Card 11 (Placeholder) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-[#dee1ff] flex items-center justify-center shrink-0">
+<span class="font-display-lg text-display-lg text-[#2A4DE0] opacity-80 group-hover:scale-110 transition-transform duration-500">I</span>
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">IT, Software &amp; AI Services</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">AI/ML development, Cloud &amp; DevOps, Cybersecurity</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">9 sub-categories</p></div></div>
+</div>
+<!-- Card 12 (Placeholder) -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant card-shadow overflow-hidden group cursor-pointer hover:border-primary-container transition-colors flex flex-col h-full">
+<div class="aspect-video relative overflow-hidden bg-[#dee1ff] flex items-center justify-center shrink-0">
+<span class="font-display-lg text-display-lg text-[#2A4DE0] opacity-80 group-hover:scale-110 transition-transform duration-500">O</span>
+</div>
+<div class="p-6 flex flex-col flex-grow"><h3 class="font-headline-md text-headline-md mb-2 text-on-background">Other</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">Other goods, Other services</p><div class="mt-auto pt-4"><p class="font-label-sm text-label-sm text-outline">2 sub-categories</p></div></div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#1A2E8F] text-white font-body-sm text-body-sm font-label-md text-label-md full-width bottom-0 border-t border-[#2340C4] flat no shadows mt-auto"><div class="flex flex-col md:flex-row justify-between items-start w-full px-4 md:px-6 lg:px-8 py-16 max-w-container-max mx-auto gap-8"><div class="w-full md:w-1/4"><a class="font-display-lg-mobile text-display-lg-mobile font-bold text-white block mb-6" href="#">MPX Global</a><p class="text-white/70 font-body-md mb-6">© 2026 MPX Global. All rights reserved.</p></div><div class="w-full md:w-3/4 grid grid-cols-2 md:grid-cols-4 gap-8"><div class="flex flex-col gap-4"><h4 class="font-label-md font-bold text-white">Marketplace</h4><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">Categories</a><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">For Buyers</a><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">For Sellers</a></div><div class="flex flex-col gap-4"><h4 class="font-label-md font-bold text-white">Company</h4><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">About Us</a><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">Careers</a><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">Contact</a></div><div class="flex flex-col gap-4"><h4 class="font-label-md font-bold text-white">Resources</h4><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">Blog</a><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">Help Center</a><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">Trade Guides</a></div><div class="flex flex-col gap-4"><h4 class="font-label-md font-bold text-white">Legal</h4><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">Privacy Policy</a><a class="text-white/70 hover:text-white transition-colors duration-200" href="#">Terms of Service</a></div></div></div></footer>
+</body></html>

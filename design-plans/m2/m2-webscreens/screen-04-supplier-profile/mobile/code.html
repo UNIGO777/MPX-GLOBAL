@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global - Supplier Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline": "#747687",
+                        "on-secondary-fixed": "#091c32",
+                        "tertiary": "#00522c",
+                        "surface-container": "#eeedf9",
+                        "on-tertiary-container": "#66f29e",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#53647d",
+                        "on-primary-container": "#d0d6ff",
+                        "error": "#ba1a1a",
+                        "on-surface": "#1a1b24",
+                        "tertiary-container": "#006d3c",
+                        "background": "#fbf8ff",
+                        "on-background": "#1a1b24",
+                        "secondary-fixed": "#d4e3ff",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "secondary": "#4e5f79",
+                        "surface-container-high": "#e8e7f3",
+                        "inverse-on-surface": "#f1effc",
+                        "tertiary-fixed": "#70fda7",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#dee1ff",
+                        "inverse-primary": "#b9c3ff",
+                        "surface-container-highest": "#e2e1ee",
+                        "primary": "#0032c3",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed": "#001158",
+                        "outline-variant": "#c4c5d8",
+                        "surface-variant": "#e2e1ee",
+                        "surface": "#fbf8ff",
+                        "surface-tint": "#2a4de0",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#2a4de0",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f4f2ff",
+                        "surface-dim": "#dad9e5",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "on-tertiary-fixed": "#00210e",
+                        "surface-bright": "#fbf8ff",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#374860",
+                        "inverse-surface": "#2f3039",
+                        "on-surface-variant": "#444655",
+                        "secondary-container": "#cfe1ff"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "stack-lg": "32px",
+                        "gutter": "24px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "container-max": "1200px",
+                        "unit": "4px",
+                        "card-padding": "40px"
+                    },
+                    fontFamily: {
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest dark:bg-on-surface sticky top-0 w-full z-50 border-b border-outline-variant dark:border-on-surface-variant shadow-sm dark:shadow-none transition-all duration-200 ease-in-out">
+<div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
+<div class="flex items-center gap-4">
+<button aria-label="Menu" class="md:hidden text-primary dark:text-primary-fixed-dim">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim" href="#">
+                    MPX Global
+                </a>
+</div>
+<nav class="hidden md:flex items-center gap-8 font-body-md text-body-md">
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary-container dark:hover:text-primary-fixed transition-colors" href="#">How it Works</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary-container dark:hover:text-primary-fixed transition-colors" href="#">Categories</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary-container dark:hover:text-primary-fixed transition-colors" href="#">Platform</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary-container dark:hover:text-primary-fixed transition-colors" href="#">FAQ</a>
+</nav>
+<div class="hidden md:flex items-center gap-4">
+<button class="text-primary dark:text-primary-fixed-dim font-label-md text-label-md hover:text-primary-container dark:hover:text-primary-fixed transition-colors">
+                    Sign In
+                </button>
+<button class="bg-primary-container text-on-primary rounded-full px-6 py-2 font-label-md text-label-md hover:bg-on-primary-fixed-variant transition-colors">
+                    Get Started
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow pb-stack-lg max-w-[480px] mx-auto w-full md:max-w-[800px] bg-surface-container-lowest">
+<!-- Supplier Header -->
+<div class="px-gutter pt-stack-lg pb-stack-md border-b border-outline-variant">
+<div class="flex items-center gap-2 mb-unit">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Tirupur Knitwear Exports</h1>
+<span class="material-symbols-outlined fill text-[#12B76A] text-xl">check_circle</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-stack-md">
+                India · Business · Established 2011 · Member since 2026
+            </p>
+<p class="font-body-md text-body-md text-secondary mb-stack-lg">
+                Leading manufacturer of premium cotton textiles and knitwear fabrics based in Tirupur, India. Specializing in high-quality organic weaves and custom fabric developments for global fashion brands.
+            </p>
+<div class="flex items-center justify-between">
+<h2 class="font-headline-md text-headline-md text-on-surface">Products</h2>
+<span class="font-label-md text-label-md text-on-surface-variant">24 products</span>
+</div>
+</div>
+<!-- Catalogue List -->
+<div class="px-gutter py-stack-md flex flex-col gap-stack-md">
+<!-- Product Card 1 -->
+<div class="flex gap-stack-md pb-stack-md border-b border-outline-variant/30 items-start">
+<div class="w-24 h-24 shrink-0 rounded-lg bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close up photography of premium combed cotton poplin fabric roll, bright lighting, crisp texture, professional B2B e-commerce product shot against a clean white background, royal blue accent tones in the styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAh1PbKpwPbPn2R_o7mZUcXAQXmO86jpFPTg2ZzxtJeIU06zC5zQshA3Ulgwv4txtv946j7wybLZ-8yvnupjAAHkLdUo7dJKPzg4uMUrvS7No-TMe-cMVPqGzLO147N01yBYFxKeLo_KkvSn6p7Z3Lhfue6UPGhaP2oKH5dgqtPxW_df3rfCLyRKHZjPbCkI2yCKxLwdTndk76rKmj74YIb9MSGwq4A_A87NlG4PJc5Cxa30pyMZsqk"/>
+</div>
+<div class="flex flex-col pt-1">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider mb-1">Poplin</span>
+<h3 class="font-label-md text-label-md font-bold text-on-surface mb-1">Combed Cotton Poplin Fabric</h3>
+<p class="font-body-md text-body-md text-on-surface">INR 220 / meter</p>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="flex gap-stack-md pb-stack-md border-b border-outline-variant/30 items-start">
+<div class="w-24 h-24 shrink-0 rounded-lg bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Lightweight sheer organic cotton voile fabric draped elegantly over a minimalist stand, studio lighting, crisp white color, professional textile catalog photography with subtle cool blue shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXBmOqeUQVKbTcugE90PfRgPYl2KC7Lr-xUCOh2B-SAdGn8o0Qt5sgpxCP3PvWUw49EFZA-wagMdfZhCFfYP6ZTohv-ffAbSCeur_yiKlElmjbEI0N5tyzAqJZx9mZi55ubSo_wkY3FZ0HcY0s8uDftr3OMKd0PXpmETk7D7OmudBXCmZvcM-jnQfB0VxNVcJpzKeormfnkjQNLBiheXjdYIIs-o5URsIe9Dh2C1ZXIxfSufOFReFb"/>
+</div>
+<div class="flex flex-col pt-1">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider mb-1">Voile</span>
+<h3 class="font-label-md text-label-md font-bold text-on-surface mb-1">Organic Cotton Voile</h3>
+<p class="font-body-md text-body-md text-on-surface">INR 180 – 260</p>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="flex gap-stack-md pb-stack-md border-b border-outline-variant/30 items-start">
+<div class="w-24 h-24 shrink-0 rounded-lg bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Large industrial roll of fine cotton cambric 60s fabric, neatly wound, resting on a clean concrete floor in a modern minimalist warehouse setting, bright natural light, crisp industrial aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDR9FUZyw9rnG1K11ynsf6xFsEv7JNrXleAcHqgkdHqts6rBw4cUlxTjxtBneeHcsST5-WgC4ueXc3xlo94NjUoYdUqC5nY5RMKEAAq_43JRStdOIEB3v3pFeW8HFyn0AuLUEOpNsRZIq9cGKziuDhaRdG8M7EfCADeUWEVZer5SfgibYaxKgYBxT-o6i2YNPMxokYj31uUtNwao2PvmFDkCfkECXD-atX25FtOjgVrmiQaQezkrqDl"/>
+</div>
+<div class="flex flex-col pt-1">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider mb-1">Cambric</span>
+<h3 class="font-label-md text-label-md font-bold text-on-surface mb-1">Cotton Cambric Roll, 60s</h3>
+<p class="font-body-md text-body-md text-on-surface">Price on request</p>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="flex gap-stack-md pb-stack-md border-b border-outline-variant/30 items-start">
+<div class="w-24 h-24 shrink-0 rounded-lg bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Stack of folded bleached cotton twill fabric showing the distinct diagonal weave pattern, pristine white color, harsh directional lighting creating sharp shadows, high-end commercial textile photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA69x8POuu8Z19SdkBwMLdTcCfnsYqt3vAxxQ1PnwjKF3F88ulkXFlaqL0TWivoD3_30SJLMkz6PBHz53SIhQQY2KQP_oc_6uNz0Q9lrfLvRip5dXTkRrmuy2OlWDeWdiUFzH-u6rof8TSqw4Lviz0uVpmS2FMmebbGsEw04p3deW5z_fLo1tfkxh-06DmCVW2Ai3ZqgKcw8Q2sM7eBPwhe2UWJtPYEyuuKUMPFGcgo0XoY2h0xjyIY"/>
+</div>
+<div class="flex flex-col pt-1">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider mb-1">Twill</span>
+<h3 class="font-label-md text-label-md font-bold text-on-surface mb-1">Bleached Cotton Twill</h3>
+<p class="font-body-md text-body-md text-on-surface">USD 3.40 / meter</p>
+</div>
+</div>
+<!-- Product Card 5 -->
+<div class="flex gap-stack-md pb-stack-md border-b border-outline-variant/30 items-start">
+<div class="w-24 h-24 shrink-0 rounded-lg bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Textured surface of unbleached handloom cotton khadi fabric, showing natural slubs and imperfections, warm earthy tone, macro photography, extremely sharp detail, minimalist composition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBy3joaTZsptfr1YX8P3rNXM8bHaLUSPZlH_ndiWNzkeFwX5wM2jNf4YAyqet-Aoy8zd3j_JJFbxw8ZjyKI4KKmOm4wwYuSjVNNNDJQIzc7RyHHUmLxUl5ndo00CNEgTLmf6HSlZ6p7qeCs_UNCuAX8vf93r1c8qrVv_B4s3fV_evXKPU8KpRiCqVUEBKjTcYi0nrW0UDApwZYgKsKZq8zOzz5pVFZItHubujMSum0o6G8rQo5aYYeN"/>
+</div>
+<div class="flex flex-col pt-1">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider mb-1">Khadi</span>
+<h3 class="font-label-md text-label-md font-bold text-on-surface mb-1">Handloom Cotton Khadi</h3>
+<p class="font-body-md text-body-md text-on-surface">INR 450 / meter</p>
+</div>
+</div>
+<!-- Product Card 6 -->
+<div class="flex gap-stack-md pb-stack-md border-b border-outline-variant/30 items-start">
+<div class="w-24 h-24 shrink-0 rounded-lg bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Heavyweight 12oz cotton canvas fabric swatch laid flat, rugged texture, neutral stone color, professional top-down product photography, even diffused lighting, crisp edges." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTBbW7Ft7qnSIgY80tqO42CKiZs5yR0Yr3PqJlvfCZNl-gwjZQR19Chi2-cVNvkG7wQKE2TOCKuxVxaDj9_V9_0DhapTNirije2qpP-D_w95PL1TdsgammleG_p600R6DnBtg-meBdQr1mCS3u4jDY7b6dT8Xr0uuSpzXzdmQnFjKUJpYLoO3mMYHAxd4TnC3Hc9gmGfatCUhdP2BSGKkGKzzMrki1fOi6VaJcN9uELRiGQWThdjS7"/>
+</div>
+<div class="flex flex-col pt-1">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider mb-1">Canvas</span>
+<h3 class="font-label-md text-label-md font-bold text-on-surface mb-1">Cotton Canvas 12oz</h3>
+<p class="font-body-md text-body-md text-on-surface">INR 390 – 520</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-on-primary-fixed-variant dark:bg-on-surface w-full mt-auto">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-stack-lg py-stack-lg px-gutter max-w-container-max mx-auto border-t border-outline/20">
+<div class="flex flex-col gap-unit">
+<h4 class="font-label-md text-label-md font-bold text-primary-fixed dark:text-primary-fixed-dim mb-2 uppercase tracking-wider">Marketplace</h4>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">Browse Categories</a>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">Top Suppliers</a>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">How to Buy</a>
+</div>
+<div class="flex flex-col gap-unit">
+<h4 class="font-label-md text-label-md font-bold text-primary-fixed dark:text-primary-fixed-dim mb-2 uppercase tracking-wider">Company</h4>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">About Us</a>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">Careers</a>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">Contact</a>
+</div>
+<div class="flex flex-col gap-unit">
+<h4 class="font-label-md text-label-md font-bold text-primary-fixed dark:text-primary-fixed-dim mb-2 uppercase tracking-wider">Resources</h4>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">Help Center</a>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">Trade Guides</a>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">API Documentation</a>
+</div>
+<div class="flex flex-col gap-unit">
+<h4 class="font-label-md text-label-md font-bold text-primary-fixed dark:text-primary-fixed-dim mb-2 uppercase tracking-wider">Legal</h4>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">Terms of Service</a>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-secondary-fixed-dim hover:text-surface-bright transition-all cursor-pointer opacity-90 hover:opacity-100" href="#">Cookie Policy</a>
+</div>
+</div>
+<div class="px-gutter pb-stack-lg max-w-container-max mx-auto text-center md:text-left">
+<span class="font-headline-md text-headline-md text-surface-bright block mb-4">MPX Global</span>
+<p class="font-body-md text-body-md text-secondary-fixed-dim">© 2026 MPX Global. All rights reserved.</p>
+</div>
+</footer>
+</body></html>

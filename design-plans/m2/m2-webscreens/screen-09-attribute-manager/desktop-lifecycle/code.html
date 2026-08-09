@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global Admin - Field Designer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-container": "#66f29e",
+                    "primary": "#0032c3",
+                    "on-primary-fixed-variant": "#0032c3",
+                    "on-surface-variant": "#444655",
+                    "surface-tint": "#2a4de0",
+                    "tertiary-fixed": "#70fda7",
+                    "on-tertiary-fixed": "#00210e",
+                    "surface-bright": "#fbf8ff",
+                    "secondary-container": "#cfe1ff",
+                    "on-background": "#1a1b24",
+                    "surface-container-high": "#e8e7f3",
+                    "error-container": "#ffdad6",
+                    "outline": "#747687",
+                    "surface-container": "#eeedf9",
+                    "inverse-surface": "#2f3039",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed-variant": "#374860",
+                    "primary-fixed": "#dee1ff",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "background": "#fbf8ff",
+                    "tertiary-fixed-dim": "#51df8e",
+                    "surface": "#fbf8ff",
+                    "outline-variant": "#c4c5d8",
+                    "secondary-fixed": "#d4e3ff",
+                    "surface-container-low": "#f4f2ff",
+                    "surface-dim": "#dad9e5",
+                    "tertiary": "#00522c",
+                    "surface-container-highest": "#e2e1ee",
+                    "on-tertiary-fixed-variant": "#00522c",
+                    "on-secondary-container": "#53647d",
+                    "on-primary-container": "#d0d6ff",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#2a4de0",
+                    "surface-variant": "#e2e1ee",
+                    "on-secondary-fixed": "#091c32",
+                    "primary-fixed-dim": "#b9c3ff",
+                    "tertiary-container": "#006d3c",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed": "#001158",
+                    "error": "#ba1a1a",
+                    "secondary": "#4e5f79",
+                    "on-surface": "#1a1b24",
+                    "inverse-on-surface": "#f1effc",
+                    "on-error": "#ffffff",
+                    "secondary-fixed-dim": "#b6c8e5",
+                    "inverse-primary": "#b9c3ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "card-padding": "40px",
+                    "unit": "4px",
+                    "stack-lg": "32px",
+                    "container-max": "1200px",
+                    "stack-sm": "8px",
+                    "gutter": "24px",
+                    "stack-md": "16px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { background-color: #ffffff; } /* The space between frames */
+        .frame-container { 
+            position: relative; 
+            width: 100%; 
+            height: 100vh; 
+            min-height: 800px;
+            overflow: hidden; 
+            background-color: #1A2E8F; /* Deep navy shell */
+            margin-bottom: 100px;
+        }
+        .canvas-bg { background-color: #EAEEFF; }
+        
+        /* Layout Structure */
+        .layout-shell { display: flex; height: 100%; }
+        .sidebar { width: 260px; flex-shrink: 0; background-color: #1A2E8F; color: white; display: flex; flex-direction: column; padding: 32px 16px; }
+        .main-area { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { height: 64px; flex-shrink: 0; background-color: #1A2E8F; display: flex; justify-content: flex-end; align-items: center; padding: 0 24px; color: white; }
+        .content-panel { 
+            flex-grow: 1; 
+            background-color: #EAEEFF; 
+            border-top-left-radius: 32px; 
+            padding: 32px; 
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        /* Reusable Components */
+        .white-card { background-color: #ffffff; border-radius: 8px; border: 1px solid #C5C6CF; box-shadow: 0px 4px 20px rgba(0, 5, 23, 0.05); padding: 40px; }
+        .btn-primary { background-color: #2A4DE0; color: #ffffff; border-radius: 9999px; padding: 8px 16px; font-weight: 500; font-size: 14px; line-height: 20px; transition: background-color 0.2s; }
+        .btn-primary:hover { background-color: #2340C4; }
+        .btn-danger { background-color: #ba1a1a; color: #ffffff; border-radius: 9999px; padding: 8px 16px; font-weight: 500; font-size: 14px; line-height: 20px; transition: background-color 0.2s; }
+        .btn-text { color: #5A6B85; font-weight: 500; font-size: 14px; line-height: 20px; padding: 8px 16px; border-radius: 9999px; }
+        .btn-text:hover { background-color: #f4f2ff; }
+        
+        .input-field { width: 100%; border-radius: 8px; border: 1px solid #C5C6CF; padding: 10px 12px; font-size: 16px; outline: none; transition: border-color 0.2s; background: white; }
+        .input-field:focus { border: 2px solid #2A4DE0; padding: 9px 11px; }
+        .input-field::placeholder { color: #667085; }
+        .form-label { display: block; font-weight: 500; font-size: 14px; color: #1a1b24; margin-bottom: 4px; }
+        .form-helper { display: block; font-size: 12px; color: #5A6B85; margin-top: 4px; }
+        
+        /* Drawer Overlay */
+        .scrim { position: absolute; inset: 0; background-color: rgba(9, 28, 50, 0.4); z-index: 40; }
+        .drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 480px; background-color: #ffffff; box-shadow: -4px 0 24px rgba(0,0,0,0.1); z-index: 50; display: flex; flex-direction: column; }
+        .drawer-header { padding: 24px 32px; border-bottom: 1px solid #e2e1ee; display: flex; justify-content: space-between; align-items: center; }
+        .drawer-content { padding: 32px; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+        .drawer-footer { padding: 24px 32px; border-top: 1px solid #e2e1ee; display: flex; justify-content: flex-end; gap: 16px; background-color: #fbf8ff; }
+        
+        /* Dialog */
+        .dialog-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 16px; padding: 32px; width: 400px; z-index: 50; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        
+        /* Table */
+        .table-container { background: white; border-radius: 8px; border: 1px solid #C5C6CF; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 16px 24px; font-size: 12px; font-weight: 600; color: #5A6B85; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e1ee; background: #fbf8ff; }
+        td { padding: 16px 24px; font-size: 14px; color: #1a1b24; border-bottom: 1px solid #e2e1ee; }
+        tr:last-child td { border-bottom: none; }
+        
+        /* Toggle */
+        .toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #c4c5d8; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        input:checked + .slider { background-color: #2A4DE0; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        
+        .chip { display: inline-flex; items-center: center; background-color: #f4f2ff; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #1a1b24; gap: 8px; border: 1px solid #e2e1ee; margin-right: 8px; margin-bottom: 8px; }
+        
+        /* Common Header & Table Template */
+        .main-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+    </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- FRAME 1: CREATE PANEL -->
+<div class="frame-container" id="frame-1">
+<div class="layout-shell">
+<nav class="sidebar">
+<div class="mb-8 px-4">
+<div class="font-headline-md text-headline-md font-bold text-surface-container-lowest">MPX Global</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-stack-md px-stack-md py-stack-sm text-[#b6c8e5] hover:text-white"><span class="material-symbols-outlined">verified_user</span><span class="font-label-md text-label-md">Verifications</span></div>
+<div class="flex items-center gap-stack-md px-stack-md py-stack-sm text-[#b6c8e5] hover:text-white"><span class="material-symbols-outlined">group</span><span class="font-label-md text-label-md">Users</span></div>
+<div class="flex items-center gap-stack-md px-stack-md py-stack-sm rounded-lg bg-primary-container text-on-primary-container font-bold"><span class="material-symbols-outlined">category</span><span class="font-label-md text-label-md">Categories</span></div>
+<div class="flex items-center gap-stack-md px-stack-md py-stack-sm text-[#b6c8e5] hover:text-white"><span class="material-symbols-outlined">inventory_2</span><span class="font-label-md text-label-md">Products</span></div>
+</div>
+</nav>
+<div class="main-area">
+<header class="topbar">
+<div class="flex items-center gap-4">
+<div class="text-right">
+<div class="font-label-md text-label-md text-white font-bold">Priya Menon</div>
+<div class="text-xs text-[#b6c8e5]">Super admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold border 2px solid white">PM</div>
+</div>
+</header>
+<main class="content-panel">
+<div class="max-w-[1200px] mx-auto w-full h-full">
+<div class="text-sm text-secondary mb-4 flex items-center gap-2">Categories <span class="material-symbols-outlined text-sm">arrow_forward</span> Textiles, Fabrics &amp; Yarn <span class="material-symbols-outlined text-sm">arrow_forward</span> Cotton fabric</div>
+<div class="main-header">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-background">Cotton fabric</h1>
+<span class="bg-surface-container-high text-on-surface-variant text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider">Goods</span>
+</div>
+<p class="text-secondary mt-2">These fields are what sellers fill in when listing under Cotton fabric.</p>
+</div>
+<button class="btn-primary">Add field</button>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Key</th>
+<th>Type</th>
+<th>Unit</th>
+<th>Options</th>
+<th>Required</th>
+<th>Filterable</th>
+<th>Order</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="font-medium">Material</td>
+<td class="font-mono text-sm text-secondary">material</td>
+<td>Text</td>
+<td class="text-secondary">—</td>
+<td class="text-secondary">—</td>
+<td>No</td>
+<td>No</td>
+<td>1</td>
+<td class="flex gap-4"><a class="text-primary font-medium hover:underline" href="#">Edit</a><a class="text-error font-medium hover:underline" href="#">Delete</a></td>
+</tr>
+<tr>
+<td class="font-medium">GSM</td>
+<td class="font-mono text-sm text-secondary">gsm</td>
+<td>Number</td>
+<td>gsm</td>
+<td class="text-secondary">—</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>2</td>
+<td class="flex gap-4"><a class="text-primary font-medium hover:underline" href="#">Edit</a><a class="text-error font-medium hover:underline" href="#">Delete</a></td>
+</tr>
+<tr>
+<td class="font-medium">Weave</td>
+<td class="font-mono text-sm text-secondary">weave</td>
+<td>Text</td>
+<td class="text-secondary">—</td>
+<td class="text-secondary">—</td>
+<td>No</td>
+<td>No</td>
+<td>3</td>
+<td class="flex gap-4"><a class="text-primary font-medium hover:underline" href="#">Edit</a><a class="text-error font-medium hover:underline" href="#">Delete</a></td>
+</tr>
+<tr>
+<td class="font-medium">Width</td>
+<td class="font-mono text-sm text-secondary">width</td>
+<td>Number</td>
+<td>inches</td>
+<td class="text-secondary">—</td>
+<td>No</td>
+<td>Yes</td>
+<td>4</td>
+<td class="flex gap-4"><a class="text-primary font-medium hover:underline" href="#">Edit</a><a class="text-error font-medium hover:underline" href="#">Delete</a></td>
+</tr>
+<tr>
+<td class="font-medium">Organic</td>
+<td class="font-mono text-sm text-secondary">organic</td>
+<td>Yes/No</td>
+<td class="text-secondary">—</td>
+<td class="text-secondary">—</td>
+<td>No</td>
+<td>Yes</td>
+<td>5</td>
+<td class="flex gap-4"><a class="text-primary font-medium hover:underline" href="#">Edit</a><a class="text-error font-medium hover:underline" href="#">Delete</a></td>
+</tr>
+<tr>
+<td class="font-medium">Finish</td>
+<td class="font-mono text-sm text-secondary">finish</td>
+<td>Select</td>
+<td class="text-secondary">—</td>
+<td>4 options</td>
+<td>No</td>
+<td>Yes</td>
+<td>6</td>
+<td class="flex gap-4"><a class="text-primary font-medium hover:underline" href="#">Edit</a><a class="text-error font-medium hover:underline" href="#">Delete</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Drawer Overlays Content Panel -->
+<div class="scrim"></div>
+<div class="drawer">
+<div class="drawer-header">
+<h2 class="font-headline-md text-headline-md text-on-background">Add field</h2>
+<button class="text-secondary hover:text-on-background"><span class="material-symbols-outlined">close</span></button>
+</div>
+<div class="drawer-content">
+<div>
+<label class="form-label">Display name</label>
+<input class="input-field" placeholder="e.g. GSM, Color, Blend" type="text"/>
+<span class="form-helper">What sellers and buyers see — safe to change later</span>
+</div>
+<div>
+<div class="flex justify-between items-baseline mb-1">
+<label class="form-label mb-0">Key</label>
+<a class="text-sm text-primary hover:underline" href="#">Generate from name</a>
+</div>
+<input class="input-field font-mono" placeholder="e.g. gsm" type="text"/>
+<span class="form-helper">Lowercase with underscores</span>
+</div>
+<div>
+<label class="form-label">Type</label>
+<select class="input-field bg-white">
+<option>Text</option>
+<option>Number</option>
+<option>Yes-No</option>
+<option>Select</option>
+</select>
+</div>
+<div>
+<label class="form-label">Unit</label>
+<input class="input-field" placeholder="e.g. gsm, kg" type="text"/>
+<span class="form-helper">e.g. gsm, kg, % — shown inside the seller's field</span>
+</div>
+<div class="flex items-center justify-between py-2">
+<div>
+<label class="form-label font-medium text-on-background">Required</label>
+<span class="text-sm text-secondary">Sellers must fill this before publishing</span>
+</div>
+<label class="toggle">
+<input checked="" type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<div class="flex items-center justify-between py-2 border-t border-surface-variant">
+<div>
+<label class="form-label font-medium text-on-background">Filterable</label>
+<span class="text-sm text-secondary">Available as a buyer filter (arrives with search)</span>
+</div>
+<label class="toggle">
+<input type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<div>
+<label class="form-label">Order</label>
+<input class="input-field w-32" type="number" value="7"/>
+</div>
+</div>
+<div class="drawer-footer">
+<button class="btn-text">Cancel</button>
+<button class="btn-primary">Add field</button>
+</div>
+</div>
+</main>
+</div>
+</div>
+</div>
+<!-- FRAME 2: EDIT PANEL -->
+<div class="frame-container" id="frame-2">
+<div class="layout-shell">
+<nav class="sidebar">
+<div class="mb-8 px-4"><div class="font-headline-md text-headline-md font-bold text-surface-container-lowest">MPX Global</div></div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-stack-md px-stack-md py-stack-sm rounded-lg bg-primary-container text-on-primary-container font-bold"><span class="material-symbols-outlined">category</span><span class="font-label-md text-label-md">Categories</span></div>
+</div>
+</nav>
+<div class="main-area">
+<header class="topbar">
+<div class="flex items-center gap-4">
+<div class="text-right"><div class="font-label-md text-label-md text-white font-bold">Priya Menon</div></div>
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">PM</div>
+</div>
+</header>
+<main class="content-panel">
+<div class="max-w-[1200px] mx-auto w-full h-full">
+<div class="text-sm text-secondary mb-4 flex items-center gap-2">Categories <span class="material-symbols-outlined text-sm">arrow_forward</span> Textiles, Fabrics &amp; Yarn <span class="material-symbols-outlined text-sm">arrow_forward</span> Cotton fabric</div>
+<div class="main-header">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-background">Cotton fabric</h1>
+<span class="bg-surface-container-high text-on-surface-variant text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider">Goods</span>
+</div>
+<p class="text-secondary mt-2">These fields are what sellers fill in when listing under Cotton fabric.</p>
+</div>
+<button class="btn-primary">Add field</button>
+</div>
+</div>
+<div class="scrim"></div>
+<div class="drawer">
+<div class="drawer-header">
+<h2 class="font-headline-md text-headline-md text-on-background">Edit field</h2>
+<button class="text-secondary hover:text-on-background"><span class="material-symbols-outlined">close</span></button>
+</div>
+<div class="drawer-content">
+<div>
+<label class="form-label">Display name</label>
+<input class="input-field" type="text" value="GSM"/>
+<span class="form-helper">What sellers and buyers see — safe to change later</span>
+</div>
+<div>
+<label class="form-label">Key</label>
+<div class="p-3 bg-surface-container-low rounded-lg border border-surface-dim font-mono text-secondary">gsm</div>
+<span class="form-helper text-secondary">Fixed so existing products keep working</span>
+</div>
+<div>
+<label class="form-label">Type</label>
+<div class="p-3 bg-surface-container-low rounded-lg border border-surface-dim text-secondary font-medium">Number</div>
+<span class="form-helper text-secondary">Type can't change later. To convert an existing field, delete it and create a new one with a different key.</span>
+</div>
+<div>
+<label class="form-label">Unit</label>
+<input class="input-field" type="text" value="gsm"/>
+</div>
+<div class="flex items-center justify-between py-2">
+<div>
+<label class="form-label font-medium text-on-background">Required</label>
+<span class="text-sm text-secondary">Sellers must fill this before publishing</span>
+</div>
+<label class="toggle"><input checked="" type="checkbox"/><span class="slider"></span></label>
+</div>
+<div class="flex items-center justify-between py-2 border-t border-surface-variant">
+<div>
+<label class="form-label font-medium text-on-background">Filterable</label>
+<span class="text-sm text-secondary">Available as a buyer filter (arrives with search)</span>
+</div>
+<label class="toggle"><input checked="" type="checkbox"/><span class="slider"></span></label>
+</div>
+<div>
+<label class="form-label">Order</label>
+<input class="input-field w-32" type="number" value="2"/>
+</div>
+</div>
+<div class="drawer-footer">
+<button class="btn-text">Cancel</button>
+<button class="btn-primary">Save</button>
+</div>
+</div>
+</main>
+</div>
+</div>
+</div>
+<!-- FRAME 3: SELECT TYPE -->
+<div class="frame-container" id="frame-3">
+<div class="layout-shell">
+<nav class="sidebar">
+<div class="mb-8 px-4"><div class="font-headline-md text-headline-md font-bold text-surface-container-lowest">MPX Global</div></div>
+</nav>
+<div class="main-area">
+<header class="topbar"><div class="text-white font-bold">Priya Menon</div></header>
+<main class="content-panel">
+<div class="scrim"></div>
+<div class="drawer">
+<div class="drawer-header">
+<h2 class="font-headline-md text-headline-md text-on-background">Add field</h2>
+<button class="text-secondary hover:text-on-background"><span class="material-symbols-outlined">close</span></button>
+</div>
+<div class="drawer-content">
+<div>
+<label class="form-label">Display name</label>
+<input class="input-field" placeholder="e.g. Finish" type="text" value="Finish"/>
+</div>
+<div>
+<label class="form-label">Key</label>
+<input class="input-field font-mono" type="text" value="finish"/>
+</div>
+<div>
+<label class="form-label">Type</label>
+<select class="input-field bg-white">
+<option>Text</option>
+<option>Number</option>
+<option>Yes-No</option>
+<option selected="">Select</option>
+</select>
+</div>
+<div class="p-4 bg-surface-container-low border border-surface-dim rounded-lg">
+<label class="form-label mb-3">Options</label>
+<div class="mb-4">
+<div class="chip">Mercerised <span class="material-symbols-outlined text-sm cursor-pointer hover:text-error">close</span></div>
+<div class="chip">Sanforised <span class="material-symbols-outlined text-sm cursor-pointer hover:text-error">close</span></div>
+<div class="chip">Bio-washed <span class="material-symbols-outlined text-sm cursor-pointer hover:text-error">close</span></div>
+<div class="chip">Calendered <span class="material-symbols-outlined text-sm cursor-pointer hover:text-error">close</span></div>
+</div>
+<div class="flex gap-2">
+<input class="input-field" placeholder="Add an option..." type="text"/>
+<button class="btn-primary whitespace-nowrap">Add</button>
+</div>
+</div>
+</div>
+<div class="drawer-footer">
+<button class="btn-text">Cancel</button>
+<button class="btn-primary">Add field</button>
+</div>
+</div>
+</main>
+</div>
+</div>
+</div>
+<!-- FRAME 4: DELETE CONFIRMATION -->
+<div class="frame-container" id="frame-4">
+<div class="layout-shell">
+<nav class="sidebar">
+<div class="mb-8 px-4"><div class="font-headline-md text-headline-md font-bold text-surface-container-lowest">MPX Global</div></div>
+</nav>
+<div class="main-area">
+<header class="topbar"><div class="text-white font-bold">Priya Menon</div></header>
+<main class="content-panel">
+<div class="max-w-[1200px] mx-auto w-full h-full">
+<div class="text-sm text-secondary mb-4 flex items-center gap-2">Categories <span class="material-symbols-outlined text-sm">arrow_forward</span> Textiles, Fabrics &amp; Yarn <span class="material-symbols-outlined text-sm">arrow_forward</span> Cotton fabric</div>
+<div class="main-header">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-background">Cotton fabric</h1>
+</div>
+</div>
+</div>
+</div>
+<div class="scrim"></div>
+<div class="dialog-container">
+<h2 class="font-headline-md text-headline-md text-on-background mb-4">Delete GSM?</h2>
+<p class="text-body-md text-on-surface-variant mb-8">Products that already have GSM keep their saved value — it just stops being asked for on new listings.</p>
+<div class="flex justify-end gap-4">
+<button class="btn-text">Cancel</button>
+<button class="btn-danger">Delete field</button>
+</div>
+</div>
+</main>
+</div>
+</div>
+</div>
+<!-- FRAME 5: EMPTY STATE -->
+<div class="frame-container" id="frame-5">
+<div class="layout-shell">
+<nav class="sidebar">
+<div class="mb-8 px-4"><div class="font-headline-md text-headline-md font-bold text-surface-container-lowest">MPX Global</div></div>
+</nav>
+<div class="main-area">
+<header class="topbar"><div class="text-white font-bold">Priya Menon</div></header>
+<main class="content-panel">
+<div class="max-w-[1200px] mx-auto w-full h-full flex flex-col">
+<div class="text-sm text-secondary mb-4 flex items-center gap-2">Categories <span class="material-symbols-outlined text-sm">arrow_forward</span> Textiles, Fabrics &amp; Yarn <span class="material-symbols-outlined text-sm">arrow_forward</span> Cotton fabric</div>
+<div class="main-header">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-background">Cotton fabric</h1>
+<span class="bg-surface-container-high text-on-surface-variant text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider">Goods</span>
+</div>
+<p class="text-secondary mt-2">These fields are what sellers fill in when listing under Cotton fabric.</p>
+</div>
+<button class="btn-primary">Add field</button>
+</div>
+<div class="flex-grow flex items-center justify-center">
+<div class="text-center max-w-md">
+<div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-surface-dim">
+<span class="material-symbols-outlined text-3xl text-secondary">view_list</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-background mb-2">No fields yet</h2>
+<p class="text-secondary mb-8 text-body-md">Sellers will only see the standard product form</p>
+<button class="btn-primary">Add field</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</div>
+<!-- FRAME 6: READ-ONLY VARIANT -->
+<div class="frame-container" id="frame-6">
+<div class="layout-shell">
+<nav class="sidebar">
+<div class="mb-8 px-4"><div class="font-headline-md text-headline-md font-bold text-surface-container-lowest">MPX Global</div></div>
+</nav>
+<div class="main-area">
+<header class="topbar"><div class="text-white font-bold">Staff User</div></header>
+<main class="content-panel">
+<div class="max-w-[1200px] mx-auto w-full h-full">
+<div class="text-sm text-secondary mb-4 flex items-center gap-2">Categories <span class="material-symbols-outlined text-sm">arrow_forward</span> Textiles, Fabrics &amp; Yarn <span class="material-symbols-outlined text-sm">arrow_forward</span> Cotton fabric</div>
+<div class="main-header">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-background">Cotton fabric</h1>
+<span class="bg-surface-container-high text-on-surface-variant text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider">Goods</span>
+</div>
+<p class="text-secondary mt-2">These fields are what sellers fill in when listing under Cotton fabric.</p>
+</div>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Key</th>
+<th>Type</th>
+<th>Unit</th>
+<th>Options</th>
+<th>Required</th>
+<th>Filterable</th>
+<th>Order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="font-medium">Material</td>
+<td class="font-mono text-sm text-secondary">material</td>
+<td>Text</td>
+<td class="text-secondary">—</td>
+<td class="text-secondary">—</td>
+<td>No</td>
+<td>No</td>
+<td>1</td>
+</tr>
+<tr>
+<td class="font-medium">GSM</td>
+<td class="font-mono text-sm text-secondary">gsm</td>
+<td>Number</td>
+<td>gsm</td>
+<td class="text-secondary">—</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>2</td>
+</tr>
+<tr>
+<td class="font-medium">Weave</td>
+<td class="font-mono text-sm text-secondary">weave</td>
+<td>Text</td>
+<td class="text-secondary">—</td>
+<td class="text-secondary">—</td>
+<td>No</td>
+<td>No</td>
+<td>3</td>
+</tr>
+<tr>
+<td class="font-medium">Width</td>
+<td class="font-mono text-sm text-secondary">width</td>
+<td>Number</td>
+<td>inches</td>
+<td class="text-secondary">—</td>
+<td>No</td>
+<td>Yes</td>
+<td>4</td>
+</tr>
+<tr>
+<td class="font-medium">Organic</td>
+<td class="font-mono text-sm text-secondary">organic</td>
+<td>Yes/No</td>
+<td class="text-secondary">—</td>
+<td class="text-secondary">—</td>
+<td>No</td>
+<td>Yes</td>
+<td>5</td>
+</tr>
+<tr>
+<td class="font-medium">Finish</td>
+<td class="font-mono text-sm text-secondary">finish</td>
+<td>Select</td>
+<td class="text-secondary">—</td>
+<td>4 options</td>
+<td>No</td>
+<td>Yes</td>
+<td>6</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+</div>
+</div>
+<!-- FRAME 7: LOADING -->
+<div class="frame-container" id="frame-7">
+<div class="layout-shell">
+<nav class="sidebar">
+<div class="mb-8 px-4"><div class="font-headline-md text-headline-md font-bold text-surface-container-lowest">MPX Global</div></div>
+</nav>
+<div class="main-area">
+<header class="topbar"><div class="text-white font-bold">Priya Menon</div></header>
+<main class="content-panel">
+<div class="max-w-[1200px] mx-auto w-full h-full">
+<div class="text-sm text-secondary mb-4 flex items-center gap-2">Categories <span class="material-symbols-outlined text-sm">arrow_forward</span> Textiles, Fabrics &amp; Yarn <span class="material-symbols-outlined text-sm">arrow_forward</span> Cotton fabric</div>
+<div class="main-header">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-background">Cotton fabric</h1>
+<span class="bg-surface-container-high text-on-surface-variant text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider">Goods</span>
+</div>
+<p class="text-secondary mt-2">These fields are what sellers fill in when listing under Cotton fabric.</p>
+</div>
+<button class="btn-primary">Add field</button>
+</div>
+<div class="flex flex-col gap-4">
+<div class="h-12 bg-surface-container-high rounded-md w-full animate-pulse"></div>
+<div class="h-12 bg-surface-container-high rounded-md w-full animate-pulse"></div>
+<div class="h-12 bg-surface-container-high rounded-md w-full animate-pulse"></div>
+<div class="h-12 bg-surface-container-high rounded-md w-full animate-pulse"></div>
+<div class="h-12 bg-surface-container-high rounded-md w-full animate-pulse"></div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</div>
+<!-- FRAME 8: ERROR -->
+<div class="frame-container" id="frame-8">
+<div class="layout-shell">
+<nav class="sidebar">
+<div class="mb-8 px-4"><div class="font-headline-md text-headline-md font-bold text-surface-container-lowest">MPX Global</div></div>
+</nav>
+<div class="main-area">
+<header class="topbar"><div class="text-white font-bold">Priya Menon</div></header>
+<main class="content-panel flex items-center justify-center">
+<div class="text-center max-w-md">
+<div class="w-16 h-16 bg-error-container rounded-full flex items-center justify-center mx-auto mb-6">
+<span class="material-symbols-outlined text-3xl text-on-error-container">error</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-background mb-2">Couldn't load fields</h2>
+<p class="text-secondary mb-8 text-body-md">Something went wrong on our side.</p>
+<button class="btn-primary">Try again</button>
+</div>
+</main>
+</div>
+</div>
+</div>
+<!-- FRAME 9: REGENERATE ORIGINAL GSM DRAWER (Corrected) -->
+<div class="frame-container" id="frame-9">
+<div class="layout-shell">
+<nav class="sidebar">
+<div class="mb-8 px-4"><div class="font-headline-md text-headline-md font-bold text-surface-container-lowest">MPX Global</div></div>
+</nav>
+<div class="main-area">
+<header class="topbar"><div class="text-white font-bold">Priya Menon</div></header>
+<main class="content-panel">
+<div class="scrim"></div>
+<div class="drawer">
+<div class="drawer-header">
+<h2 class="font-headline-md text-headline-md text-on-background">Edit field</h2>
+<button class="text-secondary hover:text-on-background"><span class="material-symbols-outlined">close</span></button>
+</div>
+<div class="drawer-content">
+<div>
+<label class="form-label">Display name</label>
+<input class="input-field" type="text" value="GSM"/>
+<span class="form-helper">What sellers and buyers see — safe to change later</span>
+</div>
+<div>
+<label class="form-label">Key</label>
+<div class="p-3 bg-surface-container-low rounded-lg border border-surface-dim font-mono text-secondary">gsm</div>
+<span class="form-helper text-secondary">Fixed so existing products keep working</span>
+</div>
+<div>
+<label class="form-label">Type</label>
+<div class="p-3 bg-surface-container-low rounded-lg border border-surface-dim text-secondary font-medium">Number</div>
+<span class="form-helper text-secondary">Type can't change later. To convert an existing field, delete it and create a new one with a different key.</span>
+</div>
+<div>
+<label class="form-label">Unit</label>
+<input class="input-field" type="text" value="gsm"/>
+</div>
+<div class="flex items-center justify-between py-2">
+<div>
+<label class="form-label font-medium text-on-background">Required</label>
+</div>
+<label class="toggle"><input checked="" type="checkbox"/><span class="slider"></span></label>
+</div>
+<div class="flex items-center justify-between py-2 border-t border-surface-variant">
+<div>
+<label class="form-label font-medium text-on-background">Filterable</label>
+</div>
+<label class="toggle"><input checked="" type="checkbox"/><span class="slider"></span></label>
+</div>
+<div>
+<label class="form-label">Order</label>
+<input class="input-field w-32" type="number" value="2"/>
+</div>
+</div>
+<div class="drawer-footer">
+<button class="btn-text">Cancel</button>
+<button class="btn-primary">Save</button>
+</div>
+</div>
+</main>
+</div>
+</div>
+</div>
+</body></html>

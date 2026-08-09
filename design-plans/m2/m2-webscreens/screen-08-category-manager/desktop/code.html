@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Categories - MPX Global Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-error-container": "#93000a",
+                        "surface-container": "#eeedf9",
+                        "inverse-on-surface": "#f1effc",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "tertiary-fixed": "#70fda7",
+                        "inverse-primary": "#b9c3ff",
+                        "on-primary-fixed": "#001158",
+                        "inverse-surface": "#2f3039",
+                        "surface-container-low": "#f4f2ff",
+                        "on-tertiary-fixed": "#00210e",
+                        "on-secondary-fixed": "#091c32",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "outline-variant": "#c4c5d8",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#cfe1ff",
+                        "surface-container-highest": "#e2e1ee",
+                        "surface-container-high": "#e8e7f3",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "primary-container": "#2a4de0",
+                        "surface-dim": "#dad9e5",
+                        "on-secondary-container": "#53647d",
+                        "on-surface": "#1a1b24",
+                        "secondary-fixed": "#d4e3ff",
+                        "surface": "#fbf8ff",
+                        "surface-tint": "#2a4de0",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "secondary": "#4e5f79",
+                        "surface-bright": "#fbf8ff",
+                        "on-surface-variant": "#444655",
+                        "on-tertiary": "#ffffff",
+                        "background": "#fbf8ff",
+                        "surface-variant": "#e2e1ee",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#dee1ff",
+                        "on-secondary-fixed-variant": "#374860",
+                        "on-primary-container": "#d0d6ff",
+                        "tertiary": "#00522c",
+                        "outline": "#747687",
+                        "on-background": "#1a1b24",
+                        "tertiary-container": "#006d3c",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary": "#0032c3",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#66f29e",
+                        "navy-brand": "#1A2E8F",
+                        "navy-highlight": "#243AAB",
+                        "royal-accent": "#2A4DE0"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "stack-lg": "32px",
+                        "container-max": "1200px",
+                        "stack-sm": "8px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "stack-md": "16px",
+                        "card-padding": "40px"
+                    },
+                    fontFamily: {
+                        "label-sm": ["Inter", "sans-serif"],
+                        "display-lg": ["Inter", "sans-serif"],
+                        "headline-lg": ["Inter", "sans-serif"],
+                        "label-md": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "headline-lg-mobile": ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"]
+                    },
+                    fontSize: {
+                        "label-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }],
+                        "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "600" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600" }],
+                        "label-md": ["14px", { lineHeight: "20px", fontWeight: "500" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "headline-lg-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: #c4c5d8;
+            border-radius: 10px;
+        }
+        
+        /* Toggle Switch Styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #2A4DE0;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #2A4DE0;
+        }
+    </style>
+</head>
+<body class="bg-navy-brand h-screen overflow-hidden text-on-surface font-body-md flex">
+<!-- L-Shape Shell Navigation -->
+<!-- SideNav -->
+<nav class="flex-none w-[260px] h-full flex flex-col bg-navy-brand text-on-primary">
+<div class="h-16 flex items-center px-6">
+<span class="font-headline-md text-headline-md font-bold tracking-tight">MPX Global</span>
+</div>
+<div class="flex-1 flex flex-col px-4 py-6 gap-2 mt-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-primary/70 hover:text-on-primary hover:bg-navy-highlight/50 transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">verified</span>
+                Verifications
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-primary/70 hover:text-on-primary hover:bg-navy-highlight/50 transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">group</span>
+                Users
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-navy-highlight text-on-primary font-bold transition-all font-label-md text-label-md shadow-sm" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">category</span>
+                Categories
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-primary/70 hover:text-on-primary hover:bg-navy-highlight/50 transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">inventory_2</span>
+                Products
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-primary/70 hover:text-on-primary hover:bg-navy-highlight/50 transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history</span>
+                Audit Log
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-primary/70 hover:text-on-primary hover:bg-navy-highlight/50 transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+                Settings
+            </a>
+</div>
+<div class="p-4 mt-auto">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-primary/70 hover:text-on-primary hover:bg-navy-highlight/50 transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">logout</span>
+                Sign out
+            </a>
+</div>
+</nav>
+<!-- Main Content Area Wrapper (includes Top Nav) -->
+<div class="flex-1 flex flex-col h-full overflow-hidden">
+<!-- TopAppBar -->
+<header class="h-16 flex-none flex justify-end items-center px-6 bg-navy-brand w-full">
+<div class="flex items-center gap-3 text-right">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-primary font-semibold">Priya Menon</span>
+<span class="font-label-sm text-label-sm text-on-primary/70 font-normal">Super admin · MPX Global</span>
+</div>
+<div class="h-10 w-10 rounded-full overflow-hidden border border-outline-variant/30 flex-shrink-0">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional headshot of an executive woman in a modern office environment, soft corporate lighting, high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuByDfh64_wO7_JmGz4tbFneItgN-95lIyM7ggtHG6bs5_CpiNG4rkOWDfLOzT3NW2oxzBXLTeLtZXYghLWsrrsyihokopHenouk6r6ceBIptPNc0TqrzZnq4rn45bSSo6Sjer2VE7-kVFQS-ewfftqLxyxWwnIIdcrpchplfW3k3S6DSS0OJiTqcUbCYnkoEGLcUZl0qL0P2FaJHXWSmZM7wSdvyUimN7W9KBCkyKT-Zp9LGYYL7Mpe"/>
+</div>
+</div>
+</header>
+<!-- White Content Canvas with Top-Left Radius -->
+<main class="flex-1 bg-surface-container-lowest rounded-tl-[32px] overflow-hidden flex flex-col shadow-[-8px_-8px_32px_rgba(0,0,0,0.15)] relative">
+<!-- Content Header -->
+<div class="px-8 py-6 border-b border-outline-variant/30 flex-none bg-surface-container-lowest z-10 relative">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Categories</h1>
+</div>
+<!-- Two Pane Layout -->
+<div class="flex-1 flex overflow-hidden bg-surface">
+<!-- LEFT PANE: Categories List -->
+<div class="w-[320px] flex-none border-r border-outline-variant/30 flex flex-col bg-surface-container-lowest custom-scroll overflow-y-auto">
+<div class="flex flex-col py-2">
+<!-- Active Category -->
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 bg-primary/5 hover:bg-primary/10 border-l-4 border-royal-accent transition-colors group">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<img class="w-full h-full object-cover" data-alt="A macro shot of vibrant woven textiles and colorful yarns intricately patterned, high contrast studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtkNGmu-XNUvJ0WhjLPeQj7yOsHn1AJofeCC7mB4VM_MO1Of7YY8d-F9Y83Q6SM-EvdefNs4Xw4rG4kteq1z-sw9GxgaaNOaO4QJbmmrVzWy_Mh7DT2S90MlTKYvWa370-aKaK4i_lNlCO439IgVUcb9zACfPzvGwuwTNI5_F04eDidgNCs1ROPns4aCoPqVmvH-8wJTdJgXActwL1yfZ4PMYWg__H8hG674Fw0bIYdN7pBNyY5K7T"/>
+</div>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-primary font-semibold block">Textiles, Fabrics &amp; Yarn</span>
+</div>
+<span class="font-label-sm text-label-sm bg-primary/10 text-primary px-2 py-0.5 rounded-full flex-shrink-0">8</span>
+</button>
+<!-- Standard Category -->
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">AP</span>
+</div>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-on-surface font-medium block group-hover:text-primary transition-colors">Apparel &amp; Garments</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">12</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">AF</span>
+</div>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-on-surface font-medium block group-hover:text-primary transition-colors">Agriculture &amp; Food Products</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">10</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">CD</span>
+</div>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-on-surface font-medium block group-hover:text-primary transition-colors">Chemicals &amp; Dyes</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">7</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">LF</span>
+</div>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-on-surface font-medium block group-hover:text-primary transition-colors">Leather &amp; Footwear</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">6</span>
+</button>
+<!-- Muted Category -->
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group opacity-60">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">HD</span>
+</div>
+<div class="flex-1 flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface-variant font-medium block">Handicrafts &amp; Home Decor</span>
+<span class="font-[10px] uppercase font-bold tracking-wider text-outline px-1.5 py-0.5 bg-surface-variant rounded border border-outline-variant/50">Inactive</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">9</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">EM</span>
+</div>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-on-surface font-medium block group-hover:text-primary transition-colors">Engineering &amp; Machinery</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">11</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">GJ</span>
+</div>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-on-surface font-medium block group-hover:text-primary transition-colors">Gems &amp; Jewellery</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">5</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">PH</span>
+</div>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-on-surface font-medium block group-hover:text-primary transition-colors">Pharmaceuticals &amp; Healthcare</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">8</span>
+</button>
+<!-- Muted Category -->
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group opacity-60">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">IT</span>
+</div>
+<div class="flex-1 flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface-variant font-medium block">IT, Software &amp; AI Services</span>
+<span class="font-[10px] uppercase font-bold tracking-wider text-outline px-1.5 py-0.5 bg-surface-variant rounded border border-outline-variant/50">Inactive</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">6</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">PP</span>
+</div>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-on-surface font-medium block group-hover:text-primary transition-colors">Packaging &amp; Printing</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">7</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-6 py-3 border-l-4 border-transparent hover:bg-surface-variant/50 transition-colors group">
+<div class="h-8 w-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0 border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">OT</span>
+</div>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-on-surface font-medium block group-hover:text-primary transition-colors">Other</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full flex-shrink-0">2</span>
+</button>
+</div>
+</div>
+<!-- RIGHT PANE: Details & Sub-categories -->
+<div class="flex-1 flex flex-col min-w-0 bg-surface-container-lowest custom-scroll overflow-y-auto">
+<div class="p-8 max-w-[1000px] w-full mx-auto flex flex-col gap-8">
+<!-- Top Detail Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden p-6 flex flex-col gap-6">
+<!-- Header & Toggle -->
+<div class="flex justify-between items-center border-b border-outline-variant/40 pb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Textiles, Fabrics &amp; Yarn</h2>
+</div>
+<!-- Image Upload & Basic Info Grid -->
+<div class="flex flex-col md:flex-row gap-8 items-start">
+<!-- Image Upload area -->
+<div class="flex flex-col gap-3 w-full md:w-[140px] flex-none">
+<div class="aspect-square rounded-lg border border-outline-variant/60 overflow-hidden bg-surface-variant relative group">
+<img alt="A professional, high-quality photograph of stacked rolls of various textiles and colored fabrics, bright natural lighting, clean studio setting, suitable for an enterprise B2B marketplace category image." class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsdLRWsA16P7Vb30R0BdJ5DFVLghb0DecoCz_tNdLRkFljX6Byg_Rwu166NrCSEUMJ4TU1JRVppupL2dJF4WrxN0a1Iq63ey80DtBy8tNYtotB2oJwHWBcEZ209t7A1zgkzqapU4llMKcflnUl8_D3S-gLtUl7C5OF0AE-W7Zqrb0GTSuRyDX7_-gk7aIJmvkxuBv_4PUvHtgko4jdgaDTxvV8xE3irLR9Ta8JprGc2Fg7h3DfAZMQ"/>
+<div class="absolute inset-0 bg-on-surface/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">upload</span>
+<span class="text-white font-label-sm text-label-sm mt-1">Replace</span>
+</div>
+</div>
+<div class="text-center">
+<p class="font-label-sm text-label-sm text-outline">1 image · 5 MB max<br/>JPG, PNG or WEBP</p>
+</div>
+</div>
+<!-- Form Fields -->
+<div class="flex-1 w-full flex flex-col gap-5">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="md:col-span-4 flex items-center gap-3 mb-2"><label class="font-label-sm text-label-sm text-on-surface-variant font-semibold">Active</label><div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in"><input checked="" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-2 border-outline-variant appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out transform translate-x-5" id="toggle-new" name="toggle" type="checkbox"/><label class="toggle-label block overflow-hidden h-5 rounded-full bg-royal-accent cursor-pointer transition-colors duration-200 ease-in" for="toggle-new"></label></div></div><div class="md:col-span-3 flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant font-semibold">Name</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:ring-2 focus:ring-royal-accent focus:border-royal-accent outline-none transition-shadow" type="text" value="Textiles, Fabrics &amp; Yarn"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant font-semibold">Display order</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md text-on-surface focus:ring-2 focus:ring-royal-accent focus:border-royal-accent outline-none transition-shadow" type="number" value="1"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant font-semibold">Synonyms</label>
+<div class="w-full min-h-[42px] bg-surface-container-lowest border border-outline-variant rounded-lg p-1.5 flex flex-wrap gap-2 items-center focus-within:ring-2 focus-within:ring-royal-accent focus-within:border-royal-accent transition-shadow">
+<!-- Chips -->
+<div class="bg-surface-variant border border-outline-variant/50 text-on-surface px-2.5 py-1 rounded-md flex items-center gap-1">
+<span class="font-label-sm text-label-sm">textiles</span>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</div>
+<div class="bg-surface-variant border border-outline-variant/50 text-on-surface px-2.5 py-1 rounded-md flex items-center gap-1">
+<span class="font-label-sm text-label-sm">fabric</span>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</div>
+<div class="bg-surface-variant border border-outline-variant/50 text-on-surface px-2.5 py-1 rounded-md flex items-center gap-1">
+<span class="font-label-sm text-label-sm">kapda</span>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</div>
+<div class="bg-surface-variant border border-outline-variant/50 text-on-surface px-2.5 py-1 rounded-md flex items-center gap-1">
+<span class="font-label-sm text-label-sm">cloth</span>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</div>
+<input class="flex-1 min-w-[120px] bg-transparent border-none p-1 focus:ring-0 font-body-md text-body-md text-on-surface placeholder:text-outline text-sm" placeholder="Add synonym..." type="text"/>
+</div>
+<p class="font-label-sm text-label-sm text-outline mt-1">Keywords buyers might type — e.g. medicine, pharma, dawai.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Sub-categories Section -->
+<div class="flex flex-col gap-4">
+<h3 class="font-headline-sm text-[20px] font-semibold text-on-surface tracking-tight">Sub-categories</h3>
+<!-- Dense Table -->
+<div class="border border-outline-variant rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-variant/30 border-b border-outline-variant text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-3 px-4 font-semibold w-12"></th>
+<th class="py-3 px-4 font-semibold">Name</th>
+<th class="py-3 px-4 font-semibold">Type</th>
+<th class="py-3 px-4 font-semibold">Status</th>
+<th class="py-3 px-4 font-semibold text-center">Fields</th>
+<th class="py-3 px-4 font-semibold text-center">Order</th>
+<th class="py-3 px-4 font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-label-md text-label-md text-on-surface divide-y divide-outline-variant/40">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-variant/20 transition-colors group">
+<td class="py-2 px-4">
+<div class="h-7 w-7 rounded bg-surface-variant border border-outline-variant/50 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close up of raw organic cotton fabric texture, soft natural lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6JOdqYXv87SgzOFD9es-B2vc5WfkXC06hRcLr4Am7nVG2491XF8DdrOky4b243bMPisN65C5xSjAnsVYLuqfkUibd0m_Zs6wM4zxM3HJWM7zwHsOG3xmtCAGSCvEg9OS-CkAUobPR4wKszM4M-xYXp1fdj89c0MKkU4L8W1geUI24wBlRjr1oeeIPnNbdg8i1bfsBEOcawBRcazxhK_rIDGIF-Kio4uua_K9nZ2TJPN68bVC4a02Y"/>
+</div>
+</td>
+<td class="py-2 px-4 font-medium">Cotton fabric</td>
+<td class="py-2 px-4 text-on-surface-variant">Goods</td>
+<td class="py-2 px-4">
+<span class="inline-flex items-center gap-1.5 text-tertiary-container bg-tertiary-container/10 px-2 py-0.5 rounded-full font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>Active
+                                                </span>
+</td>
+<td class="py-2 px-4 text-center text-outline">6</td>
+<td class="py-2 px-4 text-center text-outline">1</td>
+<td class="py-2 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1.5 text-outline hover:text-error rounded hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-variant/20 transition-colors group">
+<td class="py-2 px-4">
+<div class="h-7 w-7 rounded bg-surface-variant border border-outline-variant/50 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Macro photography of smooth shiny silk fabric catching light, luxurious rich color." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPuP1Z_KVrQYICkZDFdqRIpi3kdMdYx9Eo4A7Qt5We15EzzGkKr_mHxF5AraExs_BTSIIdASwYs3sgQmEGT_CgB9xZI_SD3yQxWUUglxI3MyGgMmBUoeLUy7ZlmLbMKMjGQi5anEbC9QD2vzmMlG6ytKBDOD4-8hy7QMoFViJn6ZPTFEgeTi125iFBlTF5AtYlXS0o8FPiqD8f2hUF6gPzfoBZVG9bwUKBC0hLkQ6BTZM2b1s1qb7E"/>
+</div>
+</td>
+<td class="py-2 px-4 font-medium">Silk fabric</td>
+<td class="py-2 px-4 text-on-surface-variant">Goods</td>
+<td class="py-2 px-4">
+<span class="inline-flex items-center gap-1.5 text-tertiary-container bg-tertiary-container/10 px-2 py-0.5 rounded-full font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>Active
+                                                </span>
+</td>
+<td class="py-2 px-4 text-center text-outline">6</td>
+<td class="py-2 px-4 text-center text-outline">2</td>
+<td class="py-2 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1.5 text-outline hover:text-error rounded hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-variant/20 transition-colors group">
+<td class="py-2 px-4">
+<div class="h-7 w-7 rounded bg-surface-variant border border-outline-variant/50 flex items-center justify-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">SB</span>
+</div>
+</td>
+<td class="py-2 px-4 font-medium">Synthetic &amp; blended fabric</td>
+<td class="py-2 px-4 text-on-surface-variant">Goods</td>
+<td class="py-2 px-4">
+<span class="inline-flex items-center gap-1.5 text-tertiary-container bg-tertiary-container/10 px-2 py-0.5 rounded-full font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>Active
+                                                </span>
+</td>
+<td class="py-2 px-4 text-center text-outline">5</td>
+<td class="py-2 px-4 text-center text-outline">3</td>
+<td class="py-2 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1.5 text-outline hover:text-error rounded hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-variant/20 transition-colors group">
+<td class="py-2 px-4">
+<div class="h-7 w-7 rounded bg-surface-variant border border-outline-variant/50 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Spools of colorful sewing thread stacked neatly, macro detail, well lit." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZVOmY617LP9HqTJIhp3rOTL3APqa9GaG-UU6PInN8umoaPfWihDplxhe1CaBSJlg-tJcb5_MhxD0M_7b43KwaYDTdNvCh1HBQiVzD8rYRrsk6sJpJtNfR0fVB0B1Do8aiQhw0AxbdqQG1Ldd5DHQjTL8QcnU5QiUgSmH-NxaeRW_QIIK7wz-9js8URDuLbEbnBV8Df9LpVd9oHw9DXF5MrE5xLksKZvNxED5FupnjtK9CFXcuzORG"/>
+</div>
+</td>
+<td class="py-2 px-4 font-medium">Yarn &amp; thread</td>
+<td class="py-2 px-4 text-on-surface-variant">Goods</td>
+<td class="py-2 px-4">
+<span class="inline-flex items-center gap-1.5 text-tertiary-container bg-tertiary-container/10 px-2 py-0.5 rounded-full font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>Active
+                                                </span>
+</td>
+<td class="py-2 px-4 text-center text-outline">4</td>
+<td class="py-2 px-4 text-center text-outline">4</td>
+<td class="py-2 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1.5 text-outline hover:text-error rounded hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-variant/20 transition-colors group">
+<td class="py-2 px-4">
+<div class="h-7 w-7 rounded bg-surface-variant border border-outline-variant/50 flex items-center justify-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold">HT</span>
+</div>
+</td>
+<td class="py-2 px-4 font-medium">Home textiles</td>
+<td class="py-2 px-4 text-on-surface-variant">Goods</td>
+<td class="py-2 px-4">
+<span class="inline-flex items-center gap-1.5 text-tertiary-container bg-tertiary-container/10 px-2 py-0.5 rounded-full font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>Active
+                                                </span>
+</td>
+<td class="py-2 px-4 text-center text-outline">5</td>
+<td class="py-2 px-4 text-center text-outline">5</td>
+<td class="py-2 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1.5 text-outline hover:text-error rounded hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-variant/20 transition-colors group">
+<td class="py-2 px-4">
+<div class="h-7 w-7 rounded bg-surface-variant border border-outline-variant/50 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A complex geometric pattern block printed onto raw canvas fabric, shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGogvkiKeQxp7vTJBRWsW3JMXR1Ksvh-hvtvWK4lGWieyXRwn_huBlbXFcaZx-YwqKhdveRqD54nD0yBoaoS_o_pYNp_nzHvwK_6v5V9Qrdjp7lRB0JEy-IyVAgYORGeH4XjW_Kjn4ncd5D5Pf1bYC9Bfq13xpiRr4TmekjqZ_fXPACpegHBmGKHYd2oeBNXLZq1vIMcACtFPYoGj6tJd4Wi4XVSSv7iBPxwBlaGoqnNbMp7koRb9I"/>
+</div>
+</td>
+<td class="py-2 px-4 font-medium">Dyed &amp; printed fabric</td>
+<td class="py-2 px-4 text-on-surface-variant">Goods</td>
+<td class="py-2 px-4">
+<span class="inline-flex items-center gap-1.5 text-tertiary-container bg-tertiary-container/10 px-2 py-0.5 rounded-full font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>Active
+                                                </span>
+</td>
+<td class="py-2 px-4 text-center text-outline">6</td>
+<td class="py-2 px-4 text-center text-outline">6</td>
+<td class="py-2 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1.5 text-outline hover:text-error rounded hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 7 (Muted/Inactive) -->
+<tr class="hover:bg-surface-variant/20 transition-colors group bg-surface-variant/10 text-on-surface-variant">
+<td class="py-2 px-4 opacity-50">
+<div class="h-7 w-7 rounded bg-surface-variant border border-outline-variant/50 flex items-center justify-center">
+<span class="font-label-sm text-label-sm font-bold">DN</span>
+</div>
+</td>
+<td class="py-2 px-4 font-medium opacity-60">Denim</td>
+<td class="py-2 px-4 opacity-60">Goods</td>
+<td class="py-2 px-4">
+<span class="inline-flex items-center gap-1.5 text-outline bg-surface-variant px-2 py-0.5 rounded-full font-label-sm text-label-sm">
+                                                    Inactive
+                                                </span>
+</td>
+<td class="py-2 px-4 text-center opacity-60">4</td>
+<td class="py-2 px-4 text-center opacity-60">7</td>
+<td class="py-2 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1.5 text-outline hover:text-error rounded hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 8 -->
+<tr class="hover:bg-surface-variant/20 transition-colors group">
+<td class="py-2 px-4">
+<div class="h-7 w-7 rounded bg-surface-variant border border-outline-variant/50 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Detail of spun bonded non-woven industrial fabric, clinical sterile white lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsVCKROziKOQ1vqIreTjUEd0tN2BK0ECg_g1FzzAoMBY53Do8cTkKqw6tEcwJmIUJEtz-xUA-vKdum46Y2F120VBFNudmmBkCg_MTEEeXm5HVbo3LIi8hVDUar4Cmz3UsaUzskfmIQ_gTSm6ifFjBnDrxpwYolqpjrFjmUD6i7xt0DMWfPGpqzhy4HYehdcP4c5HsgK2DVnD9sCFUSLGb9Y9fw6DiA1N13KeUqHRqWlBmVOVE9tDcu"/>
+</div>
+</td>
+<td class="py-2 px-4 font-medium">Non-woven fabric</td>
+<td class="py-2 px-4 text-on-surface-variant">Goods</td>
+<td class="py-2 px-4">
+<span class="inline-flex items-center gap-1.5 text-tertiary-container bg-tertiary-container/10 px-2 py-0.5 rounded-full font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>Active
+                                                </span>
+</td>
+<td class="py-2 px-4 text-center text-outline">4</td>
+<td class="py-2 px-4 text-center text-outline">8</td>
+<td class="py-2 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-outline hover:text-royal-accent rounded hover:bg-surface-variant/50"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1.5 text-outline hover:text-error rounded hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Footer Note -->
+<div class="text-center pt-4 pb-8">
+<span class="font-label-sm text-label-sm text-outline flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">info</span>
+                                Changes are recorded.
+                            </span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

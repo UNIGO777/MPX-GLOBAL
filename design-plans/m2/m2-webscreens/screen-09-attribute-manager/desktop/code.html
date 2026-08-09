@@ -1,0 +1,468 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Admin Console - Field Designer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-fixed": "#d4e3ff",
+                      "on-secondary-fixed-variant": "#374860",
+                      "inverse-primary": "#b9c3ff",
+                      "on-secondary": "#ffffff",
+                      "on-background": "#1a1b24",
+                      "inverse-surface": "#2f3039",
+                      "on-primary": "#ffffff",
+                      "surface-container": "#eeedf9",
+                      "on-secondary-container": "#53647d",
+                      "surface-container-high": "#e8e7f3",
+                      "tertiary": "#00522c",
+                      "surface-tint": "#2a4de0",
+                      "on-tertiary-container": "#66f29e",
+                      "on-secondary-fixed": "#091c32",
+                      "on-primary-container": "#d0d6ff",
+                      "on-surface-variant": "#444655",
+                      "surface-bright": "#fbf8ff",
+                      "primary-fixed-dim": "#b9c3ff",
+                      "on-tertiary-fixed": "#00210e",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#dad9e5",
+                      "background": "#fbf8ff",
+                      "surface-container-lowest": "#ffffff",
+                      "outline-variant": "#c4c5d8",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#00522c",
+                      "tertiary-fixed-dim": "#51df8e",
+                      "on-primary-fixed": "#001158",
+                      "on-surface": "#1a1b24",
+                      "outline": "#747687",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed-variant": "#0032c3",
+                      "surface-variant": "#e2e1ee",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed-dim": "#b6c8e5",
+                      "surface-container-highest": "#e2e1ee",
+                      "tertiary-container": "#006d3c",
+                      "secondary": "#4e5f79",
+                      "primary-fixed": "#dee1ff",
+                      "surface-container-low": "#f4f2ff",
+                      "error-container": "#ffdad6",
+                      "primary": "#0032c3",
+                      "primary-container": "#2a4de0",
+                      "tertiary-fixed": "#70fda7",
+                      "inverse-on-surface": "#f1effc",
+                      "secondary-container": "#cfe1ff",
+                      "surface": "#fbf8ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "unit": "4px",
+                      "stack-lg": "32px",
+                      "stack-sm": "8px",
+                      "container-max": "1200px",
+                      "stack-md": "16px",
+                      "card-padding": "40px"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap');
+        
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Custom scrollbar for table container */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #fbf8ff; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e1ee; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #c4c5d8; 
+        }
+    </style>
+</head>
+<body class="bg-[#1A2E8F] text-on-surface font-sans h-screen flex overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar -->
+<nav class="w-[260px] h-screen fixed left-0 top-0 bg-[#1A2E8F] flex flex-col py-stack-lg px-stack-md z-20 text-label-md font-label-md">
+<div class="mb-stack-lg px-stack-md flex items-center gap-3">
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-white">MPX Global</h2>
+</div>
+</div>
+<ul class="flex flex-col gap-1 flex-1">
+<li class="">
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-white hover:bg-white/10 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined opacity-90 transition-all duration-200 group-hover:scale-110" data-icon="verified_user">verified_user</span>
+                    Verifications
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-white hover:bg-white/10 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined opacity-90 transition-all duration-200 group-hover:scale-110" data-icon="group">group</span>
+                    Users
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm rounded-lg bg-primary-container text-on-primary-container font-bold shadow-sm transition-all duration-200" href="#">
+<span class="material-symbols-outlined opacity-90 transition-all duration-200" data-icon="category" data-weight="fill" style="font-variation-settings: 'FILL' 1;">category</span>
+                    Categories
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-white hover:bg-white/10 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined opacity-90 transition-all duration-200 group-hover:scale-110" data-icon="inventory_2">inventory_2</span>
+                    Products
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-white hover:bg-white/10 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined opacity-90 transition-all duration-200 group-hover:scale-110" data-icon="history_edu">history_edu</span>
+                    Audit log
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-white hover:bg-white/10 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined opacity-90 transition-all duration-200 group-hover:scale-110" data-icon="settings">settings</span>
+                    Settings
+                </a>
+</li>
+</ul>
+<ul class="flex flex-col gap-1 mt-auto pt-4">
+<li class="">
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-white hover:bg-white/10 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined opacity-90 transition-all duration-200 group-hover:scale-110" data-icon="logout">logout</span>
+                    Sign out
+                </a>
+</li>
+</ul>
+</nav>
+<!-- TopAppBar -->
+<header class="h-16 fixed top-0 right-0 left-[260px] z-10 bg-[#1A2E8F] flex justify-end items-center px-gutter transition-all duration-150 ease-in-out text-label-md font-label-md">
+<div class="flex items-center gap-4 cursor-pointer group">
+<div class="text-right">
+<span class="text-white block leading-tight">Priya Menon</span>
+<span class="text-white/70 text-[11px] block">Super admin · MPX Global</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center border border-white/20 overflow-hidden">
+<img alt="Priya Menon Super Admin Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a woman with dark hair, warm lighting, soft neutral background, wearing a modern corporate blazer, high quality, sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6uc0bsfHBk1LlCzdG6LY-Pi34peaqGrfpK5z0QToLikqCDqmdBNZe_30so8dPHDhP5Qdbxf4JVBDAvEnqqvlBSJ_ju-sACkhm5I9-EBkeTqAFvBP1G5JkIfWkm92m1UvvfG2c0JjUY26BGC9Mr19GUfPPYR2gTLb528sLRB4Ow-3tm2NIYu3iG_C6_00rW5-ApwyblkC8Y98I4UluVqQ8VhIPAq64MCKb8Htri3o4GE7CWnQK9ZVt">
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="ml-[260px] mt-16 bg-[#EAEEFF] w-full h-[calc(100vh-64px)] rounded-tl-[32px] overflow-hidden flex flex-col relative shadow-[inset_4px_4px_16px_rgba(0,0,0,0.1)]">
+<!-- Header Section inside Canvas -->
+<div class="bg-surface-container-lowest px-card-padding py-8 border-b border-outline-variant flex flex-col gap-4 sticky top-0 z-10 shrink-0">
+<!-- Breadcrumb -->
+<div class="flex items-center gap-2 text-sm text-on-surface-variant font-label-md">
+<a class="hover:text-primary transition-colors" href="#">Categories</a>
+<span class="text-outline">→</span>
+<a class="hover:text-primary transition-colors" href="#">Textiles, Fabrics &amp; Yarn</a>
+<span class="text-outline">→</span>
+<span class="text-on-surface font-semibold">Cotton fabric</span>
+</div>
+<!-- Title & Actions -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<h1 class="font-headline-lg text-headline-lg font-bold text-on-background tracking-tight">Cotton fabric</h1>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant border border-outline-variant">
+                        Goods
+                    </span>
+</div>
+<button class="bg-primary-container text-on-primary rounded-full px-6 py-2.5 font-label-md text-label-md hover:bg-on-primary-fixed-variant transition-colors shadow-sm flex items-center gap-2 focus:ring-2 focus:ring-offset-2 focus:ring-primary-container outline-none">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+                    Add field
+                </button>
+</div>
+<p class="text-on-surface-variant text-body-md font-body-md">
+                These fields are what sellers fill in when listing under Cotton fabric.
+            </p>
+</div>
+<!-- Table Container -->
+<div class="flex-1 overflow-auto bg-surface-container-lowest px-card-padding py-6 custom-scrollbar">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="border-b border-outline-variant text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+<th class="py-3 px-4 font-semibold w-[20%]">Name</th>
+<th class="py-3 px-4 font-semibold w-[15%]">Key</th>
+<th class="py-3 px-4 font-semibold w-[10%]">Type</th>
+<th class="py-3 px-4 font-semibold w-[10%]">Unit</th>
+<th class="py-3 px-4 font-semibold w-[15%]">Options</th>
+<th class="py-3 px-4 font-semibold w-[10%] text-center">Required</th>
+<th class="py-3 px-4 font-semibold w-[10%] text-center">Filterable</th>
+<th class="py-3 px-4 font-semibold w-12 text-center">Order</th>
+<th class="py-3 px-4 font-semibold w-24 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="text-body-md font-body-md text-on-surface divide-y divide-surface-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-2.5 px-4 font-medium">Material</td>
+<td class="py-2.5 px-4"><span class="font-mono text-[13px] bg-surface-variant px-1.5 py-0.5 rounded text-on-surface-variant">material</span></td>
+<td class="py-2.5 px-4">
+<div class="flex items-center gap-1.5 text-on-surface-variant text-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="match_case">match_case</span>
+                                Text
+                            </div>
+</td>
+<td class="py-2.5 px-4 text-outline text-sm">—</td>
+<td class="py-2.5 px-4 text-outline text-sm">—</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">No</span>
+</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">No</span>
+</td>
+<td class="py-2.5 px-4 text-center text-outline text-sm">
+                                1
+                            </td>
+<td class="py-2.5 px-4 text-right"><div class="flex items-center justify-end gap-4 font-label-md text-label-md"><button class="text-primary hover:underline">Edit</button><button class="text-[#D92D20] hover:underline">Delete</button></div></td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-2.5 px-4 font-medium">GSM</td>
+<td class="py-2.5 px-4"><span class="font-mono text-[13px] bg-surface-variant px-1.5 py-0.5 rounded text-on-surface-variant">gsm</span></td>
+<td class="py-2.5 px-4">
+<div class="flex items-center gap-1.5 text-on-surface-variant text-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="tag">tag</span>
+                                Number
+                            </div>
+</td>
+<td class="py-2.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-secondary-container text-on-secondary-container">
+                                gsm
+                            </span>
+</td>
+<td class="py-2.5 px-4 text-outline text-sm">—</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">Yes</span>
+</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">Yes</span>
+</td>
+<td class="py-2.5 px-4 text-center text-outline text-sm">
+                                2
+                            </td>
+<td class="py-2.5 px-4 text-right"><div class="flex items-center justify-end gap-4 font-label-md text-label-md"><button class="text-primary hover:underline">Edit</button><button class="text-[#D92D20] hover:underline">Delete</button></div></td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-2.5 px-4 font-medium">Weave</td>
+<td class="py-2.5 px-4"><span class="font-mono text-[13px] bg-surface-variant px-1.5 py-0.5 rounded text-on-surface-variant">weave</span></td>
+<td class="py-2.5 px-4">
+<div class="flex items-center gap-1.5 text-on-surface-variant text-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="match_case">match_case</span>
+                                Text
+                            </div>
+</td>
+<td class="py-2.5 px-4 text-outline text-sm">—</td>
+<td class="py-2.5 px-4 text-outline text-sm">—</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">No</span>
+</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">No</span>
+</td>
+<td class="py-2.5 px-4 text-center text-outline text-sm">
+                                3
+                            </td>
+<td class="py-2.5 px-4 text-right"><div class="flex items-center justify-end gap-4 font-label-md text-label-md"><button class="text-primary hover:underline">Edit</button><button class="text-[#D92D20] hover:underline">Delete</button></div></td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-2.5 px-4 font-medium">Width</td>
+<td class="py-2.5 px-4"><span class="font-mono text-[13px] bg-surface-variant px-1.5 py-0.5 rounded text-on-surface-variant">width</span></td>
+<td class="py-2.5 px-4">
+<div class="flex items-center gap-1.5 text-on-surface-variant text-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="tag">tag</span>
+                                Number
+                            </div>
+</td>
+<td class="py-2.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-secondary-container text-on-secondary-container">
+                                inches
+                            </span>
+</td>
+<td class="py-2.5 px-4 text-outline text-sm">—</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">No</span>
+</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">Yes</span>
+</td>
+<td class="py-2.5 px-4 text-center text-outline text-sm">
+                                4
+                            </td>
+<td class="py-2.5 px-4 text-right"><div class="flex items-center justify-end gap-4 font-label-md text-label-md"><button class="text-primary hover:underline">Edit</button><button class="text-[#D92D20] hover:underline">Delete</button></div></td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-2.5 px-4 font-medium">Organic</td>
+<td class="py-2.5 px-4"><span class="font-mono text-[13px] bg-surface-variant px-1.5 py-0.5 rounded text-on-surface-variant">organic</span></td>
+<td class="py-2.5 px-4">
+<div class="flex items-center gap-1.5 text-on-surface-variant text-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="toggle_on">toggle_on</span>
+                                Yes/No
+                            </div>
+</td>
+<td class="py-2.5 px-4 text-outline text-sm">—</td>
+<td class="py-2.5 px-4 text-outline text-sm">—</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">No</span>
+</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">Yes</span>
+</td>
+<td class="py-2.5 px-4 text-center text-outline text-sm">
+                                5
+                            </td>
+<td class="py-2.5 px-4 text-right"><div class="flex items-center justify-end gap-4 font-label-md text-label-md"><button class="text-primary hover:underline">Edit</button><button class="text-[#D92D20] hover:underline">Delete</button></div></td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-2.5 px-4 font-medium">Finish</td>
+<td class="py-2.5 px-4"><span class="font-mono text-[13px] bg-surface-variant px-1.5 py-0.5 rounded text-on-surface-variant">finish</span></td>
+<td class="py-2.5 px-4">
+<div class="flex items-center gap-1.5 text-on-surface-variant text-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="list">list</span>
+                                Select
+                            </div>
+</td>
+<td class="py-2.5 px-4 text-outline text-sm">—</td>
+<td class="py-2.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border border-outline-variant text-on-surface-variant bg-surface-bright">
+                                4 options
+                            </span>
+</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">No</span>
+</td>
+<td class="py-2.5 px-4 text-center">
+<span class="text-outline text-sm font-semibold">Yes</span>
+</td>
+<td class="py-2.5 px-4 text-center text-outline text-sm">
+                                6
+                            </td>
+<td class="py-2.5 px-4 text-right"><div class="flex items-center justify-end gap-4 font-label-md text-label-md"><button class="text-primary hover:underline">Edit</button><button class="text-[#D92D20] hover:underline">Delete</button></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer -->
+<div class="bg-surface-container-lowest px-card-padding py-4 border-t border-outline-variant shrink-0 text-center">
+<p class="text-label-sm font-label-sm text-outline-variant flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[14px]" data-icon="info">info</span>
+                Changes are recorded.
+            </p>
+</div>
+</main>
+
+
+</body></html>

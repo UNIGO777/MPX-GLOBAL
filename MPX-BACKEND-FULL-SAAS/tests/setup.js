@@ -31,6 +31,13 @@ process.env.REDIS_URL = 'redis://127.0.0.1:6379';
 // real cloud name silently failed 9 product tests with "untrusted image url" —
 // a green suite that depended on a local file. Tests must not read it.
 process.env.CLOUDINARY_CLOUD_NAME = 'demo';
+
+// 🔴 Same reasoning, same trap: a developer with OTP_DEV_PRINT=true in .env
+// would otherwise have the suite read it (dotenv fills anything process.env does
+// not already define), and the "print stays off" cases would pass or fail
+// depending on whose machine ran them. Pinned OFF; the cases that need it ON set
+// it explicitly.
+process.env.OTP_DEV_PRINT = 'false';
 process.env.JWT_ACCESS_SECRET =
   process.env.JWT_ACCESS_SECRET || 'test_access_secret_at_least_32_chars_long_000';
 process.env.JWT_REFRESH_SECRET =

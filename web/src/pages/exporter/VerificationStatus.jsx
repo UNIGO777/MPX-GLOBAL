@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { kycApi } from '../../api/kyc.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
@@ -208,6 +208,15 @@ export function VerificationStatus() {
             <div>
               <h3 className="text-[15px] font-bold text-ink-900">{LIMIT_CALLOUT.title}</h3>
               <p className="mt-1 text-sm text-ink-900/80">{LIMIT_CALLOUT.body}</p>
+              {/* The catalogue exists now (M2 screen 5) — this callout is where
+                  a seller reads about the limit, so it is where they should be
+                  able to go and see it. */}
+              <Link
+                to="/exporter/products"
+                className="mt-3 inline-flex text-sm font-semibold text-primary-700 hover:underline"
+              >
+                Manage your products →
+              </Link>
             </div>
           </aside>
         )}

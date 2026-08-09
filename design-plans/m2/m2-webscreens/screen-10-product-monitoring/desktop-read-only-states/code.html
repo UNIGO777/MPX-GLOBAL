@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Products List States</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error-container": "#93000a",
+                      "on-secondary": "#ffffff",
+                      "tertiary": "#00522c",
+                      "on-secondary-fixed": "#091c32",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-container": "#006d3c",
+                      "on-background": "#1a1b24",
+                      "secondary-container": "#cfe1ff",
+                      "on-primary-container": "#d0d6ff",
+                      "on-tertiary-container": "#66f29e",
+                      "on-surface": "#1a1b24",
+                      "outline-variant": "#c4c5d8",
+                      "on-primary-fixed": "#001158",
+                      "surface-tint": "#2a4de0",
+                      "surface-dim": "#dad9e5",
+                      "background": "#fbf8ff",
+                      "inverse-surface": "#2f3039",
+                      "tertiary-fixed-dim": "#51df8e",
+                      "error": "#ba1a1a",
+                      "surface-container-high": "#e8e7f3",
+                      "on-primary": "#ffffff",
+                      "surface-container-highest": "#e2e1ee",
+                      "surface-bright": "#fbf8ff",
+                      "secondary-fixed-dim": "#b6c8e5",
+                      "on-primary-fixed-variant": "#0032c3",
+                      "error-container": "#ffdad6",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed": "#00210e",
+                      "on-surface-variant": "#444655",
+                      "on-secondary-fixed-variant": "#374860",
+                      "on-tertiary": "#ffffff",
+                      "secondary": "#4e5f79",
+                      "primary-fixed-dim": "#b9c3ff",
+                      "surface-container": "#eeedf9",
+                      "primary-fixed": "#dee1ff",
+                      "tertiary-fixed": "#70fda7",
+                      "on-tertiary-fixed-variant": "#00522c",
+                      "primary-container": "#2a4de0",
+                      "surface": "#fbf8ff",
+                      "inverse-primary": "#b9c3ff",
+                      "outline": "#747687",
+                      "on-secondary-container": "#53647d",
+                      "secondary-fixed": "#d4e3ff",
+                      "surface-container-low": "#f4f2ff",
+                      "inverse-on-surface": "#f1effc",
+                      "surface-variant": "#e2e1ee",
+                      "primary": "#0032c3"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-md": "16px",
+                      "unit": "4px",
+                      "container-max": "1200px",
+                      "stack-sm": "8px",
+                      "gutter": "24px",
+                      "stack-lg": "32px",
+                      "card-padding": "40px"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+</head>
+<body class="bg-gray-100 p-8 space-y-16">
+<!-- Frame 1: Read-Only Variant -->
+<div class="w-full h-[900px] flex overflow-hidden rounded-xl shadow-2xl border border-gray-200">
+<!-- Sidebar -->
+<div class="w-[260px] h-full bg-[#1A2E8F] text-white flex flex-col py-stack-lg px-stack-md flex-shrink-0">
+<div class="font-headline-md text-headline-md font-bold text-surface-container-lowest mb-8 px-stack-md">MPX Global</div>
+<nav class="flex flex-col gap-1 flex-grow">
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-label-md text-label-md">Verifications</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Users</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">Categories</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm rounded-lg bg-primary-container text-on-primary-container font-bold opacity-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Products</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="font-label-md text-label-md">Audit log</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors mt-auto" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">Sign out</span>
+</a>
+</div>
+<!-- Main Content Area -->
+<div class="flex-grow flex flex-col relative bg-[#1A2E8F]">
+<!-- Top App Bar -->
+<div class="h-16 flex justify-end items-center px-gutter flex-shrink-0 text-white">
+<div class="flex flex-col items-end mr-3">
+<span class="font-label-md text-label-md font-bold">Priya Menon</span>
+<span class="text-xs text-white/70">Super admin · MPX Global</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-gray-300 overflow-hidden border-2 border-white/20">
+<img class="w-full h-full object-cover" data-alt="A detailed headshot portrait of an Indian woman with short dark hair in a professional setting. The lighting is soft and high-key, creating a modern corporate aesthetic. She is wearing a dark navy blazer over a crisp white shirt. The background is a blurred office environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyOOg4BStJ1UFW9kzT37SttoZ2IDqAutLmlUnnCBMa0bvNdlUUL5SmvZx0UXXjfKwgBqTvnMLdbSElcuNWl_YXJb6SwFGLz0AvT2dAQaj4o1Bjz4LRp7ixd6aPpevELwFn9-bIfDNRrhdiqsgXS30cpbQ2vg0FOxylwksardFvshkptVq2XeuKskqH3sj5ahXl7MTHY_PTi-7friiXq2cIE8zOXk8qHpj7DbgkBC5Pi8C4m3ZABz7v"/>
+</div>
+</div>
+<!-- Content Panel -->
+<div class="flex-grow bg-white rounded-tl-[32px] flex flex-col overflow-hidden">
+<div class="p-8 pb-4">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-6">Products</h1>
+<!-- Filters -->
+<div class="flex flex-wrap items-center gap-4 mb-6">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+<input class="pl-9 pr-4 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container focus:border-primary-container w-64 text-on-surface placeholder:text-gray-500" placeholder="Search product name" type="text"/>
+</div>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>Cotton fabric</option>
+</select>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>All statuses</option>
+</select>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>All sellers</option>
+</select>
+<div class="flex items-center gap-2 ml-auto">
+<span class="text-sm text-on-surface-variant">Nearing purge</span>
+<div class="w-10 h-5 bg-gray-300 rounded-full relative cursor-pointer">
+<div class="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
+</div>
+</div>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>20</option>
+</select>
+<button class="text-primary-container text-sm font-medium hover:underline">Clear filters</button>
+</div>
+</div>
+<!-- Table -->
+<div class="flex-grow overflow-auto border-t border-outline-variant">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider sticky top-0 z-10">
+<tr>
+<th class="px-6 py-3 border-b border-outline-variant font-medium">Image</th>
+<th class="px-6 py-3 border-b border-outline-variant font-medium">Product</th>
+<th class="px-6 py-3 border-b border-outline-variant font-medium">Seller</th>
+<th class="px-6 py-3 border-b border-outline-variant font-medium">Category</th>
+<th class="px-6 py-3 border-b border-outline-variant font-medium">Status</th>
+<th class="px-6 py-3 border-b border-outline-variant font-medium">Listed</th>
+</tr>
+</thead>
+<tbody class="text-sm text-on-surface divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-lowest transition-colors bg-white">
+<td class="px-6 py-4">
+<div class="w-12 h-12 bg-gray-100 rounded border border-gray-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A close-up studio shot of a roll of combed cotton poplin fabric in a neutral beige tone. The lighting is crisp and even, highlighting the smooth texture of the fabric. The background is pure white." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDy9ogDSSvH5xSiS_wEM9KhBveP1nOO85qu36IU1VtskQ0fF4uJZ7ijJGQ3LtGhyxRDrJ8p_PDo3H_T0jUyLquA2DeNElS_CAQR9udNjM9sUMe8CgjOBcRhs_IR9S5XoppHZ6o0HIyS1w7_yZHdE1Chm_Sh_eg57tcK4v8CS9Hf9B-JxMaeRKpMdxUr2ANdp2uXFdFT8fPIuIiSDME_WST4FEBM_lAYfwQjWQcjb8Kup_veOb1NrLiz"/>
+</div>
+</td>
+<td class="px-6 py-4 font-medium">Combed Cotton Poplin Fabric</td>
+<td class="px-6 py-4 text-on-surface-variant">Tirupur Knitwear Exports</td>
+<td class="px-6 py-4 text-on-surface-variant">Cotton fabric</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Live
+                                    </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant whitespace-nowrap">12 Mar 2026</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors bg-white">
+<td class="px-6 py-4">
+<div class="w-12 h-12 bg-gray-100 rounded border border-gray-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A top-down view of a thick roll of pristine white cotton cambric fabric. The fabric roll rests on a clean, light grey surface. The lighting is bright and diffuse, creating a clean, modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKa8Y477g5rJQWbBgfHJ9iqVHrYMMXqkIKlgX5WtYvECqrLon0i9TL0s-YeVyiHprrZg3qZ1cr1e4wml3i-6EgruZlcZ79cFcYh5znMhUlZdQcgQtBVeQBkZOkv6gJG9uI5N2p-8B9C6VLhLO5j84K31a9mxvxrjDaQkEgjA8h1wJ9CvZM5zOcOtz-3puCEOQzMIAkz6Oxi70KRQa0w8DBznIsANslVyJKKeFfsd35Ty-_aZnJy60g"/>
+</div>
+</td>
+<td class="px-6 py-4 font-medium">Cotton Cambric Roll, 60s</td>
+<td class="px-6 py-4 text-on-surface-variant">Erode Textile House<br/><span class="text-xs text-red-600">(3 takedowns)</span></td>
+<td class="px-6 py-4 text-on-surface-variant">Cotton fabric</td>
+<td class="px-6 py-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-1">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Live
+                                            </span>
+<span class="text-xs text-gray-500">+ Taken down</span>
+</div>
+<span class="text-xs text-on-surface-variant">02 Mar 2026 (Purges in 24 days)</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant whitespace-nowrap">02 Mar 2026</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors bg-white">
+<td class="px-6 py-4">
+<div class="w-12 h-12 bg-gray-100 rounded border border-gray-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A folded stack of bleached white cotton twill fabric. The fabric has a distinct diagonal weave pattern visible under sharp studio lighting. The setting is minimal and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5yiI8fbzOkr6_Nk-ARe-2bVkvHCpQqgkJrsSMcuLjaQO5X5niGkBZJWfZwXcSQSX55plqAwdkK_-M4K3cHOdak0pL8bhLtH36b3ZRDWTsJT5mLvMPmixMuuH6FV6sQ71bPgG59gvZvVQqFq3OxolDMTV676f0WC3lpa-RGYab9CQkrqDG-tlfzph65gZH4r-dcB7fCMNtQTyYI5PN3nzYmwwnf8yFAC_0aHdohGDwVROszn6ws2db"/>
+</div>
+</td>
+<td class="px-6 py-4 font-medium">Bleached Cotton Twill</td>
+<td class="px-6 py-4 text-on-surface-variant">Surat Weaving Co</td>
+<td class="px-6 py-4 text-on-surface-variant">Cotton fabric</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Hidden
+                                    </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant whitespace-nowrap">28 Feb 2026</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors bg-white">
+<td class="px-6 py-4">
+<div class="w-12 h-12 bg-gray-100 rounded border border-gray-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A swatch of yarn-dyed cotton check fabric featuring a subtle navy and white grid pattern. It is draped slightly over a clean, bright background, emphasizing its texture and high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwgPj1TcEj2rcEviacHxL36dG5Tun1isuuiKExsFVtE9majwR1W9qQBCwxpFAsQPA8nEC6xaYHgcr04-wixkxB0zl1YRt736a6YLZpsOrgCYYKJ3yfUdthaPIATLuLlxp11nnjg6aybK5bejC_nT2xm19opClFVsLYFntmlkINGlQaz6HjPno8HAjvFw_OQb_Nys-8nvW9LtNQ17kWFBeCCnkZz2mKcEvR_CvxEAwdkP9TBIgEkW9u"/>
+</div>
+</td>
+<td class="px-6 py-4 font-medium">Yarn-Dyed Cotton Check</td>
+<td class="px-6 py-4 text-on-surface-variant">Ahmedabad Mills</td>
+<td class="px-6 py-4 text-on-surface-variant">Cotton fabric</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Live
+                                    </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant whitespace-nowrap">19 Feb 2026</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors bg-white">
+<td class="px-6 py-4">
+<div class="w-12 h-12 bg-gray-100 rounded border border-gray-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A heavy roll of raw, unbleached 12oz cotton canvas. The rough, durable texture is highlighted by strong directional lighting against a stark white backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQ8gQ1jj2G9_tkUydAUVd6kqdIxZ_LbNy3Butx9--Pgkkq4CEgz9cG_XkKk9EJkkpjBFOLTyTQ_vZTlLFo8OROiqtLoyHZ376PU8KoNkhKq0hpg1NRG7jJOdPwS2hsmzX-uQWXss_BOo7ZVV__Yu6VQCoHh7PfGEX72EeDVmDrRD2vySRtTo8qmPK4Ol35Q-5i5Eo9LsRtzWLnuJuMqKxwQgs1qk6eoLkoxOBxn1_ATxvqcyA-spmN"/>
+</div>
+</td>
+<td class="px-6 py-4 font-medium">Cotton Canvas 12oz</td>
+<td class="px-6 py-4 text-on-surface-variant">Panipat Home Textiles</td>
+<td class="px-6 py-4 text-on-surface-variant">Cotton fabric</td>
+<td class="px-6 py-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-1">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Live
+                                            </span>
+<span class="text-xs text-gray-500">+ Taken down</span>
+</div>
+<span class="text-xs text-red-600">10 Sep 2025 (Purges in 4 days)</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant whitespace-nowrap">10 Sep 2025</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer -->
+<div class="px-6 py-4 border-t border-outline-variant text-sm text-on-surface-variant bg-white">
+                    Showing 1–5 of 5
+                </div>
+</div>
+</div>
+</div>
+<!-- Frame 2: Loading Variant -->
+<div class="w-full h-[900px] flex overflow-hidden rounded-xl shadow-2xl border border-gray-200">
+<!-- Sidebar -->
+<div class="w-[260px] h-full bg-[#1A2E8F] text-white flex flex-col py-stack-lg px-stack-md flex-shrink-0">
+<div class="font-headline-md text-headline-md font-bold text-surface-container-lowest mb-8 px-stack-md">MPX Global</div>
+<nav class="flex flex-col gap-1 flex-grow">
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-label-md text-label-md">Verifications</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Users</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">Categories</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm rounded-lg bg-primary-container text-on-primary-container font-bold opacity-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Products</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="font-label-md text-label-md">Audit log</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors mt-auto" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">Sign out</span>
+</a>
+</div>
+<!-- Main Content Area -->
+<div class="flex-grow flex flex-col relative bg-[#1A2E8F]">
+<!-- Top App Bar -->
+<div class="h-16 flex justify-end items-center px-gutter flex-shrink-0 text-white">
+<div class="flex flex-col items-end mr-3">
+<span class="font-label-md text-label-md font-bold">Priya Menon</span>
+<span class="text-xs text-white/70">Super admin · MPX Global</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-gray-300 overflow-hidden border-2 border-white/20">
+<img class="w-full h-full object-cover" data-alt="A detailed headshot portrait of an Indian woman with short dark hair in a professional setting. The lighting is soft and high-key, creating a modern corporate aesthetic. She is wearing a dark navy blazer over a crisp white shirt. The background is a blurred office environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE3VWTX9F0MDQmji9qymYz2fNmETvbYcQsiXgYMV2rkIBplvndQ-svqx7p2ir_54ZWalwfqS2cVVkkZt2UVejGUk7xnJYBUwRorYkxlJYqrjliApcwBnTr9On0Fw-_aTZMLurDpHklTmPHcGBclO3OuGMjk1-1OhRF3_9CNwYDKMvrthtMkxVFloBpbE3sKijXE1uxuD8jxtldocv8HjGC8JC33qGHBZNKwC5p-sIlS5pdqqx7QvZs"/>
+</div>
+</div>
+<!-- Content Panel -->
+<div class="flex-grow bg-white rounded-tl-[32px] flex flex-col overflow-hidden">
+<div class="p-8 pb-4">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-6">Products</h1>
+<!-- Filters (Same as above) -->
+<div class="flex flex-wrap items-center gap-4 mb-6">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+<input class="pl-9 pr-4 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container focus:border-primary-container w-64 text-on-surface placeholder:text-gray-500" placeholder="Search product name" type="text"/>
+</div>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>Cotton fabric</option>
+</select>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>All statuses</option>
+</select>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>All sellers</option>
+</select>
+<div class="flex items-center gap-2 ml-auto">
+<span class="text-sm text-on-surface-variant">Nearing purge</span>
+<div class="w-10 h-5 bg-gray-300 rounded-full relative cursor-pointer">
+<div class="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
+</div>
+</div>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>20</option>
+</select>
+<button class="text-primary-container text-sm font-medium hover:underline">Clear filters</button>
+</div>
+</div>
+<!-- Skeleton Table -->
+<div class="flex-grow overflow-auto border-t border-outline-variant p-6">
+<!-- Header Skeleton -->
+<div class="flex gap-4 mb-6 border-b border-gray-100 pb-4">
+<div class="h-4 bg-gray-200 rounded w-16"></div>
+<div class="h-4 bg-gray-200 rounded w-48"></div>
+<div class="h-4 bg-gray-200 rounded w-32"></div>
+<div class="h-4 bg-gray-200 rounded w-24"></div>
+<div class="h-4 bg-gray-200 rounded w-20"></div>
+<div class="h-4 bg-gray-200 rounded w-24"></div>
+</div>
+<!-- Rows Skeleton -->
+<div class="space-y-6">
+<!-- Row 1 -->
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-gray-200 rounded"></div>
+<div class="h-4 bg-gray-200 rounded w-56"></div>
+<div class="h-4 bg-gray-200 rounded w-40"></div>
+<div class="h-4 bg-gray-200 rounded w-28"></div>
+<div class="h-6 bg-gray-200 rounded-full w-16"></div>
+<div class="h-4 bg-gray-200 rounded w-24"></div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-gray-200 rounded"></div>
+<div class="h-4 bg-gray-200 rounded w-48"></div>
+<div class="flex flex-col gap-2 w-40"><div class="h-4 bg-gray-200 rounded w-full"></div><div class="h-3 bg-gray-200 rounded w-2/3"></div></div>
+<div class="h-4 bg-gray-200 rounded w-28"></div>
+<div class="flex flex-col gap-2 w-32"><div class="h-6 bg-gray-200 rounded-full w-20"></div><div class="h-3 bg-gray-200 rounded w-full"></div></div>
+<div class="h-4 bg-gray-200 rounded w-24"></div>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-gray-200 rounded"></div>
+<div class="h-4 bg-gray-200 rounded w-52"></div>
+<div class="h-4 bg-gray-200 rounded w-36"></div>
+<div class="h-4 bg-gray-200 rounded w-28"></div>
+<div class="h-6 bg-gray-200 rounded-full w-20"></div>
+<div class="h-4 bg-gray-200 rounded w-24"></div>
+</div>
+<!-- Row 4 -->
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-gray-200 rounded"></div>
+<div class="h-4 bg-gray-200 rounded w-60"></div>
+<div class="h-4 bg-gray-200 rounded w-44"></div>
+<div class="h-4 bg-gray-200 rounded w-28"></div>
+<div class="h-6 bg-gray-200 rounded-full w-16"></div>
+<div class="h-4 bg-gray-200 rounded w-24"></div>
+</div>
+<!-- Row 5 -->
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-gray-200 rounded"></div>
+<div class="h-4 bg-gray-200 rounded w-40"></div>
+<div class="h-4 bg-gray-200 rounded w-48"></div>
+<div class="h-4 bg-gray-200 rounded w-28"></div>
+<div class="flex flex-col gap-2 w-32"><div class="h-6 bg-gray-200 rounded-full w-20"></div><div class="h-3 bg-gray-200 rounded w-full"></div></div>
+<div class="h-4 bg-gray-200 rounded w-24"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Frame 3: Error Variant -->
+<div class="w-full h-[900px] flex overflow-hidden rounded-xl shadow-2xl border border-gray-200">
+<!-- Sidebar -->
+<div class="w-[260px] h-full bg-[#1A2E8F] text-white flex flex-col py-stack-lg px-stack-md flex-shrink-0">
+<div class="font-headline-md text-headline-md font-bold text-surface-container-lowest mb-8 px-stack-md">MPX Global</div>
+<nav class="flex flex-col gap-1 flex-grow">
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-label-md text-label-md">Verifications</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Users</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">Categories</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm rounded-lg bg-primary-container text-on-primary-container font-bold opacity-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Products</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="font-label-md text-label-md">Audit log</span>
+</a>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<a class="flex items-center gap-stack-md px-stack-md py-stack-sm text-secondary-fixed-dim hover:text-surface-container-lowest hover:bg-white/10 rounded-lg transition-colors mt-auto" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">Sign out</span>
+</a>
+</div>
+<!-- Main Content Area -->
+<div class="flex-grow flex flex-col relative bg-[#1A2E8F]">
+<!-- Top App Bar -->
+<div class="h-16 flex justify-end items-center px-gutter flex-shrink-0 text-white">
+<div class="flex flex-col items-end mr-3">
+<span class="font-label-md text-label-md font-bold">Priya Menon</span>
+<span class="text-xs text-white/70">Super admin · MPX Global</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-gray-300 overflow-hidden border-2 border-white/20">
+<img class="w-full h-full object-cover" data-alt="A detailed headshot portrait of an Indian woman with short dark hair in a professional setting. The lighting is soft and high-key, creating a modern corporate aesthetic. She is wearing a dark navy blazer over a crisp white shirt. The background is a blurred office environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB61MbpEfLM0gTnKFC60MwU-284O1crFLlB9isL4MKurk71LoCZo3ojicqsmV9PyP0jGBCKg7uaWWwP1T8aifh1usF_0pK8bwRFDSXwrbSMY6SVorwjRwGb6mUXyHHg5_IWtpAx7opae67rFgHcquqD8ybuCXleBMYLFaPvORu9VyfxCtBd9Apu7HbVLNkvETcA04hfjjIgyLIRyyiidbBskhP5D0fWmz9HCXb_nfCKTNTBCZHr2YCG"/>
+</div>
+</div>
+<!-- Content Panel -->
+<div class="flex-grow bg-white rounded-tl-[32px] flex flex-col overflow-hidden">
+<div class="p-8 pb-4">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-6">Products</h1>
+<!-- Filters (Same as above) -->
+<div class="flex flex-wrap items-center gap-4 mb-6">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+<input class="pl-9 pr-4 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container focus:border-primary-container w-64 text-on-surface placeholder:text-gray-500" placeholder="Search product name" type="text"/>
+</div>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>Cotton fabric</option>
+</select>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>All statuses</option>
+</select>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>All sellers</option>
+</select>
+<div class="flex items-center gap-2 ml-auto">
+<span class="text-sm text-on-surface-variant">Nearing purge</span>
+<div class="w-10 h-5 bg-gray-300 rounded-full relative cursor-pointer">
+<div class="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
+</div>
+</div>
+<select class="py-2 pl-3 pr-8 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary-container text-on-surface bg-white">
+<option>20</option>
+</select>
+<button class="text-primary-container text-sm font-medium hover:underline">Clear filters</button>
+</div>
+</div>
+<!-- Error State -->
+<div class="flex-grow flex items-center justify-center border-t border-outline-variant bg-surface-bright">
+<div class="flex flex-col items-center text-center max-w-sm">
+<div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400">
+<span class="material-symbols-outlined text-3xl">error</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">Couldn't load products</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">Something went wrong on our side.</p>
+<button class="bg-[#2A4DE0] hover:bg-[#2340C4] text-white font-label-md text-label-md py-2 px-6 rounded-full transition-colors">
+                            Try again
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

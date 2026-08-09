@@ -175,6 +175,348 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-09** — **All 11 M2 web screens flow-tested end to end: 144 assertions, 0 real failures.**
+  No browser here, so the screens were tested the way they actually behave — every endpoint each one
+  calls, driven in the same sequence, asserting the rules rather than the pixels.
+  **Category images verified by CONTENT, not assumption.** All 12 resolve (HTTP 200, `image/png`) and
+  all 12 are distinct — but "slug appears in the URL" was a bad test, because Cloudinary mints its own
+  random publicId. The real check: each PNG was generated with a distinct hue, so the uploaded file
+  was downloaded, its first pixel decoded and the hue compared to what that slug was assigned.
+  **All 12 match within 1°** — the right image is on the right category.
+  **Covered:** public projections leak no `status`/`takedown`/`website`/`kycStatus` · a TOP slug
+  aggregates its subs · goods vs service field groups are mutually exclusive · `productCount` equals
+  the visible grid · **§A10** (cap 0 vs Live tab 1 on the same seller) · every status tab · the whole
+  create-validation matrix (top category, wrong-type field, unknown attribute, operator-shaped value,
+  all four price-mode violations, forged image ref) · rename keeps the slug (§A6) · draft is one-way ·
+  the **full cascade round trip** (off → subs off + `prevActive` remembered → public 404s → on →
+  restored) · attribute `key`/`inputType` immutability · takedown leaves `status` untouched, freezes
+  the seller's status change but NOT their edits, and never leaks `byUserId` · audit is append-only
+  (POST/PATCH/DELETE all 404) · and every read-only staff variant (`category:read` reads but cannot
+  write, `product:read` cannot take down).
+  ⚠️ **3 initial failures were all MY test's assumptions, not defects** — verified rather than waved
+  away: `requireRole` deliberately admits superadmin (`authorize.js:23`), so the "buyer" check needed
+  a real buyer token (re-run: 403 on all three seller/admin routes ✓); and **zero** seeded attributes
+  are `required` (§A25.2 seeds everything optional), so publish correctly was not blocked — re-run
+  after marking `gsm` required proved the 400 names the field, and the flag was restored afterwards.
+  Dev DB left clean: 10 products, 301 categories, 0 stray `required` flags, 40/40 tops active.
+- **2026-08-09** — **All 11 M2 web screens compared against their design exports (desktop + mobile);
+  7 mismatches found and fixed.** Worked screen by screen off `m2-webscreens/`, using the desktop
+  PNGs as the authority (several mobile exports are too downscaled to read) plus each `code.html`.
+  🔴 **The real gap was screen 8.** The design edits a top category's **Name, Display order and
+  Synonyms inline** on the right pane; my build offered only the image upload and the active toggle.
+  The brief says the same ("name / order tweak · synonyms tags input") — I had missed all three.
+  Extracted a `TopPanel` with a proper tag input. **This matters beyond layout: that synonyms input
+  is the ONLY entry path for the top-40 keyword list (§A12), so without it M3's keyword→category
+  search stays permanently half-blind.**
+  **Monogram is now TWO letters, app-wide.** The desktop export used one, the mobile export two —
+  and two is right: single letters collide, "Industrial Machinery" and "IT, Software & AI Services"
+  both reduce to "I" and sit side by side on the category grid. Screen 1's inline thumbnail also now
+  uses the shared `NoImagePanel` instead of its own copy.
+  **Screen 9:** breadcrumb was missing the parent top category (resolved from the cached tree — the
+  attributes response carries only `parentId`); added the design's explanatory line; key/unit/options
+  render as chips. **Screen 10:** added the Category filter the design has (the API always supported
+  it) and put the takedown DATE beside the purge countdown. **Screen 11:** the detail drawer rendered
+  raw JSON — now a labelled `old → new` list, which is what a non-developer can act on.
+  ⚠️ **Two design elements deliberately NOT copied:** screen 11 links live targets in blue, but audit
+  rows carry no slug so a link would be a guess — kept as plain text; and screen 10's "All sellers"
+  filter needs an org picker gated on `organisation:read`, a different grant, so it is left out
+  rather than half-built.
+- **2026-08-09** — **✅ M2 WEB DONE — build-plan step 8 (nav + ledger pass) closed.** All 11 screens
+  built, wired, populated and swept. Backend 997/1001, lint clean, web build clean.
+  🔴 **The landing page was advertising a taxonomy that does not exist.** Its category section
+  hardcoded invented groupings — "Raw Materials", "Consumer Goods", "Industrial Equipment" with items
+  like "Home & Garden" — none of which are in `Category.md`. Now renders the **9 real top
+  categories** from `GET /categories`, each linking to `/category/:slug`, plus a "Browse all
+  categories" button that shows even if the fetch fails. Shares the cache key with `/categories`,
+  so that page opens instantly from the landing. This was the last "static text, no dead links"
+  placeholder in the module.
+  Also: the exporter dashboard's product-limit callout now links to `/exporter/products` (the brief
+  asked for it once the catalogue existed — it is where a seller reads about the limit, so it is
+  where they should be able to act on it); and `PortalLayout`'s comment claiming a buyer org "has no
+  read endpoint until A22" is corrected — A22 shipped, only the screen is missing.
+  **Final sweep across all 11:** every screen draws loading + error (ProductDetail has no empty state
+  by design — a single entity is found or 404s); no rendered `dangerouslySetInnerHTML`, `.website`,
+  enquiry/contact CTA or raw `kycStatus` on any public screen; **zero placeholder copy left anywhere**.
+  Every remaining `Pending` ledger row is M3 (search), M4 (enquiry/chat), A22 (company profile screen)
+  or the unwritten legal pages — **nothing M2 is outstanding**.
+- **2026-08-09** — **Dev dummy data created: 3 exporters, 10 products, 12 category images.** All 11
+  M2 web screens now have something real to render. Created through the **API**, not straight into
+  Mongo, so every validation, cap check and AuditLog write actually ran.
+  **3 exporters, chosen to exercise the states:** Tirupur Knitwear Exports (verified, 5 products) ·
+  Erode Textile House (**unverified**, so the cap meter shows) · Bengaluru AI Labs (**service**
+  categories, so the goods/service field split is visible). Products span every price mode
+  (fixed · range · on_request), INR + USD, goods + services, and statuses draft/active/inactive plus
+  one taken down.
+  **12 of 40 categories got images, deliberately not all** — the monogram fallback is the designed
+  launch look (§A20), so leaving 28 without keeps BOTH states visible on screen 1. Images are
+  generated PNGs (a small dependency-free encoder; Cloudinary magic-byte checks real bytes).
+  🔴 **The §A10 rule now has a live demonstration.** Erode's `counts.active` is **1** while
+  `caps.active.used` is **0** — their only live product is taken down, so it does not occupy a slot.
+  The Live tab and the cap meter disagreeing is the correct, required behaviour, and it is now
+  visible rather than theoretical.
+  ⚠️ **Two honest artefacts of a mistake:** the script is not idempotent for products, so a re-run
+  created 18 rows; I removed the 8 duplicates. That left (a) Erode's increment-only `takedownCount`
+  at 2 for one real offence — corrected to 1 — and (b) **audit rows pointing at deleted products**,
+  which cannot be cleaned because the log is append-only. Those render `target.name` as `null` → "—",
+  which is exactly the nullable path built earlier, now proven against real data: the surviving
+  takedown resolves to "Cotton Cambric Roll, 60s", the deleted one to null.
+  The script lives in the scratchpad, **not the repo** — CLAUDE.md bans committing seed scripts that
+  touch production-shaped data, and it creates users.
+- **2026-08-09** — **🎉 M2 WEB COMPLETE — all 11 screens built.** Step 7 shipped screens 10 (product
+  moderation) and 11 (audit log). Both lazy-chunked; the admin sidebar gains permission-filtered
+  "Products" (`product:read`/`product:takedown`) and "Audit log" (`audit:read`), closing the last
+  M1-era ledger row. Backend **997/1001**, lint clean, web build clean.
+  **One more read-side backend addition:** `reason` now rides on the audit LIST row (derived from
+  `after.reason ?? before.reason`), because screen 11's Reason column had nothing to bind to — same
+  shape as the `target.name` fix. The summary/detail split is preserved: only the reason is lifted
+  out, never the before/after snapshot. **An existing exact-key assertion caught it again** (the A3
+  pattern working, third time now) and was updated in the same change, plus a test that a
+  reasonless action returns `null`.
+  **Screen 10 rules asserted, not assumed:** no draft/archived filter exists and none can be added ·
+  the status select has exactly All + 3 · the search placeholder carries **no "Starts with…"** label,
+  because the shipped backend matches by SUBSTRING · the acting admin (`takedown.byName`) appears
+  **only** in the staff drawer, never anywhere seller-facing (§A9) · takedown reason blocked under 3
+  chars · the 180-day purge consequence and the "takedown count is not reduced" restore copy are
+  both verbatim.
+  **Screen 11 proven read-only:** the whole page has **2 interactive elements**, and the only button
+  text is "Clear filters" — no export, edit, delete or cleanup control anywhere, as tracker C10
+  requires. (Four grep flags were false positives: my own comments plus a JavaScript `delete
+  next[k]` in a filter helper — verified line by line rather than accepted.)
+- **2026-08-09** — **M2 web step 6: screens 8 + 9 built (category manager · attribute manager).**
+  9 of 11 M2 web screens done; only product monitoring and the audit viewer remain. Both land in the
+  **lazy admin chunk**, not the public bundle. The admin sidebar gains a permission-filtered
+  "Categories" item (`category:read` OR `category:manage`).
+  Verified against real seeded data, not assumed: the admin tree returns all 40 tops **including
+  `active`, `prevActive`, `synonyms`** and each sub's **`attributeCount: 6`**; and
+  `GET /admin/categories/:id/attributes` (added 2026-08-07 for exactly this screen) returns each
+  field's **`id` and `order`** — the two things the public route omits and Edit/Delete need.
+  🔴 **A behaviour I nearly shipped as a broken-looking control.** While a TOP is off, toggling one
+  of its subs does **not** change visibility — every sub is already hidden. It edits the **restore
+  intent** (`prevActive`): whether that sub comes back when the top does. The row looks unchanged
+  either way, so the screen now relabels the action ("Keep off" / "Restore with parent") and
+  confirms in words — *"X will stay off even after Y is reactivated."* Without that, the button
+  reads as doing nothing.
+  **Also encoded:** inactive rows are shown (public reads hide them; this screen must not) · tops are
+  toggle-only **except the §A20 image upload**, annotated so a later pass doesn't "fix" it away ·
+  read-only staff get actions **omitted, not disabled** · slug and (once products exist) type render
+  read-only on the sub panel · and screen 9's `key`/`inputType` immutability copy is marked
+  load-bearing — §A25.2 seeded nearly every field as `text`, so "turn this into a Select" is the
+  first thing an admin will try, and delete-and-recreate is the only route.
+- **2026-08-09** — **M2 web step 5: screens 6 + 7 built as ONE `ProductForm`** (`/exporter/products/new`
+  and `/exporter/products/:id/edit`). 7 of 11 M2 web screens now done.
+  🔴 **Backend gap found and closed first: there was no `GET /products/:id`.** The seller had create,
+  list, patch, status and delete — but no single-product read, so the edit form had nothing to load
+  from (finding the row inside a paginated `/products/mine` would break past 100 products). Added
+  `getOwnProduct` → `loadOwned`, so another seller's product is **404, never 403** (A6). **Gotcha:**
+  it must register **below** `/products/mine` — Express matches in order, and a `:id` registered
+  first would swallow the literal "mine" (pinned by a test). Archived rows are returned
+  deliberately, because the form has to recognise one to show its terminal notice. 5 new tests.
+  **One component for both screens** — the brief wants them visually identical, and two files would
+  guarantee drift. `id` absent = create.
+  **Rules the form encodes:** zones B and C are **absent** (not greyed) until a leaf is chosen, since
+  the whole field set depends on it · the leaf's `type` picks the goods/service group, and only the
+  applicable group is ever sent · save creates a **draft** and required specs are NOT enforced (the
+  server checks them at publish) · changing category **warns before clearing** entered specs · the
+  rename note "Your product's web address stays the same" appears once the name is edited (§A6) ·
+  a **blocked** product keeps its fields **editable** while Publish/Hide disappear · an **archived**
+  product never opens the form, showing the terminal notice + "Create a new listing".
+  Also corrected a stale ledger reason: the exporter "Settings" row blamed unbuilt A22 endpoints —
+  those shipped; only the screen is missing.
+- **2026-08-09** — **M2 web step 4: screen 5 built (`/exporter/products`)** — the first console
+  screen, and the pattern screens 6/7 build on. Status tabs from `counts`, cap meter from `caps`,
+  row menu by state, destructive delete confirm, blocked banner. The exporter sidebar's "Products"
+  item flips from a "Soon" chip to a live link (ledger row closed).
+  **`PortalLayout` gained `wide`** (§9.2): the M1 measure is `max-w-[860px]`, right for forms and
+  status screens but far too narrow for this table — the design draws it at ~1200px. Content width
+  only; `ConsoleShell` is owner-locked and untouched.
+  **Details worth keeping:** the two publish refusals are **different failures** and must not be
+  merged — a **409** is the D1/A15 cap (and gets a "Get verified" link) while a **400** is missing
+  required specifications; the server's own message is shown because it is already user-facing and
+  names the missing fields. One `invalidateQueries(['products','mine'])` refreshes rows, tab counts
+  and the cap meter together, because all three ride on the same response. The leaf category NAME
+  is resolved from the cached tree — `/products/mine` returns `categoryId` only.
+  🔑 **OWNER DECISION (2026-08-09) — forward links inside a module now ship LIVE.** I had built
+  "+ Add product" disabled and omitted the row menu's "Edit" (screens 6/7 not yet existing); the
+  owner's call was *"let these be built because the screens will be built eventually."* Both are now
+  real `<Link>`s. Recorded in `docs/UiWebNotes.md` as a **bounded** exception: it covers only
+  in-module forward references to a screen already scheduled in the build plan, with the shared 404
+  covering the gap. It does **not** relax anything else — controls pointing at deferred or
+  other-milestone work (M3 search, M4 enquiry, legal pages, store badges) still ship static/
+  coming-soon and stay in the ledger.
+  **`RowMenu` gained optional `to`**: an item that navigates now renders a real `<Link>` rather than
+  a button calling `navigate()`, so it middle-clicks, opens in a new tab and announces as a link.
+  `onSelect` stays for genuine actions (publish, hide, delete).
+- **2026-08-09** — **M2 web step 3: screens 3 + 4 built — all four PUBLIC screens are now live and
+  fully linked.** `ProductDetail.jsx` (`/product/:slug`) — gallery · h1 · listed-since · large price ·
+  seller block linking to screen 4 · facts strip · description · specs. `SupplierProfile.jsx`
+  (`/supplier/:slug`) — company header + its live catalogue. Screen 2's product cards flipped to
+  real links and that ledger row closed; **no placeholder "opens shortly" lines remain anywhere.**
+  **Two things the data shape forced:** the product stores `{key, value}` snapshots only, so screen 3
+  fetches the category's attribute DEFINITIONS separately to get labels and units (that is what
+  `SpecTable`'s `defs` is for); and goods vs service field groups are chosen from
+  `category.type`, never from a seller-set flag. Only **filled** facts render — never a wall of "—".
+  🔴 **Copy constraints asserted, not assumed.** Grepped all four public screens for: enquiry/contact
+  CTA · `.website` (internal, has leaked once before) · any "not verified"/"unverified" rendered text ·
+  raw `kycStatus` · stock/availability wording · sort control · search box · `dangerouslySetInnerHTML=`.
+  **Zero real violations** — the three initial hits were my own explanatory comments, confirmed by
+  re-checking for the attribute form and for JSX text specifically. All three detail pages render the
+  shared 404 on an API 404.
+  ⚠️ Still **no products in the dev DB**, so the grids and the whole of screen 3 render empty/loading
+  paths only. Owner's call: verify all 11 screens together once listings exist.
+- **2026-08-09** — **M2 web step 2: screen 2 built (`/category/:slug`), and screen 1's cards are now
+  real links.** `CategoryListing.jsx` — breadcrumb · h1 + product count · sibling column · product
+  grid · compact pager, with loading / empty / error drawn and an unknown slug rendering the shared
+  404. Verified against the running API, not assumed: `category.parentId` comes back as a string id
+  (so the sibling lookup against the cached tree matches), an unknown slug 404s, and a **top** slug
+  returns `parentId: null` — the server expands a top to its active subs, which is why the left
+  column shows *siblings* for a sub and *children* for a top.
+  **`Pagination` gained two optional props instead of a second pager**: omitting `onPageSize` hides
+  the rows-per-page control (a buyer has no reason to tune it) and `compact` centres it and drops
+  the "Showing x–y" line. One component keeps `pageList` — the ellipsis rule — from drifting.
+  🔴 **Product cards ship WITHOUT a link** (`ProductCard`'s `to` is optional by design): `/product/:slug`
+  is screen 3 and does not exist. Same honest pattern screen 1 used, with the page carrying
+  "Product pages open shortly." and a new ledger row; screen 1's row flipped to **Done** and its
+  note is deleted, because its destination now exists.
+  ⚠️ **The grid path is unverified end to end — there are no products in the dev DB** (`total: 0`
+  for every category), so every category currently renders its empty state. That IS correct
+  behaviour, and the empty state is the common launch case, but nothing has exercised the card grid
+  against real data. Screens 3 and 4 will have the same limitation until some listings exist.
+- **2026-08-09** — **M2 web build step 1 done: the 10 shared catalogue components**
+  (`web/src/components/catalogue/`) + `lib/productStatus.js` + `lib/currencies.js`.
+  Built against the **actual design exports**, not the briefs alone — card structure, class names
+  and copy were lifted from `screen-02`/`screen-03`/`screen-05`/`screen-06` `code.html`.
+  Notable details the exports settled: on a product card the **PRICE is the visual hero**, not the
+  name (name is small and 2-line clamped above it), and `mt-auto` on the price is what keeps cards
+  in a row aligned however the name wraps. **"Price on request" renders in primary blue at medium
+  weight** — information, never greyed. The card's tick is a **bare check** (no room for the word),
+  so `VerifiedTick` gained a `compact` variant that keeps the label as screen-reader text rather
+  than dropping it — the meaning never rests on colour alone.
+  `lib/currencies.js` is **generated from the backend enum** (154 ISO codes) so the two cannot drift.
+  🔴 **Verification was the interesting part.** `npm run build` passing proved nothing — nothing
+  imported the new files, so Vite never compiled them. Fixed two ways: mounted all ten in the
+  dev-only **`/styleguide`** (so they genuinely compile, and are reviewable), and wrote a
+  **server-render harness** (esbuild → `renderToStaticMarkup`) asserting the rules that matter —
+  **21/21 pass**: on-request is not muted · USD never renders as ₹ · an unverified card shows no
+  badge in the tick's place · a public card carries no status chip · a verified seller's cap meter
+  renders **nothing** · booleans read "Yes" not `true` · a spec whose definition an admin deleted
+  still renders · and the blocked banner **never** leaks the acting admin or offers an appeal.
+  ⚠️ `web/` still has **no test framework** — that harness was a one-off, not a suite. Worth a
+  decision before the surface triples.
+- **2026-08-09** — **Audit list/detail now carry `target.name` — screen 11's Target column is
+  buildable.** Read-side only; the append-only write path is untouched. Resolution order: the
+  entity's **current** name (batch-resolved **one query per entity type per page**, mirroring the
+  existing actor lookup — never per row) → the name the entry **snapshotted** (what makes a purge row
+  self-contained, §A8) → **`null`**. Nullable on purpose: a takedown records its reason and a publish
+  its status, so a deleted target may have no name anywhere — the screen renders "—" and never
+  invents one.
+  Types are an **allowlist** (`NAMEABLE`): Product · Organisation · Category · CategoryAttribute ·
+  User · FeaturedItem. **`Conversation` deliberately excluded** — thread titles are composed at read
+  time from the parties' company names (A22.3) and never stored — and so is `PendingSignup`
+  (a person who never completed signup). So adding a model to the audit trail cannot quietly widen
+  what this screen exposes.
+  **Gotcha:** `tests/m5-audit-viewer.test.js` asserted `target` with an EXACT shape and failed on the
+  new key — that is the A3 pattern working (same as `productCount` in `kyc.test.js`); updated in the
+  same change. 5 new cases: live name beats a stale snapshot on a renamed row · purged row falls back
+  to `productName` · genuinely-nameless row returns null · mixed entity types resolve on one page ·
+  an unlisted type gets no lookup. Backend **991/995**, lint clean (the 4 are the known
+  `FAST2SMS_*` env failures).
+- **2026-08-09** — **Catalogue seeded (40 tops · 261 subs · 1,376 attributes) and verified against
+  Part A; two more M2 web gaps found.** Seed checks pass: no top carries a `type`, every sub does
+  (§A16); "Other" is the two typed subs (§A14); every attribute is optional with **no `select`
+  options** (§A25.2). It also confirms empirically what the designs assumed — **0 categories have an
+  image** (§A20) and **0 have synonyms**, so the monogram fallback is the normal look and screen 8's
+  synonyms input starts empty for all 40.
+  🔴 **New gap — screen 11's "Target" column has no name to show.** `auditListView` returns
+  `target: {type, id}` only; actor names ARE batch-resolved, target names are not, and `AuditLog`
+  has no `entityName`. Worse, **most write sites never record one**: takedown stores
+  `{reason, conversationsFrozen}`, publish stores `{status}`. Only `product.create` and the 180-day
+  purge carry names (the purge snapshot honours §A8 correctly). Three options recorded in the build
+  plan §9.1 — recommendation: derive a `targetName` in the list view now, record names at the write
+  sites when those services are next touched. **Do not ship the column silently nameless while the
+  brief promises a name.**
+  Also: `PortalLayout` caps content at `max-w-[860px]`, too narrow for screen 5's full-width table
+  (§9.2) — widen per-route, never restyle the owner-locked `ConsoleShell`. And that file's comment
+  claiming a buyer org "has no read endpoint until A22" is stale; `GET /me/organisation` shipped.
+- **2026-08-09** — **M2 web screen exports reorganised + `design-plans/m2/web-build-plan.md` written.**
+  The 29 flat Stitch folders are now 11 `screen-NN-*` folders (each with `desktop*` / `mobile`
+  variants) plus `_design-system/`, matching the screen table in `m2-web-screen-details.md`.
+  **Mapping was confirmed from each export's `<title>`/`<h1>`/`<h2>`, not its folder name** — two
+  would have been mis-filed on name alone: `catalogue_pages_all_states` and
+  `mobile_catalogue_page_corrected` are **product detail (screen 3)**, not the catalogue listing.
+  `INDEX.md` records the mapping. **No image is corrupted** (all 28 PNGs decode, all 28 `code.html`
+  complete, no `<FIFE …>` placeholders like the M1 batch) — but every PNG is capped at 1600px on its
+  long side, so six tall stacked/mobile exports collapsed to 62–122px wide and are unreadable; use
+  their `code.html` instead. ⚠️ **The `mobile/` folders are RESPONSIVE WEB (verified: web header,
+  no native tab bar), not the React Native app** — the app's 7 screens remain unbuilt and unexported.
+  **The build plan** covers all 11 screens: routes, the 10 shared components to build first, three
+  API modules with exact endpoints and validator limits, per-screen states, build order, and the
+  gaps. Two decisions carried in as settled (buyer entry point, restore-over-cap — both
+  "do not re-raise"). Restates the `caps.active.used` ≠ `counts.active` trap (§A10) and the
+  🔴 finding that screen 10's search is **substring**, so the brief's "Starts with…" label is stale.
+- **2026-08-08** — **`design-plans/m2/m2-web-screen-details.md` written — paste-ready generation
+  prompts for all 11 M2 web screens.** Operational companion to `web-screens-design.md` (which
+  decides *what* each screen contains); this turns those decisions into text a UI generator obeys.
+  Structure: three shared blocks (§0.1 design tokens · §0.2 public chrome for screens 1–4 · §0.3
+  console shell for 5–11) that prefix every prompt, a global **"never draw"** list (§1), the 11
+  prompts each with a *reject if* line, and a judging checklist (§13).
+  **The global exclusion list is the load-bearing part** — generators reflexively add ratings,
+  review counts, response times and fabricated supplier metrics, and the first Stitch pass invented
+  "Trade Finance" and "Global Logistics" categories plus "1.5k Suppliers / 242 Members". Sample
+  content is pinned to the real `Category.md` taxonomy for that reason.
+  **§12 records five corrections found while writing it**, the sharpest being that the brief tells
+  screen 10 to label its search *"Starts with…"* while the shipped backend deliberately does
+  **substring** (`new RegExp(escapeRegex(q), 'i')`, no `^`, with a comment recording the decision) —
+  **the brief's label is stale.** Also: a Category carries no sub-count field (screen 1 must derive
+  it from the nested `subs`), every seeded attribute is optional and none are Selects, and seeded
+  attributes are copied onto each SUB not shared from the top.
+- **2026-08-07** — **M2 web screen 1 built: public category browse at `/categories`.** First M2 screen,
+  first consumer of TanStack Query. Renders `GET /categories` (the whole active tree in one call —
+  the grid needs each top's sub COUNT and a 3-name teaser, and **neither is a field on a category**:
+  the public projection is `name/slug/image/parentId/type` only, so `/categories/top` would draw the
+  cards with both blank).
+  **Extracted `PublicHeader` + `PublicFooter`** into `components/public/` and moved the landing page
+  onto them — screens 1–4 are all guest-visible and would otherwise carry four drifting copies of the
+  chrome. **Gotcha the extraction had to solve:** the header's section links are anchors into the
+  LANDING page, so a bare `#faq` resolves against the current URL and does nothing on `/categories`;
+  `PublicHeader` now emits `/#faq` when `pathname !== '/'`.
+  **The no-image monogram panel is the PRIMARY look, not an edge case** — §A20 has admins uploading
+  the 40 top images over time, so at launch nearly every card is empty; a grey broken-image icon
+  would make the whole page read as failed. Cards are equal-height with the count pinned via
+  `mt-auto` (several names wrap to two lines and the rows stopped aligning without it).
+  🔴 **Cards are deliberately NOT links** — `/category/:slug` is screen 2 and does not exist, and
+  `web-ui-notes.md` bans dead anchors. Ledger row added; flip to `<Link>` and drop the
+  "coming shortly" line when screen 2 ships. No search / filter / sort anywhere (M3).
+  ⚠️ **The dev database has ZERO categories seeded** (`tops: 0, subs: 0`), so the page currently
+  renders its empty state. `npm run seed:catalogue` in the backend populates 40 tops + ~260 subs;
+  the seeder is idempotent. Not run from here — it writes ~300 documents to the owner's dev DB.
+- **2026-08-07** — **🔴 LIVE API was running without `NODE_ENV=production` — found, and the OTP print
+  now needs TWO locks.** Probing `POST /auth/logout` on the live API (it clears the cookie
+  unconditionally, so the attributes leak with no credentials) returned
+  `Path=/auth; HttpOnly; SameSite=Lax` — **no `Secure`**, and `secure` is set from
+  `NODE_ENV === 'production'` and nothing else. `env.js` defaults an unset `NODE_ENV` to
+  `development`, which is exactly the mode the new OTP terminal print fires in — so real users'
+  codes could have been written into production logs (A3 / security-baseline #4). Owner set
+  `NODE_ENV=production` during the session (re-probe now shows `Secure`), and the print is
+  additionally gated behind a new **`OTP_DEV_PRINT`** flag, default OFF: it needs
+  `NODE_ENV === 'development'` **AND** `OTP_DEV_PRINT=true`, so one missing variable on one server
+  is no longer sufficient to leak.
+  **Two parsing footguns pinned by tests, both of which would have silently inverted the gate:**
+  `z.coerce.boolean()` makes the string `'false'` **TRUE**, and `z.enum(['true','false'])` would
+  have **rejected the blank value `.env.example` ships and killed the server at boot**. The schema
+  is `z.string().optional().transform(v => v === 'true')` — default-deny, only the exact string
+  `true` enables it. Verified a blank value still boots.
+  **Test-isolation gotcha:** `env.js` runs `dotenv`, which fills anything `process.env` does not
+  already define — so deleting the key mid-test just lets the developer's own `.env` answer for it.
+  `tests/setup.js` now pins `OTP_DEV_PRINT='false'` (same reasoning as the existing Cloudinary pin),
+  and "unset" is covered as a table of every non-`'true'` value instead. Second gotcha: a
+  destructuring default fires on an **explicitly passed `undefined`**, so `{ devPrint: undefined }`
+  silently became `'true'` and one test asserted the opposite of its own name.
+  ⚠️ **STILL OUTSTANDING (owner, on the VPS): `REFRESH_COOKIE_PATH=/api/auth`.** The live cookie is
+  still `Path=/auth` while the web app requests `/api/auth/refresh`, so the browser does not send it
+  and **production still logs out on reload**. The Vercel rewrite itself is confirmed working
+  (`/api/auth/refresh` returns a JSON 401 from Express, and no absolute API origin is baked into the
+  deployed bundle). Backend 986/990; the 4 failures are the Fast2SMS live-gateway group, still
+  environmental (`FAST2SMS_*` commented out in `.env`).
 - **2026-08-07** — **🔴 `npm run dev:live` was silently logging you out on every reload. Fixed.**
   It set `VITE_API_BASE_URL=https://api.mpx.nxtgendigitals.com`, which **switches the Vite proxy off**
   (`vite.config.js` only proxies a base path starting with `/`) — verified by invoking the config

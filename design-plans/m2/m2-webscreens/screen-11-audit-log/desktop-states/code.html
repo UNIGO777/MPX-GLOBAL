@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global Admin Audit Log</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-low": "#f4f2ff",
+            "inverse-primary": "#b9c3ff",
+            "surface-container-highest": "#e2e1ee",
+            "tertiary-fixed": "#70fda7",
+            "outline-variant": "#c4c5d8",
+            "surface-container": "#eeedf9",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed-variant": "#00522c",
+            "on-surface-variant": "#444655",
+            "surface": "#fbf8ff",
+            "surface-bright": "#fbf8ff",
+            "on-primary": "#ffffff",
+            "background": "#fbf8ff",
+            "outline": "#747687",
+            "surface-dim": "#dad9e5",
+            "on-background": "#1a1b24",
+            "on-primary-container": "#d0d6ff",
+            "on-surface": "#1a1b24",
+            "primary-fixed-dim": "#b9c3ff",
+            "on-tertiary-container": "#66f29e",
+            "inverse-on-surface": "#f1effc",
+            "surface-variant": "#e2e1ee",
+            "primary-fixed": "#dee1ff",
+            "on-secondary-fixed": "#091c32",
+            "on-secondary": "#ffffff",
+            "tertiary-container": "#006d3c",
+            "on-secondary-container": "#53647d",
+            "on-error": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "secondary-fixed-dim": "#b6c8e5",
+            "on-error-container": "#93000a",
+            "on-primary-fixed": "#001158",
+            "tertiary-fixed-dim": "#51df8e",
+            "secondary": "#4e5f79",
+            "on-primary-fixed-variant": "#0032c3",
+            "primary-container": "#2a4de0",
+            "primary": "#0032c3",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed": "#00210e",
+            "inverse-surface": "#2f3039",
+            "on-secondary-fixed-variant": "#374860",
+            "error": "#ba1a1a",
+            "secondary-container": "#cfe1ff",
+            "tertiary": "#00522c",
+            "surface-container-high": "#e8e7f3",
+            "surface-tint": "#2a4de0",
+            "secondary-fixed": "#d4e3ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "stack-md": "16px",
+            "gutter": "24px",
+            "stack-sm": "8px",
+            "stack-lg": "32px",
+            "card-padding": "40px",
+            "unit": "4px",
+            "container-max": "1200px"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Inter"],
+            "headline-lg": ["Inter"],
+            "label-md": ["Inter"],
+            "headline-md": ["Inter"],
+            "label-sm": ["Inter"],
+            "display-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #f2f4f7; /* Matching the recessed look request */
+    }
+  </style>
+</head>
+<body class="flex flex-col gap-24 py-24 text-on-surface min-h-screen">
+<!-- FRAME 1: EMPTY RANGE -->
+<div class="relative w-[1440px] h-[900px] mx-auto bg-[#1A2E8F] overflow-hidden rounded-xl shadow-2xl flex">
+<!-- SideNavBar -->
+<nav class="w-[260px] h-full flex flex-col py-stack-lg px-stack-md text-surface-container-lowest shrink-0">
+<div class="font-headline-md text-headline-md font-bold mb-12 px-stack-md text-surface-container-lowest">
+        MPX Global
+      </div>
+<ul class="flex flex-col gap-2">
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-label-md">Verifications</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md">Users</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md">Categories</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md">Products</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm bg-white/20 text-white font-bold rounded-lg opacity-90 transition-all duration-200 cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">history_edu</span>
+<span class="font-label-md">Audit log</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md">Settings</span>
+</li>
+</ul>
+<div class="mt-auto">
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer list-none">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md">Sign out</span>
+</li>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-full bg-[#EAEEFF] rounded-tl-[32px] overflow-hidden">
+<!-- TopAppBar -->
+<header class="h-16 flex justify-end items-center px-gutter shrink-0 bg-[#EAEEFF]">
+<div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+<div class="flex flex-col items-end">
+<span class="font-label-md text-on-surface font-bold">Priya Menon</span>
+<span class="text-xs text-on-surface-variant">Super admin · MPX Global</span>
+</div>
+<img class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A small, professional portrait photo of a corporate executive, representing Priya Menon, Super Admin. High quality, well-lit, soft background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD19EcJxEqQl8dJmA0-B7Q7qHCxjlDO8VQEf4eRxo5X9bvAlzduWDNzWyuft3JTLfgu9W2HkrHLq8KUgCCUlxJHktH8mG0W0MkFcfaLXKt_GFEedO6fDMWJeyxr0FYT2r0pjvNU7SpTG5Szyug3eVtDEg1BC5SKEtF9H5vLoICrauv-2Lu7M8Qmasu9SHowefKVNHuxJKRUpni8beaItKzs6ImpVXL12s-ZVyiIqqFxZlqsbS_jYV5C"/>
+</div>
+</header>
+<!-- Content Canvas -->
+<main class="flex-1 overflow-y-auto px-12 py-8">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-8">Audit log</h1>
+<!-- Filters -->
+<div class="flex items-center gap-4 mb-8">
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="material-symbols-outlined text-outline">calendar_today</span>
+<span class="font-label-md text-on-surface">01 Jan 2026 – 31 Jan 2026</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="font-label-md text-on-surface">All actions</span>
+<span class="material-symbols-outlined text-outline">arrow_drop_down</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="font-label-md text-on-surface">All actors</span>
+<span class="material-symbols-outlined text-outline">arrow_drop_down</span>
+</div>
+<a class="font-label-md text-primary hover:underline ml-4" href="#">Clear filters</a>
+</div>
+<!-- Empty State -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_4px_20px_rgba(0,5,23,0.05)] h-[500px] flex flex-col items-center justify-center p-12">
+<div class="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-on-surface-variant text-3xl">inbox</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">No activity in this period</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-8">01 Jan 2026 – 31 Jan 2026</p>
+<button class="bg-primary-container text-on-primary font-label-md px-6 py-3 rounded-full hover:bg-[#2340C4] transition-colors">
+            Clear filters
+          </button>
+</div>
+</main>
+</div>
+</div>
+<!-- FRAME 2: LOADING -->
+<div class="relative w-[1440px] h-[900px] mx-auto bg-[#1A2E8F] overflow-hidden rounded-xl shadow-2xl flex">
+<!-- SideNavBar -->
+<nav class="w-[260px] h-full flex flex-col py-stack-lg px-stack-md text-surface-container-lowest shrink-0">
+<div class="font-headline-md text-headline-md font-bold mb-12 px-stack-md text-surface-container-lowest">
+        MPX Global
+      </div>
+<ul class="flex flex-col gap-2">
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-label-md">Verifications</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md">Users</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md">Categories</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md">Products</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm bg-white/20 text-white font-bold rounded-lg opacity-90 transition-all duration-200 cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">history_edu</span>
+<span class="font-label-md">Audit log</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md">Settings</span>
+</li>
+</ul>
+<div class="mt-auto">
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer list-none">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md">Sign out</span>
+</li>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-full bg-[#EAEEFF] rounded-tl-[32px] overflow-hidden">
+<!-- TopAppBar -->
+<header class="h-16 flex justify-end items-center px-gutter shrink-0 bg-[#EAEEFF]">
+<div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+<div class="flex flex-col items-end">
+<span class="font-label-md text-on-surface font-bold">Priya Menon</span>
+<span class="text-xs text-on-surface-variant">Super admin · MPX Global</span>
+</div>
+<img class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A small, professional portrait photo of a corporate executive, representing Priya Menon, Super Admin. High quality, well-lit, soft background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQKJ97qG56zhvvlgllbnZkTM-olG73xVmIrkVEKGHlLdHvSsiSd4HlvYfiKlMirZ7jqqG4QGu7S6Mudztj2SCMnJoihC3z2dtiudk2-iXSBP4_jRk65U7jqS0UH4rRboPuWbH2Zdhxft7Z1NBCUAmudRuFRFt9JYEttGuIuxbwy-_UOzRTspWSNQeLk8KwxxlDJojvGR_jeLCMsTYGHXK--izOApM1q-48vriv1dGl2TctA2wigMu9"/>
+</div>
+</header>
+<!-- Content Canvas -->
+<main class="flex-1 overflow-y-auto px-12 py-8">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-8">Audit log</h1>
+<!-- Filters -->
+<div class="flex items-center gap-4 mb-8">
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="material-symbols-outlined text-outline">calendar_today</span>
+<span class="font-label-md text-on-surface">01 Mar 2026 – 08 Mar 2026</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="font-label-md text-on-surface">All actions</span>
+<span class="material-symbols-outlined text-outline">arrow_drop_down</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="font-label-md text-on-surface">All actors</span>
+<span class="material-symbols-outlined text-outline">arrow_drop_down</span>
+</div>
+</div>
+<!-- Loading Skeletons -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_4px_20px_rgba(0,5,23,0.05)] w-full">
+<!-- Header Skeleton -->
+<div class="flex gap-4 p-6 border-b border-outline-variant bg-surface-container-low/50">
+<div class="h-4 bg-surface-variant rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant rounded w-[30%]"></div>
+</div>
+<!-- Row Skeletons -->
+<div class="flex flex-col">
+<div class="flex gap-4 p-6 border-b border-outline-variant/50">
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[30%]"></div>
+</div>
+<div class="flex gap-4 p-6 border-b border-outline-variant/50">
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[30%]"></div>
+</div>
+<div class="flex gap-4 p-6 border-b border-outline-variant/50">
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[30%]"></div>
+</div>
+<div class="flex gap-4 p-6 border-b border-outline-variant/50">
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[30%]"></div>
+</div>
+<div class="flex gap-4 p-6 border-b border-outline-variant/50">
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[30%]"></div>
+</div>
+<div class="flex gap-4 p-6">
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[15%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[20%]"></div>
+<div class="h-4 bg-surface-variant/70 rounded w-[30%]"></div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- FRAME 3: ERROR -->
+<div class="relative w-[1440px] h-[900px] mx-auto bg-[#1A2E8F] overflow-hidden rounded-xl shadow-2xl flex">
+<!-- SideNavBar -->
+<nav class="w-[260px] h-full flex flex-col py-stack-lg px-stack-md text-surface-container-lowest shrink-0">
+<div class="font-headline-md text-headline-md font-bold mb-12 px-stack-md text-surface-container-lowest">
+        MPX Global
+      </div>
+<ul class="flex flex-col gap-2">
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-label-md">Verifications</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md">Users</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md">Categories</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md">Products</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm bg-white/20 text-white font-bold rounded-lg opacity-90 transition-all duration-200 cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">history_edu</span>
+<span class="font-label-md">Audit log</span>
+</li>
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md">Settings</span>
+</li>
+</ul>
+<div class="mt-auto">
+<li class="flex items-center gap-stack-md px-stack-md py-stack-sm text-surface-container-lowest/70 hover:bg-white/10 hover:text-surface-container-lowest transition-colors rounded-lg cursor-pointer list-none">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md">Sign out</span>
+</li>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-full bg-[#EAEEFF] rounded-tl-[32px] overflow-hidden">
+<!-- TopAppBar -->
+<header class="h-16 flex justify-end items-center px-gutter shrink-0 bg-[#EAEEFF]">
+<div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+<div class="flex flex-col items-end">
+<span class="font-label-md text-on-surface font-bold">Priya Menon</span>
+<span class="text-xs text-on-surface-variant">Super admin · MPX Global</span>
+</div>
+<img class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A small, professional portrait photo of a corporate executive, representing Priya Menon, Super Admin. High quality, well-lit, soft background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzZP2I2RLgQhbxsXC5vdjdFSmPJ31P1M8VHtWI5KIvTheLHEvvUIqKiyv-Bxsi-3DgNciY32fLrSQMJhf1YJGTZw0HelZOIfkLjsRLnPxChyYBk5ly908IQaxIGEUgsslfYJepA4MHTUW5cJl4zGBs9gArDT2jNMd6633uZafR8y6opvohyhYtcU2UzUvxyp8g4I1uRbJhNg8nzh-p4q04Ogi0Hf1vr4DhQy0bCiVRH7xATLXUQPBW"/>
+</div>
+</header>
+<!-- Content Canvas -->
+<main class="flex-1 overflow-y-auto px-12 py-8">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-8">Audit log</h1>
+<!-- Filters -->
+<div class="flex items-center gap-4 mb-8">
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="material-symbols-outlined text-outline">calendar_today</span>
+<span class="font-label-md text-on-surface">01 Mar 2026 – 08 Mar 2026</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="font-label-md text-on-surface">All actions</span>
+<span class="material-symbols-outlined text-outline">arrow_drop_down</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="font-label-md text-on-surface">All actors</span>
+<span class="material-symbols-outlined text-outline">arrow_drop_down</span>
+</div>
+</div>
+<!-- Error State -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_4px_20px_rgba(0,5,23,0.05)] h-[500px] flex flex-col items-center justify-center p-12">
+<div class="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-on-surface-variant text-3xl">error_outline</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">Couldn't load the audit log</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-8">Something went wrong on our side.</p>
+<button class="bg-primary-container text-on-primary font-label-md px-6 py-3 rounded-full hover:bg-[#2340C4] transition-colors">
+            Try again
+          </button>
+</div>
+</main>
+</div>
+</div>
+</body></html>

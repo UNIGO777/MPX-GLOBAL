@@ -18,6 +18,41 @@ import { SkeletonRows } from '../components/ui/Skeleton.jsx';
 import { StatusChip } from '../components/ui/StatusChip.jsx';
 import { VerifiedTick } from '../components/ui/VerifiedTick.jsx';
 import { SearchIcon } from '../components/ui/icons.jsx';
+import { AttributeFields } from '../components/catalogue/AttributeFields.jsx';
+import { BlockedBanner } from '../components/catalogue/BlockedBanner.jsx';
+import { CapMeter } from '../components/catalogue/CapMeter.jsx';
+import { CategoryPicker } from '../components/catalogue/CategoryPicker.jsx';
+import { NoImagePanel } from '../components/catalogue/NoImagePanel.jsx';
+import { PriceInput } from '../components/catalogue/PriceInput.jsx';
+import { PriceLine } from '../components/catalogue/PriceLine.jsx';
+import { ProductCard } from '../components/catalogue/ProductCard.jsx';
+import { ProductImageManager } from '../components/catalogue/ProductImageManager.jsx';
+import { SpecTable } from '../components/catalogue/SpecTable.jsx';
+import { PRODUCT_STATUS_META } from '../lib/productStatus.js';
+
+/* --- M2 fixtures: real taxonomy, real seeded attribute keys --- */
+const TREE = [
+  { id: 't1', name: 'Textiles, Fabrics & Yarn', subs: [
+    { id: 's1', name: 'Cotton fabric' }, { id: 's2', name: 'Silk fabric' }, { id: 's3', name: 'Denim' },
+  ] },
+  { id: 't2', name: 'Agriculture', subs: [{ id: 's4', name: 'Spices & herbs' }] },
+];
+// The six attributes the seed actually creates for Cotton fabric — all optional,
+// none a select (§A25.2 never invents options).
+const ATTR_DEFS = [
+  { key: 'material', name: 'Material', inputType: 'text' },
+  { key: 'gsm', name: 'GSM', inputType: 'number', unit: 'gsm' },
+  { key: 'width', name: 'Width', inputType: 'number', unit: 'inches' },
+  { key: 'weave', name: 'Weave', inputType: 'text' },
+  { key: 'organic', name: 'Organic', inputType: 'boolean' },
+  { key: 'finish', name: 'Finish', inputType: 'select', options: ['Mercerised', 'Sanforised'], required: true },
+];
+const CARD = (over = {}) => ({
+  id: 'p1', name: 'Combed Cotton Poplin Fabric, 120 GSM', images: [],
+  price: { mode: 'fixed', min: 220, currency: 'INR' }, unit: 'meter',
+  seller: { name: 'Tirupur Knitwear Exports', verified: true },
+  category: { name: 'Cotton fabric' }, ...over,
+});
 
 /**
  * DEV-ONLY review surface: every primitive in every state, one page. The route
@@ -42,6 +77,10 @@ export function Styleguide() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [cat, setCat] = useState({ topId: 't1', subId: 's1' });
+  const [price, setPrice] = useState({ mode: 'fixed', min: 220, currency: 'INR' });
+  const [specs, setSpecs] = useState({ material: 'Cotton', gsm: 120, organic: true });
+  const [imgs, setImgs] = useState([{ url: 'https://placehold.co/200', publicId: 'demo/1' }]);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-10">
@@ -157,6 +196,92 @@ export function Styleguide() {
       >
         <Checkbox label="Approve buyers" help="Decide on buyer verification" checked onChange={() => {}} />
       </Drawer>
+
+      {/* ------------------------- M2 · catalogue ------------------------- */}
+      <h2 className="pt-6 text-lg font-bold text-ink-900">M2 · Catalogue components</h2>
+
+      <Section title="Price line — three modes, all equally normal">
+        <div className="flex flex-wrap items-end gap-8">
+          <PriceLine price={{ mode: 'fixed', min: 220, currency: 'INR' }} unit="meter" />
+          <PriceLine price={{ mode: 'range', min: 800, max: 1400, currency: 'INR' }} />
+          <PriceLine price={{ mode: 'fixed', min: 3.4, currency: 'USD' }} unit="meter" />
+          <PriceLine price={{ mode: 'on_request' }} />
+        </div>
+        <p className="text-xs text-muted">
+          &ldquo;Price on request&rdquo; is information, not an absence. Currency is the seller&apos;s
+          own ISO code — no conversion exists in Phase 1.
+        </p>
+      </Section>
+
+      <Section title="No-image panel — the LAUNCH look (0 of 40 categories have an image)">
+        <div className="grid grid-cols-3 gap-4">
+          <NoImagePanel label="Textiles" monogram />
+          <NoImagePanel ratio="aspect-[4/3]" />
+          <NoImagePanel label="Tirupur Knitwear" monogram ratio="aspect-square" className="rounded-lg" />
+        </div>
+      </Section>
+
+      <Section title="Product card — public variant (never a status chip)">
+        <ul className="grid grid-cols-3 gap-4">
+          <ProductCard product={CARD()} />
+          <ProductCard product={CARD({ price: { mode: 'on_request' }, name: 'Cotton Cambric Roll, 60s',
+            seller: { name: 'Erode Textile House', verified: false } })} />
+          <ProductCard product={CARD({ name: 'Cotton Canvas 12oz',
+            price: { mode: 'range', min: 390, max: 520, currency: 'INR' } })} showSeller={false} />
+        </ul>
+        <p className="text-xs text-muted">
+          Middle card: unverified seller — identical, minus the tick. No badge in its place.
+        </p>
+      </Section>
+
+      <Section title="Spec table">
+        <SpecTable
+          defs={ATTR_DEFS}
+          attributes={[{ key: 'material', value: 'Cotton' }, { key: 'gsm', value: 120 },
+            { key: 'organic', value: true }, { key: 'orphaned_key', value: 'kept anyway' }]}
+        />
+      </Section>
+
+      <Section title="Cap meter — unverified only">
+        <CapMeter caps={{ verified: false, active: { used: 2, limit: 3 }, drafts: { used: 7, limit: 10 } }} />
+        <p className="text-xs text-muted">
+          A verified seller renders nothing at all:
+          <span className="ml-1 inline-block align-middle"><CapMeter caps={{ verified: true }} /></span>
+          (empty by design)
+        </p>
+      </Section>
+
+      <Section title="Blocked banner — reason + date, never the admin, no appeal">
+        <BlockedBanner takedown={{ reason: 'Images do not match the product described.', at: '2026-03-02' }} />
+      </Section>
+
+      <Section title="Status vocabulary — blocked is an OVERLAY, not a fifth status">
+        <div className="flex flex-wrap items-center gap-3">
+          {Object.entries(PRODUCT_STATUS_META).map(([k, m]) => (
+            <StatusChip key={k} label={m.label} tone={m.tone} />
+          ))}
+          <span className="flex items-center gap-2 rounded-lg border border-surface-border p-2">
+            <StatusChip label="Live" tone="success" />
+            <StatusChip label="Taken down" tone="danger" />
+          </span>
+        </div>
+      </Section>
+
+      <Section title="Category picker — the SUB is what is stored; no goods/service toggle">
+        <CategoryPicker tree={TREE} topId={cat.topId} subId={cat.subId} onChange={setCat} />
+      </Section>
+
+      <Section title="Price input — on request REMOVES the fields, not disables them">
+        <PriceInput value={price} onChange={setPrice} />
+      </Section>
+
+      <Section title="Attribute fields — unit inside the number field">
+        <AttributeFields defs={ATTR_DEFS} values={specs} onChange={setSpecs} />
+      </Section>
+
+      <Section title="Product image manager — all three limits stated up front">
+        <ProductImageManager images={imgs} onChange={setImgs} onUpload={async () => []} />
+      </Section>
     </div>
   );
 }

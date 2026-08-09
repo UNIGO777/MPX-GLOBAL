@@ -207,10 +207,14 @@ describe('M5-C · list, filters and shape', () => {
 
     const list = await request(app).get('/admin/audit').set(bearer(auditor.token));
     const listed = list.body.entries[0];
+    // `target.name` (2026-08-09) and `reason` (2026-08-09) widened this shape
+    // deliberately — the A3 pattern working. The summary/detail split HOLDS:
+    // only the reason is lifted out, never the before/after snapshot itself.
     expect(Object.keys(listed).sort()).toEqual(
-      ['action', 'actor', 'id', 'occurredAt', 'orgId', 'target'].sort(),
+      ['action', 'actor', 'id', 'occurredAt', 'orgId', 'reason', 'target'].sort(),
     );
     expect(listed).not.toHaveProperty('before');
+    expect(listed).not.toHaveProperty('after');
 
     const detail = await request(app).get(`/admin/audit/${row._id}`).set(bearer(auditor.token));
     expect(detail.body.entry.before).toEqual({ kycStatus: 'submitted' });
@@ -318,9 +322,93 @@ describe('M5-C · it can actually see what the platform records (§6 coverage)',
     expect(res.body.total).toBe(1);
     const row = res.body.entries[0];
     expect(row.actor.name).toBe(sa.user.name);
-    expect(row.target).toEqual({ type: 'Product', id: String(product._id) });
+    // `name` widened this shape deliberately (2026-08-09): a takedown records
+    // its reason, never the product's name, so the viewer resolves it live.
+    expect(row.target).toEqual({ type: 'Product', id: String(product._id), name: 'Cotton Roll' });
 
     const detail = await request(app).get(`/admin/audit/${row.id}`).set(bearer(auditor.token));
     expect(detail.body.entry.after.reason).toBe('counterfeit listing');
+    expect(detail.body.entry.target.name).toBe('Cotton Roll');
+  });
+});
+
+/**
+ * The Target column's name. Before this, the list returned `{type, id}` only —
+ * the screen could show "Product · 6a75…c4ee" and no more — while most actions
+ * (takedown, publish, restore) never record a name in their snapshot at all.
+ */
+describe('M5-C · target names', () => {
+  it('resolves the CURRENT name for a target that still exists', async () => {
+    const product = await Product.create({
+      exporterOrgId: sellerOrg._id, categoryId: leaf._id, name: 'Original Name', status: 'active',
+      price: { mode: 'on_request' },
+    });
+    // A create entry snapshots the name at the time; the row is then renamed.
+    await entry({ action: 'product.create', entityId: product._id, after: { name: 'Original Name' } });
+    await Product.updateOne({ _id: product._id }, { $set: { name: 'Renamed Product' } });
+
+    const res = await request(app).get('/admin/audit').set(bearer(auditor.token));
+    // Live name wins over the snapshot, so the row still points at something findable.
+    expect(res.body.entries[0].target.name).toBe('Renamed Product');
+  });
+
+  it('§A8: a PURGED product falls back to the snapshotted names', async () => {
+    // The product row and its images are gone — the audit entry is the only
+    // remaining record, which is exactly why the purge snapshots both names.
+    await entry({
+      action: 'product.purge',
+      entityId: new mongoose.Types.ObjectId(),
+      after: { productName: 'Bleached Cotton Twill', sellerCompanyName: 'Surat Weaving Co' },
+    });
+
+    const res = await request(app).get('/admin/audit').set(bearer(auditor.token));
+    expect(res.body.entries[0].target.name).toBe('Bleached Cotton Twill');
+    const detail = await request(app)
+      .get(`/admin/audit/${res.body.entries[0].id}`).set(bearer(auditor.token));
+    expect(detail.body.entry.after.sellerCompanyName).toBe('Surat Weaving Co');
+  });
+
+  it('returns null rather than inventing one when nothing recorded a name', async () => {
+    // A takedown of a product that has since been deleted: no live row, and the
+    // snapshot holds only the reason. Honest null — the screen renders "—".
+    await entry({ entityId: new mongoose.Types.ObjectId(), after: { reason: 'counterfeit' } });
+
+    const res = await request(app).get('/admin/audit').set(bearer(auditor.token));
+    expect(res.body.entries[0].target.name).toBeNull();
+  });
+
+  it('surfaces the action\'s reason at LIST level, null where there is none', async () => {
+    await entry({ action: 'product.takedown', after: { reason: 'counterfeit listing' } });
+    await entry({ action: 'product.publish', after: { status: 'active' } });
+
+    const res = await request(app).get('/admin/audit').set(bearer(auditor.token));
+    const byAction = Object.fromEntries(res.body.entries.map((e) => [e.action, e.reason]));
+    expect(byAction['product.takedown']).toBe('counterfeit listing');
+    expect(byAction['product.publish']).toBeNull();
+  });
+
+  it('resolves names across MIXED entity types on one page', async () => {
+    const org = sellerOrg;
+    await entry({ action: 'category.toggle', entityType: 'Category', entityId: leaf._id });
+    await entry({ action: 'exporter.verify', entityType: 'Organisation', entityId: org._id });
+    await entry({ action: 'employee.create', entityType: 'User', entityId: auditor.user._id });
+
+    const res = await request(app).get('/admin/audit').set(bearer(auditor.token));
+    const names = Object.fromEntries(res.body.entries.map((e) => [e.target.type, e.target.name]));
+    expect(names).toMatchObject({
+      Category: 'Cotton fabric',
+      Organisation: org.name,
+      User: auditor.user.name,
+    });
+  });
+
+  it('does not resolve a name for an unlisted entity type', async () => {
+    // Conversation titles are composed at read time from company names (A22.3)
+    // and never stored; PendingSignup is someone who never completed signup.
+    // Neither is in the allowlist, so neither gets looked up.
+    await entry({ entityType: 'Conversation', entityId: new mongoose.Types.ObjectId() });
+
+    const res = await request(app).get('/admin/audit').set(bearer(auditor.token));
+    expect(res.body.entries[0].target.name).toBeNull();
   });
 });

@@ -464,6 +464,18 @@ async function capState(exporterOrgId) {
   };
 }
 
+/**
+ * ONE of the seller's own products — what the edit form loads.
+ *
+ * Ownership-scoped by `loadOwned`, so another seller's product is a **404, never
+ * a 403**: a 403 would confirm the row exists (tracker A6). Archived rows are
+ * returned deliberately — the edit screen has to recognise one to show its
+ * terminal "this product is archived" notice rather than a form.
+ */
+export async function getOwnProduct({ user, id }) {
+  return loadOwned(id, user.orgId);
+}
+
 // The seller's own list. `status` is optional — omitted means the "All" tab.
 // Counts and caps ride along on every page so the tabs and the meter can never
 // disagree with the rows, and so publishing refreshes all three in one call.

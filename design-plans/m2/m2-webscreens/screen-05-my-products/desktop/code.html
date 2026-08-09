@@ -1,0 +1,352 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MPX Global - My Products</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#d4e3ff",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "surface-tint": "#2a4de0",
+                        "surface-container-low": "#f4f2ff",
+                        "primary-container": "#2a4de0",
+                        "surface-container": "#eeedf9",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#53647d",
+                        "on-background": "#1a1b24",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "secondary": "#4e5f79",
+                        "background": "#fbf8ff",
+                        "inverse-primary": "#b9c3ff",
+                        "primary-fixed": "#dee1ff",
+                        "outline-variant": "#c4c5d8",
+                        "surface-variant": "#e2e1ee",
+                        "tertiary-container": "#006d3c",
+                        "tertiary": "#00522c",
+                        "tertiary-fixed": "#70fda7",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#cfe1ff",
+                        "outline": "#747687",
+                        "on-surface": "#1a1b24",
+                        "surface-container-high": "#e8e7f3",
+                        "on-secondary-fixed-variant": "#374860",
+                        "inverse-surface": "#2f3039",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "on-tertiary-fixed": "#00210e",
+                        "surface-container-highest": "#e2e1ee",
+                        "surface-bright": "#fbf8ff",
+                        "surface-dim": "#dad9e5",
+                        "on-primary-fixed": "#001158",
+                        "surface": "#fbf8ff",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "inverse-on-surface": "#f1effc",
+                        "primary": "#0032c3",
+                        "on-primary-container": "#d0d6ff",
+                        "on-tertiary-container": "#66f29e",
+                        "on-surface-variant": "#444655",
+                        "on-secondary-fixed": "#091c32",
+                        "deep-navy": "#1A2E8F",
+                        "canvas": "#EAEEFF",
+                        "success": "#12B76A",
+                        "warning": "#F79009",
+                        "danger": "#D92D20"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-padding": "40px",
+                        "stack-lg": "32px",
+                        "gutter": "24px",
+                        "stack-md": "16px",
+                        "container-max": "1200px",
+                        "stack-sm": "8px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #1A2E8F; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .status-chip { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+        .status-live { background-color: #ECFDF3; color: #027A48; border: 1px solid #A6F4C5; }
+        .status-hidden { background-color: #FFFAEB; color: #B54708; border: 1px solid #FEDF89; }
+        .status-draft { background-color: #F2F4F7; color: #344054; border: 1px solid #EAECF0; }
+        .status-archived { background-color: #F9FAFB; color: #667085; border: 1px dashed #D0D5DD; opacity: 0.7; }
+        .status-takedown { background-color: #FEF3F2; color: #B42318; border: 1px solid #FECDCA; }
+        
+        .progress-bar-bg { height: 6px; width: 100%; background-color: #e2e1ee; border-radius: 9999px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background-color: #2a4de0; border-radius: 9999px; }
+        .progress-bar-fill-draft { background-color: #747687; }
+    </style>
+</head>
+<body class="h-screen w-full flex overflow-hidden">
+<!-- SideNavBar (from JSON) -->
+<nav aria-label="Sidebar Navigation" class="h-screen w-[260px] fixed left-0 top-0 bg-deep-navy flex flex-col py-0 px-6 z-50">
+<div class="h-[88px] flex items-center mb-4"><h1 class="font-headline-md text-headline-md font-bold text-white">MPX Global</h1></div>
+<ul class="space-y-1 flex-1"><li class="mb-1"><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#"><span class="material-symbols-outlined" data-icon="verified_user">verified_user</span><span class="font-label-md text-label-md">Verification</span></a></li><li class="mb-1"><a aria-current="page" class="flex items-center gap-3 px-3 py-2 rounded-lg text-white font-bold bg-white/10 transition-colors duration-200" href="#"><span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span><span class="font-label-md text-label-md">Products</span></a></li><li class="mb-1"><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#"><span class="material-symbols-outlined" data-icon="chat_bubble_outline">chat_bubble_outline</span><span class="font-label-md text-label-md flex-1">Enquiries</span><span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full text-white uppercase tracking-wider">Soon</span></a></li><li class="mb-1"><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#"><span class="material-symbols-outlined" data-icon="forum">forum</span><span class="font-label-md text-label-md flex-1">Chat</span><span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full text-white uppercase tracking-wider">Soon</span></a></li><li class="mt-auto mb-8"><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#"><span class="material-symbols-outlined" data-icon="settings">settings</span><span class="font-label-md text-label-md">Settings</span></a></li></ul>
+<!-- Bottom Nav elements from JSON if needed, but per instructions, side nav is used for desktop -->
+</nav>
+<!-- Main Content Wrapper -->
+<div class="ml-[260px] flex-1 flex flex-col h-full bg-deep-navy relative">
+<!-- TopAppBar (from JSON but adapted to requirements) -->
+<header class="flex justify-between items-center px-gutter shrink-0 bg-deep-navy text-white relative z-10 w-full border-none shadow-none h-[88px]"><div class="flex-1"></div><div class="flex items-center gap-4"><div class="text-right"><p class="font-label-md text-label-md font-semibold text-white">Rajesh Kumar</p><p class="font-label-sm text-label-sm text-white/70 font-normal">Exporter · Tirupur Knitwear Exports</p></div><div class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center font-bold font-label-sm">RK</div><button class="ml-2 text-white/70 hover:text-white transition-colors"><span class="material-symbols-outlined" data-icon="logout">logout</span></button></div></header>
+<!-- Main Canvas Area -->
+<main class="flex-1 bg-canvas rounded-tl-[32px] shadow-[inset_0_4px_20px_rgba(0,0,0,0.1)] overflow-y-auto relative z-0">
+<div class="p-8 max-w-[1200px] mx-auto min-h-full flex flex-col">
+<!-- Page Header -->
+<div class="flex justify-between items-start mb-8">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">My products</h2>
+<div class="flex gap-6 mt-4">
+<div class="w-48">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-1">
+<span class="">2 of 3 live listings</span>
+</div>
+<div class="progress-bar-bg">
+<div class="progress-bar-fill" style="width: 66%;"></div>
+</div>
+</div>
+<div class="w-48">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-1">
+<span class="">7 of 10 drafts</span>
+</div>
+<div class="progress-bar-bg">
+<div class="progress-bar-fill-draft" style="width: 70%;"></div>
+</div>
+</div>
+</div>
+<p class="font-label-sm text-label-sm text-secondary mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="info">info</span>
+                            Get verified to publish unlimited products.
+                        </p>
+</div>
+<button class="bg-primary-container text-on-primary hover:bg-[#2340C4] transition-colors rounded-full px-5 py-2.5 font-label-md text-label-md flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                        Add product
+                    </button>
+</div>
+<!-- Tabs -->
+<div class="flex border-b border-outline-variant mb-6">
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-primary text-primary font-semibold">All (14)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Live (2)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Hidden (3)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Drafts (7)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Archived (2)</button>
+</div>
+<!-- Product Table Container -->
+<div class="bg-white border border-outline-variant rounded-lg overflow-visible shadow-sm flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant bg-surface-container-lowest">
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium w-16"></th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Name</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Category</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Price</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Status</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Created Date</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium text-right w-16"></th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<!-- Row 1 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-lowest transition-colors group">
+<td class="py-3 px-4">
+<img class="w-12 h-12 rounded object-cover border border-outline-variant" data-alt="Close up shot of high quality white combed cotton poplin fabric texture, well lit studio lighting, professional e-commerce product photography, clean white background, crisp details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeBTnDb7PtfTcKwWchnOzI4z_nrOdV2EIDbR-oM2Bi3nTKiyVtA2I59I0504jB5U77cGjx38WAysFAMuXul7tUK5Dk1jbEz8bt4XiuXGZQvRbMS55FmHrhDted6ZyHQkwjNeuhIJHHbPL6dfh5qgwIqU2832rABwbAFTWZ866ja5w9W31iEPH516QyNmBV0c6ozZlVrOdlCVkqDpKLEpbIYuVGmcNL6kobuAC_sjHtgHPn3lSS_e0I">
+</td>
+<td class="py-3 px-4 font-medium">Combed Cotton Poplin Fabric</td>
+<td class="py-3 px-4 text-secondary">Cotton fabric</td>
+<td class="py-3 px-4">INR 220 / meter</td>
+<td class="py-3 px-4">
+<span class="status-chip status-live">Live</span>
+</td>
+<td class="py-3 px-4 text-secondary text-sm">12 Mar 2026</td>
+<td class="py-3 px-4 text-right relative">
+<button class="text-outline hover:text-on-surface p-1 rounded hover:bg-surface-variant opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-lowest transition-colors group">
+<td class="py-3 px-4">
+<img class="w-12 h-12 rounded object-cover border border-outline-variant" data-alt="Lightweight organic cotton voile fabric folded neatly, soft natural lighting highlighting the sheer texture, muted earthy background, minimal high-end B2B catalog style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1tI0pQGumnMhrqeCsfpaV8QGwon5e1fR_we0OhFM55AvBtokb9rZt43MuFEuXKzE-d-s3usDY2r9kgQBBhbk-dtlj-Qs6QEx0oCH-MElraczR3L0OUhChclikYNoGHc0t58D19fSAWBd5nYwKleIGhReoPxtv0OuO2ZViM0S_kVYODzpIt4Xrza8wvnS2ZPXVseIDDFq7zNNes4IvwnQtVVWj0MDUNW9n00bFISfxBWXLJOkPUPhP">
+</td>
+<td class="py-3 px-4 font-medium">Organic Cotton Voile</td>
+<td class="py-3 px-4 text-secondary">Cotton fabric</td>
+<td class="py-3 px-4">INR 180 – 260</td>
+<td class="py-3 px-4">
+<span class="status-chip status-live">Live</span>
+</td>
+<td class="py-3 px-4 text-secondary text-sm">09 Mar 2026</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface p-1 rounded hover:bg-surface-variant opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 (Live + Taken down) -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-lowest transition-colors group bg-[#FEF3F2]/30">
+<td class="py-3 px-4">
+<img class="w-12 h-12 rounded object-cover border border-outline-variant" data-alt="A large industrial roll of cotton cambric 60s fabric in a warehouse setting, soft diffused lighting, slightly desaturated color palette, focused on the weave quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwft0wWoY6BA3bHVyClTQYDEMBvci6ffuuvO3JueKLXeJIQGQMXeUKz5E16EO2xKqOtg9PbpqFavA-RTPueXqAsuLj5frPRFqL9uZrD2spCQ5smGL-Ruekb7jNpp0wQvEApjrZgHjh5yggp81_swdsF7VQ1oR6pZHO9_mPp0QnKIWzrj97oGLJIuGFvGm4UvkvzC7fyqg1wM7mFzKdy315byubTx946CU2MlC-Ph08DlcrXTXEE-9a">
+</td>
+<td class="py-3 px-4 font-medium">Cotton Cambric Roll, 60s</td>
+<td class="py-3 px-4 text-secondary">Cotton fabric</td>
+<td class="py-3 px-4 text-secondary italic">Price on request</td>
+<td class="py-3 px-4">
+<div class="flex gap-2 items-center flex-wrap">
+<span class="status-chip status-live">Live</span>
+<span class="status-chip status-takedown">Taken down</span>
+</div>
+</td>
+<td class="py-3 px-4 text-secondary text-sm">02 Mar 2026</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface p-1 rounded hover:bg-surface-variant opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-lowest transition-colors group">
+<td class="py-3 px-4">
+<img class="w-12 h-12 rounded object-cover border border-outline-variant opacity-70" data-alt="Thick bleached cotton twill fabric showing the distinct diagonal weave pattern, stark white lighting, macro shot emphasizing durability, industrial textile aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7O4L-ZBONWsXikoNYrFonOiDBsGsxD9UShRm6MRv7ktqlLBRjHhu1z18viorouDJBRMOr3a4ce7XBBx3347EDB9L_WiQHgQQpNIxyxy86KZsMWQJxpNEglEdJGd_2A_go-_cNovrjScSFJeJiJcJxsdNNqi08C0K6t8BufdXSMB6FGzxb-MfteJpvf_aCXJN9x-VgopzaNSk9KUatJ5pPspe1KiZXjhUMLiCqdTVn4ac1Mx39N4Vw">
+</td>
+<td class="py-3 px-4 font-medium text-on-surface-variant">Bleached Cotton Twill</td>
+<td class="py-3 px-4 text-secondary">Cotton fabric</td>
+<td class="py-3 px-4">USD 3.40 / meter</td>
+<td class="py-3 px-4">
+<span class="status-chip status-hidden">Hidden</span>
+</td>
+<td class="py-3 px-4 text-secondary text-sm">28 Feb 2026</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface p-1 rounded hover:bg-surface-variant opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-lowest transition-colors group">
+<td class="py-3 px-4">
+<div class="w-12 h-12 rounded bg-surface-variant border border-outline-variant flex items-center justify-center text-outline">
+<span class="material-symbols-outlined" data-icon="image">image</span>
+</div>
+</td>
+<td class="py-3 px-4 font-medium text-on-surface-variant">Cotton Flannel</td>
+<td class="py-3 px-4 text-secondary">Cotton fabric</td>
+<td class="py-3 px-4">INR 310 / meter</td>
+<td class="py-3 px-4">
+<span class="status-chip status-draft">Draft</span>
+</td>
+<td class="py-3 px-4 text-secondary text-sm">26 Feb 2026</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface p-1 rounded hover:bg-surface-variant opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 6 (Open Menu) -->
+<tr class="border-b border-outline-variant bg-surface-container-lowest relative z-10">
+<td class="py-3 px-4">
+<div class="w-12 h-12 rounded bg-surface-variant border border-outline-variant flex items-center justify-center text-outline">
+<span class="material-symbols-outlined" data-icon="image">image</span>
+</div>
+</td>
+<td class="py-3 px-4 font-medium text-on-surface-variant">Cotton Muslin, greige</td>
+<td class="py-3 px-4 text-secondary">Cotton fabric</td>
+<td class="py-3 px-4 text-secondary">—</td>
+<td class="py-3 px-4">
+<span class="status-chip status-draft">Draft</span>
+</td>
+<td class="py-3 px-4 text-secondary text-sm">24 Feb 2026</td>
+<td class="py-3 px-4 text-right relative">
+<button class="text-on-surface bg-surface-variant p-1 rounded">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+<!-- Dropdown Menu -->
+<div class="absolute right-8 top-10 w-48 bg-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-outline-variant py-2 z-50 text-left">
+<button class="w-full text-left px-4 py-2 font-label-md text-label-md hover:bg-surface-container-lowest transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="publish">publish</span> Publish
+                                        </button>
+<button class="w-full text-left px-4 py-2 font-label-md text-label-md hover:bg-surface-container-lowest transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span> Edit
+                                        </button>
+<div class="h-px w-full bg-outline-variant my-1"></div>
+<button class="w-full text-left px-4 py-2 font-label-md text-label-md text-danger hover:bg-error-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span> Delete
+                                        </button>
+</div>
+</td>
+</tr>
+<!-- Row 7 (Archived) -->
+<tr class="opacity-60 bg-surface hover:opacity-80 transition-opacity">
+<td class="py-3 px-4">
+<img class="w-12 h-12 rounded object-cover border border-outline-variant grayscale" data-alt="Rough textured handloom cotton khadi fabric, natural off-white color, subtle imperfections showing handmade quality, moody low-key lighting, rustic textile presentation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbVbk0prvxNt-ZgTTDuEz1CXHItNVviydPqY0tlGXjo7RpCTy8U3nMoqHf6SNhGA-jxuj4c_S-SroX4j_tEvIUbB_8BB8OG3fQUvpQ-wm3M2h3FZJcMVZpWiP3mvCVUAk8akra6i9N_X1efCg_9GUY72Hh_3GnuQxYAvkFm8H2FS01SKyumk2zTnP8UgpciVJzKsAMfjwRVe7l87FJPjBPZ3UTQTrcotXLWtWiWl9CH4KOLe6yb4DR">
+</td>
+<td class="py-3 px-4 font-medium text-outline line-through">Handloom Cotton Khadi</td>
+<td class="py-3 px-4 text-outline">Cotton fabric</td>
+<td class="py-3 px-4 text-outline">INR 450 / meter</td>
+<td class="py-3 px-4">
+<span class="status-chip status-archived">Archived</span>
+</td>
+<td class="py-3 px-4 text-outline text-sm">22 Feb 2026</td>
+<td class="py-3 px-4 text-right">
+<!-- No actions -->
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer area inside canvas -->
+<div class="mt-8 pt-4 border-t border-outline-variant flex justify-between items-center text-sm text-secondary">
+<span class="">© 2026 MPX Global Inc.</span>
+<div class="flex gap-4">
+<a class="hover:text-on-surface" href="#">Terms</a>
+<a class="hover:text-on-surface" href="#">Privacy</a>
+<a class="hover:text-on-surface" href="#">Support</a>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+
+</body></html>

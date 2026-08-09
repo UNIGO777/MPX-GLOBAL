@@ -72,6 +72,12 @@ export async function archive(req, res) {
   res.json({ product: ownView(product) });
 }
 
+/** One own product — the edit form's load. 404 for anyone else's (A6). */
+export async function one(req, res) {
+  const product = await svc.getOwnProduct({ user: req.user, id: req.params.id });
+  res.json({ product: ownView(product) });
+}
+
 // `counts` drives the status tabs, `caps` the cap meter — both ride on every
 // page so a publish refreshes rows, tabs and meter in one call.
 export async function mine(req, res) {

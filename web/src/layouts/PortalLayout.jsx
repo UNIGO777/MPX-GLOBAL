@@ -7,20 +7,27 @@ import { useAuth } from '../auth/AuthContext.jsx';
  * all three files, so the chrome lives in one place.
  *
  * Identity line = "Buyer · Company". The company is only shown when a panel
- * passes `subline`: a buyer's own Organisation still has no read endpoint until
- * A22 (plan §7.4) and we don't stub one, so a cold buyer header reads "Buyer".
+ * passes `subline`.
+ *
+ * ⚠️ Corrected 2026-08-09: this used to say a buyer's Organisation "has no read
+ * endpoint until A22". **A22 shipped** — `GET /me/organisation` exists. No panel
+ * passes `subline` yet, so a cold header still reads just "Buyer", but that is
+ * now a screen that has not been built, not a missing endpoint.
  */
 const ROLE_LABELS = { buyer: 'Buyer', exporter: 'Exporter' };
 
-export function PortalLayout({ nav, subline, children }) {
+export function PortalLayout({ nav, subline, wide = false, children }) {
   const { user } = useAuth();
   const identity = [ROLE_LABELS[user?.role] ?? user?.role, subline].filter(Boolean).join(' · ');
 
   return (
     <ConsoleShell nav={nav} identity={identity} signOutTo="/signin">
-      {/* The panels' design measure (860px). This is CONTENT, not shell — the
-          shell itself stays fixed and identical for the admin console. */}
-      <div className="max-w-[860px]">{children}</div>
+      {/* The panels' design measure (860px) — right for M1's forms and status
+          screens. `wide` opts a page out of it: M2's product TABLE needs the
+          full canvas (the design draws it at ~1200px) and would otherwise be
+          crushed into a column. This is CONTENT width only — the shell itself
+          stays fixed and identical across buyer, exporter and admin. */}
+      <div className={wide ? 'max-w-[1200px]' : 'max-w-[860px]'}>{children}</div>
     </ConsoleShell>
   );
 }

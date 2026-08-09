@@ -16,7 +16,7 @@ import {
 export const EXPORTER_NAV = [
   { label: 'Dashboard', Icon: HomeIcon, soon: true },
   { to: '/exporter', label: 'Verification', Icon: ShieldIcon },
-  { label: 'Products', Icon: BoxIcon, soon: true },
+  { to: '/exporter/products', label: 'Products', Icon: BoxIcon },
   { label: 'Enquiries', Icon: ListIcon, soon: true },
   { label: 'Chat', Icon: ChatIcon, soon: true },
   { label: 'Settings', Icon: SettingsIcon, disabled: true, dividerBefore: true },

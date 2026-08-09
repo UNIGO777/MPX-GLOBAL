@@ -1,6 +1,9 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { useQuery } from '@tanstack/react-query';
+
+import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { roleHome } from '../../auth/roleHome.js';
 
@@ -12,13 +15,12 @@ import {
   ChevronDownIcon,
   DocIcon,
   GlobeIcon,
-  MenuIcon,
   SearchIcon,
   ShieldIcon,
   UserIcon,
-  XIcon,
 } from '../../components/ui/icons.jsx';
-import { Logo } from '../../components/ui/Logo.jsx';
+import { PublicFooter } from '../../components/public/PublicFooter.jsx';
+import { PublicHeader } from '../../components/public/PublicHeader.jsx';
 
 /**
  * Public landing page (mockup: royal_blue_premium_landing_page). SEO surface —
@@ -38,12 +40,6 @@ import { Logo } from '../../components/ui/Logo.jsx';
  */
 
 /* ---------------------------------- data ---------------------------------- */
-
-const CATEGORY_GROUPS = [
-  { title: 'Raw Materials', Icon: BoxIcon, items: ['Textiles & Fabrics', 'Chemicals', 'Agriculture', 'Metals & Ores'] },
-  { title: 'Consumer Goods', Icon: GlobeIcon, items: ['Electronics', 'Home & Garden', 'Apparel', 'Beauty & Care'] },
-  { title: 'Industrial Equipment', Icon: DocIcon, items: ['Heavy Machinery', 'Tools & Hardware', 'Power Systems', 'Construction'] },
-];
 
 const JOURNEYS = {
   buyer: [
@@ -153,13 +149,6 @@ function SectionHeading({ children, sub, id }) {
 const pill =
   'inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition-colors';
 
-const NAV_LINKS = [
-  { href: '#how-it-works', label: 'How it Works' },
-  { href: '#categories', label: 'Categories' },
-  { href: '#platform', label: 'Platform' },
-  { href: '#faq', label: 'FAQ' },
-];
-
 /**
  * Roving-focus arrow keys for a `role="tablist"`. ARIA requires it: with
  * role="tab" a screen-reader user expects arrows to move between tabs, and Tab
@@ -185,8 +174,11 @@ export function Landing() {
   const [journey, setJourney] = useState('buyer');
   const [tab, setTab] = useState('search');
   const [openFaq, setOpenFaq] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
   const activeTab = PLATFORM_TABS.find((t) => t.key === tab);
+
+  // Real categories, so the landing page stops advertising an invented taxonomy.
+  // Shares its cache key with /categories, so that page loads instantly from here.
+  const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
   const journeyKeys = useTabKeys(['buyer', 'seller'], journey, setJourney);
   const platformKeys = useTabKeys(
@@ -216,83 +208,7 @@ export function Landing() {
         )}
       </div>
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white shadow-sm">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" aria-label="MPX Global — home">
-            <Logo size="md" />
-          </Link>
-          <nav aria-label="Landing" className="hidden items-center gap-6 lg:flex">
-            {NAV_LINKS.map(({ href, label }) => (
-              <a key={href} href={href} className="text-sm text-ink-600 hover:text-primary-700">
-                {label}
-              </a>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Logo + two actions + burger overflows a 320–375px bar, so below sm
-                the label shortens and "Sign In" moves into the menu panel. */}
-            {home ? (
-              <Link to={home} className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-800 sm:px-5`}>
-                <span className="sm:hidden">Dashboard</span>
-                <span className="hidden sm:inline">Go to your dashboard</span>
-              </Link>
-            ) : (
-              <>
-                <Link
-                  to="/signin"
-                  className="hidden text-sm font-semibold text-ink-600 hover:text-primary-700 sm:block"
-                >
-                  Sign In
-                </Link>
-                <Link to="/signup/buyer" className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-800 sm:px-5`}>
-                  Get Started
-                </Link>
-              </>
-            )}
-            {/* Below lg the section nav has nowhere to go — this is its only door. */}
-            <button
-              type="button"
-              aria-expanded={menuOpen}
-              aria-controls="landing-mobile-nav"
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-              onClick={() => setMenuOpen((o) => !o)}
-              className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-700 hover:bg-surface-subtle lg:hidden"
-            >
-              {menuOpen ? <XIcon /> : <MenuIcon />}
-            </button>
-          </div>
-        </div>
-
-        {menuOpen && (
-          <nav
-            id="landing-mobile-nav"
-            aria-label="Landing sections"
-            className="border-t border-surface-border bg-white px-4 pb-4 lg:hidden"
-          >
-            {NAV_LINKS.map(({ href, label }) => (
-              <a
-                key={href}
-                href={href}
-                onClick={() => setMenuOpen(false)}
-                className="flex min-h-[44px] items-center border-b border-surface-border/60 text-sm font-medium text-ink-700 last:border-0 hover:text-primary-700"
-              >
-                {label}
-              </a>
-            ))}
-            {/* Only below sm, where the header drops "Sign In". */}
-            {!home && (
-              <Link
-                to="/signin"
-                onClick={() => setMenuOpen(false)}
-                className="mt-3 flex min-h-[44px] items-center justify-center rounded-full border border-ink-900 text-sm font-semibold text-ink-900 sm:hidden"
-              >
-                Sign In
-              </Link>
-            )}
-          </nav>
-        )}
-      </header>
+      <PublicHeader />
 
       <main>
         {/* Hero */}
@@ -407,35 +323,52 @@ export function Landing() {
           </div>
         </section>
 
-        {/* Categories (static preview — the browsable tree ships with discovery) */}
+        {/* Categories — REAL top categories from the catalogue. These were
+            invented groupings ("Raw Materials", "Home & Garden") until the
+            browse screens shipped; a public page must not advertise a taxonomy
+            that does not exist. */}
         <section className="bg-white px-4 py-16 sm:px-6 md:py-24" id="categories">
           <div className="mx-auto max-w-7xl">
-            <SectionHeading sub="Find specialised suppliers across top global industries.">
+            <SectionHeading sub="Find specialised suppliers across 40 industries.">
               Browse by <span className="text-primary-600">Category</span>
             </SectionHeading>
-            <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
-              {CATEGORY_GROUPS.map(({ title, Icon, items }) => (
-                <div
-                  key={title}
-                  className="rounded-2xl border border-surface-border bg-surface-subtle/50 p-6 transition-colors hover:border-primary-200"
-                >
-                  <div className="mb-3 flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <span className="text-lg font-bold">{title}</span>
-                  </div>
-                  <ul className="ml-4 space-y-2.5 border-l-2 border-surface-border pl-4">
-                    {items.map((item) => (
-                      <li key={item} className="text-sm text-ink-600">{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+
+            {categories.isPending && (
+              <div className="mx-auto grid max-w-5xl grid-cols-2 gap-3 md:grid-cols-3">
+                {Array.from({ length: 9 }, (_, i) => (
+                  <div key={i} className="h-14 animate-pulse rounded-xl bg-surface-subtle" />
+                ))}
+              </div>
+            )}
+
+            {categories.isSuccess && (
+              <ul className="mx-auto grid max-w-5xl grid-cols-2 gap-3 md:grid-cols-3">
+                {categories.data.slice(0, 9).map((cat) => (
+                  <li key={cat.id}>
+                    <Link
+                      to={`/category/${cat.slug}`}
+                      className="flex min-h-[56px] items-center justify-between gap-3 rounded-xl border border-surface-border bg-surface-subtle/50 px-4 py-3 text-sm font-semibold text-ink-800 transition-colors hover:border-primary-300 hover:bg-primary-50"
+                    >
+                      <span className="line-clamp-2">{cat.name}</span>
+                      <span className="shrink-0 text-xs font-normal text-muted">
+                        {cat.subs?.length ?? 0}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Always offered, even if the fetch failed — the destination is a
+                real page and the button is the point of the section. */}
+            <div className="mt-8 text-center">
+              <Link
+                to="/categories"
+                className={`${pill} border border-ink-900 text-ink-900 hover:bg-surface-subtle`}
+              >
+                Browse all categories
+              </Link>
             </div>
-            <p className="mt-8 text-center text-sm font-medium text-muted">
-              Category browsing opens with the catalogue — coming soon.
-            </p>
           </div>
         </section>
 
@@ -753,51 +686,7 @@ export function Landing() {
         </section>
       </main>
 
-      {/* Footer — directory pages don't exist yet; static labels, no dead links */}
-      <footer className="bg-ink-900 px-4 py-14 text-white sm:px-6">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-12 md:flex-row">
-          <div className="max-w-xs">
-            <Logo size="md" variant="white" />
-            <p className="mt-3 text-sm text-white/60">
-              The B2B marketplace connecting verified Indian exporters with international buyers.
-            </p>
-            <p className="mt-6 text-xs text-white/40">© 2026 MPX Global. All rights reserved.</p>
-          </div>
-          <div className="grid flex-1 grid-cols-2 gap-8 md:grid-cols-4">
-            <div>
-              <h4 className="mb-3 text-sm font-semibold">Marketplace</h4>
-              <ul className="space-y-1 text-sm text-white/60">
-                <li><a href="#categories" className="inline-block py-1.5 hover:text-white">Categories</a></li>
-                <li><Link to="/signup/buyer" className="inline-block py-1.5 hover:text-white">For Buyers</Link></li>
-                <li><Link to="/signup/exporter" className="inline-block py-1.5 hover:text-white">For Sellers</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-3 text-sm font-semibold">Company</h4>
-              <ul className="space-y-2 text-sm text-white/40">
-                <li>About Us</li>
-                <li>Careers</li>
-                <li>Contact</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-3 text-sm font-semibold">Resources</h4>
-              <ul className="space-y-2 text-sm text-white/40">
-                <li>Blog</li>
-                <li>Help Center</li>
-                <li>Trade Guides</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-3 text-sm font-semibold">Legal</h4>
-              <ul className="space-y-2 text-sm text-white/40">
-                <li>Privacy Policy</li>
-                <li>Terms of Service</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

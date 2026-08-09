@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global - My Products States</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#d4e3ff",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "surface-tint": "#2a4de0",
+                        "surface-container-low": "#f4f2ff",
+                        "primary-container": "#2a4de0",
+                        "surface-container": "#eeedf9",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#53647d",
+                        "on-background": "#1a1b24",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "secondary": "#4e5f79",
+                        "background": "#fbf8ff",
+                        "inverse-primary": "#b9c3ff",
+                        "primary-fixed": "#dee1ff",
+                        "outline-variant": "#c4c5d8",
+                        "surface-variant": "#e2e1ee",
+                        "tertiary-container": "#006d3c",
+                        "tertiary": "#00522c",
+                        "tertiary-fixed": "#70fda7",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#cfe1ff",
+                        "outline": "#747687",
+                        "on-surface": "#1a1b24",
+                        "surface-container-high": "#e8e7f3",
+                        "on-secondary-fixed-variant": "#374860",
+                        "inverse-surface": "#2f3039",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "on-tertiary-fixed": "#00210e",
+                        "surface-container-highest": "#e2e1ee",
+                        "surface-bright": "#fbf8ff",
+                        "surface-dim": "#dad9e5",
+                        "on-primary-fixed": "#001158",
+                        "surface": "#fbf8ff",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "inverse-on-surface": "#f1effc",
+                        "primary": "#0032c3",
+                        "on-primary-container": "#d0d6ff",
+                        "on-tertiary-container": "#66f29e",
+                        "on-surface-variant": "#444655",
+                        "on-secondary-fixed": "#091c32",
+                        "deep-navy": "#1A2E8F",
+                        "canvas": "#EAEEFF",
+                        "success": "#12B76A",
+                        "warning": "#F79009",
+                        "danger": "#D92D20"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-padding": "40px",
+                        "stack-lg": "32px",
+                        "gutter": "24px",
+                        "stack-md": "16px",
+                        "container-max": "1200px",
+                        "stack-sm": "8px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .status-chip { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+        .status-live { background-color: #ECFDF3; color: #027A48; border: 1px solid #A6F4C5; }
+        .status-hidden { background-color: #FFFAEB; color: #B54708; border: 1px solid #FEDF89; }
+        .status-draft { background-color: #F2F4F7; color: #344054; border: 1px solid #EAECF0; }
+        .status-archived { background-color: #F9FAFB; color: #667085; border: 1px dashed #D0D5DD; opacity: 0.7; }
+        .status-takedown { background-color: #FEF3F2; color: #B42318; border: 1px solid #FECDCA; }
+        
+        .progress-bar-bg { height: 6px; width: 100%; background-color: #e2e1ee; border-radius: 9999px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background-color: #2a4de0; border-radius: 9999px; }
+        .progress-bar-fill-draft { background-color: #747687; }
+    </style>
+</head>
+<body class="w-full flex flex-col min-h-screen overflow-y-auto">
+<!-- FRAME 1: FIRST-RUN EMPTY -->
+<div class="w-full h-screen flex bg-deep-navy relative overflow-hidden shrink-0">
+<!-- SideNavBar -->
+<nav aria-label="Sidebar Navigation" class="h-full w-[260px] shrink-0 bg-deep-navy flex flex-col shadow-none z-50">
+<div class="h-[88px] flex items-center px-gutter mb-4">
+<h1 class="font-headline-md text-headline-md font-bold text-white">MPX Global</h1>
+</div>
+<ul class="space-y-1 flex-1 px-3">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span class="font-label-md text-label-md">Verification</span>
+</a>
+</li>
+<li class="">
+<a aria-current="page" class="flex items-center gap-3 px-3 py-2 rounded-lg text-white font-bold bg-white/20 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Products</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble_outline">chat_bubble_outline</span>
+<span class="font-label-md text-label-md flex-1">Enquiries</span>
+<span class="text-[10px] bg-surface-dim px-2 py-0.5 rounded-full text-outline uppercase tracking-wider">Soon</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span class="font-label-md text-label-md flex-1">Chat</span>
+<span class="text-[10px] bg-surface-dim px-2 py-0.5 rounded-full text-outline uppercase tracking-wider">Soon</span>
+</a>
+</li>
+<li class="mt-auto mb-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content -->
+<div class="flex-1 flex flex-col h-full bg-deep-navy relative z-0">
+<header class="h-16 flex justify-between items-center px-gutter shrink-0 bg-deep-navy text-white relative z-10 w-full border-none shadow-none">
+<div class="flex-1"></div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="font-label-md text-label-md font-semibold text-white">Rajesh Kumar</p>
+<p class="font-label-sm text-label-sm text-secondary-fixed-dim font-normal">Exporter · Tirupur Knitwear Exports</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold font-label-sm">
+                     RK
+                 </div>
+<button class="ml-2 text-secondary-fixed-dim hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+</button>
+</div>
+</header>
+<main class="flex-1 bg-canvas rounded-tl-[32px] shadow-[inset_0_4px_20px_rgba(0,0,0,0.1)] overflow-hidden relative z-0 flex flex-col">
+<div class="p-8 max-w-[1200px] mx-auto w-full flex flex-col h-full">
+<!-- Page Header (Empty State version) -->
+<div class="flex justify-between items-start mb-12">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">My products</h2>
+<div class="flex gap-6 mt-4">
+<div class="w-48">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-1">
+<span class="">0 of 3 live listings</span>
+</div>
+<div class="progress-bar-bg">
+<div class="progress-bar-fill" style="width: 0%;"></div>
+</div>
+</div>
+<div class="w-48">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-1">
+<span class="">0 of 10 drafts</span>
+</div>
+<div class="progress-bar-bg">
+<div class="progress-bar-fill-draft" style="width: 0%;"></div>
+</div>
+</div>
+</div>
+</div>
+<button class="bg-primary-container text-on-primary hover:bg-[#2340C4] transition-colors rounded-full px-5 py-2.5 font-label-md text-label-md flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                        Add product
+                    </button>
+</div>
+<!-- Empty State Content -->
+<div class="flex-1 flex flex-col items-center justify-center max-w-md mx-auto text-center mt-[-80px]">
+<div class="w-48 h-48 mb-6 text-primary/20 bg-primary/5 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-8xl" data-icon="inventory_2">inventory_2</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">List your first product</h3>
+<p class="font-body-md text-body-md text-secondary mb-8">Add your first listing so buyers can find you.</p>
+<button class="bg-primary-container text-on-primary hover:bg-[#2340C4] transition-colors rounded-full px-8 py-3 font-label-md text-label-md flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                        Add product
+                    </button>
+<p class="font-label-sm text-label-sm text-outline flex items-center gap-1 justify-center">
+<span class="material-symbols-outlined text-[14px]" data-icon="info">info</span>
+                        Get verified to publish more than 3 products.
+                    </p>
+</div>
+</div>
+</main>
+</div>
+</div>
+<div class="w-full h-[100px] bg-white shrink-0"></div>
+<!-- FRAME 2: PUBLISH REFUSED (CAP) -->
+<div class="w-full h-screen flex bg-deep-navy relative overflow-hidden shrink-0">
+<!-- SideNavBar -->
+<nav aria-label="Sidebar Navigation" class="h-full w-[260px] shrink-0 bg-deep-navy flex flex-col shadow-none z-50">
+<div class="h-[88px] flex items-center px-gutter mb-4">
+<h1 class="font-headline-md text-headline-md font-bold text-white">MPX Global</h1>
+</div>
+<ul class="space-y-1 flex-1 px-3">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span class="font-label-md text-label-md">Verification</span>
+</a>
+</li>
+<li class="">
+<a aria-current="page" class="flex items-center gap-3 px-3 py-2 rounded-lg text-white font-bold bg-white/20 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Products</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble_outline">chat_bubble_outline</span>
+<span class="font-label-md text-label-md flex-1">Enquiries</span>
+<span class="text-[10px] bg-surface-dim px-2 py-0.5 rounded-full text-outline uppercase tracking-wider">Soon</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span class="font-label-md text-label-md flex-1">Chat</span>
+<span class="text-[10px] bg-surface-dim px-2 py-0.5 rounded-full text-outline uppercase tracking-wider">Soon</span>
+</a>
+</li>
+<li class="mt-auto mb-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content -->
+<div class="flex-1 flex flex-col h-full bg-deep-navy relative z-0">
+<header class="h-16 flex justify-between items-center px-gutter shrink-0 bg-deep-navy text-white relative z-10 w-full border-none shadow-none">
+<div class="flex-1"></div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="font-label-md text-label-md font-semibold text-white">Rajesh Kumar</p>
+<p class="font-label-sm text-label-sm text-secondary-fixed-dim font-normal">Exporter · Tirupur Knitwear Exports</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold font-label-sm">
+                     RK
+                 </div>
+<button class="ml-2 text-secondary-fixed-dim hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+</button>
+</div>
+</header>
+<main class="flex-1 bg-canvas rounded-tl-[32px] shadow-[inset_0_4px_20px_rgba(0,0,0,0.1)] overflow-y-auto relative z-0">
+<div class="p-8 max-w-[1200px] mx-auto min-h-full flex flex-col">
+<!-- Page Header -->
+<div class="flex justify-between items-start mb-8">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">My products</h2>
+<div class="flex gap-6 mt-4">
+<div class="w-48">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-1">
+<span class="">3 of 3 live listings</span>
+</div>
+<div class="progress-bar-bg">
+<div class="progress-bar-fill bg-warning" style="width: 100%;"></div>
+</div>
+</div>
+<div class="w-48">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-1">
+<span class="">7 of 10 drafts</span>
+</div>
+<div class="progress-bar-bg">
+<div class="progress-bar-fill-draft" style="width: 70%;"></div>
+</div>
+</div>
+</div>
+<p class="font-label-sm text-label-sm text-secondary mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="info">info</span>
+                            Get verified to publish unlimited products.
+                        </p>
+</div>
+<button class="bg-primary-container text-on-primary hover:bg-[#2340C4] transition-colors rounded-full px-5 py-2.5 font-label-md text-label-md flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                        Add product
+                    </button>
+</div>
+<!-- Tabs -->
+<div class="flex border-b border-outline-variant mb-6">
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-primary text-primary font-semibold">All (14)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Live (3)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Hidden (2)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Drafts (7)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Archived (2)</button>
+</div>
+<!-- Warning Banner -->
+<div class="mb-4 bg-[#FFFAEB] border border-warning text-warning p-4 rounded-lg flex items-start gap-3">
+<span class="material-symbols-outlined shrink-0" data-icon="warning">warning</span>
+<div class="flex-1 font-body-md text-body-md">
+<p>You've reached 3 live products. Get verified to publish more.</p>
+</div>
+<a class="font-label-md text-label-md font-bold underline hover:text-[#B54708]" href="#">Get verified</a>
+</div>
+<!-- Product Table Container -->
+<div class="bg-white border border-outline-variant rounded-lg overflow-visible shadow-sm flex-1">
+<table class="w-full text-left border-collapse">
+<!-- Table content same as original -->
+<thead>
+<tr class="border-b border-outline-variant bg-surface-container-lowest">
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium w-16"></th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Name</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Category</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Price</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Status</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Created Date</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium text-right w-16"></th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<tr class="border-b border-outline-variant hover:bg-surface-container-lowest transition-colors group">
+<td class="py-3 px-4">
+<div class="w-12 h-12 rounded bg-surface-variant border border-outline-variant flex items-center justify-center text-outline">
+<span class="material-symbols-outlined" data-icon="image">image</span>
+</div>
+</td>
+<td class="py-3 px-4 font-medium text-on-surface-variant">Cotton Muslin, greige</td>
+<td class="py-3 px-4 text-secondary">Cotton fabric</td>
+<td class="py-3 px-4 text-secondary">—</td>
+<td class="py-3 px-4">
+<span class="status-chip status-draft">Draft</span>
+</td>
+<td class="py-3 px-4 text-secondary text-sm">24 Feb 2026</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface p-1 rounded hover:bg-surface-variant opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+</div>
+<div class="w-full h-[100px] bg-white shrink-0"></div>
+<!-- FRAME 3: PUBLISH REFUSED (MISSING SPECS) -->
+<div class="w-full h-screen flex bg-deep-navy relative overflow-hidden shrink-0">
+<!-- SideNavBar -->
+<nav aria-label="Sidebar Navigation" class="h-full w-[260px] shrink-0 bg-deep-navy flex flex-col shadow-none z-50">
+<div class="h-[88px] flex items-center px-gutter mb-4">
+<h1 class="font-headline-md text-headline-md font-bold text-white">MPX Global</h1>
+</div>
+<ul class="space-y-1 flex-1 px-3">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span class="font-label-md text-label-md">Verification</span>
+</a>
+</li>
+<li class="">
+<a aria-current="page" class="flex items-center gap-3 px-3 py-2 rounded-lg text-white font-bold bg-white/20 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Products</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble_outline">chat_bubble_outline</span>
+<span class="font-label-md text-label-md flex-1">Enquiries</span>
+<span class="text-[10px] bg-surface-dim px-2 py-0.5 rounded-full text-outline uppercase tracking-wider">Soon</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span class="font-label-md text-label-md flex-1">Chat</span>
+<span class="text-[10px] bg-surface-dim px-2 py-0.5 rounded-full text-outline uppercase tracking-wider">Soon</span>
+</a>
+</li>
+<li class="mt-auto mb-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium hover:bg-white/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content -->
+<div class="flex-1 flex flex-col h-full bg-deep-navy relative z-0">
+<header class="h-16 flex justify-between items-center px-gutter shrink-0 bg-deep-navy text-white relative z-10 w-full border-none shadow-none">
+<div class="flex-1"></div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="font-label-md text-label-md font-semibold text-white">Rajesh Kumar</p>
+<p class="font-label-sm text-label-sm text-secondary-fixed-dim font-normal">Exporter · Tirupur Knitwear Exports</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold font-label-sm">
+                     RK
+                 </div>
+<button class="ml-2 text-secondary-fixed-dim hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+</button>
+</div>
+</header>
+<main class="flex-1 bg-canvas rounded-tl-[32px] shadow-[inset_0_4px_20px_rgba(0,0,0,0.1)] overflow-y-auto relative z-0">
+<div class="p-8 max-w-[1200px] mx-auto min-h-full flex flex-col">
+<!-- Page Header -->
+<div class="flex justify-between items-start mb-8">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">My products</h2>
+<div class="flex gap-6 mt-4">
+<div class="w-48">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-1">
+<span class="">2 of 3 live listings</span>
+</div>
+<div class="progress-bar-bg">
+<div class="progress-bar-fill" style="width: 66%;"></div>
+</div>
+</div>
+<div class="w-48">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-1">
+<span class="">7 of 10 drafts</span>
+</div>
+<div class="progress-bar-bg">
+<div class="progress-bar-fill-draft" style="width: 70%;"></div>
+</div>
+</div>
+</div>
+<p class="font-label-sm text-label-sm text-secondary mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="info">info</span>
+                            Get verified to publish unlimited products.
+                        </p>
+</div>
+<button class="bg-primary-container text-on-primary hover:bg-[#2340C4] transition-colors rounded-full px-5 py-2.5 font-label-md text-label-md flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                        Add product
+                    </button>
+</div>
+<!-- Tabs -->
+<div class="flex border-b border-outline-variant mb-6">
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-primary text-primary font-semibold">All (14)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Live (2)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Hidden (3)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Drafts (7)</button>
+<button class="px-4 py-3 font-label-md text-label-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">Archived (2)</button>
+</div>
+<!-- Warning Banner -->
+<div class="mb-4 bg-[#FFFAEB] border border-warning text-warning p-4 rounded-lg flex items-start gap-3">
+<span class="material-symbols-outlined shrink-0" data-icon="warning">warning</span>
+<div class="flex-1 font-body-md text-body-md">
+<p>Add Material and GSM before publishing.</p>
+</div>
+<a class="font-label-md text-label-md font-bold underline hover:text-[#B54708]" href="#">Edit product</a>
+</div>
+<!-- Product Table Container -->
+<div class="bg-white border border-outline-variant rounded-lg overflow-visible shadow-sm flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant bg-surface-container-lowest">
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium w-16"></th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Name</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Category</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Price</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Status</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium">Created Date</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant font-medium text-right w-16"></th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<tr class="border-b border-outline-variant bg-surface-container-lowest relative z-10">
+<td class="py-3 px-4">
+<div class="w-12 h-12 rounded bg-surface-variant border border-outline-variant flex items-center justify-center text-outline">
+<span class="material-symbols-outlined" data-icon="image">image</span>
+</div>
+</td>
+<td class="py-3 px-4 font-medium text-on-surface-variant">Cotton Muslin, greige</td>
+<td class="py-3 px-4 text-secondary">Cotton fabric</td>
+<td class="py-3 px-4 text-secondary">—</td>
+<td class="py-3 px-4">
+<span class="status-chip status-draft">Draft</span>
+</td>
+<td class="py-3 px-4 text-secondary text-sm">24 Feb 2026</td>
+<td class="py-3 px-4 text-right">
+<button class="text-on-surface bg-surface-variant p-1 rounded">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- FRAME 4: ARCHIVE CONFIRMATION -->
+<div class="w-full h-[100px] bg-white shrink-0"></div>
+<div class="w-full h-screen flex bg-deep-navy relative overflow-hidden shrink-0">
+<nav class="h-full w-[260px] shrink-0 bg-deep-navy flex flex-col z-50">
+<div class="h-[88px] flex items-center px-gutter mb-4">
+<h1 class="font-headline-md text-headline-md font-bold text-white">MPX Global</h1>
+</div>
+<ul class="space-y-1 flex-1 px-3">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium" href="#"><span class="material-symbols-outlined">verified_user</span><span class="font-label-md">Verification</span></a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white font-bold bg-white/20" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="font-label-md">Products</span></a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium" href="#"><span class="material-symbols-outlined">chat_bubble_outline</span><span class="font-label-md">Enquiries</span></a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium" href="#"><span class="material-symbols-outlined">forum</span><span class="font-label-md">Chat</span></a></li>
+<li class="mt-auto mb-4"><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 font-medium" href="#"><span class="material-symbols-outlined">settings</span><span class="font-label-md">Settings</span></a></li>
+</ul>
+</nav>
+<div class="flex-1 flex flex-col h-full bg-deep-navy relative z-0">
+<header class="h-16 flex justify-between items-center px-gutter shrink-0 bg-deep-navy text-white relative z-10">
+<div class="flex-1"></div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="font-label-md font-semibold">Rajesh Kumar</p>
+<p class="font-label-sm text-secondary-fixed-dim">Exporter · Tirupur Knitwear Exports</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold font-label-sm">RK</div>
+<button class="ml-2 text-secondary-fixed-dim"><span class="material-symbols-outlined">logout</span></button>
+</div>
+</header>
+<main class="flex-1 bg-canvas rounded-tl-[32px] overflow-hidden relative z-0">
+<div class="p-8 max-w-[1200px] mx-auto w-full opacity-40 pointer-events-none">
+<h2 class="font-headline-lg text-on-surface mb-8">My products</h2>
+<div class="bg-white border border-outline-variant rounded-lg">
+<table class="w-full text-left border-collapse">
+<thead><tr class="border-b bg-surface-container-lowest"><th class="py-3 px-4 w-16"></th><th class="py-3 px-4">Name</th><th class="py-3 px-4">Category</th><th class="py-3 px-4">Status</th></tr></thead>
+<tbody><tr class="border-b"><td class="py-3 px-4"><div class="w-12 h-12 bg-surface-variant rounded"></div></td><td class="py-3 px-4">Cotton Muslin, greige</td><td class="py-3 px-4">Cotton fabric</td><td class="py-3 px-4"><span class="status-chip status-draft">Draft</span></td></tr></tbody>
+</table>
+</div>
+</div>
+<div class="absolute inset-0 flex items-center justify-center z-50 bg-black/20">
+<div class="bg-white rounded-xl p-8 max-w-md shadow-xl">
+<h3 class="font-headline-md text-on-surface mb-4">Archive this product?</h3>
+<p class="font-body-md text-secondary mb-8">This archives the product. It disappears from the catalogue and can't be edited or restored — to sell it again later, create a new listing. Your product name and web address become free to reuse.</p>
+<div class="flex gap-3 justify-end">
+<button class="px-6 py-2.5 rounded-full border border-outline text-on-surface font-label-md">Cancel</button>
+<button class="px-6 py-2.5 rounded-full bg-danger text-white font-label-md">Archive product</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- FRAME 5: TAKEN-DOWN DETAIL -->
+<div class="w-full h-[100px] bg-white shrink-0"></div>
+<div class="w-full h-screen flex bg-deep-navy relative overflow-hidden shrink-0">
+<nav class="h-full w-[260px] shrink-0 bg-deep-navy flex flex-col z-50">
+<div class="h-[88px] flex items-center px-gutter mb-4"><h1 class="font-headline-md font-bold text-white">MPX Global</h1></div>
+<ul class="space-y-1 flex-1 px-3">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white font-bold bg-white/20" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="font-label-md">Products</span></a></li>
+</ul>
+</nav>
+<div class="flex-1 flex flex-col h-full bg-deep-navy relative z-0">
+<header class="h-16 flex justify-between items-center px-gutter shrink-0 bg-deep-navy text-white relative z-10">
+<div class="flex-1"></div>
+<div class="flex items-center gap-4">
+<div class="text-right"><p class="font-label-md font-semibold">Rajesh Kumar</p><p class="font-label-sm text-secondary-fixed-dim">Exporter · Tirupur Knitwear Exports</p></div>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold font-label-sm">RK</div>
+</div>
+</header>
+<main class="flex-1 bg-canvas rounded-tl-[32px] overflow-y-auto relative z-0">
+<div class="p-8 max-w-[1200px] mx-auto w-full">
+<h2 class="font-headline-lg text-on-surface mb-8">My products</h2>
+<div class="bg-white border border-outline-variant rounded-lg overflow-hidden">
+<table class="w-full text-left border-collapse">
+<tbody class="font-body-md">
+<tr class="border-b">
+<td class="py-3 px-4 w-16"><div class="w-12 h-12 bg-surface-variant rounded"></div></td>
+<td class="py-3 px-4 font-medium">Cotton Cambric Roll, 60s</td>
+<td class="py-3 px-4 text-secondary">Cotton fabric</td>
+<td class="py-3 px-4"><span class="status-chip status-takedown">Taken down</span></td>
+<td class="py-3 px-4 text-right"><span class="material-symbols-outlined text-outline">more_vert</span></td>
+</tr>
+<tr>
+<td class="px-4 pb-4" colspan="5">
+<div class="bg-[#FEF3F2] border border-[#FECDCA] text-[#B42318] p-4 rounded-lg flex items-center gap-3">
+<span class="material-symbols-outlined">error</span>
+<p class="font-body-md">Removed by the MPX team on 02 Mar 2026 — Images do not match the product described.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- FRAME 6: VERIFIED SELLER -->
+<div class="w-full h-[100px] bg-white shrink-0"></div>
+<div class="w-full h-screen flex bg-deep-navy relative overflow-hidden shrink-0">
+<nav class="h-full w-[260px] shrink-0 bg-deep-navy flex flex-col z-50">
+<div class="h-[88px] flex items-center px-gutter mb-4"><h1 class="font-headline-md font-bold text-white">MPX Global</h1></div>
+<ul class="space-y-1 flex-1 px-3">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white font-bold bg-white/20" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="font-label-md">Products</span></a></li>
+</ul>
+</nav>
+<div class="flex-1 flex flex-col h-full bg-deep-navy relative z-0">
+<header class="h-16 flex justify-between items-center px-gutter shrink-0 bg-deep-navy text-white relative z-10">
+<div class="flex-1"></div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="font-label-md font-semibold">Rajesh Kumar</p>
+<p class="font-label-sm text-secondary-fixed-dim flex items-center justify-end gap-1">
+                        Exporter · Tirupur Knitwear Exports
+                        <span class="material-symbols-outlined text-[16px] text-[#12B76A]" style="font-variation-settings: 'FILL' 1">check_circle</span>
+<span class="text-[#12B76A] font-semibold">Verified</span>
+</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold font-label-sm">RK</div>
+</div>
+</header>
+<main class="flex-1 bg-canvas rounded-tl-[32px] overflow-y-auto relative z-0">
+<div class="p-8 max-w-[1200px] mx-auto w-full">
+<div class="flex justify-between items-center mb-8">
+<h2 class="font-headline-lg text-on-surface">My products</h2>
+<button class="bg-primary-container text-on-primary rounded-full px-5 py-2.5 font-label-md flex items-center gap-2"><span class="material-symbols-outlined">add</span>Add product</button>
+</div>
+<div class="bg-white border border-outline-variant rounded-lg h-48 flex items-center justify-center text-secondary">Product list content...</div>
+</div>
+</main>
+</div>
+</div>
+<!-- FRAME 7: LOADING -->
+<div class="w-full h-[100px] bg-white shrink-0"></div>
+<div class="w-full h-screen flex bg-deep-navy relative overflow-hidden shrink-0">
+<nav class="h-full w-[260px] shrink-0 bg-deep-navy flex flex-col z-50">
+<div class="h-[88px] flex items-center px-gutter mb-4"><h1 class="font-headline-md font-bold text-white">MPX Global</h1></div>
+<ul class="space-y-1 flex-1 px-3">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white font-bold bg-white/20" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="font-label-md">Products</span></a></li>
+</ul>
+</nav>
+<div class="flex-1 flex flex-col h-full bg-deep-navy relative z-0">
+<header class="h-16 flex justify-between items-center px-gutter shrink-0 bg-deep-navy text-white relative z-10">
+<div class="flex-1"></div>
+<div class="flex items-center gap-4">
+<div class="text-right"><p class="font-label-md font-semibold">Rajesh Kumar</p><p class="font-label-sm text-secondary-fixed-dim">Exporter · Tirupur Knitwear Exports</p></div>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold font-label-sm">RK</div>
+</div>
+</header>
+<main class="flex-1 bg-canvas rounded-tl-[32px] overflow-y-auto relative z-0">
+<div class="p-8 max-w-[1200px] mx-auto w-full">
+<div class="flex justify-between items-start mb-8">
+<div>
+<h2 class="font-headline-lg text-on-surface mb-2">My products</h2>
+<div class="flex gap-6 mt-4">
+<div class="w-48"><div class="h-1.5 bg-surface-variant rounded-full w-full"></div></div>
+<div class="w-48"><div class="h-1.5 bg-surface-variant rounded-full w-full"></div></div>
+</div>
+</div>
+<button class="bg-primary-container text-on-primary rounded-full px-5 py-2.5 font-label-md flex items-center gap-2"><span class="material-symbols-outlined">add</span>Add product</button>
+</div>
+<div class="space-y-4">
+<div class="h-12 bg-white border border-outline-variant rounded-lg animate-pulse"></div>
+<div class="h-12 bg-white border border-outline-variant rounded-lg animate-pulse"></div>
+<div class="h-12 bg-white border border-outline-variant rounded-lg animate-pulse"></div>
+<div class="h-12 bg-white border border-outline-variant rounded-lg animate-pulse"></div>
+<div class="h-12 bg-white border border-outline-variant rounded-lg animate-pulse"></div>
+<div class="h-12 bg-white border border-outline-variant rounded-lg animate-pulse"></div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- FRAME 8: ERROR -->
+<div class="w-full h-[100px] bg-white shrink-0"></div>
+<div class="w-full h-screen flex bg-deep-navy relative overflow-hidden shrink-0">
+<nav class="h-full w-[260px] shrink-0 bg-deep-navy flex flex-col z-50">
+<div class="h-[88px] flex items-center px-gutter mb-4"><h1 class="font-headline-md font-bold text-white">MPX Global</h1></div>
+<ul class="space-y-1 flex-1 px-3">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-white font-bold bg-white/20" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="font-label-md">Products</span></a></li>
+</ul>
+</nav>
+<div class="flex-1 flex flex-col h-full bg-deep-navy relative z-0">
+<header class="h-16 flex justify-between items-center px-gutter shrink-0 bg-deep-navy text-white relative z-10">
+<div class="flex-1"></div>
+<div class="flex items-center gap-4">
+<div class="text-right"><p class="font-label-md font-semibold">Rajesh Kumar</p><p class="font-label-sm text-secondary-fixed-dim">Exporter · Tirupur Knitwear Exports</p></div>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold font-label-sm">RK</div>
+</div>
+</header>
+<main class="flex-1 bg-canvas rounded-tl-[32px] overflow-y-auto relative z-0 flex items-center justify-center">
+<div class="text-center">
+<h2 class="font-headline-md text-on-surface mb-6">Couldn't load your products</h2>
+<button class="bg-primary-container text-on-primary rounded-full px-8 py-3 font-label-md">Try again</button>
+</div>
+</main>
+</div>
+</div></body></html>

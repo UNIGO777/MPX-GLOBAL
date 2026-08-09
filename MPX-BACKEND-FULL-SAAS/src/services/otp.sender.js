@@ -55,10 +55,17 @@ function emailBody({ code, purpose }) {
  * DEV ONLY — echo the code to the terminal so a developer can complete a login
  * without a real SMS or inbox.
  *
- * 🔴 HARD-GATED to `NODE_ENV === 'development'`. Not "non-production": `test` is
- * excluded too, or every suite run would print thousands of codes, and
- * production is impossible by construction. If this ever prints on a deployed
- * box, `NODE_ENV` is wrong and that is the bug.
+ * 🔴 TWO INDEPENDENT LOCKS, both required:
+ *   1. `NODE_ENV === 'development'` — not merely "non-production": `test` is
+ *      excluded too, or every suite run would print thousands of codes.
+ *   2. `OTP_DEV_PRINT=true` — explicit opt-in, defaulting to OFF.
+ *
+ * Lock 2 exists because lock 1 alone proved insufficient in practice: on
+ * 2026-08-07 the LIVE api was found running without `NODE_ENV=production` (its
+ * refresh cookie had no `Secure` flag), which means `env.js` had defaulted it to
+ * `development` — one missing variable on one server away from writing real
+ * users' codes into production logs. Two locks means a single misconfiguration
+ * is no longer enough.
  *
  * 🔴 `console.log`, deliberately, NOT the logger — and this is the one place the
  * project's no-console rule is waived. The logger ships to files and
@@ -69,7 +76,7 @@ function emailBody({ code, purpose }) {
  * affordances must not survive to handover).
  */
 function devPrintOtp({ identifier, code, purpose }) {
-  if (env.NODE_ENV !== 'development') return;
+  if (env.NODE_ENV !== 'development' || !env.OTP_DEV_PRINT) return;
   console.log(`\n🔑 [DEV OTP] ${purpose} for ${identifier}: ${code}  (dev only — never in production)\n`);
 }
 

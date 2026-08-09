@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global - Supplier Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-dim": "#dad9e5",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "surface-bright": "#fbf8ff",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "secondary": "#4e5f79",
+                        "tertiary-fixed": "#70fda7",
+                        "primary-container": "#2a4de0",
+                        "primary-fixed": "#dee1ff",
+                        "on-surface-variant": "#444655",
+                        "on-primary-fixed": "#001158",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#d4e3ff",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "surface-container": "#eeedf9",
+                        "surface-variant": "#e2e1ee",
+                        "surface-container-low": "#f4f2ff",
+                        "surface-container-high": "#e8e7f3",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e2e1ee",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#b9c3ff",
+                        "on-tertiary-fixed": "#00210e",
+                        "surface-tint": "#2a4de0",
+                        "inverse-on-surface": "#f1effc",
+                        "on-tertiary-container": "#66f29e",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "outline-variant": "#c4c5d8",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#1a1b24",
+                        "on-secondary-fixed": "#091c32",
+                        "on-primary-container": "#d0d6ff",
+                        "secondary-container": "#cfe1ff",
+                        "tertiary-container": "#006d3c",
+                        "on-background": "#1a1b24",
+                        "outline": "#747687",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "on-primary": "#ffffff",
+                        "surface": "#fbf8ff",
+                        "on-secondary-fixed-variant": "#374860",
+                        "inverse-surface": "#2f3039",
+                        "tertiary": "#00522c",
+                        "on-secondary-container": "#53647d",
+                        "background": "#fbf8ff",
+                        "primary": "#0032c3"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "container-max": "1200px",
+                        "card-padding": "40px"
+                    },
+                    fontFamily: {
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    fontSize: {
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #EAEEFF; }
+    </style>
+</head>
+<body class="font-body-md text-on-surface antialiased min-h-screen flex flex-col gap-12 py-12">
+<!-- 1. MAIN PAGE (Verified Supplier) -->
+<main class="w-full max-w-container-max mx-auto px-gutter flex flex-col gap-8">
+<!-- Header Section -->
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant p-card-padding shadow-[0px_4px_20px_rgba(0,5,23,0.05)]">
+<div class="flex flex-col md:flex-row gap-8 items-start">
+<div class="w-24 h-24 shrink-0 rounded-lg overflow-hidden border border-outline-variant bg-surface-dim flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A clean, modern corporate logo for a textile export company, featuring abstract interwoven threads in deep blue and crisp white. The design is geometric and authoritative, reflecting an established B2B manufacturing business. High resolution, stark background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyDujxT6jxhSYt0BUMoqzx7errqp4tW4cG7DdiGrSEAq5xJWYJgMyl3xDfsdZE9qBTPPfE-6HBM8QGQGdz_zwimvgq_ZVpSqLN12h_i18VypU_HLf2GTtr0a_NTSRun5fSgDjc7dtZbunWi5Jw2tommYPapZ5yLlJeZH-ESAUrL4344GZtRP0T8UyMmwIqDgkk8UDkZ_-p_iOsWvz-N1jPNZr__PEoBc8Qe1lVkxJ-gqcYOL7KgPLT"/>
+</div>
+<div class="flex flex-col gap-4 flex-grow">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Tirupur Knitwear Exports</h1>
+<span class="flex items-center gap-1 text-[#12B76A] bg-[#12B76A]/10 px-2 py-1 rounded-full text-label-sm font-label-sm border border-[#12B76A]/20">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                Verified
+                            </span>
+</div>
+<p class="font-body-md text-body-md text-secondary">India · Business · Established 2011 · Member since 2026</p>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+                        Tirupur Knitwear Exports is a premier manufacturer and exporter of high-quality knitted garments and fabrics. We specialize in sustainable cotton production, catering to global fashion brands with a commitment to ethical manufacturing practices and superior quality standards.
+                    </p>
+<div class="font-label-md text-label-md text-primary mt-2">
+                        24 products
+                    </div>
+</div>
+</div>
+</section>
+<!-- Catalogue Section -->
+<section class="flex flex-col gap-6">
+<h2 class="font-headline-md text-headline-md text-on-surface">Products</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Card 1 (Image) -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex flex-col h-full group hover:border-primary transition-colors">
+<div class="aspect-[4/3] w-full bg-surface-dim relative border-b border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A close-up studio shot of premium combed cotton poplin fabric, neatly folded. The lighting is crisp and professional, highlighting the smooth texture and tight weave of the textile against a clean white backdrop. Minimalist, high-contrast B2B product photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAF7x4BT8XJ3eW69irNoYoHpzH4pgqJG2ufmxhDJ7fF4AT0iYHGmq87iEpL14vGkG8YRaqLTYLSoPODFsXlIgwH8uxnhzhWS8RNQkBqooC2QeqRNWIP54VFJua3Q49aP5VLYiZ7604kkywSq_ybkfgufu8H-zSq0ebDfCNEr-supV5vVTt-s5ULqt_sWfCyCwuDGr8CjJVO9xqyjDZyflPP1NKwlJfi-NaqJkfkSJN_y1yJwNtaV7qT"/>
+</div>
+<div class="p-6 flex flex-col flex-grow gap-2">
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-2 min-h-[40px]">Combed Cotton Poplin Fabric</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-auto pt-4 border-t border-surface-variant">INR 220 / meter</p>
+<p class="font-label-sm text-label-sm text-secondary">Woven Fabrics</p>
+</div>
+</article>
+<!-- Card 2 (Image) -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex flex-col h-full group hover:border-primary transition-colors">
+<div class="aspect-[4/3] w-full bg-surface-dim relative border-b border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A macro photograph of organic cotton voile material, draped elegantly to show its lightweight, semi-sheer quality. The light passes through slightly, emphasizing its breathability. Shot in a bright, neutral studio setting suitable for an enterprise catalogue." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwFmlH9L2VzTToo_YsvsmeqddfKDGbnE0vYx7vAD4djs35qL7lbMl_4Qx28PJUnkvWo3TrqAaNU1bnG29_deK1U9IvZddERva8ha-R6Iw1G8du4g613Nxf4w48s1KVnHPi8sFeDZncUjnNEZVAP8HqocJT27mjwyZQu5OBqlVdYjtEV-5sROX6XdPnaOG1FVA6DD8_q4QQ-xxPGiluTSHYc7ptagwZ3ZoPgkVsoBRuRW4M0qXsB4h7"/>
+</div>
+<div class="p-6 flex flex-col flex-grow gap-2">
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-2 min-h-[40px]">Organic Cotton Voile</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-auto pt-4 border-t border-surface-variant">INR 180 – 260</p>
+<p class="font-label-sm text-label-sm text-secondary">Organic Textiles</p>
+</div>
+</article>
+<!-- Card 3 (No Image) -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex flex-col h-full group hover:border-primary transition-colors">
+<div class="aspect-[4/3] w-full bg-[#F2F4F7] flex items-center justify-center border-b border-outline-variant">
+<span class="material-symbols-outlined text-outline text-4xl">inventory_2</span>
+</div>
+<div class="p-6 flex flex-col flex-grow gap-2">
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-2 min-h-[40px]">Cotton Cambric Roll, 60s</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-auto pt-4 border-t border-surface-variant">Price on request</p>
+<p class="font-label-sm text-label-sm text-secondary">Roll Stock</p>
+</div>
+</article>
+<!-- Card 4 (Image) -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex flex-col h-full group hover:border-primary transition-colors">
+<div class="aspect-[4/3] w-full bg-surface-dim relative border-b border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A pristine roll of bleached cotton twill fabric, showing the distinct diagonal weave pattern. The lighting is strong and directional, creating a stark, high-contrast look typical of modern industrial supply imagery. Crisp white tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLEe5uUt4PL7EYNlA8E-8fKw8rorfml6v0nHTEloc_yuHxhplK14rCAbV6PYJPPEZqGXx-W31zwAxiioTwyV7aRyOf5A0ccfUfy7nZXlhM5VfIbXEZJiZp0nccL0TfLqQoMdcSQ24NxOobv_2K3uop086HSBTOI34fZWPofI-_p3on6AeJSM2JUobaEZzhRZYnP_7VV6LVqxkGLO-8RQz70sS468uXV89oYwAsbeeNuxrDUGQkh3Ew"/>
+</div>
+<div class="p-6 flex flex-col flex-grow gap-2">
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-2 min-h-[40px]">Bleached Cotton Twill</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-auto pt-4 border-t border-surface-variant">USD 3.40 / meter</p>
+<p class="font-label-sm text-label-sm text-secondary">Heavyweight Cottons</p>
+</div>
+</article>
+<!-- Card 5 (No Image) -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex flex-col h-full group hover:border-primary transition-colors">
+<div class="aspect-[4/3] w-full bg-[#F2F4F7] flex items-center justify-center border-b border-outline-variant">
+<span class="material-symbols-outlined text-outline text-4xl">inventory_2</span>
+</div>
+<div class="p-6 flex flex-col flex-grow gap-2">
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-2 min-h-[40px]">Handloom Cotton Khadi</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-auto pt-4 border-t border-surface-variant">INR 450 / meter</p>
+<p class="font-label-sm text-label-sm text-secondary">Artisanal</p>
+</div>
+</article>
+<!-- Card 6 (No Image) -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex flex-col h-full group hover:border-primary transition-colors">
+<div class="aspect-[4/3] w-full bg-[#F2F4F7] flex items-center justify-center border-b border-outline-variant">
+<span class="material-symbols-outlined text-outline text-4xl">inventory_2</span>
+</div>
+<div class="p-6 flex flex-col flex-grow gap-2">
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-2 min-h-[40px]">Cotton Canvas 12oz</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-auto pt-4 border-t border-surface-variant">INR 390 – 520</p>
+<p class="font-label-sm text-label-sm text-secondary">Industrial Canvas</p>
+</div>
+</article>
+</div>
+<!-- Pagination -->
+<div class="flex justify-center items-center gap-2 mt-8 pt-6 border-t border-outline-variant">
+<button class="w-10 h-10 flex items-center justify-center rounded border border-outline-variant text-secondary hover:bg-surface-variant disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded bg-primary-container text-on-primary font-label-md text-label-md">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded border border-outline-variant text-on-surface hover:bg-surface-variant font-label-md text-label-md">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded border border-outline-variant text-on-surface hover:bg-surface-variant font-label-md text-label-md">3</button>
+<span class="text-secondary px-2">...</span>
+<button class="w-10 h-10 flex items-center justify-center rounded border border-outline-variant text-secondary hover:bg-surface-variant">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</section>
+</main>
+<hr class="border-[#C5C6CF] w-full my-8"/>
+<!-- 2. UNVERIFIED SUPPLIER -->
+<main class="w-full max-w-container-max mx-auto px-gutter flex flex-col gap-8">
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant p-card-padding shadow-[0px_4px_20px_rgba(0,5,23,0.05)]">
+<div class="flex flex-col md:flex-row gap-8 items-start">
+<div class="w-24 h-24 shrink-0 rounded-lg overflow-hidden border border-outline-variant bg-surface-dim flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A clean, modern corporate logo for a textile export company, featuring abstract interwoven threads in deep blue and crisp white. The design is geometric and authoritative, reflecting an established B2B manufacturing business. High resolution, stark background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1TKDN9qm2fnlvL_DWUrlFXxBK3C73FSY49FI8JSh0RMgf8mBZAaAQt5g5vn6Txk0sBPL-HW84qYyiUBeEyz3UbI72DJWFc3qI1Z1BG5UPnsc_HQVnTXfJ81e8f2NAWSOcEGgOMpRkhtVscqZIP72chwX8c7y_FnqltY2U84WRccpGyOCSF5YVcfE_opmr2NIZiMFv_fGWbyEsWOxLmlz_TEb-kAOzxNYehUwLAcEBgqPgjdIusCQw"/>
+</div>
+<div class="flex flex-col gap-4 flex-grow">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Tirupur Knitwear Exports</h1>
+<!-- No verified badge -->
+</div>
+<p class="font-body-md text-body-md text-secondary">India · Business · Established 2011 · Member since 2026</p>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+                        Tirupur Knitwear Exports is a premier manufacturer and exporter of high-quality knitted garments and fabrics. We specialize in sustainable cotton production, catering to global fashion brands with a commitment to ethical manufacturing practices and superior quality standards.
+                    </p>
+<div class="font-label-md text-label-md text-primary mt-2">
+                        24 products
+                    </div>
+</div>
+</div>
+</section>
+<!-- Catalogue Section (Abridged for brevity in UNVERIFIED state as instructed it's identical) -->
+<section class="flex flex-col gap-6">
+<h2 class="font-headline-md text-headline-md text-on-surface">Products</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Repeating first card just to show layout -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex flex-col h-full group hover:border-primary transition-colors">
+<div class="aspect-[4/3] w-full bg-surface-dim relative border-b border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A close-up studio shot of premium combed cotton poplin fabric, neatly folded. The lighting is crisp and professional, highlighting the smooth texture and tight weave of the textile against a clean white backdrop. Minimalist, high-contrast B2B product photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4TrumvtZNxhDzp_NnHnkqaEcXKJT6Y61Eqe1QglPhSfuSGlB1zeEROCBaWEfJpx3UmxzHg1xhLf6IhKFig1MHVgvyN7_scAczfCprB8Cger1lrTEOYe-WRcpg8BRW19O4PWJDCyd1gr2s2d4PNy936msA0rYTZFpNyARwZAy1uYNY8sbGFg8EYkcB_z7qMRiFnfLmvgrxGnVcX_uKIZ-tqrWP8MRRxEB2kqgGe8xsIyyJ-Yfp1Vd_"/>
+</div>
+<div class="p-6 flex flex-col flex-grow gap-2">
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-2 min-h-[40px]">Combed Cotton Poplin Fabric</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-auto pt-4 border-t border-surface-variant">INR 220 / meter</p>
+<p class="font-label-sm text-label-sm text-secondary">Woven Fabrics</p>
+</div>
+</article>
+</div>
+</section>
+</main>
+<hr class="border-[#C5C6CF] w-full my-8"/>
+<!-- 3. NO PRODUCTS YET -->
+<main class="w-full max-w-container-max mx-auto px-gutter flex flex-col gap-8">
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant p-card-padding shadow-[0px_4px_20px_rgba(0,5,23,0.05)]">
+<div class="flex flex-col md:flex-row gap-8 items-start">
+<div class="w-24 h-24 shrink-0 rounded-lg overflow-hidden border border-outline-variant bg-surface-dim flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A clean, modern corporate logo for a textile export company, featuring abstract interwoven threads in deep blue and crisp white. The design is geometric and authoritative, reflecting an established B2B manufacturing business. High resolution, stark background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBs3GhSOKG2XzcGqQjOWSz0P9AjN6bFny-0MY4gs5f_mMCKOR2jzplupod0EmYn6GsThCDRcj80egRUs43NncKd6BjEs5YZ_5AR6vvZpsfFJQoVMXYAkKWh6RZvg52pkdrxg7X6Y1sDyLigJ6_BwXrUsLS2KAP_-8hEFWgT_Ah6zkgI_EWK69EaTmzkZdoTpBgEov8DD00Q6JNKAw9_uKxj4zM4pK_rIqv25-Z3u45NWeqpv0TpLUB3"/>
+</div>
+<div class="flex flex-col gap-4 flex-grow">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Tirupur Knitwear Exports</h1>
+<span class="flex items-center gap-1 text-[#12B76A] bg-[#12B76A]/10 px-2 py-1 rounded-full text-label-sm font-label-sm border border-[#12B76A]/20">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                Verified
+                            </span>
+</div>
+<p class="font-body-md text-body-md text-secondary">India · Business · Established 2011 · Member since 2026</p>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+                        Tirupur Knitwear Exports is a premier manufacturer and exporter of high-quality knitted garments and fabrics. We specialize in sustainable cotton production, catering to global fashion brands with a commitment to ethical manufacturing practices and superior quality standards.
+                    </p>
+<div class="font-label-md text-label-md text-secondary mt-2">
+                        0 products
+                    </div>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-6">
+<h2 class="font-headline-md text-headline-md text-on-surface">Products</h2>
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-12 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-outline text-6xl mb-4">inventory</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">No products listed yet</h3>
+<p class="font-body-md text-body-md text-secondary max-w-md">This supplier has not added any products to their catalogue.</p>
+</div>
+</section>
+</main>
+<hr class="border-[#C5C6CF] w-full my-8"/>
+<!-- 4. LOADING -->
+<main class="w-full max-w-container-max mx-auto px-gutter flex flex-col gap-8">
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant p-card-padding shadow-[0px_4px_20px_rgba(0,5,23,0.05)] animate-pulse">
+<div class="flex flex-col md:flex-row gap-8 items-start">
+<div class="w-24 h-24 shrink-0 rounded-lg bg-surface-variant"></div>
+<div class="flex flex-col gap-4 flex-grow w-full">
+<div>
+<div class="h-8 bg-surface-variant rounded w-64 mb-4"></div>
+<div class="h-4 bg-surface-variant rounded w-48"></div>
+</div>
+<div class="flex flex-col gap-2 mt-4 w-full max-w-3xl">
+<div class="h-4 bg-surface-variant rounded w-full"></div>
+<div class="h-4 bg-surface-variant rounded w-11/12"></div>
+<div class="h-4 bg-surface-variant rounded w-4/5"></div>
+</div>
+<div class="h-5 bg-surface-variant rounded w-24 mt-2"></div>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-6">
+<div class="h-8 bg-surface-variant rounded w-32 mb-2 animate-pulse"></div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Skeleton Card 1 -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex flex-col h-[320px] animate-pulse">
+<div class="h-48 w-full bg-surface-variant border-b border-outline-variant"></div>
+<div class="p-6 flex flex-col gap-4">
+<div class="h-4 bg-surface-variant rounded w-3/4"></div>
+<div class="h-4 bg-surface-variant rounded w-1/2"></div>
+</div>
+</article>
+<!-- Skeleton Card 2 -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex flex-col h-[320px] animate-pulse">
+<div class="h-48 w-full bg-surface-variant border-b border-outline-variant"></div>
+<div class="p-6 flex flex-col gap-4">
+<div class="h-4 bg-surface-variant rounded w-3/4"></div>
+<div class="h-4 bg-surface-variant rounded w-1/2"></div>
+</div>
+</article>
+<!-- Skeleton Card 3 -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex flex-col h-[320px] animate-pulse">
+<div class="h-48 w-full bg-surface-variant border-b border-outline-variant"></div>
+<div class="p-6 flex flex-col gap-4">
+<div class="h-4 bg-surface-variant rounded w-3/4"></div>
+<div class="h-4 bg-surface-variant rounded w-1/2"></div>
+</div>
+</article>
+</div>
+</section>
+</main>
+<hr class="border-[#C5C6CF] w-full my-8"/>
+<!-- 5. ERROR -->
+<main class="w-full max-w-container-max mx-auto px-gutter flex flex-col items-center justify-center min-h-[400px]">
+<div class="bg-surface-container-lowest rounded-lg border border-error-container p-12 flex flex-col items-center justify-center text-center max-w-lg w-full shadow-[0px_4px_20px_rgba(0,5,23,0.05)]">
+<span class="material-symbols-outlined text-error text-6xl mb-4">error</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Unable to load listing</h3>
+<p class="font-body-md text-body-md text-secondary mb-8">There was a problem retrieving the supplier profile data.</p>
+<button class="bg-primary-container text-on-primary font-label-md text-label-md px-6 py-2.5 rounded-full hover:bg-[#2340C4] transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                Try again
+            </button>
+</div>
+</main>
+</body></html>

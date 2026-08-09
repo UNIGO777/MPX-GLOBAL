@@ -1,0 +1,685 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MPX Global - Add Product States</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#dad9e5",
+                        "surface": "#fbf8ff",
+                        "on-primary-fixed": "#001158",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2f3039",
+                        "on-tertiary-fixed": "#00210e",
+                        "on-background": "#1a1b24",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#fbf8ff",
+                        "surface-container-highest": "#e2e1ee",
+                        "tertiary-container": "#006d3c",
+                        "outline": "#747687",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#091c32",
+                        "tertiary": "#00522c",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "tertiary-fixed": "#70fda7",
+                        "primary-fixed": "#dee1ff",
+                        "surface-container-low": "#f4f2ff",
+                        "on-secondary-container": "#53647d",
+                        "on-error": "#ffffff",
+                        "on-surface": "#1a1b24",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "primary": "#0032c3",
+                        "on-primary-container": "#d0d6ff",
+                        "surface-tint": "#2a4de0",
+                        "error": "#ba1a1a",
+                        "surface-container": "#eeedf9",
+                        "secondary": "#4e5f79",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f1effc",
+                        "secondary-container": "#cfe1ff",
+                        "on-secondary-fixed-variant": "#374860",
+                        "on-surface-variant": "#444655",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "primary-container": "#2a4de0",
+                        "inverse-primary": "#b9c3ff",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "background": "#EAEEFF",
+                        "outline-variant": "#c4c5d8",
+                        "on-tertiary-container": "#66f29e",
+                        "secondary-fixed": "#d4e3ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e8e7f3",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "surface-variant": "#e2e1ee",
+                        "navy-shell": "#1A2E8F"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "panel": "2rem"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "card-padding": "40px",
+                        "gutter": "24px",
+                        "stack-lg": "32px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-white min-h-screen text-on-surface font-body-md antialiased p-8 flex flex-col gap-[100px]">
+<!-- SCREEN 1: SERVICE VARIANT -->
+<div class="relative w-full flex overflow-hidden rounded-xl shadow-sm border border-outline-variant bg-navy-shell h-[800px]">
+<aside class="w-[260px] flex flex-col shrink-0 text-white pt-6 pb-6 border-r border-white/10 h-full">
+<div class="px-6 mb-8">
+<h1 class="text-headline-md font-headline-md font-semibold tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified</span><span class="text-label-md font-label-md">Verification</span></a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-md font-label-md">Products</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">question_answer</span><span class="text-label-md font-label-md">Enquiries (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">chat</span><span class="text-label-md font-label-md">Chat (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">Settings</span></a>
+</nav>
+<div class="px-4 mt-auto pt-8">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">logout</span><span class="text-label-md font-label-md">Sign Out</span></a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0 h-full">
+<header class="h-[88px] shrink-0 flex justify-end items-center px-8 text-white">
+<div class="flex items-center gap-4">
+<div class="text-right flex flex-col justify-center">
+<span class="text-label-md font-label-md leading-tight">Rajesh Kumar</span>
+<span class="text-label-sm font-label-sm text-white/70 leading-tight">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<img alt="Rajesh Kumar" class="w-10 h-10 rounded-full border border-white/20 object-cover" data-alt="A professional corporate headshot of an Indian male executive in his 40s wearing a tailored charcoal suit and light blue shirt. Bright, clean, white background, soft studio lighting, sharp focus on face, exuding confidence and reliability for an enterprise B2B platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8Ajq2Q5DYc1vJufm-mxj8g4-NNYOd04_d-POQ7dxv6q2pYXZEU8iGAZe3O6XGkcfvO0xlBAVdKG4-IYbzwOad7n1RCJjUiVbo7jXofK1BUGZn5AF-eRtqcsL5-LoHSVc8Em4prPn2eiFKCTXw358FN7IIb-xio67PbDghFWzXdjrjNDg0ro50T1e5P6nUaC2YUUAG84XQ_gmrVUU45Yl89Sf2CaJJZio3P-JEi3uVrKEAD4p-gyg">
+</div>
+</header>
+<main class="flex-1 bg-surface rounded-tl-panel overflow-hidden shadow-[inset_0px_4px_12px_rgba(0,0,0,0.1)] flex flex-col relative">
+<div class="flex-1 overflow-y-auto">
+<div class="px-10 py-8 border-b border-outline-variant shrink-0 flex justify-between items-center bg-surface sticky top-0 z-10">
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 flex items-center gap-1">
+<a class="hover:text-primary" href="#">Products</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Add product</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg">Add product</h2>
+</div>
+</div>
+<div class="flex p-10 gap-12 items-start max-w-[1200px] mx-auto w-full pb-10">
+<nav class="w-[200px] shrink-0 sticky top-[120px] flex flex-col gap-2">
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#cat1">Category</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#det1">Details</a>
+<a class="text-label-md font-label-md text-primary border-l-2 border-primary pl-4 py-1" href="#svc1">Service details</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#spe1">Specifications</a>
+</nav>
+<div class="flex-1 flex flex-col gap-12">
+<section class="flex flex-col gap-6" id="cat1">
+<h3 class="text-headline-md font-headline-md text-on-surface">Category</h3>
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Category <span class="text-error">*</span></label>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+<option>IT, Software &amp; AI Services</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Sub-category <span class="text-error">*</span></label>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+<option>AI/ML development</option>
+</select>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-6" id="det1">
+<h3 class="text-headline-md font-headline-md text-on-surface">Details</h3>
+<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Product name <span class="text-error">*</span></label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" type="text" value="AI Model Development &amp; Deployment">
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<label class="text-label-md font-label-md">Description</label>
+<span class="text-label-sm font-label-sm text-outline">0/5,000</span>
+</div>
+<textarea class="p-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none min-h-[120px]" placeholder="Details, use cases, certifications…"></textarea>
+</div>
+<div class="flex flex-col gap-4">
+<div>
+<label class="text-label-md font-label-md">Product images</label>
+<p class="text-label-sm font-label-sm text-outline">Up to 5 images · 5 MB each · JPG, PNG or WEBP</p>
+</div>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-8 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-outline">cloud_upload</span>
+<p class="text-label-md font-label-md text-on-surface-variant">Drag and drop images here, or <span class="text-primary">browse</span></p>
+</div>
+</div>
+</div>
+</section>
+<hr class="border-outline-variant"><hr class="border-outline-variant">
+<section class="flex flex-col gap-6" id="svc1">
+<h3 class="text-headline-md font-headline-md text-on-surface">Service details</h3>
+<div class="flex flex-col gap-6">
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Engagement type</label>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+<option>Project based</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Delivery model</label>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+<option>Remote</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Team size</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 5-10 experts" type="text">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Pricing model</label>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+<option>Time and materials</option>
+</select>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Timeline</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 8-12 weeks" type="text">
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<div class="w-full bg-surface border-t border-outline-variant p-6 flex justify-between items-center px-10 mt-auto shrink-0 z-20">
+<button class="text-label-md font-label-md text-secondary hover:text-on-surface transition-colors">Cancel</button>
+<button class="bg-primary text-on-primary h-10 px-6 rounded-full text-label-md font-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none">Save draft</button>
+</div>
+</main>
+</div>
+</div>
+<!-- SCREEN 2: PRICE ON REQUEST -->
+<div class="relative w-full flex overflow-hidden rounded-xl shadow-sm border border-outline-variant bg-navy-shell h-[800px]">
+<aside class="w-[260px] flex flex-col shrink-0 text-white pt-6 pb-6 border-r border-white/10 h-full">
+<div class="px-6 mb-8">
+<h1 class="text-headline-md font-headline-md font-semibold tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified</span><span class="text-label-md font-label-md">Verification</span></a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-md font-label-md">Products</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">question_answer</span><span class="text-label-md font-label-md">Enquiries (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">chat</span><span class="text-label-md font-label-md">Chat (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">Settings</span></a>
+</nav>
+<div class="px-4 mt-auto pt-8">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">logout</span><span class="text-label-md font-label-md">Sign Out</span></a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0 h-full">
+<header class="h-[88px] shrink-0 flex justify-end items-center px-8 text-white">
+<div class="flex items-center gap-4">
+<div class="text-right flex flex-col justify-center">
+<span class="text-label-md font-label-md leading-tight">Rajesh Kumar</span>
+<span class="text-label-sm font-label-sm text-white/70 leading-tight">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<img alt="Rajesh Kumar" class="w-10 h-10 rounded-full border border-white/20 object-cover" data-alt="A professional corporate headshot of an Indian male executive in his 40s wearing a tailored charcoal suit and light blue shirt. Bright, clean, white background, soft studio lighting, sharp focus on face, exuding confidence and reliability for an enterprise B2B platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8Ajq2Q5DYc1vJufm-mxj8g4-NNYOd04_d-POQ7dxv6q2pYXZEU8iGAZe3O6XGkcfvO0xlBAVdKG4-IYbzwOad7n1RCJjUiVbo7jXofK1BUGZn5AF-eRtqcsL5-LoHSVc8Em4prPn2eiFKCTXw358FN7IIb-xio67PbDghFWzXdjrjNDg0ro50T1e5P6nUaC2YUUAG84XQ_gmrVUU45Yl89Sf2CaJJZio3P-JEi3uVrKEAD4p-gyg">
+</div>
+</header>
+<main class="flex-1 bg-surface rounded-tl-panel overflow-hidden shadow-[inset_0px_4px_12px_rgba(0,0,0,0.1)] flex flex-col relative">
+<div class="flex-1 overflow-y-auto">
+<div class="px-10 py-8 border-b border-outline-variant shrink-0 flex justify-between items-center bg-surface sticky top-0 z-10">
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 flex items-center gap-1">
+<a class="hover:text-primary" href="#">Products</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Add product</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg">Add product</h2>
+</div>
+</div>
+<div class="flex p-10 gap-12 items-start max-w-[1200px] mx-auto w-full pb-10">
+<nav class="w-[200px] shrink-0 sticky top-[120px] flex flex-col gap-2">
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#cat2">Category</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#det2">Details</a>
+<a class="text-label-md font-label-md text-primary border-l-2 border-primary pl-4 py-1" href="#pri2">Pricing</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#spe2">Specifications</a>
+</nav>
+<div class="flex-1 flex flex-col gap-12">
+<section class="flex flex-col gap-6" id="pri2">
+<h3 class="text-headline-md font-headline-md text-on-surface">Pricing &amp; Trade Terms</h3>
+<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Pricing model</label>
+<div class="flex border border-outline-variant rounded-lg overflow-hidden w-fit mb-2">
+<button class="px-4 py-2 bg-surface text-on-surface-variant hover:bg-surface-container text-label-md font-label-md">Fixed</button>
+<button class="px-4 py-2 bg-surface text-on-surface-variant hover:bg-surface-container text-label-md font-label-md">Range</button>
+<button class="px-4 py-2 bg-primary-container text-on-primary-container text-label-md font-label-md font-semibold">On request</button>
+</div>
+<div class="p-4 bg-surface-container-low border border-outline-variant rounded-lg">
+<p class="text-label-md font-label-md text-on-surface-variant">Buyers will see 'Price on request'.</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Minimum order quantity</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 100" type="text">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Unit</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. meters" type="text">
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">HS code</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 5208.11" type="text">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Country of origin</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. India" type="text">
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<div class="w-full bg-surface border-t border-outline-variant p-6 flex justify-between items-center px-10 mt-auto shrink-0 z-20">
+<button class="text-label-md font-label-md text-secondary hover:text-on-surface transition-colors">Cancel</button>
+<button class="bg-primary text-on-primary h-10 px-6 rounded-full text-label-md font-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none">Save draft</button>
+</div>
+</main>
+</div>
+</div>
+<!-- SCREEN 3: PRICE RANGE ERROR -->
+<div class="relative w-full flex overflow-hidden rounded-xl shadow-sm border border-outline-variant bg-navy-shell h-[800px]">
+<aside class="w-[260px] flex flex-col shrink-0 text-white pt-6 pb-6 border-r border-white/10 h-full">
+<div class="px-6 mb-8">
+<h1 class="text-headline-md font-headline-md font-semibold tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified</span><span class="text-label-md font-label-md">Verification</span></a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-md font-label-md">Products</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">question_answer</span><span class="text-label-md font-label-md">Enquiries (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">chat</span><span class="text-label-md font-label-md">Chat (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">Settings</span></a>
+</nav>
+<div class="px-4 mt-auto pt-8">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">logout</span><span class="text-label-md font-label-md">Sign Out</span></a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0 h-full">
+<header class="h-[88px] shrink-0 flex justify-end items-center px-8 text-white">
+<div class="flex items-center gap-4">
+<div class="text-right flex flex-col justify-center">
+<span class="text-label-md font-label-md leading-tight">Rajesh Kumar</span>
+<span class="text-label-sm font-label-sm text-white/70 leading-tight">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<img alt="Rajesh Kumar" class="w-10 h-10 rounded-full border border-white/20 object-cover" data-alt="A professional corporate headshot of an Indian male executive in his 40s wearing a tailored charcoal suit and light blue shirt. Bright, clean, white background, soft studio lighting, sharp focus on face, exuding confidence and reliability for an enterprise B2B platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8Ajq2Q5DYc1vJufm-mxj8g4-NNYOd04_d-POQ7dxv6q2pYXZEU8iGAZe3O6XGkcfvO0xlBAVdKG4-IYbzwOad7n1RCJjUiVbo7jXofK1BUGZn5AF-eRtqcsL5-LoHSVc8Em4prPn2eiFKCTXw358FN7IIb-xio67PbDghFWzXdjrjNDg0ro50T1e5P6nUaC2YUUAG84XQ_gmrVUU45Yl89Sf2CaJJZio3P-JEi3uVrKEAD4p-gyg">
+</div>
+</header>
+<main class="flex-1 bg-surface rounded-tl-panel overflow-hidden shadow-[inset_0px_4px_12px_rgba(0,0,0,0.1)] flex flex-col relative">
+<div class="flex-1 overflow-y-auto">
+<div class="px-10 py-8 border-b border-outline-variant shrink-0 flex justify-between items-center bg-surface sticky top-0 z-10">
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 flex items-center gap-1">
+<a class="hover:text-primary" href="#">Products</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Add product</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg">Add product</h2>
+</div>
+</div>
+<div class="flex p-10 gap-12 items-start max-w-[1200px] mx-auto w-full pb-10">
+<nav class="w-[200px] shrink-0 sticky top-[120px] flex flex-col gap-2">
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#cat3">Category</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#det3">Details</a>
+<a class="text-label-md font-label-md text-primary border-l-2 border-primary pl-4 py-1" href="#pri3">Pricing</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#spe3">Specifications</a>
+</nav>
+<div class="flex-1 flex flex-col gap-12">
+<section class="flex flex-col gap-6" id="pri3">
+<h3 class="text-headline-md font-headline-md text-on-surface">Pricing &amp; Trade Terms</h3>
+<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Pricing model</label>
+<div class="flex border border-outline-variant rounded-lg overflow-hidden w-fit mb-2">
+<button class="px-4 py-2 bg-surface text-on-surface-variant hover:bg-surface-container text-label-md font-label-md">Fixed</button>
+<button class="px-4 py-2 bg-primary-container text-on-primary-container text-label-md font-label-md font-semibold">Range</button>
+<button class="px-4 py-2 bg-surface text-on-surface-variant hover:bg-surface-container text-label-md font-label-md">On request</button>
+</div>
+<div class="flex gap-4 items-start w-full max-w-lg"><div class="flex-1 flex flex-col gap-1">
+<div class="flex h-10 border border-error rounded-lg overflow-hidden w-full focus-within:ring-1 focus-within:ring-error">
+<div class="px-3 bg-surface-container-low border-r border-error flex items-center text-label-md font-label-md text-on-surface-variant">INR</div>
+<input class="flex-1 px-3 bg-surface outline-none text-on-surface" type="text" value="1000">
+</div>
+</div>
+<div class="flex items-center h-10 text-outline">-</div>
+<div class="flex-1 flex flex-col gap-1">
+<div class="flex h-10 border border-error rounded-lg overflow-hidden w-full focus-within:ring-1 focus-within:ring-error">
+<div class="px-3 bg-surface-container-low border-r border-error flex items-center text-label-md font-label-md text-on-surface-variant">INR</div>
+<input class="flex-1 px-3 bg-surface outline-none text-on-surface" type="text" value="500">
+</div>
+</div></div>
+<p class="text-label-sm font-label-sm text-error">Minimum must be less than maximum.</p><div class="grid grid-cols-2 gap-6 mt-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Minimum order quantity</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 100" type="text">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Unit</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. meters" type="text">
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6 mt-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">HS code</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 5208.11" type="text">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Country of origin</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. India" type="text">
+</div>
+</div>
+<div class="flex flex-col gap-6 mt-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Supply ability</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 10,000 units per month" type="text">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Lead time</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 15-20 days" type="text">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Packaging</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. Standard export carton" type="text">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Payment terms</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. L/C, T/T, Western Union" type="text">
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<div class="w-full bg-surface border-t border-outline-variant p-6 flex justify-between items-center px-10 mt-auto shrink-0 z-20">
+<button class="text-label-md font-label-md text-secondary hover:text-on-surface transition-colors">Cancel</button>
+<button class="bg-primary text-on-primary h-10 px-6 rounded-full text-label-md font-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none">Save draft</button>
+</div>
+</main>
+</div>
+</div>
+<!-- SCREEN 4: DRAFT CAP REACHED -->
+<div class="relative w-full flex overflow-hidden rounded-xl shadow-sm border border-outline-variant bg-navy-shell h-[800px]">
+<aside class="w-[260px] flex flex-col shrink-0 text-white pt-6 pb-6 border-r border-white/10 h-full">
+<div class="px-6 mb-8">
+<h1 class="text-headline-md font-headline-md font-semibold tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified</span><span class="text-label-md font-label-md">Verification</span></a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-md font-label-md">Products</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">question_answer</span><span class="text-label-md font-label-md">Enquiries (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">chat</span><span class="text-label-md font-label-md">Chat (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">Settings</span></a>
+</nav>
+<div class="px-4 mt-auto pt-8">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">logout</span><span class="text-label-md font-label-md">Sign Out</span></a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0 h-full">
+<header class="h-[88px] shrink-0 flex justify-end items-center px-8 text-white">
+<div class="flex items-center gap-4">
+<div class="text-right flex flex-col justify-center">
+<span class="text-label-md font-label-md leading-tight">Rajesh Kumar</span>
+<span class="text-label-sm font-label-sm text-white/70 leading-tight">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<img alt="Rajesh Kumar" class="w-10 h-10 rounded-full border border-white/20 object-cover" data-alt="A professional corporate headshot of an Indian male executive in his 40s wearing a tailored charcoal suit and light blue shirt. Bright, clean, white background, soft studio lighting, sharp focus on face, exuding confidence and reliability for an enterprise B2B platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8Ajq2Q5DYc1vJufm-mxj8g4-NNYOd04_d-POQ7dxv6q2pYXZEU8iGAZe3O6XGkcfvO0xlBAVdKG4-IYbzwOad7n1RCJjUiVbo7jXofK1BUGZn5AF-eRtqcsL5-LoHSVc8Em4prPn2eiFKCTXw358FN7IIb-xio67PbDghFWzXdjrjNDg0ro50T1e5P6nUaC2YUUAG84XQ_gmrVUU45Yl89Sf2CaJJZio3P-JEi3uVrKEAD4p-gyg">
+</div>
+</header>
+<main class="flex-1 bg-surface rounded-tl-panel overflow-hidden shadow-[inset_0px_4px_12px_rgba(0,0,0,0.1)] flex flex-col relative items-center justify-center">
+<div class="px-10 py-8 shrink-0 flex justify-between items-center bg-transparent absolute top-0 left-0 right-0 z-10 w-full">
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 flex items-center gap-1">
+<a class="hover:text-primary" href="#">Products</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Add product</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg">Add product</h2>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center max-w-md text-center mt-16">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-outline mb-6">
+<span class="material-symbols-outlined text-[32px]">inventory</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-on-surface mb-2">Draft limit reached (10)</h3>
+<p class="text-body-md font-body-md text-on-surface-variant mb-8">Publish or delete a draft, or get verified.</p>
+<button class="bg-primary text-on-primary h-10 px-6 rounded-full text-label-md font-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none">Back to products</button>
+</div>
+</main>
+</div>
+</div>
+<!-- SCREEN 5: CATEGORY CHANGE WARNING -->
+<div class="relative w-full flex overflow-hidden rounded-xl shadow-sm border border-outline-variant bg-navy-shell h-[800px]">
+<aside class="w-[260px] flex flex-col shrink-0 text-white pt-6 pb-6 border-r border-white/10 h-full">
+<div class="px-6 mb-8">
+<h1 class="text-headline-md font-headline-md font-semibold tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified</span><span class="text-label-md font-label-md">Verification</span></a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-md font-label-md">Products</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">question_answer</span><span class="text-label-md font-label-md">Enquiries (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">chat</span><span class="text-label-md font-label-md">Chat (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">Settings</span></a>
+</nav>
+<div class="px-4 mt-auto pt-8">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">logout</span><span class="text-label-md font-label-md">Sign Out</span></a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0 h-full relative">
+<header class="h-[88px] shrink-0 flex justify-end items-center px-8 text-white">
+<div class="flex items-center gap-4">
+<div class="text-right flex flex-col justify-center">
+<span class="text-label-md font-label-md leading-tight">Rajesh Kumar</span>
+<span class="text-label-sm font-label-sm text-white/70 leading-tight">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<img alt="Rajesh Kumar" class="w-10 h-10 rounded-full border border-white/20 object-cover" data-alt="A professional corporate headshot of an Indian male executive in his 40s wearing a tailored charcoal suit and light blue shirt. Bright, clean, white background, soft studio lighting, sharp focus on face, exuding confidence and reliability for an enterprise B2B platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8Ajq2Q5DYc1vJufm-mxj8g4-NNYOd04_d-POQ7dxv6q2pYXZEU8iGAZe3O6XGkcfvO0xlBAVdKG4-IYbzwOad7n1RCJjUiVbo7jXofK1BUGZn5AF-eRtqcsL5-LoHSVc8Em4prPn2eiFKCTXw358FN7IIb-xio67PbDghFWzXdjrjNDg0ro50T1e5P6nUaC2YUUAG84XQ_gmrVUU45Yl89Sf2CaJJZio3P-JEi3uVrKEAD4p-gyg">
+</div>
+</header>
+<main class="flex-1 bg-surface rounded-tl-panel overflow-hidden shadow-[inset_0px_4px_12px_rgba(0,0,0,0.1)] flex flex-col relative">
+<div class="flex-1 overflow-y-auto filter blur-[2px] opacity-70">
+<div class="px-10 py-8 border-b border-outline-variant shrink-0 flex justify-between items-center bg-surface sticky top-0 z-10">
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 flex items-center gap-1">
+<a class="hover:text-primary" href="#">Products</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Add product</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg">Add product</h2>
+</div>
+</div>
+<div class="flex p-10 gap-12 items-start max-w-[1200px] mx-auto w-full pb-10">
+<nav class="w-[200px] shrink-0 sticky top-[120px] flex flex-col gap-2">
+<a class="text-label-md font-label-md text-primary border-l-2 border-primary pl-4 py-1" href="#cat5">Category</a>
+</nav>
+<div class="flex-1 flex flex-col gap-12">
+<section class="flex flex-col gap-6" id="cat5">
+<h3 class="text-headline-md font-headline-md text-on-surface">Category</h3>
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Category <span class="text-error">*</span></label>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+<option>Textiles, Fabrics &amp; Yarn</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Sub-category <span class="text-error">*</span></label>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+<option>Cotton fabric</option>
+</select>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<div class="w-full bg-surface border-t border-outline-variant p-6 flex justify-between items-center px-10 mt-auto shrink-0 z-20 filter blur-[2px] opacity-70">
+<button class="text-label-md font-label-md text-secondary hover:text-on-surface transition-colors">Cancel</button>
+<button class="bg-primary text-on-primary h-10 px-6 rounded-full text-label-md font-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none">Save draft</button>
+</div>
+<!-- Overlay & Modal -->
+<div class="absolute inset-0 bg-inverse-surface/40 flex items-center justify-center z-50">
+<div class="bg-surface rounded-xl p-8 max-w-sm w-full shadow-lg flex flex-col gap-6">
+<h3 class="text-headline-md font-headline-md text-on-surface">Change category?</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Changing category clears the specifications you've filled in.</p>
+<div class="flex justify-end gap-4 mt-2">
+<button class="text-label-md font-label-md text-secondary hover:text-on-surface transition-colors">Cancel</button>
+<button class="bg-primary text-on-primary h-10 px-6 rounded-full text-label-md font-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none">Continue</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- SCREEN 6: FIELD VALIDATION ERRORS -->
+<div class="relative w-full flex overflow-hidden rounded-xl shadow-sm border border-outline-variant bg-navy-shell h-[800px]">
+<aside class="w-[260px] flex flex-col shrink-0 text-white pt-6 pb-6 border-r border-white/10 h-full">
+<div class="px-6 mb-8">
+<h1 class="text-headline-md font-headline-md font-semibold tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified</span><span class="text-label-md font-label-md">Verification</span></a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-md font-label-md">Products</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">question_answer</span><span class="text-label-md font-label-md">Enquiries (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">chat</span><span class="text-label-md font-label-md">Chat (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">Settings</span></a>
+</nav>
+<div class="px-4 mt-auto pt-8">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">logout</span><span class="text-label-md font-label-md">Sign Out</span></a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0 h-full">
+<header class="h-[88px] shrink-0 flex justify-end items-center px-8 text-white">
+<div class="flex items-center gap-4">
+<div class="text-right flex flex-col justify-center">
+<span class="text-label-md font-label-md leading-tight">Rajesh Kumar</span>
+<span class="text-label-sm font-label-sm text-white/70 leading-tight">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<img alt="Rajesh Kumar" class="w-10 h-10 rounded-full border border-white/20 object-cover" data-alt="A professional corporate headshot of an Indian male executive in his 40s wearing a tailored charcoal suit and light blue shirt. Bright, clean, white background, soft studio lighting, sharp focus on face, exuding confidence and reliability for an enterprise B2B platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8Ajq2Q5DYc1vJufm-mxj8g4-NNYOd04_d-POQ7dxv6q2pYXZEU8iGAZe3O6XGkcfvO0xlBAVdKG4-IYbzwOad7n1RCJjUiVbo7jXofK1BUGZn5AF-eRtqcsL5-LoHSVc8Em4prPn2eiFKCTXw358FN7IIb-xio67PbDghFWzXdjrjNDg0ro50T1e5P6nUaC2YUUAG84XQ_gmrVUU45Yl89Sf2CaJJZio3P-JEi3uVrKEAD4p-gyg">
+</div>
+</header>
+<main class="flex-1 bg-surface rounded-tl-panel overflow-hidden shadow-[inset_0px_4px_12px_rgba(0,0,0,0.1)] flex flex-col relative">
+<div class="flex-1 overflow-y-auto">
+<div class="px-10 py-8 border-b border-outline-variant shrink-0 flex justify-between items-center bg-surface sticky top-0 z-10">
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 flex items-center gap-1">
+<a class="hover:text-primary" href="#">Products</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Add product</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg">Add product</h2>
+</div>
+</div>
+<div class="flex p-10 gap-12 items-start max-w-[1200px] mx-auto w-full pb-10">
+<nav class="w-[200px] shrink-0 sticky top-[120px] flex flex-col gap-2">
+<a class="text-label-md font-label-md text-primary border-l-2 border-primary pl-4 py-1" href="#cat6">Category</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#det6">Details</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#pri6">Pricing</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#spe6">Specifications</a>
+</nav>
+<div class="flex-1 flex flex-col gap-12">
+<div class="p-4 bg-error-container text-on-error-container rounded-lg border border-error mb-4">
+<span class="text-label-md font-label-md font-semibold flex items-center gap-2"><span class="material-symbols-outlined">error</span>Fix 2 fields to continue.</span>
+</div>
+<section class="flex flex-col gap-6" id="cat6">
+<h3 class="text-headline-md font-headline-md text-on-surface">Category</h3>
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Category <span class="text-error">*</span></label>
+<p class="text-label-sm font-label-sm text-outline">Pick the closest match — 'Other' is there if nothing fits.</p>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+<option>Textiles, Fabrics &amp; Yarn</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Sub-category <span class="text-error">*</span></label>
+<p class="text-label-sm font-label-sm text-outline">This decides which details we'll ask for.</p>
+<select class="h-10 px-3 rounded-lg border border-error bg-surface focus:border-error focus:ring-1 focus:ring-error outline-none appearance-none">
+<option disabled="" selected="" value="">Select sub-category</option>
+<option>Cotton fabric</option>
+</select>
+<p class="text-label-sm font-label-sm text-error">Sub-category is required.</p>
+</div>
+</div>
+</section>
+<hr class="border-outline-variant">
+<section class="flex flex-col gap-6" id="det6">
+<h3 class="text-headline-md font-headline-md text-on-surface">Details</h3>
+<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Product name <span class="text-error">*</span></label>
+<input class="h-10 px-3 rounded-lg border border-error bg-surface focus:border-error focus:ring-1 focus:ring-error outline-none placeholder:text-outline" placeholder="Enter product name" type="text" value="">
+<p class="text-label-sm font-label-sm text-error">Product name is required.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<div class="w-full bg-surface border-t border-outline-variant p-6 flex justify-between items-center px-10 mt-auto shrink-0 z-20">
+<button class="text-label-md font-label-md text-secondary hover:text-on-surface transition-colors">Cancel</button>
+<button class="bg-primary text-on-primary h-10 px-6 rounded-full text-label-md font-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none">Save draft</button>
+</div>
+</main>
+</div>
+</div>
+
+
+<div class="h-[100px] w-full bg-white"></div><div class="relative w-full flex overflow-hidden rounded-xl shadow-sm border border-outline-variant bg-navy-shell h-[800px]"><aside class="w-[260px] flex flex-col shrink-0 text-white pt-6 pb-6 border-r border-white/10 h-full"><div class="px-6 mb-8"><h1 class="text-headline-md font-headline-md font-semibold tracking-tight">MPX Global</h1></div><nav class="flex-1 flex flex-col gap-1 px-4"><a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified</span><span class="text-label-md font-label-md">Verification</span></a><a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-md font-label-md">Products</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">question_answer</span><span class="text-label-md font-label-md">Enquiries (Soon)</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">chat</span><span class="text-label-md font-label-md">Chat (Soon)</span></a><a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">Settings</span></a></nav><div class="px-4 mt-auto pt-8"><a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">logout</span><span class="text-label-md font-label-md">Sign Out</span></a></div></aside><div class="flex-1 flex flex-col min-w-0 h-full"><header class="h-[88px] shrink-0 flex justify-end items-center px-8 text-white"><div class="flex items-center gap-4"><div class="text-right flex flex-col justify-center"><span class="text-label-md font-label-md leading-tight">Rajesh Kumar</span><span class="text-label-sm font-label-sm text-white/70 leading-tight">Exporter · Tirupur Knitwear Exports</span></div><img alt="Rajesh Kumar" class="w-10 h-10 rounded-full border border-white/20 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8Ajq2Q5DYc1vJufm-mxj8g4-NNYOd04_d-POQ7dxv6q2pYXZEU8iGAZe3O6XGkcfvO0xlBAVdKG4-IYbzwOad7n1RCJjUiVbo7jXofK1BUGZn5AF-eRtqcsL5-LoHSVc8Em4prPn2eiFKCTXw358FN7IIb-xio67PbDghFWzXdjrjNDg0ro50T1e5P6nUaC2YUUAG84XQ_gmrVUU45Yl89Sf2CaJJZio3P-JEi3uVrKEAD4p-gyg"></div></header><main class="flex-1 bg-surface rounded-tl-panel overflow-hidden shadow-[inset_0px_4px_12px_rgba(0,0,0,0.1)] flex flex-col relative"><div class="flex-1 overflow-y-auto opacity-50 pointer-events-none"><div class="px-10 py-8 border-b border-outline-variant shrink-0 flex justify-between items-center bg-surface sticky top-0 z-10"><div><div class="text-label-sm font-label-sm text-on-surface-variant mb-1 flex items-center gap-1"><a class="hover:text-primary" href="#">Products</a><span class="material-symbols-outlined text-[16px]">chevron_right</span><span class="text-on-surface">Add product</span></div><h2 class="text-headline-lg font-headline-lg">Add product</h2></div></div><div class="flex p-10 gap-12 items-start max-w-[1200px] mx-auto w-full pb-10"><nav class="w-[200px] shrink-0 sticky top-[120px] flex flex-col gap-2"><a class="text-label-md font-label-md text-on-surface-variant border-l-2 border-transparent pl-4 py-1" href="#">Category</a><a class="text-label-md font-label-md text-on-surface-variant border-l-2 border-transparent pl-4 py-1" href="#">Details</a><a class="text-label-md font-label-md text-primary border-l-2 border-primary pl-4 py-1" href="#">Service details</a><a class="text-label-md font-label-md text-on-surface-variant border-l-2 border-transparent pl-4 py-1" href="#">Specifications</a></nav><div class="flex-1 flex flex-col gap-12"><section class="flex flex-col gap-6"><h3 class="text-headline-md font-headline-md text-on-surface">Category</h3><div class="grid grid-cols-2 gap-6"><div class="flex flex-col gap-2"><label class="text-label-md font-label-md">Category <span class="text-error">*</span></label><select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface outline-none appearance-none"><option>IT, Software &amp; AI Services</option></select></div><div class="flex flex-col gap-2"><label class="text-label-md font-label-md">Sub-category <span class="text-error">*</span></label><select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface outline-none appearance-none"><option>AI/ML development</option></select></div></div></section><section class="flex flex-col gap-6"><h3 class="text-headline-md font-headline-md text-on-surface">Details</h3><div class="flex flex-col gap-6"><div class="flex flex-col gap-2"><label class="text-label-md font-label-md">Product name <span class="text-error">*</span></label><input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface outline-none" type="text" value="AI Model Development &amp; Deployment"></div><div class="flex flex-col gap-2"><div class="flex justify-between items-center"><label class="text-label-md font-label-md">Description</label><span class="text-label-sm font-label-sm text-outline">0/5,000</span></div><textarea class="p-3 rounded-lg border border-outline-variant bg-surface outline-none min-h-[120px]" placeholder="Details, use cases, certifications…"></textarea></div></div></section></div></div></div><div class="w-full bg-surface border-t border-outline-variant p-6 flex justify-between items-center px-10 mt-auto shrink-0 z-20"><button class="text-label-md font-label-md text-secondary opacity-50 pointer-events-none">Cancel</button><button class="bg-primary text-on-primary h-10 px-6 rounded-full text-label-md font-label-md flex items-center gap-2 pointer-events-none"><span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>Saving...</button></div></main></div></div></body></html>

@@ -12,10 +12,12 @@ Status legend: **Pending** = renders but does nothing real · **Done** = wired t
 
 | Date | Page / Component | Element (label) | What's missing / expected behaviour | Why deferred | Status |
 |------|------------------|-----------------|-------------------------------------|--------------|--------|
+| 2026-08-07 | `web/src/pages/public/Categories.jsx` | Category cards (all 40) | Each card links to `/category/:slug` | — | Done (2026-08-09, shipped with screen 2: cards are `<Link>`, the "coming shortly" line is gone) |
+| 2026-08-09 | `web/src/pages/public/CategoryListing.jsx` | Product cards on the category grid | Each card links to `/product/:slug` | — | Done (same day, shipped with screen 3) |
 | 2026-08-03 | `web/src/pages/auth/SignupCompany.jsx` + `app/src/screens/auth/SignupCompanyScreen.jsx` | Organisation **claim** path (A21 "we found a company registered with this email") | Offer claim-vs-create against an existing Organisation; a claimed org carries its verification over (one KYC, one tick, one public profile) | No backend endpoint — `/auth/signup/complete` always CREATES. Claim is the remaining half of A21 and was out of scope for the verification fix | Pending |
 | 2026-08-01 | `web/src/App.jsx` → `pages/Placeholder.jsx` | `/` root route ("Landing — arrives in build step 7") | Renders the real landing page (`pages/public/Landing.jsx`) | Screens land per build-plan §6 order; landing is step 7 | Done (step 7 shipped; Placeholder.jsx deleted) |
 | 2026-08-01 | `web/src/pages/public/Landing.jsx` hero | Hero search bar | Real `GET /public/search` once discovery screens ship | Visibly decorative (`aria-hidden`, non-interactive spans, "Search preview — opens with the catalogue" caption) | Pending |
-| 2026-08-01 | `web/src/pages/public/Landing.jsx` categories | Category group lists + "View all categories" | Category links → real browsable catalogue tree (M2/M3 web screens) | Rendered as STATIC text (no anchors — no dead links) + "Category browsing opens with the catalogue" note | Pending |
+| 2026-08-01 | `web/src/pages/public/Landing.jsx` categories | Category group lists + "View all categories" | Category links → real browsable catalogue tree | — | Done (2026-08-09). ⚠️ The old groupings ("Raw Materials", "Consumer Goods") and their items were **invented** — not our taxonomy. Replaced with the 9 real top categories from `GET /categories`, each linking to `/category/:slug`, plus a "Browse all categories" button |
 | 2026-08-01 | `web/src/pages/public/Landing.jsx` mobile-app section | Google Play / App Store badges | Real store links once the apps are published | Rendered `aria-disabled` with "Coming soon on" labels — not clickable | Pending |
 | 2026-08-03 | `web/src/pages/auth/BuyerSignup.jsx` | "Terms of Service" / "Privacy Policy" in the closing fine print | Link to the real legal pages | Those pages do not exist; rendered as PLAIN TEXT (not links) so there is no dead anchor. Design shows them as links — restore the anchors when the pages ship | Pending |
 | 2026-08-01 | `web/src/pages/public/Landing.jsx` footer | Company / Resources / Legal columns (About, Careers, Contact, Blog, Help Center, Trade Guides, Privacy, Terms) | Real pages | Rendered as static muted text, NOT links (no dead anchors). ⚠️ Privacy Policy + Terms pages will be needed before launch | Pending |
@@ -26,12 +28,12 @@ Status legend: **Pending** = renders but does nothing real · **Done** = wired t
 | 2026-08-01 | `web/src/pages/buyer/buyerNav.js` → `layouts/PortalLayout.jsx` sidebar | "Chat" item | Buyer chat threads (M4) | M4 web screens are outside the M1 set; disabled "Soon" chip | Pending |
 | 2026-08-01 | `web/src/pages/buyer/buyerNav.js` → `layouts/PortalLayout.jsx` sidebar | "Settings" item | Account settings (change password etc. — A22-adjacent) | No M1 mockup/screen for party settings. Design file shows Settings WITHOUT a Soon badge, so it renders dimmed + non-interactive (`disabled`) | Pending |
 | 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Dashboard" item | Exporter dashboard (later milestone) | Outside the M1 web set; disabled "Soon" chip | Pending |
-| 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Products" item | Exporter catalogue management (M2 web screens) | Outside the M1 web set; disabled "Soon" chip | Pending |
+| 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Products" item | Exporter catalogue management (M2 web screens) | — | Done (2026-08-09, links to `/exporter/products`) |
 | 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Enquiries" item | Exporter enquiry list (M4) | Outside the M1 web set; disabled "Soon" chip | Pending |
 | 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Chat" item | Exporter chat threads (M4) | Outside the M1 web set; disabled "Soon" chip | Pending |
-| 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Settings" item | Account/company settings (A22 company profile edit) | A22 endpoints unbuilt. Design shows no Soon badge → dimmed + non-interactive (`disabled`) | Pending |
+| 2026-08-01 | `web/src/pages/exporter/exporterNav.js` → `layouts/PortalLayout.jsx` sidebar | "Settings" item | Account/company settings (A22 company profile edit) | ⚠️ Reason CORRECTED 2026-08-09: the A22 **endpoints shipped** (`GET`/`PATCH /me/organisation` + logo) — what is missing is only the SCREEN. Still dimmed + non-interactive; build the screen to un-block it | Pending |
 | 2026-08-01 | `web/src/layouts/AdminLayout.jsx` sidebar → `pages/admin/ComingSoon.jsx` | "Dashboard" item (sidebar) | Real dashboard screen (backend GET /admin/dashboard exists — M5) | Outside the M1 web set. Per the design file this row is non-interactive with a SOON badge — it no longer links to `/admin/dashboard` (that route still renders ComingSoon if reached directly) | Pending |
-| 2026-08-01 | `web/src/layouts/AdminLayout.jsx` sidebar → `pages/admin/ComingSoon.jsx` | "Audit log" item (sidebar) | Real audit viewer screen (backend GET /admin/audit exists — M5-C) | Outside the M1 web set. Design makes this row non-interactive with a SOON badge — no longer links to `/admin/audit` (route still renders ComingSoon if reached directly) | Pending |
+| 2026-08-01 | `web/src/layouts/AdminLayout.jsx` sidebar → `pages/admin/ComingSoon.jsx` | "Audit log" item (sidebar) | Real audit viewer screen | — | Done (2026-08-09, M2 screen 11 — links to `/admin/audit`, permission-filtered on `audit:read`) |
 | 2026-08-01 | `web/src/layouts/AdminLayout.jsx` sidebar → `pages/admin/ComingSoon.jsx` | "Settings" item + `/admin/settings` route | Platform settings screen (no backend yet) | Design shows Settings as a real link with no badge → it routes to the designed ComingSoon page | Pending |
 | 2026-08-01 | `web/src/pages/admin/Employees.jsx` | Permissions column "—" + edit drawer opening unticked | Show the employee's CURRENT permission set after a reload | ✅ **DONE 2026-08-04** — owner approved the read; `GET /admin/users` now returns each employee's set to a superadmin, so the column fills and the drawer pre-ticks | Done |
 
@@ -135,3 +137,18 @@ buyer-vs-exporter — read the flags:
 | `GET /employee/orgs/:id/kyc/documents` | top-level | `type` | `buyerSide`, `exporterSide` |
 
 (One company may have both sides true — a screen must not assume exactly one.)
+
+### 🔑 Owner decision — 2026-08-09: forward links inside a module ship LIVE
+
+A control whose destination is a screen **later in the same build plan** is built as a real
+`<Link>`, not disabled and not omitted. The owner's call: *"let these be built because the screens
+will be built eventually."*
+
+This is a deliberate, bounded exception to the dead-control rule above. It applies only to
+**in-module forward references** where the target screen is already scheduled — screen 5's
+"+ Add product" and its row-menu "Edit" pointed at screens 6 and 7, one step away. The shared 404
+page covers the window in between.
+
+It does **not** relax anything else. A control pointing at work that is **deferred, unscheduled or
+in another milestone** (M3 search, M4 enquiry, the legal pages, store badges) still must not be a
+live link — those stay static or visibly "coming soon" and stay logged in the table above.

@@ -5,6 +5,10 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './auth/AuthContext.jsx';
 import { queryClient } from './lib/queryClient.js';
 import { Landing } from './pages/public/Landing.jsx';
+import { Categories } from './pages/public/Categories.jsx';
+import { CategoryListing } from './pages/public/CategoryListing.jsx';
+import { ProductDetail } from './pages/public/ProductDetail.jsx';
+import { SupplierProfile } from './pages/public/SupplierProfile.jsx';
 import { NotFound } from './pages/public/NotFound.jsx';
 import { Styleguide } from './pages/Styleguide.jsx';
 import { Spinner } from './components/ui/Spinner.jsx';
@@ -18,6 +22,8 @@ import { VerificationStatus } from './pages/buyer/VerificationStatus.jsx';
 import { KycUpload } from './pages/buyer/KycUpload.jsx';
 import { VerificationStatus as ExporterVerificationStatus } from './pages/exporter/VerificationStatus.jsx';
 import { KycUpload as ExporterKycUpload } from './pages/exporter/KycUpload.jsx';
+import { Products as ExporterProducts } from './pages/exporter/Products.jsx';
+import { ProductForm } from './pages/exporter/ProductForm.jsx';
 import { Otp } from './pages/auth/Otp.jsx';
 import { SignupVerify } from './pages/auth/SignupVerify.jsx';
 import { SignupCompany } from './pages/auth/SignupCompany.jsx';
@@ -46,6 +52,18 @@ const KycViewer = lazy(() =>
 );
 const Employees = lazy(() =>
   import('./pages/admin/Employees.jsx').then((m) => ({ default: m.Employees })),
+);
+const CategoryManager = lazy(() =>
+  import('./pages/admin/CategoryManager.jsx').then((m) => ({ default: m.CategoryManager })),
+);
+const AttributeManager = lazy(() =>
+  import('./pages/admin/AttributeManager.jsx').then((m) => ({ default: m.AttributeManager })),
+);
+const ProductMonitoring = lazy(() =>
+  import('./pages/admin/ProductMonitoring.jsx').then((m) => ({ default: m.ProductMonitoring })),
+);
+const AuditLog = lazy(() =>
+  import('./pages/admin/AuditLog.jsx').then((m) => ({ default: m.AuditLog })),
 );
 const ComingSoon = lazy(() =>
   import('./pages/admin/ComingSoon.jsx').then((m) => ({ default: m.ComingSoon })),
@@ -77,8 +95,12 @@ export function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* --- Public --- */}
+            {/* --- Public (guest-visible; no auth guard by design — B7) --- */}
             <Route path="/" element={<Landing />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/category/:slug" element={<CategoryListing />} />
+            <Route path="/product/:slug" element={<ProductDetail />} />
+            <Route path="/supplier/:slug" element={<SupplierProfile />} />
 
             {/* --- Party auth (buyer + exporter share screens; portal = the field change) ---
                    All of these are for signed-OUT visitors: RedirectIfAuthed sends a live
@@ -125,6 +147,9 @@ export function App() {
               <Route element={<RequireRole roles={['exporter']} />}>
                 <Route path="/exporter" element={<ExporterVerificationStatus />} />
                 <Route path="/exporter/kyc" element={<ExporterKycUpload />} />
+                <Route path="/exporter/products" element={<ExporterProducts />} />
+                <Route path="/exporter/products/new" element={<ProductForm />} />
+                <Route path="/exporter/products/:id/edit" element={<ProductForm />} />
               </Route>
             </Route>
 
@@ -140,13 +165,16 @@ export function App() {
                   }
                 >
                   <Route path="/admin/users" element={<Users />} />
+                  <Route path="/admin/categories" element={<CategoryManager />} />
+                  <Route path="/admin/categories/:id/attributes" element={<AttributeManager />} />
+                  <Route path="/admin/products" element={<ProductMonitoring />} />
                   <Route path="/admin/verification" element={<VerificationQueue />} />
                   <Route path="/admin/verification/:orgId/kyc" element={<KycViewer />} />
                   <Route element={<RequireRole roles={['superadmin']} />}>
                     <Route path="/admin/employees" element={<Employees />} />
                   </Route>
                   <Route path="/admin/dashboard" element={<ComingSoon title="Dashboard" />} />
-                  <Route path="/admin/audit" element={<ComingSoon title="Audit log" />} />
+                  <Route path="/admin/audit" element={<AuditLog />} />
                   <Route path="/admin/settings" element={<ComingSoon title="Settings" />} />
                   <Route path="/admin/no-access" element={<NoAccess />} />
                 </Route>

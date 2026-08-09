@@ -460,6 +460,53 @@ describe('archive + frozen states (M2-E)', () => {
   });
 });
 
+describe('GET /products/:id — the edit form\'s load', () => {
+  it('returns the seller\'s own product', async () => {
+    const ex = await makeExporter();
+    const created = await request(app).post('/products').set(bearer(ex.token)).send(validBody(ex.org._id));
+    const res = await request(app).get(`/products/${created.body.product.id}`).set(bearer(ex.token));
+    expect(res.status).toBe(200);
+    expect(res.body.product.name).toBe('Cotton Fabric Roll');
+  });
+
+  it('🔴 another seller gets 404, never 403 — a 403 confirms the row exists (A6)', async () => {
+    const mine = await makeExporter();
+    const other = await makeExporter();
+    const created = await request(app).post('/products').set(bearer(mine.token)).send(validBody(mine.org._id));
+
+    const res = await request(app).get(`/products/${created.body.product.id}`).set(bearer(other.token));
+    expect(res.status).toBe(404);
+  });
+
+  it('returns an ARCHIVED product so the form can show its terminal notice', async () => {
+    const ex = await makeExporter();
+    const created = await request(app).post('/products').set(bearer(ex.token)).send(validBody(ex.org._id));
+    await request(app).delete(`/products/${created.body.product.id}`).set(bearer(ex.token));
+
+    const res = await request(app).get(`/products/${created.body.product.id}`).set(bearer(ex.token));
+    expect(res.status).toBe(200);
+    expect(res.body.product.status).toBe('archived');
+  });
+
+  it('A9: carries takedown reason + date but NEVER byUserId', async () => {
+    const ex = await makeExporter();
+    const created = await request(app).post('/products').set(bearer(ex.token)).send(validBody(ex.org._id));
+    await Product.updateOne(
+      { _id: created.body.product.id },
+      { $set: { takedown: { isDown: true, reason: 'reported', byUserId: new mongoose.Types.ObjectId(), at: new Date() } } },
+    );
+
+    const res = await request(app).get(`/products/${created.body.product.id}`).set(bearer(ex.token));
+    expect(res.body.product.takedown.reason).toBe('reported');
+    expect(JSON.stringify(res.body)).not.toContain('byUserId');
+  });
+
+  it('does not shadow /products/mine', async () => {
+    const ex = await makeExporter();
+    expect((await request(app).get('/products/mine').set(bearer(ex.token))).status).toBe(200);
+  });
+});
+
 // The seller list screen's tabs + cap meter come from this one call.
 describe('/products/mine status tabs, counts and cap meter', () => {
   // Seeded directly: these assert the READ, not the write paths (which have

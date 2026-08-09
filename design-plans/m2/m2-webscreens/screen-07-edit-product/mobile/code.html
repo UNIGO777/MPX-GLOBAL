@@ -1,0 +1,639 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Edit Product Variations - Mobile View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "mpx-navy": "#1A2E8F",
+                        "mpx-canvas": "#EAEEFF",
+                        "mpx-border": "#C5C6CF",
+                        "on-surface": "#1a1b24",
+                        "on-surface-variant": "#444655",
+                        "primary-container": "#2a4de0",
+                        "outline": "#747687",
+                        "surface-dim": "#dad9e5",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "card": "8px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .mpx-input { border: 1px solid #C5C6CF; border-radius: 8px; width: 100%; padding: 12px; font-size: 14px; color: #1a1b24; }
+        .mpx-input:focus { outline: none; border: 2px solid #2A4DE0; padding: 11px; }
+        .mpx-label { font-size: 14px; font-weight: 500; color: #444655; margin-bottom: 4px; display: block; }
+        .mpx-card { background: white; border: 1px solid #C5C6CF; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0px 4px 20px rgba(0, 5, 23, 0.05); }
+        
+        .mobile-view {
+            width: 375px;
+            margin: 20px auto;
+            background-color: #EAEEFF;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center py-10 bg-slate-100 gap-10">
+<!-- SCREEN 1 — MAIN STATE -->
+<div class="mobile-view flex flex-col">
+<!-- TopAppBar -->
+<div class="bg-mpx-navy h-16 flex justify-between items-center px-4 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 rounded-full hover:bg-white/10">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-white font-headline-md text-headline-md tracking-tight">MPX Global</div>
+<div class="w-8 h-8 rounded-full bg-slate-300 overflow-hidden border border-white/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a business executive in a modern office environment, warm lighting, highly detailed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIVx6rAul-H-aaiV9m6YZsJkbUxY6MITTj_XynowsBXIz_2debks4VhS0IKCpjYw65tJ6OrJjKqeTYeE6AZ1-GcJcnkrgUikKNPTwMenK5M-xYCqyhdD-WCNRSNN2VjglFqL-ydfNxOkoi-Yo1HvrzN4ySRH1Cor5p0UraSTj_YQy7YBuJI2lrcM31tzw-bBRPujBFWZ0WHkn0yrZualm8xAtDnVJvnYGnGOZ6W0lLwkRkjGb3kdFi">
+</div>
+</div>
+<div class="p-4 flex flex-col gap-4 overflow-y-auto">
+<!-- Breadcrumb -->
+<div class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+                Products <span class="material-symbols-outlined text-[16px]">chevron_right</span> Edit product
+            </div>
+<!-- Header Status Strip -->
+<div class="flex flex-col gap-3 mb-2">
+<h1 class="font-headline-md text-headline-md text-on-surface">Combed Cotton Poplin Fabric, 120 GSM</h1>
+<div class="flex items-center gap-2">
+<span class="bg-emerald-100 text-emerald-800 font-label-sm text-label-sm px-2 py-1 rounded-full flex items-center gap-1">
+<div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> Live
+                    </span>
+</div>
+<div class="flex items-center gap-4 mt-2">
+<button class="border border-mpx-border text-on-surface-variant font-label-md text-label-md px-4 py-2 rounded-full hover:bg-surface-dim">Hide</button>
+<button class="text-error font-label-md text-label-md hover:underline">Delete</button>
+</div>
+</div>
+<!-- Category Card -->
+<div class="mpx-card">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Category</span>
+<button class="text-primary-container font-label-md text-label-md hover:underline">Change</button>
+</div>
+<div class="font-body-md text-body-md text-on-surface flex flex-wrap items-center gap-2">
+                    Textiles, Fabrics &amp; Yarn 
+                    <span class="material-symbols-outlined text-[16px] text-outline">arrow_right_alt</span> 
+                    Cotton fabric
+                </div>
+</div>
+<!-- Details Card -->
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Details</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Product Name</label>
+<input class="mpx-input" type="text" value="Combed Cotton Poplin Fabric, 120 GSM">
+<p class="text-[12px] text-on-surface-variant mt-1">Your product's web address stays the same</p>
+</div>
+<div>
+<label class="mpx-label">Description</label>
+<textarea class="mpx-input" rows="4">Premium combed cotton poplin fabric. Soft and durable, suitable for shirting and summer apparel. Available in multiple colors.</textarea>
+<div class="text-right text-[12px] text-on-surface-variant mt-1">412/5,000</div>
+</div>
+<div>
+<label class="mpx-label">Images</label>
+<div class="flex gap-2 mt-2">
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden relative">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtPCE-xLuayb8HD_PZh3YmzD6pwVHuBvD0JK-KQzbTOfhmJYRcmxmz2B9PB9a6WBuZgLp-ACClVK-GH0RLU3KiS3LZf3_BaqUDVIn1KUoXeonjPYgq4FeNk1PYeNeey1N76uPhoVICayMsSGSK95-UyyWBw9ODAKQWPMjz0XGDmnnUUSf6YEBw7pZSN6bupVQZYNcYIPCLmZVCzjcITt5ccqGyHFHf4VK33tQdyzgU9xfajFfxosl-">
+<div class="absolute bottom-0 w-full bg-black/60 text-white text-[10px] text-center py-0.5">Cover</div>
+</div>
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArPphUpg7FCkbLSo7q92_sc-NIssC4CD8D2bXndKDVVQGHXxmMfw8I7vK0k8rYrvmuWPDPoMCT-sYNmtHOIegIrubDKKdVDXTQ7tbD-AJP0mr302Co5SxxwqWLLsRILD3x-cTgtTYGm3Pv22Ab8e_Zii5FycDWkeD5-RqFjVV0c2ZIzsF-KdM8QgmfH_BdZccwX0Q6v_-e2EtEISMJuJQ3pwQG9snkkEvL4i_GhTejEMRA6wGUu0s_">
+</div>
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8Rmixc6jgwJXOB-JTMKlJf8VOUNNtCNrNIxblSbTdlVARArRoW4oiM3U11cvwmHF2jWYSc9yk8B6GjdwXc4Al7nYn7TgccGUm1bVYVy2l3_Sel5t_gOUa-Jyu5FSxzcbLiztJ0OF1RGKrB0dBaa7-JPGVH3_F6vqF7bTfgi1VsPcGmuH6bYfUBjcxf5oGks8XeHzqb5LM4tjSgtJFypV2fTVNLl33Qg4gVcmbEqDnT_HqDzZcEUqK">
+</div>
+<div class="w-[70px] h-[70px] border border-dashed border-mpx-border rounded flex items-center justify-center text-on-surface-variant cursor-pointer hover:bg-slate-50">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Pricing & Trade Terms Card -->
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Pricing &amp; Trade Terms</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Price (INR)</label>
+<input class="mpx-input" type="text" value="220">
+</div>
+<div>
+<label class="mpx-label">Minimum Order Quantity</label>
+<input class="mpx-input" type="text" value="500 meters">
+</div>
+<div>
+<label class="mpx-label">HS Code</label>
+<input class="mpx-input" type="text" value="5208.31.00">
+</div>
+<div>
+<label class="mpx-label">Country of Origin</label>
+<input class="mpx-input" type="text" value="India">
+</div>
+</div>
+</div>
+<!-- Technical Specifications Card -->
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Technical Specifications</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Material</label>
+<input class="mpx-input" type="text" value="100% Cotton">
+</div>
+<div>
+<label class="mpx-label">GSM</label>
+<input class="mpx-input" type="text" value="120">
+</div>
+<div>
+<label class="mpx-label">Weave</label>
+<input class="mpx-input" type="text" value="Poplin">
+</div>
+<div>
+<label class="mpx-label">Width</label>
+<input class="mpx-input" type="text" value="58 inches">
+</div>
+<div>
+<label class="mpx-label">Shrinkage</label>
+<input class="mpx-input" type="text" value="&lt; 3%">
+</div>
+<div class="flex items-center justify-between">
+<label class="mpx-label mb-0">Organic</label>
+<div class="w-10 h-6 bg-primary-container rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Actions -->
+<div class="flex flex-col gap-3 mt-4 mb-6">
+<button class="w-full bg-primary-container text-white font-label-md text-label-md py-3 rounded-full hover:bg-opacity-90">Save changes</button>
+<button class="w-full text-on-surface-variant font-label-md text-label-md py-2 hover:underline">Cancel</button>
+</div>
+</div>
+</div>
+<!-- SCREEN 2 — DRAFT -->
+<div class="mobile-view flex flex-col">
+<div class="bg-mpx-navy h-16 flex justify-between items-center px-4 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 rounded-full hover:bg-white/10">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-white font-headline-md text-headline-md tracking-tight">MPX Global</div>
+<div class="w-8 h-8 rounded-full bg-slate-300 overflow-hidden border border-white/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a business executive in a modern office environment, warm lighting, highly detailed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIVx6rAul-H-aaiV9m6YZsJkbUxY6MITTj_XynowsBXIz_2debks4VhS0IKCpjYw65tJ6OrJjKqeTYeE6AZ1-GcJcnkrgUikKNPTwMenK5M-xYCqyhdD-WCNRSNN2VjglFqL-ydfNxOkoi-Yo1HvrzN4ySRH1Cor5p0UraSTj_YQy7YBuJI2lrcM31tzw-bBRPujBFWZ0WHkn0yrZualm8xAtDnVJvnYGnGOZ6W0lLwkRkjGb3kdFi">
+</div>
+</div>
+<div class="p-4 flex flex-col gap-4 overflow-y-auto">
+<div class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+                Products <span class="material-symbols-outlined text-[16px]">chevron_right</span> Edit product
+            </div>
+<div class="flex flex-col gap-3 mb-2">
+<h1 class="font-headline-md text-headline-md text-on-surface">Combed Cotton Poplin Fabric, 120 GSM</h1>
+<div class="flex items-center gap-2">
+<span class="bg-slate-200 text-slate-800 font-label-sm text-label-sm px-2 py-1 rounded-full flex items-center gap-1">
+                    Draft
+                </span>
+</div>
+<div class="flex items-center gap-4 mt-2">
+<button class="bg-primary-container text-white font-label-md text-label-md px-4 py-2 rounded-full hover:bg-opacity-90">Publish</button>
+<button class="text-error font-label-md text-label-md hover:underline">Delete</button>
+</div>
+</div>
+<div class="mpx-card">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Category</span>
+<button class="text-primary-container font-label-md text-label-md hover:underline">Change</button>
+</div>
+<div class="font-body-md text-body-md text-on-surface flex flex-wrap items-center gap-2">
+                    Textiles, Fabrics &amp; Yarn 
+                    <span class="material-symbols-outlined text-[16px] text-outline">arrow_right_alt</span> 
+                    Cotton fabric
+                </div>
+</div>
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Details</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Product Name</label>
+<input class="mpx-input" type="text" value="Combed Cotton Poplin Fabric, 120 GSM">
+<p class="text-[12px] text-on-surface-variant mt-1">Your product's web address stays the same</p>
+</div>
+<div>
+<label class="mpx-label">Description</label>
+<textarea class="mpx-input" rows="4">Premium combed cotton poplin fabric. Soft and durable, suitable for shirting and summer apparel. Available in multiple colors.</textarea>
+<div class="text-right text-[12px] text-on-surface-variant mt-1">412/5,000</div>
+</div>
+<div>
+<label class="mpx-label">Images</label>
+<div class="flex gap-2 mt-2">
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden relative">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzNa1P3TwbWzWZ2vrFufpZnJEsRs6XaRzxx4Zf2wekupx36h39WI3Hwe-0yhtQyfhTYup-xcPstCcMT1_bBo2O5DvJwoDf1eSwIUmO18szJPfhLVagJuJW_4YLO2uN_lGCUNC1MPtyqgSDE4uY7ZScs2I8DzyNO9CqnLh1EJoCvgUwA37T5l82R7wuxqzQ-3DbL2vAM1PV5u8aNQjtZvcRu3O3h4KIxx912QmrQMKGM76rjrVJI95J">
+<div class="absolute bottom-0 w-full bg-black/60 text-white text-[10px] text-center py-0.5">Cover</div>
+</div>
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAELXkCOgG8CgVo2zUpnDZvYTEfYhLWl1j-tELA13YU_hUThIIPMebS83oI1t2gTzPD64p0Q-1XOOpEwThnX67OfOt3H17w8OuVzEwKYwQQizGD3Q92z9sfbTB3NN2xfrcfscTlifWdiLimQrWEPj3JdSYCYmzQUy4IhmMFwr4hmc-yC3t2kOqFhAsF45qFwyQ7TEJkEqQ_AFw2D_6uKODRpMD4s2efeFz7rIrauIXk8W8uxC25w7VU">
+</div>
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWZuFdfO16lUs6ZR35sPlF7NxXn3cgwVlJkS43QqUTZpjNpDFn-_pPrBSHy0W8jDaRQlHmiRTxF6t8ROh8KYmN42uImcWWkohiA_yW_M-8vJIUDz7QoM36zLjSbu8H52bG5ZffYRf3z9Cse-q5kouj1tgfevO84j4l1DWa-RrJWOgISXgE9lBUcuzQLXByZ-N5dPDUX8_DiO_8XyDQBHB4owPxej2sfgVRQf_iYUiovlPkz-4nnRbe">
+</div>
+<div class="w-[70px] h-[70px] border border-dashed border-mpx-border rounded flex items-center justify-center text-on-surface-variant cursor-pointer hover:bg-slate-50">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Pricing &amp; Trade Terms</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Price (INR)</label>
+<input class="mpx-input" type="text" value="220">
+</div>
+<div>
+<label class="mpx-label">Minimum Order Quantity</label>
+<input class="mpx-input" type="text" value="500 meters">
+</div>
+<div>
+<label class="mpx-label">HS Code</label>
+<input class="mpx-input" type="text" value="5208.31.00">
+</div>
+<div>
+<label class="mpx-label">Country of Origin</label>
+<input class="mpx-input" type="text" value="India">
+</div>
+</div>
+</div>
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Technical Specifications</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Material</label>
+<input class="mpx-input" type="text" value="100% Cotton">
+</div>
+<div>
+<label class="mpx-label">GSM</label>
+<input class="mpx-input" type="text" value="120">
+</div>
+<div>
+<label class="mpx-label">Weave</label>
+<input class="mpx-input" type="text" value="Poplin">
+</div>
+<div>
+<label class="mpx-label">Width</label>
+<input class="mpx-input" type="text" value="58 inches">
+</div>
+<div>
+<label class="mpx-label">Shrinkage</label>
+<input class="mpx-input" type="text" value="&lt; 3%">
+</div>
+<div class="flex items-center justify-between">
+<label class="mpx-label mb-0">Organic</label>
+<div class="w-10 h-6 bg-primary-container rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-4 mb-6">
+<button class="w-full bg-primary-container text-white font-label-md text-label-md py-3 rounded-full hover:bg-opacity-90">Save changes</button>
+<button class="w-full text-on-surface-variant font-label-md text-label-md py-2 hover:underline">Cancel</button>
+</div>
+</div>
+</div>
+<!-- SCREEN 3 — TAKEN-DOWN -->
+<div class="mobile-view flex flex-col">
+<div class="bg-mpx-navy h-16 flex justify-between items-center px-4 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 rounded-full hover:bg-white/10">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-white font-headline-md text-headline-md tracking-tight">MPX Global</div>
+<div class="w-8 h-8 rounded-full bg-slate-300 overflow-hidden border border-white/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a business executive in a modern office environment, warm lighting, highly detailed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIVx6rAul-H-aaiV9m6YZsJkbUxY6MITTj_XynowsBXIz_2debks4VhS0IKCpjYw65tJ6OrJjKqeTYeE6AZ1-GcJcnkrgUikKNPTwMenK5M-xYCqyhdD-WCNRSNN2VjglFqL-ydfNxOkoi-Yo1HvrzN4ySRH1Cor5p0UraSTj_YQy7YBuJI2lrcM31tzw-bBRPujBFWZ0WHkn0yrZualm8xAtDnVJvnYGnGOZ6W0lLwkRkjGb3kdFi">
+</div>
+</div>
+<div class="bg-error-container text-on-error-container p-3 font-body-md text-[14px]">
+    Removed by the MPX team on 02 Mar 2026 — Images do not match the product described.
+</div>
+<div class="p-4 flex flex-col gap-4 overflow-y-auto">
+<div class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+                Products <span class="material-symbols-outlined text-[16px]">chevron_right</span> Edit product
+            </div>
+<div class="flex flex-col gap-3 mb-2">
+<h1 class="font-headline-md text-headline-md text-on-surface">Combed Cotton Poplin Fabric, 120 GSM</h1>
+<div class="flex items-center gap-2">
+<span class="bg-emerald-100 text-emerald-800 font-label-sm text-label-sm px-2 py-1 rounded-full flex items-center gap-1">
+<div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> Live
+                    </span>
+<span class="bg-error-container text-on-error-container font-label-sm text-label-sm px-2 py-1 rounded-full flex items-center gap-1">Taken down</span>
+</div>
+<div class="flex items-center gap-4 mt-2">
+<button class="border border-slate-300 text-slate-400 font-label-md text-label-md px-4 py-2 rounded-full cursor-not-allowed">Hide</button>
+<button class="bg-slate-300 text-slate-500 font-label-md text-label-md px-4 py-2 rounded-full cursor-not-allowed">Publish</button>
+</div>
+<p class="text-[12px] text-on-surface-variant mt-1">This product was removed by the MPX team and can't be changed until it's restored.</p>
+</div>
+<div class="mpx-card">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Category</span>
+<button class="text-primary-container font-label-md text-label-md hover:underline">Change</button>
+</div>
+<div class="font-body-md text-body-md text-on-surface flex flex-wrap items-center gap-2">
+                    Textiles, Fabrics &amp; Yarn 
+                    <span class="material-symbols-outlined text-[16px] text-outline">arrow_right_alt</span> 
+                    Cotton fabric
+                </div>
+</div>
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Details</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Product Name</label>
+<input class="mpx-input" type="text" value="Combed Cotton Poplin Fabric, 120 GSM">
+<p class="text-[12px] text-on-surface-variant mt-1">Your product's web address stays the same</p>
+</div>
+<div>
+<label class="mpx-label">Description</label>
+<textarea class="mpx-input" rows="4">Premium combed cotton poplin fabric. Soft and durable, suitable for shirting and summer apparel. Available in multiple colors.</textarea>
+<div class="text-right text-[12px] text-on-surface-variant mt-1">412/5,000</div>
+</div>
+<div>
+<label class="mpx-label">Images</label>
+<div class="flex gap-2 mt-2">
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden relative">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjeWYINcxQE2elQQGT-h_HnLJY6WqFyypvjrMolYMWJ2L2jIRQ4MJyUrwcX8BMxtMIjFA80qOjDZc12iMELYtIY5KqJX81aZ6te2LymkQi_GKf2WWvu-HyfpM8kOLAIOOJwnV0ccSblkQ55MR81NSy8bsi2XDxygiv4C2xHTEzSxVgRshRxmjrLxDhgvYs0Epd7BURsvbHCLxYxjMs3YqcbbyatzHjGUdwlh2N2Kxnq2KoSKlvI5WB">
+<div class="absolute bottom-0 w-full bg-black/60 text-white text-[10px] text-center py-0.5">Cover</div>
+</div>
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAycxCdRWRr2NG7ae0EvwZsOL2viwdhafSMHT3PdYSxmNxKif9xzTwIhsCLj0ft65S6ItcRGMrsQV27NxIl8lt0tEd7EZUXMv4BXsLF5mLwulS5bi_6Sn7cf-5slMCi5uABMlY73-RSITmi9andMA5yT_XLIUGN3bPcqNg8P4d0nrpaDh8imHkK0rUUvyTmZKFlP0reVyrcWaoMVetQRt0DMG0yVmRTU8XLnrWgbd7f5KBGrkhKgHZ">
+</div>
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfScspQ77t_wrr9bR7yjaFVigxrHQOg-3ydvs0G5BcFLW2SkzpfZFE0YkFILkqkebq5bolWhtPNnr1S-OnKCfqCPJNfnIk_kzVu7A9a3GuvRyfQa69cqkcT7DOQfa6ALt2SFOXgltu7TMljlE1Yzz4IrLctE3vFPi9rwm-gIKM6a0y6PB85xEBGtG3XZsiKBb8MpRoj9Z3OQch1v8tyVshriP5rONNhKBhud4BbwNCHh1Dc9L702FL">
+</div>
+<div class="w-[70px] h-[70px] border border-dashed border-mpx-border rounded flex items-center justify-center text-on-surface-variant cursor-pointer hover:bg-slate-50">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Pricing &amp; Trade Terms</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Price (INR)</label>
+<input class="mpx-input" type="text" value="220">
+</div>
+<div>
+<label class="mpx-label">Minimum Order Quantity</label>
+<input class="mpx-input" type="text" value="500 meters">
+</div>
+<div>
+<label class="mpx-label">HS Code</label>
+<input class="mpx-input" type="text" value="5208.31.00">
+</div>
+<div>
+<label class="mpx-label">Country of Origin</label>
+<input class="mpx-input" type="text" value="India">
+</div>
+</div>
+</div>
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Technical Specifications</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Material</label>
+<input class="mpx-input" type="text" value="100% Cotton">
+</div>
+<div>
+<label class="mpx-label">GSM</label>
+<input class="mpx-input" type="text" value="120">
+</div>
+<div>
+<label class="mpx-label">Weave</label>
+<input class="mpx-input" type="text" value="Poplin">
+</div>
+<div>
+<label class="mpx-label">Width</label>
+<input class="mpx-input" type="text" value="58 inches">
+</div>
+<div>
+<label class="mpx-label">Shrinkage</label>
+<input class="mpx-input" type="text" value="&lt; 3%">
+</div>
+<div class="flex items-center justify-between">
+<label class="mpx-label mb-0">Organic</label>
+<div class="w-10 h-6 bg-primary-container rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-4 mb-6">
+<button class="w-full bg-primary-container text-white font-label-md text-label-md py-3 rounded-full hover:bg-opacity-90">Save changes</button>
+<button class="w-full text-on-surface-variant font-label-md text-label-md py-2 hover:underline">Cancel</button>
+</div>
+</div>
+</div>
+<!-- SCREEN 4 — ARCHIVED -->
+<div class="mobile-view flex flex-col">
+<div class="bg-mpx-navy h-16 flex justify-between items-center px-4 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 rounded-full hover:bg-white/10">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-white font-headline-md text-headline-md tracking-tight">MPX Global</div>
+<div class="w-8 h-8 rounded-full bg-slate-300 overflow-hidden border border-white/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a business executive in a modern office environment, warm lighting, highly detailed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIVx6rAul-H-aaiV9m6YZsJkbUxY6MITTj_XynowsBXIz_2debks4VhS0IKCpjYw65tJ6OrJjKqeTYeE6AZ1-GcJcnkrgUikKNPTwMenK5M-xYCqyhdD-WCNRSNN2VjglFqL-ydfNxOkoi-Yo1HvrzN4ySRH1Cor5p0UraSTj_YQy7YBuJI2lrcM31tzw-bBRPujBFWZ0WHkn0yrZualm8xAtDnVJvnYGnGOZ6W0lLwkRkjGb3kdFi">
+</div>
+</div>
+<div class="p-4 flex flex-col gap-4 overflow-y-auto">
+<div class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+                Products <span class="material-symbols-outlined text-[16px]">chevron_right</span> Edit product
+            </div>
+<div class="flex flex-col gap-3 mb-2">
+<h1 class="font-headline-md text-headline-md text-on-surface">Combed Cotton Poplin Fabric, 120 GSM</h1>
+</div>
+<div class="flex flex-col items-center justify-center mt-20 text-center px-4">
+<span class="material-symbols-outlined text-[48px] text-slate-400 mb-4">archive</span>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">This product is archived</h2>
+<p class="text-on-surface-variant mb-6 text-[14px]">Archived products can't be edited or restored.</p>
+<button class="bg-primary-container text-white font-label-md text-label-md px-6 py-3 rounded-full hover:bg-opacity-90">Create a new listing</button>
+</div>
+</div>
+</div>
+<!-- SCREEN 5 — PUBLISH BLOCKED -->
+<div class="mobile-view flex flex-col">
+<div class="bg-mpx-navy h-16 flex justify-between items-center px-4 w-full shrink-0">
+<button class="text-white flex items-center justify-center p-2 rounded-full hover:bg-white/10">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="text-white font-headline-md text-headline-md tracking-tight">MPX Global</div>
+<div class="w-8 h-8 rounded-full bg-slate-300 overflow-hidden border border-white/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a business executive in a modern office environment, warm lighting, highly detailed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIVx6rAul-H-aaiV9m6YZsJkbUxY6MITTj_XynowsBXIz_2debks4VhS0IKCpjYw65tJ6OrJjKqeTYeE6AZ1-GcJcnkrgUikKNPTwMenK5M-xYCqyhdD-WCNRSNN2VjglFqL-ydfNxOkoi-Yo1HvrzN4ySRH1Cor5p0UraSTj_YQy7YBuJI2lrcM31tzw-bBRPujBFWZ0WHkn0yrZualm8xAtDnVJvnYGnGOZ6W0lLwkRkjGb3kdFi">
+</div>
+</div>
+<div class="p-4 flex flex-col gap-4 overflow-y-auto">
+<div class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+                Products <span class="material-symbols-outlined text-[16px]">chevron_right</span> Edit product
+            </div>
+<div class="flex flex-col gap-3 mb-2">
+<h1 class="font-headline-md text-headline-md text-on-surface">Combed Cotton Poplin Fabric, 120 GSM</h1>
+<div class="flex items-center gap-2">
+<span class="bg-slate-200 text-slate-800 font-label-sm text-label-sm px-2 py-1 rounded-full flex items-center gap-1">
+                    Draft
+                </span>
+</div>
+<div class="flex items-center gap-4 mt-2">
+<button class="bg-primary-container text-white font-label-md text-label-md px-4 py-2 rounded-full hover:bg-opacity-90">Publish</button>
+<button class="text-error font-label-md text-label-md hover:underline">Delete</button>
+</div>
+</div>
+<div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded text-sm text-amber-900">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-amber-600 text-[20px]">warning</span>
+<div class="">
+            Add <a class="underline font-medium" href="#">Material</a> and <a class="underline font-medium" href="#">GSM</a> before publishing.
+        </div>
+</div>
+</div>
+<div class="mpx-card">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Category</span>
+<button class="text-primary-container font-label-md text-label-md hover:underline">Change</button>
+</div>
+<div class="font-body-md text-body-md text-on-surface flex flex-wrap items-center gap-2">
+                    Textiles, Fabrics &amp; Yarn 
+                    <span class="material-symbols-outlined text-[16px] text-outline">arrow_right_alt</span> 
+                    Cotton fabric
+                </div>
+</div>
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Details</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Product Name</label>
+<input class="mpx-input" type="text" value="Combed Cotton Poplin Fabric, 120 GSM">
+<p class="text-[12px] text-on-surface-variant mt-1">Your product's web address stays the same</p>
+</div>
+<div>
+<label class="mpx-label">Description</label>
+<textarea class="mpx-input" rows="4">Premium combed cotton poplin fabric. Soft and durable, suitable for shirting and summer apparel. Available in multiple colors.</textarea>
+<div class="text-right text-[12px] text-on-surface-variant mt-1">412/5,000</div>
+</div>
+<div>
+<label class="mpx-label">Images</label>
+<div class="flex gap-2 mt-2">
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden relative">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsiKA9QLLPQ4X3WM41WmMtNw0QHjIbja_kONEeM2uGve37JjK3K4on2YdehMV1eRiOJ0yK-xzSgyTrAqmc4jjKGkyFNNIhe4yJbtNZQ6aQl0Yaie2I-oGyN_h1UJH7u9gD7BSvQ8NK3QaYx84EutflT3tLSP7mxhde_ySj1zs6kh6tArxT5LWIslzYV56jl8kBs7maPQKaU62ZOASuTx4oZuZ9c0XlVuqERvWMtGGhCdGuIcrtIXiE">
+<div class="absolute bottom-0 w-full bg-black/60 text-white text-[10px] text-center py-0.5">Cover</div>
+</div>
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmudrK__UjMzCeZ0yoZMevZiCJS3SP-0hGITgGM-frJ3dUdgi25ZCmmUqoQbT0B3GMjOGdvWbWyjrZ0iuNsewkSnLaVKfDgkqyTIEU4MbAmHJsCAIVQrnyTsQS01YivtgV7stgBh-vZicIHcokomTXsSWACzrQD2dKtrlAzQsUqnlwqCySS8zFl1smh8QQ3lzvGggMq9V2xRBBLdZG2O0g0auW9BwTe4Fux25sQegu2qzo1X1iJ-wZ">
+</div>
+<div class="w-[70px] h-[70px] bg-slate-200 rounded overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCUJI_dM-c_VvqOBnYdoGqxTf0weRJlnBqcGlYwC57LstNQSSM4-PKqYvijr1CkK0bP1RanGdim3VL6M33EQrByNQOT3x3k-4n_PEmUbgWxRaWZ8AAJ3s67T30ENpQK0q48zN8MSDQOzDitEdjULjYHYWVFFHNBtSmDaNlI1EhzJ_G59aKslmY3550nECjzahAO6xBZ6YLlfWK9vNkX2Fjjsdn_8RMUFmveUjeTEPl_mx6a0vT-BxA">
+</div>
+<div class="w-[70px] h-[70px] border border-dashed border-mpx-border rounded flex items-center justify-center text-on-surface-variant cursor-pointer hover:bg-slate-50">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Pricing &amp; Trade Terms</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label">Price (INR)</label>
+<input class="mpx-input" type="text" value="220">
+</div>
+<div>
+<label class="mpx-label">Minimum Order Quantity</label>
+<input class="mpx-input" type="text" value="500 meters">
+</div>
+<div>
+<label class="mpx-label">HS Code</label>
+<input class="mpx-input" type="text" value="5208.31.00">
+</div>
+<div>
+<label class="mpx-label">Country of Origin</label>
+<input class="mpx-input" type="text" value="India">
+</div>
+</div>
+</div>
+<div class="mpx-card">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Technical Specifications</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="mpx-label text-amber-600">Material</label>
+<input class="mpx-input border-amber-500 focus:border-amber-600" type="text" value="">
+</div>
+<div>
+<label class="mpx-label text-amber-600">GSM</label>
+<input class="mpx-input border-amber-500 focus:border-amber-600" type="text" value="">
+</div>
+<div>
+<label class="mpx-label">Weave</label>
+<input class="mpx-input" type="text" value="Poplin">
+</div>
+<div>
+<label class="mpx-label">Width</label>
+<input class="mpx-input" type="text" value="58 inches">
+</div>
+<div>
+<label class="mpx-label">Shrinkage</label>
+<input class="mpx-input" type="text" value="&lt; 3%">
+</div>
+<div class="flex items-center justify-between">
+<label class="mpx-label mb-0">Organic</label>
+<div class="w-10 h-6 bg-primary-container rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-4 mb-6">
+<button class="w-full bg-primary-container text-white font-label-md text-label-md py-3 rounded-full hover:bg-opacity-90">Save changes</button>
+<button class="w-full text-on-surface-variant font-label-md text-label-md py-2 hover:underline">Cancel</button>
+</div>
+</div>
+</div>
+
+
+</body></html>

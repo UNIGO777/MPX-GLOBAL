@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global Admin - Categories Complete</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "surface-variant": "#e2e1ee",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#444655",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#66f29e",
+                        "on-primary-container": "#d0d6ff",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "primary-container": "#2a4de0",
+                        "surface-tint": "#2a4de0",
+                        "error": "#ba1a1a",
+                        "tertiary": "#00522c",
+                        "surface-container-highest": "#e2e1ee",
+                        "surface-container-low": "#f4f2ff",
+                        "on-tertiary-fixed": "#00210e",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#091c32",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#eeedf9",
+                        "outline": "#747687",
+                        "surface-dim": "#dad9e5",
+                        "on-secondary-container": "#53647d",
+                        "background": "#EAEEFF", /* Canvas base */
+                        "inverse-surface": "#2f3039",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#e8e7f3",
+                        "tertiary-fixed": "#70fda7",
+                        "primary-fixed": "#dee1ff",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "on-surface": "#1a1b24",
+                        "surface": "#ffffff", /* Card base */
+                        "surface-bright": "#fbf8ff",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "inverse-primary": "#b9c3ff",
+                        "outline-variant": "#c4c5d8",
+                        "on-primary-fixed": "#001158",
+                        "secondary-container": "#cfe1ff",
+                        "on-background": "#1a1b24",
+                        "primary": "#1A2E8F", /* Deep Navy for brand */
+                        "tertiary-container": "#006d3c",
+                        "on-secondary-fixed-variant": "#374860",
+                        "secondary-fixed": "#d4e3ff",
+                        "inverse-on-surface": "#f1effc",
+                        "secondary": "#4e5f79"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "container-max": "1200px",
+                        "stack-lg": "32px",
+                        "gutter": "24px",
+                        "card-padding": "40px",
+                        "unit": "4px"
+                    },
+                    fontFamily: {
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    fontSize: {
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #EAEEFF; }
+        .frame-container { border: 1px solid #C5C6CF; height: 900px; overflow: hidden; position: relative; background: #1A2E8F; display: flex; }
+        .shell-layout { display: flex; flex-direction: column; flex: 1; }
+        .content-area { flex: 1; padding: 24px; overflow-y: auto; display: flex; gap: 24px; background: #EAEEFF; border-top-left-radius: 32px; }
+        
+        /* Sidebar Styles */
+        .side-nav { width: 260px; background-color: #1A2E8F; color: #ffffff; display: flex; flex-direction: column; flex-shrink: 0; }
+        .side-nav a { display: flex; items-center; gap: 12px; padding: 12px 16px; margin: 4px 8px; border-radius: 9999px; color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .side-nav a:hover { background-color: rgba(255,255,255,0.1); color: #ffffff; }
+        .side-nav a.active { background-color: #d0d6ff; color: #001158; } /* primary-container & on-primary-container logic */
+        
+        /* TopNav Styles */
+        .top-nav { height: 80px; background-color: #1A2E8F; color: #ffffff; display: flex; justify-content: flex-end; align-items: center; padding: 0 24px; z-index: 50; flex-shrink: 0; }
+        
+        /* Common UI Elements */
+        .card { background: #ffffff; border-radius: 8px; border: 1px solid #C5C6CF; padding: 24px; }
+        .btn-primary { background: #2A4DE0; color: #ffffff; padding: 8px 16px; border-radius: 9999px; font-size: 14px; font-weight: 500; transition: background 0.2s; }
+        .btn-primary:hover { background: #2340C4; }
+        .btn-secondary { background: transparent; color: #2A4DE0; border: 1px solid #2A4DE0; padding: 8px 16px; border-radius: 9999px; font-size: 14px; font-weight: 500; transition: background 0.2s; }
+        .btn-secondary:hover { background: #f4f2ff; }
+        .btn-danger { background: #ba1a1a; color: #ffffff; padding: 8px 16px; border-radius: 9999px; font-size: 14px; font-weight: 500; }
+        .input-field { border: 1px solid #C5C6CF; border-radius: 8px; padding: 8px 12px; font-size: 14px; width: 100%; outline: none; }
+        .input-field:focus { border-color: #2A4DE0; box-shadow: 0 0 0 2px rgba(42, 77, 224, 0.2); }
+        .toggle { width: 44px; height: 24px; background: #e2e1ee; border-radius: 12px; position: relative; cursor: pointer; transition: 0.2s; }
+        .toggle::after { content: ''; width: 20px; height: 20px; background: #ffffff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .toggle.active { background: #2A4DE0; }
+        .toggle.active::after { left: 22px; }
+        
+        .list-item { padding: 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .list-item:hover { background: #f4f2ff; }
+        .list-item.selected { background: #f4f2ff; border-left: 3px solid #2A4DE0; font-weight: 500; }
+        
+        .chip { background: #f4f2ff; color: #0032c3; padding: 4px 8px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
+        
+        /* Modal & Drawers */
+        .overlay { position: absolute; inset: 0; background: rgba(26, 27, 36, 0.4); z-index: 100; display: flex; align-items: center; justify-content: center; border-top-left-radius: 32px; left: 260px; top: 80px;}
+        .drawer { position: absolute; right: 0; top: 80px; bottom: 0; width: 400px; background: #ffffff; z-index: 101; box-shadow: -4px 0 24px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .modal { background: #ffffff; border-radius: 12px; padding: 32px; width: 100%; max-width: 480px; z-index: 101; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+        .spacer { height: 100px; background-color: #ffffff; border-top: 2px dashed #ccc; border-bottom: 2px dashed #ccc;}
+        
+        .table-header { font-size: 12px; font-weight: 600; color: #53647d; text-transform: uppercase; letter-spacing: 0.05em; padding: 12px 16px; border-bottom: 1px solid #e2e1ee; }
+        .table-cell { padding: 16px; border-bottom: 1px solid #e2e1ee; font-size: 14px; color: #1a1b24; }
+    </style>
+</head>
+<body class="p-8 flex flex-col">
+<!-- FRAME 1: Sub-category Edit Drawer -->
+<div class="frame-container">
+<!-- Side Nav -->
+<div class="side-nav">
+<div class="p-6 mb-2">
+<div class="font-headline-md font-bold text-white">MPX Global</div>
+</div>
+<a href="#"><span class="material-symbols-outlined">verified</span> Verifications</a>
+<a href="#"><span class="material-symbols-outlined">group</span> Users</a>
+<a class="active" href="#"><span class="material-symbols-outlined">category</span> Categories</a>
+<a href="#"><span class="material-symbols-outlined">inventory_2</span> Products</a>
+<a href="#"><span class="material-symbols-outlined">history</span> Audit log</a>
+<a href="#"><span class="material-symbols-outlined">settings</span> Settings</a>
+<div class="mt-auto mb-4">
+<a href="#"><span class="material-symbols-outlined">logout</span> Sign out</a>
+</div>
+</div>
+<div class="shell-layout">
+<!-- Top Nav -->
+<div class="top-nav">
+<div class="flex gap-4 items-center">
+<div class="text-right mr-2">
+<div class="font-label-md text-white">Priya Menon</div>
+<div class="text-xs text-white/70">Super admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar placeholder showing a generic silhouette for the admin user profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAl7APvS5pn9QoF6AMIWGNRsZ2LieUzeMHmDItxbgNrkMgrczQ51YBaQSevsIGnAB5JDZ7Bnuj4uMnGSREMeYqKnU3jVVD6noiMAwUF45sLLdDdCr6xjLioYJDhcYA_CQNfZyUzF-ffyXCXrPZq0r-Ut9txt6msMGs4kezayiO-4_GNjO1atLTpc4O3lFRLRzNbOWy2o7EBobG6yh9Yns33o6EYnMC0BE5nNmTUxOKkFUwciAhiFIv"/>
+</div>
+</div>
+</div>
+<!-- Content Base -->
+<div class="content-area">
+<!-- Left Pane -->
+<div class="card w-1/3 flex flex-col gap-2 overflow-y-auto">
+<div class="font-headline-lg-mobile mb-4">Categories</div>
+<div class="list-item selected">
+<span>Textiles, Fabrics &amp; Yarn</span>
+</div>
+<div class="list-item"><span>Apparel &amp; Garments</span></div>
+<div class="list-item"><span>Agriculture &amp; Food Products</span></div>
+<div class="list-item"><span>Chemicals &amp; Dyes</span></div>
+<div class="list-item"><span>Leather &amp; Footwear</span></div>
+<div class="list-item text-outline"><span>Handicrafts &amp; Home Decor (INACTIVE)</span></div>
+<div class="list-item"><span>Engineering &amp; Machinery</span></div>
+<div class="list-item"><span>Gems &amp; Jewellery</span></div>
+<div class="list-item"><span>Pharmaceuticals &amp; Healthcare</span></div>
+<div class="list-item text-outline"><span>IT, Software &amp; AI Services (INACTIVE)</span></div>
+<div class="list-item"><span>Packaging &amp; Printing</span></div>
+<div class="list-item"><span>Other</span></div>
+</div>
+<!-- Right Pane -->
+<div class="card flex-1 flex flex-col gap-6">
+<div class="font-headline-lg-mobile">Textiles, Fabrics &amp; Yarn</div>
+</div>
+</div>
+</div>
+<!-- Overlay & Drawer -->
+<div class="overlay"></div>
+<div class="drawer">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface">
+<div class="font-headline-md text-on-surface">Edit sub-category</div>
+<span class="material-symbols-outlined cursor-pointer text-on-surface-variant">close</span>
+</div>
+<div class="p-6 flex-1 overflow-y-auto flex flex-col gap-6 bg-surface">
+<div>
+<label class="block font-label-md text-on-surface-variant mb-1">Parent Category</label>
+<div class="font-body-md text-on-surface">Textiles, Fabrics &amp; Yarn</div>
+</div>
+<div>
+<label class="block font-label-md text-on-surface-variant mb-1">Name</label>
+<input class="input-field" type="text" value="Cotton fabric"/>
+</div>
+<div>
+<label class="block font-label-md text-on-surface-variant mb-1">Slug</label>
+<input class="input-field bg-surface-variant text-on-surface-variant" readonly="" type="text" value="cotton-fabric"/>
+<div class="text-xs text-outline mt-1">The web address is fixed once created</div>
+</div>
+<div>
+<label class="block font-label-md text-on-surface-variant mb-1">Type</label>
+<div class="input-field bg-surface-variant text-on-surface-variant">Goods</div>
+<div class="text-xs text-outline mt-1">Can't change: products exist in this category</div>
+</div>
+<div>
+<label class="block font-label-md text-on-surface-variant mb-1">Display order</label>
+<input class="input-field w-24" type="number" value="1"/>
+</div>
+<div>
+<label class="block font-label-md text-on-surface-variant mb-2">Image</label>
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 bg-surface-variant rounded flex items-center justify-center border border-outline-variant overflow-hidden">
+<span class="material-symbols-outlined text-outline">image</span>
+</div>
+<div>
+<button class="font-label-md text-primary hover:underline">Replace image</button>
+<div class="text-xs text-outline mt-1">PNG, JPG up to 2MB. Recommended 800x800px.</div>
+</div>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-on-surface-variant mb-1">Synonyms</label>
+<div class="flex flex-wrap gap-2 mb-2">
+<span class="chip">cotton <span class="material-symbols-outlined text-[14px]">close</span></span>
+<span class="chip">poplin <span class="material-symbols-outlined text-[14px]">close</span></span>
+<span class="chip">woven <span class="material-symbols-outlined text-[14px]">close</span></span>
+</div>
+<input class="input-field" placeholder="Add synonym and press enter" type="text"/>
+</div>
+</div>
+<div class="p-6 border-t border-outline-variant bg-surface-container-lowest flex justify-end gap-4">
+<button class="font-label-md text-secondary">Cancel</button>
+<button class="btn-primary">Save changes</button>
+</div>
+</div>
+</div>
+<div class="spacer"></div>
+<!-- FRAME 2: Cascade Confirmation Modal -->
+<div class="frame-container">
+<!-- Side Nav -->
+<div class="side-nav">
+<div class="p-6 mb-2">
+<div class="font-headline-md font-bold text-white">MPX Global</div>
+</div>
+<a href="#"><span class="material-symbols-outlined">verified</span> Verifications</a>
+<a href="#"><span class="material-symbols-outlined">group</span> Users</a>
+<a class="active" href="#"><span class="material-symbols-outlined">category</span> Categories</a>
+<a href="#"><span class="material-symbols-outlined">inventory_2</span> Products</a>
+<a href="#"><span class="material-symbols-outlined">history</span> Audit log</a>
+<a href="#"><span class="material-symbols-outlined">settings</span> Settings</a>
+<div class="mt-auto mb-4">
+<a href="#"><span class="material-symbols-outlined">logout</span> Sign out</a>
+</div>
+</div>
+<div class="shell-layout">
+<!-- Top Nav -->
+<div class="top-nav">
+<div class="flex gap-4 items-center">
+<div class="text-right mr-2">
+<div class="font-label-md text-white">Priya Menon</div>
+<div class="text-xs text-white/70">Super admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar placeholder showing a generic silhouette for the admin user profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAl7APvS5pn9QoF6AMIWGNRsZ2LieUzeMHmDItxbgNrkMgrczQ51YBaQSevsIGnAB5JDZ7Bnuj4uMnGSREMeYqKnU3jVVD6noiMAwUF45sLLdDdCr6xjLioYJDhcYA_CQNfZyUzF-ffyXCXrPZq0r-Ut9txt6msMGs4kezayiO-4_GNjO1atLTpc4O3lFRLRzNbOWy2o7EBobG6yh9Yns33o6EYnMC0BE5nNmTUxOKkFUwciAhiFIv"/>
+</div>
+</div>
+</div>
+<div class="content-area">
+<div class="card w-1/3 flex flex-col gap-2 overflow-y-auto">
+<div class="font-headline-lg-mobile mb-4">Categories</div>
+<div class="list-item selected">
+<span>Textiles, Fabrics &amp; Yarn</span>
+</div>
+<div class="list-item"><span>Apparel &amp; Garments</span></div>
+<div class="list-item"><span>Agriculture &amp; Food Products</span></div>
+<div class="list-item"><span>Chemicals &amp; Dyes</span></div>
+<div class="list-item"><span>Leather &amp; Footwear</span></div>
+<div class="list-item text-outline"><span>Handicrafts &amp; Home Decor (INACTIVE)</span></div>
+<div class="list-item"><span>Engineering &amp; Machinery</span></div>
+<div class="list-item"><span>Gems &amp; Jewellery</span></div>
+<div class="list-item"><span>Pharmaceuticals &amp; Healthcare</span></div>
+<div class="list-item text-outline"><span>IT, Software &amp; AI Services (INACTIVE)</span></div>
+<div class="list-item"><span>Packaging &amp; Printing</span></div>
+<div class="list-item"><span>Other</span></div>
+</div>
+<div class="card flex-1 flex flex-col gap-6">
+<div class="font-headline-lg-mobile">Textiles, Fabrics &amp; Yarn</div>
+</div>
+</div>
+</div>
+<div class="overlay">
+<div class="modal flex flex-col gap-6 text-center items-center">
+<div class="w-12 h-12 rounded-full bg-error-container text-error flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[28px]">warning</span>
+</div>
+<div class="font-headline-md text-on-surface">Turn off Textiles, Fabrics &amp; Yarn?</div>
+<div class="font-body-md text-on-surface-variant text-left">This hides Textiles, Fabrics &amp; Yarn and all 8 of its sub-categories from the catalogue. Every product in them disappears from public view until you reactivate. Sub-categories you had already switched off individually will stay off when you reactivate.</div>
+<div class="flex justify-end gap-4 w-full mt-4">
+<button class="font-label-md text-secondary px-4 py-2">Cancel</button>
+<button class="btn-danger">Turn off category</button>
+</div>
+</div>
+</div>
+</div>
+<div class="spacer"></div>
+<!-- FRAME 3: Delete Refused inline error state -->
+<div class="frame-container">
+<!-- Side Nav -->
+<div class="side-nav">
+<div class="p-6 mb-2">
+<div class="font-headline-md font-bold text-white">MPX Global</div>
+</div>
+<a href="#"><span class="material-symbols-outlined">verified</span> Verifications</a>
+<a href="#"><span class="material-symbols-outlined">group</span> Users</a>
+<a class="active" href="#"><span class="material-symbols-outlined">category</span> Categories</a>
+<a href="#"><span class="material-symbols-outlined">inventory_2</span> Products</a>
+<a href="#"><span class="material-symbols-outlined">history</span> Audit log</a>
+<a href="#"><span class="material-symbols-outlined">settings</span> Settings</a>
+<div class="mt-auto mb-4">
+<a href="#"><span class="material-symbols-outlined">logout</span> Sign out</a>
+</div>
+</div>
+<div class="shell-layout">
+<!-- Top Nav -->
+<div class="top-nav">
+<div class="flex gap-4 items-center">
+<div class="text-right mr-2">
+<div class="font-label-md text-white">Priya Menon</div>
+<div class="text-xs text-white/70">Super admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar placeholder showing a generic silhouette for the admin user profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAl7APvS5pn9QoF6AMIWGNRsZ2LieUzeMHmDItxbgNrkMgrczQ51YBaQSevsIGnAB5JDZ7Bnuj4uMnGSREMeYqKnU3jVVD6noiMAwUF45sLLdDdCr6xjLioYJDhcYA_CQNfZyUzF-ffyXCXrPZq0r-Ut9txt6msMGs4kezayiO-4_GNjO1atLTpc4O3lFRLRzNbOWy2o7EBobG6yh9Yns33o6EYnMC0BE5nNmTUxOKkFUwciAhiFIv"/>
+</div>
+</div>
+</div>
+<div class="content-area flex-col">
+<div class="bg-error-container text-on-error-container p-4 rounded-md flex items-center justify-between w-full">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined">error</span>
+<span class="font-body-md">Can't delete — 12 products use this category. Deactivate it instead.</span>
+</div>
+<button class="bg-white text-error px-4 py-2 rounded-full font-label-md border border-error-container hover:bg-red-50 transition-colors">Deactivate</button>
+</div>
+<div class="flex gap-24 w-full h-full">
+<div class="card w-1/3 flex flex-col gap-2 overflow-y-auto">
+<div class="font-headline-lg-mobile mb-4">Categories</div>
+<div class="list-item selected">
+<span>Textiles, Fabrics &amp; Yarn</span>
+</div>
+<div class="list-item"><span>Apparel &amp; Garments</span></div>
+<div class="list-item"><span>Agriculture &amp; Food Products</span></div>
+<div class="list-item"><span>Chemicals &amp; Dyes</span></div>
+<div class="list-item"><span>Leather &amp; Footwear</span></div>
+<div class="list-item text-outline"><span>Handicrafts &amp; Home Decor (INACTIVE)</span></div>
+<div class="list-item"><span>Engineering &amp; Machinery</span></div>
+<div class="list-item"><span>Gems &amp; Jewellery</span></div>
+<div class="list-item"><span>Pharmaceuticals &amp; Healthcare</span></div>
+<div class="list-item text-outline"><span>IT, Software &amp; AI Services (INACTIVE)</span></div>
+<div class="list-item"><span>Packaging &amp; Printing</span></div>
+<div class="list-item"><span>Other</span></div>
+</div>
+<div class="card flex-1 flex flex-col gap-6">
+<div class="font-headline-lg-mobile">Textiles, Fabrics &amp; Yarn</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="spacer"></div>
+<!-- FRAME 4: Activation Refused inline warning state -->
+<div class="frame-container">
+<!-- Side Nav -->
+<div class="side-nav">
+<div class="p-6 mb-2">
+<div class="font-headline-md font-bold text-white">MPX Global</div>
+</div>
+<a href="#"><span class="material-symbols-outlined">verified</span> Verifications</a>
+<a href="#"><span class="material-symbols-outlined">group</span> Users</a>
+<a class="active" href="#"><span class="material-symbols-outlined">category</span> Categories</a>
+<a href="#"><span class="material-symbols-outlined">inventory_2</span> Products</a>
+<a href="#"><span class="material-symbols-outlined">history</span> Audit log</a>
+<a href="#"><span class="material-symbols-outlined">settings</span> Settings</a>
+<div class="mt-auto mb-4">
+<a href="#"><span class="material-symbols-outlined">logout</span> Sign out</a>
+</div>
+</div>
+<div class="shell-layout">
+<!-- Top Nav -->
+<div class="top-nav">
+<div class="flex gap-4 items-center">
+<div class="text-right mr-2">
+<div class="font-label-md text-white">Priya Menon</div>
+<div class="text-xs text-white/70">Super admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar placeholder showing a generic silhouette for the admin user profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAl7APvS5pn9QoF6AMIWGNRsZ2LieUzeMHmDItxbgNrkMgrczQ51YBaQSevsIGnAB5JDZ7Bnuj4uMnGSREMeYqKnU3jVVD6noiMAwUF45sLLdDdCr6xjLioYJDhcYA_CQNfZyUzF-ffyXCXrPZq0r-Ut9txt6msMGs4kezayiO-4_GNjO1atLTpc4O3lFRLRzNbOWy2o7EBobG6yh9Yns33o6EYnMC0BE5nNmTUxOKkFUwciAhiFIv"/>
+</div>
+</div>
+</div>
+<div class="content-area flex-col">
+<div class="bg-amber-100 text-amber-800 p-4 rounded-md flex items-center gap-2 w-full border border-amber-200">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-body-md">Turn on Handicrafts &amp; Home Decor first — a sub-category can't be active under an inactive parent.</span>
+</div>
+<div class="flex gap-24 w-full h-full">
+<div class="card w-1/3 flex flex-col gap-2 overflow-y-auto">
+<div class="font-headline-lg-mobile mb-4">Categories</div>
+<div class="list-item"><span>Textiles, Fabrics &amp; Yarn</span></div>
+<div class="list-item"><span>Apparel &amp; Garments</span></div>
+<div class="list-item"><span>Agriculture &amp; Food Products</span></div>
+<div class="list-item"><span>Chemicals &amp; Dyes</span></div>
+<div class="list-item"><span>Leather &amp; Footwear</span></div>
+<div class="list-item selected text-outline"><span>Handicrafts &amp; Home Decor (INACTIVE)</span></div>
+<div class="list-item"><span>Engineering &amp; Machinery</span></div>
+<div class="list-item"><span>Gems &amp; Jewellery</span></div>
+<div class="list-item"><span>Pharmaceuticals &amp; Healthcare</span></div>
+<div class="list-item text-outline"><span>IT, Software &amp; AI Services (INACTIVE)</span></div>
+<div class="list-item"><span>Packaging &amp; Printing</span></div>
+<div class="list-item"><span>Other</span></div>
+</div>
+<div class="card flex-1 flex flex-col gap-6 overflow-hidden">
+<div class="flex justify-between items-center">
+<div class="font-headline-lg-mobile">Handicrafts &amp; Home Decor</div>
+<div class="toggle"></div>
+</div>
+<div class="overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr>
+<th class="table-header">Name</th>
+<th class="table-header">Type</th>
+<th class="table-header w-24 text-right">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class="table-cell font-medium">Wooden handicrafts</td><td class="table-cell text-on-surface-variant">Goods</td><td class="table-cell text-right"><div class="toggle ml-auto"></div></td></tr>
+<tr><td class="table-cell font-medium">Brass &amp; metal decor</td><td class="table-cell text-on-surface-variant">Goods</td><td class="table-cell text-right"><div class="toggle ml-auto"></div></td></tr>
+<tr><td class="table-cell font-medium">Pottery &amp; ceramics</td><td class="table-cell text-on-surface-variant">Goods</td><td class="table-cell text-right"><div class="toggle ml-auto"></div></td></tr>
+<tr><td class="table-cell font-medium">Wall art &amp; paintings</td><td class="table-cell text-on-surface-variant">Goods</td><td class="table-cell text-right"><div class="toggle ml-auto"></div></td></tr>
+<tr><td class="table-cell font-medium">Candles &amp; fragrance</td><td class="table-cell text-on-surface-variant">Goods</td><td class="table-cell text-right"><div class="toggle ml-auto"></div></td></tr>
+<tr><td class="table-cell font-medium">Rugs &amp; carpets</td><td class="table-cell text-on-surface-variant">Goods</td><td class="table-cell text-right"><div class="toggle ml-auto"></div></td></tr>
+<tr><td class="table-cell font-medium">Wooden furniture</td><td class="table-cell text-on-surface-variant">Goods</td><td class="table-cell text-right"><div class="toggle ml-auto"></div></td></tr>
+<tr><td class="table-cell font-medium">Festive &amp; religious decor</td><td class="table-cell text-on-surface-variant">Goods</td><td class="table-cell text-right"><div class="toggle ml-auto"></div></td></tr>
+<tr><td class="table-cell font-medium border-0">Garden decor</td><td class="table-cell text-on-surface-variant border-0">Goods</td><td class="table-cell text-right border-0"><div class="toggle ml-auto"></div></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="spacer"></div>
+<!-- FRAME 5: Read-Only Variant -->
+<div class="frame-container">
+<!-- Side Nav -->
+<div class="side-nav">
+<div class="p-6 mb-2">
+<div class="font-headline-md font-bold text-white">MPX Global</div>
+</div>
+<a href="#"><span class="material-symbols-outlined">verified</span> Verifications</a>
+<a href="#"><span class="material-symbols-outlined">group</span> Users</a>
+<a class="active" href="#"><span class="material-symbols-outlined">category</span> Categories</a>
+<a href="#"><span class="material-symbols-outlined">inventory_2</span> Products</a>
+<a href="#"><span class="material-symbols-outlined">history</span> Audit log</a>
+<a href="#"><span class="material-symbols-outlined">settings</span> Settings</a>
+<div class="mt-auto mb-4">
+<a href="#"><span class="material-symbols-outlined">logout</span> Sign out</a>
+</div>
+</div>
+<div class="shell-layout">
+<!-- Top Nav -->
+<div class="top-nav">
+<div class="flex gap-4 items-center">
+<div class="text-right mr-2">
+<div class="font-label-md text-white">Priya Menon</div>
+<div class="text-xs text-white/70">Super admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar placeholder showing a generic silhouette for the admin user profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAl7APvS5pn9QoF6AMIWGNRsZ2LieUzeMHmDItxbgNrkMgrczQ51YBaQSevsIGnAB5JDZ7Bnuj4uMnGSREMeYqKnU3jVVD6noiMAwUF45sLLdDdCr6xjLioYJDhcYA_CQNfZyUzF-ffyXCXrPZq0r-Ut9txt6msMGs4kezayiO-4_GNjO1atLTpc4O3lFRLRzNbOWy2o7EBobG6yh9Yns33o6EYnMC0BE5nNmTUxOKkFUwciAhiFIv"/>
+</div>
+</div>
+</div>
+<div class="content-area">
+<div class="card w-1/3 flex flex-col gap-2 overflow-y-auto">
+<div class="font-headline-lg-mobile mb-4">Categories</div>
+<div class="list-item selected">
+<span>Textiles, Fabrics &amp; Yarn</span>
+</div>
+<div class="list-item"><span>Apparel &amp; Garments</span></div>
+<div class="list-item"><span>Agriculture &amp; Food Products</span></div>
+<div class="list-item"><span>Chemicals &amp; Dyes</span></div>
+<div class="list-item"><span>Leather &amp; Footwear</span></div>
+<div class="list-item text-outline"><span>Handicrafts &amp; Home Decor (INACTIVE)</span></div>
+<div class="list-item"><span>Engineering &amp; Machinery</span></div>
+<div class="list-item"><span>Gems &amp; Jewellery</span></div>
+<div class="list-item"><span>Pharmaceuticals &amp; Healthcare</span></div>
+<div class="list-item text-outline"><span>IT, Software &amp; AI Services (INACTIVE)</span></div>
+<div class="list-item"><span>Packaging &amp; Printing</span></div>
+<div class="list-item"><span>Other</span></div>
+</div>
+<div class="card flex-1 flex flex-col gap-6 overflow-hidden">
+<div class="font-headline-lg-mobile">Textiles, Fabrics &amp; Yarn</div>
+<div class="overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr>
+<th class="table-header w-12">Image</th>
+<th class="table-header">Name</th>
+<th class="table-header">Type</th>
+<th class="table-header">Status</th>
+<th class="table-header">Fields</th>
+<th class="table-header w-16 text-right">Order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="table-cell"><div class="w-8 h-8 bg-surface-variant rounded flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-outline">image</span></div></td>
+<td class="table-cell font-medium">Cotton fabric</td>
+<td class="table-cell text-on-surface-variant">Goods</td>
+<td class="table-cell"><span class="text-green-700 font-medium text-xs bg-green-100 px-2 py-1 rounded">Active</span></td>
+<td class="table-cell text-on-surface-variant">6</td>
+<td class="table-cell text-right">1</td>
+</tr>
+<tr>
+<td class="table-cell"><div class="w-8 h-8 bg-surface-variant rounded flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-outline">image</span></div></td>
+<td class="table-cell font-medium">Silk fabric</td>
+<td class="table-cell text-on-surface-variant">Goods</td>
+<td class="table-cell"><span class="text-green-700 font-medium text-xs bg-green-100 px-2 py-1 rounded">Active</span></td>
+<td class="table-cell text-on-surface-variant">6</td>
+<td class="table-cell text-right">2</td>
+</tr>
+<tr>
+<td class="table-cell"><div class="w-8 h-8 bg-surface-variant rounded flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-outline">image</span></div></td>
+<td class="table-cell font-medium">Synthetic &amp; blended fabric</td>
+<td class="table-cell text-on-surface-variant">Goods</td>
+<td class="table-cell"><span class="text-green-700 font-medium text-xs bg-green-100 px-2 py-1 rounded">Active</span></td>
+<td class="table-cell text-on-surface-variant">5</td>
+<td class="table-cell text-right">3</td>
+</tr>
+<tr>
+<td class="table-cell"><div class="w-8 h-8 bg-surface-variant rounded flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-outline">image</span></div></td>
+<td class="table-cell font-medium">Yarn &amp; thread</td>
+<td class="table-cell text-on-surface-variant">Goods</td>
+<td class="table-cell"><span class="text-green-700 font-medium text-xs bg-green-100 px-2 py-1 rounded">Active</span></td>
+<td class="table-cell text-on-surface-variant">4</td>
+<td class="table-cell text-right">4</td>
+</tr>
+<tr>
+<td class="table-cell"><div class="w-8 h-8 bg-surface-variant rounded flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-outline">image</span></div></td>
+<td class="table-cell font-medium">Home textiles</td>
+<td class="table-cell text-on-surface-variant">Goods</td>
+<td class="table-cell"><span class="text-green-700 font-medium text-xs bg-green-100 px-2 py-1 rounded">Active</span></td>
+<td class="table-cell text-on-surface-variant">5</td>
+<td class="table-cell text-right">5</td>
+</tr>
+<tr>
+<td class="table-cell"><div class="w-8 h-8 bg-surface-variant rounded flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-outline">image</span></div></td>
+<td class="table-cell font-medium">Dyed &amp; printed fabric</td>
+<td class="table-cell text-on-surface-variant">Goods</td>
+<td class="table-cell"><span class="text-green-700 font-medium text-xs bg-green-100 px-2 py-1 rounded">Active</span></td>
+<td class="table-cell text-on-surface-variant">6</td>
+<td class="table-cell text-right">6</td>
+</tr>
+<tr class="opacity-50">
+<td class="table-cell"><div class="w-8 h-8 bg-surface-variant rounded flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-outline">image</span></div></td>
+<td class="table-cell font-medium">Denim</td>
+<td class="table-cell text-on-surface-variant">Goods</td>
+<td class="table-cell"><span class="text-gray-700 font-medium text-xs bg-gray-200 px-2 py-1 rounded">Inactive</span></td>
+<td class="table-cell text-on-surface-variant">4</td>
+<td class="table-cell text-right">7</td>
+</tr>
+<tr>
+<td class="table-cell border-0"><div class="w-8 h-8 bg-surface-variant rounded flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-outline">image</span></div></td>
+<td class="table-cell font-medium border-0">Non-woven fabric</td>
+<td class="table-cell text-on-surface-variant border-0">Goods</td>
+<td class="table-cell border-0"><span class="text-green-700 font-medium text-xs bg-green-100 px-2 py-1 rounded">Active</span></td>
+<td class="table-cell text-on-surface-variant border-0">4</td>
+<td class="table-cell text-right border-0">8</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="spacer"></div>
+<!-- FRAME 6: Loading Skeleton -->
+<div class="frame-container">
+<!-- Side Nav -->
+<div class="side-nav">
+<div class="p-6 mb-2">
+<div class="h-6 bg-white/20 rounded w-32 animate-pulse"></div>
+</div>
+<div class="h-10 bg-white/10 rounded-full mx-2 my-1 animate-pulse"></div>
+<div class="h-10 bg-white/10 rounded-full mx-2 my-1 animate-pulse"></div>
+<div class="h-10 bg-d0d6ff/30 rounded-full mx-2 my-1 animate-pulse"></div>
+<div class="h-10 bg-white/10 rounded-full mx-2 my-1 animate-pulse"></div>
+<div class="h-10 bg-white/10 rounded-full mx-2 my-1 animate-pulse"></div>
+<div class="h-10 bg-white/10 rounded-full mx-2 my-1 animate-pulse"></div>
+<div class="mt-auto mb-4">
+<div class="h-10 bg-white/10 rounded-full mx-2 my-1 animate-pulse"></div>
+</div>
+</div>
+<div class="shell-layout">
+<!-- Top Nav -->
+<div class="top-nav">
+<div class="flex gap-4 items-center">
+<div class="text-right mr-2 flex flex-col gap-1 items-end">
+<div class="w-24 h-4 rounded bg-white/20 animate-pulse"></div>
+<div class="w-32 h-3 rounded bg-white/20 animate-pulse"></div>
+</div>
+<div class="w-10 h-10 rounded-full bg-white/20 animate-pulse"></div>
+</div>
+</div>
+<div class="content-area">
+<div class="card w-1/3 flex flex-col gap-4 overflow-y-auto">
+<div class="h-8 bg-surface-variant rounded w-32 animate-pulse mb-2"></div>
+<div class="h-10 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-10 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-10 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-10 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-10 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-10 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-10 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-10 bg-surface-variant rounded w-full animate-pulse"></div>
+</div>
+<div class="card flex-1 flex flex-col gap-6">
+<div class="h-10 bg-surface-variant rounded w-64 animate-pulse"></div>
+<div class="h-12 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-12 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-12 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-12 bg-surface-variant rounded w-full animate-pulse"></div>
+<div class="h-12 bg-surface-variant rounded w-full animate-pulse"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="spacer"></div>
+<!-- FRAME 7: Error Screen -->
+<div class="frame-container">
+<!-- Side Nav -->
+<div class="side-nav">
+<div class="p-6 mb-2">
+<div class="font-headline-md font-bold text-white">MPX Global</div>
+</div>
+<a href="#"><span class="material-symbols-outlined">verified</span> Verifications</a>
+<a href="#"><span class="material-symbols-outlined">group</span> Users</a>
+<a class="active" href="#"><span class="material-symbols-outlined">category</span> Categories</a>
+<a href="#"><span class="material-symbols-outlined">inventory_2</span> Products</a>
+<a href="#"><span class="material-symbols-outlined">history</span> Audit log</a>
+<a href="#"><span class="material-symbols-outlined">settings</span> Settings</a>
+<div class="mt-auto mb-4">
+<a href="#"><span class="material-symbols-outlined">logout</span> Sign out</a>
+</div>
+</div>
+<div class="shell-layout">
+<!-- Top Nav -->
+<div class="top-nav">
+<div class="flex gap-4 items-center">
+<div class="text-right mr-2">
+<div class="font-label-md text-white">Priya Menon</div>
+<div class="text-xs text-white/70">Super admin · MPX Global</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar placeholder showing a generic silhouette for the admin user profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAl7APvS5pn9QoF6AMIWGNRsZ2LieUzeMHmDItxbgNrkMgrczQ51YBaQSevsIGnAB5JDZ7Bnuj4uMnGSREMeYqKnU3jVVD6noiMAwUF45sLLdDdCr6xjLioYJDhcYA_CQNfZyUzF-ffyXCXrPZq0r-Ut9txt6msMGs4kezayiO-4_GNjO1atLTpc4O3lFRLRzNbOWy2o7EBobG6yh9Yns33o6EYnMC0BE5nNmTUxOKkFUwciAhiFIv"/>
+</div>
+</div>
+</div>
+<div class="content-area flex items-center justify-center">
+<div class="card text-center max-w-md w-full py-12 flex flex-col items-center">
+<div class="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-[32px] text-outline">wifi_off</span>
+</div>
+<div class="font-headline-md text-on-surface mb-2">Couldn't load categories</div>
+<div class="font-body-md text-on-surface-variant mb-6">Something went wrong on our side.</div>
+<button class="btn-primary">Try again</button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

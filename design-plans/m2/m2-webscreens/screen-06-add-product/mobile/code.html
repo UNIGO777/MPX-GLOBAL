@@ -1,0 +1,503 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MPX Global - Add Product Console States</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#eeedf9",
+                        "on-background": "#1a1b24",
+                        "surface-bright": "#fbf8ff",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#747687",
+                        "secondary-container": "#cfe1ff",
+                        "on-primary-fixed": "#001158",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "on-tertiary-container": "#66f29e",
+                        "surface-container-high": "#e8e7f3",
+                        "inverse-on-surface": "#f1effc",
+                        "surface-variant": "#e2e1ee",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#00210e",
+                        "on-secondary-fixed-variant": "#374860",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2f3039",
+                        "tertiary": "#00522c",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "primary": "#0032c3",
+                        "secondary-fixed": "#d4e3ff",
+                        "surface-dim": "#dad9e5",
+                        "inverse-primary": "#b9c3ff",
+                        "surface": "#fbf8ff",
+                        "on-secondary-container": "#53647d",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#2a4de0",
+                        "primary-fixed": "#dee1ff",
+                        "outline-variant": "#c4c5d8",
+                        "on-secondary-fixed": "#091c32",
+                        "on-primary": "#ffffff",
+                        "background": "#fbf8ff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#1a1b24",
+                        "secondary": "#4e5f79",
+                        "tertiary-fixed": "#70fda7",
+                        "surface-container-highest": "#e2e1ee",
+                        "on-surface-variant": "#444655",
+                        "tertiary-container": "#006d3c",
+                        "surface-container-low": "#f4f2ff",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "surface-tint": "#2a4de0",
+                        "on-primary-container": "#d0d6ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "container-max": "1200px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "card-padding": "40px",
+                        "stack-sm": "8px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #333; display: flex; justify-content: center; padding: 40px 0; font-family: 'Inter', sans-serif; margin: 0; }
+        .viewport { width: 375px; background-color: #EAEEFF; margin-bottom: 40px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative; overflow: hidden; }
+        .viewport:last-child { margin-bottom: 0; }
+        .top-bar { background-color: #1A2E8F; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; width: 100%; height: 64px; }
+        .card { background-color: white; border-radius: 8px; border: 1px solid #C5C6CF; padding: 16px; margin-bottom: 16px; }
+        .input-group { margin-bottom: 16px; }
+        .input-group:last-child { margin-bottom: 0; }
+        .label { display: block; font-size: 14px; font-weight: 500; color: #1a1b24; margin-bottom: 4px; }
+        .helper-text { font-size: 12px; color: #667085; margin-top: 4px; display: block; }
+        .input-field { width: 100%; border-radius: 8px; border: 1px solid #C5C6CF; padding: 12px; font-size: 16px; outline: none; transition: border-color 0.2s; background: white; }
+        .input-field:focus { border-color: #2A4DE0; border-width: 2px; padding: 11px; }
+        .input-field:disabled { background-color: #f2f4f7; color: #667085; }
+        .textarea-field { width: 100%; border-radius: 8px; border: 1px solid #C5C6CF; padding: 12px; font-size: 16px; outline: none; min-height: 100px; resize: none; font-family: 'Inter', sans-serif; }
+        .btn-primary { width: 100%; background-color: #2A4DE0; color: white; border-radius: 9999px; padding: 12px; font-size: 14px; font-weight: 500; text-align: center; border: none; cursor: pointer; display: block; }
+        .btn-primary:hover { background-color: #2340C4; }
+        .btn-cancel { width: 100%; color: #5A6B85; font-size: 14px; font-weight: 500; text-align: center; padding: 12px; margin-top: 8px; border: none; background: transparent; cursor: pointer; }
+        
+        .custom-select-wrapper { position: relative; }
+        .custom-select-wrapper::after {
+            content: ""; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #667085;
+            pointer-events: none;
+        }
+        
+        .segmented-control { display: flex; background: #f2f4f7; border-radius: 8px; padding: 4px; gap: 4px; }
+        .segment { flex: 1; text-align: center; padding: 8px; font-size: 14px; font-weight: 500; border-radius: 6px; cursor: pointer; color: #444655; }
+        .segment.active { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #1a1b24; }
+        
+        .input-with-prefix { position: relative; display: flex; align-items: center; }
+        .prefix { position: absolute; left: 12px; color: #667085; font-size: 16px; }
+        .input-with-prefix input { padding-left: 48px; }
+        
+        .input-with-suffix { position: relative; display: flex; align-items: center; }
+        .suffix { position: absolute; right: 12px; color: #667085; font-size: 16px; }
+        
+        .dropzone { border: 1px dashed #C5C6CF; border-radius: 8px; padding: 24px; text-align: center; background: #fbf8ff; cursor: pointer; }
+        .thumbnails { display: flex; gap: 8px; margin-top: 12px; }
+        .thumb { width: 72px; height: 72px; border-radius: 8px; position: relative; overflow: hidden; background: #e2e1ee; border: 1px solid #C5C6CF; }
+        .badge-cover { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.6); color: white; font-size: 10px; padding: 2px 4px; border-radius: 4px; font-weight: 600; }
+        .upload-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #2A4DE0; }
+        .fail-overlay { position: absolute; inset: 0; background: rgba(255,218,214,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #93000a; }
+        .fail-text { font-size: 10px; font-weight: 600; margin-top: 2px; }
+        
+        .toggle { display: flex; align-items: center; justify-content: space-between; }
+        .toggle-track { width: 44px; height: 24px; background: #2A4DE0; border-radius: 12px; position: relative; cursor: pointer; }
+        .toggle-thumb { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; right: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        
+        .drawer-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 10; display: flex; }
+        .drawer { width: 80%; background: #1A2E8F; height: 100%; color: white; display: flex; flex-direction: column; padding: 24px; box-shadow: 4px 0 20px rgba(0,0,0,0.2); }
+        .drawer-nav { flex: 1; margin-top: 32px; display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { padding: 12px 16px; border-radius: 8px; font-size: 16px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; color: #d0d6ff; }
+        .nav-item.active { background: #2A4DE0; color: white; }
+        .nav-pill { background: rgba(255,255,255,0.2); font-size: 12px; padding: 2px 8px; border-radius: 12px; }
+        .drawer-footer { border-top: 1px solid rgba(255,255,255,0.2); padding-top: 24px; margin-top: auto; }
+        
+        .empty-state { border: 1px dashed #C5C6CF; border-radius: 8px; padding: 48px 24px; text-align: center; color: #667085; display: flex; flex-direction: column; align-items: center; }
+        .empty-icon { width: 48px; height: 48px; margin-bottom: 16px; stroke: #C5C6CF; fill: none; stroke-width: 1.5; }
+        
+        .limit-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100% - 64px); padding: 24px; text-align: center; }
+        .limit-icon { width: 64px; height: 64px; background: #ffdad6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ba1a1a; margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+<!-- SCREEN 1: ADD PRODUCT (FULL FORM) -->
+<div class="viewport">
+<div class="top-bar">
+<svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><line x1="3" x2="21" y1="12" y2="12"></line><line x1="3" x2="21" y1="6" y2="6"></line><line x1="3" x2="21" y1="18" y2="18"></line></svg>
+<div style="font-weight: 600; font-size: 18px; letter-spacing: -0.01em;" class="">MPX Global</div>
+<div style="width: 32px; height: 32px; border-radius: 50%; background: #2A4DE0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;" class="">U</div>
+</div>
+<div style="padding: 24px 16px;">
+<h1 style="font-size: 24px; font-weight: 600; margin-bottom: 24px; color: #1a1b24;" class="">Add product</h1>
+<!-- Card 1: Category -->
+<div class="card">
+<div style="font-weight: 600; margin-bottom: 16px; color: #1a1b24;" class="">Category</div>
+<div class="input-group">
+<label class="label">Category</label>
+<div class="custom-select-wrapper">
+<select class="input-field appearance-none">
+<option>Textiles, Fabrics &amp; Yarn</option>
+</select>
+</div>
+<span class="helper-text">Select the main industry.</span>
+</div>
+<div class="input-group">
+<label class="label">Sub-category</label>
+<div class="custom-select-wrapper">
+<select class="input-field appearance-none">
+<option>Cotton fabric</option>
+</select>
+</div>
+<span class="helper-text">Refine your product type.</span>
+</div>
+</div>
+<!-- Card 2: Details -->
+<div class="card">
+<div style="font-weight: 600; margin-bottom: 16px; color: #1a1b24;" class="">Details</div>
+<div class="input-group">
+<label class="label">Product name</label>
+<input class="input-field" type="text" value="Premium Organic Cotton Poplin">
+</div>
+<div class="input-group">
+<label class="label">Description</label>
+<textarea class="textarea-field">High-quality organic cotton poplin suitable for premium shirting. GOTS certified.</textarea>
+<div style="display: flex; justify-content: space-between; margin-top: 4px;">
+<span class="helper-text" style="margin-top: 0;">Include key features and applications.</span>
+<span class="helper-text" style="margin-top: 0;">85/500</span>
+</div>
+</div>
+<div class="input-group">
+<label class="label" style="margin-bottom: 8px;">Product images</label>
+<div class="dropzone">
+<svg fill="none" height="24" stroke="#667085" stroke-width="2" style="margin: 0 auto 8px auto;" viewBox="0 0 24 24" width="24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+<div style="font-size: 14px; color: #1a1b24; font-weight: 500;" class="">Tap to upload</div>
+<div style="font-size: 12px; color: #667085; margin-top: 4px;" class="">JPG, PNG, max 5MB</div>
+</div>
+<div class="thumbnails">
+<div class="thumb" data-alt="Close up shot of premium organic white cotton poplin fabric with fine weave texture under bright studio lighting. Crisp and clean aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAhE5MU1r7MGqiQOZBJkx7n0q648M7INgkbRI3BwuxREMLrfajNrH3WEQZECa3QkfXk_JUjyjyHh0DPyoTPCT3GWTnzgDBIun5ICrifjNWNVm2jySRQvz40V16BN-bni3M7D7AtdGa4M7U267bVLq5bRTBb9fimgdJmLSkjHf1TXKdoV3H4ZLXLaTsYd8pHGtUoZc0IrFA02HcX_6ErxOL-qJFzf_hCPodFh3OHTKqxfLmYNqsfKcS4'); background-size: cover; background-position: center;">
+<div class="badge-cover">COVER</div>
+</div>
+<div class="thumb" data-alt="Rolled bolt of white cotton poplin fabric resting on a clean wooden table." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCfONBIWmPuGXDpI5rhFhXdRYYFfqnYw3iLenqcLDD6PE1x9RcOeRgfQeQfs7MTN_pTygjhGcbY8cimMVFHytX6NowADN3LbcIK9npVMJQRuXYAuGtwu4I7RyvdO90ev7DT0UlSOhH760qFmm8AW_BboXjGWZG1m6gPHDSNw54yIXJC2aXYIgOHes-Dd_gbxFQ1w3OtwW32lKPfVtpfkiVasNX3DaDRsgC7gJbfciqBmbMFLsClWkNJ'); background-size: cover; background-position: center;">
+<div class="upload-overlay">45%</div>
+</div>
+<div class="thumb" style="border-color: #ffdad6;">
+<div class="fail-overlay">
+<svg fill="none" height="16" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg>
+<span class="fail-text">Retry</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Pricing & Trade Terms -->
+<div class="card">
+<div style="font-weight: 600; margin-bottom: 16px; color: #1a1b24;" class="">Pricing &amp; Trade Terms</div>
+<div class="input-group">
+<label class="label">Pricing model</label>
+<div class="segmented-control">
+<div class="segment active">Fixed</div>
+<div class="segment">Range</div>
+<div class="segment">On request</div>
+</div>
+</div>
+<div class="input-group">
+<label class="label">Amount</label>
+<div class="input-with-prefix">
+<span class="prefix">INR</span>
+<input class="input-field" type="text" value="250.00">
+</div>
+</div>
+<div class="input-group">
+<label class="label">MOQ</label>
+<input class="input-field" placeholder="e.g. 500" type="text">
+</div>
+<div class="input-group">
+<label class="label">Unit</label>
+<input class="input-field" placeholder="e.g. meters" type="text">
+</div>
+<div class="input-group">
+<label class="label">HS code</label>
+<input class="input-field" type="text">
+</div>
+<div class="input-group">
+<label class="label">Country of origin</label>
+<div class="custom-select-wrapper">
+<select class="input-field appearance-none">
+<option>India</option>
+</select>
+</div>
+</div>
+<div class="input-group">
+<label class="label">Supply ability</label>
+<input class="input-field" type="text">
+</div>
+<div class="input-group">
+<label class="label">Lead time</label>
+<input class="input-field" type="text">
+</div>
+<div class="input-group">
+<label class="label">Packaging</label>
+<input class="input-field" type="text">
+</div>
+<div class="input-group">
+<label class="label">Payment terms</label>
+<input class="input-field" type="text">
+</div>
+</div>
+<!-- Card 4: Technical Specs -->
+<div class="card">
+<div style="font-weight: 600; margin-bottom: 16px; color: #1a1b24;" class="">Technical Specifications</div>
+<div class="input-group">
+<label class="label">Material composition</label>
+<input class="input-field" type="text" value="100% Cotton">
+</div>
+<div class="input-group">
+<label class="label">GSM</label>
+<div class="input-with-suffix">
+<input class="input-field" type="text" value="120">
+<span class="suffix">gsm</span>
+</div>
+</div>
+<div class="input-group">
+<label class="label">Weave</label>
+<input class="input-field" type="text" value="Plain / Poplin">
+</div>
+<div class="input-group">
+<label class="label">Width</label>
+<div class="input-with-suffix">
+<input class="input-field" type="text" value="58">
+<span class="suffix">inches</span>
+</div>
+</div>
+<div class="input-group">
+<label class="label">Shrinkage</label>
+<div class="input-with-suffix">
+<input class="input-field" type="text" value="&lt; 3">
+<span class="suffix">%</span>
+</div>
+</div>
+<div class="input-group toggle" style="margin-top: 24px;">
+<div>
+<div class="label" style="margin-bottom: 2px;">Organic certification</div>
+<div class="helper-text" style="margin-top: 0;">Is this product certified organic?</div>
+</div>
+<div class="toggle-track">
+<div class="toggle-thumb"></div>
+</div>
+</div>
+</div>
+<button class="btn-primary">Save draft</button>
+<button class="btn-cancel">Cancel</button>
+</div>
+</div>
+<!-- SCREEN 2: NAVIGATION DRAWER OPEN -->
+<div class="viewport" style="width: 375px; background-color: rgb(234, 238, 255); margin-bottom: 40px; box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px; position: relative; overflow: hidden; min-height: 100vh;">
+<!-- Background content slightly dimmed -->
+<div class="top-bar" style="filter: brightness(0.8);">
+<svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24"><line x1="3" x2="21" y1="12" y2="12"></line><line x1="3" x2="21" y1="6" y2="6"></line><line x1="3" x2="21" y1="18" y2="18"></line></svg>
+<div style="font-weight: 600; font-size: 18px;" class="">MPX Global</div>
+<div style="width: 32px; height: 32px; border-radius: 50%; background: #2A4DE0;"></div>
+</div>
+<div class="drawer-overlay">
+<div class="drawer">
+<div style="font-weight: 600; font-size: 24px; letter-spacing: -0.01em;" class="">MPX Global</div>
+<div class="drawer-nav">
+<div class="nav-item">Verification</div>
+<div class="nav-item active">Products</div>
+<div class="nav-item">
+                        Enquiries <span class="nav-pill">Soon</span>
+</div>
+<div class="nav-item">
+                        Chat <span class="nav-pill">Soon</span>
+</div>
+<div class="nav-item">Settings</div>
+</div>
+<div class="drawer-footer">
+<div style="font-weight: 600; font-size: 16px;" class="">Rajesh Kumar</div>
+<div style="font-size: 12px; color: #d0d6ff; margin-bottom: 24px; margin-top: 4px;" class="">Exporter · Tirupur Knitwear Exports</div>
+<div style="font-weight: 500; font-size: 14px; cursor: pointer;" class="">Sign out</div>
+</div>
+</div>
+</div>
+</div>
+<!-- SCREEN 3: PRE-CATEGORY -->
+<div class="viewport" style="width: 375px; background-color: rgb(234, 238, 255); margin-bottom: 40px; box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px; position: relative; overflow: hidden; min-height: 100vh;">
+<div class="top-bar">
+<svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><line x1="3" x2="21" y1="12" y2="12"></line><line x1="3" x2="21" y1="6" y2="6"></line><line x1="3" x2="21" y1="18" y2="18"></line></svg>
+<div style="font-weight: 600; font-size: 18px; letter-spacing: -0.01em;" class="">MPX Global</div>
+<div style="width: 32px; height: 32px; border-radius: 50%; background: #2A4DE0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;" class="">U</div>
+</div>
+<div style="padding: 24px 16px;">
+<h1 style="font-size: 24px; font-weight: 600; margin-bottom: 24px; color: #1a1b24;" class="">Add product</h1>
+<div class="card">
+<div style="font-weight: 600; margin-bottom: 16px; color: #1a1b24;" class="">Category</div>
+<div class="input-group">
+<label class="label">Category</label>
+<div class="custom-select-wrapper">
+<select class="input-field appearance-none">
+<option disabled="" selected="" value="">Select category...</option>
+<option>Textiles, Fabrics &amp; Yarn</option>
+</select>
+</div>
+</div>
+<div class="input-group">
+<label class="label">Sub-category</label>
+<div class="custom-select-wrapper">
+<select class="input-field appearance-none" disabled="">
+<option disabled="" selected="" value="">Select sub-category...</option>
+</select>
+</div>
+</div>
+</div>
+<div class="empty-state">
+<svg class="empty-icon" viewBox="0 0 24 24">
+<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+<rect height="4" rx="1" ry="1" width="8" x="8" y="2"></rect>
+</svg>
+<div style="font-weight: 500; color: #444655;" class="">Choose a category to continue.</div>
+</div>
+<div style="margin-top: 24px;">
+<button class="btn-primary" style="opacity: 0.5; cursor: not-allowed;">Save draft</button>
+<button class="btn-cancel">Cancel</button>
+</div>
+</div>
+</div>
+<!-- SCREEN 4: SERVICE VARIANT -->
+<div class="viewport" style="width: 375px; background-color: rgb(234, 238, 255); margin-bottom: 40px; box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px; position: relative; overflow: hidden; min-height: 100vh;">
+<div class="top-bar">
+<svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><line x1="3" x2="21" y1="12" y2="12"></line><line x1="3" x2="21" y1="6" y2="6"></line><line x1="3" x2="21" y1="18" y2="18"></line></svg>
+<div style="font-weight: 600; font-size: 18px; letter-spacing: -0.01em;" class="">MPX Global</div>
+<div style="width: 32px; height: 32px; border-radius: 50%; background: #2A4DE0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;" class="">U</div>
+</div>
+<div style="padding: 24px 16px;">
+<h1 style="font-size: 24px; font-weight: 600; margin-bottom: 24px; color: #1a1b24;" class="">Add product</h1>
+<div class="card">
+<div style="font-weight: 600; margin-bottom: 16px; color: #1a1b24;" class="">Category</div>
+<div class="input-group">
+<label class="label">Category</label>
+<div class="custom-select-wrapper">
+<select class="input-field appearance-none">
+<option>IT, Software &amp; AI Services</option>
+</select>
+</div>
+</div>
+<div class="input-group">
+<label class="label">Sub-category</label>
+<div class="custom-select-wrapper">
+<select class="input-field appearance-none">
+<option>AI/ML development</option>
+</select>
+</div>
+</div>
+</div>
+<div class="card">
+<div style="font-weight: 600; margin-bottom: 16px; color: #1a1b24;" class="">Details</div>
+<div class="input-group">
+<label class="label">Product name</label>
+<input class="input-field" type="text" value="AI Model Development &amp; Deployment">
+</div>
+</div>
+<div class="card">
+<div style="font-weight: 600; margin-bottom: 16px; color: #1a1b24;" class="">Service details</div>
+<div class="input-group">
+<label class="label">Engagement type</label>
+<div class="custom-select-wrapper">
+<select class="input-field appearance-none">
+<option>Project-based</option>
+</select>
+</div>
+</div>
+<div class="input-group">
+<label class="label">Delivery model</label>
+<div class="custom-select-wrapper">
+<select class="input-field appearance-none">
+<option>Remote</option>
+</select>
+</div>
+</div>
+<div class="input-group">
+<label class="label">Team size</label>
+<input class="input-field" type="text" value="e.g. 5-10 experts">
+</div>
+<div class="input-group">
+<label class="label">Pricing model</label>
+<div class="custom-select-wrapper">
+<select class="input-field appearance-none">
+<option>Time &amp; materials</option>
+</select>
+</div>
+</div>
+<div class="input-group">
+<label class="label">Timeline</label>
+<input class="input-field" type="text" value="e.g. 8-12 weeks">
+</div>
+</div>
+<button class="btn-primary">Save draft</button>
+<button class="btn-cancel">Cancel</button>
+</div>
+</div>
+<!-- SCREEN 5: DRAFT LIMIT REACHED -->
+<div class="viewport" style="height: 812px;">
+<div class="top-bar">
+<svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><line x1="3" x2="21" y1="12" y2="12"></line><line x1="3" x2="21" y1="6" y2="6"></line><line x1="3" x2="21" y1="18" y2="18"></line></svg>
+<div style="font-weight: 600; font-size: 18px; letter-spacing: -0.01em;" class="">MPX Global</div>
+<div style="width: 32px; height: 32px; border-radius: 50%; background: #2A4DE0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;" class="">U</div>
+</div>
+<div style="padding: 24px 16px;">
+<h1 style="font-size: 24px; font-weight: 600; color: #1a1b24;" class="">Add product</h1>
+</div>
+<div class="limit-screen">
+<div class="limit-icon">
+<svg fill="none" height="32" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="32"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg>
+</div>
+<h2 style="font-size: 20px; font-weight: 600; color: #1a1b24; margin-bottom: 8px;" class="">Draft limit reached (10)</h2>
+<p style="font-size: 16px; color: #444655; margin-bottom: 32px; line-height: 24px;" class="">Publish or delete a draft, or get verified.</p>
+<button class="btn-primary" style="width: 100%;">Back to products</button>
+</div>
+</div>
+
+
+</body></html>

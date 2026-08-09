@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cotton fabric - MPX Global</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#374860",
+                        "secondary": "#4e5f79",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "on-secondary-container": "#53647d",
+                        "on-surface-variant": "#444655",
+                        "on-tertiary-container": "#66f29e",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#1a1b24",
+                        "surface-container-low": "#f4f2ff",
+                        "secondary-fixed": "#d4e3ff",
+                        "primary": "#0032c3",
+                        "surface-bright": "#fbf8ff",
+                        "on-secondary-fixed": "#091c32",
+                        "surface-dim": "#dad9e5",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "on-secondary": "#ffffff",
+                        "surface": "#fbf8ff",
+                        "on-primary-fixed": "#001158",
+                        "outline-variant": "#c4c5d8",
+                        "surface-variant": "#e2e1ee",
+                        "primary-container": "#2a4de0",
+                        "inverse-surface": "#2f3039",
+                        "outline": "#747687",
+                        "inverse-on-surface": "#f1effc",
+                        "background": "#fbf8ff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#00210e",
+                        "surface-container": "#eeedf9",
+                        "tertiary": "#00522c",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#d0d6ff",
+                        "surface-container-highest": "#e2e1ee",
+                        "surface-container-high": "#e8e7f3",
+                        "inverse-primary": "#b9c3ff",
+                        "secondary-container": "#cfe1ff",
+                        "surface-tint": "#2a4de0",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#dee1ff",
+                        "tertiary-container": "#006d3c",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "on-surface": "#1a1b24",
+                        "tertiary-fixed": "#70fda7",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "card-padding": "40px",
+                        "stack-md": "16px",
+                        "gutter": "24px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter", "sans-serif"],
+                        "headline-lg-mobile": ["Inter", "sans-serif"],
+                        "label-md": ["Inter", "sans-serif"],
+                        "display-lg": ["Inter", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "label-sm": ["Inter", "sans-serif"],
+                        "headline-lg": ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #EAEEFF; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .skeleton { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
+</head>
+<body class="font-body-md text-body-md text-on-surface min-h-screen flex flex-col antialiased">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-background border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none docked full-width top-0 sticky z-50">
+<div class="flex justify-between items-center px-gutter py-stack-md max-w-container-max mx-auto w-full">
+<div class="flex items-center gap-gutter">
+<a class="text-headline-md font-headline-md text-on-background dark:text-on-background tracking-tight" href="#">MPX Global</a>
+<nav class="hidden md:flex items-center gap-stack-md ml-stack-lg">
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary hover:text-primary-container transition-colors duration-200 cursor-pointer transition-all active:opacity-80 font-label-md text-label-md" href="#">How it Works</a>
+<a class="text-primary dark:text-primary-fixed border-b-2 border-primary pb-1 hover:text-primary-container transition-colors duration-200 cursor-pointer transition-all active:opacity-80 font-label-md text-label-md" href="#">Categories</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary hover:text-primary-container transition-colors duration-200 cursor-pointer transition-all active:opacity-80 font-label-md text-label-md" href="#">Platform</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary hover:text-primary-container transition-colors duration-200 cursor-pointer transition-all active:opacity-80 font-label-md text-label-md" href="#">FAQ</a>
+</nav>
+</div>
+<div class="flex items-center gap-stack-sm">
+<button class="font-label-md text-label-md text-primary dark:text-primary-fixed hover:bg-surface-container px-4 py-2 rounded-full transition-colors hidden md:block">Sign In</button>
+<button class="font-label-md text-label-md bg-primary-container text-on-primary hover:bg-[#2340C4] px-4 py-2 rounded-full transition-colors">Get Started</button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-gutter py-stack-lg flex flex-col gap-stack-lg">
+<!-- Breadcrumb & Header -->
+<div class="flex flex-col gap-unit">
+<nav class="flex items-center gap-2 text-label-sm font-label-sm text-secondary">
+<a class="hover:text-primary transition-colors" href="#">Categories</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Textiles, Fabrics &amp; Yarn</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Cotton fabric</span>
+</nav>
+<div class="flex items-end gap-stack-sm mt-stack-sm">
+<h1 class="font-display-lg text-display-lg text-on-background">Cotton fabric</h1>
+<span class="font-body-md text-body-md text-secondary mb-2">48 products</span>
+</div>
+</div>
+<div class="flex flex-col md:flex-row gap-stack-lg items-start">
+<!-- Left Column: Categories -->
+<aside class="w-full md:w-[240px] flex-shrink-0 bg-surface-container-lowest rounded-lg border border-outline-variant p-stack-md shadow-sm sticky top-[100px]">
+<h3 class="font-label-md text-label-md text-on-surface mb-stack-sm uppercase tracking-wider text-secondary">Related Categories</h3>
+<nav class="flex flex-col gap-1">
+<a class="px-3 py-2 rounded-md font-label-md text-label-md bg-primary-container text-on-primary flex items-center justify-between" href="#">
+                        Cotton fabric
+                        <span class="material-symbols-outlined text-[18px]">check</span>
+</a>
+<a class="px-3 py-2 rounded-md font-body-md text-body-md text-on-surface-variant hover:bg-surface-container transition-colors" href="#">Silk fabric</a>
+<a class="px-3 py-2 rounded-md font-body-md text-body-md text-on-surface-variant hover:bg-surface-container transition-colors" href="#">Synthetic &amp; blended fabric</a>
+<a class="px-3 py-2 rounded-md font-body-md text-body-md text-on-surface-variant hover:bg-surface-container transition-colors" href="#">Yarn &amp; thread</a>
+<a class="px-3 py-2 rounded-md font-body-md text-body-md text-on-surface-variant hover:bg-surface-container transition-colors" href="#">Home textiles</a>
+<a class="px-3 py-2 rounded-md font-body-md text-body-md text-on-surface-variant hover:bg-surface-container transition-colors" href="#">Dyed &amp; printed fabric</a>
+<a class="px-3 py-2 rounded-md font-body-md text-body-md text-on-surface-variant hover:bg-surface-container transition-colors" href="#">Denim</a>
+<a class="px-3 py-2 rounded-md font-body-md text-body-md text-on-surface-variant hover:bg-surface-container transition-colors" href="#">Non-woven fabric</a>
+</nav>
+</aside>
+<!-- Right Column: Product Grid -->
+<div class="flex-grow w-full flex flex-col gap-stack-lg">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Product 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col shadow-[0_4px_20px_rgba(0,5,23,0.05)] hover:border-primary transition-colors cursor-pointer group">
+<div class="w-full aspect-[4/3] bg-surface-container relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A pristine, tightly woven white combed cotton poplin fabric draped elegantly over a minimalist stand. Bright, clean, neutral studio lighting highlighting the smooth texture and slight sheen of the high-quality corporate textile material, styled for a premium B2B catalog presentation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnsxEMbMYXnCWbJFP_hcPfujmW4D-Y6wWZ7oliw64prHSP9TuJBhLXqkvaCjuP9v5cyqKz2cqo5BlvzSCTKLW0R-40_GjJo1wbfgYBVaPs-LI8Ut0CfOkzLo67uVqbKvYHeeY5igR25_teZ1gMzSfF-s4drXmhyg5ANZlUzyZGBs2vNE5FFO2pbL5JlMIcKbKSzJuyPosfzyBt3Y28kVr5WC0nmurWt0YvEYi3AD42vmede1gNZ66O"/>
+</div>
+<div class="p-4 flex flex-col flex-grow gap-2">
+<h4 class="font-label-md text-label-md text-on-surface line-clamp-2 font-semibold group-hover:text-primary transition-colors">Combed Cotton Poplin Fabric</h4>
+<p class="font-headline-md text-headline-md text-on-surface mt-auto pt-2">INR 220 <span class="text-body-md font-body-md text-secondary">/ meter</span></p>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-label-sm text-label-sm text-secondary truncate">Tirupur Knitwear Exports</span>
+<span class="material-symbols-outlined text-[16px] text-[#12B76A] flex-shrink-0" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-2 pt-2 border-t border-surface-variant">Cotton fabric</span>
+</div>
+</div>
+<!-- Product 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col shadow-[0_4px_20px_rgba(0,5,23,0.05)] hover:border-primary transition-colors cursor-pointer group">
+<div class="w-full aspect-[4/3] bg-surface-container relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A soft, semi-sheer organic cotton voile fabric in a light cream tone, delicately folded on a light gray marble surface. Soft, diffused daylight washing over the textile, emphasizing its lightweight and breathable quality, suitable for high-end sustainable fashion B2B listings." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCraSa8eUsqhchjGI2cnjnMWQfEWgdI7xtNeN3EAdssW8TqyylnplbY5153qzeAK_MQaMPykVUklDHc_scIQ5Om4WLRdsG4ErDDBn9A06TnzsHY6YykbIW5Y3XIe58AFJrSOEjRzmTQoklnGXWAk1tyRv61KLGVb5b0KWNf-zDwDzLzaqx3enWEuSHZd4LQnODk-iHcuCej6WAavxMfzY5u9wN0F6d3I1eufZKLyBb4HTpth0BI7YKN"/>
+</div>
+<div class="p-4 flex flex-col flex-grow gap-2">
+<h4 class="font-label-md text-label-md text-on-surface line-clamp-2 font-semibold group-hover:text-primary transition-colors">Organic Cotton Voile</h4>
+<p class="font-headline-md text-headline-md text-on-surface mt-auto pt-2">INR 180 – 260</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-label-sm text-label-sm text-secondary truncate">Coimbatore Cotton Mills</span>
+<span class="material-symbols-outlined text-[16px] text-[#12B76A] flex-shrink-0" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-2 pt-2 border-t border-surface-variant">Cotton fabric</span>
+</div>
+</div>
+<!-- Product 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col shadow-[0_4px_20px_rgba(0,5,23,0.05)] hover:border-primary transition-colors cursor-pointer group">
+<div class="w-full aspect-[4/3] bg-surface-container relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A large, neat roll of white cotton cambric fabric, 60s count, resting on a stark white seamless backdrop. Crisp, high-contrast lighting emphasizing the industrial, raw material nature of the textile roll. Professional, functional B2B aesthetic with sharp focus on the fabric edge." src="https://lh3.googleusercontent.com/aida-public/AB6AXuANv28ijJbATVopoct6353O0ZP_RlE8-UE3O2KRHIsqTVpW_NnLz537t6oy6fHs5e6tFgHV2a9wvUReHxMOJcP3Bz_op7Fv4P3TZc0DDEynXCd4ADEIz-wNqaoFDlN4jlfc2J-Qv_b2dDeGWegT246J8sbJupTiv-R5CzMkINM-lHo6MeyNMOyLWnQmQeNbIYwDcv6hMSu6UGB6e-HPQggcD9gGwX-PBURgMhBxjQHh8cG6FzIm2sVB"/>
+</div>
+<div class="p-4 flex flex-col flex-grow gap-2">
+<h4 class="font-label-md text-label-md text-on-surface line-clamp-2 font-semibold group-hover:text-primary transition-colors">Cotton Cambric Roll, 60s</h4>
+<p class="font-body-md text-body-md text-primary mt-auto pt-2 font-medium">Price on request</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-label-sm text-label-sm text-secondary truncate">Erode Textile House</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-2 pt-2 border-t border-surface-variant">Cotton fabric</span>
+</div>
+</div>
+<!-- Product 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col shadow-[0_4px_20px_rgba(0,5,23,0.05)] hover:border-primary transition-colors cursor-pointer group">
+<div class="w-full aspect-[4/3] bg-surface-container relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Close-up macro shot of bleached white cotton twill fabric, clearly showing the diagonal rib weave structure. Sharp, analytical studio lighting highlighting the durability and texture of the material. Minimalist composition designed for a technical B2B textile sourcing platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhTo2_cWmoNULlMYV6kIyN2JskkLUZcEWY1LoCWP4ww2boYluy6g38vVu7DoeeIqvrsPxkhAE8YHALZgA2XkcVPLmwcBJq4PkYWAN1XhM_HLxCkT8KZiNm6g6Z0qlxILXunBbDMI5jexhvYWj5b8pHvz-VGbYt4XScFpbQ_QZmlE7nRJ5PXyLHb15h3MZLiLcbl_p3t3QNq-MxZdMMuLrVmH6PWTlXBrQpYpCBvo3OidNmQSYDM528"/>
+</div>
+<div class="p-4 flex flex-col flex-grow gap-2">
+<h4 class="font-label-md text-label-md text-on-surface line-clamp-2 font-semibold group-hover:text-primary transition-colors">Bleached Cotton Twill</h4>
+<p class="font-headline-md text-headline-md text-on-surface mt-auto pt-2">USD 3.40 <span class="text-body-md font-body-md text-secondary">/ meter</span></p>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-label-sm text-label-sm text-secondary truncate">Surat Weaving Co</span>
+<span class="material-symbols-outlined text-[16px] text-[#12B76A] flex-shrink-0" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-2 pt-2 border-t border-surface-variant">Cotton fabric</span>
+</div>
+</div>
+<!-- Product 5 (Placeholder) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col shadow-[0_4px_20px_rgba(0,5,23,0.05)] hover:border-primary transition-colors cursor-pointer group">
+<div class="w-full aspect-[4/3] bg-surface-container flex items-center justify-center relative overflow-hidden">
+<span class="material-symbols-outlined text-4xl text-primary-fixed-dim">texture</span>
+</div>
+<div class="p-4 flex flex-col flex-grow gap-2">
+<h4 class="font-label-md text-label-md text-on-surface line-clamp-2 font-semibold group-hover:text-primary transition-colors">Cotton Flannel, brushed both sides</h4>
+<p class="font-headline-md text-headline-md text-on-surface mt-auto pt-2">INR 310 <span class="text-body-md font-body-md text-secondary">/ meter</span></p>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-label-sm text-label-sm text-secondary truncate">Ludhiana Fabrics</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-2 pt-2 border-t border-surface-variant">Cotton fabric</span>
+</div>
+</div>
+<!-- Product 6 (Placeholder) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col shadow-[0_4px_20px_rgba(0,5,23,0.05)] hover:border-primary transition-colors cursor-pointer group">
+<div class="w-full aspect-[4/3] bg-surface-container flex items-center justify-center relative overflow-hidden">
+<span class="material-symbols-outlined text-4xl text-primary-fixed-dim">grid_on</span>
+</div>
+<div class="p-4 flex flex-col flex-grow gap-2">
+<h4 class="font-label-md text-label-md text-on-surface line-clamp-2 font-semibold group-hover:text-primary transition-colors">Yarn-Dyed Cotton Check</h4>
+<p class="font-headline-md text-headline-md text-on-surface mt-auto pt-2">EUR 4.10 – 5.60</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-label-sm text-label-sm text-secondary truncate">Ahmedabad Mills</span>
+<span class="material-symbols-outlined text-[16px] text-[#12B76A] flex-shrink-0" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-2 pt-2 border-t border-surface-variant">Cotton fabric</span>
+</div>
+</div>
+<!-- Product 7 (Placeholder) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col shadow-[0_4px_20px_rgba(0,5,23,0.05)] hover:border-primary transition-colors cursor-pointer group">
+<div class="w-full aspect-[4/3] bg-surface-container flex items-center justify-center relative overflow-hidden">
+<span class="material-symbols-outlined text-4xl text-primary-fixed-dim">layers</span>
+</div>
+<div class="p-4 flex flex-col flex-grow gap-2">
+<h4 class="font-label-md text-label-md text-on-surface line-clamp-2 font-semibold group-hover:text-primary transition-colors">Cotton Muslin, greige</h4>
+<p class="font-body-md text-body-md text-primary mt-auto pt-2 font-medium">Price on request</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-label-sm text-label-sm text-secondary truncate">Salem Cotton Traders</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-2 pt-2 border-t border-surface-variant">Cotton fabric</span>
+</div>
+</div>
+<!-- Product 8 (Placeholder) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col shadow-[0_4px_20px_rgba(0,5,23,0.05)] hover:border-primary transition-colors cursor-pointer group">
+<div class="w-full aspect-[4/3] bg-surface-container flex items-center justify-center relative overflow-hidden">
+<span class="material-symbols-outlined text-4xl text-primary-fixed-dim">waves</span>
+</div>
+<div class="p-4 flex flex-col flex-grow gap-2">
+<h4 class="font-label-md text-label-md text-on-surface line-clamp-2 font-semibold group-hover:text-primary transition-colors">Handloom Cotton Khadi</h4>
+<p class="font-headline-md text-headline-md text-on-surface mt-auto pt-2">INR 450 <span class="text-body-md font-body-md text-secondary">/ meter</span></p>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-label-sm text-label-sm text-secondary truncate">Jaipur Craft Collective</span>
+<span class="material-symbols-outlined text-[16px] text-[#12B76A] flex-shrink-0" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-2 pt-2 border-t border-surface-variant">Cotton fabric</span>
+</div>
+</div>
+<!-- Product 9 (Placeholder) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col shadow-[0_4px_20px_rgba(0,5,23,0.05)] hover:border-primary transition-colors cursor-pointer group">
+<div class="w-full aspect-[4/3] bg-surface-container flex items-center justify-center relative overflow-hidden">
+<span class="material-symbols-outlined text-4xl text-primary-fixed-dim">view_agenda</span>
+</div>
+<div class="p-4 flex flex-col flex-grow gap-2">
+<h4 class="font-label-md text-label-md text-on-surface line-clamp-2 font-semibold group-hover:text-primary transition-colors">Cotton Canvas 12oz</h4>
+<p class="font-headline-md text-headline-md text-on-surface mt-auto pt-2">INR 390 – 520</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-label-sm text-label-sm text-secondary truncate">Panipat Home Textiles</span>
+<span class="material-symbols-outlined text-[16px] text-[#12B76A] flex-shrink-0" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-2 pt-2 border-t border-surface-variant">Cotton fabric</span>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between border-t border-outline-variant pt-stack-md mt-stack-md">
+<button class="font-label-md text-label-md text-secondary hover:text-primary flex items-center gap-2 px-3 py-2 rounded-md hover:bg-surface-container transition-colors opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                        Previous
+                    </button>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-md font-label-md text-label-md bg-primary text-on-primary">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md font-label-md text-label-md text-secondary hover:bg-surface-container transition-colors">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md font-label-md text-label-md text-secondary hover:bg-surface-container transition-colors">3</button>
+<span class="text-secondary mx-1">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded-md font-label-md text-label-md text-secondary hover:bg-surface-container transition-colors">6</button>
+</div>
+<button class="font-label-md text-label-md text-primary hover:bg-surface-container flex items-center gap-2 px-3 py-2 rounded-md transition-colors">
+                        Next
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-on-background dark:bg-surface-container-lowest full-width flat no shadows">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-gutter px-gutter py-stack-lg max-w-container-max mx-auto">
+<div class="col-span-2 md:col-span-1 flex flex-col gap-stack-sm">
+<span class="font-headline-md text-headline-md text-surface dark:text-on-background tracking-tight">MPX Global</span>
+<span class="font-label-sm text-label-sm text-surface-variant dark:text-outline mt-auto pt-4">© 2026 MPX Global. All rights reserved.</span>
+</div>
+<div class="flex flex-col gap-2">
+<h4 class="font-label-md text-label-md text-surface-variant mb-2">Marketplace</h4>
+<a class="font-body-md text-body-md text-surface hover:text-primary-fixed-dim transition-colors cursor-pointer" href="#">Products</a>
+<a class="font-body-md text-body-md text-surface hover:text-primary-fixed-dim transition-colors cursor-pointer" href="#">Categories</a>
+</div>
+<div class="flex flex-col gap-2">
+<h4 class="font-label-md text-label-md text-surface-variant mb-2">Company</h4>
+<a class="font-body-md text-body-md text-surface hover:text-primary-fixed-dim transition-colors cursor-pointer" href="#">About</a>
+<a class="font-body-md text-body-md text-surface hover:text-primary-fixed-dim transition-colors cursor-pointer" href="#">Contact</a>
+</div>
+<div class="flex flex-col gap-2">
+<h4 class="font-label-md text-label-md text-surface-variant mb-2">Legal</h4>
+<a class="font-body-md text-body-md text-surface hover:text-primary-fixed-dim transition-colors cursor-pointer" href="#">Terms</a>
+<a class="font-body-md text-body-md text-surface hover:text-primary-fixed-dim transition-colors cursor-pointer" href="#">Privacy</a>
+</div>
+</div>
+</footer>
+<!-- SYSTEM STATES (Appended visually below for review, normally would replace main content area) -->
+<div class="w-full max-w-container-max mx-auto px-gutter py-stack-lg mt-stack-lg border-t-4 border-dashed border-outline-variant">
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-stack-lg text-center text-secondary">System State: Loading</h2>
+<div class="flex flex-col md:flex-row gap-stack-lg items-start opacity-70">
+<!-- Loading Sidebar -->
+<aside class="w-full md:w-[240px] flex-shrink-0 bg-surface-container-lowest rounded-lg border border-outline-variant p-stack-md shadow-sm">
+<div class="h-4 w-32 bg-surface-container rounded skeleton mb-4"></div>
+<div class="flex flex-col gap-2">
+<div class="h-8 w-full bg-surface-variant rounded skeleton"></div>
+<div class="h-8 w-full bg-surface-container rounded skeleton"></div>
+<div class="h-8 w-full bg-surface-container rounded skeleton"></div>
+<div class="h-8 w-full bg-surface-container rounded skeleton"></div>
+</div>
+</aside>
+<!-- Loading Grid -->
+<div class="flex-grow w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<div class="w-full aspect-[4/3] bg-surface-variant skeleton"></div>
+<div class="p-4 flex flex-col gap-3">
+<div class="h-4 w-3/4 bg-surface-container rounded skeleton"></div>
+<div class="h-6 w-1/2 bg-surface-container rounded skeleton mt-2"></div>
+<div class="h-3 w-2/3 bg-surface-container rounded skeleton"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<div class="w-full aspect-[4/3] bg-surface-variant skeleton"></div>
+<div class="p-4 flex flex-col gap-3">
+<div class="h-4 w-5/6 bg-surface-container rounded skeleton"></div>
+<div class="h-6 w-1/2 bg-surface-container rounded skeleton mt-2"></div>
+<div class="h-3 w-1/2 bg-surface-container rounded skeleton"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col hidden sm:flex">
+<div class="w-full aspect-[4/3] bg-surface-variant skeleton"></div>
+<div class="p-4 flex flex-col gap-3">
+<div class="h-4 w-2/3 bg-surface-container rounded skeleton"></div>
+<div class="h-6 w-1/3 bg-surface-container rounded skeleton mt-2"></div>
+<div class="h-3 w-3/4 bg-surface-container rounded skeleton"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full max-w-container-max mx-auto px-gutter py-stack-lg mt-stack-lg border-t-4 border-dashed border-outline-variant">
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-stack-lg text-center text-secondary">System State: Empty</h2>
+<div class="flex flex-col md:flex-row gap-stack-lg items-start">
+<aside class="w-full md:w-[240px] flex-shrink-0 bg-surface-container-lowest rounded-lg border border-outline-variant p-stack-md shadow-sm">
+<h3 class="font-label-md text-label-md text-on-surface mb-stack-sm uppercase tracking-wider text-secondary">Related Categories</h3>
+<nav class="flex flex-col gap-1">
+<a class="px-3 py-2 rounded-md font-label-md text-label-md bg-primary-container text-on-primary flex items-center justify-between" href="#">
+                        Alien fabric
+                        <span class="material-symbols-outlined text-[18px]">check</span>
+</a>
+</nav>
+</aside>
+<div class="flex-grow w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-12 flex flex-col items-center justify-center text-center shadow-sm">
+<span class="material-symbols-outlined text-display-lg text-secondary mb-4">inventory_2</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">No products in this category yet</h3>
+<p class="font-body-md text-body-md text-secondary mb-6 max-w-md">We are currently sourcing suppliers for this category. Check back soon or explore other materials.</p>
+<button class="font-label-md text-label-md bg-primary-container text-on-primary hover:bg-[#2340C4] px-6 py-3 rounded-full transition-colors">Browse all categories</button>
+</div>
+</div>
+</div>
+<div class="w-full max-w-container-max mx-auto px-gutter py-stack-lg mt-stack-lg border-t-4 border-dashed border-outline-variant">
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-stack-lg text-center text-secondary">System State: Error</h2>
+<div class="flex flex-col md:flex-row gap-stack-lg items-start">
+<aside class="w-full md:w-[240px] flex-shrink-0 bg-surface-container-lowest rounded-lg border border-outline-variant p-stack-md shadow-sm">
+<h3 class="font-label-md text-label-md text-on-surface mb-stack-sm uppercase tracking-wider text-secondary">Categories</h3>
+<p class="text-secondary font-body-md text-sm">Failed to load.</p>
+</aside>
+<div class="flex-grow w-full bg-error-container/30 border border-error/20 rounded-lg p-12 flex flex-col items-center justify-center text-center shadow-sm">
+<span class="material-symbols-outlined text-display-lg text-error mb-4">error</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Failed to load products</h3>
+<p class="font-body-md text-body-md text-secondary mb-6 max-w-md">We encountered a temporary network issue while retrieving the catalog data.</p>
+<button class="font-label-md text-label-md bg-surface text-on-surface border border-outline hover:bg-surface-container px-6 py-3 rounded-full transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+                    Try again
+                </button>
+</div>
+</div>
+</div>
+</body></html>

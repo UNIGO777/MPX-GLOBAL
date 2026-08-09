@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global - Fields Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "secondary-fixed-dim": "#b6c8e5",
+                  "background": "#fbf8ff",
+                  "on-primary": "#ffffff",
+                  "error-container": "#ffdad6",
+                  "secondary": "#4e5f79",
+                  "tertiary-fixed": "#70fda7",
+                  "surface-tint": "#2a4de0",
+                  "surface-variant": "#e2e1ee",
+                  "surface-container-high": "#e8e7f3",
+                  "on-tertiary": "#ffffff",
+                  "on-error-container": "#93000a",
+                  "on-secondary": "#ffffff",
+                  "on-error": "#ffffff",
+                  "surface-container": "#eeedf9",
+                  "primary-fixed-dim": "#b9c3ff",
+                  "on-secondary-fixed-variant": "#374860",
+                  "tertiary-fixed-dim": "#51df8e",
+                  "on-secondary-container": "#53647d",
+                  "outline": "#747687",
+                  "on-background": "#1a1b24",
+                  "surface-container-lowest": "#ffffff",
+                  "inverse-on-surface": "#f1effc",
+                  "error": "#ba1a1a",
+                  "surface-bright": "#fbf8ff",
+                  "inverse-primary": "#b9c3ff",
+                  "on-tertiary-container": "#66f29e",
+                  "on-primary-fixed-variant": "#0032c3",
+                  "on-primary-container": "#d0d6ff",
+                  "surface-dim": "#dad9e5",
+                  "primary-container": "#2a4de0",
+                  "on-primary-fixed": "#001158",
+                  "surface-container-highest": "#e2e1ee",
+                  "on-surface": "#1a1b24",
+                  "tertiary": "#00522c",
+                  "secondary-fixed": "#d4e3ff",
+                  "on-surface-variant": "#444655",
+                  "on-tertiary-fixed": "#00210e",
+                  "secondary-container": "#cfe1ff",
+                  "tertiary-container": "#006d3c",
+                  "surface": "#fbf8ff",
+                  "on-tertiary-fixed-variant": "#00522c",
+                  "surface-container-low": "#f4f2ff",
+                  "inverse-surface": "#2f3039",
+                  "on-secondary-fixed": "#091c32",
+                  "primary-fixed": "#dee1ff",
+                  "outline-variant": "#c4c5d8",
+                  "primary": "#0032c3",
+                  
+                  "brand-navy": "#1A2E8F",
+                  "brand-blue": "#2A4DE0",
+                  "brand-canvas": "#EAEEFF",
+                  "brand-border": "#C5C6CF",
+                  "brand-success": "#12B76A",
+                  "brand-warning": "#F79009",
+                  "brand-danger": "#D92D20",
+                  "brand-neutral": "#667085"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "unit": "4px",
+                  "container-max": "1200px",
+                  "stack-lg": "32px",
+                  "gutter": "24px",
+                  "stack-md": "16px",
+                  "stack-sm": "8px",
+                  "card-padding": "40px"
+          },
+          "fontFamily": {
+                  "body-lg": ["Inter", "sans-serif"],
+                  "headline-md": ["Inter", "sans-serif"],
+                  "body-md": ["Inter", "sans-serif"],
+                  "display-lg": ["Inter", "sans-serif"],
+                  "headline-lg": ["Inter", "sans-serif"],
+                  "label-md": ["Inter", "sans-serif"],
+                  "label-sm": ["Inter", "sans-serif"],
+                  "headline-lg-mobile": ["Inter", "sans-serif"]
+          },
+          "fontSize": {
+                  "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                  "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                  "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                  "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                  "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                  "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                  "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                  "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 0;
+      margin: 0;
+    }
+    .mobile-frame {
+      width: 375px;
+      min-height: 812px;
+      background-color: #EAEEFF;
+      margin-bottom: 100px;
+      position: relative;
+      overflow-x: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .mobile-frame:last-child {
+      margin-bottom: 0;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface">
+<!-- SCREEN 1: FIELD LIST -->
+<div class="mobile-frame">
+<!-- TopAppBar -->
+<header class="bg-brand-navy flex justify-between items-center px-4 w-full h-[64px] shadow-sm shrink-0">
+<button class="text-on-primary p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile text-on-primary">MPX Global</h1>
+<div class="w-8 h-8 rounded-full bg-white/20 overflow-hidden flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-sm">person</span>
+</div>
+</header>
+<main class="p-4 flex flex-col gap-4 pb-8">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-brand-neutral hover:text-brand-navy transition-colors text-sm font-medium cursor-pointer mb-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span>Cotton fabric</span>
+</div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface">Fields</h1>
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-0.5 rounded-full font-medium">Goods</span>
+</div>
+<p class="text-brand-neutral text-sm mt-1">These fields are what sellers fill in when listing under Cotton fabric.</p>
+</div>
+<button class="w-full bg-brand-blue text-white rounded-full py-3 font-medium hover:bg-[#2340C4] transition-colors mt-2">
+        Add field
+      </button>
+<div class="flex flex-col gap-3 mt-2">
+<!-- Card 1 -->
+<div class="bg-white rounded-lg border border-brand-border p-4 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="font-semibold text-on-surface">Material</span>
+<span class="text-brand-neutral text-sm font-medium">#1</span>
+</div>
+<div class="font-mono text-xs text-brand-neutral bg-surface-container-low px-2 py-1 rounded inline-flex w-fit">material</div>
+<div class="flex flex-wrap gap-2 mt-1">
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">Text</span>
+</div>
+<hr class="border-brand-border my-1"/>
+<div class="flex justify-between items-center pt-1">
+<button class="text-brand-blue text-sm font-medium hover:underline">Edit</button>
+<button class="text-brand-danger text-sm font-medium hover:underline">Delete</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-lg border border-brand-border p-4 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="font-semibold text-on-surface">GSM</span>
+<span class="text-brand-neutral text-sm font-medium">#2</span>
+</div>
+<div class="font-mono text-xs text-brand-neutral bg-surface-container-low px-2 py-1 rounded inline-flex w-fit">gsm</div>
+<div class="flex flex-wrap gap-2 mt-1">
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">Number</span>
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">gsm</span>
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">Required</span>
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">Filterable</span>
+</div>
+<hr class="border-brand-border my-1"/>
+<div class="flex justify-between items-center pt-1">
+<button class="text-brand-blue text-sm font-medium hover:underline">Edit</button>
+<button class="text-brand-danger text-sm font-medium hover:underline">Delete</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-lg border border-brand-border p-4 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="font-semibold text-on-surface">Weave</span>
+<span class="text-brand-neutral text-sm font-medium">#3</span>
+</div>
+<div class="font-mono text-xs text-brand-neutral bg-surface-container-low px-2 py-1 rounded inline-flex w-fit">weave</div>
+<div class="flex flex-wrap gap-2 mt-1">
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">Text</span>
+</div>
+<hr class="border-brand-border my-1"/>
+<div class="flex justify-between items-center pt-1">
+<button class="text-brand-blue text-sm font-medium hover:underline">Edit</button>
+<button class="text-brand-danger text-sm font-medium hover:underline">Delete</button>
+</div>
+</div>
+</div>
+<p class="text-center text-xs text-brand-neutral mt-4">Changes are recorded.</p>
+</main>
+</div>
+<!-- SCREEN 2: ADD FIELD -->
+<div class="mobile-frame">
+<!-- TopAppBar -->
+<header class="bg-brand-navy flex justify-between items-center px-4 w-full h-[64px] shadow-sm shrink-0">
+<button class="text-on-primary p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile text-on-primary">MPX Global</h1>
+<div class="w-8 h-8 rounded-full bg-white/20 overflow-hidden flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-sm">person</span>
+</div>
+</header>
+<main class="p-4 flex flex-col gap-4 pb-8">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-brand-neutral hover:text-brand-navy transition-colors text-sm font-medium cursor-pointer mb-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span>Fields</span>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface">Add field</h1>
+</div>
+<div class="bg-white rounded-lg border border-brand-border p-4 flex flex-col gap-5">
+<!-- Display name -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-on-surface">Display name</label>
+<input class="w-full rounded-lg border border-brand-border px-3 py-2 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-shadow" placeholder="e.g. GSM, Colour, Blend" type="text"/>
+<span class="text-xs text-brand-neutral">What sellers and buyers see — safe to change later</span>
+</div>
+<!-- Key -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center">
+<label class="text-sm font-medium text-on-surface">Key</label>
+<button class="text-xs text-brand-blue font-medium hover:underline">Generate from name</button>
+</div>
+<input class="w-full rounded-lg border border-brand-border px-3 py-2 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-shadow font-mono" placeholder="e.g. gsm" type="text"/>
+<span class="text-xs text-brand-neutral">Lowercase with underscores</span>
+</div>
+<!-- Type -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-on-surface">Type</label>
+<div class="relative">
+<select class="w-full appearance-none rounded-lg border border-brand-border px-3 py-2 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-shadow bg-white">
+<option>Text</option>
+<option>Number</option>
+<option>Select</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-brand-neutral pointer-events-none text-xl">expand_more</span>
+</div>
+</div>
+<!-- Unit -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-on-surface">Unit</label>
+<input class="w-full rounded-lg border border-brand-border px-3 py-2 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-shadow" placeholder="e.g. gsm, kg" type="text"/>
+<span class="text-xs text-brand-neutral">e.g. gsm, kg, % — shown inside the seller's field</span>
+</div>
+<!-- Required -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center">
+<label class="text-sm font-medium text-on-surface">Required</label>
+<div class="w-10 h-6 bg-surface-variant rounded-full relative cursor-pointer">
+<div class="w-4 h-4 bg-white rounded-full absolute left-1 top-1 shadow-sm"></div>
+</div>
+</div>
+<span class="text-xs text-brand-neutral">Sellers must fill this before publishing</span>
+</div>
+<!-- Filterable -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center">
+<label class="text-sm font-medium text-on-surface">Filterable</label>
+<div class="w-10 h-6 bg-surface-variant rounded-full relative cursor-pointer">
+<div class="w-4 h-4 bg-white rounded-full absolute left-1 top-1 shadow-sm"></div>
+</div>
+</div>
+<span class="text-xs text-brand-neutral">Available as a buyer filter (arrives with search)</span>
+</div>
+<!-- Order -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-on-surface">Order</label>
+<input class="w-full rounded-lg border border-brand-border px-3 py-2 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-shadow" type="number" value="7"/>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<button class="w-full bg-brand-blue text-white rounded-full py-3 font-medium hover:bg-[#2340C4] transition-colors">
+          Add field
+        </button>
+<button class="w-full text-brand-neutral rounded-full py-3 font-medium hover:bg-black/5 transition-colors">
+          Cancel
+        </button>
+</div>
+</main>
+</div>
+<!-- SCREEN 3: EDIT FIELD -->
+<div class="mobile-frame">
+<!-- TopAppBar -->
+<header class="bg-brand-navy flex justify-between items-center px-4 w-full h-[64px] shadow-sm shrink-0">
+<button class="text-on-primary p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile text-on-primary">MPX Global</h1>
+<div class="w-8 h-8 rounded-full bg-white/20 overflow-hidden flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-sm">person</span>
+</div>
+</header>
+<main class="p-4 flex flex-col gap-4 pb-8">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-brand-neutral hover:text-brand-navy transition-colors text-sm font-medium cursor-pointer mb-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span>Fields</span>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface">Edit field</h1>
+</div>
+<div class="bg-white rounded-lg border border-brand-border p-4 flex flex-col gap-5">
+<!-- Display name -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-on-surface">Display name</label>
+<input class="w-full rounded-lg border border-brand-border px-3 py-2 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-shadow" type="text" value="GSM"/>
+<span class="text-xs text-brand-neutral">What sellers and buyers see — safe to change later</span>
+</div>
+<!-- Key (Read-only) -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-on-surface">Key</label>
+<div class="w-full rounded-lg border border-brand-border px-3 py-2 text-sm bg-surface-container text-on-surface font-mono">gsm</div>
+<span class="text-xs text-brand-neutral">Fixed so existing products keep working</span>
+</div>
+<!-- Type (Read-only) -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-on-surface">Type</label>
+<div class="w-full rounded-lg border border-brand-border px-3 py-2 text-sm bg-surface-container text-on-surface">Number</div>
+<span class="text-xs text-brand-neutral">Type can't change later. To convert an existing field, delete it and create a new one with a different key.</span>
+</div>
+<!-- Unit -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-on-surface">Unit</label>
+<input class="w-full rounded-lg border border-brand-border px-3 py-2 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-shadow" type="text" value="gsm"/>
+<span class="text-xs text-brand-neutral">e.g. gsm, kg, % — shown inside the seller's field</span>
+</div>
+<!-- Required -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center">
+<label class="text-sm font-medium text-on-surface">Required</label>
+<div class="w-10 h-6 bg-brand-blue rounded-full relative cursor-pointer">
+<div class="w-4 h-4 bg-white rounded-full absolute right-1 top-1 shadow-sm"></div>
+</div>
+</div>
+<span class="text-xs text-brand-neutral">Sellers must fill this before publishing</span>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<button class="w-full bg-brand-blue text-white rounded-full py-3 font-medium hover:bg-[#2340C4] transition-colors">
+          Save
+        </button>
+<button class="w-full text-brand-neutral rounded-full py-3 font-medium hover:bg-black/5 transition-colors">
+          Cancel
+        </button>
+</div>
+</main>
+</div>
+<!-- SCREEN 4: SELECT TYPE -->
+<div class="mobile-frame">
+<!-- TopAppBar -->
+<header class="bg-brand-navy flex justify-between items-center px-4 w-full h-[64px] shadow-sm shrink-0">
+<button class="text-on-primary p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile text-on-primary">MPX Global</h1>
+<div class="w-8 h-8 rounded-full bg-white/20 overflow-hidden flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-sm">person</span>
+</div>
+</header>
+<main class="p-4 flex flex-col gap-4 pb-8">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-brand-neutral hover:text-brand-navy transition-colors text-sm font-medium cursor-pointer mb-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span>Fields</span>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface">Add field</h1>
+</div>
+<div class="bg-white rounded-lg border border-brand-border p-4 flex flex-col gap-5">
+<!-- Type -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-on-surface">Type</label>
+<div class="relative">
+<select class="w-full appearance-none rounded-lg border border-brand-border px-3 py-2 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-shadow bg-white">
+<option>Select</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-brand-neutral pointer-events-none text-xl">expand_more</span>
+</div>
+</div>
+<!-- Options Panel -->
+<div class="bg-surface-container-low p-3 rounded-lg border border-brand-border/50 flex flex-col gap-3">
+<label class="text-sm font-medium text-on-surface">Options</label>
+<div class="flex flex-wrap gap-2">
+<div class="bg-white border border-brand-border text-on-surface text-sm px-3 py-1.5 rounded-full flex items-center gap-1">
+              Mercerised <span class="material-symbols-outlined text-[16px] cursor-pointer text-brand-neutral hover:text-brand-danger">close</span>
+</div>
+<div class="bg-white border border-brand-border text-on-surface text-sm px-3 py-1.5 rounded-full flex items-center gap-1">
+              Sanforised <span class="material-symbols-outlined text-[16px] cursor-pointer text-brand-neutral hover:text-brand-danger">close</span>
+</div>
+<div class="bg-white border border-brand-border text-on-surface text-sm px-3 py-1.5 rounded-full flex items-center gap-1">
+              Bio-washed <span class="material-symbols-outlined text-[16px] cursor-pointer text-brand-neutral hover:text-brand-danger">close</span>
+</div>
+<div class="bg-white border border-brand-border text-on-surface text-sm px-3 py-1.5 rounded-full flex items-center gap-1">
+              Calendered <span class="material-symbols-outlined text-[16px] cursor-pointer text-brand-neutral hover:text-brand-danger">close</span>
+</div>
+</div>
+<div class="flex gap-2">
+<input class="flex-1 rounded-lg border border-brand-border px-3 py-2 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-shadow bg-white" placeholder="Add an option..." type="text"/>
+<button class="bg-brand-blue text-white rounded-lg px-4 font-medium hover:bg-[#2340C4] transition-colors text-sm">Add</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- SCREEN 5: DELETE CONFIRMATION -->
+<div class="mobile-frame bg-black/60 flex items-center justify-center p-4">
+<!-- Simulated background behind modal -->
+<div class="absolute inset-0 opacity-30 bg-white pointer-events-none"></div>
+<!-- Modal -->
+<div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-[343px] flex flex-col items-center text-center relative z-10">
+<div class="w-12 h-12 rounded-full bg-error-container text-brand-danger flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-2xl">warning</span>
+</div>
+<h2 class="font-headline-md text-headline-md-mobile text-on-surface mb-2">Delete GSM?</h2>
+<p class="text-brand-neutral text-sm mb-6">Products that already have GSM keep their saved value — it just stops being asked for on new listings.</p>
+<div class="w-full flex flex-col gap-3">
+<button class="w-full bg-brand-danger text-white rounded-full py-3 font-medium hover:bg-[#B92015] transition-colors">
+          Delete field
+        </button>
+<button class="w-full text-brand-neutral rounded-full py-3 font-medium hover:bg-black/5 transition-colors">
+          Cancel
+        </button>
+</div>
+</div>
+</div>
+<!-- SCREEN 6: READ-ONLY VARIANT -->
+<div class="mobile-frame">
+<!-- TopAppBar -->
+<header class="bg-brand-navy flex justify-between items-center px-4 w-full h-[64px] shadow-sm shrink-0">
+<button class="text-on-primary p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile text-on-primary">MPX Global</h1>
+<div class="w-8 h-8 rounded-full bg-white/20 overflow-hidden flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-sm">person</span>
+</div>
+</header>
+<main class="p-4 flex flex-col gap-4 pb-8">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-brand-neutral hover:text-brand-navy transition-colors text-sm font-medium cursor-pointer mb-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span>Cotton fabric</span>
+</div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface">Fields</h1>
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-0.5 rounded-full font-medium">Goods</span>
+</div>
+<p class="text-brand-neutral text-sm mt-1">These fields are what sellers fill in when listing under Cotton fabric.</p>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<!-- Card 1 -->
+<div class="bg-white rounded-lg border border-brand-border p-4 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="font-semibold text-on-surface">Material</span>
+<span class="text-brand-neutral text-sm font-medium">#1</span>
+</div>
+<div class="font-mono text-xs text-brand-neutral bg-surface-container-low px-2 py-1 rounded inline-flex w-fit">material</div>
+<div class="flex flex-wrap gap-2 mt-1">
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">Text</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-lg border border-brand-border p-4 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="font-semibold text-on-surface">GSM</span>
+<span class="text-brand-neutral text-sm font-medium">#2</span>
+</div>
+<div class="font-mono text-xs text-brand-neutral bg-surface-container-low px-2 py-1 rounded inline-flex w-fit">gsm</div>
+<div class="flex flex-wrap gap-2 mt-1">
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">Number</span>
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">gsm</span>
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">Required</span>
+<span class="bg-surface-variant text-on-surface-variant text-xs px-2 py-1 rounded">Filterable</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

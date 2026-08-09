@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global - My Products</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#b9c3ff",
+                        "inverse-on-surface": "#f1effc",
+                        "primary-container": "#2a4de0",
+                        "surface-variant": "#e2e1ee",
+                        "on-secondary-fixed": "#091c32",
+                        "surface-bright": "#fbf8ff",
+                        "on-secondary-fixed-variant": "#374860",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e2e1ee",
+                        "on-tertiary-fixed": "#00210e",
+                        "on-primary-fixed": "#001158",
+                        "secondary": "#4e5f79",
+                        "inverse-primary": "#b9c3ff",
+                        "primary": "#0032c3",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#cfe1ff",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "surface-container-high": "#e8e7f3",
+                        "outline": "#747687",
+                        "on-surface": "#1a1b24",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#d0d6ff",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "tertiary-container": "#006d3c",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f4f2ff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#53647d",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "primary-fixed": "#dee1ff",
+                        "surface-dim": "#dad9e5",
+                        "on-background": "#1a1b24",
+                        "on-error": "#ffffff",
+                        "tertiary": "#00522c",
+                        "background": "#fbf8ff",
+                        "on-surface-variant": "#444655",
+                        "inverse-surface": "#2f3039",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#2a4de0",
+                        "surface-container": "#eeedf9",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "secondary-fixed": "#d4e3ff",
+                        "surface": "#fbf8ff",
+                        "on-tertiary-container": "#66f29e",
+                        "outline-variant": "#c4c5d8",
+                        "tertiary-fixed": "#70fda7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-padding": "40px",
+                        "gutter": "24px",
+                        "stack-sm": "8px",
+                        "unit": "4px",
+                        "stack-md": "16px",
+                        "container-max": "1200px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col md:max-w-[480px] md:mx-auto relative font-body-md overflow-x-hidden">
+<!-- OVERLAY (Hidden by default, used for drawer/menu) -->
+<div class="fixed inset-0 bg-on-background/40 z-40 hidden transition-opacity duration-300" id="overlay" onclick="closeDrawer()"></div>
+<!-- NavigationDrawer (Hidden by default) -->
+<nav class="bg-surface dark:bg-inverse-surface fixed inset-y-0 left-0 w-80 z-[60] bg-surface-container-low dark:bg-inverse-surface shadow-xl flex flex-col h-full py-stack-lg transition-transform duration-300 -translate-x-full" id="drawer">
+<!-- Header -->
+<div class="flex items-center gap-stack-md px-gutter mb-stack-lg">
+<img alt="User profile photo" class="w-12 h-12 rounded-full object-cover border border-outline-variant" data-alt="A clean, professional headshot avatar of an enterprise software user, isolated on a light, neutral background, suitable for a corporate B2B dashboard context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCne9S4ubjJMo72Mw6QYJ3Se6Xa1uutZfnFXWsKCk1wA_VSeDwWB-FOvBgu48pi31NKhLdcO9F6meGxwIcKBfTZglb8bkkBov-hoYbImN5MLXBi8P-URE7TyihpLaG7L9dAbjCxsHmZT8FzNel0FDjDU9Q4A0iBbNG3zkK0P2q0z0HQ9gKa8qtCdsLWuNCQc7I3jjOJje7aaKPoxW0xbB1Gnt57Sk1UMba8ghNwHch-__ttgQ8fzXhR"/>
+<div>
+<h2 class="font-headline-md text-headline-md-mobile text-primary font-bold">Exporter Console</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">MPX Global Authorized</p>
+<p class="font-label-sm text-label-sm text-outline text-[10px]">v1.0.4</p>
+</div>
+</div>
+<!-- Links -->
+<div class="flex-1 overflow-y-auto">
+<a class="flex items-center gap-stack-md text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-3 mx-2 hover:bg-surface-container-high transition-all active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="verified" style="font-variation-settings: 'FILL' 0;">verified</span>
+<span class="font-label-md text-label-md">Verification</span>
+</a>
+<a class="flex items-center gap-stack-md bg-secondary-container text-on-secondary-container rounded-full px-4 py-3 mx-2 hover:bg-surface-container-high transition-all active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="font-label-md text-label-md font-bold">Products</span>
+</a>
+<a class="flex items-center gap-stack-md text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-3 mx-2 hover:bg-surface-container-high transition-all active:scale-95 duration-150 opacity-60" href="#">
+<span class="material-symbols-outlined" data-icon="request_quote" style="font-variation-settings: 'FILL' 0;">request_quote</span>
+<span class="font-label-md text-label-md">Enquiries <span class="text-[10px] bg-surface-container-high px-2 py-0.5 rounded-full ml-2">Soon</span></span>
+</a>
+<a class="flex items-center gap-stack-md text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-3 mx-2 hover:bg-surface-container-high transition-all active:scale-95 duration-150 opacity-60" href="#">
+<span class="material-symbols-outlined" data-icon="forum" style="font-variation-settings: 'FILL' 0;">forum</span>
+<span class="font-label-md text-label-md">Chat <span class="text-[10px] bg-surface-container-high px-2 py-0.5 rounded-full ml-2">Soon</span></span>
+</a>
+<a class="flex items-center gap-stack-md text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-3 mx-2 hover:bg-surface-container-high transition-all active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+</nav>
+<!-- TopAppBar -->
+<header class="bg-primary dark:bg-primary-container text-on-primary dark:text-on-primary-container fixed top-0 w-full z-50 border-b border-outline-variant shadow-sm transition-colors duration-200 flex items-center justify-between px-gutter h-16 md:max-w-[480px]">
+<div class="flex items-center gap-stack-sm">
+<button class="p-2 hover:bg-primary-container/20 rounded-full transition-colors flex items-center justify-center text-on-primary" onclick="openDrawer()">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile font-bold text-on-primary tracking-tight">MPX Global</h1>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm flex items-center justify-center font-bold border border-outline-variant shadow-sm shrink-0">
+            RK
+        </div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-[80px] pb-gutter px-gutter flex-1 flex flex-col gap-stack-lg bg-[#EAEEFF]">
+<!-- Header & Action -->
+<div class="flex items-center justify-between">
+<h2 class="font-headline-lg text-headline-lg-mobile text-on-background">My products</h2>
+<button class="bg-primary-container text-on-tertiary hover:bg-[#2340C4] transition-colors rounded-full px-4 py-2 font-label-md text-label-md flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+                Add product
+            </button>
+</div>
+<!-- Cap Meter Card -->
+<div class="bg-surface rounded-lg p-stack-md border border-outline-variant shadow-[0_4px_20px_rgba(0,5,23,0.05)]">
+<div class="flex flex-col gap-stack-md">
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center font-label-sm text-label-sm">
+<span class="text-on-surface">Live listings</span>
+<span class="text-on-surface-variant font-bold">2 / 3</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 66%;"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center font-label-sm text-label-sm">
+<span class="text-on-surface">Drafts</span>
+<span class="text-on-surface-variant font-bold">7 / 10</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1.5 overflow-hidden">
+<div class="bg-outline h-full rounded-full" style="width: 70%;"></div>
+</div>
+</div>
+<div class="mt-2 flex items-start gap-2 bg-[#F2F4F7] p-3 rounded border border-outline-variant/50">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="lightbulb" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant leading-tight mt-0.5">
+                        Get verified to publish unlimited products. <a class="text-primary-container underline ml-1 font-bold" href="#">Verify now</a>
+</p>
+</div>
+</div>
+</div>
+<!-- Tabs -->
+<div class="w-full overflow-x-auto no-scrollbar -mx-gutter px-gutter">
+<div class="flex gap-2 min-w-max pb-2">
+<button class="px-4 py-1.5 rounded-full border border-primary-container bg-primary-container/10 text-primary-container font-label-md text-label-md transition-colors">All (14)</button>
+<button class="px-4 py-1.5 rounded-full border border-outline-variant bg-surface text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">Live (2)</button>
+<button class="px-4 py-1.5 rounded-full border border-outline-variant bg-surface text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">Hidden (3)</button>
+<button class="px-4 py-1.5 rounded-full border border-outline-variant bg-surface text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">Drafts (7)</button>
+<button class="px-4 py-1.5 rounded-full border border-outline-variant bg-surface text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">Archived (2)</button>
+</div>
+</div>
+<!-- Product List -->
+<div class="flex flex-col gap-stack-md">
+<!-- Item 1 -->
+<div class="bg-surface rounded-lg p-stack-md border border-outline-variant shadow-[0_4px_20px_rgba(0,5,23,0.05)] flex gap-stack-md relative">
+<div class="w-16 h-16 rounded bg-surface-container-high border border-outline-variant shrink-0 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A close-up, high-quality photograph of combed cotton poplin fabric roll, smooth texture, professional lighting, B2B product catalog aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWoTn39mcAK0oxZjH0r1MwSNJKhbS5GPZNbvKKogOaYZEeG2VNZlQgPGN2cF-dvR4bmqgIg7J4OJiHf9xinTCgPIvg4B91p_9oiTaYEsPSyUy3z0lIyIpKbrJgVBMiLL3SUd78CVabu0gWrYUF_ZTtPUbukKAJlSHAHsDqg8lXK9WujVcz1cFqDgtgbGe7jFyjQ6PaUMVx97IbFnzECc6-nExkyv75Do4bmndEPom924CQEBCTkc4S"/>
+</div>
+<div class="flex-1 flex flex-col gap-1 min-w-0">
+<h3 class="font-label-md text-label-md text-on-surface truncate pr-8">Combed Cotton Poplin Fabric</h3>
+<p class="font-body-md text-[13px] leading-tight text-on-surface-variant truncate">Cotton fabric • INR 220 / meter</p>
+<div class="flex items-center gap-2 mt-1 flex-wrap">
+<span class="bg-[#E7F8ED] text-[#006D3C] border border-[#A6E8C3] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span> Live
+                        </span>
+<span class="font-label-sm text-[11px] text-outline">12 Mar 2026</span>
+</div>
+</div>
+<button class="absolute top-2 right-2 p-1 text-on-surface-variant hover:bg-surface-container-highest rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface rounded-lg p-stack-md border border-outline-variant shadow-[0_4px_20px_rgba(0,5,23,0.05)] flex gap-stack-md relative">
+<div class="w-16 h-16 rounded bg-surface-container-high border border-outline-variant shrink-0 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A detailed macro shot of organic cotton voile fabric, sheer and lightweight texture, warm natural lighting, professional B2B textile presentation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-dj6WvktZzkCCgAmFAO_bvRnlthUEPRCxWCAm31sdjVXWRP7hb6_2pQP-ELTtEfJCqxDNbFhLVM0wgGxEhkSFl2NkaKJcWHndR1ws4zHqsAyyzTzoZusXwkWqb4-i2t7laPemWFA8iWYEDAVt1XZb0oT205CxY47Y1M5uRiVFmB5RB1QsDivP5ugL868dUQDq9rTaJ0X2_7yKnqmc6Koiw3ol6VrJaO5Kn9SZnL3pCgZ4qbgBhA5N"/>
+</div>
+<div class="flex-1 flex flex-col gap-1 min-w-0">
+<h3 class="font-label-md text-label-md text-on-surface truncate pr-8">Organic Cotton Voile</h3>
+<p class="font-body-md text-[13px] leading-tight text-on-surface-variant truncate">Cotton fabric • INR 180 – 260</p>
+<div class="flex items-center gap-2 mt-1 flex-wrap">
+<span class="bg-[#E7F8ED] text-[#006D3C] border border-[#A6E8C3] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span> Live
+                        </span>
+<span class="font-label-sm text-[11px] text-outline">09 Mar 2026</span>
+</div>
+</div>
+<button class="absolute top-2 right-2 p-1 text-on-surface-variant hover:bg-surface-container-highest rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<!-- Item 3 -->
+<div class="bg-surface rounded-lg p-stack-md border border-error shadow-[0_4px_20px_rgba(186,26,26,0.1)] flex gap-stack-md relative">
+<div class="w-16 h-16 rounded bg-surface-container-high border border-outline-variant shrink-0 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Industrial cotton cambric roll 60s stacked in a clean, modern warehouse setting, high-key lighting, corporate inventory catalog style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDr8p9dioB8u1YeG0i0OUgb0kBATR-f466OOivzz46JTP6iDsp93jeKpbEU40pGvkatDmI8xtSg7k690H8NPnsaPMX740H2E_-KOUukWzT5qaddKf0IG6OaBVyZpyNI1_DFOioDkCJGx3ZLH2hdPXqouiksEKEsU54HRirSldAttKPUqBf9cnOMGdkqk2Gpje2XhNkaYcMPC5rNw7Q8w3fM9O1vd0j8mgT6cs4v1VLJaAOCVOF5Nl-f"/>
+</div>
+<div class="flex-1 flex flex-col gap-1 min-w-0">
+<h3 class="font-label-md text-label-md text-on-surface truncate pr-8">Cotton Cambric Roll, 60s</h3>
+<p class="font-body-md text-[13px] leading-tight text-on-surface-variant truncate">Price on request</p>
+<div class="flex items-center gap-2 mt-1 flex-wrap">
+<span class="bg-[#E7F8ED] text-[#006D3C] border border-[#A6E8C3] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span> Live
+                        </span>
+<span class="bg-[#FFF0F0] text-[#D92D20] border border-[#FFD0D0] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span> Taken down
+                        </span>
+<span class="font-label-sm text-[11px] text-outline w-full mt-1">02 Mar 2026</span>
+</div>
+</div>
+<button class="absolute top-2 right-2 p-1 text-on-surface-variant hover:bg-surface-container-highest rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<!-- Item 4 -->
+<div class="bg-surface rounded-lg p-stack-md border border-outline-variant shadow-[0_4px_20px_rgba(0,5,23,0.05)] flex gap-stack-md relative">
+<div class="w-16 h-16 rounded bg-surface-container-high border border-outline-variant shrink-0 flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-outline" data-icon="image">image</span>
+</div>
+<div class="flex-1 flex flex-col gap-1 min-w-0">
+<h3 class="font-label-md text-label-md text-on-surface truncate pr-8">Bleached Cotton Twill</h3>
+<p class="font-body-md text-[13px] leading-tight text-on-surface-variant truncate">USD 3.40 / meter</p>
+<div class="flex items-center gap-2 mt-1 flex-wrap">
+<span class="bg-[#FFF8E6] text-[#B54708] border border-[#FDEB9D] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="visibility_off">visibility_off</span> Hidden
+                        </span>
+<span class="font-label-sm text-[11px] text-outline">28 Feb 2026</span>
+</div>
+</div>
+<button class="absolute top-2 right-2 p-1 text-on-surface-variant hover:bg-surface-container-highest rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<!-- Item 5 (Action Menu Open) -->
+<div class="bg-surface rounded-lg p-stack-md border border-primary-container shadow-[0_4px_20px_rgba(42,77,224,0.1)] flex gap-stack-md relative z-10">
+<div class="w-16 h-16 rounded bg-surface-container-high border border-outline-variant shrink-0 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Soft cotton flannel fabric swatch, neutral beige tones, well-lit studio shot for e-commerce material library." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB53H_8LL-V2ZHGi0qQnUYMwtxKa2oqVKFylfa4pAmihB4BPQn7_iubaXpMb3_1Oga7_ktRwL-XY0AEq4w7j5DPh6g9tkaavz6iiqedzXwZERkkynveWha5TCk4rXXCcATXAqK0uFTDSq6KTxA3rzEunPOnsLjvGgAB_5Y6B_JzXORlokcPVP1pslx6NQs2dmz0_Ha3vFiWLbnlgYwZn65zM34T-HMPmDZtDr76mhSo-gexOdf1MTkw"/>
+</div>
+<div class="flex-1 flex flex-col gap-1 min-w-0">
+<h3 class="font-label-md text-label-md text-on-surface truncate pr-8">Cotton Flannel</h3>
+<p class="font-body-md text-[13px] leading-tight text-on-surface-variant truncate">INR 310 / meter</p>
+<div class="flex items-center gap-2 mt-1 flex-wrap">
+<span class="bg-surface-container-highest text-on-surface-variant border border-outline-variant px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                            Draft
+                        </span>
+<span class="font-label-sm text-[11px] text-outline">26 Feb 2026</span>
+</div>
+</div>
+<!-- Active More Button -->
+<button class="absolute top-2 right-2 p-1 text-primary-container bg-primary-container/10 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+<!-- Actions Menu Popup -->
+<div class="absolute top-10 right-2 w-48 bg-surface border border-outline-variant shadow-lg rounded py-1 flex flex-col z-20">
+<button class="px-4 py-2 text-left font-label-md text-label-md text-on-surface hover:bg-surface-container-low flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="publish">publish</span> Publish
+                    </button>
+<button class="px-4 py-2 text-left font-label-md text-label-md text-on-surface hover:bg-surface-container-low flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span> Edit
+                    </button>
+<div class="h-[1px] bg-outline-variant my-1 w-full"></div>
+<button class="px-4 py-2 text-left font-label-md text-label-md text-error hover:bg-[#FFF0F0] flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span> Delete
+                    </button>
+</div>
+</div>
+<!-- Item 6 (Archived) -->
+<div class="bg-[#F2F4F7] rounded-lg p-stack-md border border-outline-variant shadow-none flex gap-stack-md relative opacity-80 grayscale-[20%]">
+<div class="w-16 h-16 rounded bg-surface-container-highest border border-outline-variant shrink-0 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Traditional handloom cotton khadi fabric texture, slightly coarse weave, natural off-white color, B2B textile reference." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcNxoRpkI81Vkr_el_niIsNJIIF3uBLYpKiwcd46TGGA6q7bPVcKblYvfSQaIcuXETzgJ9AHKh7I_y_m8HlgP0XQScVQ_wqh7GPLeh3v41Q_IXguXVZ_Yg_Ehh0uW4Tt2l_CQDrbTnP14-5RGGMihzrTxN7uYyrEofV14MHtUUoKme64DwQye9T9IJOpp0BjOXXndJNaJGCHT1ztDqD8yLpIa8Gr8NTbBhP6ZpzLQRVXDaiezriZ_X"/>
+</div>
+<div class="flex-1 flex flex-col gap-1 min-w-0">
+<h3 class="font-label-md text-label-md text-on-surface-variant truncate">Handloom Cotton Khadi</h3>
+<p class="font-body-md text-[13px] leading-tight text-on-surface-variant truncate">INR 450 / meter</p>
+<div class="flex items-center gap-2 mt-1 flex-wrap">
+<span class="text-outline text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="inventory">inventory</span> Archived
+                        </span>
+</div>
+</div>
+<!-- No Actions Menu for Archived -->
+</div>
+</div>
+<!-- Pagination -->
+<div class="flex justify-center items-center gap-2 mt-stack-md pb-stack-lg">
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-outline cursor-not-allowed bg-surface-container-low" disabled="">
+<span class="material-symbols-outlined text-[18px]" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded border border-primary-container bg-primary-container text-on-tertiary font-label-md flex items-center justify-center shadow-sm">
+                1
+            </button>
+<button class="w-8 h-8 rounded border border-outline-variant bg-surface text-on-surface-variant hover:bg-surface-container-low font-label-md flex items-center justify-center transition-colors">
+                2
+            </button>
+<span class="text-outline">...</span>
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors bg-surface shadow-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</main>
+<script>
+        function openDrawer() {
+            document.getElementById('drawer').classList.remove('-translate-x-full');
+            document.getElementById('overlay').classList.remove('hidden');
+            // Small delay to allow display:block to apply before animating opacity
+            setTimeout(() => {
+                document.getElementById('overlay').classList.remove('opacity-0');
+            }, 10);
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawer').classList.add('-translate-x-full');
+            document.getElementById('overlay').classList.add('opacity-0');
+            setTimeout(() => {
+                document.getElementById('overlay').classList.add('hidden');
+            }, 300);
+        }
+        
+        // Custom CSS to hide scrollbar but keep functionality
+        const style = document.createElement('style');
+        style.textContent = `
+            .no-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+            .no-scrollbar {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body></html>

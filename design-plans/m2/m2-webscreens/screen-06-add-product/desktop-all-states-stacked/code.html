@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPX Global - Add Product States</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#dad9e5",
+                        "surface": "#fbf8ff",
+                        "on-primary-fixed": "#001158",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2f3039",
+                        "on-tertiary-fixed": "#00210e",
+                        "on-background": "#1a1b24",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#fbf8ff",
+                        "surface-container-highest": "#e2e1ee",
+                        "tertiary-container": "#006d3c",
+                        "outline": "#747687",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#091c32",
+                        "tertiary": "#00522c",
+                        "on-tertiary-fixed-variant": "#00522c",
+                        "tertiary-fixed": "#70fda7",
+                        "primary-fixed": "#dee1ff",
+                        "surface-container-low": "#f4f2ff",
+                        "on-secondary-container": "#53647d",
+                        "on-error": "#ffffff",
+                        "on-surface": "#1a1b24",
+                        "on-primary-fixed-variant": "#0032c3",
+                        "primary": "#0032c3",
+                        "on-primary-container": "#d0d6ff",
+                        "surface-tint": "#2a4de0",
+                        "error": "#ba1a1a",
+                        "surface-container": "#eeedf9",
+                        "secondary": "#4e5f79",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f1effc",
+                        "secondary-container": "#cfe1ff",
+                        "on-secondary-fixed-variant": "#374860",
+                        "on-surface-variant": "#444655",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "primary-container": "#2a4de0",
+                        "inverse-primary": "#b9c3ff",
+                        "secondary-fixed-dim": "#b6c8e5",
+                        "background": "#EAEEFF",
+                        "outline-variant": "#c4c5d8",
+                        "on-tertiary-container": "#66f29e",
+                        "secondary-fixed": "#d4e3ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e8e7f3",
+                        "tertiary-fixed-dim": "#51df8e",
+                        "surface-variant": "#e2e1ee",
+                        "navy-shell": "#1A2E8F"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "panel": "2rem"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "card-padding": "40px",
+                        "gutter": "24px",
+                        "stack-lg": "32px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen text-on-surface font-body-md antialiased p-8 flex flex-col gap-[100px]">
+<!-- SHELL 1: MAIN FORM -->
+<div class="relative w-full flex overflow-hidden rounded-xl shadow-sm border border-outline-variant bg-navy-shell">
+<!-- Sidebar -->
+<aside class="w-[260px] flex flex-col shrink-0 text-white pt-6 pb-6 border-r border-white/10">
+<div class="px-6 mb-8">
+<h1 class="text-headline-md font-headline-md font-semibold tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified</span><span class="text-label-md font-label-md">Verification</span></a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-md font-label-md">Products</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">question_answer</span><span class="text-label-md font-label-md">Enquiries (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">chat</span><span class="text-label-md font-label-md">Chat (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">Settings</span></a>
+</nav>
+<div class="px-4 mt-auto pt-8">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">logout</span><span class="text-label-md font-label-md">Sign Out</span></a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-w-0">
+<!-- Top Bar -->
+<header class="h-[88px] shrink-0 flex justify-end items-center px-8 text-white">
+<div class="flex items-center gap-4">
+<div class="text-right flex flex-col justify-center">
+<span class="text-label-md font-label-md leading-tight">Rajesh Kumar</span>
+<span class="text-label-sm font-label-sm text-white/70 leading-tight">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<img alt="Rajesh Kumar" class="w-10 h-10 rounded-full border border-white/20 object-cover" data-alt="A professional corporate headshot of an Indian male executive in his 40s wearing a tailored charcoal suit and light blue shirt. Bright, clean, white background, soft studio lighting, sharp focus on face, exuding confidence and reliability for an enterprise B2B platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8Ajq2Q5DYc1vJufm-mxj8g4-NNYOd04_d-POQ7dxv6q2pYXZEU8iGAZe3O6XGkcfvO0xlBAVdKG4-IYbzwOad7n1RCJjUiVbo7jXofK1BUGZn5AF-eRtqcsL5-LoHSVc8Em4prPn2eiFKCTXw358FN7IIb-xio67PbDghFWzXdjrjNDg0ro50T1e5P6nUaC2YUUAG84XQ_gmrVUU45Yl89Sf2CaJJZio3P-JEi3uVrKEAD4p-gyg"/>
+</div>
+</header>
+<!-- Main Panel (Nested White Box) -->
+<main class="flex-1 bg-surface rounded-tl-panel overflow-hidden shadow-[inset_0px_4px_12px_rgba(0,0,0,0.1)] flex flex-col relative">
+<div class="flex-1">
+<!-- Header -->
+<div class="px-10 py-8 border-b border-outline-variant shrink-0 flex justify-between items-center bg-surface sticky top-0 z-10">
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 flex items-center gap-1">
+<a class="hover:text-primary" href="#">Products</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Add product</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg">Add product</h2>
+</div>
+</div>
+<!-- Form Layout -->
+<div class="flex p-10 gap-12 items-start max-w-[1200px] mx-auto w-full pb-10">
+<!-- Sticky Form Nav -->
+<nav class="w-[200px] shrink-0 sticky top-[120px] flex flex-col gap-2">
+<a class="text-label-md font-label-md text-primary border-l-2 border-primary pl-4 py-1" href="#cat">Category</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#det">Details</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#pri">Pricing</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-on-surface border-l-2 border-transparent pl-4 py-1" href="#spe">Specifications</a>
+</nav>
+<!-- Form Content -->
+<div class="flex-1 flex flex-col gap-12">
+<!-- Zone A: Category -->
+<section class="flex flex-col gap-6" id="cat">
+<h3 class="text-headline-md font-headline-md text-on-surface">Category</h3>
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Category <span class="text-error">*</span></label>
+<p class="text-label-sm font-label-sm text-outline">Pick the closest match — 'Other' is there if nothing fits.</p>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+<option>Textiles, Fabrics &amp; Yarn</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Sub-category <span class="text-error">*</span></label>
+<p class="text-label-sm font-label-sm text-outline">This decides which details we'll ask for.</p>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+<option>Cotton fabric</option>
+</select>
+</div>
+</div>
+</section>
+<hr class="border-outline-variant"/>
+<!-- Zone B: Details -->
+<section class="flex flex-col gap-6" id="det">
+<h3 class="text-headline-md font-headline-md text-on-surface">Details</h3>
+<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Product name <span class="text-error">*</span></label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none placeholder:text-outline" type="text" value="Premium Organic Cotton Poplin"/>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<div>
+<label class="text-label-md font-label-md">Description</label>
+<p class="text-label-sm font-label-sm text-outline mt-1">Details, use cases, certifications…</p>
+</div>
+<span class="text-label-sm font-label-sm text-outline">0/5,000</span>
+</div>
+<textarea class="h-32 p-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none placeholder:text-outline" placeholder="Enter detailed description..."></textarea>
+</div>
+<div class="flex flex-col gap-2 mt-4">
+<label class="text-label-md font-label-md">Product images</label>
+<p class="text-label-sm font-label-sm text-outline mb-2">Up to 5 images · 5 MB each · JPG, PNG or WEBP</p>
+<button class="w-full h-32 rounded-lg border-2 border-dashed border-outline-variant flex flex-col items-center justify-center text-outline hover:border-primary hover:text-primary transition-colors bg-surface-container-low mb-4">
+<span class="material-symbols-outlined text-[32px] mb-2">cloud_upload</span>
+<span class="text-label-md font-label-md">Drag and drop images here, or browse</span>
+</button>
+<div class="flex gap-4">
+<div class="w-24 h-24 rounded-lg border border-outline-variant overflow-hidden relative group">
+<div class="absolute top-1 left-1 bg-primary text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded uppercase z-10">Cover</div>
+<img alt="Fabric cover" class="w-full h-full object-cover" data-alt="Close up macro shot of premium organic white cotton poplin fabric texture. Crisp, clean folds, subtle diagonal weave visible, soft natural daylight illuminating the pristine textile surface. High fashion editorial photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUuYGyhPLgPdLIrXMa7sqCfXzfbgf-hTmreyExhETOhdl8I6RKUlLcZpintirA1HD-jyf9HTfrnLvPnFnFFEpBK1mKH04SSabhb9lClbMl-CRo2MfTXomwFke8xZ9KDxAryN-HqMQAeHT9Az3o4to8IO8tKn_ALNURUFfs1vpRUa18bYJEjyjPGHFH5bw0V5eZJLnkjyLQKUN6G-P3ac1wmXB2Tikv0fS0aT1RNT7DcOzTWR13sTD7"/>
+<button class="absolute top-1 right-1 w-6 h-6 bg-inverse-surface/50 text-white rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center z-10"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</div>
+<div class="w-24 h-24 rounded-lg border border-outline-variant overflow-hidden relative bg-surface-container-high flex flex-col items-center justify-center p-2 text-center">
+<div class="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-2"></div>
+<span class="text-[10px] font-label-sm text-primary">Uploading 45%</span>
+</div>
+<div class="w-24 h-24 rounded-lg border border-error overflow-hidden relative bg-error-container/20 flex flex-col items-center justify-center p-2 text-center cursor-pointer hover:bg-error-container/40 transition-colors">
+<span class="material-symbols-outlined text-error mb-1">error</span>
+<span class="text-label-sm font-label-sm text-error">Retry</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<hr class="border-outline-variant"/>
+<!-- Zone C: Pricing -->
+<section class="flex flex-col gap-6" id="pri">
+<h3 class="text-headline-md font-headline-md text-on-surface">Pricing &amp; Trade Terms</h3>
+<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Pricing model</label>
+<div class="flex border border-outline-variant rounded-lg overflow-hidden w-fit mb-2">
+<button class="px-4 py-2 bg-primary-container text-on-primary-container text-label-md font-label-md font-semibold">Fixed</button>
+<button class="px-4 py-2 bg-surface text-on-surface-variant hover:bg-surface-container text-label-md font-label-md">Range</button>
+<button class="px-4 py-2 bg-surface text-on-surface-variant hover:bg-surface-container text-label-md font-label-md">On request</button>
+</div>
+<div class="flex h-10 border border-outline-variant rounded-lg overflow-hidden w-full max-w-sm">
+<select class="px-3 bg-surface border-r border-outline-variant outline-none focus:ring-1 focus:ring-primary">
+<option>INR</option>
+</select>
+<input class="flex-1 px-3 bg-surface outline-none focus:ring-1 focus:ring-primary" placeholder="Enter amount" type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Minimum order quantity</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 100" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Unit</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. meters" type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">HS code</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 5208.11" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Country of origin</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. India" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Supply ability</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 10000 meters per month" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Lead time</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 15-30 days" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Packaging</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. Rolled on tubes, packed in plastic bags" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Payment terms</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. L/C, T/T" type="text"/>
+</div>
+</div>
+</section>
+<hr class="border-outline-variant"/>
+<!-- Zone D: Specifications -->
+<section class="flex flex-col gap-6" id="spe">
+<h3 class="text-headline-md font-headline-md text-on-surface">Technical Specifications</h3>
+<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Material</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 100% Cotton" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">GSM</label>
+<div class="relative">
+<input class="h-10 px-3 w-full rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 120" type="number"/>
+<span class="absolute right-3 top-2 text-outline text-label-md font-label-md">gsm</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Weave</label>
+<input class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. Poplin" type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Width</label>
+<div class="relative">
+<input class="h-10 px-3 w-full rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 58" type="number"/>
+<span class="absolute right-3 top-2 text-outline text-label-md font-label-md">inches</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Shrinkage</label>
+<div class="relative">
+<input class="h-10 px-3 w-full rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 2-3" type="number"/>
+<span class="absolute right-3 top-2 text-outline text-label-md font-label-md">%</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 border border-outline-variant rounded-lg mt-2">
+<div>
+<div class="text-label-md font-label-md">Organic</div>
+<div class="text-label-sm font-label-sm text-outline">Is this product certified organic?</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<!-- Fixed Action Bar -->
+<div class="w-full bg-surface border-t border-outline-variant p-6 flex justify-between items-center px-10 mt-auto">
+<button class="text-label-md font-label-md text-secondary hover:text-on-surface transition-colors">Cancel</button>
+<button class="bg-primary text-on-primary h-10 px-6 rounded-full text-label-md font-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none">Save draft</button>
+</div>
+</main>
+</div>
+</div>
+<!-- FRAME 1 (PRE-CATEGORY) -->
+<div class="relative w-full flex overflow-hidden rounded-xl shadow-sm border border-outline-variant bg-navy-shell">
+<aside class="w-[260px] flex flex-col shrink-0 text-white pt-6 pb-6 border-r border-white/10">
+<div class="px-6 mb-8">
+<h1 class="text-headline-md font-headline-md font-semibold tracking-tight">MPX Global</h1>
+</div>
+<nav class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">verified</span><span class="text-label-md font-label-md">Verification</span></a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-md font-label-md">Products</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">question_answer</span><span class="text-label-md font-label-md">Enquiries (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/60 rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">chat</span><span class="text-label-md font-label-md">Chat (Soon)</span></a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">Settings</span></a>
+</nav>
+<div class="px-4 mt-auto pt-8">
+<a class="flex items-center gap-3 px-4 py-3 text-white/70 hover:text-white rounded-lg transition-colors" href="#"><span class="material-symbols-outlined">logout</span><span class="text-label-md font-label-md">Sign Out</span></a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0">
+<header class="h-[88px] shrink-0 flex justify-end items-center px-8 text-white">
+<div class="flex items-center gap-4">
+<div class="text-right flex flex-col justify-center">
+<span class="text-label-md font-label-md leading-tight">Rajesh Kumar</span>
+<span class="text-label-sm font-label-sm text-white/70 leading-tight">Exporter · Tirupur Knitwear Exports</span>
+</div>
+<img alt="Rajesh Kumar" class="w-10 h-10 rounded-full border border-white/20 object-cover" data-alt="A professional corporate headshot of an Indian male executive in his 40s wearing a tailored charcoal suit and light blue shirt." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8Ajq2Q5DYc1vJufm-mxj8g4-NNYOd04_d-POQ7dxv6q2pYXZEU8iGAZe3O6XGkcfvO0xlBAVdKG4-IYbzwOad7n1RCJjUiVbo7jXofK1BUGZn5AF-eRtqcsL5-LoHSVc8Em4prPn2eiFKCTXw358FN7IIb-xio67PbDghFWzXdjrjNDg0ro50T1e5P6nUaC2YUUAG84XQ_gmrVUU45Yl89Sf2CaJJZio3P-JEi3uVrKEAD4p-gyg"/>
+</div>
+</header>
+<main class="flex-1 bg-surface rounded-tl-panel overflow-hidden shadow-[inset_0px_4px_12px_rgba(0,0,0,0.1)] flex flex-col relative">
+<div class="flex-1">
+<div class="px-10 py-8 border-b border-outline-variant shrink-0 flex justify-between items-center bg-surface sticky top-0 z-10">
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 flex items-center gap-1">
+<a class="hover:text-primary" href="#">Products</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Add product</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg">Add product</h2>
+</div>
+</div>
+<div class="flex p-10 gap-12 items-start max-w-[1200px] mx-auto w-full pb-10">
+<nav class="w-[200px] shrink-0 sticky top-[120px] flex flex-col gap-2">
+<a class="text-label-md font-label-md text-primary border-l-2 border-primary pl-4 py-1" href="#cat">Category</a>
+</nav>
+<div class="flex-1 flex flex-col gap-12">
+<section class="flex flex-col gap-6" id="cat">
+<h3 class="text-headline-md font-headline-md text-on-surface">Category</h3>
+<div class="grid grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Category <span class="text-error">*</span></label>
+<p class="text-label-sm font-label-sm text-outline">Pick the closest match — 'Other' is there if nothing fits.</p>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none text-outline">
+<option>Select a category</option>
+<option>Textiles, Fabrics &amp; Yarn</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md">Sub-category <span class="text-error">*</span></label>
+<p class="text-label-sm font-label-sm text-outline">This decides which details we'll ask for.</p>
+<select class="h-10 px-3 rounded-lg border border-outline-variant bg-surface-container-low text-outline outline-none appearance-none cursor-not-allowed" disabled="">
+<option>Select sub-category</option>
+</select>
+</div>
+</div>
+</section>
+<div class="text-center py-20">
+<p class="text-body-lg text-on-surface-variant">Choose a category to continue.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full bg-surface border-t border-outline-variant p-6 flex justify-between items-center px-10 mt-auto">
+<button class="text-label-md font-label-md text-secondary hover:text-on-surface transition-colors">Cancel</button>
+<button class="bg-primary text-on-primary h-10 px-6 rounded-full text-label-md font-label-md opacity-50 cursor-not-allowed">Save draft</button>
+</div>
+</main>
+</div>
+</div>
+</body></html>

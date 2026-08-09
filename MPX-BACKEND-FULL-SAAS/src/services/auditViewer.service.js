@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 
 import { AuditLog } from '../models/AuditLog.js';
 import { User } from '../models/User.js';
+import { Product } from '../models/Product.js';
+import { Organisation } from '../models/Organisation.js';
+import { Category } from '../models/Category.js';
+import { CategoryAttribute } from '../models/CategoryAttribute.js';
+import { FeaturedItem } from '../models/FeaturedItem.js';
 import { AppError } from '../utils/AppError.js';
 
 /**
@@ -68,6 +73,85 @@ function actorFor(row, actorById) {
   );
 }
 
+/**
+ * Which audited entity types may have their name resolved for display, and from
+ * which field. An ALLOWLIST on purpose — a type absent here simply renders
+ * without a name rather than having one guessed, so adding a model to the audit
+ * trail can never quietly widen what this screen shows.
+ *
+ * Deliberately absent:
+ *  - `Conversation` — thread titles are composed at read time from the parties'
+ *    company names (A22.3), never stored; there is nothing here to read.
+ *  - `PendingSignup` — a person who never completed signup. Their name is not
+ *    something the audit viewer needs in order to describe the action.
+ */
+const NAMEABLE = {
+  Product: [Product, 'name'],
+  Organisation: [Organisation, 'name'],
+  Category: [Category, 'name'],
+  CategoryAttribute: [CategoryAttribute, 'name'],
+  User: [User, 'name'],
+  FeaturedItem: [FeaturedItem, 'title'],
+};
+
+/**
+ * The name a row's snapshot preserved, for targets that no longer exist.
+ *
+ * This is what makes a purge row self-contained (§A8): the product row and its
+ * images are gone, so the AuditLog entry is the only remaining record, and it
+ * snapshots `productName` + `sellerCompanyName` precisely for this moment.
+ */
+function snapshotName(row) {
+  const snap = { ...(row.before ?? {}), ...(row.after ?? {}) };
+  return snap.productName ?? snap.name ?? snap.title ?? null;
+}
+
+/**
+ * Resolve target names for a page in ONE query PER TYPE — never per row.
+ *
+ * A page carries at most a handful of distinct entity types (usually two or
+ * three), so this is 2–3 small indexed `$in` lookups, the same shape as the
+ * actor resolution above.
+ */
+async function loadTargetNames(rows) {
+  const byType = new Map();
+  for (const row of rows) {
+    if (!row.entityId || !NAMEABLE[row.entityType]) continue;
+    if (!byType.has(row.entityType)) byType.set(row.entityType, new Set());
+    byType.get(row.entityType).add(String(row.entityId));
+  }
+
+  const names = new Map(); // `${type}:${id}` -> name
+  await Promise.all(
+    [...byType.entries()].map(async ([type, ids]) => {
+      const [Model, field] = NAMEABLE[type];
+      const docs = await Model.find({ _id: { $in: [...ids] } })
+        .select(field)
+        .lean();
+      for (const doc of docs) names.set(`${type}:${String(doc._id)}`, doc[field] ?? null);
+    }),
+  );
+  return names;
+}
+
+/**
+ * Live name first, snapshot second, null last.
+ *
+ * The order matters: a renamed entity should read under its CURRENT name so the
+ * row still points at something findable, while a DELETED one falls back to what
+ * the entry preserved. `null` is an honest answer — most actions never recorded a
+ * name (a takedown stores its reason, a publish stores its status), so a row
+ * whose target has since been removed genuinely has no name to show, and
+ * inventing one would be worse than the gap.
+ */
+function targetNameFor(row, nameById) {
+  if (row.entityId && row.entityType) {
+    const live = nameById.get(`${row.entityType}:${String(row.entityId)}`);
+    if (live) return live;
+  }
+  return snapshotName(row);
+}
+
 export async function listAuditEntries(params) {
   const size = Math.min(params.pageSize ?? 20, MAX_PAGE);
   const page = params.page ?? 1;
@@ -85,13 +169,21 @@ export async function listAuditEntries(params) {
     AuditLog.countDocuments(filter),
   ]);
 
-  const actorById = await loadActors(rows);
-  return { rows, actorById, total, page, pageSize: size, actorFor };
+  const [actorById, nameById] = await Promise.all([loadActors(rows), loadTargetNames(rows)]);
+  return {
+    rows,
+    actorById,
+    total,
+    page,
+    pageSize: size,
+    actorFor,
+    targetNameFor: (row) => targetNameFor(row, nameById),
+  };
 }
 
 export async function getAuditEntry(id) {
   const entry = await AuditLog.findOne({ _id: id }).lean();
   if (!entry) throw AppError.notFound('audit entry not found', 'Not found.');
-  const actorById = await loadActors([entry]);
-  return { entry, actor: actorFor(entry, actorById) };
+  const [actorById, nameById] = await Promise.all([loadActors([entry]), loadTargetNames([entry])]);
+  return { entry, actor: actorFor(entry, actorById), targetName: targetNameFor(entry, nameById) };
 }

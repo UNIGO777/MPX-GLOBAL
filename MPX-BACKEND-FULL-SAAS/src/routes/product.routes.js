@@ -32,6 +32,16 @@ productRouter.post('/products', authenticate, requireRole('exporter'), validate(
 
 productRouter.get('/products/mine', authenticate, requireRole('exporter'), validate(V.listMine), ctrl.mine);
 
+// 🔴 MUST stay below '/products/mine' — Express matches in registration order,
+// and a ':id' registered first would swallow the literal "mine".
+productRouter.get(
+  '/products/:id',
+  authenticate,
+  requireRole('exporter'),
+  validate(V.productIdParam),
+  ctrl.one,
+);
+
 productRouter.patch(
   '/products/:id',
   authenticate,
