@@ -4,7 +4,7 @@
 > only** (React Native / Expo, iOS + Android).
 > This is a **design** document: what each screen contains, every field on it, and the states that
 > need artwork. No API or code detail.
-> Companion: `my-plans/m1/web-screens-design.md` — the two surfaces must feel like one product.
+> Companion: `design-plans/m1/web-screens-design.md` — the two surfaces must feel like one product.
 
 > ## 🔴 Realigned 2026-07-30 to `modules-in-detailed/m1-max-1.5days/m1.md`
 > This brief was rewritten against the current M1 plan. Three things changed structurally, and they

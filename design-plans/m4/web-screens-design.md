@@ -4,7 +4,7 @@
 > This is a **design** document: what each screen contains, every field on it, and the states that
 > need artwork. No API or code detail.
 > Product: **MPX Global** — B2B import/export marketplace. Indian exporters, international buyers.
-> Companion: `my-plans/m4/app-screens-design.md` — the two surfaces must feel like one product.
+> Companion: `design-plans/m4/app-screens-design.md` — the two surfaces must feel like one product.
 >
 > **Scope rule (same as the M1 briefs):** this brief contains **only** the screens named in
 > `modules-in-detailed/m4/` — `m4.md` §9 plus `screens.png`, `enquiry+chat-flow1.png`,

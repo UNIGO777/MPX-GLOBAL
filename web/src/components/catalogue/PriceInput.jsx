@@ -87,7 +87,7 @@ export function PriceInput({ value, onChange, errors = {} }) {
           {mode === 'range' && (
             <Field
               label="Maximum"
-              error={errors.max ?? (rangeInvalid ? 'Maximum must be more than the minimum.' : undefined)}
+              error={errors.max ?? (rangeInvalid ? 'Minimum must be less than maximum.' : undefined)}
             >
               {(id, hasError) => (
                 <input

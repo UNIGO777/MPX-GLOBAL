@@ -4,7 +4,7 @@
 > iOS + Android).
 > This is a **design** document: what each screen contains, every field on it, and the states
 > that need artwork. No API or code detail.
-> Companion: `my-plans/m4/web-screens-design.md` — shared vocabulary (freeze labels, system-voice
+> Companion: `design-plans/m4/web-screens-design.md` — shared vocabulary (freeze labels, system-voice
 > copy, company-only identity) is defined there in §1 and **applies verbatim here**; this brief
 > repeats only what the phone changes.
 >

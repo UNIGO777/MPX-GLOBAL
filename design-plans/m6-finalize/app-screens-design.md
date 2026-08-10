@@ -7,7 +7,7 @@
 >
 > **Sources:** `modules-in-detailed/m6-Finalization/MPX-FINALIZE-Module.md` ·
 > `build-plans/m6-finalize/backend-plan.md` · `docs/Note.md`. Companion:
-> `my-plans/m6-finalize/web-screens-design.md` (which carries everything FINALIZE does design).
+> `design-plans/m6-finalize/web-screens-design.md` (which carries everything FINALIZE does design).
 
 ---
 

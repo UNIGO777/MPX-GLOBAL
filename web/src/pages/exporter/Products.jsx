@@ -237,9 +237,11 @@ export function Products() {
                     return (
                       <tr
                         key={p.id}
+                        // Design tints a taken-down row pale red (bg-[#FEF3F2]/30)
+                        // so it reads at a glance without opening anything.
                         className={`align-middle ${archived ? 'opacity-60' : ''} ${
-                          busyId === p.id ? 'opacity-50' : ''
-                        }`}
+                          p.takedown ? 'bg-danger-50/40' : ''
+                        } ${busyId === p.id ? 'opacity-50' : ''}`}
                       >
                         <td className="border-b border-surface-border px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -326,7 +328,7 @@ export function Products() {
         centered
         danger
         icon={TrashIcon}
-        title="Delete this product?"
+        title="Archive this product?"
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirmDelete(null)}>Cancel</Button>

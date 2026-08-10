@@ -2,7 +2,7 @@
 
 > **0 screens.** M5 has **no mobile-app surface**, by design. This file exists so the milestone's
 > design set is complete and so nobody infers the gap is an oversight.
-> Companion: `my-plans/m5/web-screens-design.md` — the entire M5 console, 13 screens, web only.
+> Companion: `design-plans/m5/web-screens-design.md` — the entire M5 console, 13 screens, web only.
 
 ---
 
@@ -10,7 +10,7 @@
 
 - **`modules-in-detailed/m5/m5.md` (header):** *"Surface: web only. Not in the mobile app."*
   `m5.md` §9 lists Mobile as out of scope with the reason **"Never — admin is web only."**
-- **The app has two roles only — buyer and exporter** (`my-plans/m1/app-screens-design.md` §1).
+- **The app has two roles only — buyer and exporter** (`design-plans/m1/app-screens-design.md` §1).
   Employee and superadmin do not exist in the app: no staff login endpoint is reachable from it,
   no staff portal choice is offered, and nothing in the UI may hint at internal tooling.
 - **Contractual rule:** approval and release capabilities are **web-only**; the mobile app never

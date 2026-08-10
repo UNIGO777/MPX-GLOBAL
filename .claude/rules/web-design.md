@@ -53,10 +53,17 @@ owner's call — ask before inventing a brand identity.
 
 ## Trust signals & role UX (project-specific)
 
-- **Verified tick, not a "not verified" badge.** Show the tick only when
-  `kycStatus === 'verified'`; its absence means unverified. Never gate a seller's public
+- **Verified tick, not a "not verified" badge.** Show the tick only when the server's derived
+  **`verified` boolean** is true; its absence means unverified. Never gate a seller's public
   visibility behind verification in the UI — the profile is public from signup (CLAUDE.md
-  Roles; `docs/scope-of-work.md`). Show status from `kycStatus`.
+  Roles; `docs/scope-of-work.md`).
+  🔴 **Corrected 2026-08-10 — this rule used to say "show status from `kycStatus`", and it was
+  wrong in a way that could not work.** No public response contains `kycStatus`: the projection
+  derives `verified` + `verifiedAt` and drops the raw status precisely so the `rejected` state can
+  never leak (B7 · `Organisation.PUBLIC_DERIVED` · `m3-public-projection.md`). A screen following
+  the old line would bind to a field that is never sent. **On a public surface read `verified`.**
+  The owner's OWN status screens (`/buyer/verification`, `/exporter`) are the only place raw
+  `kycStatus` is legitimate — that is a self-scoped read of your own organisation, not a public one.
 - Verification/approval status, quotation status (sent / negotiating / accepted), enquiry
   state — always visible and unambiguous. This is a trust marketplace; ambiguity erodes it.
 

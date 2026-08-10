@@ -71,7 +71,7 @@ function Gallery({ images = [], name }) {
       />
       {images.length > 1 && (
         <ul className="mt-3 flex gap-3">
-          {images.map((src, i) => (
+          {images.slice(0, images.length > 4 ? 3 : 4).map((src, i) => (
             <li key={src}>
               <button
                 type="button"
@@ -86,7 +86,51 @@ function Gallery({ images = [], name }) {
               </button>
             </li>
           ))}
+          {/* Design's "+2" overflow tile — advances through the hidden images. */}
+          {images.length > 4 && (
+            <li>
+              <button
+                type="button"
+                onClick={() => setActive(active >= 3 && active < images.length - 1 ? active + 1 : 3)}
+                aria-label={`Show ${images.length - 3} more images`}
+                className={`flex h-16 w-16 items-center justify-center rounded-lg border-2 bg-surface-subtle text-sm font-semibold text-ink-600 ${
+                  active >= 3 ? 'border-primary-600' : 'border-surface-border'
+                }`}
+              >
+                +{images.length - 3}
+              </button>
+            </li>
+          )}
         </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Long prose folds behind "Read more" (design). React escapes the text by
+ * default — user-generated content is never injected as HTML.
+ */
+function Description({ text }) {
+  const [expanded, setExpanded] = useState(false);
+  const foldable = text.length > 400;
+  return (
+    <div>
+      <p
+        className={`max-w-prose whitespace-pre-line text-sm leading-relaxed text-ink-700 ${
+          foldable && !expanded ? 'line-clamp-[8]' : ''
+        }`}
+      >
+        {text}
+      </p>
+      {foldable && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-2 text-sm font-medium text-primary-700 hover:underline"
+        >
+          {expanded ? 'Show less' : 'Read more'}
+        </button>
       )}
     </div>
   );
@@ -107,15 +151,22 @@ function Facts({ product }) {
   // Only filled fields render — never a wall of "—".
   if (rows.length === 0) return null;
 
+  // Design: a small-caps section label, then single-column label→value rows
+  // with right-aligned values — reads like a spec sheet, not a form grid.
   return (
-    <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
-      {rows.map(([label, value]) => (
-        <div key={label} className="flex justify-between gap-4 border-b border-surface-border pb-3">
-          <dt className="text-sm text-muted">{label}</dt>
-          <dd className="text-right text-sm font-medium text-ink-900">{value}</dd>
-        </div>
-      ))}
-    </dl>
+    <div>
+      <h2 className="mb-3 border-t border-surface-border pt-4 text-xs font-semibold uppercase tracking-wider text-muted">
+        {isService ? 'Engagement details' : 'Trade facts'}
+      </h2>
+      <dl>
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex justify-between gap-6 py-2">
+            <dt className="text-sm text-muted">{label}</dt>
+            <dd className="text-right text-sm font-medium text-ink-900">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }
 
@@ -189,6 +240,7 @@ export function ProductDetail() {
                 <span className="font-medium text-ink-800">{p.name}</span>
               </nav>
 
+              <section className="rounded-lg border border-surface-border bg-white p-6 shadow-card sm:p-8">
               <div className="grid gap-10 lg:grid-cols-2">
                 <Gallery images={p.images} name={p.name} />
 
@@ -238,15 +290,12 @@ export function ProductDetail() {
                   </div>
                 </div>
               </div>
+              </section>
 
-              <div className="mt-10 grid gap-6 lg:grid-cols-2">
+              <div className="mt-6 grid gap-6 lg:grid-cols-2">
                 {p.description && (
                   <Panel title="Description">
-                    {/* React escapes this by default — user-generated text is
-                        never injected as HTML (dangerouslySetInnerHTML is banned). */}
-                    <p className="max-w-prose whitespace-pre-line text-sm leading-relaxed text-ink-700">
-                      {p.description}
-                    </p>
+                    <Description text={p.description} />
                   </Panel>
                 )}
                 {p.attributes?.length > 0 && (

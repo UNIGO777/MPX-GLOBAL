@@ -10,7 +10,7 @@ import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
-import { BoxIcon, ChevronRightIcon } from '../../components/ui/icons.jsx';
+import { BoxIcon, CheckIcon, ChevronRightIcon } from '../../components/ui/icons.jsx';
 import { NotFound } from './NotFound.jsx';
 
 /**
@@ -135,8 +135,11 @@ export function CategoryListing() {
                   {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-9 w-full" />)}
                 </div>
               ) : (
-                // Horizontally scrolling chips on mobile, a stacked list from lg.
-                <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
+                // Horizontally scrolling chips on mobile; from lg the design
+                // draws a white card holding the list, current pill filled blue
+                // WITH a check — the check matters because colour alone must
+                // never carry meaning.
+                <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:gap-1.5 lg:overflow-visible lg:rounded-lg lg:border lg:border-surface-border lg:bg-white lg:p-3 lg:pb-3 lg:shadow-card">
                   {siblings.map((sub) => {
                     const current = sub.id === cat?.id;
                     return (
@@ -144,13 +147,14 @@ export function CategoryListing() {
                         <Link
                           to={`/category/${sub.slug}`}
                           aria-current={current ? 'page' : undefined}
-                          className={`flex min-h-[44px] items-center whitespace-nowrap rounded-full px-4 text-sm lg:whitespace-normal lg:rounded-lg ${
+                          className={`flex min-h-[44px] items-center justify-between gap-2 whitespace-nowrap rounded-full px-4 text-sm lg:whitespace-normal lg:rounded-lg ${
                             current
                               ? 'bg-primary-600 font-semibold text-white'
                               : 'bg-white text-ink-700 hover:bg-primary-50 lg:bg-transparent'
                           }`}
                         >
                           {sub.name}
+                          {current && <CheckIcon className="h-4 w-4 shrink-0" aria-hidden="true" />}
                         </Link>
                       </li>
                     );

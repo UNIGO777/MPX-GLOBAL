@@ -13,7 +13,7 @@
 > `adminOrg.view.js`, `dashboard.service.js`, validators) so gates, filters and fields below match
 > what actually exists. Nothing inferred, nothing added. See §12 for gaps.
 >
-> **Companion:** `my-plans/m1/web-screens-design.md` — M5 reuses its design foundations, shared
+> **Companion:** `design-plans/m1/web-screens-design.md` — M5 reuses its design foundations, shared
 > components and admin screens 13–16. The four M1 admin screens are **already designed and already
 > built** (`web/src/pages/admin/`); this brief designs only their M5 **delta** (§10).
 
@@ -21,7 +21,7 @@
 
 ## 1. Design foundations
 
-Everything in `my-plans/m1/web-screens-design.md` §1 applies unchanged — tone, type and spacing
+Everything in `design-plans/m1/web-screens-design.md` §1 applies unchanged — tone, type and spacing
 scale, responsive breakpoints (1440 / 1024 / 768 / 375), accessibility bar, four drawn states per
 screen, the verified-tick convention (§1.1) and the status vocabulary (§1.2). M5 adds the
 following on top.
@@ -126,7 +126,7 @@ brief, not a dead end.
 | 12 | Error log viewer | `/admin/errors` | `errorlog:read` | FINALIZE F5a (built 2026-08-01) |
 | 13 | Featured content manager | `/admin/featured` | `featured:manage` | FINALIZE F5b (built 2026-08-01) |
 
-**Carried from M1, not redesigned here** — already in `my-plans/m1/web-screens-design.md`
+**Carried from M1, not redesigned here** — already in `design-plans/m1/web-screens-design.md`
 (screens 13–16) and already built in `web/src/pages/admin/`: **Users** (`/admin/users`),
 **Verification queue** (`/admin/verification`), **KYC viewer**, **Employees & permissions**
 (`/admin/employees`). Their M5 delta — chiefly the grown permission catalogue — is §10.
@@ -573,7 +573,7 @@ change needed; it's just another action code.)*
 
 Both built and owner-approved 2026-08-01 (`MPX-FINALIZE-Module.md` F5a/F5b). They live in this
 console because it is their only home; they are FINALIZE work, not M5, and are labelled so here
-for traceability. ⚠️ **They are also specified in `my-plans/m6-finalize/web-screens-design.md`**
+for traceability. ⚠️ **They are also specified in `design-plans/m6-finalize/web-screens-design.md`**
 (written 2026-08-02, before this brief existed) — that brief noted it had "no M5 web brief to
 host" them. If the two ever disagree, reconcile rather than pick; this section is the console-
 context view (sidebar placement, shared components), the M6 brief is the feature-owner view.

@@ -123,7 +123,8 @@ export function SupplierProfile() {
                     </p>
                   )}
 
-                  <p className="mt-4 text-sm font-semibold text-ink-800">
+                  {/* Design renders the count in brand blue. */}
+                  <p className="mt-4 text-sm font-semibold text-primary-700">
                     {s.productCount} {s.productCount === 1 ? 'product' : 'products'}
                   </p>
                 </div>

@@ -4,8 +4,8 @@
 > iOS + Android): buyer browse + exporter catalogue management.
 > This is a **design** document: what each screen contains, every field on it, and the states that
 > need artwork. No API or code detail.
-> Companion: `my-plans/m2/web-screens-design.md` — the two surfaces must feel like one product —
-> and `my-plans/m1/app-screens-design.md`, whose shells (tabs, ScreenContainer, tokens) these
+> Companion: `design-plans/m2/web-screens-design.md` — the two surfaces must feel like one product —
+> and `design-plans/m1/app-screens-design.md`, whose shells (tabs, ScreenContainer, tokens) these
 > screens live inside.
 >
 > **Scope rule:** only the screens named in `modules-in-detailed/m2-max-3to6days/M2.md` §6 (app,

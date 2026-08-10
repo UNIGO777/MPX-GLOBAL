@@ -10,7 +10,7 @@
 > **Sources:** the F-register above · `build-plans/m6-finalize/backend-plan.md` (owner decisions
 > 2026-08-01 + build results — F-A and F5b are already built server-side) · `docs/Note.md`
 > (D4 close checklist) · `docs/UiWebNotes.md` · `.claude/rules/web-design.md`. Same conventions
-> as `my-plans/m1/web-screens-design.md` (§1 foundations, §1.2 status vocabulary, four states per
+> as `design-plans/m1/web-screens-design.md` (§1 foundations, §1.2 status vocabulary, four states per
 > screen); they are not repeated here.
 
 ---
@@ -29,7 +29,7 @@
 Everything else in the F-register — F2 (cancelled), F4 (moved into M4), F6 (closed), the entire
 content + infrastructure table, and the whole F-C hygiene pass — adds **zero** web UI. See §5.
 
-**A note on hosts for the deltas (#5, #6):** there is no M5 web design brief in `my-plans/` yet.
+**A note on hosts for the deltas (#5, #6):** there is no M5 web design brief in `design-plans/` yet.
 When one is written, rows 5–6 belong inside its Organisation-detail screen; until then this brief
 is their only record. The backend for both already exists (`views/adminOrg.view.js`).
 

@@ -4,7 +4,7 @@
 > Expo, iOS + Android).
 > This is a **design** document: what each screen contains, every control on it, and the states
 > that need artwork. No API or code detail.
-> Companion: `my-plans/m3/web-screens-design.md` — the two surfaces must feel like one product,
+> Companion: `design-plans/m3/web-screens-design.md` — the two surfaces must feel like one product,
 > and both render **exactly the same public data** (same projection on web and app, by rule).
 >
 > **Scope rule:** only screens named in `modules-in-detailed/m3-search-filter-3-4days-max/` —
@@ -23,6 +23,24 @@
 **Discovery is the buyer's reason to open the app.** M1 gave the app auth and profile; M3 gives
 it something to *do*: search, browse, product pages, seller pages, saving. The buyer's dead
 "Search ⏳" tab from the M1 brief comes alive here.
+
+> 🔴 **M2 SITS BETWEEN THEM, AND FOUR SCREENS HERE ARE ALREADY ITS SCREENS.** Added 2026-08-10 —
+> this brief previously went M1 → M3 without naming M2 at all, which reads as though discovery
+> builds product and seller pages from scratch. It does not:
+>
+> | This brief | Is the same screen as |
+> |---|---|
+> | 5 · Category browse | M2 app screen 1 |
+> | 6 · Product detail | M2 app screen 3 |
+> | 7 · Seller profile | M2 app screen 4 |
+>
+> M3 **extends** those three — it adds the save heart, the availability badge and the search
+> entry points — exactly as the web briefs already say for their equivalents. Genuinely new here
+> are screens **1 · 2 · 3 · 4 · 8** (search home, results, filter modal, AI modal, saved items).
+>
+> ⚠️ **Neither milestone's app screens are built yet.** `app/src/screens` holds only M1 (auth, kyc,
+> profile), so **M2's 7 app screens must land before this milestone has anything to extend.** Do not
+> start M3 app work expecting a catalogue to already be there.
 
 **The app has two roles only: Buyer and Exporter.** No staff surface, ever. M3 adds nothing
 staff-shaped — *"admin has no search screens"* (`m3.md` §8).
@@ -515,4 +533,4 @@ survives tab-switching.
 | **Enquiry buttons dead until M4** | Screens 6–7 carry "Send enquiry" with no destination this milestone. | Ship visibly "coming soon" + ledger rows, per the strict non-operational-UI rule. |
 | **No app equivalent of web SEO surfaces** | Category pages / slugs / canonical are web-only concerns; the app navigates internally. | None — recorded so nobody "ports" SEO screens into the app. |
 | **Featured content on Search home** | Screen 1's featured strip reuses the web landing's curated content; no M3 source explicitly names it *for the app*. | Optional — cut it from screen 1 without loss if the owner prefers the app entry minimal. |
-| **`web-design.md` stale tick line** | The always-relevant tick rule file still references `kycStatus`; every M3 source (and the shipped API) uses the `verified` boolean. | Brief follows `verified`; the rule file needs the correction pass (also flagged in the web brief §11). |
+| ~~**`web-design.md` stale tick line**~~ | ✅ **FIXED 2026-08-10.** The always-loaded rule said "show status from `kycStatus`" — a field no public response contains, so a screen following it would bind to nothing. Corrected to the derived `verified` boolean, with the self-scoped exception (`/buyer/verification`, `/exporter`) spelled out. `remind.md` carried the same phrasing and was corrected too. | None — brief and rule now agree. |

@@ -3,9 +3,9 @@
 > **Sources, in precedence order:**
 > 1. The shipped backend (`MPX-BACKEND-FULL-SAAS/src/routes|validators|controllers`) — field
 >    names, enums, routes and response shapes come from HERE, nowhere else.
-> 2. `my-plans/m1/m1-webscreens/` — 19 HTML mockups (each carrying 2–5 state copies) + 3
+> 2. `design-plans/m1/m1-webscreens/` — 19 HTML mockups (each carrying 2–5 state copies) + 3
 >    DESIGN.md briefs. These are the visual truth: layout, copy, states.
-> 3. `my-plans/m1/web-screens-design.md` — content/state reference only. Its auth model
+> 3. `design-plans/m1/web-screens-design.md` — content/state reference only. Its auth model
 >    (one shared login for all four roles) is **stale against §A21** and superseded by the
 >    owner's instruction: party portal pair + separate staff portal.
 >

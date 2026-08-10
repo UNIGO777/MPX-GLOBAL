@@ -175,6 +175,72 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-10** — **Second full design-comparison pass over all 11 M2 web screens — every export
+  opened (or its `code.html` read where the PNG is unreadably narrow), 12 more mismatches fixed.**
+  🔴 **The one FUNCTIONAL gap: the 10-draft cap blocker on Add product was missing entirely.** The
+  design (and brief) draw it as a full-page state — icon, "Draft limit reached (10)", "Publish or
+  delete a draft, or get verified.", a "Back to products" button, and **no form beneath it**. My
+  build let a capped seller fill the whole form and only fail at save. Now a cheap
+  `/products/mine?pageSize=1` fetch on create mode gates the page before anything renders.
+  **Validation pattern inverted to match the design:** Save was disabled-until-valid, which can
+  never explain itself; the design keeps it ENABLED and answers a failed attempt with a red
+  "Fix N fields to continue." banner plus inline field errors (sub-category, name, price). Range
+  error wording matched to the design's "Minimum must be less than maximum."
+  **Other fixes:** S6/7 gained the breadcrumb and the sticky in-page section nav (lg only) ·
+  S3 restructured — gallery + summary in ONE card, facts as single-column rows under a small-caps
+  "TRADE FACTS"/"ENGAGEMENT DETAILS" label, "Read more" fold past ~400 chars, "+N" overflow
+  thumbnail tile · S5 taken-down rows get the design's pale red row tint (`bg-danger-50/40` ≈ the
+  export's `bg-[#FEF3F2]/30`) and the delete dialog is titled **"Archive this product?"** as the
+  design words it · S2 sibling list becomes a white card at lg with a **check icon** on the current
+  pill (colour alone must not carry meaning) · S4 product count in brand blue · S8 INACTIVE chip on
+  switched-off tops + ORDER column on the sub table.
+  Screens 1, 9, 10, 11 re-verified as already matching after the earlier pass. Compiled-CSS check
+  confirmed the new utilities landed (`-webkit-line-clamp:8`, `bg-danger-50/40`, `scroll-mt-6`) —
+  first grep said `line-clamp-[8]` was missing, but that was my escaping, not the build.
+  ⚠️ Deliberately not copied, unchanged from last pass: audit targets as links (no slug to link to)
+  and screen 10's seller picker (needs `organisation:read`, a different grant).
+- **2026-08-10** — **Dev data completed: all 40 category images + every product fully populated.**
+  Previously 12/40 categories had an image and **no product had one at all**, with most carrying
+  1–4 of 7 trade fields and 0–4 of 6 specs — so the screens could only be reviewed against
+  fallbacks and gaps.
+  **Now:** 40/40 top categories imaged · every product has **3 images, a 200–500 char multi-paragraph
+  description, all 6 category attributes, and the complete field group** (7/7 trade for goods,
+  5/5 engagement for services). Verified through the public API, not the log — and the group split
+  holds: goods carry no `engagementType`, services carry no `moq`/`hsCode`.
+  **A second image generator** for products — woven texture + vignette rather than the categories'
+  flat band, so a product card reads as a photograph instead of a swatch.
+  🔴 **The upload rate limiter fired mid-run and I did NOT bypass it.** `uploadLimiter` is 30/hour
+  per user (§A25.3 — sized deliberately, since 300/15min × 5 files × 5 MB would allow ~7.5 GB of
+  orphan-able Cloudinary uploads). The superadmin spent 28 on the 40 tops, so the sub-category
+  images 429'd. Product uploads were unaffected — they use SELLER tokens, which are separate keys.
+  ⚠️ **Sub-category images deliberately left unfilled** (0/261). §A11 makes them optional with a
+  designed fallback, so skipping was the correct call over resetting a storage-abuse control. They
+  can be added next hour if wanted; screen 8's sub table shows the fallback meanwhile.
+  ⚠️ **Trade-off worth knowing:** with 40/40 imaged, screen 1 no longer exercises the monogram
+  fallback — which is still the true launch state, since §A20 has real images arriving over time.
+  `/styleguide` renders it in isolation for review.
+- **2026-08-10** — **M3 app brief fixed — and it pointed at a genuinely dangerous stale rule.**
+  🔴 **`.claude/rules/web-design.md` told every session to render the verified tick from
+  `kycStatus`** — a field **no public response contains**. The projection derives `verified` +
+  `verifiedAt` and drops the raw status precisely so the `rejected` state cannot leak (B7). Any
+  screen following that rule binds to a field that is never sent. This is the exact failure
+  CLAUDE.md's "When a decision changes" section documents as having already cost the project twice:
+  a stale line in an ALWAYS-LOADED rule outranks four corrected plan docs. Corrected to the derived
+  boolean, with the legitimate exception spelled out — the owner's OWN status screens
+  (`/buyer/verification`, `/exporter`) read raw `kycStatus`, because that is a self-scoped read of
+  your own organisation, not a public one. `remind.md` carried the same phrasing and was corrected
+  too. The M3 app brief had flagged this in its §11 gaps table; that row is now closed.
+  **Checked, not assumed:** the brief's other flag — "primary is indigo `#4f46e5`" — is **already
+  correct**; `app/src/theme/colors.js` confirms `primary.600 = #2A4DE0` and `800 = #1A2E8F`. The
+  line is a correction note, not a live error. Left alone.
+  🔴 **The M3 app brief never mentioned M2.** It read M1 → M3, as though discovery builds product
+  and seller pages from scratch. It does not: its screens **5, 6 and 7 ARE M2 app screens 1, 3 and
+  4**, and M3 only extends them (save heart, availability badge, search entry). Added the mapping
+  table plus the harder fact — **`app/src/screens` holds only M1, so M2's 7 app screens must land
+  before M3 has anything to extend.**
+  **Stale `my-plans/` paths fixed repo-wide** — the folder is `design-plans/` and has been for some
+  time; 12 briefs across every milestone pointed at a directory that does not exist. All 12
+  corrected and every referenced target verified to resolve.
 - **2026-08-09** — **All 11 M2 web screens flow-tested end to end: 144 assertions, 0 real failures.**
   No browser here, so the screens were tested the way they actually behave — every endpoint each one
   calls, driven in the same sequence, asserting the rules rather than the pixels.

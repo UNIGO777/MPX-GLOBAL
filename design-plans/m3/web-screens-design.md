@@ -4,7 +4,7 @@
 > This is a **design** document: what each screen contains, every control on it, and the states
 > that need artwork. No API or code detail.
 > Product: **MPX Global** — B2B import/export marketplace. Indian exporters, international buyers.
-> Companion: `my-plans/m3/app-screens-design.md` — the two surfaces must feel like one product.
+> Companion: `design-plans/m3/app-screens-design.md` — the two surfaces must feel like one product.
 >
 > **Scope rule (same discipline as the M1 briefs):** this brief contains **only** the screens named
 > in `modules-in-detailed/m3-search-filter-3-4days-max/` — `m3.md` §8, `Search.md` §9,

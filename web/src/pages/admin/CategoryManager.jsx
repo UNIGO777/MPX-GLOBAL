@@ -154,9 +154,18 @@ export function CategoryManager() {
                         <NoImagePanel label={t.name} monogram ratio="h-9 w-9" className="shrink-0 rounded" />
                       )}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium text-ink-900">{t.name}</span>
+                        <span className="flex items-center gap-2">
+                          <span className="truncate text-sm font-medium text-ink-900">{t.name}</span>
+                          {/* Design: an explicit INACTIVE chip, not a suffix —
+                              a switched-off top must read at a glance. */}
+                          {!t.active && (
+                            <span className="shrink-0 rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-500">
+                              Inactive
+                            </span>
+                          )}
+                        </span>
                         <span className="block text-xs text-muted">
-                          {t.subs?.length ?? 0} sub-categories{t.active ? '' : ' · off'}
+                          {t.subs?.length ?? 0} sub-categories
                         </span>
                       </span>
                     </button>
@@ -189,6 +198,7 @@ export function CategoryManager() {
                         <th className="border-b border-surface-border px-4 py-3 font-semibold">Type</th>
                         <th className="border-b border-surface-border px-4 py-3 font-semibold">Fields</th>
                         <th className="border-b border-surface-border px-4 py-3 font-semibold">State</th>
+                        <th className="border-b border-surface-border px-4 py-3 font-semibold">Order</th>
                         <th className="border-b border-surface-border px-4 py-3" />
                       </tr>
                     </thead>
@@ -212,6 +222,9 @@ export function CategoryManager() {
                           </td>
                           <td className="border-b border-surface-border px-4 py-3 text-xs text-muted">
                             {sub.active ? 'Active' : 'Off'}
+                          </td>
+                          <td className="border-b border-surface-border px-4 py-3 text-ink-600">
+                            {sub.order ?? '—'}
                           </td>
                           <td className="border-b border-surface-border px-4 py-3 text-right">
                             {/* Read-only staff see NO actions — not disabled ones. */}

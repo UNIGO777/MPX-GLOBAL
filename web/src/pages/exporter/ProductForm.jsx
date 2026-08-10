@@ -21,7 +21,7 @@ import { Field, inputClasses } from '../../components/ui/Field.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
-import { BoxIcon, TrashIcon } from '../../components/ui/icons.jsx';
+import { BoxIcon, ChevronRightIcon, TrashIcon } from '../../components/ui/icons.jsx';
 import { PortalLayout } from '../../layouts/PortalLayout.jsx';
 import { EXPORTER_NAV } from './exporterNav.js';
 import { PRODUCT_STATUS_META } from '../../lib/productStatus.js';
@@ -78,9 +78,9 @@ const EMPTY = {
   timeline: '',
 };
 
-function Section({ title, children }) {
+function Section({ id, title, children }) {
   return (
-    <section className="rounded-lg border border-surface-border bg-white p-6 shadow-card">
+    <section id={id} className="scroll-mt-6 rounded-lg border border-surface-border bg-white p-6 shadow-card">
       <h2 className="mb-5 text-lg font-bold text-ink-900">{title}</h2>
       <div className="space-y-5">{children}</div>
     </section>
@@ -100,8 +100,18 @@ export function ProductForm() {
   const [pendingCat, setPendingCat] = useState(null); // category change awaiting confirmation
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [nameEdited, setNameEdited] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const tree = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
+
+  // 🔴 Design + brief: the 10-draft cap blocks BEFORE the seller fills anything
+  // in — a full-page notice with no form beneath it, not an error at save. One
+  // cheap list call carries `caps`; verified sellers return {verified:true}.
+  const capCheck = useQuery({
+    queryKey: productKeys.minePage({ page: 1, pageSize: 1 }),
+    queryFn: () => productsApi.mine({ page: 1, pageSize: 1 }),
+    enabled: !isEdit,
+  });
 
   const existing = useQuery({
     queryKey: ['products', 'one', id],
@@ -205,6 +215,28 @@ export function ProductForm() {
     },
   });
 
+  const caps = capCheck.data?.caps;
+  if (!isEdit && caps && caps.verified === false && caps.drafts.used >= caps.drafts.limit) {
+    return (
+      <PortalLayout nav={EXPORTER_NAV}>
+        <EmptyState
+          icon={BoxIcon}
+          title={`Draft limit reached (${caps.drafts.limit})`}
+          action={
+            <Link
+              to="/exporter/products"
+              className="inline-flex min-h-[44px] items-center rounded-full bg-primary-600 px-6 text-sm font-semibold text-white hover:bg-primary-700"
+            >
+              Back to products
+            </Link>
+          }
+        >
+          Publish or delete a draft, or get verified.
+        </EmptyState>
+      </PortalLayout>
+    );
+  }
+
   if (isEdit && existing.isError) {
     return (
       <PortalLayout nav={EXPORTER_NAV}>
@@ -251,8 +283,30 @@ export function ProductForm() {
   const fixedFields = isService ? SERVICE_FIELDS : GOODS_FIELDS;
   const chosen = Boolean(cat.subId);
 
+  // Design: Save stays ENABLED and a failed attempt explains itself — a red
+  // "Fix N fields to continue." banner plus inline field errors. A disabled
+  // button that never says why is the pattern the design deliberately avoids.
+  function trySave() {
+    const errs = {};
+    if (!cat.subId) errs.category = 'Sub-category is required.';
+    if (!form.name.trim()) errs.name = 'Product name is required.';
+    const pr = form.price;
+    if (pr.mode === 'range' && pr.min != null && pr.max != null && Number(pr.min) >= Number(pr.max)) {
+      errs.price = 'Minimum must be less than maximum.';
+    }
+    if (pr.mode !== 'on_request' && pr.min == null) errs.price = 'A price is required.';
+    setFieldErrors(errs);
+    if (Object.keys(errs).length === 0) save.mutate();
+  }
+  const errorCount = Object.keys(fieldErrors).length;
+
   return (
     <PortalLayout nav={EXPORTER_NAV}>
+      <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1.5 text-sm text-muted">
+        <Link to="/exporter/products" className="hover:text-primary-700">Products</Link>
+        <ChevronRightIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+        <span className="font-medium text-ink-800">{isEdit ? 'Edit product' : 'Add product'}</span>
+      </nav>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-ink-900">
           {isEdit ? 'Edit product' : 'Add product'}
@@ -287,14 +341,43 @@ export function ProductForm() {
       {blocked && <BlockedBanner takedown={product.takedown} className="mb-6" />}
 
       {error && <Alert tone="danger" className="mb-6">{error}</Alert>}
+      {errorCount > 0 && (
+        <Alert tone="danger" className="mb-6">
+          Fix {errorCount} {errorCount === 1 ? 'field' : 'fields'} to continue.
+        </Alert>
+      )}
 
-      <div className="space-y-6">
-        <Section title="Category">
+      {/* Design: a slim in-page section nav at desktop — the form is the longest
+          in the product and the nav is how you get back to Pricing from the
+          bottom of Specifications. Anchors only; hidden below lg. */}
+      <div className="flex gap-8">
+        <aside className="hidden w-40 shrink-0 lg:block" aria-label="Form sections">
+          <ol className="sticky top-6 space-y-1 border-l border-surface-border text-sm">
+            {[['section-category', 'Category'], ['section-details', 'Details'],
+              ['section-pricing', 'Pricing'],
+              ['section-trade', leaf?.type === 'service' ? 'Service details' : 'Trade details'],
+              ...((attrs.data?.attributes?.length ?? 0) > 0 ? [['section-specs', 'Specifications']] : []),
+            ].map(([anchor, label]) => (
+              <li key={anchor}>
+                <a
+                  href={`#${anchor}`}
+                  className="-ml-px block border-l-2 border-transparent px-3 py-1.5 text-ink-600 hover:border-primary-600 hover:text-primary-700"
+                >
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </aside>
+
+      <div className="min-w-0 flex-1 space-y-6">
+        <Section id="section-category" title="Category">
           <CategoryPicker
             tree={tree.data ?? []}
             topId={cat.topId}
             subId={cat.subId}
-            onChange={applyCategory}
+            onChange={(next) => { setFieldErrors(({ category, ...rest }) => rest); applyCategory(next); }}
+            error={fieldErrors.category}
           />
         </Section>
 
@@ -307,15 +390,15 @@ export function ProductForm() {
           </p>
         ) : (
           <>
-            <Section title="Details">
-              <Field label="Product name">
+            <Section id="section-details" title="Details">
+              <Field label="Product name" error={fieldErrors.name}>
                 {(fid, hasError) => (
                   <input
                     id={fid}
                     className={inputClasses(hasError)}
                     maxLength={200}
                     value={form.name}
-                    onChange={(e) => { set({ name: e.target.value }); setNameEdited(true); }}
+                    onChange={(e) => { set({ name: e.target.value }); setNameEdited(true); setFieldErrors(({ name, ...rest }) => rest); }}
                   />
                 )}
               </Field>
@@ -350,11 +433,15 @@ export function ProductForm() {
               />
             </Section>
 
-            <Section title="Pricing">
-              <PriceInput value={form.price} onChange={(price) => set({ price })} />
+            <Section id="section-pricing" title="Pricing">
+              <PriceInput
+                value={form.price}
+                onChange={(price) => { set({ price }); setFieldErrors(({ price: _p, ...rest }) => rest); }}
+                errors={fieldErrors.price ? { min: fieldErrors.price } : {}}
+              />
             </Section>
 
-            <Section title={isService ? 'Service details' : 'Trade details'}>
+            <Section id="section-trade" title={isService ? 'Service details' : 'Trade details'}>
               {!isService && (
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field label="Minimum order quantity" optional>
@@ -403,7 +490,7 @@ export function ProductForm() {
             </Section>
 
             {(attrs.data?.attributes?.length ?? 0) > 0 && (
-              <Section title="Specifications">
+              <Section id="section-specs" title="Specifications">
                 <AttributeFields
                   defs={attrs.data.attributes}
                   values={specs}
@@ -419,15 +506,12 @@ export function ProductForm() {
         )}
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button
-            loading={save.isPending}
-            disabled={!chosen || !form.name.trim()}
-            onClick={() => save.mutate()}
-          >
+          <Button loading={save.isPending} onClick={trySave}>
             {isEdit ? 'Save changes' : 'Save draft'}
           </Button>
           <Button variant="ghost" onClick={() => navigate('/exporter/products')}>Cancel</Button>
         </div>
+      </div>
       </div>
 
       <Modal

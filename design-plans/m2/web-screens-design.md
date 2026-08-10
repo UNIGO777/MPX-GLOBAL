@@ -17,13 +17,13 @@
 > §A14/§A17), `Models-Chart.png` (`type: either`, `resolvedType` — removed), `Flow-Chart-Backend.png`
 > ("view-only" admin — superseded by §A25 grantable takedown). The `.md` files + Part A win.
 >
-> Companion: `my-plans/m1/web-screens-design.md` — same tokens, same shell, one product.
+> Companion: `design-plans/m1/web-screens-design.md` — same tokens, same shell, one product.
 
 ---
 
 ## 1. Design foundations
 
-Everything in `my-plans/m1/web-screens-design.md` §1 carries over unchanged: tone, one type/spacing
+Everything in `design-plans/m1/web-screens-design.md` §1 carries over unchanged: tone, one type/spacing
 scale, responsive at 1440/1024/768/375, accessibility as "done", four drawn states per screen, and
 the layout shell (top bar + permission-driven sidebar). This section adds only what M2 introduces.
 
