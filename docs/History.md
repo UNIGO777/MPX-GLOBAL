@@ -241,6 +241,33 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   **Stale `my-plans/` paths fixed repo-wide** — the folder is `design-plans/` and has been for some
   time; 12 briefs across every milestone pointed at a directory that does not exist. All 12
   corrected and every referenced target verified to resolve.
+- **2026-08-10** — **`docs/Testing.md` written — human test guide for web, M1 + M2, all panels
+  (public, buyer, exporter, staff/admin).** 27 numbered sections + cross-cutting checks + bug
+  log + sign-off table, in the same PASS/FAIL step format as the earlier `webtest.docx`, but now
+  covering the catalogue module too and living in-repo as Markdown instead of a binary doc.
+  Exact UI copy (button labels, empty states, error text, chip wording) was pulled from the
+  actual source files rather than paraphrased, so a non-technical tester can match wording
+  word-for-word — this surfaced a few precise facts worth recording:
+  - **The web KYC "profile incomplete" gate has no friendly UI at all** — confirmed via grep,
+    zero references to `PROFILE_INCOMPLETE` anywhere in `web/src`. A buyer or exporter with an
+    incomplete company profile (buyer signup never asks for an address at all; exporter's
+    address is optional at signup) gets the server's raw sentence — **"Complete your company
+    profile before uploading documents."** — surfaced inline against the document row via the
+    shared `apiError()` helper, with **no button or link to fix it**. This is the same gap flagged
+    in `webtest.docx` on 2026-08-05, now pinned to the exact wording and confirmed still open;
+    §10/§11 of the new doc has the tester reproduce it and record that exact string.
+  - Confirmed (also via grep/read, not assumption) that **no web "company profile" edit screen
+    exists for either role** — `VerificationStatus.jsx` is the buyer/exporter dashboard AND the
+    full extent of account-level self-service today; the exporter sidebar's "Settings" row is
+    dimmed/disabled per `docs/UiWebNotes.md`, consistent with that ledger.
+  - M2 sections (§16–§27) encode the load-bearing rules already proven in the 2026-08-09 test
+    pass (§A10 cap-vs-live-tab disagreement, the top-off cascade's "restore intent" vs visible
+    toggle state, takedown identity staying seller-invisible, audit log's exact-match action
+    filter and "—" fallback for purged targets, purge countdown singular/plural, the 3-live/
+    10-draft cap wording) as explicit numbered steps, so a tester without code access can verify
+    the same guarantees a developer already checked programmatically.
+  No code changed — this is a docs-only addition. Verified secret-free before writing (grepped
+  for connection strings / key patterns / seeded credentials — none present).
 - **2026-08-09** — **All 11 M2 web screens flow-tested end to end: 144 assertions, 0 real failures.**
   No browser here, so the screens were tested the way they actually behave — every endpoint each one
   calls, driven in the same sequence, asserting the rules rather than the pixels.
