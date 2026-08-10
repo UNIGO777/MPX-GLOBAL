@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { Field, inputClasses } from '../ui/Field.jsx';
+import { Combobox } from '../ui/Combobox.jsx';
+import { Field } from '../ui/Field.jsx';
 
 /**
  * Two fields, not a tree control (design brief §2).
@@ -27,24 +28,23 @@ export function CategoryPicker({ tree = [], topId, subId, onChange, error, disab
   );
 
   return (
-    <div className="grid gap-5 sm:grid-cols-2">
+    // Stacked, not side-by-side: this picker's home is the editor's 300px rail,
+    // where two columns crush both fields into truncation (owner screenshot,
+    // 2026-08-11). Hybrid Combobox per the same decision — type to filter.
+    <div className="grid gap-4">
       <Field
         label="Category"
         helper="Pick the closest match — 'Other' is there if nothing fits."
       >
         {(id) => (
-          <select
+          <Combobox
             id={id}
-            className={inputClasses(false)}
-            value={topId ?? ''}
+            value={topId}
             disabled={disabled}
-            onChange={(e) => onChange({ topId: e.target.value || null, subId: null })}
-          >
-            <option value="">Select a category</option>
-            {tree.map((top) => (
-              <option key={top.id} value={top.id}>{top.name}</option>
-            ))}
-          </select>
+            placeholder="Select a category"
+            options={tree.map((top) => ({ value: top.id, label: top.name }))}
+            onChange={(v) => onChange({ topId: v, subId: null })}
+          />
         )}
       </Field>
 
@@ -54,20 +54,21 @@ export function CategoryPicker({ tree = [], topId, subId, onChange, error, disab
         error={error}
       >
         {(id, hasError) => (
-          <select
+          <Combobox
             id={id}
-            className={inputClasses(hasError)}
-            value={subId ?? ''}
+            value={subId}
+            hasError={hasError}
             // Disabled until a top is chosen — there is nothing to choose from,
-            // and an empty open select reads as a broken field.
+            // and an empty open list reads as a broken field.
             disabled={disabled || !topId}
-            onChange={(e) => onChange({ topId, subId: e.target.value || null })}
-          >
-            <option value="">{topId ? 'Select a sub-category' : 'Choose a category first'}</option>
-            {subs.map((sub) => (
-              <option key={sub.id} value={sub.id}>{sub.name}</option>
-            ))}
-          </select>
+            placeholder={topId ? 'Select a sub-category' : 'Choose a category first'}
+            options={subs.map((sub) => ({
+              value: sub.id,
+              label: sub.name,
+              ...(sub.type === 'service' ? { hint: 'Service' } : {}),
+            }))}
+            onChange={(v) => onChange({ topId, subId: v })}
+          />
         )}
       </Field>
     </div>

@@ -152,3 +152,10 @@ export const BadgeCheckIcon = (p) => (
     <path d="M6 16c.6-1.3 1.7-2 3-2s2.4.7 3 2M15 10h4M15 13.5h3" />
   </Svg>
 );
+
+export const TagIcon = (props) => (
+  <Svg {...props}>
+    <path d="M20.59 13.41 12 22l-8.59-8.59A2 2 0 0 1 3 12V4a1 1 0 0 1 1-1h8a2 2 0 0 1 1.41.59L22 12a2 2 0 0 1-1.41 1.41Z" />
+    <circle cx="7.5" cy="7.5" r="1" fill="currentColor" stroke="none" />
+  </Svg>
+);

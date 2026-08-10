@@ -437,7 +437,9 @@ async function statusCounts(exporterOrgId) {
   const counts = { all: 0, draft: 0, active: 0, inactive: 0, archived: 0 };
   for (const { _id, count } of grouped) {
     if (_id in counts) counts[_id] = count;
-    counts.all += count;
+    // `all` mirrors the unfiltered list, which EXCLUDES archived (see listMine)
+    // — the tile and the rows it opens must agree.
+    if (_id !== 'archived') counts.all += count;
   }
   return counts;
 }
@@ -480,7 +482,13 @@ export async function getOwnProduct({ user, id }) {
 // Counts and caps ride along on every page so the tabs and the meter can never
 // disagree with the rows, and so publishing refreshes all three in one call.
 export async function listMine({ user, status, page, pageSize }) {
-  const filter = { exporterOrgId: user.orgId, ...(status ? { status } : {}) };
+  // No status = "All", and All EXCLUDES archived (owner, 2026-08-11): archived
+  // rows are dead history and drowned the working list. They remain reachable
+  // via ?status=archived — their tab/tile is the only window into them.
+  const filter = {
+    exporterOrgId: user.orgId,
+    ...(status ? { status } : { status: { $ne: 'archived' } }),
+  };
   const [rows, total, counts, caps] = await Promise.all([
     Product.find(filter)
       .sort({ createdAt: -1, _id: -1 })

@@ -1,3 +1,4 @@
+import { Combobox } from '../ui/Combobox.jsx';
 import { Field, inputClasses } from '../ui/Field.jsx';
 
 /**
@@ -65,17 +66,20 @@ export function AttributeFields({ defs = [], values = {}, onChange, errors = {} 
           return (
             <Field key={def.key} label={def.name} error={error} optional={!def.required}>
               {(id, hasError) => (
-                <select
+                <Combobox
                   id={id}
-                  className={inputClasses(hasError)}
+                  hasError={hasError}
                   value={value ?? ''}
-                  onChange={(e) => set(def.key, e.target.value || undefined)}
-                >
-                  <option value="">Select</option>
-                  {(def.options ?? []).map((o) => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
-                </select>
+                  placeholder="Select"
+                  // A leading "—" row is the clear path the native select's
+                  // empty option used to provide (drafts may leave any spec
+                  // blank).
+                  options={[
+                    { value: '', label: '—' },
+                    ...(def.options ?? []).map((o) => ({ value: o, label: o })),
+                  ]}
+                  onChange={(v) => set(def.key, v || undefined)}
+                />
               )}
             </Field>
           );

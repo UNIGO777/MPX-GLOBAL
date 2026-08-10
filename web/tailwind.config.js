@@ -113,8 +113,12 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        // The one card shadow the Precision spec allows (soft, navy-tinted)
+        // The resting card shadow (soft, navy-tinted — Precision spec)
         card: '0px 4px 20px rgba(0, 5, 23, 0.05)',
+        // Elevation for the ACTIVE surface only (focused form card, floating
+        // action bar). Added with the 2026-08-10 M2 redesign — same navy tint,
+        // one step deeper. Two levels, never more.
+        lift: '0px 2px 6px rgba(0, 5, 23, 0.04), 0px 12px 32px rgba(0, 5, 23, 0.10)',
       },
     },
   },

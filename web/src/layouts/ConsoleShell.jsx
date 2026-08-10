@@ -101,7 +101,14 @@ export function ConsoleShell({ nav, identity, signOutTo = '/signin', children })
     .toUpperCase();
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-primary-800">
+    // 🔴 `fixed inset-0`, not `h-screen` (2026-08-10). With h-screen the console
+    // was one 100vh block INSIDE the document — so anything that nudged the
+    // body taller than the viewport (zoom artefacts, extensions, scrollbar
+    // gutters) let the WHOLE console scroll away, sidebar included. Pinning it
+    // to the viewport makes document scroll irrelevant: only `main` scrolls,
+    // which is the entire design of this shell. Public pages are untouched —
+    // they scroll the body on purpose.
+    <div className="fixed inset-0 flex overflow-hidden bg-primary-800">
       {/* Sidebar — desktop only; below lg the nav becomes a strip under the bar */}
       <aside className="hidden w-[260px] shrink-0 flex-col bg-primary-800 text-white lg:flex">
         <div className="flex h-[88px] shrink-0 items-center px-8">

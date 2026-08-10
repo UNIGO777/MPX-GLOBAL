@@ -175,6 +175,67 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-11 — Screen 5/7 follow-ups.** (a) "All" now EXCLUDES archived (owner): `listMine` unfiltered adds `status: {$ne:'archived'}` and `counts.all` skips archived — archived reachable only via its own tile; tests updated (24 pass). (b) Edit screen images fixed: `ownView.images` now returns `{url, publicId}` refs (owner-only surface; public projections unchanged) so the form loads existing images, and the PATCH body always sends `images` (omitting it silently kept deleted images). (c) Screen 5 mobile: card list below md (no 820px sideways table), stat tiles = swipeable strip. (d) RowMenu popover now position:fixed + flip-up when short on space (was clipped by card overflow-hidden). (e) ProductForm: scroll-to-top on entering the editor; category search on entry chooser; card stretch-to-bottom experiment REVERTED at owner request.
+- **2026-08-11 — M2 redesign: screen 5 (My products) rebuilt to the new language; all form dropdowns now hybrid.** (a) New shared `Combobox` primitive (type-to-filter, keyboard nav, wrap-not-clip popover) replaces native selects in CategoryPicker (now stacked for the 300px rail), PriceInput currency, CountrySelect (rewritten as a wrapper) and AttributeFields selects (leading "—" row keeps the clear path). Pagination/MobileInput/Select native selects deliberately untouched. (b) Screen 5: underline tabs → STAT TILES that are the filter, with D1/A15 cap bars inside the Live/Drafts tiles (§A10 tile-count-vs-cap disagreement preserved and commented); rows richer — name links to edit, category stacked under name, inline always-visible Publish/Hide buttons + RowMenu, takedown reason inline in the row (reason+date only, §A9); below-table BlockedBanner dump removed. CapMeter component now used only by Styleguide. (c) ProductForm entry: category search box (name-only matching; synonyms not in public tree) + auto-scroll to specialisations on top-category pick.
+- **2026-08-10 — M2 web redesign begins; screen 6/7 (ProductForm) rebuilt as an editor workspace.** Owner judged the shipped M2 screens' design inadequate ("redesign them all") — the m2-webscreens Stitch exports are SUPERSEDED as design authority, starting with screen 6. Final structure (after two owner iterations — "not impressive", "wasted space / side-lined"): full-width VISUAL CATEGORY CHOOSER (top-category monogram tiles + specialisation pills, no dropdowns), then one continuous GUIDED CARD of four numbered sections with connector line and done-ticks, dense 2–3-col field grids, + 300px sticky rail with category summary/change, live buyer preview (real public ProductCard inside a browser-chrome frame showing the future /product/ slug), listing-strength meter + checklist incl. required-spec warning, and (edit) a Status card holding Publish/Hide/Delete (replaces the header strip). Floating sticky action bar keeps Save always visible. All locked rules preserved (leaf-decides §A14, save=draft, cap blocker, §A6 rename note, blocked-stays-editable, archived terminal). New `TagIcon` + `shadow-lift` token (second elevation level — active surfaces only). Content stays LEFT-ALIGNED (owner rejected centring). Remaining M2 screens to be redesigned to this direction next.
+- **2026-08-10** — **Console scroll bug (owner screenshot: the sidebar scrolled off with the page).**
+  `ConsoleShell`'s root was `h-screen overflow-hidden` — a 100vh block sitting IN the document flow,
+  so anything that made the body even slightly taller than the viewport let the entire console
+  scroll as a document, sidebar and top bar included. Our own tree cannot inflate the body (single
+  root, portals are `fixed`, index.html clean — all verified), so the trigger is environmental
+  (zoom artefacts / extensions / scrollbar gutters), but the DESIGN was fragile: it depended on the
+  document never scrolling rather than not caring. Root is now **`fixed inset-0`** — the console
+  occupies exactly the viewport regardless of body height, and only `main` scrolls, which was
+  always the intent. Public pages are unaffected; they scroll the body on purpose.
+- **2026-08-10** — **KYC upload restructured on BOTH web screens (owner request): the document-type
+  dropdown is gone — every accepted type renders as its own card, stacked.** First cut (bare label +
+  dropzone + trash) was rejected mid-turn ("the style is not good"); final style is one card per
+  document: header row (doc icon · type name · "Sent for review" tick or a quiet Clear action),
+  the full-width dropzone beneath, progress bar and errors inside the same frame, and the card
+  border tints green on success / red on error. Rows are FIXED — never added or removed, only their
+  file changes; "Add another document" is gone; uploading any subset remains valid.
+  **Buyer wrinkle:** rows only exist once an entity type is chosen (the type decides the list), and
+  switching entity RESEEDS the list — picked files drop with it, since they were chosen for types
+  that no longer apply. Exporter seeds from the signup entityType at load.
+  Cleanup: dead `Select` imports and the now-unused `docTypes` locals removed from both files.
+- **2026-08-10** — Company profile logo control is now a **drag-and-drop zone** (owner request):
+  whole area droppable + clickable + keyboard-operable, drag-over highlight, client pre-checks
+  mirroring the server (JPG/PNG/WEBP, 5 MB) so a bad drop fails instantly with a message instead of
+  a round trip. Buttons inside the zone `stopPropagation` so Remove doesn't open the file picker.
+- **2026-08-10** — **Owner-caught bug on the new company profile screen: saving a rename didn't
+  refresh the "How buyers see you" preview.** Root cause: the preview query is keyed on the org's
+  SLUG, and a rename never changes the slug (A6, by design) — so the key never changed and the
+  cached copy kept rendering. Only the LOGO mutations invalidated it; `save` never did. Fixed with
+  prefix invalidations on save: `['catalogue','exporter']` + `['catalogue','products']` +
+  `['catalogue','product']` — wider than the preview alone because the seller block inside every
+  cached public product response is composed from the live Organisation, so a rename stales those
+  too, and a demotion must drop the preview's tick immediately. **Gotcha worth keeping: any cache
+  keyed on an immutable identifier (slug) will NEVER self-invalidate on content changes — every
+  mutation of the underlying entity needs an explicit invalidation.**
+- **2026-08-10** — **§A22 company profile screen BUILT for web (`/buyer/company` + `/exporter/company`,
+  one role-aware component) — and the PROFILE_INCOMPLETE dead end is closed.** The dimmed "Settings"
+  sidebar items became live "Company profile" links (ledger rows closed).
+  **What it does:** registered details (name · country · address · entityType) with the A22
+  lock/demotion made explicit — on a VERIFIED org a locked-field save first shows a confirm naming
+  the fields ("This sends you back to review"), and a `demoted: true` response is surfaced in words,
+  never silently. Exporter extras: **logo upload/remove + description (the ONLY capture path for
+  both)**, the A6 rename note (public slug unchanged), and a **live public preview fetched from the
+  real `GET /exporters/:slug`** — the identical projection a guest gets, so the preview cannot lie.
+  Buyer variant: registered details only, entityType editable (exporter's is read-only in every
+  state — the server 400s it). Both variants gain an **Account → Change password** link, the first
+  party-side entry point to a screen that has existed since M1.
+  **The gate:** both web KycUpload screens now check `profileComplete === false` and render a
+  "Complete your company profile first" blocker routing to the new screen — mirroring the app's
+  VerificationHub. Before this, a web user whose optional signup address was skipped hit a hard dead
+  end: upload offered, server refused PROFILE_INCOMPLETE, nowhere to fix it.
+  **Contract verified LIVE, 11/11** — ownerView shape, no-op save `demoted:false`, description edit
+  never demotes, exporter entityType 400s, verified rename → `demoted:true` + `submitted` + slug
+  unchanged (dev org restored to verified afterwards).
+  **Audit for sibling gaps (the ask: "check all other such flows"):** all six server error codes now
+  have web handlers · all five contract flags (`mustChangePassword`, `profileComplete`,
+  `kycRejectionReason`, `demoted`, `sessionNote`) covered · app-vs-web screen parity closes — the
+  remaining app-only screens (Splash/Welcome/biometric/multi-step KYC capture) are app-shell
+  patterns, not missing web capability. **No further gap of the PROFILE_INCOMPLETE class found.**
 - **2026-08-10** — **Second full design-comparison pass over all 11 M2 web screens — every export
   opened (or its `code.html` read where the PNG is unreadably narrow), 12 more mismatches fixed.**
   🔴 **The one FUNCTIONAL gap: the 10-draft cap blocker on Add product was missing entirely.** The

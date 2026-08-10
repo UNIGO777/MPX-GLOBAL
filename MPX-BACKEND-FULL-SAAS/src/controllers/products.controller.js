@@ -21,7 +21,12 @@ function ownView(p) {
       max: p.price?.max ?? null,
       currency: p.price?.currency ?? null,
     },
-    images: (p.images ?? []).map((i) => i.url),
+    // Full refs, not bare URLs (2026-08-11): PATCH replaces the whole images
+    // array and every ref must carry its publicId, so the edit screen needs
+    // them back to keep/reorder/remove existing images. Owner-only surface —
+    // the owner already received these exact refs from POST /products/images.
+    // The PUBLIC projections still expose URLs only.
+    images: (p.images ?? []).map((i) => ({ url: i.url, publicId: i.publicId })),
     moq: p.moq ?? null,
     unit: p.unit ?? null,
     hsCode: p.hsCode ?? null,

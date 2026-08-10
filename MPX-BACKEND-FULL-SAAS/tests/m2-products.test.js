@@ -525,16 +525,21 @@ describe('/products/mine status tabs, counts and cap meter', () => {
     }
   }
 
-  it('counts every status and sums to all', async () => {
+  it('counts every status; "all" excludes archived and matches the unfiltered list', async () => {
     const ex = await makeExporter();
     await seedSpread(ex);
 
     const res = await request(app).get('/products/mine').set(bearer(ex.token));
     expect(res.status).toBe(200);
-    expect(res.body.counts).toEqual({ all: 6, draft: 2, active: 2, inactive: 1, archived: 1 });
+    // Owner decision 2026-08-11: All = working list, archived is history and
+    // lives only behind its own tab.
+    expect(res.body.counts).toEqual({ all: 5, draft: 2, active: 2, inactive: 1, archived: 1 });
     expect(res.body.counts.all).toBe(
-      res.body.counts.draft + res.body.counts.active + res.body.counts.inactive + res.body.counts.archived,
+      res.body.counts.draft + res.body.counts.active + res.body.counts.inactive,
     );
+    // The unfiltered list itself must agree with the All count.
+    expect(res.body.total).toBe(5);
+    expect(res.body.products.some((p) => p.status === 'archived')).toBe(false);
   });
 
   it('the status filter returns only that status, and counts stay whole-list', async () => {
@@ -547,7 +552,7 @@ describe('/products/mine status tabs, counts and cap meter', () => {
     expect(drafts.body.products.every((p) => p.status === 'draft')).toBe(true);
     expect(drafts.body.total).toBe(2);
     // The tabs must keep showing every tab's size while one tab is selected.
-    expect(drafts.body.counts.all).toBe(6);
+    expect(drafts.body.counts.all).toBe(5);
 
     const archived = await request(app).get('/products/mine?status=archived').set(bearer(ex.token));
     expect(archived.body.products.map((p) => p.name)).toEqual(['Gone1']);
@@ -588,7 +593,7 @@ describe('/products/mine status tabs, counts and cap meter', () => {
 
     const res = await request(app).get('/products/mine').set(bearer(ex.token));
     expect(res.body.caps).toEqual({ verified: true });
-    expect(res.body.counts.all).toBe(6); // tabs still work
+    expect(res.body.counts.all).toBe(5); // tabs still work (all excludes archived)
   });
 
   it('draft usage tracks the 10-draft cap', async () => {

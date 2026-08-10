@@ -16,12 +16,12 @@ import { BUYER_NAV } from './buyerNav.js';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
-import { Select } from '../../components/ui/Select.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
 import { FileDrop } from '../../components/ui/FileDrop.jsx';
 import {
   BuildingIcon,
   CheckCircleIcon,
+  DocIcon,
   ChevronLeftIcon,
   InfoIcon,
   TrashIcon,
@@ -40,17 +40,18 @@ import {
  * Already-verified accounts short-circuit: the server 409s uploads, so the form
  * never renders.
  */
-let rowSeq = 0;
-// No entity argument: the select starts on "Choose type" regardless, so taking
-// one would only imply a dependency that no longer exists.
-const newRow = () => ({
-  id: ++rowSeq,
-  docType: '', // design: the select starts on "Choose type"
-  file: null,
-  progress: 0,
-  status: 'idle', // idle | uploading | done | error
-  error: null,
-});
+// One FIXED row per accepted document type (owner request, 2026-08-10) — the
+// dropdown is gone. Rows exist only once an entity type is chosen, because the
+// type decides the list.
+const rowsFor = (entityType) =>
+  (entityType ? DOC_TYPES_BY_ENTITY[entityType] : []).map((docType) => ({
+    id: docType,
+    docType,
+    file: null,
+    progress: 0,
+    status: 'idle', // idle | uploading | done | error
+    error: null,
+  }));
 
 const ENTITY_OPTIONS = [
   { value: 'business', title: 'Business', desc: 'For registered companies', Icon: BuildingIcon },
@@ -76,7 +77,7 @@ export function KycUpload() {
       const v = await kycApi.myVerification();
       setVerification(v);
       setEntityType(v.entityType ?? null);
-      setRows([newRow()]);
+      setRows(rowsFor(v.entityType ?? null));
     } catch (err) {
       setLoadError(apiError(err));
     } finally {
@@ -89,19 +90,13 @@ export function KycUpload() {
   }, [load]);
 
   const entityLocked = Boolean(verification?.entityType);
-  const docTypes = entityType ? DOC_TYPES_BY_ENTITY[entityType] : [];
 
   const chooseEntity = (value) => {
     if (entityLocked || submitting) return;
     setEntityType(value);
-    // Doc types differ per entity — reset selections that no longer apply.
-    setRows((rs) =>
-      rs.map((r) =>
-        DOC_TYPES_BY_ENTITY[value].includes(r.docType)
-          ? r
-          : { ...r, docType: '' },
-      ),
-    );
+    // The row list IS the entity's document list now — switching reseeds it.
+    // Picked files drop with it: they were chosen for types that no longer apply.
+    setRows(rowsFor(value));
   };
 
   // role="radio" promises radiogroup keys: one tab stop, arrows to move between
@@ -141,7 +136,6 @@ export function KycUpload() {
     if (submitting || canSubmit) return null;
     if (!entityType) return 'Choose what kind of account this is to continue.';
     if (rows.every((r) => !r.file)) return 'Add at least one document to continue.';
-    if (rows.some((r) => r.file && !r.docType)) return 'Choose a document type for each file you have added.';
     return null;
   })();
 
@@ -193,6 +187,24 @@ export function KycUpload() {
     return shell(
       <div className="max-w-[860px] rounded-xl border border-surface-border bg-white shadow-sm">
         <ErrorState message={loadError.message} requestId={loadError.requestId} onRetry={load} />
+      </div>,
+    );
+  }
+
+  // A22 gate — same rule as the exporter side; the buyer variant of the company
+  // screen carries exactly the fields the server checks.
+  if (verification && verification.profileComplete === false) {
+    return shell(
+      <div className="max-w-[860px] rounded-xl border border-surface-border bg-white p-8 text-center shadow-sm">
+        <BuildingIcon className="mx-auto h-10 w-10 text-primary-600" />
+        <h1 className="mt-3 text-xl font-bold text-ink-900">Complete your company profile first</h1>
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+          Verification is optional — but if you want the tick, we need your registered company
+          name, country and address on file before reviewing documents.
+        </p>
+        <Button className="mt-6" onClick={() => navigate('/buyer/company')}>
+          Complete company profile
+        </Button>
       </div>,
     );
   }
@@ -338,57 +350,56 @@ export function KycUpload() {
         {entityType && (
           <div className="mt-5 space-y-5">
             {rows.map((row) => {
-              const removable = rows.length > 1 || Boolean(row.file);
+              const removable = Boolean(row.file);
               return (
-                <div key={row.id}>
-                  {/* Design: "Document type" and "File" side by side, with the
-                      remove control as its own trailing cell so it can never
-                      overflow the row. */}
-                  <div className="flex flex-wrap items-end gap-4">
-                    <div className="w-full sm:w-[180px] sm:shrink-0">
-                      <Select
-                        label="Document type"
-                        value={row.docType}
-                        disabled={submitting || row.status === 'done'}
-                        onChange={(e) => patchRow(row.id, { docType: e.target.value })}
-                        options={[
-                          { value: '', label: 'Choose type' },
-                          ...docTypes.map((t) => ({ value: t, label: DOC_TYPE_LABELS[t] })),
-                        ]}
-                      />
-                    </div>
-
-                    <div className="w-full min-w-0 sm:w-auto sm:flex-1">
-                      <span className="block text-sm font-medium text-ink-800">File</span>
-                      <div className="mt-1.5">
-                        <FileDrop
-                          file={row.file}
-                          accept={KYC_ACCEPT}
-                          disabled={submitting || row.status === 'done'}
-                          onPick={(f) => pickFile(row.id, f)}
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      aria-label="Remove this document"
-                      disabled={submitting || row.status === 'done' || !removable}
-                      onClick={() =>
-                        rows.length > 1
-                          ? setRows((rs) => rs.filter((r) => r.id !== row.id))
-                          : patchRow(row.id, { file: null, error: null, status: 'idle', progress: 0 })
-                      }
-                      title="Remove this document"
-                      className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-surface-border bg-white text-ink-500 transition-colors hover:border-danger hover:bg-danger-50 hover:text-danger disabled:cursor-not-allowed disabled:border-surface-border disabled:bg-ink-50 disabled:text-ink-300 disabled:hover:bg-ink-50"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
+                <div
+                  key={row.id}
+                  className={`rounded-xl border p-4 transition-colors ${
+                    row.status === 'done'
+                      ? 'border-success-300 bg-success-50/40'
+                      : row.error
+                        ? 'border-danger-200 bg-danger-50/40'
+                        : 'border-surface-border bg-white'
+                  }`}
+                >
+                  <div className="mb-2.5 flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-ink-900">
+                      <DocIcon className="h-4 w-4 text-primary-600" aria-hidden="true" />
+                      {DOC_TYPE_LABELS[row.docType]}
+                    </span>
+                    {row.status === 'done' ? (
+                      <span className="flex items-center gap-1.5 text-[13px] font-semibold text-success">
+                        <CheckCircleIcon className="h-4 w-4" /> Sent for review
+                      </span>
+                    ) : (
+                      removable && (
+                        <button
+                          type="button"
+                          aria-label={`Clear ${DOC_TYPE_LABELS[row.docType]} file`}
+                          disabled={submitting}
+                          onClick={() =>
+                            patchRow(row.id, { file: null, error: null, status: 'idle', progress: 0 })
+                          }
+                          className="flex items-center gap-1 text-[13px] font-medium text-ink-500 transition-colors hover:text-danger disabled:cursor-not-allowed disabled:text-ink-300"
+                        >
+                          <TrashIcon className="h-4 w-4" /> Clear
+                        </button>
+                      )
+                    )}
                   </div>
+
+                  {row.status !== 'done' && (
+                    <FileDrop
+                      file={row.file}
+                      accept={KYC_ACCEPT}
+                      disabled={submitting}
+                      onPick={(f) => pickFile(row.id, f)}
+                    />
+                  )}
 
                   {row.status === 'uploading' && (
                     <div
-                      className="mt-2 h-1 overflow-hidden rounded-full bg-ink-200"
+                      className="mt-2.5 h-1 overflow-hidden rounded-full bg-ink-200"
                       role="progressbar"
                       aria-valuenow={row.progress}
                       aria-valuemin={0}
@@ -401,31 +412,11 @@ export function KycUpload() {
                     </div>
                   )}
 
-                  {row.status === 'done' && (
-                    <p className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold text-success">
-                      <CheckCircleIcon className="h-4 w-4" /> Sent for review
-                    </p>
-                  )}
-
-                  {row.error && <p className="mt-2 text-[13px] font-medium text-danger">{row.error}</p>}
+                  {row.error && <p className="mt-2.5 text-[13px] font-medium text-danger">{row.error}</p>}
                 </div>
               );
             })}
 
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={() => setRows((rs) => [...rs, newRow()])}
-              className="flex items-center gap-2 text-[15px] font-semibold text-primary-600 hover:text-primary-700 disabled:cursor-not-allowed disabled:text-ink-400"
-            >
-              <span
-                aria-hidden="true"
-                className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-current text-xs font-bold leading-none"
-              >
-                +
-              </span>
-              Add another document
-            </button>
           </div>
         )}
       </section>

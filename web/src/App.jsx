@@ -24,6 +24,7 @@ import { VerificationStatus as ExporterVerificationStatus } from './pages/export
 import { KycUpload as ExporterKycUpload } from './pages/exporter/KycUpload.jsx';
 import { Products as ExporterProducts } from './pages/exporter/Products.jsx';
 import { ProductForm } from './pages/exporter/ProductForm.jsx';
+import { CompanyProfile } from './pages/account/CompanyProfile.jsx';
 import { Otp } from './pages/auth/Otp.jsx';
 import { SignupVerify } from './pages/auth/SignupVerify.jsx';
 import { SignupCompany } from './pages/auth/SignupCompany.jsx';
@@ -139,6 +140,7 @@ export function App() {
               <Route element={<RequireRole roles={['buyer']} />}>
                 <Route path="/buyer/verification" element={<VerificationStatus />} />
                 <Route path="/buyer/kyc" element={<KycUpload />} />
+                <Route path="/buyer/company" element={<CompanyProfile />} />
               </Route>
             </Route>
 
@@ -147,6 +149,7 @@ export function App() {
               <Route element={<RequireRole roles={['exporter']} />}>
                 <Route path="/exporter" element={<ExporterVerificationStatus />} />
                 <Route path="/exporter/kyc" element={<ExporterKycUpload />} />
+                <Route path="/exporter/company" element={<CompanyProfile />} />
                 <Route path="/exporter/products" element={<ExporterProducts />} />
                 <Route path="/exporter/products/new" element={<ProductForm />} />
                 <Route path="/exporter/products/:id/edit" element={<ProductForm />} />

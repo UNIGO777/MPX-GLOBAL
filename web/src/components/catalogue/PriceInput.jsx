@@ -1,4 +1,5 @@
 import { CURRENCIES } from '../../lib/currencies.js';
+import { Combobox } from '../ui/Combobox.jsx';
 import { Field, inputClasses } from '../ui/Field.jsx';
 
 /**
@@ -105,16 +106,16 @@ export function PriceInput({ value, onChange, errors = {} }) {
 
           <Field label="Currency" error={errors.currency}>
             {(id, hasError) => (
-              <select
-                id={id}
-                className={inputClasses(hasError, 'sm:w-32')}
-                value={currency}
-                onChange={(e) => set({ currency: e.target.value })}
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              <div className="sm:w-36">
+                <Combobox
+                  id={id}
+                  hasError={hasError}
+                  value={currency}
+                  placeholder="Currency"
+                  options={CURRENCIES.map((c) => ({ value: c, label: c }))}
+                  onChange={(v) => set({ currency: v })}
+                />
+              </div>
             )}
           </Field>
         </div>

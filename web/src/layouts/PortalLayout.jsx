@@ -26,7 +26,8 @@ export function PortalLayout({ nav, subline, wide = false, children }) {
           screens. `wide` opts a page out of it: M2's product TABLE needs the
           full canvas (the design draws it at ~1200px) and would otherwise be
           crushed into a column. This is CONTENT width only — the shell itself
-          stays fixed and identical across buyer, exporter and admin. */}
+          stays fixed and identical across buyer, exporter and admin. Content is
+          left-aligned by design (owner, 2026-08-10 — no centring). */}
       <div className={wide ? 'max-w-[1200px]' : 'max-w-[860px]'}>{children}</div>
     </ConsoleShell>
   );

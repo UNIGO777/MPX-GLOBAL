@@ -4,7 +4,7 @@ import {
   BoxIcon,
   ListIcon,
   ChatIcon,
-  SettingsIcon,
+  BuildingIcon,
 } from '../../components/ui/icons.jsx';
 
 /**
@@ -19,5 +19,5 @@ export const EXPORTER_NAV = [
   { to: '/exporter/products', label: 'Products', Icon: BoxIcon },
   { label: 'Enquiries', Icon: ListIcon, soon: true },
   { label: 'Chat', Icon: ChatIcon, soon: true },
-  { label: 'Settings', Icon: SettingsIcon, disabled: true, dividerBefore: true },
+  { to: '/exporter/company', label: 'Company profile', Icon: BuildingIcon, dividerBefore: true },
 ];

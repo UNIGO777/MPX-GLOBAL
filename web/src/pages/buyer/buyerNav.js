@@ -3,7 +3,7 @@ import {
   SearchIcon,
   ChatIcon,
   ListIcon,
-  SettingsIcon,
+  BuildingIcon,
 } from '../../components/ui/icons.jsx';
 
 /**
@@ -19,5 +19,5 @@ export const BUYER_NAV = [
   { label: 'Search suppliers', Icon: SearchIcon, soon: true },
   { label: 'Enquiries', Icon: ListIcon, soon: true },
   { label: 'Chat', Icon: ChatIcon, soon: true },
-  { label: 'Settings', Icon: SettingsIcon, disabled: true, dividerBefore: true },
+  { to: '/buyer/company', label: 'Company profile', Icon: BuildingIcon, dividerBefore: true },
 ];
