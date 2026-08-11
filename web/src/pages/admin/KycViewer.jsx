@@ -152,44 +152,72 @@ export function KycViewer() {
 
   return (
     <AdminLayout>
-      <Link
-        to="/admin/verification"
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700"
-      >
-        <ChevronLeftIcon className="h-4 w-4" /> Back to verification queue
-      </Link>
-
-      {/* Applicant summary bar. Name / country / submitted come from the org
-          record, which needs `organisation:read` — a reviewer holding only
-          `kyc:view` still sees the documents, just with those cells blank. */}
-      <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border border-surface-border bg-white px-6 py-4 shadow-sm">
-        {[
-          { k: 'Applicant', v: org?.header?.name },
-          { k: 'Entity', v: data?.entityType ? ENTITY_LABELS[data.entityType] : null },
-          { k: 'Country', v: countryName(org?.company?.country) },
-          { k: 'Submitted', v: org?.verification?.submittedAt ? formatDate(org.verification.submittedAt) : null },
-        ].map(({ k, v }) => (
-          <div key={k} className="border-surface-border pr-8 [&:not(:last-child)]:border-r">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted">{k}</p>
-            <p className="mt-0.5 text-[15px] font-semibold text-ink-900">{v || '—'}</p>
+      {/* --- floating action bar (M2 language): the decision is never a
+          scroll away. Name / country / submitted come from the org record,
+          which needs `organisation:read` — a reviewer holding only `kyc:view`
+          still sees the documents, just with those cells blank. */}
+      <div className="sticky top-0 z-20 mb-5 pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-border bg-white/95 px-4 py-2.5 shadow-lift backdrop-blur">
+          <div className="min-w-0">
+            <Link
+              to="/admin/verification"
+              className="flex items-center gap-1 text-xs font-medium text-muted hover:text-primary-700"
+            >
+              <ChevronLeftIcon className="h-3.5 w-3.5" /> Verification queue
+            </Link>
+            <div className="mt-0.5 flex flex-wrap items-center gap-2">
+              <h1 className="max-w-[36ch] truncate text-lg font-bold leading-tight text-ink-900">
+                {org?.header?.name ?? 'KYC documents'}
+              </h1>
+              {data && <StatusChip status={data.kycStatus} />}
+            </div>
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
+              {[
+                data?.entityType ? ENTITY_LABELS[data.entityType] : null,
+                countryName(org?.company?.country),
+                org?.verification?.submittedAt
+                  ? `Sent ${formatDate(org.verification.submittedAt)}`
+                  : null,
+                `${docs.length} file${docs.length === 1 ? '' : 's'}`,
+              ]
+                .filter(Boolean)
+                .map((part, i) => (
+                  <span key={part} className="flex items-center gap-2">
+                    {i > 0 && <span aria-hidden="true" className="text-ink-300">·</span>}
+                    {part}
+                  </span>
+                ))}
+            </p>
           </div>
-        ))}
-        <p className="flex items-center gap-2 text-[15px] text-ink-900">
-          <DocIcon className="h-4 w-4 text-ink-500" />
-          {docs.length} file{docs.length === 1 ? '' : 's'}
-        </p>
-        <span className="ml-auto">
-          {data && <StatusChip status={data.kycStatus} />}
-        </span>
+          {canDecide && (
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="dangerOutline"
+                disabled={processing}
+                onClick={() => {
+                  setReason('');
+                  setRejectOpen(true);
+                }}
+              >
+                <XIcon className="h-4 w-4" /> Reject
+              </Button>
+              <Button size="sm" variant="success" loading={processing} onClick={() => decide('approve')}>
+                <CheckCircleIcon className="h-4 w-4" />
+                {decidableSide === 'exporter' ? 'Verify' : 'Approve'}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {decidedNote && (
-        <div className="mt-4">
+        <div className="mb-4">
           <Alert tone="info">{decidedNote}</Alert>
         </div>
       )}
       {actionError && (
-        <div className="mt-4">
+        <div className="mb-4">
           <Alert tone="danger">
             {actionError.message}
             {actionError.requestId && (
@@ -200,20 +228,20 @@ export function KycViewer() {
       )}
 
       {loading && (
-        <div className="mt-6 grid gap-5 lg:grid-cols-[320px_1fr]">
+        <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
           <Skeleton className="h-64 rounded-xl" />
           <Skeleton className="h-96 rounded-xl" />
         </div>
       )}
 
       {!loading && error && (
-        <div className="mt-6 rounded-xl border border-surface-border bg-white shadow-sm">
+        <div className="rounded-2xl border border-surface-border bg-white shadow-card">
           <ErrorState message={error.message} requestId={error.requestId} onRetry={load} />
         </div>
       )}
 
       {!loading && !error && docs.length === 0 && (
-        <div className="mt-6 rounded-xl border border-surface-border bg-white shadow-sm">
+        <div className="rounded-2xl border border-surface-border bg-white shadow-card">
           <EmptyState icon={DocIcon} title="No documents">
             This company hasn&apos;t uploaded any KYC documents yet.
           </EmptyState>
@@ -222,10 +250,10 @@ export function KycViewer() {
 
       {!loading && !error && docs.length > 0 && (
         <>
-          <div className="mt-6 grid items-start gap-5 lg:grid-cols-[320px_1fr]">
+          <div className="grid items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
             {/* Document list */}
             <div>
-              <h2 className="text-lg font-bold text-ink-900">Documents ({docs.length})</h2>
+              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted">Documents ({docs.length})</h2>
               <ul className="mt-3 space-y-3">
                 {docs.map((d, i) => {
                   const on = selected === i;
@@ -269,7 +297,7 @@ export function KycViewer() {
             </div>
 
             {/* Preview */}
-            <div className="overflow-hidden rounded-xl border border-surface-border bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border px-5 py-3">
                 <span className="flex items-center gap-2 text-[15px] font-semibold text-ink-900">
                   <FileIcon className="h-4 w-4 text-ink-500" />
@@ -334,31 +362,6 @@ export function KycViewer() {
             </div>
           </div>
 
-          {/* Decision bar (design puts it under both columns) */}
-          {canDecide && (
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-surface-border bg-white px-6 py-4 shadow-sm">
-              <p className="flex items-center gap-2.5 text-sm text-muted">
-                <ShieldIcon className="h-4 w-4 shrink-0" />
-                These documents are private. Your access to them is recorded.
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  variant="dangerOutline"
-                  disabled={processing}
-                  onClick={() => {
-                    setReason('');
-                    setRejectOpen(true);
-                  }}
-                >
-                  <XIcon className="h-4 w-4" /> Reject
-                </Button>
-                <Button variant="success" loading={processing} onClick={() => decide('approve')}>
-                  <CheckCircleIcon className="h-4 w-4" />
-                  {decidableSide === 'exporter' ? 'Verify' : 'Approve'}
-                </Button>
-              </div>
-            </div>
-          )}
         </>
       )}
 

@@ -35,6 +35,10 @@ import { CheckCircleIcon, CopyIcon, InfoIcon, UsersIcon } from '../../components
  */
 const PERMISSION_COUNT = PERMISSION_LIST.length;
 
+function initials(name = '') {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?';
+}
+
 function generatePassword() {
   // Temp password the superadmin hands over; the employee must change it at
   // first sign-in (mustChangePassword). Charset avoids ambiguous glyphs.
@@ -195,10 +199,17 @@ export function Employees() {
 
   return (
     <AdminLayout>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[32px] font-bold leading-tight text-ink-900">Employees</h1>
-          <p className="mt-1 text-[15px] text-muted">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-2xl font-bold leading-tight text-ink-900">Employees</h1>
+            {data && (
+              <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+                {(data.total ?? rows.length).toLocaleString()} staff
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-sm text-muted">
             Create staff accounts and manage what each person can do.
           </p>
         </div>
@@ -213,7 +224,7 @@ export function Employees() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-surface-border bg-white shadow-card">
+      <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
         {loading && <SkeletonRows rows={6} />}
 
         {!loading && error && (
@@ -236,31 +247,110 @@ export function Employees() {
 
         {!loading && !error && rows.length > 0 && (
           <>
-            <div className="overflow-x-auto">
-              {/* Mockup columns: Name · Email · Mobile · Permissions · Active. */}
-              <table className="w-full min-w-[860px] text-left text-sm">
+            {/* Phones get CARDS, not a sideways-scrolling table. */}
+            <ul className="divide-y divide-surface-border md:hidden">
+              {rows.map((row) => {
+                const perms = permsFor(row);
+                return (
+                  <li key={row.id} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <span
+                        aria-hidden="true"
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          row.isActive ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
+                        }`}
+                      >
+                        {initials(row.name)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-ink-900">{row.name}</p>
+                        <p className="truncate text-xs text-muted">{row.email}</p>
+                        {row.mobile && <p className="truncate text-xs text-muted">{row.mobile}</p>}
+                      </div>
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                      {!perms ? (
+                        <span className="text-xs text-muted">—</span>
+                      ) : perms.length === 0 ? (
+                        <span className="text-xs text-muted">No access yet</span>
+                      ) : (
+                        <span className="flex items-center gap-1.5">
+                          <span className="whitespace-nowrap rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
+                            {perms.length === 1
+                              ? (PERMISSION_LABELS[perms[0]] ?? perms[0])
+                              : `${perms.length} permissions`}
+                          </span>
+                          {perms.length > 1 && (
+                            <button
+                              type="button"
+                              aria-label={`See all ${perms.length} permissions for ${row.name}`}
+                              onClick={() => setPermsView({ row, perms })}
+                              className="rounded-full p-1 text-ink-500 transition-colors hover:bg-primary-50 hover:text-primary-600"
+                            >
+                              <InfoIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1.5 text-[12px] font-medium">
+                        <span
+                          aria-hidden="true"
+                          className={`h-1.5 w-1.5 rounded-full ${row.isActive ? 'bg-success-500' : 'bg-ink-300'}`}
+                        />
+                        <span className={row.isActive ? 'text-ink-800' : 'text-muted'}>
+                          {row.isActive ? 'Active' : 'Deactivated'}
+                        </span>
+                      </span>
+                      <span className="ml-auto">
+                        <Button variant="secondary" size="sm" onClick={() => openEdit(row)}>
+                          Edit permissions
+                        </Button>
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
+              {/* M2 redesign (2026-08-11): email stacks under the name beside a
+                  monogram avatar — one identity cell, less horizontal scroll. */}
+              <table className="w-full min-w-[720px] text-left text-sm">
                 <thead>
-                  <tr className="border-b border-surface-border text-xs uppercase tracking-wide text-muted">
-                    <th className="px-6 py-3 font-semibold">Name</th>
-                    <th className="px-6 py-3 font-semibold">Email</th>
-                    <th className="px-6 py-3 font-semibold">Mobile</th>
-                    <th className="px-6 py-3 font-semibold">Permissions</th>
-                    <th className="px-6 py-3 font-semibold">Active</th>
-                    <th className="px-6 py-3 text-right font-semibold">Actions</th>
+                  <tr className="bg-ink-50 border-b border-surface-border text-xs uppercase tracking-wide text-muted">
+                    <th className="px-5 py-3 font-semibold">Employee</th>
+                    <th className="px-5 py-3 font-semibold">Mobile</th>
+                    <th className="px-5 py-3 font-semibold">Permissions</th>
+                    <th className="px-5 py-3 font-semibold">Status</th>
+                    <th className="px-5 py-3 text-right font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-100">
                   {rows.map((row) => {
                     const perms = permsFor(row);
                     return (
-                      <tr key={row.id} className="transition-colors hover:bg-ink-50">
-                        <td className="px-6 py-4 font-semibold text-ink-900">{row.name}</td>
-                        <td className="px-6 py-4 text-muted">{row.email}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-muted">{row.mobile ?? '—'}</td>
+                      <tr key={row.id} className="transition-colors hover:bg-surface-subtle/50">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <span
+                              aria-hidden="true"
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                row.isActive ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
+                              }`}
+                            >
+                              {initials(row.name)}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate font-semibold text-ink-900">{row.name}</p>
+                              <p className="truncate text-xs text-muted">{row.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-3.5 text-muted">{row.mobile ?? '—'}</td>
                         {/* One grant reads fine as a chip; several would wrap
                             the row, so they collapse to a count with an (i)
                             that opens the full list. */}
-                        <td className="whitespace-nowrap px-6 py-4">
+                        <td className="whitespace-nowrap px-5 py-3.5">
                           {!perms ? (
                             <span className="text-muted" title="Not returned for this account">
                               —
@@ -288,8 +378,18 @@ export function Employees() {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-ink-900">{row.isActive ? 'Yes' : 'No'}</td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="whitespace-nowrap px-5 py-3.5">
+                          <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
+                            <span
+                              aria-hidden="true"
+                              className={`h-1.5 w-1.5 rounded-full ${row.isActive ? 'bg-success-500' : 'bg-ink-300'}`}
+                            />
+                            <span className={row.isActive ? 'text-ink-800' : 'text-muted'}>
+                              {row.isActive ? 'Active' : 'Deactivated'}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
                           <Button
                             variant="secondary"
                             size="sm"

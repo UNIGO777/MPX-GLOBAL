@@ -24,7 +24,9 @@ export function PriceLine({ price, unit, size = 'md', className = '' }) {
       ? 'text-3xl font-bold text-ink-900'
       : size === 'sm'
         ? 'text-sm font-semibold text-ink-900'
-        : 'text-xl font-bold text-ink-900';
+        : size === 'base'
+          ? 'text-base font-bold text-ink-900'
+          : 'text-xl font-bold text-ink-900';
   const unitClass = size === 'lg' ? 'text-base font-normal text-muted' : 'text-sm font-normal text-muted';
 
   if (mode === 'on_request' || (min == null && max == null)) {

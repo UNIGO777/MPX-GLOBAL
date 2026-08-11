@@ -1,4 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
+
 import { ConsoleShell } from './ConsoleShell.jsx';
+import { organisationApi, organisationKeys } from '../api/organisation.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 
 /**
@@ -6,19 +9,24 @@ import { useAuth } from '../auth/AuthContext.jsx';
  * (`ConsoleShell`) that the admin console also uses — the design is the same in
  * all three files, so the chrome lives in one place.
  *
- * Identity line = "Buyer · Company". The company is only shown when a panel
- * passes `subline`.
- *
- * ⚠️ Corrected 2026-08-09: this used to say a buyer's Organisation "has no read
- * endpoint until A22". **A22 shipped** — `GET /me/organisation` exists. No panel
- * passes `subline` yet, so a cold header still reads just "Buyer", but that is
- * now a screen that has not been built, not a missing endpoint.
+ * Identity line = "Buyer · Company" on EVERY tab (owner, 2026-08-11): the
+ * company name is fetched HERE from the caller's own Organisation, not passed
+ * per-screen — per-screen sublines made the header flicker between "Exporter"
+ * and "Exporter · Company" as you moved around. The 30s query cache means one
+ * fetch serves the whole session's navigation. `subline` remains as an
+ * explicit override only.
  */
 const ROLE_LABELS = { buyer: 'Buyer', exporter: 'Exporter' };
 
 export function PortalLayout({ nav, subline, wide = false, children }) {
   const { user } = useAuth();
-  const identity = [ROLE_LABELS[user?.role] ?? user?.role, subline].filter(Boolean).join(' · ');
+  const org = useQuery({
+    queryKey: organisationKeys.mine,
+    queryFn: organisationApi.mine,
+    enabled: Boolean(user),
+  });
+  const company = subline ?? org.data?.name;
+  const identity = [ROLE_LABELS[user?.role] ?? user?.role, company].filter(Boolean).join(' · ');
 
   return (
     <ConsoleShell nav={nav} identity={identity} signOutTo="/signin">

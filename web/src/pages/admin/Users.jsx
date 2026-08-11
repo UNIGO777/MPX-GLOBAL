@@ -12,7 +12,7 @@ import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
-import { Select } from '../../components/ui/Select.jsx';
+import { Combobox } from '../../components/ui/Combobox.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
 import { inputClasses } from '../../components/ui/Field.jsx';
@@ -57,6 +57,10 @@ const KYC_OPTIONS = [
   { value: 'verified', label: 'Verified' },
   { value: 'rejected', label: 'Needs attention' },
 ];
+
+function initials(name = '') {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?';
+}
 
 const ROLE_LABELS = {
   buyer: 'Buyer',
@@ -115,11 +119,6 @@ export function Users() {
     }, 350);
     return () => clearTimeout(t);
   }, [qInput]);
-
-  const setFilter = (key) => (e) => {
-    setFilters((f) => ({ ...f, [key]: e.target.value }));
-    setPage(1);
-  };
 
   const setActive = async (row, active) => {
     setActionError(null);
@@ -211,61 +210,69 @@ export function Users() {
 
   return (
     <AdminLayout>
-      {/* Design: 32px title, subline, right-aligned account count */}
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[32px] font-bold leading-tight text-ink-900">Users</h1>
-          <p className="mt-1 text-[15px] text-muted">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-2xl font-bold leading-tight text-ink-900">Users</h1>
+            <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+              {rowsTotal.toLocaleString(config.locale.numbers)} accounts
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-muted">
             Every account on the platform — buyers, exporters and staff.
           </p>
         </div>
-        <p className="text-sm text-muted">{rowsTotal.toLocaleString(config.locale.numbers)} accounts</p>
       </div>
 
-      {/* Filter card */}
-      <div className="mb-5 rounded-xl border border-surface-border bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-end gap-6">
-          <div className="w-full sm:w-[348px]">
-            <label htmlFor="user-q" className="block text-xs font-semibold uppercase tracking-wider text-muted">
-              Starts with…
-            </label>
-            <div className="relative mt-2">
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" />
-              <input
-                id="user-q"
-                type="search"
-                value={qInput}
-                onChange={(e) => setQInput(e.target.value)}
-                placeholder="Name, email or mobile"
-                className={inputClasses(false, 'pl-9')}
-              />
-            </div>
+      {/* Filter toolbar — hybrid comboboxes, one row (M2 language, 2026-08-11) */}
+      <div className="mb-5 rounded-2xl border border-surface-border bg-white p-4 shadow-card">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-full sm:w-[320px]">
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" />
+            <input
+              id="user-q"
+              type="search"
+              aria-label="Search — starts with name, email or mobile"
+              value={qInput}
+              onChange={(e) => setQInput(e.target.value)}
+              placeholder="Starts with — name, email or mobile"
+              className={inputClasses(false, 'pl-9')}
+            />
           </div>
-          <div className="w-[180px]">
-            <span className="block text-xs font-semibold uppercase tracking-wider text-muted">Role</span>
-            <div className="mt-2">
-              <Select aria-label="Filter by role" value={filters.role} onChange={setFilter('role')} options={ROLE_OPTIONS} />
-            </div>
+          {/* Phones: the two dropdowns share one line (owner, 2026-08-11). */}
+          <div className="min-w-0 flex-1 basis-0 sm:flex-none sm:basis-auto sm:w-[170px]">
+            <Combobox
+              id="user-role"
+              value={filters.role}
+              placeholder="All roles"
+              options={ROLE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              onChange={(v) => {
+                setFilters((f) => ({ ...f, role: v }));
+                setPage(1);
+              }}
+            />
           </div>
-          <div className="w-[200px]">
-            <span className="block text-xs font-semibold uppercase tracking-wider text-muted">Verification</span>
-            <div className="mt-2">
-              <Select
-                aria-label="Filter by verification"
-                value={filters.kycStatus}
-                onChange={setFilter('kycStatus')}
-                options={KYC_OPTIONS}
-              />
-            </div>
+          <div className="min-w-0 flex-1 basis-0 sm:flex-none sm:basis-auto sm:w-[190px]">
+            <Combobox
+              id="user-kyc"
+              value={filters.kycStatus}
+              placeholder="All statuses"
+              options={KYC_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              onChange={(v) => {
+                setFilters((f) => ({ ...f, kycStatus: v }));
+                setPage(1);
+              }}
+            />
           </div>
-          <button
-            type="button"
-            onClick={clearFilters}
-            disabled={!hasFilters}
-            className="pb-3 text-sm font-medium text-primary-600 hover:text-primary-700 disabled:cursor-not-allowed disabled:text-ink-400"
-          >
-            Clear filters
-          </button>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-sm font-medium text-primary-600 hover:text-primary-700"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       </div>
 
@@ -280,7 +287,7 @@ export function Users() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-surface-border bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
         {loading && <SkeletonRows rows={8} />}
 
         {!loading && error && (
@@ -311,45 +318,126 @@ export function Users() {
 
         {!loading && !error && rows.length > 0 && (
           <>
-            <div className="overflow-x-auto">
-              {/* Design columns: Name · Email · Mobile · Role · Verification ·
-                  Active · Joined (+ actions). The design's company sub-line
-                  under the name can't render — the list rows carry no company
-                  (documented backend projection gap). */}
-              <table className="w-full min-w-[860px] border-separate border-spacing-0 text-left text-sm">
+            {/* Phones get CARDS, not a sideways-scrolling table. */}
+            <ul className="divide-y divide-surface-border md:hidden">
+              {rows.map((row) => (
+                <li key={row.id} className="p-4">
+                  <div className="flex items-start gap-3">
+                    <span
+                      aria-hidden="true"
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                        row.isActive ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
+                      }`}
+                    >
+                      {initials(row.name)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-ink-900">{row.name}</p>
+                      <p className="truncate text-xs text-muted">{row.email}</p>
+                      {row.mobile && <p className="truncate text-xs text-muted">{row.mobile}</p>}
+                    </div>
+                    <RowMenu label={`Actions for ${row.name}`} items={rowActions(row)} />
+                  </div>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                        row.role === 'superadmin'
+                          ? 'bg-primary-50 text-primary-700'
+                          : row.role === 'employee'
+                            ? 'bg-ink-100 text-ink-700'
+                            : 'bg-surface-subtle text-ink-600'
+                      }`}
+                    >
+                      {ROLE_LABELS[row.role] ?? row.role}
+                    </span>
+                    {row.kycStatus && KYC_STATUS_META[row.kycStatus] && (
+                      <StatusChip status={row.kycStatus} />
+                    )}
+                    <span className="inline-flex items-center gap-1.5 text-[12px] font-medium">
+                      <span
+                        aria-hidden="true"
+                        className={`h-1.5 w-1.5 rounded-full ${row.isActive ? 'bg-success-500' : 'bg-ink-300'}`}
+                      />
+                      <span className={row.isActive ? 'text-ink-800' : 'text-muted'}>
+                        {row.isActive ? 'Active' : 'Deactivated'}
+                      </span>
+                    </span>
+                    <span className="ml-auto text-[11px] text-muted">{formatDate(row.createdAt)}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
+              {/* M2 redesign (2026-08-11): email stacks UNDER the name beside a
+                  monogram avatar — kills the widest column, no more 860px
+                  minimum. Role + account state render as chips (colour never
+                  alone; each carries its word). */}
+              <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm">
                 <thead>
                   <tr className="bg-ink-50 text-xs uppercase tracking-wider text-muted [&>th]:border-b [&>th]:border-surface-border">
-                    {/* NAME is pinned: the design keeps it readable while the
-                        rest of the row scrolls horizontally. */}
-                    <th className="sticky left-0 z-20 border-r border-surface-border bg-ink-50 px-6 py-3 font-semibold">Name</th>
-                    <th className="px-6 py-3 font-semibold">Email</th>
-                    <th className="px-6 py-3 font-semibold">Mobile</th>
-                    <th className="px-6 py-3 font-semibold">Role</th>
-                    <th className="px-6 py-3 font-semibold">Verification</th>
-                    <th className="px-6 py-3 font-semibold">Active</th>
-                    <th className="px-6 py-3 font-semibold">Joined</th>
-                    <th className="px-6 py-3 text-right font-semibold">Actions</th>
+                    <th className="px-5 py-3 font-semibold">User</th>
+                    <th className="px-5 py-3 font-semibold">Mobile</th>
+                    <th className="px-5 py-3 font-semibold">Role</th>
+                    <th className="px-5 py-3 font-semibold">Verification</th>
+                    <th className="px-5 py-3 font-semibold">Status</th>
+                    <th className="px-5 py-3 font-semibold">Joined</th>
+                    <th className="px-5 py-3 text-right font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="[&>tr:not(:first-child)>*]:border-t [&>tr>*]:border-ink-100">
                   {rows.map((row) => (
-                    <tr key={row.id} className="group transition-colors hover:bg-ink-50">
-                      <td className="sticky left-0 z-10 border-r border-surface-border bg-white px-6 py-4 font-semibold text-ink-900 transition-colors group-hover:bg-ink-50">
-                        {row.name}
+                    <tr key={row.id} className="group transition-colors hover:bg-surface-subtle/50">
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <span
+                            aria-hidden="true"
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                              row.isActive ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
+                            }`}
+                          >
+                            {initials(row.name)}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-ink-900">{row.name}</p>
+                            <p className="truncate text-xs text-muted">{row.email}</p>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-muted">{row.email}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-muted">{row.mobile ?? '—'}</td>
-                      <td className="px-6 py-4 text-ink-900">{ROLE_LABELS[row.role] ?? row.role}</td>
-                      <td className="whitespace-nowrap px-6 py-4">
+                      <td className="whitespace-nowrap px-5 py-3.5 text-muted">{row.mobile ?? '—'}</td>
+                      <td className="whitespace-nowrap px-5 py-3.5">
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                            row.role === 'superadmin'
+                              ? 'bg-primary-50 text-primary-700'
+                              : row.role === 'employee'
+                                ? 'bg-ink-100 text-ink-700'
+                                : 'bg-surface-subtle text-ink-600'
+                          }`}
+                        >
+                          {ROLE_LABELS[row.role] ?? row.role}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-3.5">
                         {row.kycStatus && KYC_STATUS_META[row.kycStatus] ? (
                           <StatusChip status={row.kycStatus} />
                         ) : (
                           <span className="text-muted">—</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-ink-900">{row.isActive ? 'Yes' : 'No'}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-muted">{formatDate(row.createdAt)}</td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="whitespace-nowrap px-5 py-3.5">
+                        <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
+                          <span
+                            aria-hidden="true"
+                            className={`h-1.5 w-1.5 rounded-full ${row.isActive ? 'bg-success-500' : 'bg-ink-300'}`}
+                          />
+                          <span className={row.isActive ? 'text-ink-800' : 'text-muted'}>
+                            {row.isActive ? 'Active' : 'Deactivated'}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-3.5 text-muted">{formatDate(row.createdAt)}</td>
+                      <td className="px-5 py-3.5 text-right">
                         <RowMenu
                           label={`Actions for ${row.name}`}
                           items={rowActions(row)}

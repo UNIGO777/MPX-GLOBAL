@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { useLayoutEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider } from './auth/AuthContext.jsx';
@@ -87,6 +88,49 @@ function ChunkFallback() {
  * Route map (build plan §2) — all M1 screens shipped. Admin areas outside the
  * M1 set render the designed ComingSoon page (logged in docs/UiWebNotes.md).
  */
+/**
+ * Scroll restoration (owner-reported, 2026-08-11): the router keeps scroll
+ * across navigations, so a page opened from deep in a list started mid-scroll.
+ * Two scrollers exist — the WINDOW on public pages, the console shell's <main>
+ * on portal/admin screens — reset both on every pathname change. Hash
+ * navigations (`/#faq`) are left alone so anchors still land on their section;
+ * query-only changes (pagination, filters) deliberately keep position.
+ */
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+  useLayoutEffect(() => {
+    // The browser's own restoration fights this on back/forward — take it over.
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+    if (hash) return;
+    // LAYOUT effect: reset BEFORE the new page paints, so it can never be seen
+    // scrolled. Every scroller: window (public pages), documentElement/body
+    // (engine differences), and any <main> (the console shells scroll there).
+    const reset = () => {
+      // The stylesheet sets scroll-behavior:smooth, which turns these resets
+      // into a visible glide from the old position (found via headless-browser
+      // trace). Suspend it for the reset so the new page STARTS at the top.
+      const root = document.documentElement;
+      const prev = root.style.scrollBehavior;
+      root.style.scrollBehavior = 'auto';
+      window.scrollTo(0, 0);
+      root.scrollTop = 0;
+      document.body.scrollTop = 0;
+      document.querySelectorAll('main').forEach((el) => {
+        el.style.scrollBehavior = 'auto';
+        el.scrollTop = 0;
+        el.style.scrollBehavior = '';
+      });
+      root.style.scrollBehavior = prev;
+    };
+    reset();
+    // Second pass a frame later: catches a scroller that only becomes
+    // scrollable after async content/images land in the same navigation.
+    const raf = requestAnimationFrame(() => requestAnimationFrame(reset));
+    return () => cancelAnimationFrame(raf);
+  }, [pathname, hash]);
+  return null;
+}
+
 export function App() {
   return (
     // Query cache OUTSIDE the auth provider: sign-out clears it (see
@@ -95,6 +139,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             {/* --- Public (guest-visible; no auth guard by design — B7) --- */}
             <Route path="/" element={<Landing />} />
@@ -147,7 +192,9 @@ export function App() {
             {/* --- Exporter panel --- */}
             <Route element={<RequireAuth />}>
               <Route element={<RequireRole roles={['exporter']} />}>
-                <Route path="/exporter" element={<ExporterVerificationStatus />} />
+                <Route path="/exporter/verification" element={<ExporterVerificationStatus />} />
+                {/* Old bookmark-friendly alias — the hub moved (owner, 2026-08-11). */}
+                <Route path="/exporter" element={<Navigate to="/exporter/verification" replace />} />
                 <Route path="/exporter/kyc" element={<ExporterKycUpload />} />
                 <Route path="/exporter/company" element={<CompanyProfile />} />
                 <Route path="/exporter/products" element={<ExporterProducts />} />

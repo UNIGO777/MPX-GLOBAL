@@ -34,6 +34,7 @@ export function Combobox({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(null); // null = not editing → show selected label
   const [hi, setHi] = useState(0);
+  const [alignRight, setAlignRight] = useState(false);
   const rootRef = useRef(null);
   const inputRef = useRef(null);
   const listRef = useRef(null);
@@ -73,6 +74,21 @@ export function Combobox({
       ?.querySelector(`[data-index="${hi}"]`)
       ?.scrollIntoView({ block: 'nearest' });
   }, [hi, open]);
+
+  // The popover sizes to its CONTENT (long labels were colliding with their
+  // hints inside narrow fields — owner, 2026-08-11). Content-sized means it
+  // can poke past the right viewport edge for fields near it, so measure once
+  // open and flip to right-alignment when needed.
+  useEffect(() => {
+    if (!open) {
+      setAlignRight(false);
+      return;
+    }
+    const el = listRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    if (r.right > window.innerWidth - 8) setAlignRight(true);
+  }, [open, query]);
 
   const pick = (opt) => {
     onChange(opt.value);
@@ -155,7 +171,9 @@ export function Combobox({
           ref={listRef}
           id={listId}
           role="listbox"
-          className="absolute z-30 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-surface-border bg-white py-1 shadow-lift"
+          className={`absolute z-30 mt-1 max-h-60 w-max min-w-full max-w-[340px] overflow-y-auto rounded-lg border border-surface-border bg-white py-1 shadow-lift ${
+            alignRight ? 'right-0' : 'left-0'
+          }`}
         >
           {filtered.length === 0 && (
             <li className="px-3 py-2 text-sm text-muted">{notFound}</li>
@@ -173,12 +191,12 @@ export function Combobox({
                   pick(o);
                 }}
                 onPointerEnter={() => setHi(i)}
-                className={`flex w-full items-start justify-between gap-3 whitespace-normal px-3 py-2 text-left text-sm ${
+                className={`flex w-full items-baseline justify-between gap-4 whitespace-normal px-3 py-2 text-left text-sm ${
                   i === hi ? 'bg-primary-50' : ''
                 } ${o.value === value ? 'font-medium text-primary-800' : 'text-ink-800'}`}
               >
-                <span className="min-w-0">{o.label}</span>
-                {o.hint && <span className="shrink-0 text-xs text-muted">{o.hint}</span>}
+                <span className="min-w-0 flex-1">{o.label}</span>
+                {o.hint && <span className="shrink-0 whitespace-nowrap text-xs text-muted">{o.hint}</span>}
               </button>
             </li>
           ))}

@@ -12,7 +12,7 @@ export function roleHome(user) {
     case 'buyer':
       return '/buyer/verification';
     case 'exporter':
-      return '/exporter';
+      return '/exporter/verification';
     case 'superadmin':
       return '/admin/users';
     case 'employee': {

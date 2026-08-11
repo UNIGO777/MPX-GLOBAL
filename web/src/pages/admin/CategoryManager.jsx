@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -10,9 +10,21 @@ import { Drawer } from '../../components/ui/Drawer.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Field, inputClasses } from '../../components/ui/Field.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
+import { RowMenu } from '../../components/ui/RowMenu.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
-import { ListIcon, TrashIcon, UploadIcon, XIcon } from '../../components/ui/icons.jsx';
+import { Switch } from '../../components/ui/Switch.jsx';
+import {
+  AlertIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ListIcon,
+  SearchIcon,
+  SettingsIcon,
+  TrashIcon,
+  UploadIcon,
+  XIcon,
+} from '../../components/ui/icons.jsx';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
@@ -20,18 +32,33 @@ import { can } from '../../auth/roleHome.js';
 /**
  * M2 web screen 8 — the category manager (`/admin/categories`).
  *
- * 🔴 THIS SCREEN SHOWS INACTIVE ROWS. Every public read hides them; this one must
- * not, or an admin cannot find — let alone reactivate — the category they just
- * switched off. Inactive rows render muted but fully readable.
+ * RETHOUGHT 2026-08-11 (owner: the sub table + detached toggle were wrong).
+ * The right side is now a category DETAIL VIEW, not a form-plus-table:
  *
- * 🔴 TOP CATEGORIES ARE TOGGLE-ONLY — the 40 are seeded, and there is no create,
- * no delete and no structural edit for them. The ONE exception is the **image
- * upload (§A20)**, which is deliberate and documented: the 40 top images arrive
- * through this control, not a seed. Do not "tidy" it away.
+ *   header   → identity (image = the §A20 upload control, click/drop to
+ *              replace) + the MASTER SWITCH with its consequence written right
+ *              beside it ("Live in the catalogue" / "Hidden, and every
+ *              sub-category with it").
+ *   settings → the three editable pieces (name · order · synonyms) in one card.
+ *   subs     → a LIST with a REAL SWITCH per row — no more "Turn off"/"Keep
+ *              off" text buttons — plus a ⋮ menu (Edit · Manage fields ·
+ *              Delete). While the parent is OFF, an amber banner explains that
+ *              the switches now set RESTORE INTENT, and each switch binds to
+ *              `prevActive` instead of `active`.
  *
- * 🔴 READ-ONLY VARIANT OMITS ACTIONS, never disables them. With `category:read`
- * alone the page is a browsing view — no toggles, no panels, no upload — rather
- * than a wall of greyed buttons.
+ * One rendering serves desktop and phones — rows wrap, nothing is a table.
+ *
+ * 🔴 THIS SCREEN SHOWS INACTIVE ROWS. Every public read hides them; this one
+ * must not, or an admin cannot find the category they just switched off.
+ * Inactive rows render muted but fully readable.
+ *
+ * 🔴 TOP CATEGORIES ARE TOGGLE-ONLY — the 40 are seeded; no create, no delete,
+ * no structural edit. The ONE exception is the image upload (§A20): the 40 top
+ * images arrive through the header control, not a seed. Do not "tidy" it away.
+ *
+ * 🔴 READ-ONLY VARIANT OMITS CONTROLS, never disables them. With
+ * `category:read` alone the page is a browsing view — state dots instead of
+ * switches, no menus, no add, no upload.
  */
 function TypeChip({ type }) {
   return (
@@ -42,6 +69,136 @@ function TypeChip({ type }) {
   );
 }
 
+/** One top-category row (image · name · inactive chip · sub count). */
+function TopRowBody({ t }) {
+  return (
+    <>
+      {t.image ? (
+        <img src={t.image} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
+      ) : (
+        <NoImagePanel label={t.name} monogram ratio="h-9 w-9" className="shrink-0 rounded" />
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <span className="truncate text-sm font-medium text-ink-900">{t.name}</span>
+          {!t.active && (
+            <span className="shrink-0 rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-500">
+              Inactive
+            </span>
+          )}
+        </span>
+        <span className="block text-xs text-muted">{t.subs?.length ?? 0} sub-categories</span>
+      </span>
+    </>
+  );
+}
+
+/**
+ * Phone category picker (2026-08-11): 40 categories don't fit a swipe strip.
+ * A full-height SHEET with search — type-to-filter on names AND synonyms —
+ * replaces it; the page shows only a compact "current category" selector.
+ */
+function CategorySheet({ open, tops, selectedId, onPick, onClose }) {
+  const [q, setQ] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    setQ('');
+    inputRef.current?.focus();
+    const onKey = (e) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const norm = q.trim().toLowerCase();
+  const list = norm
+    ? tops.filter((t) =>
+        `${t.name} ${(t.synonyms ?? []).join(' ')}`.toLowerCase().includes(norm),
+      )
+    : tops;
+
+  return (
+    <div className="fixed inset-0 z-50 xl:hidden" role="dialog" aria-modal="true" aria-label="Choose a category">
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-ink-900/40" />
+      <div className="absolute inset-x-0 bottom-0 top-12 flex flex-col rounded-t-2xl bg-white shadow-lift">
+        <div className="flex items-center justify-between gap-3 border-b border-ink-100 px-4 py-3">
+          <h2 className="text-[15px] font-bold text-ink-900">Choose a category</h2>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-ink-500 hover:bg-ink-100 hover:text-ink-900"
+          >
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="relative border-b border-ink-100 px-4 py-2.5">
+          <SearchIcon className="pointer-events-none absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+          <input
+            ref={inputRef}
+            type="search"
+            aria-label="Search categories"
+            placeholder="Search 40 categories…"
+            className="h-10 w-full rounded-lg border border-surface-border bg-white pl-9 pr-3 text-sm outline-none placeholder:text-ink-500 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/20"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+        <ul className="min-h-0 flex-1 divide-y divide-surface-border overflow-y-auto overscroll-contain">
+          {list.length === 0 && (
+            <li className="px-4 py-8 text-center text-sm text-muted">
+              No category matches &ldquo;{q.trim()}&rdquo;.
+            </li>
+          )}
+          {list.map((t) => {
+            const on = t.id === selectedId;
+            return (
+              <li key={t.id}>
+                <button
+                  type="button"
+                  onClick={() => onPick(t.id)}
+                  aria-current={on || undefined}
+                  className={`flex w-full items-center gap-3 px-4 py-3 text-left ${
+                    on ? 'bg-primary-50' : 'hover:bg-surface-subtle'
+                  } ${t.active ? '' : 'opacity-55'}`}
+                >
+                  <TopRowBody t={t} />
+                  {on && <CheckIcon className="h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/** Plain category thumbnail — image or neutral monogram. Never a control. */
+function CategoryThumb({ name, image, sizeClasses, monogram = true }) {
+  return image ? (
+    <img src={image} alt="" className={`${sizeClasses} shrink-0 rounded-xl object-cover`} />
+  ) : (
+    <NoImagePanel label={name} monogram={monogram} ratio={sizeClasses} className="shrink-0 rounded-xl" />
+  );
+}
+
+/** Read-only state: dot + word, colour never alone. */
+function StateDot({ on, onWord = 'Active', offWord = 'Off' }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
+      <span
+        aria-hidden="true"
+        className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-success-500' : 'bg-ink-300'}`}
+      />
+      <span className={on ? 'text-ink-800' : 'text-muted'}>{on ? onWord : offWord}</span>
+    </span>
+  );
+}
+
 export function CategoryManager() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -49,6 +206,7 @@ export function CategoryManager() {
   const canManage = can(user, 'category:manage');
 
   const [panel, setPanel] = useState(null); // { mode: 'create'|'edit', sub? }
+  const [pickerOpen, setPickerOpen] = useState(false); // phone category sheet
   const [cascade, setCascade] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [error, setError] = useState(null);
@@ -69,12 +227,13 @@ export function CategoryManager() {
     onSuccess: (_data, vars) => { setCascade(null); if (vars.notice) setNotice(vars.notice); refresh(); },
     onError,
   });
+  const busyId = toggle.isPending ? toggle.variables?.id : null;
 
   /**
    * 🔴 While a TOP is off, toggling one of its subs does not change visibility —
    * every sub is already hidden. It edits the RESTORE INTENT: whether that sub
-   * comes back when the top does. Nothing visible changes on the row, so without
-   * this message the control looks broken.
+   * comes back when the top does. The banner above the list carries the rule;
+   * the notice confirms what each flip meant.
    */
   const toggleSub = (sub) => {
     const parentOff = top && !top.active;
@@ -87,9 +246,10 @@ export function CategoryManager() {
         : null,
     });
   };
-  // A top category is seeded and structurally fixed, but its NAME, DISPLAY ORDER
-  // and SYNONYMS are editable — the design puts all three on this panel, and the
-  // synonyms input is the ONLY entry path for the top-40 keyword list (§A12).
+
+  // A top category is seeded and structurally fixed, but its NAME, DISPLAY
+  // ORDER and SYNONYMS are editable — and the synonyms input is the ONLY entry
+  // path for the top-40 keyword list (§A12).
   const saveTop = useMutation({
     mutationFn: ({ id, body }) => adminCatalogueApi.update(id, body),
     onMutate: () => { setError(null); setNotice(null); },
@@ -98,8 +258,15 @@ export function CategoryManager() {
   });
 
   const saveSub = useMutation({
-    mutationFn: ({ mode, id, body }) =>
-      mode === 'create' ? adminCatalogueApi.createSub(body) : adminCatalogueApi.update(id, body),
+    // The image rides WITH the save (owner, 2026-08-11): the drawer is the one
+    // place a sub's picture is set, so create-then-upload chains here — a new
+    // sub has no id until the create returns.
+    mutationFn: async ({ mode, id, body, imageFile }) => {
+      const saved =
+        mode === 'create' ? await adminCatalogueApi.createSub(body) : await adminCatalogueApi.update(id, body);
+      if (imageFile) await adminCatalogueApi.uploadImage(saved?.id ?? id, imageFile);
+      return saved;
+    },
     onMutate: () => setError(null),
     onSuccess: () => { setPanel(null); refresh(); },
     onError,
@@ -119,11 +286,15 @@ export function CategoryManager() {
 
   return (
     <AdminLayout>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-ink-900">Categories</h1>
-        {canManage && top && (
-          <Button size="sm" onClick={() => setPanel({ mode: 'create' })}>+ Add sub-category</Button>
-        )}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-ink-900">Categories</h1>
+          {tree.isSuccess && (
+            <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+              {tops.length} categories
+            </span>
+          )}
+        </div>
       </div>
 
       {error && <Alert tone="danger" className="mb-5">{error}</Alert>}
@@ -133,10 +304,40 @@ export function CategoryManager() {
       {tree.isError && <ErrorState onRetry={tree.refetch} />}
 
       {tree.isSuccess && (
-        <div className="flex flex-col gap-6 lg:flex-row">
-          {/* --- Left: the 40 tops, inactive ones included --- */}
-          <aside className="lg:w-80 lg:shrink-0">
-            <ul className="max-h-[70vh] divide-y divide-surface-border overflow-y-auto rounded-lg border border-surface-border bg-white shadow-card">
+        <div className="flex flex-col gap-5 xl:flex-row">
+          {/* --- Left: the 40 tops, inactive ones included. Phones: a compact
+              selector that opens a SEARCHABLE SHEET (a swipe strip was
+              unusable at 40 entries — owner, 2026-08-11); lg+: the vertical
+              rail. --- */}
+          <div className="xl:hidden">
+            {top && (
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                aria-haspopup="dialog"
+                className="flex w-full items-center gap-3 rounded-2xl border border-surface-border bg-white p-3 text-left shadow-card active:bg-surface-subtle"
+              >
+                <TopRowBody t={top} />
+                <span className="flex items-center gap-1.5 text-xs font-medium text-primary-700">
+                  Change
+                  <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </button>
+            )}
+            <CategorySheet
+              open={pickerOpen}
+              tops={tops}
+              selectedId={selectedId}
+              onPick={(id) => {
+                setParams({ top: id });
+                setPickerOpen(false);
+              }}
+              onClose={() => setPickerOpen(false)}
+            />
+          </div>
+
+          <aside className="hidden xl:block xl:w-80 xl:shrink-0">
+            <ul className="max-h-[70vh] divide-y divide-surface-border overflow-y-auto rounded-2xl border border-surface-border bg-white shadow-card">
               {tops.map((t) => {
                 const active = t.id === selectedId;
                 return (
@@ -144,30 +345,12 @@ export function CategoryManager() {
                     <button
                       type="button"
                       onClick={() => setParams({ top: t.id })}
+                      aria-current={active || undefined}
                       className={`flex w-full items-center gap-3 px-3 py-2.5 text-left ${
                         active ? 'bg-primary-50' : 'hover:bg-surface-subtle'
                       } ${t.active ? '' : 'opacity-55'}`}
                     >
-                      {t.image ? (
-                        <img src={t.image} alt="" className="h-9 w-9 rounded object-cover" />
-                      ) : (
-                        <NoImagePanel label={t.name} monogram ratio="h-9 w-9" className="shrink-0 rounded" />
-                      )}
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2">
-                          <span className="truncate text-sm font-medium text-ink-900">{t.name}</span>
-                          {/* Design: an explicit INACTIVE chip, not a suffix —
-                              a switched-off top must read at a glance. */}
-                          {!t.active && (
-                            <span className="shrink-0 rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-500">
-                              Inactive
-                            </span>
-                          )}
-                        </span>
-                        <span className="block text-xs text-muted">
-                          {t.subs?.length ?? 0} sub-categories
-                        </span>
-                      </span>
+                      <TopRowBody t={t} />
                     </button>
                   </li>
                 );
@@ -175,85 +358,37 @@ export function CategoryManager() {
             </ul>
           </aside>
 
-          {/* --- Right: the selected top --- */}
-          <div className="min-w-0 flex-1 space-y-6">
+          {/* --- Right: the selected category as a DETAIL VIEW --- */}
+          <div className="min-w-0 flex-1 space-y-5">
             {top && (
               <>
-                <TopPanel
-                  key={top.id}
+                <TopHeader
+                  key={`h-${top.id}`}
                   top={top}
                   canManage={canManage}
-                  saving={saveTop.isPending}
                   uploading={uploadImage.isPending}
-                  onSave={(body) => saveTop.mutate({ id: top.id, body })}
+                  busy={busyId === top.id}
                   onUpload={(file) => uploadImage.mutate({ id: top.id, file })}
                   onToggle={() => (top.active ? setCascade(top) : toggle.mutate({ id: top.id }))}
                 />
 
-                <section className="overflow-hidden rounded-lg border border-surface-border bg-white shadow-card">
-                  <table className="w-full min-w-[720px] text-sm">
-                    <thead>
-                      <tr className="text-left text-xs uppercase tracking-wide text-muted">
-                        <th className="border-b border-surface-border px-4 py-3 font-semibold">Sub-category</th>
-                        <th className="border-b border-surface-border px-4 py-3 font-semibold">Type</th>
-                        <th className="border-b border-surface-border px-4 py-3 font-semibold">Fields</th>
-                        <th className="border-b border-surface-border px-4 py-3 font-semibold">State</th>
-                        <th className="border-b border-surface-border px-4 py-3 font-semibold">Order</th>
-                        <th className="border-b border-surface-border px-4 py-3" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(top.subs ?? []).map((sub) => (
-                        <tr key={sub.id} className={sub.active ? '' : 'opacity-55'}>
-                          <td className="border-b border-surface-border px-4 py-3 font-medium text-ink-900">
-                            {sub.name}
-                          </td>
-                          <td className="border-b border-surface-border px-4 py-3">
-                            <TypeChip type={sub.type} />
-                          </td>
-                          <td className="border-b border-surface-border px-4 py-3">
-                            <Link
-                              to={`/admin/categories/${sub.id}/attributes`}
-                              className="inline-flex items-center gap-1.5 font-medium text-primary-700 hover:underline"
-                            >
-                              <ListIcon className="h-4 w-4" />
-                              {sub.attributeCount ?? 0} fields
-                            </Link>
-                          </td>
-                          <td className="border-b border-surface-border px-4 py-3 text-xs text-muted">
-                            {sub.active ? 'Active' : 'Off'}
-                          </td>
-                          <td className="border-b border-surface-border px-4 py-3 text-ink-600">
-                            {sub.order ?? '—'}
-                          </td>
-                          <td className="border-b border-surface-border px-4 py-3 text-right">
-                            {/* Read-only staff see NO actions — not disabled ones. */}
-                            {canManage && (
-                              <div className="flex justify-end gap-2">
-                                <Button size="sm" variant="ghost" onClick={() => setPanel({ mode: 'edit', sub })}>
-                                  Edit
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => toggleSub(sub)}>
-                                  {top.active
-                                    ? (sub.active ? 'Turn off' : 'Turn on')
-                                    : (sub.prevActive === false ? 'Restore with parent' : "Keep off")}
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(sub)}>
-                                  <TrashIcon className="h-4 w-4 text-danger" />
-                                </Button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {(top.subs?.length ?? 0) === 0 && (
-                    <p className="px-4 py-8 text-center text-sm text-muted">
-                      No sub-categories yet{canManage ? ' — add one above.' : '.'}
-                    </p>
-                  )}
-                </section>
+                <TopSettings
+                  key={`s-${top.id}`}
+                  top={top}
+                  canManage={canManage}
+                  saving={saveTop.isPending}
+                  onSave={(body) => saveTop.mutate({ id: top.id, body })}
+                />
+
+                <SubList
+                  top={top}
+                  canManage={canManage}
+                  busyId={busyId}
+                  onAdd={() => setPanel({ mode: 'create' })}
+                  onEdit={(sub) => setPanel({ mode: 'edit', sub })}
+                  onToggle={toggleSub}
+                  onDelete={(sub) => setConfirmDelete(sub)}
+                />
 
                 <p className="text-xs text-muted">Changes are recorded.</p>
               </>
@@ -267,9 +402,7 @@ export function CategoryManager() {
         top={top}
         saving={saveSub.isPending}
         onClose={() => setPanel(null)}
-        onSave={(body) =>
-          saveSub.mutate({ mode: panel.mode, id: panel.sub?.id, body })
-        }
+        onSave={(body, imageFile) => saveSub.mutate({ mode: panel.mode, id: panel.sub?.id, body, imageFile })}
       />
 
       {/* The cascade modal is where an admin learns the prevActive rule — it is
@@ -319,99 +452,143 @@ export function CategoryManager() {
 }
 
 /**
- * The selected top category: image, active toggle, and the three editable
- * fields the design puts here — Name, Display order and Synonyms.
- *
- * 🔴 §A20: the image upload is allowed on a TOP category even though tops are
- * otherwise activate/deactivate-only. Deliberate and documented — the 40 top
- * images arrive through this control, not a seed. Do not "tidy" it away.
- *
- * 🔴 The synonyms tag input is the ONLY entry path for the top-40 keyword list
- * (§A12). It is empty for all 40 today — that is owner content, not a bug — and
- * without it keyword→category search (M3) stays half-blind.
+ * Identity + the master switch, together. The image IS the §A20 upload
+ * control — click or drop a file on it (the 40 top images arrive through this,
+ * not a seed). The switch's consequence is written beside it, not implied.
  */
-function TopPanel({ top, canManage, saving, uploading, onSave, onUpload, onToggle }) {
+function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle }) {
+  const liveSubs = (top.subs ?? []).filter((s) => s.active).length;
   const fileRef = useRef(null);
-  const [name, setName] = useState(top.name);
-  const [order, setOrder] = useState(top.order ?? '');
-  const [synonyms, setSynonyms] = useState(top.synonyms ?? []);
-  const [draft, setDraft] = useState('');
-
-  const dirty =
-    name !== top.name ||
-    String(order) !== String(top.order ?? '') ||
-    synonyms.join('|') !== (top.synonyms ?? []).join('|');
-
-  const addSynonym = (value) => {
-    const v = value.trim().replace(/,$/, '');
-    if (v && !synonyms.includes(v)) setSynonyms((list) => [...list, v]);
-    setDraft('');
-  };
 
   return (
-    <section className="rounded-lg border border-surface-border bg-white p-6 shadow-card">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <h2 className="text-lg font-bold text-ink-900">{top.name}</h2>
-        {canManage && (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-ink-800">Active</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={top.active}
-              aria-label={top.active ? 'Turn category off' : 'Turn category on'}
-              onClick={onToggle}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                top.active ? 'bg-primary-600' : 'bg-ink-300'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                  top.active ? 'translate-x-[22px]' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
+    <section className="rounded-2xl border border-surface-border bg-white shadow-card">
+      {/* Identity row — the name owns the width; nothing competes with it. */}
+      <div className="flex items-center gap-4 p-5">
+        <CategoryThumb name={top.name} image={top.image} sizeClasses="h-16 w-16" />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="truncate text-lg font-bold text-ink-900">{top.name}</h2>
+            {!top.active && (
+              <span className="rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-500">
+                Inactive
+              </span>
+            )}
           </div>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-6 sm:flex-row">
-        <div className="sm:w-44 sm:shrink-0">
-          {top.image ? (
-            <img src={top.image} alt="" className="aspect-square w-full rounded-lg object-cover" />
-          ) : (
-            <NoImagePanel label={top.name} monogram ratio="aspect-square" className="w-full rounded-lg" />
-          )}
-          <p className="mt-2 text-center text-xs text-muted">1 image · 5 MB max<br />JPG, PNG or WEBP</p>
+          <p className="mt-0.5 text-[13px] text-muted">
+            {(top.subs ?? []).length} sub-categories · {liveSubs} live
+          </p>
           {canManage && (
-            <>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="mt-2 w-full"
-                loading={uploading}
-                onClick={() => fileRef.current?.click()}
-              >
+            <div className="mt-2">
+              <Button size="sm" variant="secondary" loading={uploading} onClick={() => fileRef.current?.click()}>
                 <UploadIcon className="mr-1.5 h-4 w-4" />
-                {top.image ? 'Replace' : 'Add image'}
+                {top.image ? 'Replace image' : 'Add image'}
               </Button>
               <input
                 ref={fileRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 className="sr-only"
+                aria-label={`Choose ${top.name} image`}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) onUpload(file);
                   e.target.value = '';
                 }}
               />
-            </>
+            </div>
           )}
         </div>
+        {!canManage && <StateDot on={top.active} onWord="Live" offWord="Hidden" />}
+      </div>
 
-        <div className="min-w-0 flex-1 space-y-5">
-          <div className="grid gap-5 sm:grid-cols-[1fr_120px]">
+      {/* The master switch gets its OWN row — at no width does it fight the
+          name for space (owner screenshot, 2026-08-11: the title truncated to
+          "Tex…" beside empty space). */}
+      {canManage && (
+        <div className="flex items-center justify-between gap-4 border-t border-ink-100 px-5 py-3">
+          <p className="min-w-0 text-[13px] leading-snug">
+            <span className="block font-semibold text-ink-900">
+              {top.active ? 'Live in the catalogue' : 'Hidden from the catalogue'}
+            </span>
+            <span className="block text-xs text-muted">
+              {top.active
+                ? 'Buyers can browse it and everything inside.'
+                : 'Every sub-category and product inside is hidden too.'}
+            </span>
+          </p>
+          <Switch
+            checked={top.active}
+            busy={busy || uploading}
+            onChange={onToggle}
+            label={top.active ? `Turn ${top.name} off` : `Turn ${top.name} on`}
+          />
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Name · order · synonyms — the only editable pieces of a seeded top (§A12). */
+function TopSettings({ top, canManage, saving, onSave }) {
+  const [name, setName] = useState(top.name);
+  const [order, setOrder] = useState(top.order ?? '');
+  const [synonyms, setSynonyms] = useState(top.synonyms ?? []);
+  const [draft, setDraft] = useState('');
+
+  const addSynonym = (raw) => {
+    const v = raw.trim().toLowerCase();
+    if (!v) return;
+    setSynonyms((l) => (l.includes(v) ? l : [...l, v]));
+    setDraft('');
+  };
+
+  const dirty =
+    name !== top.name ||
+    String(order) !== String(top.order ?? '') ||
+    JSON.stringify(synonyms) !== JSON.stringify(top.synonyms ?? []);
+
+  const discard = () => {
+    setName(top.name);
+    setOrder(top.order ?? '');
+    setSynonyms(top.synonyms ?? []);
+    setDraft('');
+  };
+
+  return (
+    <section className="rounded-2xl border border-surface-border bg-white shadow-card">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+            <SettingsIcon className="h-[18px] w-[18px]" />
+          </span>
+          <span className="min-w-0">
+            <h3 className="text-[15px] font-bold text-ink-900">Category settings</h3>
+            <p className="text-[13px] text-muted">
+              The structure is seeded and fixed — these are the editable pieces.
+            </p>
+          </span>
+        </div>
+        {/* Save lives in the HEADER, next to what it saves — no layout jump at
+            the card's foot when the form goes dirty. */}
+        {canManage && dirty && (
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="ghost" onClick={discard}>
+              Discard
+            </Button>
+            <Button
+              size="sm"
+              loading={saving}
+              onClick={() => onSave({ name, synonyms, ...(order !== '' ? { order: Number(order) } : {}) })}
+            >
+              Save changes
+            </Button>
+          </div>
+        )}
+      </header>
+
+      <div className="space-y-5 p-5">
+        <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_140px]">
+          <div>
             <Field label="Name">
               {(id) => (
                 <input
@@ -424,79 +601,200 @@ function TopPanel({ top, canManage, saving, uploading, onSave, onUpload, onToggl
                 />
               )}
             </Field>
-            <Field label="Display order">
-              {(id) => (
-                <input
-                  id={id}
-                  type="number"
-                  className={inputClasses(false)}
-                  value={order}
-                  disabled={!canManage}
-                  onChange={(e) => setOrder(e.target.value)}
-                />
-              )}
-            </Field>
+            {/* A6: the slug is immutable — a rename never breaks /category/:slug. */}
+            {name !== top.name && (
+              <p className="mt-1.5 text-xs text-muted">
+                The public web address (/category/{top.slug}) stays the same.
+              </p>
+            )}
           </div>
-
-          <Field
-            label="Synonyms"
-            helper="Keywords buyers might type — e.g. medicine, pharma, dawai. Never shown publicly."
-          >
+          <Field label="Display order" helper="Lower shows first.">
             {(id) => (
-              <div className={`${inputClasses(false, 'h-auto min-h-[44px] py-2')} flex flex-wrap items-center gap-2`}>
-                {synonyms.map((syn) => (
-                  <span key={syn} className="inline-flex items-center gap-1.5 rounded-md bg-ink-100 px-2 py-1 text-xs text-ink-800">
-                    {syn}
-                    {canManage && (
-                      <button
-                        type="button"
-                        aria-label={`Remove ${syn}`}
-                        onClick={() => setSynonyms((l) => l.filter((x) => x !== syn))}
-                        className="text-ink-500 hover:text-danger"
-                      >
-                        <XIcon className="h-3 w-3" />
-                      </button>
-                    )}
-                  </span>
-                ))}
-                {canManage && (
-                  <input
-                    id={id}
-                    className="min-w-[140px] flex-1 border-0 bg-transparent p-0 text-sm outline-none placeholder:text-ink-500"
-                    placeholder={synonyms.length ? 'Add synonym…' : 'No keywords yet — add one'}
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSynonym(draft); }
-                      if (e.key === 'Backspace' && !draft) setSynonyms((l) => l.slice(0, -1));
-                    }}
-                    onBlur={() => addSynonym(draft)}
-                  />
-                )}
-              </div>
+              <input
+                id={id}
+                type="number"
+                className={inputClasses(false)}
+                value={order}
+                disabled={!canManage}
+                onChange={(e) => setOrder(e.target.value)}
+              />
             )}
           </Field>
+        </div>
 
-          {canManage && dirty && (
-            <div className="flex gap-3">
-              <Button
-                size="sm"
-                loading={saving}
-                onClick={() => onSave({ name, synonyms, ...(order !== '' ? { order: Number(order) } : {}) })}
-              >
-                Save changes
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => { setName(top.name); setOrder(top.order ?? ''); setSynonyms(top.synonyms ?? []); }}
-              >
-                Discard
-              </Button>
+        {/* 🔴 §A12: this tag input is the ONLY entry path for the top-40
+            keyword list. Never shown publicly; search-matching only. Not built
+            on inputClasses — its h-11 fights the growing tag box. */}
+        <Field
+          label="Synonyms"
+          helper="Keywords buyers might type — e.g. medicine, pharma, dawai. Enter or comma adds one. Never shown publicly."
+        >
+          {(id) => (
+            <div
+              className="flex min-h-[44px] w-full flex-wrap items-center gap-2 rounded-lg border border-surface-border bg-white px-3 py-2 transition-all focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-600/20"
+              onClick={() => document.getElementById(id)?.focus()}
+            >
+              {synonyms.map((syn) => (
+                <span key={syn} className="inline-flex items-center gap-1.5 rounded-md bg-ink-100 px-2 py-1 text-xs text-ink-800">
+                  {syn}
+                  {canManage && (
+                    <button
+                      type="button"
+                      aria-label={`Remove ${syn}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSynonyms((l) => l.filter((x) => x !== syn));
+                      }}
+                      className="text-ink-500 hover:text-danger"
+                    >
+                      <XIcon className="h-3 w-3" />
+                    </button>
+                  )}
+                </span>
+              ))}
+              {canManage && (
+                <input
+                  id={id}
+                  className="min-w-[140px] flex-1 border-0 bg-transparent p-0 text-sm outline-none placeholder:text-ink-500"
+                  placeholder={synonyms.length ? 'Add synonym…' : 'No keywords yet — add one'}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSynonym(draft); }
+                    if (e.key === 'Backspace' && !draft) setSynonyms((l) => l.slice(0, -1));
+                  }}
+                  onBlur={() => addSynonym(draft)}
+                />
+              )}
+              {!canManage && synonyms.length === 0 && (
+                <span className="text-sm text-muted">No keywords yet.</span>
+              )}
             </div>
           )}
-        </div>
+        </Field>
       </div>
+    </section>
+  );
+}
+
+/**
+ * The sub-categories as a LIST with a real switch per row. While the parent is
+ * OFF the switches set RESTORE INTENT (`prevActive`), and the banner above the
+ * list is what makes that legible — nothing visible changes on a row when the
+ * intent flips, so without the banner the control looks broken.
+ */
+function SubList({ top, canManage, busyId, onAdd, onEdit, onToggle, onDelete }) {
+  const subs = top.subs ?? [];
+  const parentOff = !top.active;
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+            <ListIcon className="h-[18px] w-[18px]" />
+          </span>
+          <span>
+            <h3 className="flex items-center gap-2 text-[15px] font-bold text-ink-900">
+              Sub-categories
+              <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-medium text-ink-600">
+                {subs.length}
+              </span>
+            </h3>
+            <p className="text-[13px] text-muted">
+              Where products actually live — each carries its own fields.
+            </p>
+          </span>
+        </div>
+        {canManage && <Button size="sm" onClick={onAdd}>+ Add sub-category</Button>}
+      </header>
+
+      {parentOff && (
+        <div className="flex gap-3 border-b border-warning-100 bg-warning-50 px-5 py-3">
+          <AlertIcon className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+          <p className="text-[13px] leading-relaxed text-ink-900">
+            <span className="font-semibold">{top.name} is switched off</span> — everything below is
+            hidden right now. The switches set what comes back when you reactivate it.
+          </p>
+        </div>
+      )}
+
+      {subs.length === 0 ? (
+        <p className="px-5 py-8 text-center text-sm text-muted">
+          No sub-categories yet{canManage ? ' — add one above.' : '.'}
+        </p>
+      ) : (
+        <ul className="divide-y divide-surface-border">
+          {subs.map((sub) => {
+            // Parent off → the switch binds to RESTORE INTENT, not visibility.
+            const checked = parentOff ? sub.prevActive !== false : Boolean(sub.active);
+            const muted = parentOff ? !checked : !sub.active;
+            return (
+              <li
+                key={sub.id}
+                className={`flex items-center gap-3 px-4 py-3.5 sm:gap-4 sm:px-5 ${muted ? 'opacity-55' : ''}`}
+              >
+                <CategoryThumb name={sub.name} image={sub.image} sizeClasses="h-10 w-10" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate font-medium text-ink-900">{sub.name}</p>
+                    <TypeChip type={sub.type} />
+                  </div>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
+                    <Link
+                      to={`/admin/categories/${sub.id}/attributes`}
+                      className="font-medium text-primary-700 hover:underline"
+                    >
+                      {sub.attributeCount ?? 0} fields
+                    </Link>
+                    {sub.order != null && (
+                      <>
+                        <span aria-hidden="true" className="text-ink-300">·</span>
+                        <span>Order {sub.order}</span>
+                      </>
+                    )}
+                    {parentOff && (
+                      <>
+                        <span aria-hidden="true" className="text-ink-300">·</span>
+                        <span>{checked ? 'Comes back with parent' : 'Stays off'}</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                {canManage ? (
+                  <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                    <Switch
+                      checked={checked}
+                      busy={busyId === sub.id}
+                      onChange={() => onToggle(sub)}
+                      label={
+                        parentOff
+                          ? `${sub.name}: come back when ${top.name} is reactivated`
+                          : `${sub.name} visible in the catalogue`
+                      }
+                    />
+                    <RowMenu
+                      label={`Actions for ${sub.name}`}
+                      items={[
+                        { label: 'Edit', Icon: SettingsIcon, onSelect: () => onEdit(sub) },
+                        {
+                          label: 'Manage fields',
+                          Icon: ListIcon,
+                          to: `/admin/categories/${sub.id}/attributes`,
+                        },
+                        { label: 'Delete', Icon: TrashIcon, danger: true, onSelect: () => onDelete(sub) },
+                      ]}
+                    />
+                  </div>
+                ) : (
+                  <StateDot on={Boolean(sub.active)} />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }
@@ -509,7 +807,9 @@ function SubPanel({ panel, top, saving, onClose, onSave }) {
   const [type, setType] = useState('goods');
   const [order, setOrder] = useState('');
   const [synonyms, setSynonyms] = useState('');
+  const [imageFile, setImageFile] = useState(null); // uploads with Save
   const [ready, setReady] = useState(null);
+  const imageRef = useRef(null);
 
   // Reset the fields whenever a different row opens the panel.
   if (panel && ready !== (sub?.id ?? 'new')) {
@@ -518,6 +818,7 @@ function SubPanel({ panel, top, saving, onClose, onSave }) {
     setType(sub?.type ?? 'goods');
     setOrder(sub?.order ?? '');
     setSynonyms((sub?.synonyms ?? []).join(', '));
+    setImageFile(null);
   }
 
   const submit = () => {
@@ -527,7 +828,7 @@ function SubPanel({ panel, top, saving, onClose, onSave }) {
       synonyms: synonyms.split(',').map((s) => s.trim()).filter(Boolean),
       ...(editing ? {} : { parentId: top.id, type }),
     };
-    onSave(body);
+    onSave(body, imageFile);
   };
 
   return (
@@ -560,6 +861,49 @@ function SubPanel({ panel, top, saving, onClose, onSave }) {
           )}
         </Field>
 
+        {/* §A11: the card image, managed HERE (owner, 2026-08-11) — the list
+            rows are display-only. A picked file uploads together with Save. */}
+        <Field label="Image" optional helper="Shown on the category card · 5 MB · JPG, PNG or WEBP.">
+          {() => (
+            <div className="flex items-center gap-3">
+              {imageFile ? (
+                <img
+                  src={URL.createObjectURL(imageFile)}
+                  alt=""
+                  className="h-14 w-14 shrink-0 rounded-xl object-cover"
+                />
+              ) : sub?.image ? (
+                <img src={sub.image} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+              ) : (
+                <NoImagePanel label={name || 'New'} monogram ratio="h-14 w-14" className="shrink-0 rounded-xl" />
+              )}
+              <div className="min-w-0">
+                <Button size="sm" variant="secondary" onClick={() => imageRef.current?.click()}>
+                  <UploadIcon className="mr-1.5 h-4 w-4" />
+                  {imageFile || sub?.image ? 'Replace image' : 'Add image'}
+                </Button>
+                {imageFile && (
+                  <p className="mt-1 truncate text-xs text-muted">
+                    {imageFile.name} — uploads when you save
+                  </p>
+                )}
+              </div>
+              <input
+                ref={imageRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                aria-label="Choose category image"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) setImageFile(f);
+                  e.target.value = '';
+                }}
+              />
+            </div>
+          )}
+        </Field>
+
         {editing && (
           <Field label="Web address" helper="Fixed once created, so existing links keep working.">
             {(id) => (
@@ -584,11 +928,32 @@ function SubPanel({ panel, top, saving, onClose, onSave }) {
           </Field>
         ) : (
           <Field label="Type" helper="Decides which fields sellers are asked for.">
-            {(id) => (
-              <select id={id} className={inputClasses(false)} value={type} onChange={(e) => setType(e.target.value)}>
-                <option value="goods">Goods</option>
-                <option value="service">Service</option>
-              </select>
+            {() => (
+              <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Category type">
+                {[
+                  { value: 'goods', label: 'Goods', desc: 'Physical products' },
+                  { value: 'service', label: 'Service', desc: 'Work and expertise' },
+                ].map((opt) => {
+                  const on = type === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      onClick={() => setType(opt.value)}
+                      className={`rounded-xl border p-3 text-left transition-all ${
+                        on
+                          ? 'border-primary-600 bg-primary-50 ring-1 ring-primary-600'
+                          : 'border-surface-border bg-white hover:border-primary-400'
+                      }`}
+                    >
+                      <span className="block text-sm font-semibold text-ink-900">{opt.label}</span>
+                      <span className="block text-xs text-muted">{opt.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </Field>
         )}

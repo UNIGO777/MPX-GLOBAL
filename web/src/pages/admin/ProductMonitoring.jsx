@@ -7,6 +7,7 @@ import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
+import { Combobox } from '../../components/ui/Combobox.jsx';
 import { Drawer } from '../../components/ui/Drawer.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
@@ -16,7 +17,7 @@ import { Pagination } from '../../components/ui/Pagination.jsx';
 import { RowMenu } from '../../components/ui/RowMenu.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
-import { SearchOffIcon, ShieldIcon, TrashIcon } from '../../components/ui/icons.jsx';
+import { ClockIcon, SearchIcon, SearchOffIcon, ShieldIcon, TrashIcon } from '../../components/ui/icons.jsx';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
@@ -118,86 +119,116 @@ export function ProductMonitoring() {
     setParams(next);
   };
   const hasFilters = Boolean(q || status || nearingPurge || category);
+
+  // ONE `category` param serves both boxes (the server resolves a top to its
+  // leaves): a top slug selects only the Category box, a sub slug selects its
+  // parent + itself. Derived, so a pasted URL populates both correctly.
+  const tops = tree.data ?? [];
+  const selTop =
+    tops.find((t) => t.slug === category) ??
+    tops.find((t) => (t.subs ?? []).some((sub) => sub.slug === category)) ??
+    null;
+  const selSub = selTop?.subs?.find((sub) => sub.slug === category) ?? null;
   const rows = list.data?.rows ?? [];
   const total = list.data?.total ?? 0;
 
   return (
     <AdminLayout>
-      <h1 className="mb-6 text-2xl font-bold text-ink-900">Products</h1>
+      <div className="mb-5 flex flex-wrap items-center gap-2.5">
+        <h1 className="text-2xl font-bold text-ink-900">Products</h1>
+        {list.isSuccess && (
+          <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+            {total.toLocaleString()} listed
+          </span>
+        )}
+      </div>
 
       {error && <Alert tone="danger" className="mb-5">{error}</Alert>}
 
-      <div className="mb-5 rounded-lg border border-surface-border bg-white p-4 shadow-card">
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="min-w-[220px] flex-1">
-            <Field label="Search">
-              {(id) => (
-                <input
-                  id={id}
-                  className={inputClasses(false)}
-                  placeholder="Search product name"
-                  defaultValue={q}
-                  onKeyDown={(e) => e.key === 'Enter' && setFilter({ q: e.currentTarget.value })}
-                  onBlur={(e) => e.target.value !== q && setFilter({ q: e.target.value })}
-                />
-              )}
-            </Field>
-          </div>
-          <div className="w-52">
-            <Field label="Category">
-              {(id) => (
-                <select
-                  id={id}
-                  className={inputClasses(false)}
-                  value={category}
-                  onChange={(e) => setFilter({ category: e.target.value })}
-                >
-                  <option value="">All categories</option>
-                  {(tree.data ?? []).map((top) => (
-                    <optgroup key={top.id} label={top.name}>
-                      {(top.subs ?? []).map((sub) => (
-                        <option key={sub.id} value={sub.slug}>{sub.name}</option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              )}
-            </Field>
-          </div>
-          <div className="w-44">
-            <Field label="Status">
-              {(id) => (
-                <select
-                  id={id}
-                  className={inputClasses(false)}
-                  value={status}
-                  onChange={(e) => setFilter({ status: e.target.value })}
-                >
-                  {/* EXACTLY three. No drafts, no archived — ever. */}
-                  <option value="">All</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="blocked">Blocked</option>
-                </select>
-              )}
-            </Field>
-          </div>
-          <label className="flex min-h-[44px] items-center gap-2 text-sm text-ink-800">
+      {/* Filter toolbar — hybrid comboboxes; the category picker is SEARCHABLE
+          (the old optgroup select was unusable at ~200 subs). */}
+      <div className="mb-5 rounded-2xl border border-surface-border bg-white p-4 shadow-card">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-full sm:w-[280px]">
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" />
             <input
-              type="checkbox"
-              className="h-4 w-4"
-              checked={nearingPurge}
-              onChange={(e) => setFilter({ nearingPurge: e.target.checked ? 'true' : '' })}
+              aria-label="Search products"
+              type="search"
+              className={inputClasses(false, 'pl-9')}
+              placeholder="Search products…"
+              defaultValue={q}
+              onKeyDown={(e) => e.key === 'Enter' && setFilter({ q: e.currentTarget.value })}
+              onBlur={(e) => e.target.value !== q && setFilter({ q: e.target.value })}
             />
+          </div>
+          {/* Category → Sub-category, dependent (owner, 2026-08-11) — the
+              single flattened list made long names collide and mixed levels. */}
+          <div className="min-w-0 flex-1 basis-0 sm:flex-none sm:basis-auto sm:w-[210px]">
+            <Combobox
+              id="mod-category"
+              value={selTop?.slug ?? ''}
+              placeholder="All categories"
+              options={[
+                { value: '', label: 'All categories' },
+                ...tops.map((t) => ({ value: t.slug, label: t.name })),
+              ]}
+              onChange={(v) => setFilter({ category: v })}
+            />
+          </div>
+          <div className="min-w-0 flex-1 basis-0 sm:flex-none sm:basis-auto sm:w-[210px]">
+            <Combobox
+              id="mod-subcategory"
+              value={selSub?.slug ?? ''}
+              disabled={!selTop}
+              placeholder={selTop ? `All in ${selTop.name}` : 'Sub-category'}
+              options={[
+                { value: '', label: selTop ? `All in ${selTop.name}` : 'All' },
+                ...(selTop?.subs ?? []).map((sub) => ({ value: sub.slug, label: sub.name })),
+              ]}
+              onChange={(v) => setFilter({ category: v || selTop.slug })}
+            />
+          </div>
+          <div className="min-w-0 flex-1 basis-0 sm:flex-none sm:basis-auto sm:w-[150px]">
+            {/* EXACTLY three states. No drafts, no archived — ever. */}
+            <Combobox
+              id="mod-status"
+              value={status}
+              placeholder="All"
+              options={[
+                { value: '', label: 'All' },
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+                { value: 'blocked', label: 'Blocked' },
+              ]}
+              onChange={(v) => setFilter({ status: v })}
+            />
+          </div>
+          <button
+            type="button"
+            aria-pressed={nearingPurge}
+            onClick={() => setFilter({ nearingPurge: nearingPurge ? '' : 'true' })}
+            className={`inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 text-sm font-medium transition-all ${
+              nearingPurge
+                ? 'border-warning-500 bg-warning-50 text-warning-800'
+                : 'border-surface-border bg-white text-ink-600 hover:border-warning-400'
+            }`}
+          >
+            <ClockIcon className="h-4 w-4" aria-hidden="true" />
             Nearing purge
-          </label>
+          </button>
           {hasFilters && (
-            <Button size="sm" variant="ghost" onClick={() => setParams({})}>Clear filters</Button>
+            <button
+              type="button"
+              onClick={() => setParams({})}
+              className="text-sm font-medium text-primary-600 hover:text-primary-700"
+            >
+              Clear filters
+            </button>
           )}
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-surface-border bg-white shadow-card">
+      <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
         {list.isPending && <SkeletonRows rows={8} />}
         {list.isError && (
           <ErrorState
@@ -221,10 +252,64 @@ export function ProductMonitoring() {
 
         {list.isSuccess && total > 0 && (
           <>
-            <div className="overflow-x-auto">
+            {/* Phones get CARDS, not a sideways-scrolling table. */}
+            <ul className="divide-y divide-surface-border md:hidden">
+              {rows.map((p) => {
+                const meta = PRODUCT_STATUS_META[p.status];
+                const blocked = p.takedown?.isDown;
+                return (
+                  <li key={p.id} className={`p-4 ${blocked ? 'bg-danger-50/40' : ''}`}>
+                    <div className="flex items-start gap-3">
+                      {p.image ? (
+                        <img src={p.image} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
+                      ) : (
+                        <NoImagePanel ratio="h-11 w-11" className="shrink-0 rounded-lg" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-ink-900">{p.name}</p>
+                        <p className="truncate text-xs text-muted">
+                          {p.seller?.name ?? '—'}
+                          {p.category?.name ? ` · ${p.category.name}` : ''}
+                        </p>
+                      </div>
+                      <RowMenu
+                        label={`Actions for ${p.name}`}
+                        items={[
+                          { label: 'View details', Icon: ShieldIcon, onSelect: () => setDetail(p) },
+                          canModerate && !blocked && {
+                            label: 'Take down',
+                            Icon: TrashIcon,
+                            danger: true,
+                            onSelect: () => { setReason(''); setTakedown(p); },
+                          },
+                          canModerate && blocked && {
+                            label: 'Restore',
+                            Icon: ShieldIcon,
+                            onSelect: () => setRestore(p),
+                          },
+                        ].filter(Boolean)}
+                      />
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                      <StatusChip label={meta?.label} tone={meta?.tone} />
+                      {blocked && <StatusChip label="Taken down" tone="danger" />}
+                      {p.seller?.takedownCount > 0 && (
+                        <span className="rounded-full bg-danger-50 px-2 py-0.5 text-xs font-semibold text-danger">
+                          {p.seller.takedownCount} takedowns
+                        </span>
+                      )}
+                      <span className="ml-auto text-[11px] text-muted">{formatDate(p.createdAt)}</span>
+                    </div>
+                    {blocked && <PurgeCountdown purgeAt={p.purgeAt} />}
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[900px] text-sm">
                 <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-muted">
+                  <tr className="bg-ink-50 text-left text-xs uppercase tracking-wide text-muted">
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">Product</th>
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">Seller</th>
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">Category</th>
@@ -238,10 +323,19 @@ export function ProductMonitoring() {
                     const meta = PRODUCT_STATUS_META[p.status];
                     const blocked = p.takedown?.isDown;
                     return (
-                      <tr key={p.id}>
+                      <tr
+                        key={p.id}
+                        className={`transition-colors hover:bg-surface-subtle/50 ${
+                          blocked ? 'bg-danger-50/40' : ''
+                        }`}
+                      >
                         <td className="border-b border-surface-border px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <NoImagePanel ratio="h-10 w-10" className="shrink-0 rounded" />
+                            {p.image ? (
+                              <img src={p.image} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                            ) : (
+                              <NoImagePanel ratio="h-10 w-10" className="shrink-0 rounded-lg" />
+                            )}
                             <span className="font-medium text-ink-900">{p.name}</span>
                           </div>
                         </td>

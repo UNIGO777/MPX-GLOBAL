@@ -13,24 +13,29 @@ import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
 import { VerifiedTick } from '../../components/ui/VerifiedTick.jsx';
-import { DocIcon, InfoIcon } from '../../components/ui/icons.jsx';
+import {
+  CheckIcon,
+  ClockIcon,
+  DocIcon,
+  ExternalIcon,
+  InfoIcon,
+  XIcon,
+} from '../../components/ui/icons.jsx';
 
 /**
- * Exporter home — verification status (mockup:
- * exporter_verification_all_states_stacked). Two loads: GET /me/verification
- * (the status) and the org's own PUBLIC profile via GET /exporters/:orgId — the
- * only self-org source until A22 (plan §7.4) — for the company name/country in
- * the header. The profile failing must not sink the page: the header degrades
- * to the person, exactly like the buyer panel.
+ * Exporter home — verification status. REDESIGNED 2026-08-11 to the M2
+ * language: the single copy-card became a STATUS HUB — the main card carries a
+ * four-step VERIFICATION JOURNEY (Profile → Documents → Review → Verified) with
+ * live per-step states, and the rail holds what used to crowd the card: the
+ * sent-documents list, the D1 limit callout, and the public-page link.
+ *
+ * Two loads: GET /me/verification (the status) and the org's own PUBLIC profile
+ * via GET /exporters/:orgId for the header. The profile failing must not sink
+ * the page: the header degrades to the person.
  *
  * D1 truth in the copy: unverified = max 3 ACTIVE products (a limit, not a
  * gate — the profile is public from signup); verified = limit removed.
  */
-const LIMIT_CALLOUT = {
-  title: 'Your current limit: 3 active products',
-  body: "Until you're verified you can keep up to 3 products live at a time. Verified exporters have no limit.",
-};
-
 const STATES = {
   pending: {
     title: 'Get verified to sell without limits',
@@ -53,15 +58,68 @@ const STATES = {
   },
 };
 
-/**
- * A status outside the four known ones used to render an EMPTY card. Say
- * something true instead, and keep the upload route reachable.
- */
+/** A status outside the four known ones — say something true, keep upload reachable. */
 const UNKNOWN_STATE = {
   title: 'Verification status unavailable',
   body: "We couldn't read the status of your verification just now. Your profile is still live — try refreshing, and contact us if it keeps happening.",
   cta: 'Start verification',
 };
+
+/** One journey step: state ∈ done | active | failed | todo. */
+function JourneyStep({ state, title, meta, last = false, children }) {
+  const marker =
+    state === 'done' ? (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-success-500 text-white">
+        <CheckIcon className="h-4 w-4" />
+      </span>
+    ) : state === 'active' ? (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-warning-100 text-warning-700">
+        <ClockIcon className="h-4 w-4" />
+      </span>
+    ) : state === 'failed' ? (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-danger-100 text-danger">
+        <XIcon className="h-4 w-4" />
+      </span>
+    ) : (
+      <span className="h-8 w-8 rounded-full border-2 border-ink-200 bg-white" />
+    );
+
+  return (
+    <li className="grid grid-cols-[32px_minmax(0,1fr)] gap-x-3.5">
+      <div className="flex flex-col items-center">
+        <span aria-hidden="true">{marker}</span>
+        {!last && (
+          <span
+            aria-hidden="true"
+            className={`my-1 w-px flex-1 ${state === 'done' ? 'bg-success-300' : 'bg-ink-200'}`}
+          />
+        )}
+      </div>
+      <div className={last ? 'pb-1' : 'pb-6'}>
+        <p
+          className={`pt-1.5 text-sm font-semibold ${
+            state === 'todo' ? 'text-muted' : 'text-ink-900'
+          }`}
+        >
+          {title}
+        </p>
+        {meta && <p className="mt-0.5 text-[13px] text-muted">{meta}</p>}
+        {children}
+      </div>
+    </li>
+  );
+}
+
+function RailCard({ label, children }) {
+  return (
+    <section className="rounded-xl border border-surface-border bg-white p-4 shadow-card">
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
+        {label}
+      </h3>
+      {children}
+    </section>
+  );
+}
 
 export function VerificationStatus() {
   const navigate = useNavigate();
@@ -96,8 +154,22 @@ export function VerificationStatus() {
   }, [load]);
 
   const v = verification;
-  const state = v ? (STATES[v.kycStatus] ?? UNKNOWN_STATE) : null;
-  const showLimit = v && v.kycStatus !== 'verified';
+  const status = v?.kycStatus;
+  const state = v ? (STATES[status] ?? UNKNOWN_STATE) : null;
+  const showLimit = v && status !== 'verified';
+
+  // Journey step states, all derived — no invented data.
+  const profileDone = v ? v.profileComplete !== false : false;
+  const docsSent =
+    ['submitted', 'verified', 'rejected'].includes(status) || (v?.documents?.length ?? 0) > 0;
+  const reviewState =
+    status === 'verified'
+      ? 'done'
+      : status === 'submitted'
+        ? 'active'
+        : status === 'rejected'
+          ? 'failed'
+          : 'todo';
 
   const headerSub = profile
     ? [countryName(profile.country), profile.entityType ? `${ENTITY_LABELS[profile.entityType]} account` : null]
@@ -106,121 +178,185 @@ export function VerificationStatus() {
     : 'Your exporter account on MPX Global';
 
   return (
-    <PortalLayout nav={EXPORTER_NAV} subline={profile?.name}>
-      {/* Mockup: 860px column, 32px title, 16px subline, 40px gap to the card */}
-      <div className="mb-8 max-w-[860px]">
-        <h1 className="text-[26px] font-bold text-ink-900 sm:text-[32px]">
-          {profile?.name ?? `Welcome${user?.name ? `, ${user.name.split(/\s+/)[0]}` : ''}`}
-        </h1>
-        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-muted">
-          {headerSub}
-          {v?.kycStatus === 'verified' && <VerifiedTick verified verifiedAt={v.verifiedAt} />}
-        </p>
+    <PortalLayout nav={EXPORTER_NAV} subline={profile?.name} wide>
+      <div className="mb-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-bold text-ink-900">
+            {profile?.name ?? `Welcome${user?.name ? `, ${user.name.split(/\s+/)[0]}` : ''}`}
+          </h1>
+          {status === 'verified' && <VerifiedTick verified verifiedAt={v.verifiedAt} />}
+        </div>
+        <p className="mt-1 text-sm text-muted">{headerSub}</p>
       </div>
 
-      <div className="max-w-[860px] space-y-6">
-        <section className="rounded-xl border border-surface-border bg-white p-6 shadow-card sm:p-10">
-          {loading && (
-            <div className="space-y-4" role="status" aria-label="Loading verification status">
-              <Skeleton className="h-6 w-24 rounded-full" />
-              <Skeleton className="h-7 w-2/3" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-            </div>
-          )}
+      {loading && (
+        <div className="max-w-[860px] space-y-4" role="status" aria-label="Loading verification status">
+          <Skeleton className="h-6 w-24 rounded-full" />
+          <Skeleton className="h-40 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
+      )}
 
-          {!loading && error && (
-            <ErrorState message={error.message} requestId={error.requestId} onRetry={load} />
-          )}
+      {!loading && error && (
+        <div className="max-w-[860px] rounded-2xl border border-surface-border bg-white shadow-card">
+          <ErrorState message={error.message} requestId={error.requestId} onRetry={load} />
+        </div>
+      )}
 
-          {!loading && !error && v && state && (
-            <>
-              <StatusChip status={v.kycStatus} />
-              {/* Mockup: 22px semibold title, 16px body capped at 680px */}
-              <h2 className="mt-4 text-[22px] font-semibold leading-tight text-ink-900">
-                {state.title}
-              </h2>
+      {!loading && !error && v && state && (
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          {/* ============ main: state + the journey ============ */}
+          <section className="min-w-0 rounded-2xl border border-surface-border bg-white p-6 shadow-card sm:p-8">
+            <StatusChip status={status} />
+            <h2 className="mt-4 text-[22px] font-semibold leading-tight text-ink-900">
+              {state.title}
+            </h2>
 
-              {v.kycStatus === 'rejected' ? (
-                <>
-                  {/* 3px left accent on the tint, same as the buyer panel */}
-                  <div className="mt-4 rounded-r-lg border-l-[3px] border-danger bg-danger-50 p-5 text-[15px] leading-relaxed text-ink-900">
-                    {v.kycRejectionReason ?? 'Our team could not verify the documents you sent.'}
-                  </div>
-                  {/* `kycSubmittedAt` is when the exporter SENT them — the payload
-                      carries no reviewedAt, so "Reviewed" asserted a date the API
-                      never returned. */}
-                  {v.kycSubmittedAt && (
-                    <p className="mt-3 text-xs text-muted">Sent {formatDate(v.kycSubmittedAt)}</p>
-                  )}
-                </>
-              ) : (
-                <p className="mt-3 max-w-[680px] text-base leading-relaxed text-muted">
-                  {typeof state.body === 'function' ? state.body(v) : state.body}
-                </p>
-              )}
+            {status === 'rejected' ? (
+              <>
+                <div className="mt-4 rounded-r-lg border-l-[3px] border-danger bg-danger-50 p-5 text-[15px] leading-relaxed text-ink-900">
+                  {v.kycRejectionReason ?? 'Our team could not verify the documents you sent.'}
+                </div>
+                {/* `kycSubmittedAt` is when the exporter SENT them — the payload
+                    carries no reviewedAt, so naming one would be invention. */}
+                {v.kycSubmittedAt && (
+                  <p className="mt-3 text-xs text-muted">Sent {formatDate(v.kycSubmittedAt)}</p>
+                )}
+              </>
+            ) : (
+              <p className="mt-3 max-w-[680px] text-[15px] leading-relaxed text-muted">
+                {typeof state.body === 'function' ? state.body(v) : state.body}
+              </p>
+            )}
 
-              {state.cta && (
-                <Button size="lg" className="mt-6" onClick={() => navigate('/exporter/kyc')}>
-                  {state.cta}
-                </Button>
-              )}
+            {state.cta && (
+              <Button className="mt-5" onClick={() => navigate('/exporter/kyc')}>
+                {state.cta}
+              </Button>
+            )}
 
-              {v.documents?.length > 0 && (
-                <>
-                  {/* Hairline separator, then 64px rows with a tinted glyph tile
-                      — identical treatment to the buyer panel. */}
-                  <div aria-hidden="true" className="my-7 h-px w-full bg-surface-border" />
-                  <div>
-                    <h3 className="text-base font-semibold text-ink-900">What you sent</h3>
-                    <p className="mt-1 text-[13px] text-muted">
-                      Your documents are private. We don&apos;t show them back to you here.
-                    </p>
-                    <ul className="mt-4 space-y-3">
-                      {v.documents.map((d, i) => (
-                        <li
-                          key={`${d.docType}-${d.uploadedAt}-${i}`}
-                          className="flex h-16 items-center gap-3 rounded-lg border border-surface-border bg-white px-4"
-                        >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-ink-100">
-                            <DocIcon className="h-[18px] w-[18px] text-ink-500" />
-                          </span>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-ink-900">
-                              {DOC_TYPE_LABELS[d.docType] ?? d.docType}
-                            </p>
-                            <p className="text-xs text-muted">Uploaded {formatDate(d.uploadedAt)}</p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-        </section>
-
-        {/* D1 callout — mockup: warning tint, 12px radius, 24px padding, NO border */}
-        {!loading && !error && showLimit && (
-          <aside className="flex gap-4 rounded-xl bg-warning-50 p-6">
-            <InfoIcon className="h-5 w-5 shrink-0 text-warning" />
-            <div>
-              <h3 className="text-[15px] font-bold text-ink-900">{LIMIT_CALLOUT.title}</h3>
-              <p className="mt-1 text-sm text-ink-900/80">{LIMIT_CALLOUT.body}</p>
-              {/* The catalogue exists now (M2 screen 5) — this callout is where
-                  a seller reads about the limit, so it is where they should be
-                  able to go and see it. */}
-              <Link
-                to="/exporter/products"
-                className="mt-3 inline-flex text-sm font-semibold text-primary-700 hover:underline"
+            {/* The journey — every state is DERIVED from the payload. */}
+            <div aria-hidden="true" className="my-7 h-px w-full bg-surface-border" />
+            <h3 className="mb-5 text-base font-semibold text-ink-900">How verification works</h3>
+            <ol>
+              <JourneyStep
+                state={profileDone ? 'done' : 'active'}
+                title="Company profile"
+                meta={
+                  profileDone
+                    ? 'Your registered details are on file.'
+                    : 'Name, country and address first — we check documents against them.'
+                }
               >
-                Manage your products →
-              </Link>
-            </div>
+                {!profileDone && (
+                  <Link
+                    to="/exporter/company"
+                    className="mt-1.5 inline-block text-sm font-medium text-primary-700 hover:underline"
+                  >
+                    Complete profile →
+                  </Link>
+                )}
+              </JourneyStep>
+              <JourneyStep
+                state={docsSent ? 'done' : profileDone ? 'active' : 'todo'}
+                title="Send documents"
+                meta={
+                  docsSent
+                    ? `${v.documents?.length ?? 0} document${(v.documents?.length ?? 0) === 1 ? '' : 's'} sent`
+                    : 'Any one accepted document is enough to start the review.'
+                }
+              />
+              <JourneyStep
+                state={reviewState}
+                title="Our team reviews"
+                meta={
+                  reviewState === 'failed'
+                    ? 'See the reason above — send replacements and we review again.'
+                    : reviewState === 'active'
+                      ? 'Usually two to three working days.'
+                      : reviewState === 'done'
+                        ? 'Approved.'
+                        : 'We email you when it’s done.'
+                }
+              />
+              <JourneyStep
+                state={status === 'verified' ? 'done' : 'todo'}
+                title="Verified tick goes live"
+                meta={
+                  status === 'verified'
+                    ? `On your public profile since ${formatDate(v.verifiedAt)}.`
+                    : 'Shown on your public profile and every listing; product limit removed.'
+                }
+                last
+              />
+            </ol>
+          </section>
+
+          {/* ============ context rail ============ */}
+          <aside className="space-y-4 lg:sticky lg:top-6">
+            {v.documents?.length > 0 && (
+              <RailCard label="What you sent">
+                <ul className="space-y-2.5">
+                  {v.documents.map((d, i) => (
+                    <li key={`${d.docType}-${d.uploadedAt}-${i}`} className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+                        <DocIcon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-ink-900">
+                          {DOC_TYPE_LABELS[d.docType] ?? d.docType}
+                        </p>
+                        <p className="text-xs text-muted">Uploaded {formatDate(d.uploadedAt)}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-[11px] text-muted">
+                  Your documents are private — we don&apos;t show them back to you here.
+                </p>
+              </RailCard>
+            )}
+
+            {/* D1 callout — a LIMIT, not a gate; gone entirely once verified. */}
+            {showLimit && (
+              <section className="rounded-xl bg-warning-50 p-4">
+                <div className="flex gap-3">
+                  <InfoIcon className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+                  <div>
+                    <h3 className="text-sm font-bold text-ink-900">
+                      Current limit: 3 active products
+                    </h3>
+                    <p className="mt-1 text-[13px] text-ink-900/80">
+                      Until you&apos;re verified you can keep up to 3 products live at a time.
+                      Verified exporters have no limit.
+                    </p>
+                    <Link
+                      to="/exporter/products"
+                      className="mt-2 inline-flex text-[13px] font-semibold text-primary-700 hover:underline"
+                    >
+                      Manage your products →
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {profile?.slug && (
+              <RailCard label="Your public page">
+                <p className="text-[13px] text-ink-700">
+                  Live from signup — verification adds the tick, it never hides you.
+                </p>
+                <Link
+                  to={`/supplier/${profile.slug}`}
+                  className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary-700 hover:underline"
+                >
+                  View public page <ExternalIcon className="h-4 w-4" />
+                </Link>
+              </RailCard>
+            )}
           </aside>
-        )}
-      </div>
+        </div>
+      )}
     </PortalLayout>
   );
 }

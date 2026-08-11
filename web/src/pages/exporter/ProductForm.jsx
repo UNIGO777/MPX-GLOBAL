@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
+import { organisationApi, organisationKeys } from '../../api/organisation.js';
 import { productKeys, productsApi } from '../../api/products.js';
 import {
   AttributeFields,
@@ -183,6 +184,12 @@ export function ProductForm() {
   const [catQuery, setCatQuery] = useState(''); // entry-state category search
 
   const tree = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
+
+  // Own organisation — the preview card's SELLER ROW (2026-08-11): buyers see
+  // name + tick + country on every catalogue card, so the preview must too.
+  // Self-scoped owner read; verified derives from own kycStatus, which is
+  // legitimate here (never on public surfaces).
+  const org = useQuery({ queryKey: organisationKeys.mine, queryFn: organisationApi.mine });
 
   // 🔴 The 10-draft cap blocks BEFORE the seller invests any effort (create
   // mode) — a full page with no form beneath it, not an error at save. One
@@ -536,14 +543,27 @@ export function ProductForm() {
                         : 'border-surface-border bg-white hover:border-primary-400 hover:shadow-card'
                     }`}
                   >
-                    <span
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                        selected ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700'
-                      }`}
-                      aria-hidden="true"
-                    >
-                      {initials(t.name)}
-                    </span>
+                    {t.image ? (
+                      <img
+                        src={t.image}
+                        alt=""
+                        loading="lazy"
+                        width={36}
+                        height={36}
+                        className={`h-9 w-9 shrink-0 rounded-lg object-cover ${
+                          selected ? 'ring-2 ring-primary-600' : ''
+                        }`}
+                      />
+                    ) : (
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                          selected ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700'
+                        }`}
+                        aria-hidden="true"
+                      >
+                        {initials(t.name)}
+                      </span>
+                    )}
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-ink-900">
                         {t.name}
@@ -935,9 +955,20 @@ export function ProductForm() {
                     images: form.images.map((i) => i.url),
                     price: form.price,
                     unit: form.unit || undefined,
+                    moq: form.moq !== '' ? Number(form.moq) : undefined,
+                    // Live specs → the card's chips, same as buyers will see.
+                    attributes: toAttributeArray(specs),
                     category: { name: leaf?.name },
+                    // The seller row buyers see on every catalogue card — own
+                    // org, self-scoped; tick derives from own kycStatus.
+                    seller: org.data
+                      ? {
+                          name: org.data.name,
+                          verified: org.data.kycStatus === 'verified',
+                          country: org.data.country,
+                        }
+                      : undefined,
                   }}
-                  showSeller={false}
                 />
               </ul>
             </div>

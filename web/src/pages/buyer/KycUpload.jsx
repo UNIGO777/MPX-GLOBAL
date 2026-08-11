@@ -17,14 +17,12 @@ import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
-import { FileDrop } from '../../components/ui/FileDrop.jsx';
+import { DocSlotRow } from '../../components/kyc/DocSlotRow.jsx';
 import {
   BuildingIcon,
   CheckCircleIcon,
-  DocIcon,
   ChevronLeftIcon,
   InfoIcon,
-  TrashIcon,
   UserIcon,
 } from '../../components/ui/icons.jsx';
 
@@ -171,7 +169,9 @@ export function KycUpload() {
     if (failed === 0 && untouched === 0 && anyDone) setFinished(true);
   };
 
-  const shell = (content) => <PortalLayout nav={BUYER_NAV}>{content}</PortalLayout>;
+  const shell = (content, wide = false) => (
+    <PortalLayout nav={BUYER_NAV} wide={wide}>{content}</PortalLayout>
+  );
 
   if (loading) {
     return shell(
@@ -242,201 +242,180 @@ export function KycUpload() {
     );
   }
 
+  const addedCount = rows.filter((r) => r.status === 'done' || (r.file && !r.error)).length;
+
   return shell(
-    <div className="max-w-[860px]">
-      {/* Design: back link sits at the TOP of the page, not under the form */}
-      <button
-        type="button"
-        onClick={() => navigate('/buyer/verification')}
-        className="flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700"
-      >
-        <ChevronLeftIcon className="h-4 w-4" />
-        Back to verification status
-      </button>
-
-      <h1 className="mt-6 text-[32px] font-bold leading-tight text-ink-900">Upload your documents</h1>
-      <p className="mt-1 text-base text-muted">Optional — this earns you a verified tick.</p>
-
-      {verification?.kycStatus === 'pending' && (
-        <div className="mt-6 flex gap-4 rounded-xl border border-primary-100 bg-primary-50 p-5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-primary-600">
-            <InfoIcon className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="text-[15px] font-bold text-primary-800">You don&apos;t have to do this</p>
-            <p className="mt-1 text-[15px] leading-relaxed text-primary-800/80">
-              Your account already works in full. Sending documents adds a verified tick to your
-              profile, which helps suppliers take your enquiries seriously. You can do it now,
-              later, or never.
-            </p>
+    <div>
+      {/* --- floating action bar (M2 language): Submit is never a scroll away --- */}
+      <div className="sticky top-0 z-20 mb-5 pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-border bg-white/95 px-4 py-2.5 shadow-lift backdrop-blur">
+          <div className="min-w-0">
+            <button
+              type="button"
+              onClick={() => navigate('/buyer/verification')}
+              className="flex items-center gap-1 text-xs font-medium text-muted hover:text-primary-700"
+            >
+              <ChevronLeftIcon className="h-3.5 w-3.5" />
+              Verification status
+            </button>
+            <div className="mt-0.5 flex flex-wrap items-center gap-2">
+              <h1 className="text-lg font-bold leading-tight text-ink-900">Upload your documents</h1>
+              {rows.length > 0 && (
+                <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+                  {addedCount}/{rows.length} added
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {blocker && <span className="hidden text-xs text-muted md:block">{blocker}</span>}
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={submitting}
+              onClick={() => navigate('/buyer/verification')}
+            >
+              Cancel
+            </Button>
+            <Button size="sm" loading={submitting} disabled={!canSubmit} onClick={submit}>
+              {submitting ? 'Sending…' : 'Submit for review'}
+            </Button>
           </div>
         </div>
-      )}
+      </div>
 
       {verification?.kycStatus === 'rejected' && verification.kycRejectionReason && (
-        <div className="mt-6">
+        <div className="mb-5">
           <Alert tone="danger">{verification.kycRejectionReason}</Alert>
         </div>
       )}
 
-      {/* ONE card holds the account kind AND the documents (design) */}
-      <section className="mt-6 rounded-xl border border-surface-border bg-white p-6 shadow-sm sm:p-8">
-        <h2 className="text-lg font-bold text-ink-900">What kind of account is this?</h2>
-        {entityLocked ? (
-          <p className="mt-3 text-[15px] text-muted">
-            Your account is set up as{' '}
-            <span className="font-semibold text-ink-900">{ENTITY_LABELS[entityType]}</span>. Your
-            first upload fixed this, and it decides which document types we accept.
-          </p>
-        ) : (
-          <div
-            className="mt-4 grid gap-4 sm:grid-cols-2"
-            role="radiogroup"
-            aria-label="Account kind"
-            onKeyDown={onEntityKeyDown}
-          >
-            {ENTITY_OPTIONS.map(({ value, title, desc, Icon }) => {
-              const on = entityType === value;
-              return (
-                <button
-                  key={value}
-                  ref={(el) => (entityRefs.current[value] = el)}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  tabIndex={on || (!entityType && value === ENTITY_OPTIONS[0].value) ? 0 : -1}
-                  disabled={submitting}
-                  onClick={() => chooseEntity(value)}
-                  className={`flex items-center gap-4 rounded-lg border p-4 text-left transition-colors ${
-                    on ? 'border-primary-600 bg-primary-50' : 'border-surface-border bg-white hover:border-ink-400'
-                  }`}
-                >
-                  <span
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
-                      on ? 'bg-primary-100 text-primary-700' : 'bg-ink-100 text-ink-500'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[15px] font-semibold text-ink-900">{title}</span>
-                    <span className="block text-[13px] text-muted">{desc}</span>
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                      on ? 'border-primary-600' : 'border-ink-300'
-                    }`}
-                  >
-                    {on && <span className="h-2.5 w-2.5 rounded-full bg-primary-600" />}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        <hr className="my-8 border-surface-border" />
-
-        <h2 className="text-lg font-bold text-ink-900">Your documents</h2>
-        {/* Same per-document cap as the exporter side — one server setting
-            (KYC_MAX_FILE_MB) governs both portals, so state it here too rather
-            than let a buyer discover it by failing an upload. */}
-        <p className="mt-1 text-[13px] text-muted">
-          PDF, JPG, PNG or WEBP. Up to {config.kyc.maxMb} MB per file.
-        </p>
-        {!entityType && <p className="mt-3 text-[15px] text-muted">Choose your account kind first.</p>}
-
-        {entityType && (
-          <div className="mt-5 space-y-5">
-            {rows.map((row) => {
-              const removable = Boolean(row.file);
-              return (
-                <div
-                  key={row.id}
-                  className={`rounded-xl border p-4 transition-colors ${
-                    row.status === 'done'
-                      ? 'border-success-300 bg-success-50/40'
-                      : row.error
-                        ? 'border-danger-200 bg-danger-50/40'
-                        : 'border-surface-border bg-white'
-                  }`}
-                >
-                  <div className="mb-2.5 flex items-center justify-between gap-3">
-                    <span className="flex items-center gap-2 text-sm font-semibold text-ink-900">
-                      <DocIcon className="h-4 w-4 text-primary-600" aria-hidden="true" />
-                      {DOC_TYPE_LABELS[row.docType]}
-                    </span>
-                    {row.status === 'done' ? (
-                      <span className="flex items-center gap-1.5 text-[13px] font-semibold text-success">
-                        <CheckCircleIcon className="h-4 w-4" /> Sent for review
-                      </span>
-                    ) : (
-                      removable && (
-                        <button
-                          type="button"
-                          aria-label={`Clear ${DOC_TYPE_LABELS[row.docType]} file`}
-                          disabled={submitting}
-                          onClick={() =>
-                            patchRow(row.id, { file: null, error: null, status: 'idle', progress: 0 })
-                          }
-                          className="flex items-center gap-1 text-[13px] font-medium text-ink-500 transition-colors hover:text-danger disabled:cursor-not-allowed disabled:text-ink-300"
-                        >
-                          <TrashIcon className="h-4 w-4" /> Clear
-                        </button>
-                      )
-                    )}
-                  </div>
-
-                  {row.status !== 'done' && (
-                    <FileDrop
-                      file={row.file}
-                      accept={KYC_ACCEPT}
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        {/* ============ main: account kind, then the document slots ============ */}
+        <section className="min-w-0 rounded-2xl border border-surface-border bg-white shadow-card">
+          <div className="border-b border-ink-100 p-5 sm:p-6">
+            <h2 className="text-[15px] font-bold text-ink-900">What kind of account is this?</h2>
+            {entityLocked ? (
+              <p className="mt-2 text-sm text-muted">
+                Your account is set up as{' '}
+                <span className="font-semibold text-ink-900">{ENTITY_LABELS[entityType]}</span>.
+                Your first upload fixed this, and it decides which document types we accept.
+              </p>
+            ) : (
+              <div
+                className="mt-4 grid gap-3 sm:grid-cols-2"
+                role="radiogroup"
+                aria-label="Account kind"
+                onKeyDown={onEntityKeyDown}
+              >
+                {ENTITY_OPTIONS.map(({ value, title, desc, Icon }) => {
+                  const on = entityType === value;
+                  return (
+                    <button
+                      key={value}
+                      ref={(el) => (entityRefs.current[value] = el)}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      tabIndex={on || (!entityType && value === ENTITY_OPTIONS[0].value) ? 0 : -1}
                       disabled={submitting}
-                      onPick={(f) => pickFile(row.id, f)}
-                    />
-                  )}
-
-                  {row.status === 'uploading' && (
-                    <div
-                      className="mt-2.5 h-1 overflow-hidden rounded-full bg-ink-200"
-                      role="progressbar"
-                      aria-valuenow={row.progress}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
+                      onClick={() => chooseEntity(value)}
+                      className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${
+                        on
+                          ? 'border-primary-600 bg-primary-50 ring-1 ring-primary-600'
+                          : 'border-surface-border bg-white hover:border-primary-400 hover:shadow-card'
+                      }`}
                     >
-                      <div
-                        className="h-full bg-primary-600 transition-all"
-                        style={{ width: `${row.progress}%` }}
-                      />
-                    </div>
-                  )}
-
-                  {row.error && <p className="mt-2.5 text-[13px] font-medium text-danger">{row.error}</p>}
-                </div>
-              );
-            })}
-
+                      <span
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                          on ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-600'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold text-ink-900">{title}</span>
+                        <span className="block text-xs text-muted">{desc}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </section>
 
-      {/* Design footer: primary submit (grey until something is ready) + Cancel */}
-      <div className="mt-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <Button loading={submitting} disabled={!canSubmit} onClick={submit} className="min-w-[220px]">
-            {submitting ? 'Sending…' : 'Submit for review'}
-          </Button>
-          <Button
-            variant="ghost"
-            disabled={submitting}
-            onClick={() => navigate('/buyer/verification')}
-          >
-            Cancel
-          </Button>
-        </div>
-        {blocker && <p className="mt-3 text-sm text-muted">{blocker}</p>}
+          <div className="p-5 sm:p-6">
+            <h2 className="text-[15px] font-bold text-ink-900">Your documents</h2>
+            <p className="mt-0.5 text-[13px] text-muted">
+              {entityType
+                ? `Send at least one — any of these works. Up to ${config.kyc.maxMb} MB per file.`
+                : 'Choose your account kind first — it decides which documents we accept.'}
+            </p>
+            {entityType && (
+              <ul className="mt-4 space-y-3">
+                {rows.map((row) => (
+                  <DocSlotRow
+                    key={row.id}
+                    label={DOC_TYPE_LABELS[row.docType]}
+                    file={row.file}
+                    status={row.status}
+                    progress={row.progress}
+                    error={row.error}
+                    disabled={submitting}
+                    accept={KYC_ACCEPT}
+                    onPick={(f) => pickFile(row.id, f)}
+                    onClear={() => patchRow(row.id, { file: null, error: null, status: 'idle', progress: 0 })}
+                  />
+                ))}
+              </ul>
+            )}
+            {/* The bar hides the blocker below md — repeat it here so a phone
+                user still learns why Submit is disabled. */}
+            {blocker && <p className="mt-4 text-sm text-muted md:hidden">{blocker}</p>}
+          </div>
+        </section>
+
+        {/* ============ context rail ============ */}
+        <aside className="space-y-4 lg:sticky lg:top-[84px]">
+          <section className="rounded-xl border border-surface-border bg-white p-4 shadow-card">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              Why verify
+            </h3>
+            <p className="text-[13px] leading-relaxed text-ink-700">
+              You don&apos;t have to do this — your account already works in full. Sending documents
+              adds a verified tick to your profile, which helps suppliers take your enquiries
+              seriously. Now, later, or never.
+            </p>
+          </section>
+
+          <section className="rounded-xl border border-surface-border bg-white p-4 shadow-card">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              What happens next
+            </h3>
+            <ul className="space-y-2 text-[13px] text-ink-700">
+              <li className="flex gap-2">
+                <InfoIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
+                <span>
+                  We check documents against your{' '}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/buyer/company')}
+                    className="font-medium text-primary-700 hover:underline"
+                  >
+                    registered details
+                  </button>
+                  .
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
+                <span>Reviews take two to three working days — we email you when it&apos;s done.</span>
+              </li>
+            </ul>
+          </section>
+        </aside>
       </div>
     </div>,
+    true,
   );
 }

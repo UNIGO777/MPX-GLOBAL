@@ -1,4 +1,4 @@
-import { Shield } from 'lucide-react';
+import { KeyRound, Shield } from 'lucide-react';
 
 /**
  * Minimal inline SVG icon set (1.8 stroke, currentColor) — no icon-font network
@@ -157,5 +157,17 @@ export const TagIcon = (props) => (
   <Svg {...props}>
     <path d="M20.59 13.41 12 22l-8.59-8.59A2 2 0 0 1 3 12V4a1 1 0 0 1 1-1h8a2 2 0 0 1 1.41.59L22 12a2 2 0 0 1-1.41 1.41Z" />
     <circle cx="7.5" cy="7.5" r="1" fill="currentColor" stroke="none" />
+  </Svg>
+);
+
+export const KeyIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <KeyRound aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+export const ImageIcon = (props) => (
+  <Svg {...props}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="9" cy="10" r="1.6" />
+    <path d="m21 15-4.2-4.2a1 1 0 0 0-1.42 0L7 19M14 19l3.4-3.4" />
   </Svg>
 );

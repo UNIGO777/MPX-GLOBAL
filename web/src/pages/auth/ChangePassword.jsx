@@ -9,6 +9,24 @@ import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { PasswordInput } from '../../components/ui/PasswordInput.jsx';
+import { CheckCircleIcon, KeyIcon } from '../../components/ui/icons.jsx';
+
+/** Live requirement row — quiet until typing starts, green when satisfied. */
+function Requirement({ met, started, children }) {
+  return (
+    <li className="flex items-center gap-2 text-[13px]">
+      {met ? (
+        <CheckCircleIcon className="h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+      ) : (
+        <span
+          aria-hidden="true"
+          className={`h-4 w-4 shrink-0 rounded-full border-[1.5px] ${started ? 'border-ink-400' : 'border-ink-300'}`}
+        />
+      )}
+      <span className={met ? 'text-ink-800' : 'text-muted'}>{children}</span>
+    </li>
+  );
+}
 
 /**
  * The blocking change-password gate. No mockup exists for it, but the staff
@@ -78,7 +96,10 @@ export function ChangePassword() {
       headline="One more step before you start."
       sub="Temporary passwords are single-use by design — pick your own and every other session signs out."
     >
-      <h2 className="text-[28px] font-bold text-ink-900">Set a new password</h2>
+      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+        <KeyIcon className="h-6 w-6" />
+      </span>
+      <h2 className="mt-4 text-[28px] font-bold text-ink-900">Set a new password</h2>
       <p className="mt-2 text-sm text-muted">
         {forced
           ? `You're signed in with a temporary password${user?.name ? `, ${user.name}` : ''}. Choose your own to continue — nothing else is accessible until you do.`
@@ -101,12 +122,31 @@ export function ChangePassword() {
           label="New password"
           autoComplete="new-password"
           placeholder="••••••••"
-          helper="At least 8 characters."
           showStrength
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           disabled={loading}
         />
+
+        {/* The submit-time checks, visible as they're satisfied — nobody
+            should learn a rule from a rejection. */}
+        <ul className="space-y-1.5 rounded-lg bg-surface-subtle px-4 py-3">
+          <Requirement met={newPassword.length >= 8} started={newPassword.length > 0}>
+            At least 8 characters
+          </Requirement>
+          <Requirement
+            met={newPassword.length > 0 && newPassword !== currentPassword}
+            started={newPassword.length > 0}
+          >
+            Different from your current password
+          </Requirement>
+          <Requirement
+            met={confirm.length > 0 && confirm === newPassword}
+            started={confirm.length > 0}
+          >
+            Both entries match
+          </Requirement>
+        </ul>
 
         <PasswordInput
           label="Confirm new password"

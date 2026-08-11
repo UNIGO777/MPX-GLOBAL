@@ -32,6 +32,13 @@ import { AdminLayout } from '../../layouts/AdminLayout.jsx';
  */
 const PAGE_SIZE = 20; // the server caps this route at 50
 
+/** Chip tint per action family — the word always rides with the colour. */
+function actionTone(action) {
+  if (/takedown|reject|delete|deactivate|purge/.test(action)) return 'bg-danger-50 text-danger-700';
+  if (/restore|verify|approve|activate|publish/.test(action)) return 'bg-success-50 text-success-700';
+  return 'bg-ink-100 text-ink-700';
+}
+
 /** Turn `product.takedown` into "Product taken down". */
 function actionLabel(action) {
   const [entity, ...rest] = action.split('.');
@@ -116,14 +123,23 @@ export function AuditLog() {
 
   return (
     <AdminLayout>
-      <h1 className="mb-2 text-2xl font-bold text-ink-900">Audit log</h1>
-      <p className="mb-6 text-sm text-muted">
-        Every governance and catalogue action, oldest preserved. This record is append-only.
-      </p>
+      <div className="mb-5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-ink-900">Audit log</h1>
+          {list.isSuccess && (
+            <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+              {total.toLocaleString()} entries
+            </span>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-muted">
+          Every governance and catalogue action, oldest preserved. This record is append-only.
+        </p>
+      </div>
 
-      <div className="mb-5 rounded-lg border border-surface-border bg-white p-4 shadow-card">
+      <div className="mb-5 rounded-2xl border border-surface-border bg-white p-4 shadow-card">
         <div className="flex flex-wrap items-end gap-4">
-          <div className="w-48">
+          <div className="w-full sm:w-48">
             <Field label="From">
               {(id) => (
                 <input
@@ -136,7 +152,7 @@ export function AuditLog() {
               )}
             </Field>
           </div>
-          <div className="w-48">
+          <div className="w-full sm:w-48">
             <Field label="To">
               {(id) => (
                 <input
@@ -174,7 +190,7 @@ export function AuditLog() {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-surface-border bg-white shadow-card">
+      <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
         {list.isPending && !inverted && <SkeletonRows rows={8} />}
         {list.isError && (
           <ErrorState
@@ -196,10 +212,44 @@ export function AuditLog() {
 
         {list.isSuccess && total > 0 && (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-sm">
+            {/* Phones get CARDS, not a sideways-scrolling table. Same tap →
+                drawer behaviour; real buttons, so keyboard access is native. */}
+            <ul className="divide-y divide-surface-border md:hidden">
+              {rows.map((row) => (
+                <li key={row.id}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(row.id)}
+                    className="w-full p-4 text-left transition-colors hover:bg-surface-subtle/60"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${actionTone(row.action)}`}
+                      >
+                        {actionLabel(row.action)}
+                      </span>
+                      <span className="text-[11px] text-muted">{timestamp(row.occurredAt)}</span>
+                    </div>
+                    <p className="mt-2 text-sm">
+                      <span className="font-medium text-ink-900">{row.actor?.name ?? 'Unknown'}</span>
+                      {row.actor?.role && <span className="text-muted"> · {row.actor.role}</span>}
+                    </p>
+                    <p className="mt-0.5 text-[13px] text-ink-700">
+                      {row.target?.name ?? '—'}
+                      {row.target?.type && <span className="text-muted"> · {row.target.type}</span>}
+                    </p>
+                    {row.reason && (
+                      <p className="mt-1 line-clamp-2 text-[13px] text-muted">{row.reason}</p>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[880px] text-sm">
                 <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-muted">
+                  <tr className="bg-ink-50 text-left text-xs uppercase tracking-wide text-muted">
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">When</th>
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">Actor</th>
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">Action</th>
@@ -211,22 +261,52 @@ export function AuditLog() {
                   {rows.map((row) => (
                     <tr
                       key={row.id}
+                      // Keyboard-openable: rows are the only path to the detail
+                      // drawer, so a mouse must not be a requirement.
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Open audit entry: ${actionLabel(row.action)}`}
                       onClick={() => setOpenId(row.id)}
-                      className="cursor-pointer hover:bg-surface-subtle"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setOpenId(row.id);
+                        }
+                      }}
+                      className="cursor-pointer transition-colors hover:bg-surface-subtle/60 focus-visible:bg-surface-subtle/60 focus-visible:outline-none"
                     >
                       <td className="whitespace-nowrap border-b border-surface-border px-4 py-3 text-ink-600">
                         {timestamp(row.occurredAt)}
                       </td>
                       <td className="border-b border-surface-border px-4 py-3">
-                        <span className="font-medium text-ink-900">{row.actor?.name ?? 'Unknown'}</span>
-                        {row.actor?.role && (
-                          <span className="ml-1.5 text-xs text-muted">
-                            {row.actor.role === 'system' ? '· system' : `· ${row.actor.role}`}
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            aria-hidden="true"
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-[11px] font-bold text-primary-700"
+                          >
+                            {(row.actor?.name ?? '?')
+                              .split(/\s+/)
+                              .filter(Boolean)
+                              .slice(0, 2)
+                              .map((w) => w[0].toUpperCase())
+                              .join('') || '?'}
                           </span>
-                        )}
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-ink-900">
+                              {row.actor?.name ?? 'Unknown'}
+                            </p>
+                            {row.actor?.role && (
+                              <p className="text-xs text-muted">{row.actor.role}</p>
+                            )}
+                          </div>
+                        </div>
                       </td>
-                      <td className="border-b border-surface-border px-4 py-3 text-ink-800">
-                        {actionLabel(row.action)}
+                      <td className="whitespace-nowrap border-b border-surface-border px-4 py-3">
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${actionTone(row.action)}`}
+                        >
+                          {actionLabel(row.action)}
+                        </span>
                       </td>
                       <td className="border-b border-surface-border px-4 py-3">
                         {/* Plain text, never a link — the target may have been
@@ -236,8 +316,8 @@ export function AuditLog() {
                           <span className="ml-1.5 text-xs text-muted">{row.target.type}</span>
                         )}
                       </td>
-                      <td className="border-b border-surface-border px-4 py-3 text-ink-600">
-                        {row.reason ?? '—'}
+                      <td className="max-w-[280px] border-b border-surface-border px-4 py-3 text-ink-600">
+                        <span className="line-clamp-2">{row.reason ?? '—'}</span>
                       </td>
                     </tr>
                   ))}

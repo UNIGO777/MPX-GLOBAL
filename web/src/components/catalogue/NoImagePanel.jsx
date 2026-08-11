@@ -1,20 +1,15 @@
-import { BoxIcon } from '../ui/icons.jsx';
+import { ImageIcon } from '../ui/icons.jsx';
 
 /**
- * The no-image state, designed as the PRIMARY look rather than an edge case.
+ * The no-image state — ONE component for all four surfaces (category cards,
+ * product cards, galleries, supplier logos) so they degrade identically.
  *
- * 🔴 This is the launch reality, not a rare fallback, and the seed proves it:
- * **0 of 40 top categories have an image** (§A20 — admins upload them through the
- * panel over time), and publishing a product does not require a photo. So a full
- * grid of these is the normal appearance of the catalogue on day one. A grey
- * broken-image glyph would make the whole page read as failed.
+ * STANDARD fallback (owner, 2026-08-11): a quiet NEUTRAL panel — grey surface,
+ * photo glyph — never a coloured box. The earlier primary-tinted monogram tiles
+ * read as content ("colour boxes") instead of as an absence.
  *
- * One component for all four surfaces — category cards, product cards, galleries
- * and supplier logos — so they degrade identically instead of three teams
- * inventing three placeholders.
- *
- * `monogram` renders the first letter (categories, company logos); otherwise a
- * quiet line icon (products, where a letter would read as a brand).
+ * `monogram` keeps initials for AVATAR-shaped gaps (a company logo), where
+ * initials are the standard convention — but on the same neutral palette.
  */
 /** First letters of the first two significant words — "Cotton fabric" → "CF". */
 function initials(label = '') {
@@ -24,21 +19,16 @@ function initials(label = '') {
   return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-export function NoImagePanel({ label = '', monogram = false, ratio = 'aspect-video', className = '', icon: Icon = BoxIcon }) {
+export function NoImagePanel({ label = '', monogram = false, ratio = 'aspect-video', className = '', icon: Icon = ImageIcon }) {
   return (
     <div
       aria-hidden="true"
-      className={`flex items-center justify-center bg-primary-100 ${ratio} ${className}`}
+      className={`flex items-center justify-center border border-ink-200/60 bg-ink-100 ${ratio} ${className}`}
     >
       {monogram ? (
-        // TWO letters, per the design exports. One collides: "Industrial
-        // Machinery" and "IT, Software & AI Services" both reduce to "I", and
-        // the category grid shows them side by side.
-        <span className="text-3xl font-bold tracking-tight text-primary-300">
-          {initials(label)}
-        </span>
+        <span className="text-xl font-bold tracking-tight text-ink-400">{initials(label)}</span>
       ) : (
-        <Icon className="h-9 w-9 text-primary-300" />
+        <Icon className="h-6 w-6 text-ink-400" />
       )}
     </div>
   );

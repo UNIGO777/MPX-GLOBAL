@@ -35,7 +35,7 @@ import { NotFound } from './NotFound.jsx';
  * visible cards always agree.
  */
 const PAGE_SIZE = 12;
-const GRID = 'grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3';
+const GRID = 'grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4';
 
 export function SupplierProfile() {
   const { slug } = useParams();
@@ -73,68 +73,88 @@ export function SupplierProfile() {
 
       <main className="flex-1">
         <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 md:py-12">
-          {/* --- Company header --- */}
-          <section className="rounded-lg border border-surface-border bg-white p-6 shadow-card sm:p-8">
+          {/* --- Company header: profile composition — brand cover band,
+              overlapping logo, name + tick, stat chips (2026-08-11 redesign).
+              The tick's ABSENCE stays the entire "not verified" signal. --- */}
+          <section className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
+            <div
+              aria-hidden="true"
+              className="h-24 bg-gradient-to-r from-primary-800 via-primary-700 to-primary-500 sm:h-28"
+            />
             {seller.isPending ? (
-              <div className="flex gap-5">
-                <Skeleton className="h-24 w-24 rounded-lg" />
-                <div className="flex-1 space-y-3">
-                  <Skeleton className="h-8 w-2/3" />
-                  <Skeleton className="h-4 w-1/2" />
-                  <Skeleton className="h-16 w-full" />
-                </div>
+              <div className="px-5 pb-6 sm:px-8">
+                <Skeleton className="-mt-10 h-20 w-20 rounded-2xl" />
+                <Skeleton className="mt-4 h-8 w-64" />
+                <Skeleton className="mt-3 h-6 w-96 rounded-full" />
               </div>
             ) : (
-              <div className="flex flex-col gap-5 sm:flex-row">
-                {s.logo ? (
-                  <img
-                    src={s.logo}
-                    alt=""
-                    className="h-24 w-24 shrink-0 rounded-lg border border-surface-border object-cover"
-                  />
-                ) : (
-                  <NoImagePanel
-                    label={s.name}
-                    monogram
-                    ratio="h-24 w-24"
-                    className="shrink-0 rounded-lg"
-                  />
-                )}
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="text-2xl font-bold text-ink-900 sm:text-3xl">{s.name}</h1>
-                    {/* Absence of this tick is the entire "not verified" signal. */}
-                    <VerifiedTick verified={s.verified} verifiedAt={s.verifiedAt} />
-                  </div>
-
-                  <p className="mt-2 text-sm text-muted">
-                    {[
-                      countryName(s.country) ?? s.country,
-                      s.entityType === 'individual' ? 'Individual' : 'Business',
-                      s.establishedYear ? `Established ${s.establishedYear}` : null,
-                      s.memberSince ? `Member since ${s.memberSince}` : null,
-                    ].filter(Boolean).join(' · ')}
-                  </p>
-
-                  {s.description && (
-                    <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-700">
-                      {s.description}
-                    </p>
+              <div className="px-5 pb-6 sm:px-8">
+                <div className="-mt-10">
+                  {s.logo ? (
+                    <img
+                      src={s.logo}
+                      alt=""
+                      className="h-20 w-20 rounded-2xl object-cover ring-4 ring-white"
+                    />
+                  ) : (
+                    <NoImagePanel
+                      label={s.name}
+                      monogram
+                      ratio="h-20 w-20"
+                      className="rounded-2xl ring-4 ring-white"
+                    />
                   )}
-
-                  {/* Design renders the count in brand blue. */}
-                  <p className="mt-4 text-sm font-semibold text-primary-700">
-                    {s.productCount} {s.productCount === 1 ? 'product' : 'products'}
-                  </p>
                 </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <h1 className="text-2xl font-bold text-ink-900 sm:text-3xl">{s.name}</h1>
+                  <VerifiedTick verified={s.verified} verifiedAt={s.verifiedAt} />
+                </div>
+
+                <p className="mt-3 flex flex-wrap items-center gap-2">
+                  {[
+                    countryName(s.country) ?? s.country,
+                    s.entityType === 'individual' ? 'Individual' : 'Business',
+                    s.establishedYear ? `Established ${s.establishedYear}` : null,
+                    s.memberSince ? `Member since ${s.memberSince}` : null,
+                  ]
+                    .filter(Boolean)
+                    .map((item) => (
+                      <span
+                        key={item}
+                        className="inline-flex items-center rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-medium text-ink-700"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  {/* BoxIcon, deliberately NOT a check/badge — a badge-shaped
+                      icon here could read as verification on unverified pages. */}
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
+                    <BoxIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                    {s.productCount} {s.productCount === 1 ? 'product' : 'products'}
+                  </span>
+                </p>
+
+                {s.description && (
+                  <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-700">
+                    {s.description}
+                  </p>
+                )}
               </div>
             )}
           </section>
 
           {/* --- Catalogue --- */}
-          <section className="mt-10">
-            <h2 className="mb-5 text-lg font-bold text-ink-900">Products</h2>
+          <section className="mt-6">
+            <div className="mb-4 flex flex-wrap items-center gap-2.5 rounded-xl border border-surface-border bg-white px-4 py-2.5 shadow-card">
+              <h2 className="text-[15px] font-bold text-ink-900">Products</h2>
+              {products.isSuccess && (
+                <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+                  {total}
+                </span>
+              )}
+              <span className="ml-auto text-xs text-muted">Sorted by newest</span>
+            </div>
 
             {(seller.isPending || products.isPending) && (
               <ul className={GRID} aria-busy="true" aria-label="Loading products">
@@ -151,7 +171,7 @@ export function SupplierProfile() {
             )}
 
             {products.isError && (
-              <div className="rounded-lg border border-surface-border bg-white shadow-card">
+              <div className="rounded-2xl border border-surface-border bg-white shadow-card">
                 <ErrorState
                   title="We couldn't load this catalogue"
                   requestId={products.error?.response?.data?.error?.requestId}
@@ -164,7 +184,7 @@ export function SupplierProfile() {
                 company signs up, so the header above still renders in full and
                 only this area is empty. Never an error, never "inactive". */}
             {products.isSuccess && total === 0 && (
-              <div className="rounded-lg border border-surface-border bg-white shadow-card">
+              <div className="rounded-2xl border border-surface-border bg-white shadow-card">
                 <EmptyState icon={BoxIcon} title="No products listed yet">
                   This supplier hasn&apos;t published any listings.
                 </EmptyState>

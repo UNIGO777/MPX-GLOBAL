@@ -7,28 +7,45 @@ import { organisationApi, organisationKeys } from '../../api/organisation.js';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
+import { Combobox } from '../../components/ui/Combobox.jsx';
 import { CountrySelect } from '../../components/ui/CountrySelect.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Field, inputClasses } from '../../components/ui/Field.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
+import { StatusChip } from '../../components/ui/StatusChip.jsx';
 import { VerifiedTick } from '../../components/ui/VerifiedTick.jsx';
-import { ExternalIcon, ShieldIcon, TrashIcon, UploadIcon } from '../../components/ui/icons.jsx';
+import {
+  BuildingIcon,
+  ExternalIcon,
+  GlobeIcon,
+  KeyIcon,
+  ShieldIcon,
+  TrashIcon,
+  UploadIcon,
+} from '../../components/ui/icons.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { PortalLayout } from '../../layouts/PortalLayout.jsx';
 import { BUYER_NAV } from '../buyer/buyerNav.js';
 import { EXPORTER_NAV } from '../exporter/exporterNav.js';
 import { countryName } from '../../lib/countries.js';
+import { statesFor } from '../../lib/states.js';
 
 /**
  * §A22 · Company profile — the owner's view and edit of their own Organisation.
  * ONE component, both portals; what differs is by SIDE, not by file:
  *
- *   buyer     → name · country · address · entityType. No logo, no description,
- *               no preview — a buyer has no public page.
+ *   buyer     → name · country · address · entityType, single column. No logo,
+ *               no description, no preview — a buyer has no public page.
  *   exporter  → the same, plus LOGO + DESCRIPTION (this screen is their ONLY
  *               capture path — the public supplier page renders whatever is set
- *               here) and a live public-page preview.
+ *               here) in a workspace layout: edit column + STICKY RAIL carrying
+ *               the live public preview, verification state and account.
+ *
+ * REDESIGNED 2026-08-11 to the M2 language (screens 5/6 set it): sticky
+ * floating action bar, icon-chip section cards, hybrid Combobox, and — exporter
+ * only — the editor-plus-context-rail structure, so the public consequences of
+ * an edit sit beside the fields being edited.
  *
  * 🔴 THE LOCK + DEMOTION RULE IS THE HEART OF IT (A22.1/A22.2). Name, country,
  * address and entityType are what an Employee verified against the documents.
@@ -50,6 +67,36 @@ const LOCKED_HELP =
   'company will return to review and the verified tick is withheld until re-approval.';
 
 const EMPTY_ADDRESS = { line1: '', line2: '', city: '', state: '', postalCode: '' };
+
+/** Section card in the M2 language: tinted icon chip · title · purpose line. */
+function SectionCard({ icon: Icon, title, desc, children }) {
+  return (
+    <section className="rounded-2xl border border-surface-border bg-white shadow-card">
+      <header className="flex items-start gap-3 border-b border-ink-100 px-6 py-4">
+        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+          <Icon className="h-[18px] w-[18px]" />
+        </span>
+        <span className="min-w-0">
+          <h2 className="text-[15px] font-bold text-ink-900">{title}</h2>
+          {desc && <p className="text-[13px] text-muted">{desc}</p>}
+        </span>
+      </header>
+      <div className="space-y-5 p-6">{children}</div>
+    </section>
+  );
+}
+
+/** Right-rail card: small-caps label + body. Quieter than the main surface. */
+function RailCard({ label, children }) {
+  return (
+    <section className="rounded-xl border border-surface-border bg-white p-4 shadow-card">
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
+        {label}
+      </h3>
+      {children}
+    </section>
+  );
+}
 
 export function CompanyProfile() {
   const { user } = useAuth();
@@ -85,6 +132,14 @@ export function CompanyProfile() {
   }
 
   const verified = org.data?.kycStatus === 'verified';
+  // Self-scoped read of the OWN org — the one place raw kycStatus is
+  // legitimate (web-design.md). Only two states get a chip; rejection
+  // messaging belongs to the verification screen, not a passing badge.
+  const statusChip = verified
+    ? { label: 'Verified', tone: 'success' }
+    : org.data?.kycStatus === 'submitted'
+      ? { label: 'In review', tone: 'warning' }
+      : null;
 
   /** Which locked fields differ from the loaded org right now. */
   const lockedChanges = useMemo(() => {
@@ -180,28 +235,274 @@ export function CompanyProfile() {
 
   const nav = isExporter ? EXPORTER_NAV : BUYER_NAV;
 
-  return (
-    <PortalLayout nav={nav} wide={isExporter}>
-      <h1 className="text-2xl font-bold text-ink-900">Company profile</h1>
-      <p className="mt-1 text-sm text-muted">
-        {isExporter
-          ? 'What buyers see on your public page, and the registered details we verify.'
-          : 'Your registered company details. We check these if you choose to get verified.'}
-      </p>
+  // State list for the chosen country — countries we don't have a list for
+  // fall back to free text (`address.state` is an unconstrained string
+  // server-side, so the dropdown is UX, not contract). A saved value that
+  // isn't in the list (typed before the dropdown existed, or the country
+  // changed) is kept as an extra option so it still displays.
+  const stateOptions = useMemo(() => {
+    const list = form ? statesFor(form.country) : null;
+    if (!list) return null;
+    const current = form.address.state?.trim();
+    return (current && !list.includes(current) ? [current, ...list] : list).map((s) => ({
+      value: s,
+      label: s,
+    }));
+  }, [form]);
 
-      {org.isPending && <div className="mt-8"><SkeletonRows rows={6} /></div>}
-      {org.isError && (
-        <div className="mt-8">
-          <ErrorState
-            title="We couldn't load your company profile"
-            requestId={org.error?.response?.data?.error?.requestId}
-            onRetry={org.refetch}
+  /* ---------------- shared section blocks ---------------- */
+
+  const registeredCard = form && (
+    <SectionCard
+      icon={BuildingIcon}
+      title="Registered details"
+      desc={verified ? 'Verified against your documents — changes go back to review.' : 'What we verify your documents against.'}
+    >
+      <Field label="Company name">
+        {(id) => (
+          <input
+            id={id}
+            className={inputClasses(false)}
+            maxLength={200}
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          />
+        )}
+      </Field>
+      {/* A6: the slug never changes on rename — say so or it gets reported as a
+          broken public link later. */}
+      {isExporter && lockedChanges.includes('name') && org.data?.slug && (
+        <p className="-mt-3 text-xs text-muted">
+          Your public web address (/supplier/{org.data.slug}) stays the same.
+        </p>
+      )}
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <CountrySelect
+          value={form.country}
+          onChange={(v) => setForm((f) => ({ ...f, country: v }))}
+        />
+        {isExporter ? (
+          <Field label="Entity type" helper="Set at signup — it decided which documents we asked for.">
+            {(id) => (
+              <input
+                id={id}
+                className={inputClasses(false)}
+                value={form.entityType === 'individual' ? 'Individual' : 'Business'}
+                readOnly
+                disabled
+              />
+            )}
+          </Field>
+        ) : (
+          <Field label="Entity type" helper="Determines which KYC documents you'd provide.">
+            {(id) => (
+              <Combobox
+                id={id}
+                value={form.entityType || null}
+                placeholder="Select"
+                options={[
+                  { value: 'business', label: 'Business' },
+                  { value: 'individual', label: 'Individual' },
+                ]}
+                onChange={(v) => setForm((f) => ({ ...f, entityType: v }))}
+              />
+            )}
+          </Field>
+        )}
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Address line 1">
+          {(id) => (
+            <input id={id} className={inputClasses(false)} maxLength={200} value={form.address.line1}
+              onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, line1: e.target.value } }))} />
+          )}
+        </Field>
+        <Field label="Address line 2" optional>
+          {(id) => (
+            <input id={id} className={inputClasses(false)} maxLength={200} value={form.address.line2}
+              onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, line2: e.target.value } }))} />
+          )}
+        </Field>
+        <Field label="City">
+          {(id) => (
+            <input id={id} className={inputClasses(false)} maxLength={100} value={form.address.city}
+              onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, city: e.target.value } }))} />
+          )}
+        </Field>
+        <div className="grid grid-cols-2 gap-5">
+          <Field label="State" optional>
+            {(id) =>
+              stateOptions ? (
+                <Combobox
+                  id={id}
+                  value={form.address.state || null}
+                  placeholder="Choose a state"
+                  options={stateOptions}
+                  onChange={(v) => setForm((f) => ({ ...f, address: { ...f.address, state: v } }))}
+                />
+              ) : (
+                <input id={id} className={inputClasses(false)} maxLength={100} value={form.address.state}
+                  onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, state: e.target.value } }))} />
+              )
+            }
+          </Field>
+          <Field label="Postal code">
+            {(id) => (
+              <input id={id} className={inputClasses(false)} maxLength={20} value={form.address.postalCode}
+                onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, postalCode: e.target.value } }))} />
+            )}
+          </Field>
+        </div>
+      </div>
+    </SectionCard>
+  );
+
+  const storefrontCard = form && isExporter && (
+    <SectionCard
+      icon={GlobeIcon}
+      title="Public storefront"
+      desc="Shown on your public supplier page — changing these never affects your verification."
+    >
+      {/* The whole zone is a dropzone AND a click target — same interaction as
+          the product image manager, one file. */}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={org.data?.logo ? 'Replace logo' : 'Upload logo'}
+        onClick={() => logoRef.current?.click()}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && logoRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDraggingLogo(true); }}
+        onDragLeave={() => setDraggingLogo(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDraggingLogo(false);
+          acceptLogo(e.dataTransfer.files?.[0]);
+        }}
+        className={`flex cursor-pointer items-start gap-4 rounded-xl border-2 border-dashed p-4 transition-colors ${
+          draggingLogo
+            ? 'border-primary-600 bg-primary-50'
+            : 'border-surface-border hover:bg-surface-subtle'
+        }`}
+      >
+        {org.data?.logo ? (
+          <img src={org.data.logo} alt="" className="h-20 w-20 rounded-lg border border-surface-border object-cover" />
+        ) : (
+          <NoImagePanel label={org.data?.name} monogram ratio="h-20 w-20" className="shrink-0 rounded-lg" />
+        )}
+        <div>
+          <span className="text-sm font-medium text-ink-900">Logo</span>
+          <p className="text-xs text-muted">
+            Drag an image here, or click to browse · JPG, PNG or WEBP · 5 MB max
+          </p>
+          <div className="mt-2 flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={logoUpload.isPending}
+              onClick={(e) => { e.stopPropagation(); logoRef.current?.click(); }}
+            >
+              <UploadIcon className="mr-1.5 h-4 w-4" />
+              {org.data?.logo ? 'Replace' : 'Upload'}
+            </Button>
+            {org.data?.logo && (
+              <Button
+                size="sm"
+                variant="ghost"
+                loading={logoRemove.isPending}
+                onClick={(e) => { e.stopPropagation(); logoRemove.mutate(); }}
+              >
+                <TrashIcon className="mr-1 h-4 w-4 text-danger" /> Remove
+              </Button>
+            )}
+          </div>
+          <input
+            ref={logoRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              acceptLogo(e.target.files?.[0]);
+              e.target.value = '';
+            }}
           />
         </div>
+      </div>
+
+      <Field
+        label="Description"
+        optional
+        helper="What you make, for whom, since when."
+        trailing={<span className="text-xs text-muted">{form.description.length}/500</span>}
+      >
+        {(id) => (
+          <textarea
+            id={id}
+            rows={4}
+            maxLength={500}
+            className={inputClasses(false, 'h-auto py-3')}
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+          />
+        )}
+      </Field>
+    </SectionCard>
+  );
+
+  const accountBody = (
+    <Link
+      to="/change-password"
+      className="inline-flex items-center gap-2 text-sm font-medium text-primary-700 hover:underline"
+    >
+      <KeyIcon className="h-4 w-4" /> Change password
+    </Link>
+  );
+
+  return (
+    <PortalLayout nav={nav} wide={isExporter}>
+      {/* --- floating action bar: Save is never a scroll away --- */}
+      <div className="sticky top-0 z-20 mb-5 pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-border bg-white/95 px-4 py-2.5 shadow-lift backdrop-blur">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg font-bold leading-tight text-ink-900">Company profile</h1>
+              {statusChip && <StatusChip label={statusChip.label} tone={statusChip.tone} />}
+            </div>
+            <p className="mt-0.5 text-xs text-muted">
+              {isExporter
+                ? 'What buyers see on your public page, and the registered details we verify.'
+                : 'Your registered company details. We check these if you choose to get verified.'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {dirty && (
+              <>
+                <span className="hidden text-xs text-muted md:block">Unsaved changes</span>
+                <Button variant="ghost" size="sm" onClick={() => { setForm(null); setNotice(null); }}>
+                  Discard
+                </Button>
+              </>
+            )}
+            <Button size="sm" loading={save.isPending} disabled={!dirty} onClick={trySave}>
+              Save changes
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {org.isPending && <SkeletonRows rows={6} />}
+      {org.isError && (
+        <ErrorState
+          title="We couldn't load your company profile"
+          requestId={org.error?.response?.data?.error?.requestId}
+          onRetry={org.refetch}
+        />
       )}
 
       {org.data && form && (
-        <div className="mt-6 space-y-6">
+        <div className="space-y-5">
           {notice && <Alert tone={notice === 'Saved.' ? 'success' : 'warning'}>{notice}</Alert>}
           {error && <Alert tone="danger">{error}</Alert>}
 
@@ -212,260 +513,88 @@ export function CompanyProfile() {
             </Alert>
           )}
 
-          <div className={isExporter ? 'grid items-start gap-6 lg:grid-cols-2' : 'space-y-6'}>
-          {/* ------------- registered details (the locked set) ------------- */}
-          <section className="rounded-lg border border-surface-border bg-white p-6 shadow-card">
-            <h2 className="mb-5 text-lg font-bold text-ink-900">Registered details</h2>
-            <div className="space-y-5">
-              <Field label="Company name">
-                {(id) => (
-                  <input
-                    id={id}
-                    className={inputClasses(false)}
-                    maxLength={200}
-                    value={form.name}
-                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  />
-                )}
-              </Field>
-              {/* A6: the slug never changes on rename — say so or it gets
-                  reported as a broken public link later. */}
-              {isExporter && lockedChanges.includes('name') && org.data.slug && (
-                <p className="-mt-3 text-xs text-muted">
-                  Your public web address (/supplier/{org.data.slug}) stays the same.
-                </p>
-              )}
+          {isExporter ? (
+            /* ---------- exporter: edit column + sticky context rail ---------- */
+            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+              <div className="min-w-0 space-y-5">
+                {registeredCard}
+                {storefrontCard}
+              </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <CountrySelect
-                  value={form.country}
-                  onChange={(v) => setForm((f) => ({ ...f, country: v }))}
-                />
-                {isExporter ? (
-                  <Field label="Entity type" helper="Set at signup — it decided which documents we asked for.">
-                    {(id) => (
-                      <input
-                        id={id}
-                        className={inputClasses(false)}
-                        value={form.entityType === 'individual' ? 'Individual' : 'Business'}
-                        readOnly
-                        disabled
-                      />
-                    )}
-                  </Field>
-                ) : (
-                  <Field label="Entity type" helper="Determines which KYC documents you'd provide.">
-                    {(id) => (
-                      <select
-                        id={id}
-                        className={inputClasses(false)}
-                        value={form.entityType}
-                        onChange={(e) => setForm((f) => ({ ...f, entityType: e.target.value }))}
+              <aside className="space-y-4 lg:sticky lg:top-[84px]">
+                <RailCard label="How buyers see you">
+                  {preview.data ? (
+                    <>
+                      <div className="rounded-lg bg-surface-subtle p-4">
+                        {preview.data.logo ? (
+                          <img src={preview.data.logo} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                        ) : (
+                          <NoImagePanel label={preview.data.name} monogram ratio="h-16 w-16" className="rounded-lg" />
+                        )}
+                        <span className="mt-3 flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-ink-900">{preview.data.name}</span>
+                          <VerifiedTick verified={preview.data.verified} />
+                        </span>
+                        <p className="mt-0.5 text-xs text-muted">
+                          {[countryName(preview.data.country) ?? preview.data.country,
+                            preview.data.entityType === 'individual' ? 'Individual' : 'Business',
+                            `${preview.data.productCount} products`].join(' · ')}
+                        </p>
+                        {preview.data.description && (
+                          <p className="mt-2 line-clamp-3 text-sm text-ink-700">{preview.data.description}</p>
+                        )}
+                      </div>
+                      {/* Rendered from the PUBLIC endpoint — the identical
+                          projection a guest receives, so it cannot lie (A22). */}
+                      <Link
+                        to={`/supplier/${org.data.slug}`}
+                        className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary-700 hover:underline"
                       >
-                        <option value="">Select</option>
-                        <option value="business">Business</option>
-                        <option value="individual">Individual</option>
-                      </select>
-                    )}
-                  </Field>
-                )}
-              </div>
-
-              <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Address line 1">
-                  {(id) => (
-                    <input id={id} className={inputClasses(false)} maxLength={200} value={form.address.line1}
-                      onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, line1: e.target.value } }))} />
-                  )}
-                </Field>
-                <Field label="Address line 2" optional>
-                  {(id) => (
-                    <input id={id} className={inputClasses(false)} maxLength={200} value={form.address.line2}
-                      onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, line2: e.target.value } }))} />
-                  )}
-                </Field>
-                <Field label="City">
-                  {(id) => (
-                    <input id={id} className={inputClasses(false)} maxLength={100} value={form.address.city}
-                      onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, city: e.target.value } }))} />
-                  )}
-                </Field>
-                <div className="grid grid-cols-2 gap-5">
-                  <Field label="State" optional>
-                    {(id) => (
-                      <input id={id} className={inputClasses(false)} maxLength={100} value={form.address.state}
-                        onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, state: e.target.value } }))} />
-                    )}
-                  </Field>
-                  <Field label="Postal code">
-                    {(id) => (
-                      <input id={id} className={inputClasses(false)} maxLength={20} value={form.address.postalCode}
-                        onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, postalCode: e.target.value } }))} />
-                    )}
-                  </Field>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ------------- storefront (exporter only) ------------- */}
-          {isExporter && (
-            <section className="rounded-lg border border-surface-border bg-white p-6 shadow-card">
-              <h2 className="mb-1 text-lg font-bold text-ink-900">Public storefront</h2>
-              <p className="mb-5 text-sm text-muted">
-                Shown on your public supplier page. Changing these never affects your verification.
-              </p>
-              <div className="space-y-5">
-                {/* The whole zone is a dropzone AND a click target — same
-                    interaction as the product image manager, one file. */}
-                <div
-                  role="button"
-                  tabIndex={0}
-                  aria-label={org.data.logo ? 'Replace logo' : 'Upload logo'}
-                  onClick={() => logoRef.current?.click()}
-                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && logoRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); setDraggingLogo(true); }}
-                  onDragLeave={() => setDraggingLogo(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDraggingLogo(false);
-                    acceptLogo(e.dataTransfer.files?.[0]);
-                  }}
-                  className={`flex cursor-pointer items-start gap-4 rounded-xl border-2 border-dashed p-4 transition-colors ${
-                    draggingLogo
-                      ? 'border-primary-600 bg-primary-50'
-                      : 'border-surface-border hover:bg-surface-subtle'
-                  }`}
-                >
-                  {org.data.logo ? (
-                    <img src={org.data.logo} alt="" className="h-20 w-20 rounded-lg border border-surface-border object-cover" />
+                        View public page <ExternalIcon className="h-4 w-4" />
+                      </Link>
+                    </>
                   ) : (
-                    <NoImagePanel label={org.data.name} monogram ratio="h-20 w-20" className="shrink-0 rounded-lg" />
+                    <SkeletonRows rows={3} />
                   )}
-                  <div>
-                    <span className="text-sm font-medium text-ink-900">Logo</span>
-                    <p className="text-xs text-muted">
-                      Drag an image here, or click to browse · JPG, PNG or WEBP · 5 MB max
-                    </p>
-                    <div className="mt-2 flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        loading={logoUpload.isPending}
-                        onClick={(e) => { e.stopPropagation(); logoRef.current?.click(); }}
-                      >
-                        <UploadIcon className="mr-1.5 h-4 w-4" />
-                        {org.data.logo ? 'Replace' : 'Upload'}
-                      </Button>
-                      {org.data.logo && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          loading={logoRemove.isPending}
-                          onClick={(e) => { e.stopPropagation(); logoRemove.mutate(); }}
-                        >
-                          <TrashIcon className="mr-1 h-4 w-4 text-danger" /> Remove
-                        </Button>
-                      )}
-                    </div>
-                    <input
-                      ref={logoRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="sr-only"
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => {
-                        acceptLogo(e.target.files?.[0]);
-                        e.target.value = '';
-                      }}
-                    />
+                </RailCard>
+
+                <RailCard label="Verification">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {statusChip ? (
+                      <StatusChip label={statusChip.label} tone={statusChip.tone} />
+                    ) : (
+                      <span className="text-sm text-ink-800">Not verified yet</span>
+                    )}
                   </div>
-                </div>
-
-                <Field
-                  label="Description"
-                  optional
-                  helper="What you make, for whom, since when."
-                  trailing={<span className="text-xs text-muted">{form.description.length}/500</span>}
-                >
-                  {(id) => (
-                    <textarea
-                      id={id}
-                      rows={4}
-                      maxLength={500}
-                      className={inputClasses(false, 'h-auto py-3')}
-                      value={form.description}
-                      onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                    />
-                  )}
-                </Field>
-              </div>
-            </section>
-          )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button loading={save.isPending} disabled={!dirty} onClick={trySave}>
-              Save changes
-            </Button>
-            {dirty && (
-              <Button variant="ghost" onClick={() => { setForm(null); setNotice(null); }}>
-                Discard
-              </Button>
-            )}
-          </div>
-
-          {/* ------------- live public preview (exporter only) ------------- */}
-          {isExporter && preview.data && (
-            <section className="rounded-lg border border-surface-border bg-white p-6 shadow-card">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-bold text-ink-900">How buyers see you</h2>
-                <Link
-                  to={`/supplier/${org.data.slug}`}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-700 hover:underline"
-                >
-                  View public page <ExternalIcon className="h-4 w-4" />
-                </Link>
-              </div>
-              {/* Rendered from the PUBLIC endpoint — the identical projection a
-                  guest receives, so this preview cannot lie (A22). */}
-              <div className="flex gap-4 rounded-lg bg-surface-subtle p-4">
-                {preview.data.logo ? (
-                  <img src={preview.data.logo} alt="" className="h-14 w-14 rounded-lg object-cover" />
-                ) : (
-                  <NoImagePanel label={preview.data.name} monogram ratio="h-14 w-14" className="shrink-0 rounded-lg" />
-                )}
-                <div className="min-w-0">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-ink-900">{preview.data.name}</span>
-                    <VerifiedTick verified={preview.data.verified} />
-                  </span>
-                  <p className="mt-0.5 text-xs text-muted">
-                    {[countryName(preview.data.country) ?? preview.data.country,
-                      preview.data.entityType === 'individual' ? 'Individual' : 'Business',
-                      `${preview.data.productCount} products`].join(' · ')}
+                  <p className="mt-2 text-xs text-muted">
+                    {verified
+                      ? 'Your documents are approved — the tick shows on your public page.'
+                      : org.data.kycStatus === 'submitted'
+                        ? 'Our team is reviewing your documents.'
+                        : 'Get the verified tick — buyers trust verified suppliers more.'}
                   </p>
-                  {preview.data.description && (
-                    <p className="mt-2 line-clamp-2 text-sm text-ink-700">{preview.data.description}</p>
-                  )}
-                </div>
-              </div>
-            </section>
-          )}
+                  <Link
+                    to="/exporter/verification"
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary-700 hover:underline"
+                  >
+                    <ShieldIcon className="h-4 w-4" /> Verification status
+                  </Link>
+                </RailCard>
 
-          {/* ------------- account (both roles) ------------- */}
-          <section className="rounded-lg border border-surface-border bg-white p-6 shadow-card">
-            <h2 className="mb-1 text-lg font-bold text-ink-900">Account</h2>
-            <p className="mb-4 text-sm text-muted">Sign-in settings for your own user.</p>
-            {/* The change-password screen has existed since M1 and works for
-                every role — this is its first party-side entry point. */}
-            <Link
-              to="/change-password"
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary-700 hover:underline"
-            >
-              <ShieldIcon className="h-4 w-4" /> Change password
-            </Link>
-          </section>
+                <RailCard label="Account">{accountBody}</RailCard>
+              </aside>
+            </div>
+          ) : (
+            /* ---------- buyer: single calm column ---------- */
+            <>
+              {registeredCard}
+              <SectionCard icon={ShieldIcon} title="Account" desc="Sign-in settings for your own user.">
+                {/* The change-password screen has existed since M1 and works for
+                    every role — this is its first party-side entry point. */}
+                {accountBody}
+              </SectionCard>
+            </>
+          )}
         </div>
       )}
 

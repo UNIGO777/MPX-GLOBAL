@@ -97,6 +97,9 @@ export async function listAdminProducts({ category, status, seller, q, nearingPu
               status: 1,
               createdAt: 1,
               takedown: 1,
+              // Cover thumbnail for the moderation table (staff-only view —
+              // 2026-08-11); the public projections are untouched.
+              image: { $arrayElemAt: ['$images.url', 0] },
               category: { id: '$category._id', name: '$category.name', slug: '$category.slug' },
               seller: { orgId: '$org._id', name: '$org.name', takedownCount: '$org.takedownCount' },
             },

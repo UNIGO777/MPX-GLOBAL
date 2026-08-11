@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
+import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { roleHome } from '../../auth/roleHome.js';
 
@@ -33,10 +34,11 @@ import { PublicHeader } from '../../components/public/PublicHeader.jsx';
  * Phase-1 truth (verification, AI search, enquiries + chat, catalogue) and the
  * mockup's "Quotations" platform tab is dropped. Flagged to the owner.
  *
- * Non-operational elements (each in docs/UiWebNotes.md): hero search (visibly
- * decorative), category lists (static text, not links), store badges ("Coming
- * soon"), footer directory (static text). Every auth CTA routes to the real
- * screens. Testimonials are PLACEHOLDER content — replace before launch.
+ * Non-operational elements (each in docs/UiWebNotes.md): store badges ("Coming
+ * soon") and the footer directory (static text). The hero search bar and the
+ * category section are REAL links now (2026-08-11): search → /categories (the
+ * quick-find lives there; AI search stays Module 3), categories → live cards.
+ * The hero match panel shows real listings, not invented suppliers.
  */
 
 /* ---------------------------------- data ---------------------------------- */
@@ -89,27 +91,27 @@ const PLATFORM_TABS = [
 
 const TRUST_CARDS = [
   {
-    tint: 'bg-[#E7F0FF]',
+    tint: 'bg-primary-50',
     title: 'Human-verified sellers',
     body: 'Exporters submit real business documents; our team reviews each one before the tick appears.',
   },
   {
-    tint: 'bg-[#E7F7EF]',
+    tint: 'bg-success-50',
     title: 'AI-assisted search',
     body: 'Find the exact partners you need using natural-language discovery.',
   },
   {
-    tint: 'bg-[#ECEBFF]',
+    tint: 'bg-primary-100/60',
     title: 'Real-time chat',
     body: 'Talk to suppliers directly in a secure, integrated environment — every thread kept.',
   },
 ];
 
 const WHY_CARDS = [
-  { title: 'Not sure who to trust?', body: 'Every verified tick is decided by a human after checking documents.' },
-  { title: "Can't find the right supplier?", body: 'AI search understands plain language.' },
-  { title: 'Deals stuck in email chains?', body: 'Enquiries and chat in one place.' },
-  { title: 'Always on the move?', body: 'A full mobile app for buyers and sellers.' },
+  { title: 'Not sure who to trust?', body: 'Every verified tick is decided by a human after checking documents.', Icon: ShieldIcon },
+  { title: "Can't find the right supplier?", body: 'AI search understands plain language.', Icon: SearchIcon },
+  { title: 'Deals stuck in email chains?', body: 'Enquiries and chat in one place.', Icon: ChatIcon },
+  { title: 'Always on the move?', body: 'A full mobile app for buyers and sellers.', Icon: GlobeIcon },
 ];
 
 const FAQS = [
@@ -149,6 +151,22 @@ function SectionHeading({ children, sub, id }) {
 const pill =
   'inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition-colors';
 
+/* Store brand marks — local to the landing badges; monochrome per the dark card. */
+function AppleLogo(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M17.05 12.54c-.03-2.89 2.36-4.27 2.47-4.34-1.35-1.97-3.44-2.24-4.18-2.27-1.78-.18-3.47 1.05-4.37 1.05-.9 0-2.29-1.02-3.77-1-1.94.03-3.72 1.13-4.72 2.86-2.01 3.49-.51 8.66 1.45 11.49.96 1.39 2.1 2.94 3.6 2.89 1.45-.06 1.99-.93 3.74-.93 1.75 0 2.24.93 3.77.9 1.56-.03 2.54-1.41 3.49-2.8 1.1-1.61 1.55-3.17 1.58-3.25-.04-.02-3.03-1.16-3.06-4.6zM14.16 4.06c.8-.97 1.34-2.31 1.19-3.66-1.15.05-2.55.77-3.38 1.74-.74.85-1.39 2.22-1.22 3.53 1.29.1 2.6-.65 3.41-1.61z" />
+    </svg>
+  );
+}
+function PlayLogo(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M3.6 1.8c-.36.38-.6.97-.6 1.73v16.94c0 .76.24 1.35.6 1.73l.1.09 9.49-9.49v-.22L3.7 1.71l-.1.09zM16.35 15.05 13.19 11.89v-.22l3.16-3.16.07.04 3.75 2.13c1.07.6 1.07 1.6 0 2.21l-3.75 2.12-.07.04zM6.05 22.66l10.3-5.85-2.86-2.87-7.44 8.72zM6.05 1.34l7.44 8.72 2.86-2.87-10.3-5.85z" />
+    </svg>
+  );
+}
+
 /**
  * Roving-focus arrow keys for a `role="tablist"`. ARIA requires it: with
  * role="tab" a screen-reader user expects arrows to move between tabs, and Tab
@@ -179,6 +197,13 @@ export function Landing() {
   // Real categories, so the landing page stops advertising an invented taxonomy.
   // Shares its cache key with /categories, so that page loads instantly from here.
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
+
+  // The hero's match panel shows REAL live listings (2026-08-11) — the old
+  // hardcoded supplier names advertised companies that may not exist.
+  const heroMatches = useQuery({
+    queryKey: catalogueKeys.products({ page: 1, pageSize: 2 }),
+    queryFn: () => catalogueApi.products({ page: 1, pageSize: 2 }),
+  });
 
   const journeyKeys = useTabKeys(['buyer', 'seller'], journey, setJourney);
   const platformKeys = useTabKeys(
@@ -229,19 +254,21 @@ export function Landing() {
                 directly — discovery to deal on one secure platform.
               </p>
 
-              {/* Decorative search — real search ships with the discovery screens */}
-              <div className="mt-6 w-full max-w-lg" aria-hidden="true">
-                <div className="flex items-center rounded-full border border-surface-border bg-white p-1.5 opacity-90 shadow-card">
+              {/* A real door, not a prop (2026-08-11): opens the catalogue,
+                  where the quick-find filter actually works. AI search itself
+                  is still Module 3. */}
+              <Link to="/categories" className="mt-6 block w-full max-w-lg" aria-label="Browse the catalogue">
+                <span className="flex items-center rounded-full border border-surface-border bg-white p-1.5 shadow-card transition-all hover:border-primary-400 hover:shadow-lift">
                   <span className="pl-3 text-ink-400"><SearchIcon className="h-5 w-5" /></span>
                   <span className="flex-1 truncate px-3 text-sm text-ink-500">
-                    &ldquo;Cotton knitwear manufacturers in Tirupur&hellip;&rdquo;
+                    Find suppliers — fabrics, machinery, IT services&hellip;
                   </span>
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-600 text-white">
                     <SearchIcon className="h-4 w-4" />
                   </span>
-                </div>
-                <p className="mt-1.5 pl-4 text-xs text-ink-500">Search preview — opens with the catalogue.</p>
-              </div>
+                </span>
+                <span className="mt-1.5 block pl-4 text-xs text-ink-500">Browse 40 categories →</span>
+              </Link>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {home ? (
@@ -276,24 +303,31 @@ export function Landing() {
                   </span>
                 </div>
                 <div className="space-y-3">
-                  {[
-                    { name: 'Tirupur Knitwear Exports', meta: 'Tirupur, India · Business', tag: 'Textiles' },
-                    { name: 'Jaipur Craft Collective', meta: 'Jaipur, India · Business', tag: 'Handicrafts' },
-                  ].map((s) => (
-                    <div key={s.name} className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                      <div className="flex items-start justify-between">
-                        <p className="text-sm font-semibold text-white">{s.name}</p>
-                        <span className="flex items-center gap-1 rounded bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-300">
-                          <CheckCircleIcon className="h-3.5 w-3.5" /> Verified
-                        </span>
+                  {(heroMatches.data?.products ?? []).slice(0, 2).map((m) => (
+                    <div key={m.id} className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="min-w-0 truncate text-sm font-semibold text-white">{m.seller?.name ?? m.name}</p>
+                        {m.seller?.verified && (
+                          <span className="flex shrink-0 items-center gap-1 rounded bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-300">
+                            <CheckCircleIcon className="h-3.5 w-3.5" /> Verified
+                          </span>
+                        )}
                       </div>
-                      <p className="mt-1 text-xs text-white/60">{s.meta}</p>
-                      <span className="mt-2 inline-block rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80">
-                        {s.tag}
-                      </span>
+                      <p className="mt-1 truncate text-xs text-white/60">
+                        {[m.seller?.country === 'IN' ? 'India' : m.seller?.country, m.name].filter(Boolean).join(' · ')}
+                      </p>
+                      {m.category?.name && (
+                        <span className="mt-2 inline-block rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80">
+                          {m.category.name}
+                        </span>
+                      )}
                     </div>
                   ))}
-                </div>
+                  {heroMatches.isPending &&
+                    Array.from({ length: 2 }, (_, i) => (
+                      <div key={i} className="h-24 animate-pulse rounded-xl border border-white/10 bg-white/5" />
+                    ))}
+                                </div>
               </div>
             </div>
           </div>
@@ -334,25 +368,49 @@ export function Landing() {
             </SectionHeading>
 
             {categories.isPending && (
-              <div className="mx-auto grid max-w-5xl grid-cols-2 gap-3 md:grid-cols-3">
-                {Array.from({ length: 9 }, (_, i) => (
-                  <div key={i} className="h-14 animate-pulse rounded-xl bg-surface-subtle" />
+              <div className="mx-auto grid max-w-5xl grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {Array.from({ length: 8 }, (_, i) => (
+                  <div key={i} className="overflow-hidden rounded-xl border border-surface-border">
+                    <div className="aspect-video animate-pulse bg-surface-subtle" />
+                    <div className="space-y-2 p-3.5">
+                      <div className="h-4 w-3/4 animate-pulse rounded bg-surface-subtle" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-surface-subtle" />
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
 
+            {/* Mirrors the /categories page cards (owner, 2026-08-11) — same
+                photo-forward look, so the landing teaser and the full page read
+                as one surface. */}
             {categories.isSuccess && (
-              <ul className="mx-auto grid max-w-5xl grid-cols-2 gap-3 md:grid-cols-3">
-                {categories.data.slice(0, 9).map((cat) => (
-                  <li key={cat.id}>
+              <ul className="mx-auto grid max-w-5xl grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {categories.data.slice(0, 8).map((cat) => (
+                  <li key={cat.id} className="h-full">
                     <Link
                       to={`/category/${cat.slug}`}
-                      className="flex min-h-[56px] items-center justify-between gap-3 rounded-xl border border-surface-border bg-surface-subtle/50 px-4 py-3 text-sm font-semibold text-ink-800 transition-colors hover:border-primary-300 hover:bg-primary-50"
+                      className="flex h-full flex-col overflow-hidden rounded-xl border border-surface-border bg-white shadow-card transition-colors hover:border-primary-600"
                     >
-                      <span className="line-clamp-2">{cat.name}</span>
-                      <span className="shrink-0 text-xs font-normal text-muted">
-                        {cat.subs?.length ?? 0}
-                      </span>
+                      {cat.image ? (
+                        <img
+                          src={cat.image}
+                          alt=""
+                          loading="lazy"
+                          width={640}
+                          height={360}
+                          className="aspect-video w-full object-cover"
+                        />
+                      ) : (
+                        <NoImagePanel label={cat.name} ratio="aspect-video" />
+                      )}
+                      <div className="flex flex-1 flex-col p-3.5">
+                        <h3 className="text-sm font-bold leading-snug text-ink-900">{cat.name}</h3>
+                        <p className="mt-auto pt-1.5 text-xs text-muted">
+                          {cat.subs?.length ?? 0}{' '}
+                          {(cat.subs?.length ?? 0) === 1 ? 'sub-category' : 'sub-categories'}
+                        </p>
+                      </div>
                     </Link>
                   </li>
                 ))}
@@ -539,7 +597,7 @@ export function Landing() {
                   className="flex h-full flex-col rounded-[20px] border border-surface-border/60 bg-white p-6 shadow-card transition-shadow hover:shadow-lg"
                 >
                   <div className="mb-6 flex h-[100px] items-center justify-center rounded-lg bg-primary-50">
-                    <CheckIcon className="h-12 w-12 text-primary-600" />
+                    <c.Icon className="h-10 w-10 text-primary-600" />
                   </div>
                   <h3 className="text-lg font-semibold text-primary-800">{c.title}</h3>
                   <p className="mt-auto pt-2 text-sm text-ink-600">{c.body}</p>
@@ -574,12 +632,16 @@ export function Landing() {
               </ul>
               {/* Store badges — apps not published yet; visibly coming-soon */}
               <div className="mt-8 flex flex-wrap items-center gap-4">
-                {['Google Play', 'App Store'].map((store) => (
+                {[
+                  { store: 'Google Play', Logo: PlayLogo },
+                  { store: 'App Store', Logo: AppleLogo },
+                ].map(({ store, Logo }) => (
                   <span
                     key={store}
                     aria-disabled="true"
                     className="flex cursor-default items-center gap-3 rounded-lg border border-white/20 bg-white/10 px-5 py-3 opacity-70"
                   >
+                    <Logo className="h-7 w-7 text-white" />
                     <div className="flex flex-col items-start">
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70">
                         Coming soon on
@@ -590,23 +652,63 @@ export function Landing() {
                 ))}
               </div>
             </div>
+            {/* Decorative phone mockups — PLACEHOLDER content, no real data
+                fetched; purely illustrative (2026-08-11: filled per owner). */}
             <div className="hidden items-center justify-center lg:flex" aria-hidden="true">
               <div className="relative h-[480px] w-full max-w-md">
+                {/* Phone 1 — the catalogue */}
                 <div className="absolute left-[12%] top-[10%] flex aspect-[9/18] w-[42%] -rotate-6 flex-col overflow-hidden rounded-[2rem] border-4 border-white/10 bg-white p-3 shadow-2xl">
                   <div className="h-2 w-16 self-center rounded-full bg-ink-200" />
-                  <div className="mt-3 h-8 rounded-lg bg-primary-50" />
+                  <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-primary-50 px-2 py-1.5">
+                    <SearchIcon className="h-3 w-3 shrink-0 text-primary-600" />
+                    <span className="truncate text-[9px] text-ink-500">cotton fabric…</span>
+                  </div>
                   <div className="mt-2 flex-1 space-y-2">
-                    <div className="h-16 rounded-lg bg-surface-subtle" />
-                    <div className="h-16 rounded-lg bg-surface-subtle" />
-                    <div className="h-16 rounded-lg bg-surface-subtle" />
+                    {[
+                      { name: 'Cotton Poplin, 120 GSM', price: '₹120 / meter', tint: 'bg-primary-100' },
+                      { name: 'Selvedge Denim, 14oz', price: '₹520 / meter', tint: 'bg-primary-200' },
+                      { name: 'Mulberry Silk', price: '₹1,450 / meter', tint: 'bg-primary-50' },
+                    ].map((r) => (
+                      <div key={r.name} className="flex items-center gap-2 rounded-lg border border-surface-border p-1.5">
+                        <span className={`h-9 w-9 shrink-0 rounded-md ${r.tint}`} />
+                        <span className="min-w-0">
+                          <span className="block truncate text-[9px] font-semibold text-ink-900">{r.name}</span>
+                          <span className="block text-[9px] font-bold text-primary-700">{r.price}</span>
+                          <span className="block text-[8px] text-ink-500">MOQ 200 · Verified ✓</span>
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
+                {/* Phone 2 — the chat */}
                 <div className="absolute right-[12%] top-[22%] flex aspect-[9/18] w-[42%] rotate-6 flex-col overflow-hidden rounded-[2rem] border-4 border-white/10 bg-white p-3 shadow-2xl">
                   <div className="h-2 w-16 self-center rounded-full bg-ink-200" />
-                  <div className="mt-3 flex-1 space-y-2">
-                    <div className="ml-auto h-10 w-3/4 rounded-2xl rounded-tr-none bg-primary-100" />
-                    <div className="h-10 w-3/4 rounded-2xl rounded-tl-none bg-surface-subtle" />
-                    <div className="ml-auto h-10 w-2/3 rounded-2xl rounded-tr-none bg-primary-100" />
+                  <div className="mt-3 flex items-center gap-1.5 border-b border-surface-border pb-2">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-[8px] font-bold text-primary-700">
+                      TK
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-[9px] font-semibold text-ink-900">Tirupur Knitwear ✓</span>
+                      <span className="block text-[8px] text-success">Online</span>
+                    </span>
+                  </div>
+                  <div className="mt-2 flex-1 space-y-1.5">
+                    <p className="ml-auto w-fit max-w-[85%] rounded-xl rounded-tr-none bg-primary-600 px-2 py-1.5 text-[8px] leading-snug text-white">
+                      Need 500 m denim, 14oz. Lead time?
+                    </p>
+                    <p className="w-fit max-w-[85%] rounded-xl rounded-tl-none bg-surface-subtle px-2 py-1.5 text-[8px] leading-snug text-ink-800">
+                      2 weeks ex-factory. MOQ 200 m.
+                    </p>
+                    <p className="ml-auto w-fit max-w-[85%] rounded-xl rounded-tr-none bg-primary-600 px-2 py-1.5 text-[8px] leading-snug text-white">
+                      Works. Share samples?
+                    </p>
+                    <p className="w-fit max-w-[85%] rounded-xl rounded-tl-none bg-surface-subtle px-2 py-1.5 text-[8px] leading-snug text-ink-800">
+                      Couriering tomorrow 📦
+                    </p>
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-1 rounded-full border border-surface-border px-2 py-1">
+                    <span className="flex-1 text-[8px] text-ink-400">Message…</span>
+                    <span className="h-4 w-4 rounded-full bg-primary-600" />
                   </div>
                 </div>
               </div>

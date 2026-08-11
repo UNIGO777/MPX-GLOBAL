@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { kycApi } from '../../api/kyc.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
@@ -12,53 +12,24 @@ import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
 import { VerifiedTick } from '../../components/ui/VerifiedTick.jsx';
-import { DocIcon } from '../../components/ui/icons.jsx';
+import {
+  CheckIcon,
+  ClockIcon,
+  DocIcon,
+  InfoIcon,
+  XIcon,
+} from '../../components/ui/icons.jsx';
 
 /**
- * Buyer home — verification status, four states (mockup:
- * buyer_verification_states_separated). The copy leans on D3 truth throughout:
- * the account already works in full; verification is an optional tick, never a
- * gate. Rejection reason renders VERBATIM (the reviewer wrote it for the
- * applicant). Company name is absent until A22 ships a self-org read — the
- * header greets the person instead (plan §7.4).
+ * Buyer home — verification status. REDESIGNED 2026-08-11 to the M2 language,
+ * mirroring the exporter hub: main card = state + a four-step VERIFICATION
+ * JOURNEY with live derived markers; rail = the sent-documents list and the D3
+ * "this is optional" card.
+ *
+ * The copy leans on D3 truth throughout: the account already works in full;
+ * verification is an optional tick, never a gate. Rejection reason renders
+ * VERBATIM (the reviewer wrote it for the applicant).
  */
-
-/** "What you sent" — metadata only; the files themselves are never shown back. */
-function DocumentList({ documents }) {
-  if (!documents?.length) return null;
-  return (
-    <>
-      {/* Mockup separates this block with a full-width hairline, not just space */}
-      <div aria-hidden="true" className="my-7 h-px w-full bg-surface-border" />
-      <div>
-        <h3 className="text-base font-semibold text-ink-900">What you sent</h3>
-        <p className="mt-1 text-[13px] text-muted">
-          Your documents are private. We don&apos;t show them back to you here.
-        </p>
-        <ul className="mt-4 space-y-3">
-          {documents.map((d, i) => (
-            <li
-              key={`${d.docType}-${d.uploadedAt}-${i}`}
-              className="flex h-16 items-center gap-3 rounded-lg border border-surface-border bg-white px-4"
-            >
-              {/* Mockup: 32px tinted tile behind the doc glyph */}
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-ink-100">
-                <DocIcon className="h-[18px] w-[18px] text-ink-500" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink-900">
-                  {DOC_TYPE_LABELS[d.docType] ?? d.docType}
-                </p>
-                <p className="text-xs text-muted">Uploaded {formatDate(d.uploadedAt)}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </>
-  );
-}
-
 const STATES = {
   pending: {
     title: "You haven't sent any documents",
@@ -81,16 +52,68 @@ const STATES = {
   },
 };
 
-/**
- * A status outside the four known ones used to render an EMPTY card — no copy,
- * no CTA, no error. Say something true instead, and still offer the upload
- * route so the screen is never a dead end.
- */
+/** A status outside the four known ones — say something true, keep upload reachable. */
 const UNKNOWN_STATE = {
   title: 'Verification status unavailable',
   body: "We couldn't read the status of your verification just now. Your account works as normal — try refreshing, and contact us if it keeps happening.",
   cta: 'Upload documents',
 };
+
+/** One journey step: state ∈ done | active | failed | todo. */
+function JourneyStep({ state, title, meta, last = false, children }) {
+  const marker =
+    state === 'done' ? (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-success-500 text-white">
+        <CheckIcon className="h-4 w-4" />
+      </span>
+    ) : state === 'active' ? (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-warning-100 text-warning-700">
+        <ClockIcon className="h-4 w-4" />
+      </span>
+    ) : state === 'failed' ? (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-danger-100 text-danger">
+        <XIcon className="h-4 w-4" />
+      </span>
+    ) : (
+      <span className="h-8 w-8 rounded-full border-2 border-ink-200 bg-white" />
+    );
+
+  return (
+    <li className="grid grid-cols-[32px_minmax(0,1fr)] gap-x-3.5">
+      <div className="flex flex-col items-center">
+        <span aria-hidden="true">{marker}</span>
+        {!last && (
+          <span
+            aria-hidden="true"
+            className={`my-1 w-px flex-1 ${state === 'done' ? 'bg-success-300' : 'bg-ink-200'}`}
+          />
+        )}
+      </div>
+      <div className={last ? 'pb-1' : 'pb-6'}>
+        <p
+          className={`pt-1.5 text-sm font-semibold ${
+            state === 'todo' ? 'text-muted' : 'text-ink-900'
+          }`}
+        >
+          {title}
+        </p>
+        {meta && <p className="mt-0.5 text-[13px] text-muted">{meta}</p>}
+        {children}
+      </div>
+    </li>
+  );
+}
+
+function RailCard({ label, children }) {
+  return (
+    <section className="rounded-xl border border-surface-border bg-white p-4 shadow-card">
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
+        {label}
+      </h3>
+      {children}
+    </section>
+  );
+}
 
 export function VerificationStatus() {
   const navigate = useNavigate();
@@ -116,75 +139,181 @@ export function VerificationStatus() {
   }, [load]);
 
   const v = verification;
-  const state = v ? (STATES[v.kycStatus] ?? UNKNOWN_STATE) : null;
+  const status = v?.kycStatus;
+  const state = v ? (STATES[status] ?? UNKNOWN_STATE) : null;
   const firstName = user?.name?.split(/\s+/)[0] ?? '';
 
+  // Journey step states, all derived — no invented data.
+  const profileDone = v ? v.profileComplete !== false : false;
+  const docsSent =
+    ['submitted', 'verified', 'rejected'].includes(status) || (v?.documents?.length ?? 0) > 0;
+  const reviewState =
+    status === 'verified'
+      ? 'done'
+      : status === 'submitted'
+        ? 'active'
+        : status === 'rejected'
+          ? 'failed'
+          : 'todo';
+
   return (
-    <PortalLayout nav={BUYER_NAV}>
-      {/* Design: 32px header block, 32px title, 16px subline */}
-      <div className="mb-8 flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-[26px] font-bold text-ink-900 sm:text-[32px]">
+    <PortalLayout nav={BUYER_NAV} wide>
+      <div className="mb-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-bold text-ink-900">
             Welcome{firstName ? `, ${firstName}` : ''}
           </h1>
-          <p className="mt-1 text-base text-muted">Your buyer account on MPX Global</p>
+          {status === 'verified' && <VerifiedTick verified verifiedAt={v.verifiedAt} />}
         </div>
-        {v?.kycStatus === 'verified' && <VerifiedTick verified verifiedAt={v.verifiedAt} />}
+        <p className="mt-1 text-sm text-muted">Your buyer account on MPX Global</p>
       </div>
 
-      {/* Design card: 860px cap, 12px radius, 32px padding, hairline + soft shadow */}
-      <section className="max-w-[860px] rounded-xl border border-surface-border bg-white p-6 shadow-sm sm:p-8">
-        {loading && (
-          <div className="space-y-4" role="status" aria-label="Loading verification status">
-            <Skeleton className="h-6 w-24 rounded-full" />
-            <Skeleton className="h-7 w-2/3" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-          </div>
-        )}
+      {loading && (
+        <div className="max-w-[860px] space-y-4" role="status" aria-label="Loading verification status">
+          <Skeleton className="h-6 w-24 rounded-full" />
+          <Skeleton className="h-40 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
+      )}
 
-        {!loading && error && (
+      {!loading && error && (
+        <div className="max-w-[860px] rounded-2xl border border-surface-border bg-white shadow-card">
           <ErrorState message={error.message} requestId={error.requestId} onRetry={load} />
-        )}
+        </div>
+      )}
 
-        {!loading && !error && v && state && (
-          <>
-            <StatusChip status={v.kycStatus} />
-            <h2 className="mt-3 text-xl font-semibold text-ink-900">{state.title}</h2>
+      {!loading && !error && v && state && (
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          {/* ============ main: state + the journey ============ */}
+          <section className="min-w-0 rounded-2xl border border-surface-border bg-white p-6 shadow-card sm:p-8">
+            <StatusChip status={status} />
+            <h2 className="mt-4 text-[22px] font-semibold leading-tight text-ink-900">
+              {state.title}
+            </h2>
 
-            {v.kycStatus === 'rejected' ? (
+            {status === 'rejected' ? (
               <>
-                {/* Mockup: a 3px LEFT accent bar on the tint, not a full border */}
                 <div className="mt-4 rounded-r-lg border-l-[3px] border-danger bg-danger-50 p-5 text-[15px] leading-relaxed text-ink-900">
                   {v.kycRejectionReason ?? 'Our team could not verify the documents you sent.'}
                 </div>
-                {/* `kycSubmittedAt` is when the buyer SENT them. The payload
-                    carries no reviewedAt/rejectedAt, so labelling this
-                    "Reviewed" stated a date the API never returned. */}
+                {/* `kycSubmittedAt` is when the buyer SENT them — the payload
+                    carries no reviewedAt, so naming one would be invention. */}
                 {v.kycSubmittedAt && (
                   <p className="mt-3 text-xs text-muted">Sent {formatDate(v.kycSubmittedAt)}</p>
                 )}
               </>
             ) : (
-              <p className="mt-2 text-[15px] leading-relaxed text-muted">
+              <p className="mt-3 max-w-[680px] text-[15px] leading-relaxed text-muted">
                 {typeof state.body === 'function' ? state.body(v) : state.body}
               </p>
             )}
 
-            {/* Design CTA: 200×44 pill */}
             {state.cta && (
-              <Button
-                className="mt-6 h-11 w-[200px] px-0 text-[15px]"
-                onClick={() => navigate('/buyer/kyc')}
-              >
+              <Button className="mt-5" onClick={() => navigate('/buyer/kyc')}>
                 {state.cta}
               </Button>
             )}
 
-            <DocumentList documents={v.documents} />
-          </>
-        )}
-      </section>
+            {/* The journey — every state is DERIVED from the payload. */}
+            <div aria-hidden="true" className="my-7 h-px w-full bg-surface-border" />
+            <h3 className="mb-5 text-base font-semibold text-ink-900">How verification works</h3>
+            <ol>
+              <JourneyStep
+                state={profileDone ? 'done' : 'active'}
+                title="Company profile"
+                meta={
+                  profileDone
+                    ? 'Your registered details are on file.'
+                    : 'Name, country and address first — we check documents against them.'
+                }
+              >
+                {!profileDone && (
+                  <Link
+                    to="/buyer/company"
+                    className="mt-1.5 inline-block text-sm font-medium text-primary-700 hover:underline"
+                  >
+                    Complete profile →
+                  </Link>
+                )}
+              </JourneyStep>
+              <JourneyStep
+                state={docsSent ? 'done' : profileDone ? 'active' : 'todo'}
+                title="Send documents"
+                meta={
+                  docsSent
+                    ? `${v.documents?.length ?? 0} document${(v.documents?.length ?? 0) === 1 ? '' : 's'} sent`
+                    : 'Any one accepted document is enough to start the review.'
+                }
+              />
+              <JourneyStep
+                state={reviewState}
+                title="Our team reviews"
+                meta={
+                  reviewState === 'failed'
+                    ? 'See the reason above — send replacements and we review again.'
+                    : reviewState === 'active'
+                      ? 'Usually two to three working days.'
+                      : reviewState === 'done'
+                        ? 'Approved.'
+                        : 'We email you when it’s done.'
+                }
+              />
+              <JourneyStep
+                state={status === 'verified' ? 'done' : 'todo'}
+                title="Verified tick goes live"
+                meta={
+                  status === 'verified'
+                    ? `On your profile since ${formatDate(v.verifiedAt)}.`
+                    : 'Shown to suppliers whenever you contact them.'
+                }
+                last
+              />
+            </ol>
+          </section>
+
+          {/* ============ context rail ============ */}
+          <aside className="space-y-4 lg:sticky lg:top-6">
+            {v.documents?.length > 0 && (
+              <RailCard label="What you sent">
+                <ul className="space-y-2.5">
+                  {v.documents.map((d, i) => (
+                    <li key={`${d.docType}-${d.uploadedAt}-${i}`} className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+                        <DocIcon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-ink-900">
+                          {DOC_TYPE_LABELS[d.docType] ?? d.docType}
+                        </p>
+                        <p className="text-xs text-muted">Uploaded {formatDate(d.uploadedAt)}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-[11px] text-muted">
+                  Your documents are private — we don&apos;t show them back to you here.
+                </p>
+              </RailCard>
+            )}
+
+            {/* D3 truth: never pressure — the account is whole without it. */}
+            {status !== 'verified' && (
+              <section className="rounded-xl bg-surface-subtle p-4">
+                <div className="flex gap-3">
+                  <InfoIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
+                  <div>
+                    <h3 className="text-sm font-bold text-ink-900">Entirely optional</h3>
+                    <p className="mt-1 text-[13px] text-ink-900/80">
+                      Your account already works in full — browse, enquire and chat without
+                      verification. The tick just helps suppliers prioritise your enquiries.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
+          </aside>
+        </div>
+      )}
     </PortalLayout>
   );
 }
