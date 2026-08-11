@@ -1,5 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
+import { BuyerHomeScreen } from '../screens/BuyerHomeScreen.jsx';
 import { ProfileScreen } from '../screens/ProfileScreen.jsx';
 import { makePlaceholder } from '../screens/PlaceholderScreen.jsx';
 import { screenHeaderOptions, tabBarOptions } from './navigationTheme.js';
@@ -8,7 +9,8 @@ import { tabIcon } from './tabIcon.jsx';
 const Tab = createBottomTabNavigator();
 
 /**
- * Buyer shell — placeholder screens only; the modules land in M2–M4.
+ * Buyer shell — Home + Profile are real; Search/Enquiries/Chat stay
+ * placeholders until M3/M4.
  *
  * 🔴 Scope note: `docs/auth-app-steps.md` Step 7 also lists an **Orders** tab.
  * Orders/shipments are `month1-not-doing.md` **Bucket B** (Phase 2), which
@@ -26,7 +28,7 @@ export function BuyerNavigator() {
       <Tab.Screen
         name="BuyerHome"
         options={{ title: 'Home', tabBarLabel: 'Home', tabBarIcon: tabIcon('home') }}
-        component={makePlaceholder({ title: 'Home', module: 'Buyer dashboard', milestone: 'M2' })}
+        component={BuyerHomeScreen}
       />
       <Tab.Screen
         name="BuyerSearch"

@@ -53,6 +53,23 @@ are no dead buttons to log. The rows below record controls that appeared in the 
 | 2026-08-02 | `app/src/screens/auth/SignupAccountScreen.jsx` | "I agree to the Terms of Service and Privacy Policy" checkbox (in mockup) | Record consent at signup | **NOT BUILT** — no backend field stores consent and no Terms/Privacy pages exist yet, so the checkbox would be theatre. ⚠️ **Owner decision needed before launch**: consent capture is usually a legal requirement | Pending (owner decision) |
 | 2026-08-02 | `app/src/screens/auth/SignupCompanyScreen.jsx` | Screen 8 **Path A · Claim an existing company** | "We found a company registered with this email" card → claim vs create new | 🔴 **BLOCKED — no backend.** There is no organisation lookup or claim endpoint (`auth.routes.js` has neither). Separately, the path as specified is an **account-enumeration surface**: it confirms to an anonymous caller that a company is registered to a given email. Needs an owner decision on the disclosure before it is designed, let alone built. Only Path B (create new) ships | Pending (blocked + needs security decision) |
 
+### 📱 Mobile app — Home screens (2026-08-10)
+
+`BuyerHomeScreen.jsx` / `ExporterHomeScreen.jsx` (design brief `design-plans/m1/app-screens-design.md`
+§9/§13) replace the `BuyerHome`/`ExporterHome` tab placeholders. Everything on both screens is wired
+to a real endpoint (`/me/organisation`, `/me/verification`) **except** the "Coming soon" module cards
+below — plain `View`s, no `Pressable`, no chevron, an explicit "Coming soon" chip baked in, so nothing
+reads as tappable.
+
+| Date | Page / Component | Element (label) | What's missing / expected behaviour | Why deferred | Status |
+|------|------------------|-----------------|-------------------------------------|--------------|--------|
+| 2026-08-10 | `app/src/screens/BuyerHomeScreen.jsx` | "Search suppliers" card | Opens buyer discovery search | M3 — the `BuyerSearch` tab is the same placeholder today | Pending |
+| 2026-08-10 | `app/src/screens/BuyerHomeScreen.jsx` | "Enquiries" card | Opens the buyer's enquiry list | M4 | Pending |
+| 2026-08-10 | `app/src/screens/BuyerHomeScreen.jsx` | "Chat" card | Opens buyer chat threads | M4 | Pending |
+| 2026-08-10 | `app/src/screens/ExporterHomeScreen.jsx` | "Catalogue" card | Opens "My products" (M2 app screen 5) | M2's app catalogue screens (5–7) aren't built yet — this card is meant to be wired the moment screen 5 ships (design brief §6 names this exact follow-up); the `ExporterCatalogue` tab is the same placeholder today | Pending |
+| 2026-08-10 | `app/src/screens/ExporterHomeScreen.jsx` | "Enquiries" card | Opens the exporter's enquiry list | M4 | Pending |
+| 2026-08-10 | `app/src/screens/ExporterHomeScreen.jsx` | "Chat" card | Opens exporter chat threads | M4 | Pending |
+
 ---
 
 ## 🔧 Recommended backend follow-ups (owner-approved to LOG, not build — 2026-08-01)

@@ -10,6 +10,7 @@ import { NavyCanopy } from '../../components/NavyCanopy.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { colors, radii, spacing, typography } from '../../theme/index.js';
 import { toAppError } from '../../utils/errors.js';
+import { KYC_STATE_TITLE as TITLES, KYC_STATE_SUBTITLE as SUBTITLES } from '../../utils/verificationCopy.js';
 
 /**
  * Verification hub — renders all four `kycStatus` states from one call.
@@ -149,7 +150,7 @@ export function VerificationHubScreen({ navigation }) {
           {status === 'rejected' && v.kycRejectionReason ? (
             <View style={styles.reasonCard}>
               <View style={styles.reasonHead}>
-                <Ionicons name="alert-circle" size={20} color={colors.danger} />
+                <Ionicons name="alert-circle" size={20} color={colors.danger.DEFAULT} />
                 <Text style={styles.reasonTitle}>What we need changed</Text>
               </View>
               <Text style={styles.reasonBody}>{v.kycRejectionReason}</Text>
@@ -240,20 +241,6 @@ const FOOTER_LABEL = {
   rejected: 'Fix and resubmit',
 };
 
-const TITLES = {
-  pending: 'Verify your business',
-  submitted: 'In review',
-  verified: 'Verified',
-  rejected: 'One more thing',
-};
-
-const SUBTITLES = {
-  pending: 'Add a document and get the tick.',
-  submitted: 'We have your documents — no action needed.',
-  verified: 'Your company carries the verified tick.',
-  rejected: 'A quick fix and we can finish this.',
-};
-
 const styles = StyleSheet.create({
   gateNote: {
     flexDirection: 'row',
@@ -284,12 +271,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEECEA',
     borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.danger,
+    borderColor: colors.danger.DEFAULT,
     padding: spacing[4],
     gap: spacing[2],
   },
   reasonHead: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
-  reasonTitle: { ...typography.label, color: colors.danger },
+  reasonTitle: { ...typography.label, color: colors.danger.DEFAULT },
   reasonBody: { ...typography.body, color: colors.ink[900] },
 
   reviewCard: {

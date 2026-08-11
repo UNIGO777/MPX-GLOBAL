@@ -241,6 +241,34 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   `kycRejectionReason`, `demoted`, `sessionNote`) covered · app-vs-web screen parity closes — the
   remaining app-only screens (Splash/Welcome/biometric/multi-step KYC capture) are app-shell
   patterns, not missing web capability. **No further gap of the PROFILE_INCOMPLETE class found.**
+- **2026-08-10** — **App Home screens built — `BuyerHomeScreen.jsx` / `ExporterHomeScreen.jsx`**,
+  replacing the `BuyerHome`/`ExporterHome` tab placeholders per the M1 design brief (screens 9 & 13
+  — `design-plans/m1/app-screens-design.md`), the two M1-spec'd screens the code itself deferred to
+  build alongside M2 (their placeholders were already tagged `milestone: 'M2'`). Not part of the M2
+  catalogue screens (5–7) — those are still unbuilt, see the entry below.
+  Each screen: company identity (name/country/verified tick, `/me/organisation`) · a condensed
+  **verification card** that taps through to the existing `KycHub` (never re-implements its
+  `profileIncomplete` routing — duplicating that logic in two places is exactly how they'd drift) ·
+  exporter-only **product allowance notice** ("You can publish up to 3 active products...",
+  disappears once verified) · "Coming soon" placeholder cards for the modules that aren't built yet
+  (Search/Enquiries/Chat for buyer; Catalogue/Enquiries/Chat for exporter — Catalogue is meant to be
+  wired the moment M2's app screens 5–7 ship, per the brief's own §6 follow-up). All six placeholder
+  cards logged in `docs/UiWebNotes.md` under a new "Mobile app — Home screens" section — plain
+  `View`s, no `Pressable`, nothing that reads as tappable.
+  **Extracted, not duplicated:** `VerificationHubScreen.jsx`'s `TITLES`/`SUBTITLES` moved to a new
+  shared `utils/verificationCopy.js` (`KYC_STATE_TITLE`/`KYC_STATE_SUBTITLE`) so the Hub and the new
+  `VerificationSummaryCard` component show the exact same headline/body for the same status —
+  same discipline as the earlier `kycStatus.js` extraction, same failure mode it prevents.
+  **`NavyCanopy` gained optional `refreshing`/`onRefresh` props** (additive — every existing caller
+  is unaffected) to support pull-to-refresh, which the design brief requires on both Home screens.
+  🔴 **Found and fixed a pre-existing bug while in `VerificationHubScreen.jsx`:** three spots passed
+  `colors.danger` directly as a colour value, but `colors.danger` is a scale object (`{50, DEFAULT}`),
+  not a string — the rejected-state icon, its card border and its title were all rendering with an
+  invalid colour. Fixed to `colors.danger.DEFAULT`. Confirmed via grep this was the only place in
+  `app/src` making that mistake.
+  Verified via a Babel transform-check (`babel-preset-expo`) on every new/edited file — no bundler
+  running here to do a real Metro build. Not yet verified on-device (no phone connected this
+  session) — flagging that gap rather than claiming it was tested.
 - **2026-08-10** — **Second full design-comparison pass over all 11 M2 web screens — every export
   opened (or its `code.html` read where the PNG is unreadably narrow), 12 more mismatches fixed.**
   🔴 **The one FUNCTIONAL gap: the 10-draft cap blocker on Add product was missing entirely.** The

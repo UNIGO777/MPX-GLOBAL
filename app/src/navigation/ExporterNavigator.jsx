@@ -1,5 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
+import { ExporterHomeScreen } from '../screens/ExporterHomeScreen.jsx';
 import { ProfileScreen } from '../screens/ProfileScreen.jsx';
 import { makePlaceholder } from '../screens/PlaceholderScreen.jsx';
 import { screenHeaderOptions, tabBarOptions } from './navigationTheme.js';
@@ -8,7 +9,8 @@ import { tabIcon } from './tabIcon.jsx';
 const Tab = createBottomTabNavigator();
 
 /**
- * Exporter shell — placeholder screens only; the modules land in M2–M4.
+ * Exporter shell — Home + Profile are real; Catalogue stays a placeholder
+ * until M2's product screens (5–7) land, Enquiries/Chat until M4.
  *
  * 🔴 Scope note: `docs/auth-app-steps.md` Step 7 also lists **Quotations** and
  * **Orders** tabs. Quotation & negotiation is `month1-not-doing.md` **Bucket A1**
@@ -24,7 +26,7 @@ export function ExporterNavigator() {
       <Tab.Screen
         name="ExporterHome"
         options={{ title: 'Home', tabBarLabel: 'Home', tabBarIcon: tabIcon('home') }}
-        component={makePlaceholder({ title: 'Home', module: 'Exporter dashboard', milestone: 'M2' })}
+        component={ExporterHomeScreen}
       />
       <Tab.Screen
         name="ExporterCatalogue"

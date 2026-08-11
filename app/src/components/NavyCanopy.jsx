@@ -4,6 +4,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -48,6 +49,9 @@ import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/i
  * @param {func}   onBack      renders the back affordance when provided
  * @param {node}   footer      pinned above the keyboard and home indicator
  * @param {'plain'|'subtle'} sheetTone  white (default) or the pale canvas tint
+ * @param {boolean} [refreshing]  pull-to-refresh spinner state — omit both this
+ *   and `onRefresh` to leave the sheet non-refreshable (every existing caller)
+ * @param {func}   [onRefresh]  enables RefreshControl on the sheet when provided
  */
 export function NavyCanopy({
   title,
@@ -58,6 +62,8 @@ export function NavyCanopy({
   children,
   sheetTone = 'plain',
   showWordmark = true,
+  refreshing = false,
+  onRefresh,
 }) {
   const insets = useSafeAreaInsets();
   const sheetBackground = sheetTone === 'subtle' ? colors.ink[50] : colors.surface.DEFAULT;
@@ -136,6 +142,11 @@ export function NavyCanopy({
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="interactive"
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              onRefresh ? (
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary[600]} />
+              ) : undefined
+            }
           >
             {children}
           </ScrollView>

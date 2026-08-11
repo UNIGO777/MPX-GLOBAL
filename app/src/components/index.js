@@ -11,6 +11,7 @@ export { PasswordStrength, scorePassword, PASSWORD_MIN_LENGTH } from './Password
 export { FormError } from './FormError.jsx';
 export { Card } from './Card.jsx';
 export { Badge, VerifiedBadge } from './Badge.jsx';
+export { VerificationSummaryCard } from './VerificationSummaryCard.jsx';
 export { Divider } from './Divider.jsx';
 export { Spinner, Skeleton, EmptyState, ErrorState } from './Feedback.jsx';
 export { ToastProvider, useToast } from './Toast.jsx';
