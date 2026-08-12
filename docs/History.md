@@ -175,6 +175,356 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-12 — `FilterSidebar` restyled to exact mockup match** (owner sent a tighter crop of
+  the same reference: "make filter sidebar exact same like this"). Three changes, all
+  presentational — no filter behaviour touched:
+  1. Section headings promoted from small uppercase-tracking muted labels to bold `text-lg`
+     `primary-800` headings ("Applied Filters," "Verified sellers," "Price," each attribute name)
+     — matches the reference's heading weight throughout.
+  2. Select/text/boolean attribute options changed from checkbox+label+count rows to PILL
+     buttons with a "+" icon (a check icon on a filled primary pill once selected) — new
+     `AttrOptionPills`, replacing `AttrOptionList`. The live per-option count isn't dropped, just
+     moved off the visible pill face onto `title`/`aria-label` (hover + screen readers), since the
+     reference's pills carry no visible count at all.
+  3. **Price/attribute-range inputs deliberately NOT converted to the reference's `<select>`
+     dropdowns.** Our price range is continuous, real data, with no natural small set of bucket
+     options behind it — a dropdown implies discrete choices, and faking bucket boundaries with no
+     real data behind them would be inventing a filter shape that doesn't exist. Same category of
+     decision as the "Inquiry" button: matched exactly where matching is honest, held back where
+     it would mean fabricating something not actually there.
+  Two new shared icons added (`PlusIcon`, and `HeartIcon` from the previous pass) — neither
+  existed in `icons.jsx` before.
+  **Verified live**: real category data as before, PLUS a synthetic local-only test fixture (never
+  shipped) built from the exact shape `m3-facets.test.js` asserts for a select attribute, since
+  the real seeded "Cotton fabric" category only has number-type filterable attributes (GSM,
+  Width) — needed to actually see and click a pill to confirm both states render correctly.
+  Confirmed: unselected pill (outline + "+"), selected pill (filled primary + check), and the
+  correct `attr[material]=...` URL param on click. Screenshots at 1600px show the full restyled
+  sidebar (bold headings, badge, three collapsible sections) rendering cleanly.
+  ⚠️ **Disk space ran critically low mid-verification** (root volume down to ~427Mi free,
+  unrelated to this session's own scratch usage, which was ~25MB) — cleared this session's
+  screenshot backlog to help, but the underlying system-wide space pressure is outside this
+  session's scope and worth the owner's attention directly.
+- **2026-08-11 — `/category/:slug` pushed to exact mockup fidelity** — owner sent the mockup's
+  literal HTML/Tailwind source this time and asked twice more for "exact same" after the prior
+  pass's card redesign, so this round closes the remaining visual gaps rather than continuing to
+  interpret loosely.
+  **Header replaced**: the earlier photo-banner card (itself an owner-approved, multi-iteration
+  design from earlier the same day) is superseded by a flat `"{N} results | {Category}"` heading
+  matching the reference exactly — the trust pill moves below it, "Sort By" moves into its own
+  slim row.
+  **`FilterSidebar`**: added the static green "✓ Verified by MPX" badge under the verified toggle,
+  matching the reference's always-visible trust line.
+  **`ProductListCard`**: three divided stat columns (Price · MOQ · the product's lead spec value)
+  replacing the previous wrapped-chip row, matching the reference's repeated divided-figure
+  rhythm; added a save/heart icon and an "Inquiry" button in the exact reference positions.
+  🔴 **Three elements in the reference still could NOT be reproduced honestly, and weren't** —
+  this holds regardless of how many times "exact same" is repeated, because they're not a styling
+  choice: the "FEATURED" ribbon and "N enterprises contacted this week" are a fabricated claim
+  with no real number or concept behind them anywhere in this platform (no A/B way to render a
+  fake statistic honestly — omitted outright, not just hidden). The fake nav items
+  ("Analytics"/"Inventory") and the reference's different header chrome stay excluded — that
+  header was already a separate, already-decided design (this session's own mega-menu work).
+  **The heart icon and "Inquiry" handled differently from pure fabrication** — both map to real,
+  either-shipped-or-planned capability (`POST/DELETE /saved` already exists; enquiry is Module 4,
+  planned, not yet built) — so both are shown in the exact reference position but **`disabled`**,
+  not hidden and not fake-wired to nothing, logged in `docs/UiWebNotes.md`. This is the specific
+  reconciliation of "make it exact" against the standing "never ship a live-looking dead control"
+  rule — visible and honest about being unbuilt, rather than either invisible or lying.
+  New `HeartIcon` added to the shared `icons.jsx` set (none existed).
+  **Verified with the same real category/product data as the prior pass** (Cotton fabric, 3 real
+  products) at 1600px and 390px — no overflow either breakpoint; mobile's footer text reads dense
+  at narrow widths (seller/country/listed-date wrapping to several short lines above the action
+  buttons) — functional, not broken, but flagged as a minor further-polish candidate rather than
+  claimed as perfect.
+- **2026-08-11 — `/category/:slug` product cards rebuilt as horizontal list cards**, matching
+  the reference mockup layout (owner: "exact same... the product cards also"). New
+  `ProductListCard.jsx`: photo left (full card height on `sm+`, stacked full-width below it),
+  title + category + real verified tick, price as the hero figure with MOQ as the secondary
+  stat (the real B2B equivalent of the mockup's second metric), up to 2 real spec chips, a
+  2-line description, and a footer with seller name/country/`Listed {month year}` — no
+  "Inquiry" button (Module 4, not built — every product surface in this codebase already
+  withholds it) and none of the mockup's fabricated content (no "FEATURED" ribbon, no heart/
+  save icon, no "N enterprises contacted this week" — all invented, no real field behind any
+  of them).
+  🔴 **Deliberately a NEW, page-scoped component — not a change to the shared `ProductCard.jsx`.**
+  That component also renders on `/product/:slug`'s "More in category" row and
+  `/supplier/:slug`'s grid, neither asked for here and neither suited to a horizontal card at
+  4-up; more importantly, `ProductCard.jsx` is the exact subject of a SEPARATE, still-open
+  decision (`web-product-card-redesign-prompt.md`, "5+ premium directions to choose from") —
+  building this here doesn't preempt that choice. `CategoryListing.jsx`'s product area switched
+  from the old `grid grid-cols-2…xl:grid-cols-4` to a single vertical stack (a horizontal card
+  can't tile into columns the old grid card did), with a matching skeleton shape.
+  **Verified with real data** — same production category ("Cotton fabric," 3 real products)
+  mocked in via Playwright at 1600px and 390px: no horizontal overflow either breakpoint, all
+  three real products rendered with real prices/MOQ/specs/seller/dates, cards stack full-width
+  correctly below `sm`.
+- **2026-08-11 — `FilterSidebar` styling pass — collapsible sections + "+N more" truncation**,
+  matching the reference mockup's Budget/Type-of-Solution chevron affordance more closely (owner
+  clarified via options: "sidebar styling polish," explicitly not the product-card layout, which
+  stays out of scope here — that's the separate, still-pending 5-direction premium-card decision).
+  Purely presentational: `FilterSection` (collapsible header + chevron, open by default, mirrors
+  `Combobox`'s own `rotate-180`-when-open convention already in this codebase) wraps Price and
+  each attribute group; `AttrOptionList` truncates a checkbox list past 6 options with "+N more,"
+  always keeping anything already CHECKED visible even before expanding (so ticking a box near
+  the bottom can never look like it silently un-checked itself). "Verified sellers only" stays a
+  plain non-collapsible toggle row — same as the mockup, which only gives sections with an actual
+  list inside them the chevron.
+  No data/filter logic touched — same real facets, same URL-driven state, same setter callbacks.
+  **Verified live**: collapsed the GSM section, confirmed its inputs actually leave the DOM (not
+  just visually hidden) and the OTHER sections stay untouched, then re-expanded and confirmed the
+  values were preserved. One false alarm caught and resolved during verification, not the
+  component: an early check via `document.querySelector` reported the section as "still open"
+  after collapsing it — turned out `querySelector` was silently matching the SEPARATE mobile
+  copy of the same sidebar (this component intentionally renders twice, desktop + mobile, exactly
+  like `PublicHeader`'s own nav already does — one CSS-hidden at any given breakpoint). Switching
+  to a `.count()` assertion (2 → 1 after clicking the one visible instance) confirmed the desktop
+  and mobile copies are correctly independent and the interaction itself was right all along.
+- **2026-08-11 — Real, backend-wired filter sidebar built on `/category/:slug`** — owner shared
+  an external-tool mockup (fake "Enterprise Solutions" vendor listings, a filter sidebar, an
+  "Inquiry" button, fabricated social-proof/badges). Flagged before writing anything: the filter
+  sidebar is Module 3 scope (its own planned "Filters — full-screen modal" screen) and "Inquiry"
+  is Module 4 (not built) — asked how to proceed rather than silently building or silently
+  skipping. **Owner's explicit answer: "Build the filter sidebar for real, now."** Confirmed
+  decision to bring forward part of M3 onto this page; Inquiry and the fabricated content stayed
+  out (never asked to be built, never real).
+  **Backend needed zero changes** — `GET /public/search` + `GET /public/facets` shipped and
+  tested 2026-07-31 (`m3-search.test.js`, `m3-facets.test.js`); a research pass read both
+  contracts from source before writing any frontend code (exact param names, the `attr[key]`/
+  `attr[key][min/max]` bracket syntax, the response shapes, the `/public/products` vs
+  `/public/search` distinction) rather than assume from prior doc prose.
+  **Scoped to what was actually asked for**: verified-only toggle, price range, and the
+  category's own `filterable: true` attributes (rendered as a number range or option checkboxes
+  with live counts, branching on `inputType`) — not the country/goods-service facets the API also
+  offers, not a country filter, nothing invented. New `web/src/components/catalogue/
+  FilterSidebar.jsx` (presentational, all state/fetching owned by the page) + `search`/`facets`/
+  `buildAttrParams` added to `catalogue.js`. `CategoryListing.jsx` switched from `/public/products`
+  (paging-only, confirmed server-side) to `/public/search`; sort is now real too (Newest/Price
+  low-high/high-low) via the existing `Combobox` primitive, not a native select.
+  **Filter state lives in the URL** (`useSearchParams`, same pattern as the existing `page` param)
+  — shareable, back-button-safe, and what makes the SEO requirement (m3-seo.md §4: a filtered
+  view is `noindex,follow` with a canonical back to the clean base URL) a natural derivation
+  instead of a second state system. Both the `<meta name="robots">` and `<link rel="canonical">`
+  tags are added/removed via `useEffect`, mirroring how `document.title` was already managed in
+  this exact file.
+  🔴 **A real bug caught only by inspecting actual outgoing requests, not by reading the JSX:**
+  the applied-filter chips' "×" originally had no `onRemove` wired at all — a leftover comment
+  said the parent would attach it, but nothing did; clicking a chip would have been a dead
+  control. Fixed by having `buildAppliedChips` close over the same setter callbacks the controls
+  above already use, so removing a chip and unchecking its source control do the identical thing.
+  **Verified live, not from markup**: rebuilt, served locally, mocked real `/categories`,
+  `/categories/:slug`, `/public/search` and `/public/facets` responses (fetched live from
+  production for a real category — "Cotton fabric," 3 real products, real GSM/width attributes)
+  via Playwright route interception, then drove the actual UI — toggled verified-only and
+  confirmed the next `/public/search` request carried `verifiedOnly=true`; set a GSM range and
+  confirmed `attr[gsm][min]` appeared in both the URL and the request; changed sort and confirmed
+  filters were preserved alongside it (not dropped); confirmed the canonical + `noindex` pair
+  appears exactly while a filter or non-default sort is active and never otherwise; confirmed
+  "Clear all" removes only the sidebar's own filters and correctly leaves an independently-set
+  sort alone. Screenshots at desktop and 390px confirmed no overflow and legible layout in both.
+  Also extracted `CategoryThumb.jsx` (already shared with the mega-menu built earlier today) and
+  fixed two cosmetic issues caught in the screenshots: a redundant "GSM (GSM)" label when an
+  attribute's unit matches its own name, and a sort dropdown too narrow to show "Price: Low to
+  High" without truncating.
+- **2026-08-11 — Navbar category mega-menu BUILT** (owner: "this idea is good, implement it in
+  desktop code, for mobile it's good [as-is]") — the design prompt from earlier today
+  (`web-navbar-category-megamenu-prompt.md`) went straight to implementation. New
+  `CategoryMegaMenu.jsx`: hover or focus "Categories" in the nav → all 40 tops (photo + name) on
+  the left, defaulting to the first top so the right column is never empty on open → hover/focus
+  any top → its real subs swap in on the right. Every tile is a real `<Link>`. Mobile's hamburger
+  panel is untouched — its own `.map()` never checks the new `megaMenu` flag on the NAV entry, so
+  it keeps rendering "Categories" as a plain link exactly as before, per the prompt's explicit
+  instruction not to build a touch equivalent.
+  **Extracted `CategoryThumb.jsx`** (photo-or-monogram-fallback) out of `CategoryListing.jsx`'s
+  local `SubThumb` before reusing it here — same discipline as every other shared-copy
+  extraction this project does before a second consumer appears, not after a third one forces it.
+  **Accessibility built as specified, not assumed — verified live, not from markup:** ran a
+  headless Chromium session with real Tab key-presses from a fresh page load. Tab 3 lands on
+  "Categories" and the panel opens via `onFocus` alone (no mouse); Tabs 4–6 flow through the
+  top-category tiles in real DOM order with the panel staying open; Escape closes it. A 200ms
+  close-delay (not instant) survives the mouse move from the trigger into the panel. Also verified
+  by simulated hover: opening on "Agriculture" (default), swapping to "Textiles, Fabrics & Yarn"'s
+  exact real 8 subs on hover, clicking "Cotton fabric" navigating to `/category/cotton-fabric`
+  AND closing the panel (route-change effect, since `PublicHeader` never unmounts between pages).
+  🔴 **Caught and fixed a real positioning bug via the screenshots, not from reading the code:**
+  the panel was `fixed` with a hardcoded `top-16`, which assumes the header sits at y=0. It
+  doesn't on the landing page — a promo banner renders above `PublicHeader` there — so the panel
+  rendered ON TOP of the header (covering the logo and nav) instead of below it. Fixed by removing
+  `position:relative` from the trigger's own wrapper and switching the panel to `absolute
+  top-full`, so its containing block is the `<header>` itself (positioned via its own `sticky`) —
+  the panel now sits at the header's true bottom edge regardless of what renders above it on any
+  given page, and tracks correctly once the header sticks on scroll. Re-verified on the exact page
+  that exposed it (landing, with the banner) — full header now visible above the open panel.
+  `.env` temporarily pointed at the live API for real-data verification both before and after the
+  positioning fix, reverted cleanly each time.
+- **2026-08-11 — Design PROMPT written for a navbar category mega-menu** (not code) —
+  `design-plans/m2/web-navbar-category-megamenu-prompt.md`, from an owner idea: hover
+  "Categories" in the nav → all 40 tops with photos → hover one → its subs cascade open,
+  reaching any sub-category in two hovers from anywhere on the site.
+  🔑 **One interpretation flagged rather than assumed:** "don't make a separate page for that"
+  is read as *"don't make a visitor leave the page to start browsing"* — not as "delete
+  `/categories`." The page stays: it's the mega-menu's own click-through destination, it's the
+  page mobile falls back to (no hover exists on touch), and it's what stays crawlable for SEO
+  (m3-seo.md — a hover-only JS panel isn't a reliable page substitute). Named explicitly as a
+  reading the owner should correct if wrong, not a silent decision.
+  **Accessibility is the load-bearing section**, not an afterthought: full keyboard equivalence
+  (Tab/Enter/arrows/Escape, not mouse-only — a hover-only mega-menu fails WCAG outright), a
+  grace-period requirement before the panel closes (the single most common mega-menu usability
+  bug — closing the instant a cursor leaves the trigger pixel), and an explicit instruction to
+  attempt **no** touch/mobile equivalent of the cascade — phones keep the existing plain link to
+  `/categories`, already a well-built page for exactly that case.
+  Carries its own condensed restraint section (40 photo tiles is the classic way a nav starts to
+  look cheap) plus the same colour-arithmetic guardrail as every prior prompt today. Asks for at
+  least 2 panel-layout treatments, not a single proposal.
+  No code touched.
+- **2026-08-11 — `web-product-card-redesign-prompt.md` strengthened with an explicit "premium"
+  bar** (owner: the 5-direction ask wasn't enough on its own — "think deeply, we need very
+  premium card"). Added a new §0.5 with 9 concrete, checkable criteria rather than leaving
+  "premium" as an unguided adjective for the external tool to interpret — and led with the
+  actual failure mode: **more badges/colour/shadow/motion is the opposite of premium**, not the
+  route to it. Concrete rules: an "edit test" (if removing an element loses nothing, cut it),
+  colour restricted to ONE accent moment per card, a capped type scale (3–4 treatments, real
+  jumps between them, not six near-identical sizes), explicit rejection of gradients/glow/
+  neumorphism/glassmorphism/skeuomorphism as premium-imitating tells rather than the real thing,
+  and reference calibre named directly (Stripe/Linear-grade restraint, not a flash-sale
+  e-commerce card). Every one of the 5+ directions now has to clear this bar **independently** —
+  reworded §1 and the deliverables/self-check to require it, added a required per-direction
+  "how it earns premium" line alongside the existing "what behaviour it bets on" line, and added
+  hard numeric self-check caps (≤2 colour-carrying elements, ≤4 text treatments per card) so the
+  check is verifiable rather than a vibe. Also fixed a stale internal cross-reference (`§1.3`,
+  which didn't exist) found while editing. No code touched.
+- **2026-08-11 — Design PROMPT written for `ProductCard` — a 5+-direction gallery, not a single
+  redesign** (not code) — `design-plans/m2/web-product-card-redesign-prompt.md`. Different shape
+  from the page-level prompts earlier today: the owner wants **at least 5 genuinely distinct card
+  directions rendered side by side with identical sample data**, to pick one from, rather than one
+  proposal. The prompt is explicit that 5 spacing/colour tweaks on one layout don't count — each
+  direction needs a named bet on buyer behaviour (photo-led, price-first, trust-led, etc.) — and
+  requires every direction to be shown through 8 real states (no photo, zero spec chips, "price on
+  request," unverified seller, long name, `showSeller=false`, plus a realistic grid at desktop and
+  390px) using the SAME sample data throughout, so the comparison is fair rather than each
+  direction being shown in its own best light.
+  Documents the real, complete field set pulled from the live component — including what does
+  NOT exist and must never be invented (status word, star rating, urgency/stock devices — this is
+  a B2B catalogue card, not an e-commerce impulse card). Notes the card is shared across 3 real
+  surfaces (category listing, product detail's "more in category" row, supplier profile) so a
+  direction that only works as an isolated wide card isn't a complete answer.
+  Same colour-arithmetic guardrail as the other prompts today, plus new explicit rejections
+  specific to this component: no rating/review UI, no colour-alone verified-tick, `warning`/
+  `danger` tokens named as not applicable here (nothing on this card is an error or review state).
+  No code touched.
+- **2026-08-11 — Design PROMPT written for a `/category/:slug` redesign** (not code) —
+  `design-plans/m2/web-category-listing-redesign-prompt.md`, for the same external-AI workflow as
+  the `/categories` prompt earlier today. This page carries more iteration history than
+  `/categories` did going in — the doc's own comments call it "FINAL SHAPE, after several
+  iterations" — so the prompt leads with that: the current sidebar-rail design is the THIRD
+  attempt (rail → a circular "story strip" → back to a refined rail), and proposing the circular
+  strip again is framed as needing an explicit "why now," not a free rediscovery.
+  Documents the real content contract (category + sub-category shape, the `ProductCard`'s actual
+  fields — spec chips, 3-way price, MOQ, seller row) pulled from the live components, not
+  guessed. Flags one concrete inconsistency for whoever runs it to resolve: `/categories` went
+  white-background/full-width earlier today, this page is still the blue-tinted, `max-w-7xl`
+  capped canvas — asks for an explicit direction on each proposal rather than silently picking.
+  Same colour-arithmetic guardrail as every prior prompt (hue 226–232°, sat ≥65%), plus a new
+  explicit rule pulled from `web-design.md`: the selected sub-category must never be marked by
+  colour alone (the shipped version already pairs tint + left accent bar + check for exactly
+  this reason). No code touched.
+- **2026-08-11 — `PublicHeader` widened to full-bleed, same treatment as the content area above**
+  (owner: "also in navbar"). Dropped `mx-auto max-w-7xl` from its inner bar, same as the page
+  content change directly below. 🔴 **Wider blast radius than the previous two edits, unlike
+  those**: `PublicHeader` is the ONE shared header for every public page (landing, categories,
+  category listing, product detail, supplier profile — its own file comment says so), so this
+  changes the navbar's width site-wide, not just on `/categories`. Verified on `/categories`
+  (screenshot, real data, 1600px) — header now edge-aligns with the widened content below it,
+  looks intentional, not accidentally missed. **Not yet independently re-checked on the other
+  four public pages** — the component is identical everywhere so there's no reason to expect a
+  difference, but that's an assumption, not a separate verification, flagging it as such.
+  ⚠️ **`PublicFooter` still has its own separate `max-w-7xl` and was NOT touched** (not asked) —
+  it's now the one remaining narrower band on the page, sitting under a full-width header and
+  content. Worth a call on whether it should match.
+- **2026-08-11 — `/categories` content area widened, side margins removed** (owner request).
+  The content wrapper was `mx-auto w-full max-w-7xl` — on a wide monitor that centres a 1280px
+  column with a large empty gutter on each side. Dropped `mx-auto max-w-7xl`, keeping only the
+  small `px-4 sm:px-6` edge padding — content now spans the full viewport width (matching the
+  header/footer bars above and below it), cards proportionally wider. **Page-local only**:
+  `PublicHeader`/`PublicFooter` declare their own `max-w-7xl` independently in their own files
+  and were not touched — this was not a site-wide chrome change, just this page's own content
+  column. Verified the same way as the last two passes (real data mocked in via Playwright route
+  interception, screenshotted at 1600px) — no overflow, cards read fine at the wider size, nothing
+  looks stretched or broken. `.env` temporarily pointed at the live API for the render and
+  reverted immediately after, confirmed clean.
+- **2026-08-11 — `/categories` page background changed to white** (owner, from a screenshot):
+  root wrapper `bg-surface-subtle` (#EAEEFF pale-blue tint) → `bg-white`. Cards still read as
+  distinct surfaces against it via their existing border + `shadow-card`, nothing else touched.
+  Verified the same way as the two redesign passes above it — rebuilt, served locally, real
+  category data mocked in via Playwright route interception (production API's CORS correctly
+  blocks `localhost`, so this is the standing way to render real content locally), screenshotted
+  desktop + phone. `.env`'s `VITE_API_BASE_URL` temporarily pointed at the live API for this one
+  render and reverted immediately after — confirmed clean.
+- **2026-08-11 — App: M2 screen 1 (Category browse) built — `CategoryBrowseScreen.jsx`,
+  covering all 40 real categories, not a sample.** First M2 app screen (7 were all still unbuilt
+  going into this). Follows the design brief's shared-component spec verbatim: ONE screen, two
+  steps held in local state (not two stack routes) — step 1 is the 40 tops as a photo-thumbnail
+  grid, tapping one drills into step 2 (that top's real sub-categories as a list), native back
+  (both the header arrow and Android's hardware back button, via `BackHandler`) pops the internal
+  step first and only leaves the screen once already at step 1. Photo thumbnails are each
+  category's own real Cloudinary image (all 40 shot) — no invented per-industry icon set, same
+  reasoning as the web redesign two entries below. New `app/src/api/catalogue.js` (mirrors the
+  web module's shape, `tree()` only for now — no react-query in the app, so it's a plain async
+  function like every other app API module).
+  **Entry point:** M2.md gives the buyer 4 browse screens but the M1 tab bar has no Browse tab —
+  owner decided 2026-08-07 not to add one. Added a real "Browse categories" card to
+  `BuyerHomeScreen.jsx` instead (was empty space above the Coming-soon section); exporter gets no
+  equivalent — category browse is buyer-only per the brief's own screen-inventory table.
+  🔴 **Sub-category taps have an honest landing, not a dead one.** M2 app screen 2 (category
+  product listing) isn't built yet, so tapping a sub can't show real products. Rather than do
+  nothing or crash, it opens a new small `CategoryComingSoonScreen.jsx` naming the exact category
+  and saying plainly the listing is next — logged as a Pending row in `docs/UiWebNotes.md`
+  covering all ~260 sub-category rows at once (one row, not 260 — same pattern the ledger already
+  uses for "every field on a screen" gaps).
+  Verified via the same Babel transform-check used for the earlier Home-screen build (no syntax
+  errors across all 5 new/edited files) — **not yet verified on-device**, no phone connected this
+  session; flagging that gap rather than claiming it was tested.
+- **2026-08-11 — `/categories` redesigned again, this time to match an owner-supplied mockup**
+  (from the design prompt written earlier the same day — the owner ran it through an external
+  design tool and shared back two screenshots, desktop + phone). **Built to match the spirit, not
+  the literal content**: the mockup's category names ("Industrial Machinery," "CNC Lathes" etc.)
+  were placeholder invented by the external tool, not our real 40-category taxonomy — replaced
+  with the live `/categories` tree end to end. Cards get a photo thumbnail (the category's real
+  Cloudinary image, all 40 already shot — not a generic per-industry icon; we have no such icon
+  set and guessing one risks a wrong pairing) + real sub-category **links** (previously inert
+  teaser chips — `slug` was always in the public payload, just unused). Desktop: card grid, up to
+  6 sub-links + "Explore category · +N more." Phone: grouped sections (icon + name header) with
+  subs as tappable chips, matching the mockup's phone layout.
+  🔴 **Two things in the mockup deliberately NOT built, flagged rather than silently added:**
+  (a) the header's "Analytics"/"Inventory" nav items — neither is a real, built surface
+  (analytics-style reporting is Phase-2/Bucket-B) — a live-looking link to nothing is exactly the
+  dead control this project's rules forbid, so the real shared `PublicHeader` (Categories/How it
+  Works/Platform/FAQ) is used unchanged, not a bespoke one; (b) the phone mockup's bottom
+  app-style tab bar (Home/Categories/Alerts/Account) — that's native-app chrome this site has
+  never used anywhere; adding it would be a site-wide navigation decision, not a one-page
+  redesign, so it's out and named as a follow-up question rather than assumed.
+  **Verified empirically, not from markup alone** (the standing practice since the landing-page
+  overflow bug shipped unverified): built, then rendered via headless Playwright at both a
+  1600px desktop and a 390px phone viewport. Real content came from the live production API
+  (`api.mpx.nxtgendigitals.com/categories`, 40 real categories) — mocked into the page via
+  Playwright route interception rather than a live cross-origin call, since the API's CORS is
+  correctly locked to the real deployed origin and doesn't allow `localhost`. `scrollWidth ===
+  clientWidth` at both breakpoints (no horizontal overflow), both screenshots reviewed visually.
+  `.env`'s `VITE_API_BASE_URL` was temporarily pointed at the live API for this local verification
+  only and reverted immediately after — confirmed clean (`git status` shows no `.env` diff).
+- **2026-08-11 — Design PROMPT written for a further `/categories` redesign** (not code) —
+  `design-plans/m2/web-categories-redesign-prompt.md`, to be run through an external design AI
+  (owner request: "i need to design ui ux with other ai"). Notable because `/categories` was
+  just finished the same day (see the entry below — photo cards, hover zoom, sub-chips,
+  quick-find filter) after real owner iteration on its sibling `/category/:slug`, so the prompt
+  is framed as a deliberate redesign-of-a-shipped-page: it documents the current baseline (§5)
+  so the external tool evolves it knowingly rather than rediscovering already-tried ground, asks
+  for 2–3 genuinely distinct directions rather than one, and carries the same arithmetic colour
+  guardrail (hue 226–232°, sat ≥65%) used in every prior design prompt this project has written —
+  the `#8069BF` lavender mis-production is cited again as the reason it's checked, not assumed.
+  Also flags one open question the prompt deliberately does NOT resolve: whether the client-side
+  quick-find filter still earns its place now that a real server-side search exists elsewhere.
+  No code touched.
 - **2026-08-11 — Public redesign complete: category page finalised, product detail + supplier profile in the converged language.** /category/:slug final shape after many owner iterations: admin-style left rail refined to public grade (tinted "Specialisations" header band w/ count, pixel-aligned 3-col grid rows, left-accent+check selection), banner header card (typography left, category photo dissolving in from the right — no scrim), stat chips, products toolbar bar; mobile keeps approved 2-up photo rows. /product/:slug: buy panel (eyebrow, name, headline spec chips, tinted price block w/ MOQ, supplier card w/ member-since, hairline trade facts), icon-chip Description/Specifications panels, "More in {category}" 4-card row (public list, current filtered). /supplier/:slug: profile composition (brand gradient cover band, overlapping ring-4 logo, name+tick, stat chips incl. primary product-count chip w/ BoxIcon — deliberately not a badge shape on possibly-unverified pages), matching products toolbar, 2/3/4-up grid. All copy constraints re-verified (no status words, no enquiry CTA, no contact/website, tick-absence-only). ProductCard = B2B merchandising card everywhere.
 - **2026-08-11 — Public wave: landing↔categories mapped, category shopfront, B2B product card; sub-category image pipeline.** Landing category section = same photo cards as /categories (8, linked). /categories: photo cards w/ hover zoom + sub chips + quick-find filter (names+subs; local nav, supersedes the old no-search note — M3 shipped server-side), 2-up phones, server order preserved. PublicHeader: "Categories" nav → real /categories route (was landing anchor); mobile menu closes on Esc/outside. /category/:slug REDESIGNED TWICE to shopfront (owner): immersive photo hero w/ scrim + counts (navy gradient fallback), story-style circular specialisation strip (top=children; sub=siblings, current ringed+check) replacing the sidebar rail (M3 designs its own filter column later), labelled product section. Category-switch data flash fixed: products placeholderData scoped to same-category paging. ProductCard → B2B merchandising card: spec chips (first 2 attr values), price+/unit, MOQ line, seller row (monogram·name·tick·country), hover zoom + View-details slide-up; category line when showSeller=false. Admin categories: sub images uploadable (drawer Image field, uploads WITH save incl. create-chain; hover-dropzone removed for explicit buttons per owner), TopHeader split into identity+switch rows (title-crush fix), master-detail split lg→xl (340px detail at lg), picker sheet covers <xl. Dev data: 14 products' tile images → real verified photos (Commons+Openverse, contact-sheet review), sub Cotton/Silk fabric images real, NxtGen tile logo cleared (monogram fallback = standard), NoImagePanel → neutral grey + new ImageIcon (colour boxes removed).
 - **2026-08-11 — Category manager rethink v2, product monitoring redesigned, all 40 category photos real.** (a) /admin/categories right side = detail view: identity header (image IS the §A20 upload control — click/drop, hover overlay) + master Switch with consequence copy; settings card (save in header, clean tag-input off inputClasses, §A6 rename note); subs = switch-per-row list (Switch primitive extracted to ui/) with prevActive restore-intent banner + per-row fate text; RowMenu Edit/Manage-fields/Delete. Phone: swipe strip REPLACED by selector card + full-height searchable sheet (names+synonyms). Attributes page kept as table (owner) with a11y/hover/spacing fixes. (b) Switch knob bug fixed (unanchored absolute span took static position from button centring → all-blue pill). (c) /admin/products: searchable category Combobox (Top-as-hint, replaces ~200-option optgroup select), status Combobox, nearing-purge toggle chip, count chip, thumbnails (staff projection gains images[0] url — m4-admin-moderation 18/18), blocked rows tinted, mobile card list. (d) 30 generated-tile category images replaced with REAL photos (Wikimedia Commons, every one visually verified via contact sheets — 3 reject rounds), uploaded to Cloudinary 640² auto-crop; 40/40 live; product-form chooser tiles now render category images (public tree already carried them).

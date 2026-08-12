@@ -11,6 +11,8 @@ import { CaptureDocumentScreen } from '../screens/kyc/CaptureDocumentScreen.jsx'
 import { withUnverifiedGuard } from '../screens/kyc/RequireUnverified.jsx';
 import { CompanyProfileScreen } from '../screens/profile/CompanyProfileScreen.jsx';
 import { ChangePasswordScreen } from '../screens/profile/ChangePasswordScreen.jsx';
+import { CategoryBrowseScreen } from '../screens/CategoryBrowseScreen.jsx';
+import { CategoryComingSoonScreen } from '../screens/CategoryComingSoonScreen.jsx';
 import { postSignupPrompt } from '../screens/kyc/postSignupPrompt.js';
 
 const Stack = createNativeStackNavigator();
@@ -53,6 +55,12 @@ export function AppStack({ role }) {
 
       {/* Screen 16 sub-screen — pushed from Profile's Security section. */}
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+
+      {/* M2 app screen 1 — buyer-only, reached from Buyer Home (no tab-bar
+          entry, owner decision 2026-08-07). CategoryComingSoon is the honest
+          landing for a sub-category tap until screen 2 (product listing) ships. */}
+      <Stack.Screen name="CategoryBrowse" component={CategoryBrowseScreen} />
+      <Stack.Screen name="CategoryComingSoon" component={CategoryComingSoonScreen} />
 
       <Stack.Screen name="KycEntityType" component={withUnverifiedGuard(EntityTypeScreen)} />
       <Stack.Screen name="KycDocumentType" component={withUnverifiedGuard(DocumentTypeScreen)} />

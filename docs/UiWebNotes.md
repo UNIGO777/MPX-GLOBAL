@@ -69,6 +69,22 @@ reads as tappable.
 | 2026-08-10 | `app/src/screens/ExporterHomeScreen.jsx` | "Catalogue" card | Opens "My products" (M2 app screen 5) | M2's app catalogue screens (5–7) aren't built yet — this card is meant to be wired the moment screen 5 ships (design brief §6 names this exact follow-up); the `ExporterCatalogue` tab is the same placeholder today | Pending |
 | 2026-08-10 | `app/src/screens/ExporterHomeScreen.jsx` | "Enquiries" card | Opens the exporter's enquiry list | M4 | Pending |
 | 2026-08-10 | `app/src/screens/ExporterHomeScreen.jsx` | "Chat" card | Opens exporter chat threads | M4 | Pending |
+| 2026-08-10 | `app/src/screens/BuyerHomeScreen.jsx` | "Browse categories" card | Opens M2 app screen 1 (category browse) | — | Done (2026-08-11, links to `CategoryBrowse` — see the section below) |
+| 2026-08-11 | `web/src/components/catalogue/ProductListCard.jsx` (`/category/:slug`) | Heart/save icon on every card | Adds the product to the buyer's saved list | The real endpoint exists (`POST`/`DELETE /saved`, buyer-only) but auth-gating + optimistic UI wasn't part of this pass — shown in the exact mockup position, `disabled`, not hidden and not fake-wired | Pending |
+| 2026-08-11 | `web/src/components/catalogue/ProductListCard.jsx` (`/category/:slug`) | "Inquiry" button on every card | Opens an enquiry/contact flow to the seller | Module 4 (enquiry/chat), not built — every other product surface in this codebase withholds this entirely; shown here `disabled` because the owner asked twice more for exact mockup fidelity after the first pass omitted it | Pending |
+
+### 📱 Mobile app — Category browse (2026-08-11)
+
+`CategoryBrowseScreen.jsx` (M2 app screen 1, design brief `design-plans/m2/app-screens-design.md`
+§4) is fully wired — real 40-category tree, real drill-in, real sub-category `slug`s. The one gap:
+tapping a sub-category can't land on a real product listing yet, because M2 app screen 2 (category
+product listing) doesn't exist. Rather than do nothing, it opens `CategoryComingSoonScreen.jsx`,
+which names the exact category and says plainly the listing isn't built — not a dead tap, not a
+crash, but not a real result either.
+
+| Date | Page / Component | Element (label) | What's missing / expected behaviour | Why deferred | Status |
+|------|------------------|-----------------|-------------------------------------|--------------|--------|
+| 2026-08-11 | `app/src/screens/CategoryBrowseScreen.jsx` → `CategoryComingSoonScreen.jsx` | Every sub-category row (all ~260 of them) | Should open the category's real product listing | M2 app screen 2 isn't built yet — this is the natural next screen to build | Pending |
 
 ---
 

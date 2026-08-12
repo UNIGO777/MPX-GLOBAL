@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { organisationApi } from '../api/organisation.js';
@@ -16,7 +16,9 @@ import { toAppError } from '../utils/errors.js';
 /**
  * Buyer home — first tab (design brief `design-plans/m1/app-screens-design.md`
  * §9). Greeting + company identity + a verification card that taps through to
- * the hub + placeholder cards for the modules arriving later (M3 search, M4
+ * the hub + a real "Browse categories" entry (M2 screen 1 has no tab-bar slot
+ * of its own — owner decision 2026-08-07 — so Home is where it hangs) +
+ * placeholder cards for the modules arriving later (M3 search, M4
  * enquiries/chat) — those stay visibly "Coming soon", ledgered in
  * `docs/UiWebNotes.md`, not live-looking dead links.
  *
@@ -82,6 +84,24 @@ export function BuyerHomeScreen({ navigation }) {
 
           <VerificationSummaryCard status={status} onPress={() => navigation.navigate('KycHub')} />
 
+          {/* M2 screen 1. No tab-bar entry by design (owner, 2026-08-07) —
+              Home is the entry point instead. */}
+          <Pressable
+            onPress={() => navigation.navigate('CategoryBrowse')}
+            accessibilityRole="button"
+            accessibilityLabel="Browse categories"
+            style={({ pressed }) => [styles.browseCard, pressed && styles.browseCardPressed]}
+          >
+            <View style={styles.browseIconWrap}>
+              <Ionicons name="grid-outline" size={22} color={colors.primary[600]} accessible={false} />
+            </View>
+            <View style={styles.browseBody}>
+              <Text style={styles.browseTitle}>Browse categories</Text>
+              <Text style={styles.browseSubtitle}>Find suppliers across 40 categories</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.ink[400]} accessible={false} />
+          </Pressable>
+
           <Text style={styles.sectionLabel}>COMING SOON</Text>
           <View style={styles.placeholderStack}>
             <PlaceholderCard icon="search-outline" label="Search suppliers" />
@@ -121,6 +141,29 @@ const styles = StyleSheet.create({
   identityRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
   identityName: { ...typography.label, color: colors.ink[900], flex: 1 },
   identityMeta: { ...typography.caption, color: colors.muted },
+
+  browseCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    backgroundColor: colors.surface.DEFAULT,
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surface.border,
+    padding: spacing[4],
+  },
+  browseCardPressed: { backgroundColor: colors.ink[50] },
+  browseIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.full,
+    backgroundColor: colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  browseBody: { flex: 1, gap: 2 },
+  browseTitle: { ...typography.label, color: colors.ink[900] },
+  browseSubtitle: { ...typography.caption, color: colors.muted },
 
   sectionLabel: {
     ...typography.label,

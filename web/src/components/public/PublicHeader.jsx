@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { roleHome } from '../../auth/roleHome.js';
+import { CategoryMegaMenu } from './CategoryMegaMenu.jsx';
 import { MenuIcon, XIcon } from '../ui/icons.jsx';
 import { Logo } from '../ui/Logo.jsx';
 
@@ -16,9 +17,16 @@ import { Logo } from '../ui/Logo.jsx';
  * while the marketing sections stay landing anchors. Anchors only work as bare
  * `#hash` on `/`; anywhere else they carry the path or they resolve against
  * the current URL and do nothing.
+ *
+ * 🔑 `megaMenu: true` on "Categories" (2026-08-11, design prompt
+ * `design-plans/m2/web-navbar-category-megamenu-prompt.md`) swaps it for a
+ * hover/focus mega-menu on the DESKTOP nav only — see `CategoryMegaMenu.jsx`.
+ * The MOBILE nav below deliberately keeps rendering it as a plain link (that
+ * `.map()` never checks the flag) — the prompt was explicit that touch/mobile
+ * gets no cascade equivalent, `/categories` already serves that case well.
  */
 const NAV = [
-  { to: '/categories', label: 'Categories' },
+  { to: '/categories', label: 'Categories', megaMenu: true },
   { hash: '#how-it-works', label: 'How it Works' },
   { hash: '#platform', label: 'Platform' },
   { hash: '#faq', label: 'FAQ' },
@@ -62,13 +70,15 @@ export function PublicHeader({ current }) {
 
   return (
     <header ref={rootRef} className="sticky top-0 z-40 bg-white shadow-sm">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6">
         <Link to="/" aria-label="MPX Global — home">
           <Logo size="md" />
         </Link>
         <nav aria-label="Main" className="hidden items-center gap-6 lg:flex">
           {NAV.map((item) =>
-            item.to ? (
+            item.megaMenu ? (
+              <CategoryMegaMenu key={item.label} current={current} linkClasses={linkClasses} />
+            ) : item.to ? (
               <Link
                 key={item.label}
                 to={item.to}

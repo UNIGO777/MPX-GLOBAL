@@ -171,3 +171,14 @@ export const ImageIcon = (props) => (
     <path d="m21 15-4.2-4.2a1 1 0 0 0-1.42 0L7 19M14 19l3.4-3.4" />
   </Svg>
 );
+
+/** Save/favourite (unfilled — filled-on-select is a future state, not drawn
+ *  since nothing here is wired yet; see `ProductListCard.jsx`). */
+export const HeartIcon = (p) => (
+  <Svg {...p}>
+    <path d="M12 20.6 4.3 13a4.9 4.9 0 0 1 0-7 4.7 4.7 0 0 1 6.9 0l.8.8.8-.8a4.7 4.7 0 0 1 6.9 0 4.9 4.9 0 0 1 0 7z" />
+  </Svg>
+);
+
+/** An unselected filter-pill's leading glyph (`FilterSidebar.jsx`). */
+export const PlusIcon = (p) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;

@@ -3,10 +3,12 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
-import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
+import { CategoryThumb } from '../../components/catalogue/CategoryThumb.jsx';
+import { FilterSidebar } from '../../components/catalogue/FilterSidebar.jsx';
+import { ProductListCard } from '../../components/catalogue/ProductListCard.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
+import { Combobox } from '../../components/ui/Combobox.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
@@ -17,7 +19,7 @@ import { NotFound } from './NotFound.jsx';
 /**
  * M2 web screen 2 — the products of one category (`/category/:slug`).
  *
- * FINAL SHAPE (owner-directed, 2026-08-11, after several iterations):
+ * Base layout (owner-directed, 2026-08-11, after several iterations):
  *
  *   left rail → the sub-categories as a STICKY SIDEBAR of photo rows (thumb ·
  *               name · chevron) — the approved row design, vertical. "All
@@ -27,29 +29,82 @@ import { NotFound } from './NotFound.jsx';
  *   header    → typographic: the category name and a muted context line.
  *   grid      → the products — the page's visual centre of gravity.
  *
+ * 🔴 FILTERS ADDED 2026-08-11 (owner: "build the filter sidebar for real,
+ * now" — explicitly bringing forward part of Module 3, confirmed, not
+ * assumed). Real, backend-wired — `GET /public/search` + `GET /public/facets`,
+ * both shipped and tested (m3-search.test.js, m3-facets.test.js). This
+ * replaces the earlier "NO filters — all Module 3" stance for THIS page only;
+ * `/public/products` (paging-only) is left as-is for any other surface still
+ * using it.
+ *
+ * Scoped to what was actually asked for: verified-only, price range, and the
+ * category's own filterable attributes (material, GSM, etc.). NOT built:
+ * country/goods-vs-service facets (in the API, not part of this ask), a
+ * full-screen filter modal (that's M3's own planned screen, a bigger UI than
+ * this sidebar), enquiry/contact CTAs (M4, still not built), and no fabricated
+ * content (social-proof counters, "featured" ribbons, badges) — none of that
+ * is real data.
+ *
+ * Filter state lives in the URL (`useSearchParams`), same pattern already
+ * used for `page` — shareable, back-button-safe, and it's what lets a
+ * filtered view get `noindex,follow` + a clean canonical (m3-seo.md §4)
+ * without a second state system to keep in sync.
+ *
  * The slug may be a SUB or a TOP: the server resolves a top to its active
  * sub-categories (`resolveCategoryLeafIds`), so a top page aggregates its
- * children.
- *
- * 🔴 NO search box, filter facets or sort control — all Module 3 ("Newest
- * first" is stated, not implied). The rail is category NAVIGATION, not a
- * filter rail; M3 can extend this column with facets later.
+ * children — identically for both `/public/products` and `/public/search`,
+ * confirmed the same shared resolver.
  *
  * An unknown or deactivated slug 404s from the API and renders the shared
  * not-found page — deliberately indistinguishable from a category that never
  * existed, so the page is never an oracle for hidden rows.
  */
 const PAGE_SIZE = 12;
-const GRID = 'grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4';
+// Vertical list (2026-08-11, owner: match the reference mockup's horizontal
+// cards) — a horizontal card can't tile into columns the way the old
+// photo-top grid card did, so this is a single stack, not a grid.
+const LIST = 'flex flex-col gap-4';
+
+const SORT_OPTIONS = [
+  { value: 'newest', label: 'Newest first' },
+  { value: 'priceAsc', label: 'Price: Low to High' },
+  { value: 'priceDesc', label: 'Price: High to Low' },
+];
+
+const FILTER_KEY_RE = /^attr\[([^\]]+)\](?:\[(min|max)\])?$/;
+
+/** Every `attr[...]` entry in the URL, both as raw key→value pairs (to
+ *  forward verbatim to the API — the URL already uses the API's own bracket
+ *  syntax) and parsed into `{ [attrKey]: string[] | {min,max} }` for
+ *  rendering which options/ranges are currently checked. One scan, both
+ *  shapes, so they can never drift apart. */
+function readAttrParams(searchParams) {
+  const raw = {};
+  const selections = {};
+  for (const [k, v] of searchParams.entries()) {
+    const m = k.match(FILTER_KEY_RE);
+    if (!m) continue;
+    raw[k] = v;
+    const [, key, bound] = m;
+    if (bound) {
+      selections[key] = { ...selections[key], [bound]: v };
+    } else {
+      selections[key] = v.split(',').filter(Boolean);
+    }
+  }
+  return { raw, selections };
+}
 
 function CardSkeleton() {
   return (
-    <li className="overflow-hidden rounded-lg border border-surface-border bg-white shadow-card">
-      <Skeleton className="aspect-[4/3] w-full rounded-none" />
-      <div className="space-y-3 p-4">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-6 w-1/2" />
-        <Skeleton className="h-3 w-2/3" />
+    <li className="flex flex-col overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card sm:flex-row">
+      <Skeleton className="aspect-[4/3] w-full rounded-none sm:aspect-auto sm:h-56 sm:w-64 md:w-72" />
+      <div className="flex-1 space-y-3 p-5 sm:p-6">
+        <Skeleton className="h-6 w-2/3" />
+        <Skeleton className="h-3.5 w-1/3" />
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-3.5 w-full" />
+        <Skeleton className="h-3.5 w-4/5" />
       </div>
     </li>
   );
@@ -65,22 +120,6 @@ function Crumb({ to, children, last }) {
       )}
       {!last && <ChevronRightIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />}
     </>
-  );
-}
-
-/** One sub-category thumbnail: photo or the neutral monogram. */
-function SubThumb({ image, label, size = 'h-12 w-12' }) {
-  return image ? (
-    <img
-      src={image}
-      alt=""
-      loading="lazy"
-      width={48}
-      height={48}
-      className={`${size} shrink-0 rounded-lg object-cover`}
-    />
-  ) : (
-    <NoImagePanel label={label} monogram ratio={size} className="shrink-0 rounded-lg" />
   );
 }
 
@@ -113,7 +152,7 @@ function SubRail({ top, currentId, onSubPage }) {
         {onSubPage && (
           <li className="mb-1.5 border-b border-ink-100 pb-1.5">
             <Link to={`/category/${top.slug}`} className={`${ROW} transition-colors hover:bg-surface-subtle`}>
-              <SubThumb image={top.image} label={top.name} size="h-9 w-9" />
+              <CategoryThumb image={top.image} label={top.name} size="h-9 w-9" />
               <span className="truncate text-sm font-semibold text-ink-900">All {top.name}</span>
               <ChevronRightIcon className="h-4 w-4 text-ink-300" aria-hidden="true" />
             </Link>
@@ -129,7 +168,7 @@ function SubRail({ top, currentId, onSubPage }) {
                     aria-hidden="true"
                     className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-primary-600"
                   />
-                  <SubThumb image={sub.image} label={sub.name} size="h-9 w-9" />
+                  <CategoryThumb image={sub.image} label={sub.name} size="h-9 w-9" />
                   <span className="truncate text-sm font-semibold text-primary-800">{sub.name}</span>
                   <CheckIcon className="h-4 w-4 text-primary-600" aria-hidden="true" />
                 </span>
@@ -138,7 +177,7 @@ function SubRail({ top, currentId, onSubPage }) {
                   to={`/category/${sub.slug}`}
                   className={`${ROW} transition-colors hover:bg-surface-subtle`}
                 >
-                  <SubThumb image={sub.image} label={sub.name} size="h-9 w-9" />
+                  <CategoryThumb image={sub.image} label={sub.name} size="h-9 w-9" />
                   <span className="truncate text-sm font-medium text-ink-800">{sub.name}</span>
                   <ChevronRightIcon className="h-4 w-4 text-ink-300" aria-hidden="true" />
                 </Link>
@@ -173,7 +212,7 @@ function SubGrid({ top, currentId, onSubPage }) {
         {onSubPage && (
           <li>
             <Link to={`/category/${top.slug}`} className={shell(false)}>
-              <SubThumb image={top.image} label={top.name} />
+              <CategoryThumb image={top.image} label={top.name} />
               <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink-900">
                 All {top.name}
               </span>
@@ -185,7 +224,7 @@ function SubGrid({ top, currentId, onSubPage }) {
           const current = sub.id === currentId;
           const inner = (
             <>
-              <SubThumb image={sub.image} label={sub.name} />
+              <CategoryThumb image={sub.image} label={sub.name} />
               <span
                 className={`min-w-0 flex-1 truncate text-sm ${
                   current ? 'font-semibold text-primary-700' : 'font-medium text-ink-800'
@@ -219,6 +258,63 @@ export function CategoryListing() {
   const { slug } = useParams();
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Number(params.get('page')) || 1);
+  const sort = params.get('sort') || 'newest';
+  const verifiedOnly = params.get('verified') === '1';
+  const priceMin = params.get('priceMin') ?? '';
+  const priceMax = params.get('priceMax') ?? '';
+  const { raw: attrRawParams, selections: attrSelections } = readAttrParams(params);
+
+  // Every setter resets `page` — a changed filter invalidates whatever page
+  // you were on, and re-fetching page 4 of a now-much-smaller result set
+  // would just show an empty page instead of the new page 1.
+  const updateParams = (mutate) => {
+    const next = new URLSearchParams(params);
+    mutate(next);
+    next.delete('page');
+    setParams(next);
+  };
+
+  const onToggleVerified = () =>
+    updateParams((next) => (verifiedOnly ? next.delete('verified') : next.set('verified', '1')));
+
+  const onPriceChange = (min, max) =>
+    updateParams((next) => {
+      min ? next.set('priceMin', min) : next.delete('priceMin');
+      max ? next.set('priceMax', max) : next.delete('priceMax');
+    });
+
+  const onAttrToggle = (key, value) =>
+    updateParams((next) => {
+      const current = (next.get(`attr[${key}]`) ?? '').split(',').filter(Boolean);
+      const updated = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+      updated.length ? next.set(`attr[${key}]`, updated.join(',')) : next.delete(`attr[${key}]`);
+    });
+
+  const onAttrRangeChange = (key, min, max) =>
+    updateParams((next) => {
+      min ? next.set(`attr[${key}][min]`, min) : next.delete(`attr[${key}][min]`);
+      max ? next.set(`attr[${key}][max]`, max) : next.delete(`attr[${key}][max]`);
+    });
+
+  const onClearAllFilters = () =>
+    updateParams((next) => {
+      for (const k of [...next.keys()]) {
+        if (k === 'verified' || k === 'priceMin' || k === 'priceMax' || FILTER_KEY_RE.test(k)) next.delete(k);
+      }
+    });
+
+  const onSortChange = (val) => updateParams((next) => (val === 'newest' ? next.delete('sort') : next.set('sort', val)));
+
+  const hasActiveFilters =
+    verifiedOnly || priceMin || priceMax || Object.keys(attrSelections).length > 0 || sort !== 'newest';
+
+  const filterParams = {
+    category: slug,
+    ...(verifiedOnly ? { verifiedOnly: 'true' } : {}),
+    ...(priceMin ? { priceMin } : {}),
+    ...(priceMax ? { priceMax } : {}),
+    ...attrRawParams,
+  };
 
   const category = useQuery({
     queryKey: catalogueKeys.category(slug),
@@ -232,18 +328,27 @@ export function CategoryListing() {
   const tree = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
   const products = useQuery({
-    queryKey: catalogueKeys.products({ category: slug, page, pageSize: PAGE_SIZE }),
-    queryFn: () => catalogueApi.products({ category: slug, page, pageSize: PAGE_SIZE }),
+    queryKey: catalogueKeys.search({ ...filterParams, sort, page, pageSize: PAGE_SIZE }),
+    queryFn: () => catalogueApi.search({ ...filterParams, sort, page, pageSize: PAGE_SIZE }),
     enabled: category.isSuccess,
     // Keeps the previous PAGE's cards on screen while the next loads, so paging
-    // doesn't flash the grid back to skeletons — but ONLY within the same
-    // category. Unconditional carry-over flashed the PREVIOUS category's
-    // products for a frame after clicking a sibling (owner-reported), which
-    // reads as showing the wrong data.
+    // (or a filter tweak) doesn't flash the grid back to skeletons — but ONLY
+    // within the same category. Unconditional carry-over flashed the PREVIOUS
+    // category's products for a frame after clicking a sibling (owner-reported),
+    // which reads as showing the wrong data.
     placeholderData: (prev, prevQuery) => {
       const prevCategory = prevQuery?.queryKey?.[2]?.category;
       return prevCategory === slug ? prev : undefined;
     },
+  });
+
+  // Facets don't need paging — same filter context, live counts. Excluded
+  // from `enabled` gate's category dependency the same way as `products`: no
+  // point asking for facets of a category that just 404'd.
+  const facets = useQuery({
+    queryKey: catalogueKeys.facets(filterParams),
+    queryFn: () => catalogueApi.facets(filterParams),
+    enabled: category.isSuccess,
   });
 
   const cat = category.data;
@@ -254,6 +359,30 @@ export function CategoryListing() {
     return () => { document.title = previous; };
   }, [cat]);
 
+  // m3-seo.md §4: a filtered view (any filter, or a non-default sort) is
+  // noindex,follow with a canonical back to the clean base category URL —
+  // the base URL stays the one that's actually indexable.
+  useEffect(() => {
+    if (!cat) return undefined;
+    const canonical = document.createElement('link');
+    canonical.rel = 'canonical';
+    canonical.href = `${window.location.origin}/category/${cat.slug}`;
+    document.head.appendChild(canonical);
+
+    let robots;
+    if (hasActiveFilters) {
+      robots = document.createElement('meta');
+      robots.name = 'robots';
+      robots.content = 'noindex,follow';
+      document.head.appendChild(robots);
+    }
+
+    return () => {
+      canonical.remove();
+      robots?.remove();
+    };
+  }, [cat, hasActiveFilters]);
+
   if (category.isError) return <NotFound />;
 
   const top = cat?.parentId
@@ -261,6 +390,20 @@ export function CategoryListing() {
     : (tree.data ?? []).find((t) => t.id === cat?.id);
   const total = products.data?.total ?? 0;
   const onSubPage = Boolean(cat?.parentId);
+
+  const filterSidebarProps = {
+    facets: facets.data?.facets,
+    loading: facets.isPending,
+    verifiedOnly,
+    priceMin,
+    priceMax,
+    attrSelections,
+    onToggleVerified,
+    onPriceChange,
+    onAttrToggle,
+    onAttrRangeChange,
+    onClearAll: onClearAllFilters,
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-surface-subtle text-ink-900">
@@ -275,76 +418,63 @@ export function CategoryListing() {
           </nav>
 
           <div className="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8">
-            {/* --- Left: sticky sub-category rail (lg+) --- */}
-            <aside className="hidden lg:block">
+            {/* --- Left: sticky sub-category rail + filters (lg+) --- */}
+            <aside className="hidden lg:block lg:space-y-4">
               {tree.isPending ? (
                 <Skeleton className="h-96 w-full rounded-2xl" />
               ) : (
                 <SubRail top={top} currentId={cat?.id} onSubPage={onSubPage} />
               )}
+              <FilterSidebar {...filterSidebarProps} />
             </aside>
 
-            {/* --- Right: header, (mobile subs), products --- */}
+            {/* --- Right: header, (mobile subs + filters), products --- */}
             <div className="min-w-0">
+              {/* Flat "N results | Category" heading (2026-08-11, owner: exact
+                  match to the reference template) — supersedes the earlier
+                  photo-banner header card from earlier the same day. The
+                  count + trust line move here as plain text/pills rather than
+                  a separate card. */}
               {cat ? (
-                /* Banner header (owner, 2026-08-11): the same typography, now
-                   on a card with the category photo dissolving in from the
-                   right — present, never shouting. Photo hides below sm. */
-                <section className="relative overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
-                  <div className="relative z-10 max-w-xl p-5 sm:p-7">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-primary-700">
-                      {onSubPage ? top?.name ?? 'Specialisation' : 'Category'}
-                    </p>
-                    <h1 className="mt-1.5 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
-                      {cat.name}
-                    </h1>
-                    <p className="mt-4 flex flex-wrap items-center gap-2">
-                      {products.isSuccess && (
-                        <span className="inline-flex items-center rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-medium text-ink-700">
-                          {total} {total === 1 ? 'product' : 'products'}
-                        </span>
-                      )}
-                      {!onSubPage && (top?.subs?.length ?? 0) > 0 && (
-                        <span className="inline-flex items-center rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-medium text-ink-700">
-                          {top.subs.length} specialisations
-                        </span>
-                      )}
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-medium text-ink-700">
-                        <BadgeCheckIcon className="h-3.5 w-3.5 text-success" aria-hidden="true" />
-                        Verified Indian exporters
+                <div>
+                  <h1 className="text-2xl font-bold text-ink-900 sm:text-3xl">
+                    {products.isSuccess ? `${total} result${total === 1 ? '' : 's'}` : '…'}
+                    <span className="mx-2 font-normal text-muted">|</span>
+                    {cat.name}
+                  </h1>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {!onSubPage && (top?.subs?.length ?? 0) > 0 && (
+                      <span className="inline-flex items-center rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-medium text-ink-700">
+                        {top.subs.length} specialisations
                       </span>
-                    </p>
+                    )}
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-medium text-ink-700">
+                      <BadgeCheckIcon className="h-3.5 w-3.5 text-success" aria-hidden="true" />
+                      Verified Indian exporters
+                    </span>
                   </div>
-                  {cat.image && (
-                    <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-64 sm:block md:w-80">
-                      <img src={cat.image} alt="" className="h-full w-full object-cover" />
-                      {/* The photo dissolves INTO the card — a soft white fade
-                          on its leading edge, no scrim, no overlay text. */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-white via-white/45 to-transparent" />
-                    </div>
-                  )}
-                </section>
+                </div>
               ) : (
-                <Skeleton className="h-40 w-full rounded-2xl" />
+                <Skeleton className="h-10 w-2/3 rounded-lg" />
               )}
 
               <div className="mt-6 lg:hidden">
                 <SubGrid top={top} currentId={cat?.id} onSubPage={onSubPage} />
               </div>
+              <div className="mt-6 lg:hidden">
+                <FilterSidebar {...filterSidebarProps} />
+              </div>
 
-              <div className="mb-4 mt-7 flex flex-wrap items-center gap-2.5 rounded-xl border border-surface-border bg-white px-4 py-2.5 shadow-card">
-                <h2 className="text-[15px] font-bold text-ink-900">Products</h2>
-                {products.isSuccess && (
-                  <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
-                    {total}
-                  </span>
-                )}
-                <span className="ml-auto text-xs text-muted">Sorted by newest</span>
+              <div className="mb-4 mt-6 flex items-center gap-2 border-t border-surface-border pt-4">
+                <span className="text-sm font-medium text-ink-800">Sort By</span>
+                <div className="w-52">
+                  <Combobox id="sort" value={sort} options={SORT_OPTIONS} onChange={onSortChange} />
+                </div>
               </div>
 
               {(category.isPending || products.isPending) && (
-                <ul className={GRID} aria-busy="true" aria-label="Loading products">
-                  {Array.from({ length: 8 }, (_, i) => <CardSkeleton key={i} />)}
+                <ul className={LIST} aria-busy="true" aria-label="Loading products">
+                  {Array.from({ length: 4 }, (_, i) => <CardSkeleton key={i} />)}
                 </ul>
               )}
 
@@ -358,32 +488,48 @@ export function CategoryListing() {
                 </div>
               )}
 
-              {/* The empty category is a COMMON state at launch, not a rare
-                  one — most sub-categories have no listings yet. */}
+              {/* Empty because the category genuinely has nothing yet, vs.
+                  empty because the current filters matched nothing — two
+                  different states, two different fixes to offer. */}
               {products.isSuccess && total === 0 && (
                 <div className="rounded-2xl border border-surface-border bg-white shadow-card">
-                  <EmptyState
-                    icon={BoxIcon}
-                    title="No products in this category yet"
-                    action={
-                      <Link
-                        to="/categories"
-                        className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
-                      >
-                        Browse all categories
-                      </Link>
-                    }
-                  >
-                    We&apos;re still sourcing suppliers here. Try another category in the meantime.
-                  </EmptyState>
+                  {hasActiveFilters ? (
+                    <EmptyState icon={BoxIcon} title="No products match these filters">
+                      Try removing a filter — the category's other listings might fit.
+                      <div className="mt-4">
+                        <button
+                          type="button"
+                          onClick={onClearAllFilters}
+                          className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+                        >
+                          Clear filters
+                        </button>
+                      </div>
+                    </EmptyState>
+                  ) : (
+                    <EmptyState
+                      icon={BoxIcon}
+                      title="No products in this category yet"
+                      action={
+                        <Link
+                          to="/categories"
+                          className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+                        >
+                          Browse all categories
+                        </Link>
+                      }
+                    >
+                      We&apos;re still sourcing suppliers here. Try another category in the meantime.
+                    </EmptyState>
+                  )}
                 </div>
               )}
 
               {products.isSuccess && total > 0 && (
                 <>
-                  <ul className={GRID}>
+                  <ul className={LIST}>
                     {products.data.products.map((product) => (
-                      <ProductCard
+                      <ProductListCard
                         key={product.id}
                         product={product}
                         to={`/product/${product.slug}`}
@@ -395,7 +541,11 @@ export function CategoryListing() {
                     page={page}
                     pageSize={PAGE_SIZE}
                     total={total}
-                    onPage={(n) => setParams(n > 1 ? { page: String(n) } : {})}
+                    onPage={(n) => setParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      n > 1 ? next.set('page', String(n)) : next.delete('page');
+                      return next;
+                    })}
                   />
                 </>
               )}
