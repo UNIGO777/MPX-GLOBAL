@@ -175,6 +175,246 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-13 — `/supplier/:slug` catalogue card: "View Specifications" button wrapping on
+  mobile.** Owner screenshot: the button text was breaking to two lines ("View" / "Specifications")
+  on the 2-up mobile grid, since a phone-width card only leaves ~130-150px for it at the
+  original `text-sm` + `px-4`. Fixed with `text-xs` + `px-3` + `whitespace-nowrap` below `sm:`,
+  reverting to the original `text-sm`/`px-4` at `sm:` and up where cards have plenty of room.
+  Caught and fixed in the same pass: the button's own height (`min-h-[40px]`) was already below
+  this project's 44px minimum touch-target rule (web-design.md) — bumped to `min-h-[44px]`.
+  Verified at 375px (a common narrow-phone width, e.g. iPhone SE class): button height measures
+  exactly 44px, text stays on one line in all four grid cards.
+- **2026-08-13 — `/supplier/:slug` cover/logo overlap bugfix + "Start Conversation" button.**
+  Owner screenshot: the logo was rendering half-hidden under the cover banner. Root cause: the
+  cover image's wrapper div had `position: relative` with nothing inside it that actually needed
+  positioning — but a positioned element (even with no explicit z-index) always paints ABOVE
+  plain static content in the same stacking context, regardless of DOM order. So the cover
+  (positioned) painted over the top half of the logo (static, pulled up with `-mt-10`) even
+  though the logo comes later in the markup. Fixed by removing the unneeded `relative` — one
+  word. Verified the full logo now renders on top, correctly.
+  Also added "Start Conversation" (identity block, next to the company name/tick) — same
+  disabled-placeholder treatment as `ProductDetail.jsx`'s "Send Enquiry" and
+  `ProductListCard.jsx`'s "Inquiry": the M4 backend (`Inquiry`/`Conversation`/`Message`) is real
+  and tested, but no create-conversation flow is wired on the web client yet. Owner-requested
+  directly this time, not from a mockup. Logged in `docs/UiWebNotes.md`. Verified on desktop
+  (sits inline with the name row) and mobile (wraps to its own row cleanly, 44px touch target).
+- **2026-08-13 — Dev-DB-only: real `logo` + `coverImage` set on "Tirupur Knitwear Exports."**
+  Owner asked to demo the new cover-image feature with real content rather than the fallback
+  gradient. Set via `mongosh` directly against the shared local dev database (not a code change,
+  no migration) — two Unsplash URLs (pre-checked reachable), a warm-toned hanging-knitwear photo
+  for `coverImage` and a folded-garment flat-lay for `logo`, both thematically fitting a knitwear
+  exporter. **Only this one seller** — every other seeded organisation still renders the fallback
+  states, which is expected and correct (no upload path exists yet, see the entry above). Worth
+  knowing if `tirupur-knitwear-exports` looks different from other suppliers in a future session —
+  that's this, not a bug.
+- **2026-08-13 — `/supplier/:slug` full redesign + a new public field, `Organisation.coverImage`.**
+  Owner asked for a detailed ground-up design brief first (no reference image at that point —
+  written to stand alone: platform rules, the exact real-data whitelist, section-by-section spec,
+  every state, responsive rules), then supplied a reference mockup and confirmed "make it,"
+  including a Facebook/LinkedIn-style cover banner the brief had explicitly NOT assumed existed.
+  **New field, added deliberately, not silently:** `Organisation.coverImage` (string, Cloudinary
+  URL, same shape as `logo`) added to the schema AND to `PUBLIC_FIELDS` — checked first that it
+  didn't already exist. Widening a public projection is a documented STOP-and-alert item in
+  `m3-public-projection.md`; that doc's Seller/Supplier whitelist line was updated in the same
+  pass (never leave the rule doc stale after a real projection change — CLAUDE.md's own standing
+  instruction). Also added to the exporter's own-profile read in `organisation.service.js` for
+  consistency (auth+ownership-gated already, not a new exposure).
+  **Deliberately NOT built:** any upload endpoint or edit-screen UI for a seller to actually SET
+  this field. `logo` has its own dedicated Cloudinary upload path (`organisation.service.js`);
+  `coverImage` doesn't yet. Every real seller renders the fallback fill (the same gradient this
+  section used as its whole header before the redesign, not a new placeholder) until that
+  follow-up ships — told to the owner directly. Verified BOTH paths live (fallback gradient, and
+  a temporary Cloudinary URL applied then reverted via mongosh against the local dev DB only —
+  never left in place).
+  **Page redesign** (`SupplierProfile.jsx`): cover banner (fixed `aspect-[4/1]`, capped height so
+  it can't dominate a tall mobile screen) → overlapping logo (unchanged fallback/ring treatment)
+  → name + a pill-wrapped `VerifiedTick` (never forked) → icon fact-pills (country/entity-type/
+  established/member-since; two new icons, `CalendarIcon` + reused `MapPinIcon`/`BuildingIcon`/
+  `TagIcon`) → "About the Company" card with a real designed empty state (was previously a silent
+  gap when a seller had no description) → "Product Catalogue" heading + an honest
+  always-matching count pill.
+  **Catalogue card forked** (`SupplierCatalogueCard`, local to this file) rather than reusing the
+  shared `ProductCard` — same reasoning as `ProductDetail.jsx`'s "More in category" fork:
+  eyebrow category, name, then Price + Min. Order as label/value rows (matching the reference's
+  stat-row layout), then an honest "View Specifications" button linking to the real product page,
+  which does show full specifications. **One flagged deviation from the reference:** its cards
+  showed a domain spec (e.g. "Purity 99.8%") + MOQ with no price; this page's cards show price
+  instead, because every other product card on the site treats price as the primary buying
+  signal and — unlike a category-specific spec — it exists on every product. Not a silent change.
+  Verified live: fallback + real-photo cover states, mobile (390px, no horizontal overflow, fact
+  pills wrap cleanly), desktop, and the full catalogue grid/pagination/empty/error states inherited
+  unchanged from the prior version.
+- **2026-08-13 — `/category/:slug` mobile product grid: 2-up instead of 1-up.** Owner: "i need
+  two cards in one row" (mobile screenshot of the horizontal `ProductListCard` stacked one per
+  row). Asked first rather than guessing: that card carries a LOT (description, seller footer,
+  two buttons) — squeezing the exact same card to half-width would've been unreadable, so
+  confirmed the owner wanted a separate, more compact card for the 2-up grid rather than the rich
+  card narrowed. Owner picked the compact option.
+  Implementation: two parallel `<ul>`s instead of one list whose card component changes shape
+  mid-breakpoint — `sm:hidden` 2-column grid of the existing shared `ProductCard` (same compact
+  card already used for "More in category" on the product detail page — no new card component
+  built) below `sm`, `hidden sm:flex` the original `ProductListCard` stack at `sm` and up. Both
+  map the exact same `products.data.products` array, so there's no second fetch and no risk of
+  the two views ever showing different products. Loading state got the matching treatment: a new
+  `CardSkeletonCompact` (matches `ProductCard`'s shape) for the mobile grid, existing
+  `CardSkeleton` (matches `ProductListCard`'s horizontal shape) still used at `sm+` — was a real
+  gap otherwise: the old skeleton was horizontal-shaped and would have flashed one full-width
+  loading card right before two half-width real ones popped in.
+  Verified: mobile shows a clean 2-column grid (photo, name, spec chips, price, MOQ, seller name
+  + verified tick, country); desktop screenshot confirms zero change to the existing horizontal
+  list card.
+- **2026-08-13 — `/category/:slug` mobile "Filters" sheet.** Owner: "for the mobile version for
+  the phone make a page for these all filters," screenshot showing every sub-category tile AND
+  every filter control (verified/price/GSM/width) rendering inline on the page — on a phone this
+  pushed the actual product results a full screen or more below the fold before a buyer saw a
+  single listing. Standard mobile-commerce pattern instead: a compact "Filters" pill button (with
+  a live active-filter-count badge) now sits next to "Sort By," right under the heading — tapping
+  it opens a full-screen sheet (new `MobileFiltersSheet`) containing the same real category tiles
+  + `FilterSidebar` (rendered `bare`, reusing the prop built for the desktop merge). Same modal
+  mechanics as `ProductDetail.jsx`'s `Lightbox` — portalled to `document.body`, Escape/backdrop-
+  X/close, focus trap, body-scroll lock — written fresh rather than extracted to a shared hook:
+  this is the pattern's second occurrence, and CLAUDE.md's "duplicate twice before you
+  generalise" says wait for a third before abstracting.
+  Filters apply LIVE from inside the sheet, same as they always have on desktop — there's no
+  separate "pending vs applied" filter state anywhere in this codebase to plug a "pending until
+  Apply" pattern into, so the footer is just "Show N results," which closes the sheet onto
+  results that are already correct underneath it. Verified end-to-end: toggling "Verified
+  sellers" inside the sheet updates the URL (`?verified=1`) immediately; Escape closes it,
+  restores body scroll, and returns focus to the trigger button; desktop is untouched (the
+  trigger is `lg:hidden`, sidebar unchanged, confirmed via screenshot).
+  New icon: `FilterIcon` (lucide `SlidersHorizontal`), same wrapper pattern as the other
+  lucide-sourced icons in this set.
+- **2026-08-13 — `/category/:slug` mobile responsiveness fixes.** Owner: "make mobile
+  responsive," reference screenshot of the desktop page. Two real bugs found on a 390px
+  viewport, both fixed:
+  1. `ProductListCard.jsx`'s footer row (seller/country/listed-date + "View details"/"Inquiry"
+     buttons) was one `flex items-center justify-between` row with no mobile stacking — the
+     buttons' `shrink-0` forced the info text to compress until it wrapped one word per line
+     ("Seller •" / "India" / "Listed" / "Aug" / "2026 ·" / "Tirupur" each on its own line).
+     Fixed with `flex-col` on mobile, `sm:flex-row` restoring the original layout once there's
+     room. This card is also used standalone (not inside the redesigned sidebar work), so the
+     fix reaches every page rendering it.
+  2. `CategoryListing.jsx`'s `SubGrid` (the mobile-only photo-tile "Specialisations" grid,
+     separate component from `SubRail`) had the SAME single-line `truncate` bug fixed on
+     `SubRail` two days ago, never carried over to this one — "All Textiles, Fabrics & Yarn" cut
+     to "All Text…", "Home textiles (bedsheets, towels)" cut to "Home t…". Same fix: `truncate` →
+     `line-clamp-2 leading-snug`. Most names now show in full on 2 lines; a couple of the longest
+     ("All Textiles, Fabrics & Yarn," "Synthetic & blended fabric," "Home textiles (bedsheets,
+     towels)") still ellipsis past 2 lines — real improvement, not a full fix, flagged to the owner.
+  Verified on a 390px viewport: no horizontal overflow, both fixes confirmed visually, touch
+  targets already adequate (unrelated to this pass).
+- **2026-08-13 — `/product/:slug` "More in category" gets a parent-category fallback.** Owner
+  saw the section vanish entirely on `selvedge-denim-14oz` and flagged it ("cant see the
+  section") — not a bug: "Denim" genuinely has exactly one product (itself) on this seed data, so
+  `relatedRows` was correctly empty and the section correctly hid rather than showing an empty
+  heading. Owner's follow-up: if the exact category has nothing else, broaden to the parent
+  category instead of hiding the row outright. Implemented as a real second query, not a
+  client-side reshuffle: `/public/products`'s `category` param already resolves a TOP id to every
+  LEAF under it server-side (`resolveCategoryLeafIds` — the same mechanism `/category/:slug`'s
+  own top-level pages use), so passing `p.category.parentId` returns real sibling-category
+  products in one more honest fetch. Only fires once the primary same-category query has actually
+  resolved empty (`related.isSuccess && relatedRows.length === 0`) — never fetched speculatively
+  alongside it — and only when a parent exists (`parentId` is `null` on a top-level category,
+  nothing broader to fall back to). Also fetches the parent category by id (cheap — one category,
+  not the whole tree) purely to LABEL the fallback honestly: "More in Denim" would have been
+  wrong once the row is actually showing Textiles/Fabrics/Yarn siblings, so the heading and "View
+  Category" link both switch to the parent's real name/slug when the fallback is in use. Verified
+  both paths live: `selvedge-denim-14oz` now shows "More in Textiles, Fabrics & Yarn" with 3 real
+  cross-category products (denim itself correctly excluded); `cotton-canvas-12oz` still shows
+  "More in Cotton fabric" unchanged — the fallback never fires when the direct match has rows.
+  **Gotcha hit while verifying:** got a stray 429 mid-check from the backend's `generalLimiter`
+  (300 req/15 min) — purely from this session's own heavy Playwright/curl testing traffic
+  accumulated over many hours, not a real issue; confirmed by re-checking Redis (`dbsize 0`, the
+  counter had already rolled off) and a clean retry. No code or config touched to work around it —
+  the limiter is a real security control (security-baseline.md) and stayed exactly as it was.
+- **2026-08-13 — `/product/:slug` follow-ups: page chrome + related-products card fork.**
+  Three small owner requests in sequence: page container went from `mx-auto max-w-7xl` (centered,
+  empty side margins on wide screens) to full-width with just a `px-4 sm:px-6` gutter — same
+  minimal-margin balance as `/category/:slug`; page background `bg-surface-subtle` → `bg-white`
+  (the price block keeps its own light-blue tint on purpose, that's unrelated to the page bg).
+  Then: the "More in {category}" section already existed (built in the redesign below) but used
+  the shared `ProductCard` — owner explicitly chose to fork a dedicated card for this section
+  instead of reusing it, to match the reference crop exactly (category eyebrow above the name,
+  "MOQ: 300 meter" format, no seller row, "View Category →" instead of "View all →"). New
+  `RelatedProductCard` is local to this file only — `/category/:slug` keeps using `ProductCard`
+  unchanged. Flagged but shipped as asked: every card in this one section shares the exact same
+  category as the product being viewed (that's what the query is), so the eyebrow reads
+  identically on every card here, unlike the reference's own example (varied sub-types from one
+  parent category) — still real data, just less differentiating than the reference happened to have.
+- **2026-08-12 (later same day) — `/product/:slug` fidelity pass + a real modal stacking-context
+  bug found and fixed.** Owner re-sent the same reference mockup: "recode exect same as image."
+  Closed the remaining style gaps from the redesign below: headline spec chips got a uniform
+  leading tag icon (not a per-chip semantic icon — chips are just "the top few attribute values
+  in whatever order," there's no reliable way to know which one is "architecture" vs "frequency"
+  without guessing); price-block labels went from bold uppercase brand-blue to neutral muted
+  gray (the price itself is the loud element, not its label); seller card's country row swapped
+  `GlobeIcon` → a new `MapPinIcon`. Also added a **real, working fullscreen image lightbox**
+  (expand icon on the gallery photo → modal with prev/next, Escape/backdrop/X to close, focus
+  trap + focus restore, body-scroll lock) — unlike "Send Enquiry," this needed no backend and no
+  fabricated data, so it was built for real rather than shown disabled.
+  **Bug found while testing the lightbox itself:** the close button rendered correctly, in the
+  right place, with the right focus — and was completely unclickable. Root cause: the modal was
+  a React child of the gallery's `sticky` wrapper (added earlier that day for the dead-space
+  fix), and `position: sticky` unconditionally opens its own stacking context regardless of
+  z-index. The modal's `fixed z-50` was real, but scoped *inside* that wrapper's stacking
+  context — so at the document root it was competing as part of a z-index:auto box, and the
+  header's explicit `z-40` won despite the "lower" number. Fixed with `createPortal` to
+  `document.body`, the standard escape hatch for exactly this class of bug. Confirmed via
+  Playwright: close click, Escape, backdrop click, focus-restore-on-close, and body-scroll-lock
+  release all verified directly against the DOM, not just eyeballed from a screenshot.
+- **2026-08-12 — `/category/:slug` margin/background tweak, sidebar rebuild, and
+  `/product/:slug` redesign against an owner-supplied reference mockup.**
+  1. `CategoryListing.jsx` — page background `bg-surface-subtle` → `bg-white`, container went
+     full-width (dropped `mx-auto max-w-7xl`), then a small `px-4 sm:px-6` gutter was added back
+     after the owner asked for "some margin" (zero-gutter read as too tight against the edge).
+  2. `FilterSidebar` toggle bugfix — the "Verified sellers" switch's thumb had `top-0.5` but no
+     explicit `left`, so the browser's static-position fallback put its resting position ~22px
+     in (not 0), and the checked-state `translate-x-[22px]` doubled that offset, pushing the
+     thumb outside the track. Fixed with one added class (`left-0`).
+  3. Sidebar (`CategoryListing.jsx` + `FilterSidebar.jsx`) full redesign, unprompted-mockup pass
+     — owner: "sidebar is not looking good redesign it again and make it very professional."
+     Merged the sub-category rail and the filter panel from two separate stacked `shadow-card`
+     boxes into ONE card (`FilterSidebar` gained a `bare` prop so it can sit flush inside it on
+     desktop; mobile still gets its own card, unchanged). Unified the rail's heading to match
+     the filters' `text-lg font-bold text-primary-800` style. Fixed real-data truncation ("All
+     Textiles, Fabrics & …", "Home textiles (bedsh…") to 2-line wrap. Collapsed a nested-scroll
+     bug (the rail had its own `max-h-[68vh] overflow-y-auto` INSIDE the outer sticky wrapper's
+     own scroll region) down to one scroll area.
+  4. Separately, the sticky sidebar itself had an actual overlap bug (reported via screenshot,
+     "second one is overlapping the first one"): the sub-category rail's own `sticky top-20` had
+     the whole `<aside>` (rail + filters together) as its containing block, so its stuck range
+     spanned the filter panel's height too, and the filter panel — normal flow, not sticky —
+     scrolled up underneath the pinned rail. Fixed by moving the sticky/scroll positioning to a
+     wrapper around both, so they move together as one pinned unit.
+  5. `/product/:slug` (`ProductDetail.jsx`) redesigned end-to-end against an owner-supplied
+     reference screenshot ("this is the design for product page make this"). Gallery pinned
+     (`self-start` + `sticky`, desktop only) instead of stretching to the buy panel's height and
+     leaving dead white space under a single photo. Price block promoted to a tinted bordered
+     card with MOQ + supply ability (`p.supplyAbility`, already real data) as a two-column row.
+     Trade facts became their own bordered card (`Facts` component) with a leading icon per row
+     (`GOODS_FACTS`/`SERVICE_FACTS` now carry an icon reference; two new icons added to
+     `icons.jsx` via the existing lucide-wrapper pattern — `CreditCardIcon`, `MailIcon`).
+     Description + Specifications went from a side-by-side 2-col grid to full-width stacked, and
+     `SpecTable.jsx` itself gained a 2-column row grid (`sm:grid-cols-2`) to fill a full-width
+     card. Seller card's `VerifiedTick` got wrapped in a pill (never forked — the shared
+     component's own logic/copy is untouched) and gained icon meta (member-since/country/entity
+     type). Added a disabled "Send Enquiry" button in the reference's exact position — same
+     treatment as `ProductListCard`'s existing "Inquiry" placeholder (Module 4's create-enquiry
+     flow isn't wired on the web client yet): shown, disabled, never fake-functional, logged in
+     `docs/UiWebNotes.md`. **Deliberately did NOT add** the reference's view counter or star
+     supplier rating — neither field exists on `Product`/`Organisation`; inventing one would be
+     presenting a fabrication as real signal on a page buyers make sourcing decisions from.
+  6. **Local dev environment gotcha hit while verifying #5, worth recording:** `web/.env`'s
+     `VITE_DEV_API_PROXY=https://api.mpx.nxtgendigitals.com` makes even plain `npm run dev`
+     proxy to the REMOTE VPS API (not `localhost:3000`, despite `dev` vs `dev:live` in
+     `package.json` implying otherwise) — `.env` is loaded regardless of which script runs and
+     wins. The remote host was unreachable during this session (`ETIMEDOUT`), which looked like
+     a 500 from every API call and sent an hour down the wrong path (killing/restarting the
+     local backend + local Mongo checks — all fine the whole time, and beside the point). Fixed
+     verification locally with `VITE_DEV_API_PROXY=http://localhost:3000 npm run dev` (shell-level
+     override only, `.env` itself untouched — that file is the owner's tracked call, not mine to
+     silently change) then restored the plain `npm run dev` afterward. Worth the owner knowing
+     this exists next time local API calls mysteriously 500.
 - **2026-08-12 — `FilterSidebar` restyled to exact mockup match** (owner sent a tighter crop of
   the same reference: "make filter sidebar exact same like this"). Three changes, all
   presentational — no filter behaviour touched:

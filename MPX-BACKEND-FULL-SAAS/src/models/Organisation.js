@@ -49,6 +49,11 @@ const organisationSchema = new Schema(
     website: { type: String, trim: true },
     description: { type: String, trim: true },
     logo: { type: String, trim: true },
+    // Public supplier-profile cover banner (2026-08-13, owner-directed
+    // redesign — SupplierProfile.jsx). Same shape as `logo`: a Cloudinary
+    // URL, public asset by design, no upload endpoint wired yet — see that
+    // file's own header comment for what's built vs still missing.
+    coverImage: { type: String, trim: true },
 
     businessProfile: {
       registrationNumber: { type: String, trim: true },
@@ -200,6 +205,7 @@ export const PUBLIC_FIELDS = [
   'country', // ISO alpha-2 only — the street address stays private
   'description',
   'logo',
+  'coverImage', // 2026-08-13 — same public-asset reasoning as `logo` above.
   // 'business' | 'individual'. A trust signal that sits next to the verified tick,
   // and the field that closes the cancelled "business type" (A22.5): without it the
   // public page said nothing about whether a seller is a registered business.

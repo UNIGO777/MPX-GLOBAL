@@ -44,6 +44,14 @@ import { Skeleton } from '../ui/Skeleton.jsx';
  *      doesn't exist, the same category of thing as the earlier "Inquiry"
  *      button decision — shown honestly as what it functionally is, not
  *      whatever looks closest to the reference.
+ * 2026-08-12 (owner: "sidebar is not looking good, redesign it, make it very
+ *   professional") — added `bare`: on desktop this now renders as one
+ *   section inside a single unified card shared with the sub-category rail
+ *   (built by the caller, `CategoryListing`), instead of two separate
+ *   shadow-card boxes stacked with a gap. `bare` strips this component's own
+ *   border/shadow/rounding so it can sit flush inside that shared card
+ *   without a double border. Mobile keeps calling this WITHOUT `bare` — it
+ *   has no shared card to sit inside, so it stays a standalone card there.
  */
 const OPTIONS_SHOW_LIMIT = 6;
 
@@ -59,6 +67,7 @@ export function FilterSidebar({
   onAttrToggle,
   onAttrRangeChange,
   onClearAll,
+  bare = false,
 }) {
   const appliedChips = buildAppliedChips({
     verifiedOnly,
@@ -74,7 +83,7 @@ export function FilterSidebar({
   });
 
   return (
-    <div className="rounded-2xl border border-surface-border bg-white p-4 shadow-card">
+    <div className={bare ? 'p-4' : 'rounded-2xl border border-surface-border bg-white p-4 shadow-card'}>
       {appliedChips.length > 0 && (
         <div className="mb-5">
           <div className="mb-3 flex items-center justify-between">
@@ -118,7 +127,7 @@ export function FilterSidebar({
         >
           <span
             aria-hidden="true"
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+            className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
               verifiedOnly ? 'translate-x-[22px]' : 'translate-x-0.5'
             }`}
           />

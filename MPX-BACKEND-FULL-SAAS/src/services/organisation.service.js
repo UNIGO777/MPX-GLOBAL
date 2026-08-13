@@ -58,6 +58,7 @@ export function ownerView(org) {
     buyerSide: Boolean(org.buyerSide),
     exporterSide: Boolean(org.exporterSide),
     logo: org.logo ?? null,
+    coverImage: org.coverImage ?? null,
     description: org.description ?? '',
     establishedYear: org.businessProfile?.establishedYear ?? null,
     kycStatus: org.kycStatus,

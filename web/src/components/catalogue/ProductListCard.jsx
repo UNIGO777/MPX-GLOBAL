@@ -113,7 +113,13 @@ export function ProductListCard({ product, to }) {
             <p className="mb-4 line-clamp-2 text-sm text-muted">{product.description}</p>
           )}
 
-          <div className="mt-auto flex items-center justify-between gap-4 border-t border-surface-border pt-4">
+          {/* `flex-col` on mobile — was a single `flex items-center
+              justify-between` row, which forced the info column to compress
+              against the buttons' `shrink-0` at narrow widths until it wrapped
+              one word per line ("Seller •" / "India" / "Listed" / "Aug" ...).
+              `sm:flex-row` restores the original side-by-side layout once
+              there's room for both. */}
+          <div className="mt-auto flex flex-col gap-3 border-t border-surface-border pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div className="text-sm text-muted">
               {seller?.country ? `Seller • ${countryName(seller.country) ?? seller.country}` : 'Seller'}
               {product.listedSince && <br />}

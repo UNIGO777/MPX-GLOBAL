@@ -1,4 +1,4 @@
-import { KeyRound, Shield } from 'lucide-react';
+import { Calendar, CreditCard, Expand, KeyRound, Mail, MapPin, Shield, SlidersHorizontal } from 'lucide-react';
 
 /**
  * Minimal inline SVG icon set (1.8 stroke, currentColor) — no icon-font network
@@ -162,6 +162,38 @@ export const TagIcon = (props) => (
 
 export const KeyIcon = ({ className = 'h-5 w-5', ...rest }) => (
   <KeyRound aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** Trade-facts rows: payment terms / pricing model (`ProductDetail.jsx`). */
+export const CreditCardIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <CreditCard aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** The disabled "Send Enquiry" placeholder (`ProductDetail.jsx` — Module 4,
+ *  not built; see the button's own comment). */
+export const MailIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Mail aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** Seller card's country row (`ProductDetail.jsx`) — a location pin reads
+ *  more precisely as "this is a place" than the world/globe glyph. */
+export const MapPinIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <MapPin aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** Gallery's fullscreen/zoom trigger (`ProductDetail.jsx`). */
+export const ExpandIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Expand aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** The mobile "Filters" trigger (`CategoryListing.jsx`). */
+export const FilterIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <SlidersHorizontal aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** "Est. {year}" fact pill (`SupplierProfile.jsx`). */
+export const CalendarIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Calendar aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
 );
 
 export const ImageIcon = (props) => (

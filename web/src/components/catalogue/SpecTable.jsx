@@ -11,6 +11,12 @@
  * 🔴 Booleans read "Yes"/"No", never `true`/`false`, and numbers carry the
  * definition's unit ("120 gsm"). Renders nothing at all when there are no
  * values — never an empty table with a heading.
+ *
+ * 2026-08-12 (owner-supplied reference mockup, product detail redesign):
+ * two columns on `sm+` instead of one long divided list — a full-width panel
+ * with only 3-4 spec rows read as very sparse; two columns fill the space the
+ * panel actually has and match a real specs sheet's density. Single column
+ * below `sm` (mobile) where there isn't room for two.
  */
 function present(value, def) {
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
@@ -26,7 +32,7 @@ export function SpecTable({ attributes = [], defs = [] }) {
   const defByKey = new Map(defs.map((d) => [d.key, d]));
 
   return (
-    <dl className="border-t border-surface-border">
+    <dl className="grid grid-cols-1 gap-x-8 border-t border-surface-border sm:grid-cols-2">
       {rows.map((attr) => {
         const def = defByKey.get(attr.key);
         return (

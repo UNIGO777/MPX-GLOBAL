@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { CategoryThumb } from '../../components/catalogue/CategoryThumb.jsx';
 import { FilterSidebar } from '../../components/catalogue/FilterSidebar.jsx';
+import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { ProductListCard } from '../../components/catalogue/ProductListCard.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
@@ -13,7 +15,14 @@ import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
-import { BadgeCheckIcon, BoxIcon, CheckIcon, ChevronRightIcon } from '../../components/ui/icons.jsx';
+import {
+  BadgeCheckIcon,
+  BoxIcon,
+  CheckIcon,
+  ChevronRightIcon,
+  FilterIcon,
+  XIcon,
+} from '../../components/ui/icons.jsx';
 import { NotFound } from './NotFound.jsx';
 
 /**
@@ -63,7 +72,15 @@ const PAGE_SIZE = 12;
 // Vertical list (2026-08-11, owner: match the reference mockup's horizontal
 // cards) — a horizontal card can't tile into columns the way the old
 // photo-top grid card did, so this is a single stack, not a grid.
-const LIST = 'flex flex-col gap-4';
+//
+// 2026-08-13 (owner: "i need two cards in one row" on mobile) — the
+// horizontal `ProductListCard` carries too much (description, seller
+// footer, two buttons) to read at half-width, so mobile switches to a
+// SEPARATE 2-up grid of the compact `ProductCard` instead of squeezing the
+// same card narrower. Two parallel `<ul>`s, one hidden at each breakpoint,
+// rather than one list whose card component changes shape mid-breakpoint.
+const LIST_MOBILE = 'grid grid-cols-2 gap-3 sm:hidden';
+const LIST = 'hidden sm:flex sm:flex-col sm:gap-4';
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest first' },
@@ -110,6 +127,23 @@ function CardSkeleton() {
   );
 }
 
+/** Loading state for the mobile 2-up grid — matches `ProductCard`'s own
+ *  shape, not `CardSkeleton` above (that one's horizontal, matching
+ *  `ProductListCard`, and would flash a mismatched full-width skeleton
+ *  right before two half-width cards pop in). */
+function CardSkeletonCompact() {
+  return (
+    <li className="flex h-full flex-col overflow-hidden rounded-xl border border-surface-border bg-white shadow-card">
+      <Skeleton className="aspect-[4/3] w-full rounded-none" />
+      <div className="flex-1 space-y-2 p-3.5">
+        <Skeleton className="h-4 w-4/5" />
+        <Skeleton className="h-3 w-1/2" />
+        <Skeleton className="h-5 w-2/3" />
+      </div>
+    </li>
+  );
+}
+
 function Crumb({ to, children, last }) {
   return (
     <>
@@ -124,37 +158,56 @@ function Crumb({ to, children, last }) {
 }
 
 /**
- * Desktop: the sticky left rail. Refined 2026-08-11 (owner: "too plain,
- * selection misaligned"):
- *  - a TINTED HEADER BAND gives the card identity;
- *  - every row is the same 3-column grid (thumb · name · marker), so thumbs,
- *    names and trailing icons align to the pixel in every state;
- *  - the current row = soft tint + a LEFT ACCENT BAR + check, which highlights
- *    without the heavy solid fill that fought the photos.
+ * Desktop: the left sub-category section. Redesigned 2026-08-12 (owner:
+ * "sidebar is not looking good, redesign it, make it very professional") —
+ * this used to be its own separate shadow-card box, stacked above
+ * `FilterSidebar`'s separate shadow-card box with a visible gap between them,
+ * and used a different heading style (small uppercase label in a tinted
+ * band) than the filters below it (bold `text-lg` headings) — two mismatched
+ * panels reading as an afterthought pairing, not one designed sidebar. Now:
+ *  - renders BARE (no own border/shadow/rounding/padding) — the caller
+ *    (`CategoryListing`) wraps this together with `FilterSidebar` in ONE
+ *    shared card with a single divider between them;
+ *  - the heading matches `FilterSidebar`'s own section-title style exactly
+ *    (bold `text-lg primary-800` + a light count badge), so the whole card
+ *    reads as one typographic system, not two;
+ *  - names that don't fit on one line wrap to 2 lines (`line-clamp-2`)
+ *    instead of getting cut mid-word with an ellipsis (was "All Textiles,
+ *    Fabrics & …", "Home textiles (bedsh…" — real category names, ugly
+ *    truncation);
+ *  - dropped its own internal `max-h-[68vh] overflow-y-auto` — that was a
+ *    SECOND, nested scroll region inside the outer sticky panel's own
+ *    scroll area (`CategoryListing`'s wrapper). One sidebar should scroll
+ *    as one region, not two independently-scrolling boxes.
+ * Kept from the 2026-08-11 pass: every row is the same 3-column grid
+ * (thumb · name · marker) so thumbs/names/icons still align to the pixel in
+ * every state; the current row = soft tint + left accent bar + check.
  */
 function SubRail({ top, currentId, onSubPage }) {
   if (!top) return null;
   const subs = top.subs ?? [];
   if (!subs.length) return null;
 
-  const ROW = 'relative grid h-12 grid-cols-[36px_minmax(0,1fr)_16px] items-center gap-3 rounded-xl px-3';
+  const ROW =
+    'relative grid min-h-[48px] grid-cols-[36px_minmax(0,1fr)_16px] items-center gap-3 rounded-xl px-3 py-2';
+  const NAME = 'line-clamp-2 min-w-0 flex-1 text-sm leading-snug';
 
   return (
-    <div className="sticky top-20 overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
-      <h2 className="flex items-center justify-between gap-2 border-b border-primary-100 bg-primary-50/70 px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-primary-800">
-        Specialisations
-        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary-700">
+    <div>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h2 className="text-lg font-bold text-primary-800">Specialisations</h2>
+        <span className="rounded-full border border-primary-200 bg-primary-50 px-2.5 py-0.5 text-xs font-semibold text-primary-700">
           {subs.length}
         </span>
-      </h2>
+      </div>
 
-      <ul className="max-h-[68vh] space-y-0.5 overflow-y-auto p-2">
+      <ul className="space-y-0.5">
         {onSubPage && (
           <li className="mb-1.5 border-b border-ink-100 pb-1.5">
             <Link to={`/category/${top.slug}`} className={`${ROW} transition-colors hover:bg-surface-subtle`}>
               <CategoryThumb image={top.image} label={top.name} size="h-9 w-9" />
-              <span className="truncate text-sm font-semibold text-ink-900">All {top.name}</span>
-              <ChevronRightIcon className="h-4 w-4 text-ink-300" aria-hidden="true" />
+              <span className={`${NAME} font-semibold text-ink-900`}>All {top.name}</span>
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-300" aria-hidden="true" />
             </Link>
           </li>
         )}
@@ -169,8 +222,8 @@ function SubRail({ top, currentId, onSubPage }) {
                     className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-primary-600"
                   />
                   <CategoryThumb image={sub.image} label={sub.name} size="h-9 w-9" />
-                  <span className="truncate text-sm font-semibold text-primary-800">{sub.name}</span>
-                  <CheckIcon className="h-4 w-4 text-primary-600" aria-hidden="true" />
+                  <span className={`${NAME} font-semibold text-primary-800`}>{sub.name}</span>
+                  <CheckIcon className="h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
                 </span>
               ) : (
                 <Link
@@ -178,8 +231,8 @@ function SubRail({ top, currentId, onSubPage }) {
                   className={`${ROW} transition-colors hover:bg-surface-subtle`}
                 >
                   <CategoryThumb image={sub.image} label={sub.name} size="h-9 w-9" />
-                  <span className="truncate text-sm font-medium text-ink-800">{sub.name}</span>
-                  <ChevronRightIcon className="h-4 w-4 text-ink-300" aria-hidden="true" />
+                  <span className={`${NAME} font-medium text-ink-800`}>{sub.name}</span>
+                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-300" aria-hidden="true" />
                 </Link>
               )}
             </li>
@@ -213,7 +266,7 @@ function SubGrid({ top, currentId, onSubPage }) {
           <li>
             <Link to={`/category/${top.slug}`} className={shell(false)}>
               <CategoryThumb image={top.image} label={top.name} />
-              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink-900">
+              <span className="line-clamp-2 min-w-0 flex-1 text-sm font-semibold leading-snug text-ink-900">
                 All {top.name}
               </span>
               <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-300" aria-hidden="true" />
@@ -226,7 +279,7 @@ function SubGrid({ top, currentId, onSubPage }) {
             <>
               <CategoryThumb image={sub.image} label={sub.name} />
               <span
-                className={`min-w-0 flex-1 truncate text-sm ${
+                className={`line-clamp-2 min-w-0 flex-1 text-sm leading-snug ${
                   current ? 'font-semibold text-primary-700' : 'font-medium text-ink-800'
                 }`}
               >
@@ -254,9 +307,106 @@ function SubGrid({ top, currentId, onSubPage }) {
   );
 }
 
+/**
+ * Mobile "Filters" full-screen sheet (2026-08-13, owner: "for the mobile
+ * version for the phone make a page for these all filters"). Before this,
+ * every sub-category tile AND every filter control rendered inline, in
+ * order, above the product list — on a phone that pushed the actual results
+ * an entire screen or more below the fold before a buyer saw a single
+ * product. Standard mobile-commerce pattern instead: a compact "Filters"
+ * button opens this sheet; the results grid sits right under "Sort By" on
+ * the page itself.
+ *
+ * Same modal mechanics as `ProductDetail.jsx`'s `Lightbox` (portalled to
+ * `document.body`, Escape/backdrop/X close, focus trap, body-scroll lock) —
+ * not extracted to a shared hook yet. This is the second occurrence of the
+ * pattern, not the third; per CLAUDE.md ("duplicate twice before you
+ * generalise") it stays self-contained here until a third use asks for it.
+ *
+ * Filters still apply LIVE as you touch them (same as desktop — there is no
+ * separate "pending vs applied" filter state anywhere in this codebase to
+ * plug into), so the footer button is just "Show N results": it closes the
+ * sheet onto results that are already correct underneath it.
+ */
+function MobileFiltersSheet({ open, onClose, total, isPending, top, cat, onSubPage, filterSidebarProps }) {
+  useEffect(() => {
+    if (!open) return undefined;
+    const previouslyFocused = document.activeElement;
+    document.body.style.overflow = 'hidden';
+
+    function onKeyDown(e) {
+      if (e.key !== 'Tab') {
+        if (e.key === 'Escape') onClose();
+        return;
+      }
+      const focusable = document.querySelectorAll('[data-mobile-filters] button, [data-mobile-filters] input, [data-mobile-filters] a');
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    document.querySelector('[data-mobile-filters-close]')?.focus();
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = '';
+      previouslyFocused?.focus?.();
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return createPortal(
+    <div
+      data-mobile-filters
+      role="dialog"
+      aria-modal="true"
+      aria-label="Filters"
+      className="fixed inset-0 z-50 flex flex-col bg-white lg:hidden"
+    >
+      <header className="flex shrink-0 items-center justify-between border-b border-surface-border px-4 py-4">
+        <h2 className="text-lg font-bold text-ink-900">Filters</h2>
+        <button
+          type="button"
+          data-mobile-filters-close
+          onClick={onClose}
+          aria-label="Close filters"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-ink-500 hover:bg-surface-subtle"
+        >
+          <XIcon className="h-5 w-5" aria-hidden="true" />
+        </button>
+      </header>
+
+      <div className="flex-1 overflow-y-auto px-4 py-5">
+        <SubGrid top={top} currentId={cat?.id} onSubPage={onSubPage} />
+        <FilterSidebar {...filterSidebarProps} bare />
+      </div>
+
+      <footer className="shrink-0 border-t border-surface-border p-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex min-h-[44px] w-full items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+        >
+          {isPending ? 'Show results' : `Show ${total} result${total === 1 ? '' : 's'}`}
+        </button>
+      </footer>
+    </div>,
+    document.body,
+  );
+}
+
 export function CategoryListing() {
   const { slug } = useParams();
   const [params, setParams] = useSearchParams();
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const page = Math.max(1, Number(params.get('page')) || 1);
   const sort = params.get('sort') || 'newest';
   const verifiedOnly = params.get('verified') === '1';
@@ -307,6 +457,11 @@ export function CategoryListing() {
 
   const hasActiveFilters =
     verifiedOnly || priceMin || priceMax || Object.keys(attrSelections).length > 0 || sort !== 'newest';
+
+  // The mobile "Filters" button's badge — deliberately NOT `hasActiveFilters`
+  // above, which also counts `sort` (not a control inside the sheet at all).
+  const activeFilterCount =
+    (verifiedOnly ? 1 : 0) + (priceMin || priceMax ? 1 : 0) + Object.keys(attrSelections).length;
 
   const filterParams = {
     category: slug,
@@ -406,11 +561,11 @@ export function CategoryListing() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface-subtle text-ink-900">
+    <div className="flex min-h-screen flex-col bg-white text-ink-900">
       <PublicHeader current="Categories" />
 
       <main className="flex-1">
-        <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 md:py-10">
+        <div className="w-full px-4 py-8 sm:px-6 md:py-10">
           <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-muted">
             <Crumb to="/categories">Categories</Crumb>
             {onSubPage && top && <Crumb to={`/category/${top.slug}`}>{top.name}</Crumb>}
@@ -418,14 +573,28 @@ export function CategoryListing() {
           </nav>
 
           <div className="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8">
-            {/* --- Left: sticky sub-category rail + filters (lg+) --- */}
-            <aside className="hidden lg:block lg:space-y-4">
-              {tree.isPending ? (
-                <Skeleton className="h-96 w-full rounded-2xl" />
-              ) : (
-                <SubRail top={top} currentId={cat?.id} onSubPage={onSubPage} />
-              )}
-              <FilterSidebar {...filterSidebarProps} />
+            {/* --- Left: sticky sub-category rail + filters (lg+) ---
+                One unified card (2026-08-12 redesign — see SubRail's own
+                comment for the "why"), not two separate shadow-card boxes.
+                The sticky positioning + scroll live on THIS wrapper, not on
+                either child (that was the original overlap bug: a child's
+                own `sticky top-20` had the whole <aside> as its containing
+                block, so its "stuck" range spanned its sibling's height too,
+                and the sibling slid underneath it while scrolling). Pinning
+                and scrolling the wrapper instead keeps both sections moving
+                as one card, with ONE scroll region if the combined content
+                is ever taller than the viewport, instead of two. */}
+            <aside className="hidden lg:block">
+              <div className="sticky top-20 max-h-[calc(100vh-6rem)] divide-y divide-surface-border overflow-y-auto rounded-2xl border border-surface-border bg-white shadow-card">
+                <div className="p-4">
+                  {tree.isPending ? (
+                    <Skeleton className="h-96 w-full rounded-2xl" />
+                  ) : (
+                    <SubRail top={top} currentId={cat?.id} onSubPage={onSubPage} />
+                  )}
+                </div>
+                <FilterSidebar {...filterSidebarProps} bare />
+              </div>
             </aside>
 
             {/* --- Right: header, (mobile subs + filters), products --- */}
@@ -458,24 +627,52 @@ export function CategoryListing() {
                 <Skeleton className="h-10 w-2/3 rounded-lg" />
               )}
 
-              <div className="mt-6 lg:hidden">
-                <SubGrid top={top} currentId={cat?.id} onSubPage={onSubPage} />
-              </div>
-              <div className="mt-6 lg:hidden">
-                <FilterSidebar {...filterSidebarProps} />
-              </div>
-
-              <div className="mb-4 mt-6 flex items-center gap-2 border-t border-surface-border pt-4">
-                <span className="text-sm font-medium text-ink-800">Sort By</span>
-                <div className="w-52">
-                  <Combobox id="sort" value={sort} options={SORT_OPTIONS} onChange={onSortChange} />
+              {/* Mobile: a "Filters" button opens the full-screen sheet
+                  (2026-08-13) instead of the sub-categories + every filter
+                  control rendering inline here — that used to push the
+                  actual results a full screen or more below the fold. */}
+              <div className="mb-4 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-surface-border pt-4">
+                <button
+                  type="button"
+                  onClick={() => setMobileFiltersOpen(true)}
+                  className="flex min-h-[44px] items-center gap-2 rounded-full border border-surface-border px-4 text-sm font-semibold text-ink-800 hover:border-primary-600 lg:hidden"
+                >
+                  <FilterIcon className="h-4 w-4" aria-hidden="true" />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary-600 px-1 text-xs font-bold text-white">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-ink-800">Sort By</span>
+                  <div className="w-40 sm:w-52">
+                    <Combobox id="sort" value={sort} options={SORT_OPTIONS} onChange={onSortChange} />
+                  </div>
                 </div>
               </div>
 
+              <MobileFiltersSheet
+                open={mobileFiltersOpen}
+                onClose={() => setMobileFiltersOpen(false)}
+                total={total}
+                isPending={products.isPending}
+                top={top}
+                cat={cat}
+                onSubPage={onSubPage}
+                filterSidebarProps={filterSidebarProps}
+              />
+
               {(category.isPending || products.isPending) && (
-                <ul className={LIST} aria-busy="true" aria-label="Loading products">
-                  {Array.from({ length: 4 }, (_, i) => <CardSkeleton key={i} />)}
-                </ul>
+                <>
+                  <ul className={LIST_MOBILE} aria-busy="true" aria-label="Loading products">
+                    {Array.from({ length: 4 }, (_, i) => <CardSkeletonCompact key={i} />)}
+                  </ul>
+                  <ul className={LIST} aria-busy="true" aria-label="Loading products">
+                    {Array.from({ length: 4 }, (_, i) => <CardSkeleton key={i} />)}
+                  </ul>
+                </>
               )}
 
               {products.isError && (
@@ -527,6 +724,18 @@ export function CategoryListing() {
 
               {products.isSuccess && total > 0 && (
                 <>
+                  {/* Mobile: compact 2-up grid (`ProductCard`, the same
+                      card used for "More in category" on the product
+                      detail page). sm+: the rich horizontal list card. */}
+                  <ul className={LIST_MOBILE}>
+                    {products.data.products.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        to={`/product/${product.slug}`}
+                      />
+                    ))}
+                  </ul>
                   <ul className={LIST}>
                     {products.data.products.map((product) => (
                       <ProductListCard

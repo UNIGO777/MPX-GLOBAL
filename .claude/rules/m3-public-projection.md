@@ -34,7 +34,9 @@ whitelisted public fields below**. Everything else stays private.
 ## Public whitelist (the ONLY fields a buyer/guest may receive)
 
 **Seller / Supplier** — company/business name · **`slug`** (`/supplier/:slug` link — §A6) · logo ·
-description · verified tick = a **`verified` boolean** + `verifiedAt` (derived server-side from
+**`coverImage`** (2026-08-13 — supplier-profile banner, same public-asset reasoning as `logo`;
+**no upload endpoint exists yet**, see `SupplierProfile.jsx`'s own header comment) · description ·
+verified tick = a **`verified` boolean** + `verifiedAt` (derived server-side from
 `kycStatus`; the raw `kycStatus` / `rejected` state is **never** exposed — frontend reads
 `verified`, not `kycStatus`) · general location (country / city, **not** street
 address) · **`entityType`** (`business` | `individual` — the trust signal that replaced the cancelled

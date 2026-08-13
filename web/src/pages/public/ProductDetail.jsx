@@ -1,20 +1,35 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { PriceLine } from '../../components/catalogue/PriceLine.jsx';
-import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { SpecTable } from '../../components/catalogue/SpecTable.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
 import { VerifiedTick } from '../../components/ui/VerifiedTick.jsx';
-import { ChevronRightIcon, DocIcon, ListIcon } from '../../components/ui/icons.jsx';
+import {
+  BoxIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  CreditCardIcon,
+  DocIcon,
+  ExpandIcon,
+  GlobeIcon,
+  ListIcon,
+  MailIcon,
+  MapPinIcon,
+  TagIcon,
+  UsersIcon,
+  XIcon,
+} from '../../components/ui/icons.jsx';
 import { countryName } from '../../lib/countries.js';
-import { formatMonth } from '../../lib/format.js';
+import { formatDate } from '../../lib/format.js';
 import { NotFound } from './NotFound.jsx';
 
 /**
@@ -25,13 +40,39 @@ import { NotFound } from './NotFound.jsx';
  * MOQ → supplier card → trade facts), icon-chip panels for description and
  * specifications, and a "More in {category}" row of real product cards.
  *
+ * REDESIGNED AGAIN 2026-08-12 against an owner-supplied reference mockup
+ * ("this is the design for product page make this"):
+ *  - gallery pinned (`self-start` + `sticky`, desktop only) instead of
+ *    stretching to the buy panel's height and leaving dead white space below
+ *    a single photo;
+ *  - price block promoted to a tinted, bordered card with MOQ and supply
+ *    ability as a two-column row beneath the price, instead of a flat
+ *    rectangle with just the price;
+ *  - trade facts became their own bordered card with a leading icon per row
+ *    (was a plain label/value list folded under the seller card);
+ *  - Description + Specifications go full-width stacked instead of side by
+ *    side — a 2-3 row spec table in a half-width card read as very sparse.
+ *  - a disabled "Send Enquiry" button now sits under trade facts, in the
+ *    reference's exact position — the same treatment as `ProductListCard`'s
+ *    "Inquiry" button (Module 4 isn't wired on the web client yet): shown,
+ *    disabled, never fake-functional, logged in `docs/UiWebNotes.md`.
+ * Two things the reference shows that this screen deliberately does NOT
+ * add, because there is no real data behind them and this is a page buyers
+ * make sourcing decisions from: a view counter and a star supplier rating.
+ * Neither field exists on `Product` or `Organisation` — inventing a number
+ * ("2.4k views", "4.9★") would be presenting a fabrication as real signal,
+ * on a platform where D3/D1-style honesty about what's real is a standing
+ * rule, not a style preference.
+ *
  * 🔴 THE COPY CONSTRAINTS ARE THE POINT OF THIS SCREEN:
  *  - No status word anywhere. Only `active` products are queryable, so "Live",
  *    "Available" or "In stock" would be noise at best and a leak at worst.
  *  - No negative verification text. An unverified seller's block is identical,
  *    minus the tick — there is no badge, chip or sentence in its place.
- *  - No enquiry / contact / quote button. That is Module 4; a placeholder here
- *    would promise a path that does not exist.
+ *  - No WORKING enquiry / contact / quote button — the create-enquiry flow
+ *    isn't wired on the web client yet. 2026-08-12 added a "Send Enquiry"
+ *    button (owner's reference mockup shows one), but it's disabled, same
+ *    treatment as `ProductListCard`'s "Inquiry" button — never fake-functional.
  *  - The gallery shows ONLY the seller's own images. Never stock filler.
  *  - Never email, phone, street address or website — `website` in particular is
  *    internal and has reached a public response once before.
@@ -41,25 +82,29 @@ import { NotFound } from './NotFound.jsx';
  * deliberately indistinguishable from each other.
  */
 
-/** Goods and service listings carry different field groups; the leaf's type decided which. */
+/** Goods and service listings carry different field groups; the leaf's type
+ *  decided which. Each row also carries the icon its "Trade specifications"
+ *  card row leads with — picked for what the field IS, not copied from the
+ *  reference mockup's own (semiconductor-specific) row set. */
 const GOODS_FACTS = [
-  ['hsCode', 'HS code'],
-  ['countryOfOrigin', 'Country of origin'],
-  ['supplyAbility', 'Supply ability'],
-  ['leadTime', 'Lead time'],
-  ['packaging', 'Packaging'],
-  ['terms', 'Payment terms'],
+  ['hsCode', 'HS code', TagIcon],
+  ['countryOfOrigin', 'Country of origin', GlobeIcon],
+  ['supplyAbility', 'Supply ability', BoxIcon],
+  ['leadTime', 'Lead time', ClockIcon],
+  ['packaging', 'Packaging', BoxIcon],
+  ['terms', 'Payment terms', CreditCardIcon],
 ];
 const SERVICE_FACTS = [
-  ['engagementType', 'Engagement type'],
-  ['deliveryModel', 'Delivery model'],
-  ['teamSize', 'Team size'],
-  ['pricingModel', 'Pricing model'],
-  ['timeline', 'Timeline'],
+  ['engagementType', 'Engagement type', TagIcon],
+  ['deliveryModel', 'Delivery model', GlobeIcon],
+  ['teamSize', 'Team size', UsersIcon],
+  ['pricingModel', 'Pricing model', CreditCardIcon],
+  ['timeline', 'Timeline', ClockIcon],
 ];
 
 function Gallery({ images = [], name }) {
   const [active, setActive] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (images.length === 0) {
     // Publishing does not require a photo, so this is a normal listing, not a
@@ -69,9 +114,30 @@ function Gallery({ images = [], name }) {
 
   return (
     <div>
-      <div className="overflow-hidden rounded-xl border border-surface-border bg-white">
+      <div className="relative overflow-hidden rounded-xl border border-surface-border bg-white">
         <img src={images[active]} alt={name} className="aspect-[4/3] w-full object-cover" />
+        {/* Fullscreen trigger (2026-08-12, owner's reference mockup) — real,
+            working zoom, not a placeholder: it's pure client-side image
+            display, nothing to wire to a backend, so unlike "Send Enquiry"
+            there's no reason to hold this back. */}
+        <button
+          type="button"
+          onClick={() => setLightboxOpen(true)}
+          aria-label="View full-size image"
+          className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-ink-900/60 text-white backdrop-blur-sm transition-colors hover:bg-ink-900/80"
+        >
+          <ExpandIcon className="h-4 w-4" aria-hidden="true" />
+        </button>
       </div>
+      {lightboxOpen && (
+        <Lightbox
+          images={images}
+          active={active}
+          name={name}
+          onNavigate={setActive}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
       {images.length > 1 && (
         <ul className="mt-3 flex gap-2.5">
           {images.slice(0, images.length > 4 ? 3 : 4).map((src, i) => (
@@ -113,6 +179,125 @@ function Gallery({ images = [], name }) {
 }
 
 /**
+ * Fullscreen image view, triggered by `Gallery`'s expand button. A real
+ * modal (web-design.md: "modals trap focus and close on Esc"), not a bare
+ * `<img>` swapped to `position: fixed` — focus moves to the close button on
+ * open and back to whatever triggered it on close, Tab cycles only within
+ * the modal's own controls, Escape and a backdrop click both close it.
+ */
+function Lightbox({ images, active, name, onNavigate, onClose }) {
+  useEffect(() => {
+    const previouslyFocused = document.activeElement;
+    document.body.style.overflow = 'hidden';
+
+    function onKeyDown(e) {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowRight' && images.length > 1) {
+        onNavigate((active + 1) % images.length);
+      } else if (e.key === 'ArrowLeft' && images.length > 1) {
+        onNavigate((active - 1 + images.length) % images.length);
+      } else if (e.key === 'Tab') {
+        // Lightweight focus trap — the modal only ever has 1-3 buttons
+        // (close, and prev/next when there's more than one image).
+        const focusable = document.querySelectorAll('[data-lightbox] button');
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    document.querySelector('[data-lightbox-close]')?.focus();
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = '';
+      previouslyFocused?.focus?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
+  // Portalled to `document.body` (2026-08-12 bugfix, found while testing this
+  // exact modal) — rendered in place, this modal's `fixed` + `z-50` was
+  // trapped inside the gallery's own `sticky` wrapper (added earlier for the
+  // dead-space fix), which unconditionally opens its own stacking context.
+  // The header's `z-40` then painted OVER the modal despite the lower
+  // number, because the two were never actually competing in the same
+  // stacking context — the close button rendered correctly but was
+  // genuinely unclickable. A portal escapes every ancestor's stacking
+  // context, so z-50 now competes for real at the document root.
+  return createPortal(
+    <div
+      data-lightbox
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${name} — full-size image`}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/90 p-6"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        data-lightbox-close
+        onClick={onClose}
+        aria-label="Close full-size image"
+        className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+      >
+        <XIcon className="h-5 w-5" aria-hidden="true" />
+      </button>
+
+      {images.length > 1 && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigate((active - 1 + images.length) % images.length);
+          }}
+          aria-label="Previous image"
+          className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+        >
+          <ChevronLeftIcon className="h-6 w-6" aria-hidden="true" />
+        </button>
+      )}
+
+      <img
+        src={images[active]}
+        alt={name}
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain"
+      />
+
+      {images.length > 1 && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigate((active + 1) % images.length);
+          }}
+          aria-label="Next image"
+          className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+        >
+          <ChevronRightIcon className="h-6 w-6" aria-hidden="true" />
+        </button>
+      )}
+
+      {images.length > 1 && (
+        <p className="absolute bottom-5 left-1/2 -translate-x-1/2 text-sm font-medium text-white/80">
+          {active + 1} / {images.length}
+        </p>
+      )}
+    </div>,
+    document.body,
+  );
+}
+
+/**
  * Long prose folds behind "Read more" (design). React escapes the text by
  * default — user-generated content is never injected as HTML.
  */
@@ -141,14 +326,21 @@ function Description({ text }) {
   );
 }
 
+/**
+ * The "Trade specifications" / "Engagement details" card — its own bordered
+ * panel (2026-08-12 redesign) with a leading icon per row, matching the
+ * reference. Was previously a plain label/value list folded in under the
+ * seller card with just a small-caps heading; that's now the seller card's
+ * own space to breathe, and this stands as a clearly separate fact sheet.
+ */
 function Facts({ product }) {
   const isService = product.category?.type === 'service';
   const rows = (isService ? SERVICE_FACTS : GOODS_FACTS)
-    .map(([key, label]) => {
+    .map(([key, label, Icon]) => {
       let value = product[key];
       if (value === null || value === undefined || value === '') return null;
       if (key === 'countryOfOrigin') value = countryName(value) ?? value;
-      return [label, value];
+      return [key, label, value, Icon];
     })
     .filter(Boolean);
 
@@ -156,14 +348,17 @@ function Facts({ product }) {
   if (rows.length === 0) return null;
 
   return (
-    <div>
-      <h2 className="mb-2 border-t border-surface-border pt-4 text-xs font-semibold uppercase tracking-wider text-muted">
-        {isService ? 'Engagement details' : 'Trade facts'}
+    <div className="rounded-xl border border-surface-border bg-white p-4">
+      <h2 className="mb-1 text-sm font-bold text-ink-900">
+        {isService ? 'Engagement details' : 'Trade specifications'}
       </h2>
       <dl className="divide-y divide-surface-border/60">
-        {rows.map(([label, value]) => (
-          <div key={label} className="flex justify-between gap-6 py-2">
-            <dt className="text-sm text-muted">{label}</dt>
+        {rows.map(([key, label, value, Icon]) => (
+          <div key={key} className="flex items-center justify-between gap-6 py-2.5">
+            <dt className="flex items-center gap-2 text-sm text-muted">
+              <Icon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+              {label}
+            </dt>
             <dd className="text-right text-sm font-medium text-ink-900">{value}</dd>
           </div>
         ))}
@@ -195,6 +390,63 @@ function headlineChips(attributes = []) {
     .map((a) => (typeof a.value === 'number' ? `${a.value} ${a.key}` : String(a.value)));
 }
 
+/**
+ * "More in {category}" card — 2026-08-12, owner's reference mockup, chosen
+ * over reusing the shared `ProductCard` here ("fork a new card style just
+ * for this section" — the owner's explicit call, knowing it means this one
+ * row looks different from the identical cards on `/category/:slug`).
+ *
+ * Deliberately simpler than `ProductCard`: category eyebrow above the name,
+ * price, MOQ — no seller row. The eyebrow is real data (`product.category
+ * .name`), not invented, but worth flagging: every card in this ONE section
+ * shares the exact same category as the product being viewed (that's what
+ * "more in {category}" queries by), so the eyebrow reads identically on
+ * every card here — unlike the reference's own example (varied sub-types
+ * pulled from one parent category). Still real, just less differentiating
+ * than the reference happened to have on hand.
+ */
+function RelatedProductCard({ product, to }) {
+  const cover = product.images?.[0];
+  return (
+    <li className="h-full">
+      <Link
+        to={to}
+        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-surface-border bg-white transition-all hover:border-primary-600 hover:shadow-card"
+      >
+        {cover ? (
+          <img
+            src={cover}
+            alt=""
+            loading="lazy"
+            width={640}
+            height={480}
+            className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <NoImagePanel ratio="aspect-[4/3]" />
+        )}
+        <div className="flex flex-1 flex-col p-4">
+          {product.category?.name && (
+            <p className="text-xs text-muted">{product.category.name}</p>
+          )}
+          <h3 className="mt-0.5 line-clamp-2 text-sm font-semibold leading-snug text-ink-900">
+            {product.name}
+          </h3>
+          <div className="mt-auto pt-3">
+            <PriceLine price={product.price} unit={product.unit} size="base" />
+            {product.moq != null && (
+              <p className="mt-0.5 text-xs text-muted">
+                MOQ: {product.moq.toLocaleString('en-IN')}
+                {product.unit ? ` ${product.unit}` : ''}
+              </p>
+            )}
+          </div>
+        </div>
+      </Link>
+    </li>
+  );
+}
+
 export function ProductDetail() {
   const { slug } = useParams();
 
@@ -223,6 +475,43 @@ export function ProductDetail() {
   });
   const relatedRows = (related.data?.products ?? []).filter((r) => r.slug !== slug).slice(0, 4);
 
+  /**
+   * Fallback (2026-08-13, owner: "if there is not same category try to
+   * match with another thing... check with the [parent] category") — when
+   * this product's own leaf category has no OTHER live listings (a real,
+   * common state on sparse/seed data — e.g. "Denim" with exactly one
+   * product), broaden to the PARENT category instead of hiding the section
+   * outright. `category` on `/public/products` already resolves a TOP id to
+   * every LEAF under it server-side (`resolveCategoryLeafIds` — the same
+   * mechanism the category browse page's top-level pages use), so this is
+   * one more real query, not a client-side reshuffle of unrelated products.
+   * Only fires once the primary query has actually resolved empty — never
+   * fetched speculatively alongside it — and only when a parent exists (a
+   * top-level category's `parentId` is null; nothing broader to fall back to).
+   */
+  const needsFallback = related.isSuccess && relatedRows.length === 0 && Boolean(p?.category?.parentId);
+
+  const relatedFallback = useQuery({
+    queryKey: catalogueKeys.products({ category: p?.category?.parentId, page: 1, pageSize: 5 }),
+    queryFn: () => catalogueApi.products({ category: p.category.parentId, page: 1, pageSize: 5 }),
+    enabled: needsFallback,
+  });
+  const fallbackRows = (relatedFallback.data?.products ?? []).filter((r) => r.slug !== slug).slice(0, 4);
+
+  // Only fetched to LABEL the fallback honestly — "More in Denim" would be
+  // wrong once the row is actually showing products from "Textiles, Fabrics
+  // & Yarn". Cheap: one category by id, not the whole tree.
+  const parentCategory = useQuery({
+    queryKey: catalogueKeys.category(p?.category?.parentId),
+    queryFn: () => catalogueApi.category(p.category.parentId),
+    enabled: needsFallback,
+  });
+
+  const usingFallback = needsFallback && fallbackRows.length > 0;
+  const relatedSection = usingFallback
+    ? { rows: fallbackRows, category: parentCategory.data }
+    : { rows: relatedRows, category: p?.category };
+
   useEffect(() => {
     if (!p) return undefined;
     const previous = document.title;
@@ -235,11 +524,11 @@ export function ProductDetail() {
   const chips = p ? headlineChips(p.attributes) : [];
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface-subtle text-ink-900">
+    <div className="flex min-h-screen flex-col bg-white text-ink-900">
       <PublicHeader current="Categories" />
 
       <main className="flex-1">
-        <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 md:py-10">
+        <div className="w-full px-4 py-8 sm:px-6 md:py-10">
           {product.isPending && (
             <div className="grid gap-10 lg:grid-cols-2">
               <Skeleton className="aspect-[4/3] w-full rounded-xl" />
@@ -269,7 +558,19 @@ export function ProductDetail() {
 
               <section className="rounded-2xl border border-surface-border bg-white p-5 shadow-card sm:p-8">
                 <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-                  <Gallery images={p.images} name={p.name} />
+                  {/* `self-start` + `sticky`: the buy panel (badges, price,
+                      seller card, trade facts) usually runs taller than a
+                      single 4:3 photo. Without this, the grid's default
+                      row-stretch left the gallery's own box exactly as tall
+                      as the buy panel with nothing to fill it — a slab of
+                      dead white space under the image. `self-start` lets the
+                      gallery size to its own content instead of stretching;
+                      `sticky` (desktop only) then keeps the photo in view as
+                      the taller column scrolls past, the standard pattern on
+                      product-detail pages for exactly this height mismatch. */}
+                  <div className="lg:sticky lg:top-24 lg:self-start">
+                    <Gallery images={p.images} name={p.name} />
+                  </div>
 
                   {/* ---- the buy panel ---- */}
                   <div>
@@ -282,7 +583,10 @@ export function ProductDetail() {
                       {p.name}
                     </h1>
                     {p.listedSince && (
-                      <p className="mt-1.5 text-sm text-muted">Listed {formatMonth(p.listedSince)}</p>
+                      <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted">
+                        <ClockIcon className="h-4 w-4" aria-hidden="true" />
+                        Listed {formatDate(p.listedSince)}
+                      </p>
                     )}
 
                     {chips.length > 0 && (
@@ -290,23 +594,53 @@ export function ProductDetail() {
                         {chips.map((c) => (
                           <span
                             key={c}
-                            className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-medium text-ink-700"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-white px-2.5 py-1 text-xs font-medium text-ink-700"
                           >
+                            {/* One generic glyph for every chip, not a
+                                per-chip icon (2026-08-12 fidelity pass) — a
+                                chip is just the top few attribute values in
+                                whatever order the category defines, so there
+                                is no reliable "this one is architecture, that
+                                one is frequency" to hang a specific icon on
+                                without guessing. */}
+                            <TagIcon className="h-3 w-3 shrink-0 text-ink-400" aria-hidden="true" />
                             {c}
                           </span>
                         ))}
                       </p>
                     )}
 
-                    {/* Price block — the panel's anchor, MOQ beside it, exactly
-                        like the card promises in the grid. */}
-                    <div className="mt-5 rounded-xl bg-surface-subtle p-4">
-                      <PriceLine price={p.price} unit={p.unit} size="lg" />
-                      {p.moq != null && (
-                        <p className="mt-1 text-sm text-muted">
-                          Minimum order {p.moq.toLocaleString('en-IN')}
-                          {p.unit ? ` ${p.unit}` : ''}
-                        </p>
+                    {/* Price block — the panel's anchor. Promoted 2026-08-12
+                        from a flat neutral rectangle to a tinted, bordered
+                        card, with MOQ and supply ability as a two-column row
+                        underneath — this is the single number a buyer is on
+                        the page to find, so it should read as more than
+                        just larger text. Labels are neutral muted gray, not
+                        brand-blue caps (2026-08-12 fidelity pass against the
+                        reference) — the price itself is the loud element. */}
+                    <div className="mt-5 rounded-xl border border-primary-100 bg-primary-50 p-4">
+                      <p className="text-xs text-muted">Unit price</p>
+                      <div className="mt-1">
+                        <PriceLine price={p.price} unit={p.unit} size="lg" />
+                      </div>
+                      {(p.moq != null || p.supplyAbility) && (
+                        <div className="mt-4 grid grid-cols-2 gap-4 border-t border-primary-100 pt-3">
+                          {p.moq != null && (
+                            <div>
+                              <p className="text-xs text-muted">Minimum order</p>
+                              <p className="text-sm font-semibold text-ink-900">
+                                {p.moq.toLocaleString('en-IN')}
+                                {p.unit ? ` ${p.unit}` : ''}
+                              </p>
+                            </div>
+                          )}
+                          {p.supplyAbility && (
+                            <div>
+                              <p className="text-xs text-muted">Supply ability</p>
+                              <p className="text-sm font-semibold text-ink-900">{p.supplyAbility}</p>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
 
@@ -330,13 +664,32 @@ export function ProductDetail() {
                         <span className="min-w-0 flex-1">
                           <span className="flex flex-wrap items-center gap-2">
                             <span className="font-semibold text-ink-900">{p.seller.name}</span>
-                            <VerifiedTick verified={p.seller.verified} />
+                            {/* Pill wrap around the shared `VerifiedTick` —
+                                never fork its own logic/copy, that component
+                                is THE single verified-state convention (its
+                                own §1.1 comment). Only the container here is
+                                new. */}
+                            {p.seller.verified && (
+                              <VerifiedTick verified compact={false} className="rounded-full bg-success-50 px-2 py-0.5" />
+                            )}
                           </span>
-                          <span className="mt-0.5 block text-sm text-muted">
-                            {[countryName(p.seller.country) ?? p.seller.country,
-                              p.seller.entityType === 'individual' ? 'Individual' : 'Business',
-                              p.seller.memberSince ? `Member since ${p.seller.memberSince}` : null]
-                              .filter(Boolean).join(' · ')}
+                          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+                            {p.seller.memberSince && (
+                              <span className="inline-flex items-center gap-1">
+                                <ClockIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                                Member since {p.seller.memberSince}
+                              </span>
+                            )}
+                            {(countryName(p.seller.country) ?? p.seller.country) && (
+                              <span className="inline-flex items-center gap-1">
+                                <MapPinIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                                {countryName(p.seller.country) ?? p.seller.country}
+                              </span>
+                            )}
+                            <span className="inline-flex items-center gap-1">
+                              <UsersIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                              {p.seller.entityType === 'individual' ? 'Individual' : 'Business'}
+                            </span>
                           </span>
                         </span>
                         <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-300" aria-hidden="true" />
@@ -346,11 +699,32 @@ export function ProductDetail() {
                     <div className="mt-5">
                       <Facts product={p} />
                     </div>
+
+                    {/* Disabled placeholder — same treatment as
+                        `ProductListCard`'s "Inquiry" button: Module 4
+                        (enquiry/chat) has no create-enquiry flow wired on the
+                        web client yet, so this can't be real. Shown in the
+                        reference's exact position, visibly inert, not
+                        fake-functional — logged in docs/UiWebNotes.md. */}
+                    <button
+                      type="button"
+                      disabled
+                      title="Enquiries are coming soon"
+                      className="mt-5 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-ink-200 px-6 py-3 text-sm font-bold text-ink-500"
+                    >
+                      <MailIcon className="h-4 w-4" aria-hidden="true" />
+                      Send Enquiry
+                    </button>
                   </div>
                 </div>
               </section>
 
-              <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+              {/* Full-width stacked (2026-08-12 — was a side-by-side 2-col
+                  grid) — a specs table with only 3-4 rows read as very sparse
+                  squeezed into a half-width card; full width gives both
+                  panels, and `SpecTable`'s own 2-column row grid, the room
+                  they actually need. */}
+              <div className="mt-6 space-y-6">
                 {p.description && (
                   <Panel icon={DocIcon} title="Description">
                     <Description text={p.description} />
@@ -363,21 +737,24 @@ export function ProductDetail() {
                 )}
               </div>
 
-              {/* ---- more from this category ---- */}
-              {relatedRows.length > 0 && p.category && (
+              {/* ---- more from this category (or its parent — see
+                  `relatedSection` above) ---- */}
+              {relatedSection.rows.length > 0 && relatedSection.category && (
                 <section className="mt-10">
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-lg font-bold text-ink-900">More in {p.category.name}</h2>
+                    <h2 className="text-lg font-bold text-ink-900">
+                      More in {relatedSection.category.name}
+                    </h2>
                     <Link
-                      to={`/category/${p.category.slug}`}
+                      to={`/category/${relatedSection.category.slug}`}
                       className="text-sm font-medium text-primary-700 hover:underline"
                     >
-                      View all →
+                      View Category →
                     </Link>
                   </div>
                   <ul className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-                    {relatedRows.map((r) => (
-                      <ProductCard key={r.id} product={r} to={`/product/${r.slug}`} />
+                    {relatedSection.rows.map((r) => (
+                      <RelatedProductCard key={r.id} product={r} to={`/product/${r.slug}`} />
                     ))}
                   </ul>
                 </section>
