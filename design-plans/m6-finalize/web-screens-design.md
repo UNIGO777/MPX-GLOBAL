@@ -29,9 +29,15 @@
 Everything else in the F-register — F2 (cancelled), F4 (moved into M4), F6 (closed), the entire
 content + infrastructure table, and the whole F-C hygiene pass — adds **zero** web UI. See §5.
 
-**A note on hosts for the deltas (#5, #6):** there is no M5 web design brief in `design-plans/` yet.
-When one is written, rows 5–6 belong inside its Organisation-detail screen; until then this brief
-is their only record. The backend for both already exists (`views/adminOrg.view.js`).
+**A note on hosts for the deltas (#5, #6):** ✳️ *superseded 2026-08-14 —*
+`design-plans/m5/web-screens-design.md` **now exists**; rows 5–6 belong inside its
+Organisation-detail screen (verify it carries them — if not, this brief remains their record).
+The backend for both already exists (`views/adminOrg.view.js`).
+
+> ✳️ **Build status check (2026-08-14):** screens 1–3 remain **designed-here, not built** — no
+> `/admin/errors` or `/admin/featured` route exists in `web/src/App.jsx`, and the landing does
+> not yet call `GET /public/featured` (§4a). Only the backend halves (F-A, F5b server-side,
+> 2026-08-01) are done. This brief is still forward-looking, not a record of shipped UI.
 
 ---
 
@@ -147,23 +153,33 @@ state (above) · error.
 
 ### 4a · Public landing — featured strips (`/`)
 
-The landing page shipped in the M1 web build (step 7) with static category text and a decorative
-hero. F5b gives it real data: `GET /public/featured` returns banners, featured products, featured
-categories and highlighted suppliers **in one call**.
+✳️ *Baseline updated 2026-08-14:* the landing is **no longer** the static M1 version — a
+2026-08-11 pass gave it real hero data, store brand logos, filled phone mockups, and a category
+section using the same photo cards as `/categories` (8, linked). What it still does **not** have
+is the F5b wiring: it makes no call to `GET /public/featured` yet, so the strips below remain
+to-be-designed-and-wired. F5b gives it real data: `GET /public/featured` returns banners,
+featured products, featured categories and highlighted suppliers **in one call**.
 
 Design notes:
 
 - **Four strips:** banner carousel/hero rotation · featured products · featured categories ·
   highlighted suppliers. Cards for the last three use the **exact same public card designs** as
-  the rest of the public surface (M3 search results / category tiles / supplier cards) — the
-  payload is the same public projection, nothing richer. Do not design a special "featured" card
-  with extra fields; the only genuinely new visual is the banner (image + title + subtitle + link).
+  the rest of the public surface — as of 2026-08-14 that concretely means the shared
+  `ProductCard` (chips · price/MOQ · seller row w/ tick; it is now the one product card on
+  `/category`, the product page's related row, and the landing), the `/categories` photo tiles,
+  and the supplier cards — the payload is the same public projection, nothing richer. Do not
+  design a special "featured" card with extra fields; the only genuinely new visual is the banner
+  (image + title + subtitle + link).
 - **An empty group hides its section entirely.** Before the owner curates anything, all four may
   be empty — the landing must look complete, not gappy, in that state. No "nothing featured"
   placeholder on a public page.
 - **Self-healing is silent.** A blocked company or taken-down product simply stops appearing.
   Never a "this item is unavailable" tile on the landing page.
 - A supplier card carries `productCount` (live listings) — same as the public seller profile.
+  ✳️ *2026-08-14:* the public seller projection also carries `coverImage` since 2026-08-13
+  (`/supplier/:slug`'s banner; whitelisted in `m3-public-projection.md`). A featured-supplier
+  card MAY use it, with the same fallback-gradient rule as the profile — **no upload endpoint
+  exists yet**, so most sellers render the fallback.
 - ⚠️ `docs/UiWebNotes.md` governs the wiring: strips added before wiring must be logged there.
 
 ### 4b · M5 Organisation detail — block reason + cascade status (F1)
@@ -223,10 +239,17 @@ designing these now would be designing against an unmade decision. **List only �
 
 For completeness, so nobody hunts for their screens: the entire **F-C hygiene pass** (index sync,
 C10 append-only audit grant, Mongo auth + backups, key/password rotations, dev OTP print removal,
-secret scan, KYC-private regression test) and the **content/dependency table** (40 category
+secret scan, KYC-private regression test — 🔴 **all still OPEN as of 2026-08-14**: rotations, the
+OTP terminal-print removal and the D4 TOTP restore remain close-out items per `docs/Note.md` /
+`secrets-and-hygiene.md`; nothing here is done) and the **content/dependency table** (40 category
 synonyms, 40 category images — uploaded through the **existing** M5 category admin, no new
 screen — OTP provider, OpenAI/Redis/Cloudinary keys, VPS setup, Girish's sign-off). Backend/ops/
 content only.
+✳️ *Content status 2026-08-14:* the **40 top-category images are DONE** (real verified photos,
+2026-08-11), and **sub-category images stand at 252/261** (2026-08-14 pipeline; the remaining 9 —
+two "Other …" catch-alls by design plus seven where free-image quality bottomed out — render the
+neutral monogram and can be filled any time via the category admin). Synonyms remain owner
+content, status unchanged here.
 
 ---
 
@@ -236,9 +259,12 @@ content only.
    dimensions, aspect ratio, count shown at once, or rotation behaviour. Propose one (and how it
    degrades at 375px) and get owner sign-off before final artwork — this also becomes the upload
    helper text on screen 3.
-2. **No M5 web design brief exists yet** — the two F1/F3 deltas in §4b–4c have no host document.
-   Whoever writes the M5 brief must fold them in; until then this file is their record.
-3. **The support reference code loop should be verified end-to-end:** the error viewer's value
-   depends on client error states actually showing the `requestId`. M1's brief specifies "a
-   support reference code" on error states — confirm the built screens render it.
+2. ✳️ *Resolved 2026-08-14:* **the M5 web design brief now exists**
+   (`design-plans/m5/web-screens-design.md`). The two F1/F3 deltas in §4b–4c belong in its
+   Organisation-detail screen — confirm it folds them in; if it doesn't, this file remains their
+   record.
+3. ✳️ *Confirmed 2026-08-14:* the shared `ErrorState` component
+   (`web/src/components/ui/ErrorState.jsx`) renders the server `requestId` as a support
+   reference, and built screens pass it through (e.g. `CategoryListing`, `ProductMonitoring`).
+   The loop the error viewer depends on is real.
 4. **Brand palette** — still the same open item as M1 §10.

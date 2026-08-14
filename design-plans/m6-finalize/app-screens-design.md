@@ -27,7 +27,7 @@ here; each is a state of a screen that belongs to another module's brief.
 | **F1 · account block — sessions** | A user of a blocked company is signed out everywhere and their next login fails with the same generic **"Invalid credentials"** as any other failure. No "your account is blocked" screen exists, and none should be invented — the generic message is deliberate | M1 login screens (generic-error rule) |
 | **F1-B · products into takedown** | A blocked exporter's listings disappear from public search/browse; the exporter's own catalogue shows them taken down with the block reason ("Account blocked by MPX Global") | M2/M3 catalogue + discovery briefs — takedown states already exist there; the block only supplies a reason string |
 | **F1-B · chats freeze** | Conversations involving a blocked company freeze with a third freeze reason, `account`, alongside the existing per-thread and per-product freezes | **M4's brief** — frozen-thread states are designed there once, covering all freeze reasons. Cross-reference; do not duplicate. Only check that its frozen-state copy is generic enough to cover an account-level freeze without leaking why |
-| **F5b · featured landing content** | *Potentially* a curated home feed: `GET /public/featured` is public and returns banners + featured products/categories/suppliers in one call, so an app home screen could mirror the web landing strips | The app home belongs to whichever milestone designs the app's public/discovery screens — not M6. If built, follow the web brief §4a rules: same public cards as everywhere else, empty groups hidden, self-healing silent |
+| **F5b · featured landing content** | *Potentially* a curated home feed: `GET /public/featured` is public and returns banners + featured products/categories/suppliers in one call, so an app home screen could mirror the web landing strips. ✳️ *2026-08-14:* the app **now has** home/discovery screens (`BuyerHomeScreen` / `ExporterHomeScreen` / `CategoryBrowseScreen`, shipped 2026-08-13) — and they do **not** call `/public/featured` yet, so the open question below is now concrete rather than hypothetical | The app home belongs to whichever milestone designs the app's public/discovery screens — not M6. If built, follow the web brief §4a rules: same public cards as everywhere else, empty groups hidden, self-healing silent |
 | **F-A · error log viewer** | Nothing directly — but the viewer's value depends on app error states showing the **support reference code** (`requestId`), which is what staff search for. A component-level convention, not a screen | Each module's app error states |
 
 ## 3. Do not design
@@ -43,6 +43,10 @@ here; each is a state of a screen that belongs to another module's brief.
 ## 4. Gaps
 
 1. Whether the app gets a featured-content home strip at all is an open product question for the
-   app milestone — FINALIZE only guarantees the endpoint exists.
-2. An M4 app brief carrying the frozen-chat states was assumed above; if it does not exist yet,
-   the `account` freeze reason must be folded into it when written.
+   app milestone — FINALIZE only guarantees the endpoint exists. ✳️ *2026-08-14:* the app home
+   screens now exist (see §2 F5b row) without featured wiring, so this is a live decision for
+   whoever next touches `BuyerHomeScreen`, not a future one.
+2. ✳️ *Resolved 2026-08-14:* `design-plans/m4/app-screens-design.md` **exists** and carries the
+   frozen-thread vocabulary (shared freeze labels with the M4 web brief). Confirm its freeze copy
+   stays generic enough to cover the `account` freeze reason without leaking why — that check,
+   not the brief's existence, is what remains.

@@ -38,9 +38,13 @@ it something to *do*: search, browse, product pages, seller pages, saving. The b
 > entry points — exactly as the web briefs already say for their equivalents. Genuinely new here
 > are screens **1 · 2 · 3 · 4 · 8** (search home, results, filter modal, AI modal, saved items).
 >
-> ⚠️ **Neither milestone's app screens are built yet.** `app/src/screens` holds only M1 (auth, kyc,
-> profile), so **M2's 7 app screens must land before this milestone has anything to extend.** Do not
-> start M3 app work expecting a catalogue to already be there.
+> ⚠️ ~~Neither milestone's app screens are built yet — `app/src/screens` holds only M1.~~
+> **Updated 2026-08-14:** the app now also has **`BuyerHomeScreen` / `ExporterHomeScreen`** and
+> **`CategoryBrowseScreen`** (= M2 app screen 1 / this brief's screen 5). Tapping a sub-category
+> lands on the honest **`CategoryComingSoonScreen`** placeholder — the category product
+> **listing** (M2 app screen 2) plus product detail and seller profile (M2 app screens 3–4 /
+> this brief's screens 6–7) are **still unbuilt**, so most of the caution stands: do not start
+> M3 app work expecting the full catalogue stack to be there.
 
 **The app has two roles only: Buyer and Exporter.** No staff surface, ever. M3 adds nothing
 staff-shaped — *"admin has no search screens"* (`m3.md` §8).
@@ -62,6 +66,15 @@ instead of a sidebar (named in `m3.md` §8 App specifics), bottom sheets, infini
 pull-to-refresh, lazy-loaded facets, optional swipe-to-unsave. No SEO surface exists in the app
 — slugs, canonical, JSON-LD are web-brief concerns; the app just navigates by id/slug
 internally.
+
+> ✅ **Convergence note, 2026-08-14:** web no longer uses a persistent filter *sidebar* either —
+> the shipped `/category/:slug` opens filters from a "Filters" button into a **full-screen sheet
+> on phones and a right-side drawer on desktop**, with facet options as **pill buttons** (counts
+> on the accessible label, not the pill face) and applied-filter chips + Clear All. The app's
+> full-screen filter modal (screen 3) is therefore the *same* pattern, not a divergence — keep
+> the two surfaces' filter anatomy and copy aligned when screen 3 is designed. Web's shipped
+> product card is a chips · price · MOQ · seller-row merchandising card; match its content
+> hierarchy in the app card.
 
 ### 1.1 Design foundations
 
@@ -319,7 +332,7 @@ never present AI results as a different result type — they are the same cards,
 
 ---
 
-### 5 · Category browse
+### 5 · Category browse ✅ PARTIALLY SHIPPED (2026-08-13, M2 form)
 
 The visual directory in the search stack (a tab-bar destination or a "Browse categories" entry
 from screen 1 — nav decision in §8).
@@ -328,8 +341,14 @@ from screen 1 — nav decision in §8).
 screen 2 filtered to that category (its leaves then appear as filter options / a chip rail on
 results). Optional goods/services section split.
 
-**States:** loading (skeleton grid) · loaded · offline · error. Design the no-image category
-tile (initial on tint) — admin images may be missing early.
+⚠️ **As built today:** `CategoryBrowseScreen` exists (reached from `BuyerHomeScreen`), but a
+category tap opens the honest **`CategoryComingSoonScreen`** ("Product listings are coming
+soon", logged in `docs/UiWebNotes.md`) — because screen 2 (results) doesn't exist yet. M3's job
+here is to replace that placeholder with the pre-filtered results push this section describes.
+Category images are no longer "missing early": all 40 tops and 252/261 subs carry real photos
+(2026-08-14); keep the monogram fallback for the remainder.
+
+**States:** loading (skeleton grid) · loaded · offline · error.
 
 ---
 

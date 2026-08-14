@@ -90,8 +90,17 @@ state, layout shell with permission-driven sidebar. New for M5:
 - **Cursor "Load more"** — conversations and messages paginate by cursor, never page numbers
   (`m5-rules.md` §9). Design the "Load more" / infinite-scroll pattern distinct from the numbered
   pager other tables use.
-- **Tree row** — category tree: expand/collapse, active/inactive state, drag-free (order is a
-  number field, not drag-and-drop, unless the owner asks).
+- ~~**Tree row**~~ — **superseded 2026-08-14.** The category screen is built as a
+  **master–detail**, not a tree (see screen 7): no expand/collapse rows exist. Ordering is
+  **positional** — the order field is a *position*, and saving it re-sequences the siblings
+  server-side to a clean 1..n (both tops and subs); there is no drag-and-drop and none is
+  planned. Two built idioms this screen family relies on: **entity settings edit in a Drawer**
+  (the same right-side Drawer the Employees screen uses — top-category settings and sub-category
+  editing both use it, one editing idiom per screen), and the **phone selector card + full-height
+  searchable sheet** for picking among the 40 tops (searches names *and* synonyms — allowed here,
+  staff surface). Build gotcha for any spec'd field layout: the shared input class bakes in
+  `w-full`, so a deliberately narrow input (e.g. a rank/order box) needs a fixed-width *wrapper*,
+  not a width override on the input.
 - **Attribute editor row** — name · key · input type · options · unit · required · filterable ·
   order, with add/remove.
 - **"Not captured" field row** — label + a quiet em-dash and the words "Not captured" (never an
@@ -118,8 +127,8 @@ brief, not a dead end.
 | 4 | Org block / unblock modal | (within 3) | **superadmin only** | `m5.md` §7 · FINALIZE F1 |
 | 5 | Product monitoring list | `/admin/products` | `product:read` | `m5.md` §4 · #8 |
 | 6 | Takedown / restore modal | (within 5) | `product:takedown` | #9 |
-| 7 | Category tree | `/admin/categories` | `category:read` (writes `category:manage`) | #6 |
-| 8 | Sub-category editor + attributes | `/admin/categories/:id` | `category:read` / `category:manage` | #7 |
+| 7 | Category manager (master–detail; built) | `/admin/categories` | `category:read` (writes `category:manage`) | #6 |
+| 8 | Sub-category drawer (in 7) + attribute manager (built) | drawer + `/admin/categories/:id/attributes` | `category:read` / `category:manage` | #7 |
 | 9 | All conversations | `/admin/conversations` | `conversation:read` | `m5.md` §3 · #10 |
 | 10 | Chat viewer (read-only) | `/admin/conversations/:id` | `conversation:read` (block: `conversation:block`) | #11 |
 | 11 | Audit log viewer | `/admin/audit` | `audit:read` | `m5.md` §6 · #13 |
@@ -392,6 +401,21 @@ Organisation gets blocked (screen 4). The staff product detail shows the takedow
 name**; ⚠️ the *seller's* own view of a takedown shows reason and date but **never who** — that
 asymmetry is deliberate and not this screen's to fix.
 
+> **As built (2026-08-11, extended 2026-08-14)** — deltas from the spec above, all shipped in
+> `ProductMonitoring.jsx`:
+> - **Filters:** Category and Sub-category are **dependent searchable Comboboxes** (one URL
+>   param; the server resolves a top to its leaves), Status is a Combobox, plus a
+>   **"nearing purge" toggle chip** and a live result-count chip. Product-name search as spec'd.
+>   ⚠️ No seller *picker* shipped — seller filtering exists only as a URL param (the org detail
+>   deep-links it).
+> - **Rows** carry a product **thumbnail** (staff projection exposes `images[0]`); blocked rows
+>   are tinted; below `md` the table becomes a **card list**.
+> - **"Product detail" is a Drawer**, not a page: product image, status, category, **seller with
+>   cumulative-takedown chip**, listed date, a **"View listing" link to the public page** (active,
+>   un-taken-down rows only — others have no public page), and the takedown block (reason, actor
+>   by name, purge countdown) on blocked rows. Opened from the ⋮ menu — and on mobile by tapping
+>   the **card body itself** (2026-08-14; the ⋮ alone was too easy to miss).
+
 ---
 
 ### 6 · Takedown / restore — modal within screen 5
@@ -415,60 +439,86 @@ the purge clock starts.
 
 ---
 
-### 7 · Category tree — `/admin/categories`
+### 7 · Category manager — `/admin/categories`
 
-The full tree: ~40 top categories, ~250 sub-categories. Read for `category:read`; every write
-needs `category:manage` (controls absent otherwise).
+> **⚠️ SUPERSEDED AS A "TREE" — built and owner-iterated through 2026-08-14.** The shipped screen
+> (`web/src/pages/admin/CategoryManager.jsx`) is a **master–detail**, not an expandable tree.
+> This section now describes the built truth; the original tree spec is retired.
 
-**Controls:** search by name · Active/Inactive filter · expand/collapse all.
+Read for `category:read`; every write needs `category:manage` (controls **absent** otherwise —
+the read-only variant is a browsing view: state dots instead of switches, no menus, no add).
 
-**Top-category rows — toggle and image only.** No create, no rename, no delete on top
-categories (`m5-rules.md` §12). Row shows: name · image thumbnail (or "no image" placeholder) ·
-active toggle · sub-count · expand.
+**Master (pick a top):** at `xl+` a vertical rail of all 40 tops (image · name · inactive chip ·
+sub-count; inactive rows muted but fully readable). Below `xl`, a compact **selector card**
+(current top's thumb · name · sub-count · "Change ⌄") opening a **full-height searchable sheet** —
+type-to-filter on names *and* synonyms.
 
-- **Image upload** on a top category is the single deliberate write exception — square-ish crop,
-  replace/remove, per-file progress and error. The 40 images are seeded through this control.
-- **Deactivate confirmation — cascade copy:** *"Hides this category and all N of its
-  sub-categories from buyers. Their current on/off states are remembered — reactivating restores
-  them exactly, it doesn't switch everything on."* That restore-not-blanket behaviour is a rule;
-  the copy must teach it or admins will fear the toggle.
+**Detail (the selected top) — two stacked pieces, full width:**
 
-**Sub-category rows:** name · type badge (Goods / Service) · active state · product count ·
-order · open editor (→ screen 8) · delete. **Delete is blocked** when products or child
-categories exist — show the refusal inline with the count that blocks it ("Can't delete — 14
-products use it"), not a generic failure.
+1. **TopHeader** — identity row (image thumb · name · inactive chip · sub counts), the
+   **image control** ("Replace image" — the single §A20 write exception on a top; the 40 images
+   arrived through it), a **gear icon-button in the card's top-right** opening the settings
+   drawer, and the **master switch on its own row** with consequence copy inline
+   (*"Live in the catalogue — buyers can browse it and everything inside"* / the hidden mirror).
+   Deactivate confirms with the cascade copy: *"Hides this category and all N of its
+   sub-categories… their current on/off states are remembered — reactivating restores them
+   exactly."* The restore-not-blanket rule (`prevActive`) is taught by that modal.
+2. **Sub-category list** — full-width card, one row per sub (image · name · type badge ·
+   product-count context) with a **real switch per row** and a ⋮ RowMenu (Edit · Manage fields ·
+   Delete). While the parent is OFF, an amber banner explains the switches now set **restore
+   intent** (`prevActive`), not live state. "+ Add sub-category" sits in this card's header.
+   **Delete is blocked** when products exist — refusal names the blocking count, not a generic
+   failure.
 
-**States:** loading (tree skeleton) · loaded · search-no-match · error · row saving.
+**Top-category settings — a DRAWER, not a page section** (owner-final 2026-08-14 after four
+rejected on-page placements). The gear opens the shared right-side Drawer: name (with the
+immutable public URL noted permanently beneath it — `/category/{slug}` never changes on rename),
+**Display order** (a small centred rank box — *positional*: "Lower shows first — the others
+shift around it"), and **Search keywords** (chips + live count; §A12 — the only entry path for
+the top-40 keyword list, never public). Footer: Cancel / Save changes (Save disabled until
+dirty; success closes). Read-only staff can open it too — fields render disabled, no footer —
+so the keyword list stays browsable.
+
+**No create, no rename-at-will, no delete on top categories — still by design** (`m5-rules.md`
+§12; reconfirmed 2026-08-14 when QA flagged "create category not shown"): the 40 tops are
+seeded, toggle-only. **A request for create-top is a scope change — red-alert first**, not a bug.
+
+**States:** loading (rail/selector skeleton) · loaded · sheet search-no-match · drawer
+(read-only / editable / saving) · restore-intent banner · row saving.
 
 ---
 
-### 8 · Sub-category editor + attribute manager — `/admin/categories/:id`
+### 8 · Sub-category editor + attribute manager
 
-Create and edit sub-categories, and manage the attribute set that builds the product form.
+> **⚠️ SUPERSEDED AS A STANDALONE PAGE — built 2026-08-11..14.** Sub-category create/edit is a
+> **Drawer inside `/admin/categories`** (the `SubPanel`, same idiom as the top-settings drawer);
+> only the **attribute manager** is its own page, at `/admin/categories/:id/attributes` (kept as
+> a table — owner call). This section now matches the build.
 
-**Sub-category — fields**
+**Sub-category drawer — fields as built**
 
-| Label | Type | Required | Helper |
+| Label | Type | Required | Notes |
 |---|---|---|---|
+| Parent category | read-only | — | shown, never editable (no re-parenting) |
+| Image | file upload | ○ | explicit buttons, no hover-dropzone (owner); **uploads WITH save**, including on create |
 | Name | text | ✔ | — |
-| Parent category | select | ✔ | top categories only |
-| Type | radio: **Goods / Service** | ✔ | "Decides which product form sellers fill in" — **required on sub-categories, never set on tops** |
-| Synonyms | **tags input** | ✔ | 🔴 "Words buyers might search instead — without these this category is invisible to search." **Not optional** (`m5-rules.md` §12) |
-| Active | toggle | — | — |
-| Order | number | ○ | — |
-| Image | file upload | ○ | same component as screen 7 |
+| Web address | read-only (edit) | — | "Fixed once created, so existing links keep working" |
+| Type | **tile radios** Goods / Service | ✔ create | create-only; on edit read-only — locked once products use the category |
+| Display order | number (fixed-width box) | ○ | **positional** — "Lower shows first — the others shift around it"; a new sub appends to the end by default (2026-08-14) |
+| Synonyms | comma-separated text | ○ | ⚠️ **built as optional**, diverging from `m5-rules.md` §12's "not optional" — flagged below |
 
-**Attribute manager — repeatable rows** (per attribute): name · key · input type (text / number
-/ select / boolean) · options (select only — chips editor) · unit (number only) · required
-toggle · filterable toggle · order. Add / edit / remove.
+**Attribute manager — `/admin/categories/:id/attributes`** (per attribute): name · key ·
+input type (text / number / select / boolean) · options (select only) · unit · required ·
+filterable · order. **Key and input type are immutable after create** (load-bearing copy in the
+built screen); tops have no attributes and the route refuses them.
 
-**States:** create (empty form) · edit (loaded) · saving · validation errors (a missing synonyms
-list is an error, not a warning) · attribute row editing · delete-blocked refusal · error.
+**States:** create (empty drawer) · edit (loaded) · saving · validation errors ·
+delete-blocked refusal · error.
 
-**Design notes:** the synonyms input needs real prominence — it is the difference between a
-category buyers find and one they don't. The type radio is consequential and irreversible in
-spirit (it decides the product form); give it explanation at the point of choice, like entity
-type on the signup screens.
+**✅ Resolved 2026-08-14 (owner):** synonyms stay **Optional**, exactly as built — they are a
+search-matching aid, never shown on any frontend, and a sub-category without them is still
+findable by its name. The earlier "invisible to search without synonyms" line overstated the
+stakes; do not add a required-ness gate.
 
 ---
 
@@ -664,6 +714,10 @@ logged placeholder (month 2).
 
 No other M1 admin screen changes. The verification queue and KYC viewer keep working exactly as
 designed; the org detail (screen 3) links **into** them rather than duplicating their decisions.
+*(One built refinement worth mirroring in any redraw, 2026-08-14: on phones the verification
+queue's per-row action cluster — View documents · Reject · Verify — takes its own full-width
+row under the identity block instead of sitting beside it; a rigid side-by-side cluster
+overflowed the card and clipped the primary action off-screen.)*
 
 ---
 
@@ -721,8 +775,9 @@ designed; the org detail (screen 3) links **into** them rather than duplicating 
 ### Still open
 
 1. **Brand palette** — same open item as M1; decide once for the whole product.
-2. **Category ordering interaction** — this brief specifies a numeric order field. If the owner
-   wants drag-to-reorder, say so before visual design; it changes the tree component.
+2. ~~**Category ordering interaction**~~ — **resolved 2026-08-14 (owner):** the order field is
+   **positional** — saving position N re-sequences the siblings server-side to a clean 1..n
+   (tops and subs alike; new subs append to the end). No drag-to-reorder exists or is planned.
 3. **Audit "action" suggestions** — the input is free text by rule; whether it offers recent
    values as suggestions needs a cheap source. Optional polish, not scope.
 

@@ -25,14 +25,20 @@ function present(value, def) {
   return value;
 }
 
-export function SpecTable({ attributes = [], defs = [] }) {
+export function SpecTable({ attributes = [], defs = [], columns = 2 }) {
   const rows = attributes.filter((a) => a.value !== null && a.value !== undefined && a.value !== '');
   if (rows.length === 0) return null;
 
   const defByKey = new Map(defs.map((d) => [d.key, d]));
 
   return (
-    <dl className="grid grid-cols-1 gap-x-8 border-t border-surface-border sm:grid-cols-2">
+    // `columns={1}` for half-width containers (ProductDetail's side-by-side
+    // panels, 2026-08-14) — two columns crush label+value there.
+    <dl
+      className={`grid grid-cols-1 gap-x-8 border-t border-surface-border ${
+        columns === 2 ? 'sm:grid-cols-2' : ''
+      }`}
+    >
       {rows.map((attr) => {
         const def = defByKey.get(attr.key);
         return (

@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { PriceLine } from '../../components/catalogue/PriceLine.jsx';
+import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { SpecTable } from '../../components/catalogue/SpecTable.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
@@ -306,8 +307,12 @@ function Description({ text }) {
   const foldable = text.length > 400;
   return (
     <div>
+      {/* max-w-4xl, not max-w-prose (2026-08-14): at the page's full-bleed
+          width a 65ch column left ~60% of the card empty — the wider measure
+          with slightly larger text keeps it readable without the barren
+          right side. */}
       <p
-        className={`max-w-prose whitespace-pre-line text-sm leading-relaxed text-ink-700 ${
+        className={`max-w-4xl whitespace-pre-line text-[15px] leading-relaxed text-ink-700 ${
           foldable && !expanded ? 'line-clamp-[8]' : ''
         }`}
       >
@@ -388,63 +393,6 @@ function headlineChips(attributes = []) {
     .filter((a) => a && a.value != null && a.value !== '' && typeof a.value !== 'boolean')
     .slice(0, 3)
     .map((a) => (typeof a.value === 'number' ? `${a.value} ${a.key}` : String(a.value)));
-}
-
-/**
- * "More in {category}" card — 2026-08-12, owner's reference mockup, chosen
- * over reusing the shared `ProductCard` here ("fork a new card style just
- * for this section" — the owner's explicit call, knowing it means this one
- * row looks different from the identical cards on `/category/:slug`).
- *
- * Deliberately simpler than `ProductCard`: category eyebrow above the name,
- * price, MOQ — no seller row. The eyebrow is real data (`product.category
- * .name`), not invented, but worth flagging: every card in this ONE section
- * shares the exact same category as the product being viewed (that's what
- * "more in {category}" queries by), so the eyebrow reads identically on
- * every card here — unlike the reference's own example (varied sub-types
- * pulled from one parent category). Still real, just less differentiating
- * than the reference happened to have on hand.
- */
-function RelatedProductCard({ product, to }) {
-  const cover = product.images?.[0];
-  return (
-    <li className="h-full">
-      <Link
-        to={to}
-        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-surface-border bg-white transition-all hover:border-primary-600 hover:shadow-card"
-      >
-        {cover ? (
-          <img
-            src={cover}
-            alt=""
-            loading="lazy"
-            width={640}
-            height={480}
-            className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <NoImagePanel ratio="aspect-[4/3]" />
-        )}
-        <div className="flex flex-1 flex-col p-4">
-          {product.category?.name && (
-            <p className="text-xs text-muted">{product.category.name}</p>
-          )}
-          <h3 className="mt-0.5 line-clamp-2 text-sm font-semibold leading-snug text-ink-900">
-            {product.name}
-          </h3>
-          <div className="mt-auto pt-3">
-            <PriceLine price={product.price} unit={product.unit} size="base" />
-            {product.moq != null && (
-              <p className="mt-0.5 text-xs text-muted">
-                MOQ: {product.moq.toLocaleString('en-IN')}
-                {product.unit ? ` ${product.unit}` : ''}
-              </p>
-            )}
-          </div>
-        </div>
-      </Link>
-    </li>
-  );
 }
 
 export function ProductDetail() {
@@ -719,12 +667,14 @@ export function ProductDetail() {
                 </div>
               </section>
 
-              {/* Full-width stacked (2026-08-12 — was a side-by-side 2-col
-                  grid) — a specs table with only 3-4 rows read as very sparse
-                  squeezed into a half-width card; full width gives both
-                  panels, and `SpecTable`'s own 2-column row grid, the room
-                  they actually need. */}
-              <div className="mt-6 space-y-6">
+              {/* Side by side at lg+ when BOTH exist (owner, 2026-08-14 —
+                  reverses the 2026-08-12 full-width stacking); a lone panel
+                  still gets the full width. Below lg they stack. */}
+              <div
+                className={`mt-6 grid gap-6 ${
+                  p.description && p.attributes?.length > 0 ? 'lg:grid-cols-2 lg:items-start' : ''
+                }`}
+              >
                 {p.description && (
                   <Panel icon={DocIcon} title="Description">
                     <Description text={p.description} />
@@ -732,7 +682,7 @@ export function ProductDetail() {
                 )}
                 {p.attributes?.length > 0 && (
                   <Panel icon={ListIcon} title="Specifications">
-                    <SpecTable attributes={p.attributes} defs={attrs.data?.attributes ?? []} />
+                    <SpecTable attributes={p.attributes} defs={attrs.data?.attributes ?? []} columns={1} />
                   </Panel>
                 )}
               </div>
@@ -753,8 +703,13 @@ export function ProductDetail() {
                     </Link>
                   </div>
                   <ul className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+                    {/* The SHARED merchandising card (owner, 2026-08-14: "fix
+                        below cards") — the page-local skinny variant showed a
+                        category line that always duplicated the section title
+                        plus a bare price; this one carries chips, MOQ and the
+                        seller row, same as the category page. */}
                     {relatedSection.rows.map((r) => (
-                      <RelatedProductCard key={r.id} product={r} to={`/product/${r.slug}`} />
+                      <ProductCard key={r.id} product={r} to={`/product/${r.slug}`} />
                     ))}
                   </ul>
                 </section>

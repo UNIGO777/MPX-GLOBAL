@@ -218,6 +218,25 @@ delete the "Enquiries" placeholder when wiring. Flagged in §9; do not design an
 The only door into the whole module (M4-4: no product-less enquiries). One button whose label
 depends on whether this buyer already has a thread on this product (`Buttons-summaries.png`).
 
+> ✅ **Superseded context (2026-08-14): the entry point already exists as a placeholder.** The
+> shipped product page carries a **disabled "Send Enquiry" button** (added 2026-08-12 from the
+> owner's reference mockup, logged in `docs/UiWebNotes.md`) in the buy panel directly below the
+> trade-specifications card. Screen 1's work is **replacing that placeholder in that exact
+> position** with the state table below — not adding a new button to a page without one.
+>
+> Two further disabled placeholders exist that this brief predates. **Owner ruled on both,
+> 2026-08-14:**
+> - **`/category/:slug` list cards' "Inquiry" button — DEACTIVATED, do not wire.** The product
+>   page's "Send Enquiry" is the ONE door into chat ("send inquiry will wire to chat"). At M4
+>   wiring time the card button is removed (or stays visibly inert if removal is deferred) —
+>   never fake-wired, and no per-card enquiry flow gets designed.
+> - **`/supplier/:slug` "Start Conversation" — KEPT, disabled, decision deferred.** The owner
+>   wants the company-level conversation concept preserved on the page but has not chosen how it
+>   reconciles with M4-4's product-scoped threads ("we will decide it later, keep it disabled
+>   till then"). It stays a visible, disabled placeholder through M4 wiring; gap 7 in §10 holds
+>   the open options. Do not wire it, drop it, or design a supplier-level flow until the owner
+>   rules.
+
 **Button states:**
 
 | Viewer | Button | Behaviour |
@@ -544,9 +563,14 @@ Owner sign-off needed since it changes the M1-approved nav sets.
 ### Still open
 
 1. **Brand palette** — unchanged from M1; confirm before final artwork.
-2. **Product-page dependency** — screen 1 modifies the public product detail page, which is an
-   M3 web screen that has no design brief yet. This brief designs the enquiry entry only; the
-   page around it is M3's to define.
+2. ~~**Product-page dependency** — screen 1 modifies the public product detail page, which is an
+   M3 web screen that has no design brief yet.~~ **Superseded 2026-08-14: the page is built and
+   settled.** `/product/:slug` shipped and was redesigned through owner iterations
+   (2026-08-11 → 14): gallery + structured buy panel, tinted price block with MOQ/supply row,
+   trade-facts card, **Description and Specifications side by side at lg+** (2026-08-14), and a
+   "More in {category}" row using the shared `ProductCard`. The disabled "Send Enquiry"
+   placeholder already sits in screen 1's position (see §4). This brief designs only the button's
+   state behaviour; the page around it exists and is not this milestone's to restyle.
 
 ---
 
@@ -560,3 +584,4 @@ Owner sign-off needed since it changes the M1-approved nav sets.
 | 4 | **No verified tick in conversation payloads** | The counterparty in a thread is a name only; `verified` is not part of the conversation projection. The enquiry form header (screen 2) can show the tick because it sits on the public product/seller surface. If the owner wants the tick inside the chat list/thread, that is a projection change — red-flag before designing it in. |
 | 5 | **Enquiry `fields` render as plain text** | The structured data lives on `Inquiry`, but the party projection of a thread does not re-expose it separately — the composed first message is the visible record. No "enquiry details" panel is designed; if month-2 quotation work wants one, it attaches to `Inquiry` then. |
 | 6 | **Blocked-account counterparty wording** | M4-28's "seller is shown that the buyer is blocked" is implemented as the neutral system line ("account currently unavailable") — deliberately vaguer than the plan's wording, to avoid disclosing account status. Design follows the built copy. |
+| 7 | **Supplier-page "Start Conversation" placeholder vs M4-4** *(added 2026-08-14)* | `/supplier/:slug` ships a disabled owner-requested "Start Conversation" button (2026-08-13, `docs/UiWebNotes.md`), but every M4 thread is **product-scoped** — there is no supplier-level conversation to wire it to. Options are an owner/backend call, not a design call: (a) route it to the supplier's catalogue so the buyer picks a product; (b) drop the button; (c) a backend change allowing product-less threads, which contradicts M4-4. Red-flag before designing anything for it. |

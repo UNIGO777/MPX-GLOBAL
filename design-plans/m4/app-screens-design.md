@@ -120,7 +120,7 @@ event the client emits.
 
 | # | Screen | Role | Named in |
 |---|---|---|---|
-| 1 | Product detail — enquiry entry *(existing app surface, modified)* | buyer | `m4.md` §9.1 · `Buttons-summaries.png` |
+| 1 | Product detail — enquiry entry *(app surface **not yet built** — see §9 gap 1)* | buyer | `m4.md` §9.1 · `Buttons-summaries.png` |
 | 2 | Enquiry form | buyer | `m4.md` §9.1 · `product-enquire-flow2.png` |
 | 3 | Chat list — "Chats" tab | buyer + exporter | `m4.md` §9.2 · M4-37 |
 | 4 | Chat thread | buyer + exporter | `m4.md` §9.3 · `enquiry+chat-flow1.png` |
@@ -135,6 +135,11 @@ collapses those: this milestone lights up **one "Chats" tab per portal**, with t
 Recommendation carried to the owner: buyer tabs become Home · Search · **Chats** · Profile;
 exporter tabs Home · Catalogue · **Chats** · Profile. Flagged in §8 — it amends the M1 brief's
 tab table.
+
+> **Update 2026-08-14:** the placeholder tabs became real **Home screens** (shipped 2026-08-10),
+> which carry separate **"Enquiries"** and **"Chat"** coming-soon module cards
+> (`docs/UiWebNotes.md`). The consolidation above applies to those cards too: wiring M4 should
+> collapse both into **one "Chats" card** per Home screen, same reasoning, same owner sign-off.
 
 ### Do not design — with sources
 
@@ -160,7 +165,14 @@ tab table.
 
 ## 4. Enquiry entry (screens 1–2) — buyer
 
-### 1 · Product detail — enquiry entry *(existing app surface, modified)*
+### 1 · Product detail — enquiry entry *(app surface not yet built)*
+
+> ⚠️ **Reality check (2026-08-14):** the app's product-detail screen does **not exist yet**. Its
+> design brief does — `design-plans/m2/app-screens-design.md` §4 screen 3 — but only category
+> browse (M2 app screen 1) has shipped; sub-category taps currently open a coming-soon screen.
+> This section designs the enquiry entry **against that M2 brief**, to be applied when the
+> screen is built. (On web the equivalent door already exists as a disabled "Send Enquiry"
+> placeholder — see the web brief §4.)
 
 The app's public product view gains the same single door as web (`Buttons-summaries.png`):
 
@@ -381,7 +393,10 @@ expectation, and violating it is a bug.
 
 The M4 backend (models, REST, socket, FCM) exists and is tested; wordings and label pairs in
 this brief are the server's own. Do not "improve" locked copy (welcome, freeze notices, push
-templates) in artwork — it renders verbatim.
+templates) in artwork — it renders verbatim. *(Precision, 2026-08-14: "built" means the
+**server** side — `firebase-admin`, `DeviceToken`, the two send events. The app client's token
+registration and notification handling are not yet wired; screen 5 designs ahead of that
+build.)*
 
 ### Recommendation — tab consolidation (needs owner sign-off)
 
@@ -404,7 +419,7 @@ say the word and I'll update that brief in the same pass.
 
 | # | Gap | Detail |
 |---|---|---|
-| 1 | **App product-detail screen has no design brief yet** | Screen 1 modifies the app's public product view — an M2/M3 app surface that was a placeholder tab in the M1 brief and has no brief of its own. This document designs only the enquiry entry; the page around it needs its own M2/M3 app brief before build. |
+| 1 | **App product-detail screen is briefed but not built** *(updated 2026-08-14)* | The brief now exists — `design-plans/m2/app-screens-design.md` §4 screen 3 — but the screen itself is unbuilt: only category browse (M2 app screen 1) shipped, and its sub-category taps open a coming-soon screen until the listing + product screens land. Screen 1 here designs only the enquiry entry to apply on top of that M2 design when it is built. |
 | 2 | **Account-freeze has no list chip** | Server behaviour (`tone: none`): the row looks normal; only the opened thread explains. Same open question as the web brief gap 1 — ask the owner if a list cue is wanted; do not invent one. |
 | 3 | **No verified tick inside chat surfaces** | The conversation payload carries the counterparty's name only. The tick appears on screen 2's product/seller context (public projection), not in the list or thread. Adding it there is a backend projection change — flag before designing it in. |
 | 4 | **No attachments on a camera-first device** | M4-14 is deliberate; users will ask. The composer design should not visually reserve a paperclip slot that ships dead — add it when the Quotation module lands. |

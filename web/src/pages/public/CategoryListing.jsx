@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
@@ -10,7 +10,6 @@ import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { ProductListCard } from '../../components/catalogue/ProductListCard.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
-import { Combobox } from '../../components/ui/Combobox.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
@@ -19,8 +18,10 @@ import {
   BadgeCheckIcon,
   BoxIcon,
   CheckIcon,
+  ChevronDownIcon,
   ChevronRightIcon,
   FilterIcon,
+  SearchIcon,
   XIcon,
 } from '../../components/ui/icons.jsx';
 import { NotFound } from './NotFound.jsx';
@@ -79,8 +80,13 @@ const PAGE_SIZE = 12;
 // SEPARATE 2-up grid of the compact `ProductCard` instead of squeezing the
 // same card narrower. Two parallel `<ul>`s, one hidden at each breakpoint,
 // rather than one list whose card component changes shape mid-breakpoint.
-const LIST_MOBILE = 'grid grid-cols-2 gap-3 sm:hidden';
-const LIST = 'hidden sm:flex sm:flex-col sm:gap-4';
+// Responsive audit 2026-08-14: the horizontal card used to start at sm
+// (640px) with a FIXED 400px image — ~200px left for every word. The 2-up
+// compact grid now holds through sm; the list card starts at md, with an
+// image column that scales to the room the rail leaves it (see
+// ProductListCard).
+const LIST_MOBILE = 'grid grid-cols-2 gap-3 md:hidden';
+const LIST = 'hidden md:flex md:flex-col md:gap-5';
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest first' },
@@ -112,11 +118,211 @@ function readAttrParams(searchParams) {
   return { raw, selections };
 }
 
+/**
+ * Pure sort dropdown (2026-08-14, owner: "no text field") — three fixed
+ * options never need the hybrid type-to-filter Combobox; a quiet text
+ * button + listbox matches the flat toolbar. Full keyboard support:
+ * ↑/↓ move, Enter picks, Esc closes.
+ */
+function SortMenu({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [hi, setHi] = useState(0);
+  const rootRef = useRef(null);
+  const current = SORT_OPTIONS.find((o) => o.value === value) ?? SORT_OPTIONS[0];
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onOutside = (e) => {
+      if (!rootRef.current?.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', onOutside);
+    return () => document.removeEventListener('pointerdown', onOutside);
+  }, [open]);
+
+  const pick = (opt) => {
+    onChange(opt.value);
+    setOpen(false);
+  };
+
+  const onKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      setOpen(false);
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!open) {
+        setOpen(true);
+        setHi(SORT_OPTIONS.indexOf(current));
+      } else {
+        const d = e.key === 'ArrowDown' ? 1 : -1;
+        setHi((h) => (h + d + SORT_OPTIONS.length) % SORT_OPTIONS.length);
+      }
+    } else if ((e.key === 'Enter' || e.key === ' ') && open) {
+      e.preventDefault();
+      pick(SORT_OPTIONS[hi]);
+    }
+  };
+
+  return (
+    <div ref={rootRef} className="relative" onKeyDown={onKeyDown}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => {
+          setHi(SORT_OPTIONS.indexOf(current));
+          setOpen((o) => !o);
+        }}
+        className="flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-ink-900 transition-colors hover:text-primary-700"
+      >
+        <span className="font-normal text-muted">Sort:</span>
+        {current.label}
+        <ChevronDownIcon
+          className={`h-4 w-4 text-ink-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        />
+      </button>
+      {open && (
+        <ul role="listbox" aria-label="Sort products" className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-surface-border bg-white py-1.5 shadow-lift">
+          {SORT_OPTIONS.map((opt, i) => {
+            const selected = opt.value === current.value;
+            return (
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  tabIndex={-1}
+                  onPointerDown={(e) => e.preventDefault()}
+                  onClick={() => pick(opt)}
+                  onPointerEnter={() => setHi(i)}
+                  className={`flex w-full items-center justify-between gap-3 px-3.5 py-2 text-left text-sm ${
+                    i === hi ? 'bg-primary-50' : ''
+                  } ${selected ? 'font-semibold text-primary-800' : 'text-ink-800'}`}
+                >
+                  {opt.label}
+                  {selected && <CheckIcon className="h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Full-height specialisation picker sheet, <lg (2026-08-14, owner: "same as
+ * we show categories in admin panel mobile view") — the admin category
+ * manager's phone pattern brought to the public page: selector card on the
+ * page, this searchable sheet on tap. Search filters by NAME only — the
+ * public projection carries no synonyms (search-only field, never public).
+ */
+function SpecialisationSheet({ open, top, currentId, onClose, onPick }) {
+  const [q, setQ] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    setQ('');
+    inputRef.current?.focus();
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const items = [
+    { id: top.id, slug: top.slug, name: `All ${top.name}`, image: top.image, isAll: true },
+    ...(top.subs ?? []),
+  ];
+  const norm = q.trim().toLowerCase();
+  const list = norm ? items.filter((i) => i.name.toLowerCase().includes(norm)) : items;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 lg:hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Choose a specialisation"
+    >
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-ink-900/40" />
+      <div className="absolute inset-x-0 bottom-0 top-12 flex flex-col rounded-t-2xl bg-white shadow-lift">
+        <div className="flex items-center justify-between gap-3 border-b border-ink-100 px-4 py-3">
+          <h2 className="text-[15px] font-bold text-ink-900">Choose a specialisation</h2>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-ink-500 hover:bg-ink-100 hover:text-ink-900"
+          >
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="relative border-b border-ink-100 px-4 py-2.5">
+          <SearchIcon className="pointer-events-none absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+          <input
+            ref={inputRef}
+            type="search"
+            aria-label="Search specialisations"
+            placeholder={`Search ${top.subs?.length ?? 0} specialisations…`}
+            className="h-10 w-full rounded-lg border border-surface-border bg-white pl-9 pr-3 text-sm outline-none placeholder:text-ink-500 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/20"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+        <ul className="min-h-0 flex-1 divide-y divide-surface-border overflow-y-auto overscroll-contain">
+          {list.length === 0 && (
+            <li className="px-4 py-8 text-center text-sm text-muted">
+              No specialisation matches &ldquo;{q.trim()}&rdquo;.
+            </li>
+          )}
+          {list.map((item) => {
+            const on = item.id === currentId;
+            return (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => onPick(item)}
+                  aria-current={on || undefined}
+                  className={`flex w-full items-center gap-3 px-4 py-3 text-left ${
+                    on ? 'bg-primary-50' : 'hover:bg-surface-subtle'
+                  }`}
+                >
+                  <CategoryThumb image={item.image} label={item.name} size="h-9 w-9" />
+                  <span
+                    className={`min-w-0 flex-1 text-sm ${
+                      on ? 'font-semibold text-primary-800' : item.isAll ? 'font-semibold text-ink-900' : 'font-medium text-ink-800'
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+                  {on ? (
+                    <CheckIcon className="h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
+                  ) : (
+                    <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-300" aria-hidden="true" />
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function CardSkeleton() {
   return (
-    <li className="flex flex-col overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card sm:flex-row">
-      <Skeleton className="aspect-[4/3] w-full rounded-none sm:aspect-auto sm:h-56 sm:w-64 md:w-72" />
-      <div className="flex-1 space-y-3 p-5 sm:p-6">
+    <li className="flex flex-col overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card md:flex-row">
+      <Skeleton className="aspect-[4/3] w-full rounded-none md:aspect-auto md:h-56 md:w-[320px] lg:w-[300px] xl:w-[360px] 2xl:w-[400px]" />
+      <div className="flex-1 space-y-3 p-4">
         <Skeleton className="h-6 w-2/3" />
         <Skeleton className="h-3.5 w-1/3" />
         <Skeleton className="h-8 w-1/4" />
@@ -194,11 +400,13 @@ function SubRail({ top, currentId, onSubPage }) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <h2 className="text-lg font-bold text-primary-800">Specialisations</h2>
-        <span className="rounded-full border border-primary-200 bg-primary-50 px-2.5 py-0.5 text-xs font-semibold text-primary-700">
-          {subs.length}
-        </span>
+      {/* Quiet label (2026-08-14): with the filters gone from this card, a
+          text-lg primary-800 heading out-shouted the masthead itself. */}
+      <div className="mb-3 flex items-center justify-between gap-2 px-1">
+        <h2 className="text-[13px] font-semibold uppercase tracking-wider text-ink-500">
+          Specialisations
+        </h2>
+        <span className="text-xs font-medium text-muted">{subs.length}</span>
       </div>
 
       <ul className="space-y-0.5">
@@ -369,35 +577,50 @@ function MobileFiltersSheet({ open, onClose, total, isPending, top, cat, onSubPa
       role="dialog"
       aria-modal="true"
       aria-label="Filters"
-      className="fixed inset-0 z-50 flex flex-col bg-white lg:hidden"
+      className="fixed inset-0 z-50"
     >
-      <header className="flex shrink-0 items-center justify-between border-b border-surface-border px-4 py-4">
-        <h2 className="text-lg font-bold text-ink-900">Filters</h2>
-        <button
-          type="button"
-          data-mobile-filters-close
-          onClick={onClose}
-          aria-label="Close filters"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-ink-500 hover:bg-surface-subtle"
-        >
-          <XIcon className="h-5 w-5" aria-hidden="true" />
-        </button>
-      </header>
+      {/* Desktop (2026-08-14, owner: filters out of the sidebar): the same
+          sheet renders as a right-side drawer over a dimmed backdrop; phones
+          keep the full-screen takeover. One filter surface, every width. */}
+      <button
+        type="button"
+        aria-label="Close filters"
+        onClick={onClose}
+        className="absolute inset-0 hidden cursor-default bg-ink-900/40 lg:block"
+      />
+      <div className="relative flex h-full w-full flex-col bg-white lg:ml-auto lg:max-w-md lg:shadow-lift">
+        <header className="flex shrink-0 items-center justify-between border-b border-surface-border px-4 py-4">
+          <h2 className="text-lg font-bold text-ink-900">Filters</h2>
+          <button
+            type="button"
+            data-mobile-filters-close
+            onClick={onClose}
+            aria-label="Close filters"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-ink-500 hover:bg-surface-subtle"
+          >
+            <XIcon className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-5">
-        <SubGrid top={top} currentId={cat?.id} onSubPage={onSubPage} />
-        <FilterSidebar {...filterSidebarProps} bare />
+        <div className="flex-1 overflow-y-auto px-4 py-5">
+          {/* The rail already shows specialisations on lg+ — repeating them
+              inside the drawer would be the same list twice on one screen. */}
+          <div className="lg:hidden">
+            <SubGrid top={top} currentId={cat?.id} onSubPage={onSubPage} />
+          </div>
+          <FilterSidebar {...filterSidebarProps} bare />
+        </div>
+
+        <footer className="shrink-0 border-t border-surface-border p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex min-h-[44px] w-full items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+          >
+            {isPending ? 'Show results' : `Show ${total} result${total === 1 ? '' : 's'}`}
+          </button>
+        </footer>
       </div>
-
-      <footer className="shrink-0 border-t border-surface-border p-4">
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex min-h-[44px] w-full items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
-        >
-          {isPending ? 'Show results' : `Show ${total} result${total === 1 ? '' : 's'}`}
-        </button>
-      </footer>
     </div>,
     document.body,
   );
@@ -405,8 +628,10 @@ function MobileFiltersSheet({ open, onClose, total, isPending, top, cat, onSubPa
 
 export function CategoryListing() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [specPickerOpen, setSpecPickerOpen] = useState(false); // <lg specialisation sheet
   const page = Math.max(1, Number(params.get('page')) || 1);
   const sort = params.get('sort') || 'newest';
   const verifiedOnly = params.get('verified') === '1';
@@ -564,28 +789,29 @@ export function CategoryListing() {
     <div className="flex min-h-screen flex-col bg-white text-ink-900">
       <PublicHeader current="Categories" />
 
-      <main className="flex-1">
-        <div className="w-full px-4 py-8 sm:px-6 md:py-10">
-          <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-muted">
+      {/* Off-white canvas (2026-08-14 polish pass): white cards read as
+          SURFACES against it instead of dissolving into a white page. */}
+      <main className="flex-1 bg-surface-subtle/50">
+        {/* Vertical scale (2026-08-14 finalise): py-8/10 left dead air under
+            the sticky header and above the footer; left/right stay untouched
+            (standing owner preference: full-bleed, slim side padding). */}
+        <div className="w-full px-4 py-6 sm:px-6 md:py-8">
+          <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-sm text-muted">
             <Crumb to="/categories">Categories</Crumb>
             {onSubPage && top && <Crumb to={`/category/${top.slug}`}>{top.name}</Crumb>}
             <Crumb last>{cat?.name ?? '…'}</Crumb>
           </nav>
 
           <div className="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8">
-            {/* --- Left: sticky sub-category rail + filters (lg+) ---
-                One unified card (2026-08-12 redesign — see SubRail's own
-                comment for the "why"), not two separate shadow-card boxes.
-                The sticky positioning + scroll live on THIS wrapper, not on
-                either child (that was the original overlap bug: a child's
-                own `sticky top-20` had the whole <aside> as its containing
-                block, so its "stuck" range spanned its sibling's height too,
-                and the sibling slid underneath it while scrolling). Pinning
-                and scrolling the wrapper instead keeps both sections moving
-                as one card, with ONE scroll region if the combined content
-                is ever taller than the viewport, instead of two. */}
+            {/* --- Left: sticky SPECIALISATIONS rail (lg+) ---
+                Filters moved OUT of this card and into the Filters drawer
+                (2026-08-14, owner: "I don't like the position of these
+                filters below the specialisation list") — the rail is now
+                navigation only. Sticky + scroll stay on the wrapper (the
+                original overlap bug: a child's own sticky had the whole
+                <aside> as its containing block). */}
             <aside className="hidden lg:block">
-              <div className="sticky top-20 max-h-[calc(100vh-6rem)] divide-y divide-surface-border overflow-y-auto rounded-2xl border border-surface-border bg-white shadow-card">
+              <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border border-surface-border bg-white shadow-card">
                 <div className="p-4">
                   {tree.isPending ? (
                     <Skeleton className="h-96 w-full rounded-2xl" />
@@ -593,64 +819,131 @@ export function CategoryListing() {
                     <SubRail top={top} currentId={cat?.id} onSubPage={onSubPage} />
                   )}
                 </div>
-                <FilterSidebar {...filterSidebarProps} bare />
               </div>
             </aside>
 
             {/* --- Right: header, (mobile subs + filters), products --- */}
             <div className="min-w-0">
-              {/* Flat "N results | Category" heading (2026-08-11, owner: exact
-                  match to the reference template) — supersedes the earlier
-                  photo-banner header card from earlier the same day. The
-                  count + trust line move here as plain text/pills rather than
-                  a separate card. */}
+              {/* MASTHEAD (2026-08-14, owner: "doesn't feel like an
+                  international brand") — the category's identity is the
+                  page's one brand moment: name in display weight, a single
+                  promise line, real-data chips, and the category's own photo
+                  dissolving in from the right (the device the 2026-08-11
+                  approved design had, restored). The result COUNT moves down
+                  to the flat toolbar — a category page leads with the
+                  category, not its number of rows. */}
               {cat ? (
-                <div>
-                  <h1 className="text-2xl font-bold text-ink-900 sm:text-3xl">
-                    {products.isSuccess ? `${total} result${total === 1 ? '' : 's'}` : '…'}
-                    <span className="mx-2 font-normal text-muted">|</span>
-                    {cat.name}
-                  </h1>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {!onSubPage && (top?.subs?.length ?? 0) > 0 && (
-                      <span className="inline-flex items-center rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-medium text-ink-700">
-                        {top.subs.length} specialisations
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-medium text-ink-700">
-                      <BadgeCheckIcon className="h-3.5 w-3.5 text-success" aria-hidden="true" />
-                      Verified Indian exporters
-                    </span>
+                <section className="relative overflow-hidden rounded-2xl border border-surface-border bg-gradient-to-r from-primary-50 via-primary-50/40 to-white shadow-card">
+                  {(cat.image ?? top?.image) && (
+                    <img
+                      src={cat.image ?? top?.image}
+                      alt=""
+                      className="absolute inset-y-0 right-0 hidden h-full w-[45%] object-cover sm:block"
+                      style={{
+                        maskImage: 'linear-gradient(to left, black 55%, transparent)',
+                        WebkitMaskImage: 'linear-gradient(to left, black 55%, transparent)',
+                      }}
+                    />
+                  )}
+                  <div className="relative p-5 sm:max-w-[58%] sm:p-8">
+                    {/* Stepped display size — 3xl on a phone made long names
+                        wrap to three lines and the masthead tower. */}
+                    <h1 className="text-2xl font-bold tracking-tight text-ink-900 sm:text-3xl lg:text-4xl">
+                      {cat.name}
+                    </h1>
+                    <p className="mt-2 text-sm text-ink-600 sm:text-[15px]">
+                      Sourced directly from Indian exporters — every verified tick is checked by MPX.
+                    </p>
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      {!onSubPage && (top?.subs?.length ?? 0) > 0 && (
+                        <span className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-primary-800 ring-1 ring-primary-200">
+                          {top.subs.length} specialisations
+                        </span>
+                      )}
+                      {onSubPage && top && (
+                        <span className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-primary-800 ring-1 ring-primary-200">
+                          Part of {top.name}
+                        </span>
+                      )}
+                      {products.isSuccess && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink-700 ring-1 ring-surface-border">
+                          <BadgeCheckIcon className="h-3.5 w-3.5 text-success" aria-hidden="true" />
+                          {total} listing{total === 1 ? '' : 's'}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </section>
               ) : (
-                <Skeleton className="h-10 w-2/3 rounded-lg" />
+                <Skeleton className="h-40 w-full rounded-2xl" />
               )}
 
-              {/* Mobile: a "Filters" button opens the full-screen sheet
-                  (2026-08-13) instead of the sub-categories + every filter
-                  control rendering inline here — that used to push the
-                  actual results a full screen or more below the fold. */}
-              <div className="mb-4 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-surface-border pt-4">
-                <button
-                  type="button"
-                  onClick={() => setMobileFiltersOpen(true)}
-                  className="flex min-h-[44px] items-center gap-2 rounded-full border border-surface-border px-4 text-sm font-semibold text-ink-800 hover:border-primary-600 lg:hidden"
-                >
-                  <FilterIcon className="h-4 w-4" aria-hidden="true" />
-                  Filters
-                  {activeFilterCount > 0 && (
-                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary-600 px-1 text-xs font-bold text-white">
-                      {activeFilterCount}
+              {/* Specialisation selector, <lg only (owner, 2026-08-14: "same
+                  as we show categories in admin panel mobile view") — the
+                  admin category manager's phone pattern: a compact current-
+                  selection CARD opening a full-height searchable sheet. The
+                  rail covers lg+. */}
+              {top && (top.subs?.length ?? 0) > 0 && (
+                <div className="mt-4 lg:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setSpecPickerOpen(true)}
+                    aria-haspopup="dialog"
+                    className="flex w-full items-center gap-3 rounded-2xl border border-surface-border bg-white p-3 text-left shadow-card active:bg-surface-subtle"
+                  >
+                    <CategoryThumb image={cat?.image ?? top.image} label={cat?.name ?? top.name} size="h-9 w-9" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-ink-900">
+                        {onSubPage ? cat.name : `All ${top.name}`}
+                      </span>
+                      <span className="block text-xs text-muted">
+                        {onSubPage ? `in ${top.name}` : `${top.subs.length} specialisations`}
+                      </span>
                     </span>
-                  )}
-                </button>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-ink-800">Sort By</span>
-                  <div className="w-40 sm:w-52">
-                    <Combobox id="sort" value={sort} options={SORT_OPTIONS} onChange={onSortChange} />
-                  </div>
+                    <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-primary-700">
+                      Change
+                      <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                  </button>
+                  <SpecialisationSheet
+                    open={specPickerOpen}
+                    top={top}
+                    currentId={cat?.id}
+                    onClose={() => setSpecPickerOpen(false)}
+                    onPick={(item) => {
+                      setSpecPickerOpen(false);
+                      if (item.id !== cat?.id) navigate(`/category/${item.slug}`);
+                    }}
+                  />
                 </div>
+              )}
+
+              {/* FLAT results toolbar (2026-08-14 rethink — a boxed bar was
+                  border-noise): controls read as typography over one
+                  hairline. Count lives HERE (metadata, not a headline);
+                  "Filters" is a text-button opening the sheet (phones,
+                  2026-08-13) or the right-side drawer (lg+). */}
+              <div className="mb-5 mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-surface-border pb-3">
+                <div className="flex min-h-[44px] items-center gap-4">
+                  <span className="text-sm text-muted" aria-live="polite">
+                    {products.isSuccess ? `${total} product${total === 1 ? '' : 's'}` : ' '}
+                  </span>
+                  <span aria-hidden="true" className="h-4 w-px bg-surface-border" />
+                  <button
+                    type="button"
+                    onClick={() => setMobileFiltersOpen(true)}
+                    className="flex min-h-[44px] items-center gap-2 text-sm font-semibold text-ink-900 transition-colors hover:text-primary-700"
+                  >
+                    <FilterIcon className="h-4 w-4" aria-hidden="true" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary-600 px-1 text-xs font-bold text-white">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
+                <SortMenu value={sort} onChange={onSortChange} />
               </div>
 
               <MobileFiltersSheet
@@ -745,17 +1038,19 @@ export function CategoryListing() {
                       />
                     ))}
                   </ul>
-                  <Pagination
-                    compact
-                    page={page}
-                    pageSize={PAGE_SIZE}
-                    total={total}
-                    onPage={(n) => setParams((prev) => {
-                      const next = new URLSearchParams(prev);
-                      n > 1 ? next.set('page', String(n)) : next.delete('page');
-                      return next;
-                    })}
-                  />
+                  <div className="mt-4">
+                    <Pagination
+                      compact
+                      page={page}
+                      pageSize={PAGE_SIZE}
+                      total={total}
+                      onPage={(n) => setParams((prev) => {
+                        const next = new URLSearchParams(prev);
+                        n > 1 ? next.set('page', String(n)) : next.delete('page');
+                        return next;
+                      })}
+                    />
+                  </div>
                 </>
               )}
             </div>

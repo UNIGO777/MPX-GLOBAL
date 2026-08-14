@@ -18,6 +18,15 @@
 > screen may show is pinned by real, tested responses. The public field lists in this brief are
 > **contractual**: they mirror `.claude/rules/m3-public-projection.md`, and a designer adding a
 > field the projection doesn't return is drawing a screen that cannot be built.
+>
+> ⚠️ **STATUS 2026-08-14 — four of the eight screens are BUILT and iterated.** Screens **4–7**
+> (`/categories`, `/category/:slug`, `/product/:slug`, `/supplier/:slug`) shipped ahead of this
+> milestone (M2 pull-forward, then owner-directed design passes 2026-08-11 → 2026-08-14). Their
+> sections below have been corrected to **as-built** — treat those passages as descriptions of
+> shipped reality, not proposals. Screens **1 (hero wiring) · 2 · 3 · 8** remain unbuilt and are
+> still genuine design work; where their assumptions collided with what shipped, a dated
+> supersession note marks the change. Standing owner preference recorded the same day: the
+> category page is **full-bleed** (`w-full`, slim side padding) — never cap its container width.
 
 ---
 
@@ -45,13 +54,23 @@ single source of truth (`web-design.md`). The M3 grid density is new (card grids
 but it is built from the same primitives, not a second system.
 
 **Responsive.** Every screen works at **1440 / 1024 / 768 / 375**. Card grids reflow
-(4 → 3 → 2 → 1 columns); the filter sidebar becomes a slide-over drawer under 1024 with a
-"Filters" button showing an active-filter count badge. No horizontal page scroll ever.
+(4 → 3 → 2 → 1 columns). No horizontal page scroll ever.
+⚠️ **Superseded 2026-08-14 (filters):** this line originally said "the filter sidebar becomes a
+slide-over drawer under 1024". As shipped on `/category/:slug`, filters are **never** a
+persistent sidebar at any width: a "Filters" button (with active-filter count badge) opens a
+**full-screen sheet on phones** and a **right-side drawer at lg+**. The left rail is
+**navigation only** (Specialisations). Screen 2's design should follow this shipped pattern
+rather than the two-column sidebar this brief originally assumed.
 
 **Accessibility is "done", not polish.** Real labels on every filter control; visible focus on
 cards and hearts; touch targets ≥ 44px; text contrast ≥ 4.5:1; never colour alone — the tick has
-an icon + the word "Verified", the unavailable state has a label, not just grey. Facet checkboxes
-are real checkboxes. `prefers-reduced-motion` respected on grid transitions.
+an icon + the word "Verified", the unavailable state has a label, not just grey.
+`prefers-reduced-motion` respected on grid transitions.
+⚠️ **Superseded 2026-08-12 (facet controls):** "facet checkboxes are real checkboxes" no longer
+describes the shipped surface — select/text/boolean options render as **pill buttons**
+(`aria-pressed`, "+" icon unselected / check on a filled pill selected, per the owner's
+reference mockup), with each option's live count moved to `title`/`aria-label` rather than
+visible text. Number attributes and price stay real min/max inputs.
 
 **Every screen needs four states drawn, not one:** loading (skeleton cards, not a spinner), empty,
 error, success. M3 adds a fifth that matters more here than anywhere: **zero results** — see §1.4.
@@ -69,9 +88,9 @@ badge, no red cross, no warning chip, anywhere.** Absence of the tick is the onl
   verification-shaped control a buyer ever sees is the **opt-in "Verified sellers only" facet
   toggle** (§3.1 of Search.md — an allowed carve-out, off by default).
 
-⚠️ `.claude/rules/web-design.md` still says "show the tick when `kycStatus === 'verified'`" —
-that line is **stale** (pre-dates the B7 fix pass). The tick is rendered from `verified`; the
-public API doesn't return `kycStatus` at all. Flagged in §11.
+~~⚠️ `.claude/rules/web-design.md` still says "show the tick when `kycStatus === 'verified'`"~~ —
+✅ **FIXED 2026-08-10**: the rule now reads from the derived `verified` boolean (with the
+self-scoped own-status exception spelled out). Brief and rule agree; the §11 row is closed.
 
 ### 1.2 Availability vocabulary (saved list + dead links)
 
@@ -125,6 +144,18 @@ These carry every M3 screen — design them before any page. (`m3.md` §8.7 name
 | **Supplier card** | logo, company name, verified tick, country, product count, save heart | `/supplier/:slug` |
 | **Category card** | name, image, product count | that category's page |
 
+⚠️ **Superseded 2026-08-11→14 (product card — SHIPPED shape):** the shared `ProductCard` is a
+B2B merchandising card: image (hover zoom + "View details" slide-up) · name · **spec chips**
+(first two short attribute values; numeric chips humanise snake_case keys) · price + /unit ·
+MOQ line · **seller row** (monogram · name · tick · country) — or a category line when the
+seller row is off. It has **no save heart yet** (SaveButton is still unbuilt M3 work; the
+hearts that exist today are visibly-disabled placeholders on `ProductListCard` and product
+detail, logged in `docs/UiWebNotes.md`). A second, **page-scoped horizontal card**
+(`ProductListCard`) ships on `/category/:slug` from `md+`: wide image column that scales with
+the viewport (md 320 / lg 300 / xl 360 / 2xl 400px), title + category/tick line, hero price,
+lead-spec block beside the price (truncating), 2-line description, seller/listed footer, and
+disabled "Inquiry" + heart placeholders.
+
 - Product-card seller line links to the seller page; the tick sits beside the seller name.
 - Supplier card with `productCount: 0` is a **normal state** — sellers with zero live listings
   do appear (B7; flagged backend default). Copy: "No live listings yet", never hidden.
@@ -143,7 +174,17 @@ fail). Toast copy: "Saved" / "Removed from saved".
 it and the **✨ AI Search** button. Appears on the landing hero and persists at the top of search
 results. Enter submits; the toggle re-runs the current query in the other mode.
 
-**Filter panel** (the facet sidebar — Search.md §3):
+**Filter panel** (Search.md §3):
+⚠️ **Superseded in part, 2026-08-11→14 — a SUBSET of this panel is SHIPPED** as
+`FilterSidebar`, live on `/category/:slug` (owner-directed pull-forward): **verified-only
+toggle · price min/max** (single server-supplied currency shown in the group title — no
+currency *select* on this surface) · **dynamic attribute groups** (pills for
+select/text/boolean, min/max for number, live counts per §A27.2) · **applied-filter chips with
+per-chip remove + Clear All**. It renders inside the Filters **sheet (phones) / right-side
+drawer (lg+)** — never a persistent sidebar. The groups below that are NOT on the category
+page (Category, Country, currency select, include-price-on-request, MOQ, Goods/Services)
+remain future `/search` work; when screen 2 is built, extend the shipped component rather than
+re-deriving the panel.
 - **Standard groups:** Category (tops → leaves once a top is chosen) · Country (seller's
   country) · Price range (min/max **+ a currency select**, §1 of §A27 — see screen 2) ·
   "Include price-on-request" toggle · MOQ (goods only) · Goods / Services · "Verified sellers
@@ -162,6 +203,11 @@ results. Enter submits; the toggle re-runs the current query in the other mode.
 
 **Sort select** — Relevance (default with a query) · Newest · Price: low to high · Price: high to
 low. See screen 2 for the price-sort honesty note.
+⚠️ **Shipped form 2026-08-14:** on `/category/:slug` sort is a **pure dropdown** (`SortMenu` —
+text-button trigger "Sort: {label}" + listbox with check-marked active option; owner: "no text
+field"), with Newest · Price ↑ · Price ↓ (no Relevance — there is no query on that surface).
+Screen 2 should reuse this control, adding Relevance when a query is present. The hybrid
+type-to-filter Combobox is NOT used for sort anywhere.
 
 **Pagination** — page-based pager with total count ("1–20 of 214"). (Infinite scroll is an open
 decision — §10.)
@@ -179,10 +225,10 @@ JSON-LD per page — §8; a content requirement per screen, not a visual).
 | 1 | Landing — discovery wiring | `/` | public | `Search-flow-chart.png` "search entry" · UiWebNotes ledger (hero + categories pending) · `GET /public/featured` (F5b) |
 | 2 | Search results | `/search?q=…&type=product\|supplier` | public | `m3.md` §8.1 · `Search-screens.png` |
 | 3 | AI search modal (+ AI results treatment) | overlay on 1–2 | public | `m3.md` §8.2 · `Search-demo.html` |
-| 4 | Category browse — all categories | `/categories` | public | `m3.md` §8.5 "category cards → filtered listing" |
-| 5 | Category page — top & leaf | `/category/:slug` · `/category/:parentSlug/:childSlug` | public | `m3.md` §8.5 · `m3-seo-rules.md` §1 |
-| 6 | Product detail | `/product/:slug` | public | `m3.md` §8.3 · `m3allscreens.png` |
-| 7 | Seller public profile | `/supplier/:slug` | public | `m3.md` §8.4 · §5b |
+| 4 | Category browse — all categories ✅ **shipped** | `/categories` | public | `m3.md` §8.5 "category cards → filtered listing" |
+| 5 | Category page — top & leaf ✅ **shipped** | `/category/:slug` (⚠️ **flat for BOTH levels as built** — slugs are globally unique; the nested `/category/:parentSlug/:childSlug` form was never implemented) | public | `m3.md` §8.5 · `m3-seo-rules.md` §1 |
+| 6 | Product detail ✅ **shipped** | `/product/:slug` | public | `m3.md` §8.3 · `m3allscreens.png` |
+| 7 | Seller public profile ✅ **shipped** | `/supplier/:slug` | public | `m3.md` §8.4 · §5b |
 | 8 | Saved items | `/saved` | **buyer only** | `m3.md` §8.6 · `Saved-items-ui.png` |
 
 All eight exist for guests except **8** (buyer-only). Screens 5–7 are the **indexable SEO
@@ -243,8 +289,13 @@ The workhorse. One screen serves both sides of the **Products | Suppliers** togg
 queries, category-filtered arrivals, and AI-search results (screen 3 lands here).
 
 **Layout:** persistent search bar on top (query editable in place) → active-filter chip row →
-two columns: **filter sidebar** (left, ~280px; drawer under 1024) + **result area** (toolbar:
-result count, sort, toggle · card grid · pagination).
+result area (toolbar: result count, sort, toggle · card grid · pagination).
+⚠️ **Superseded 2026-08-14 (was "two columns: filter sidebar left ~280px; drawer under
+1024"):** follow the shipped `/category` pattern instead — a "Filters" button (active-count
+badge) opening the sheet (phones) / right-side drawer (lg+) at every width, a flat typographic
+toolbar (count · Filters · "Sort: {label} ⌄" pure dropdown, + the Products|Suppliers toggle
+this screen adds), and the shipped `FilterSidebar` extended with this screen's extra groups
+(§2). No persistent sidebar column.
 
 **Controls**
 
@@ -348,52 +399,70 @@ attribute) — a prompt promising something the engine can't do writes a support
 
 ## 5. Browse surfaces (screens 4–5)
 
-### 4 · Category browse — all categories — `/categories`
+### 4 · Category browse — all categories — `/categories` ✅ SHIPPED
 
 The visual directory: category cards → filtered listings (`m3.md` §8.5).
 
-**Contains:** page heading + one-line intro · grid of **top-category cards** (§2: name, image,
-product count) · each card → screen 5. Optionally group by goods vs services with two section
-headings — the data supports it and the split is meaningful to buyers.
+**As built (2026-08-11):** page heading · grid of **photo category cards** with hover zoom and
+**sub-category chips** on each card · a **client-side quick-find filter** (matches category and
+sub names locally — navigation aid, not server search) · 2-up on phones, server category order
+preserved. Each card → screen 5. The goods/services section split from the original brief was
+not built.
 
 **States:** loading (skeleton grid) · loaded · error. (A true "no categories" state is
 practically impossible — design it anyway as a one-liner.)
 
 **Design notes:** only **active** categories arrive; product counts come from the server —
-never compute or cache them client-side. Category images are admin-uploaded (M2 §A11) and can
-be missing in dev data — design the no-image fallback tile (initial letter on a tinted ground),
-because a broken-image grid is the first thing a stakeholder will see.
+never compute or cache them client-side. All 40 top-category images are now real photos
+(2026-08-11) and 252/261 sub-categories have images (2026-08-14); the no-image fallback tile
+(neutral monogram) remains the standard for the rest.
 
-⚠️ **Route note:** the SEO doc defines `/category/:slug` pages but never names the index URL;
-`/categories` is this brief's placeholder — confirm before build (§11).
+✅ **Route resolved:** `/categories` is the live index URL (the "placeholder — confirm before
+build" caveat is closed; §11 row updated).
 
 ---
 
-### 5 · Category page — `/category/:slug` (top) · `/category/:parentSlug/:childSlug` (leaf)
+### 5 · Category page — `/category/:slug` ✅ SHIPPED (flat route for BOTH levels)
 
-The **indexable** category surfaces — a category page is a search-results page with an identity.
-One design, two levels:
+The **indexable** category surfaces — heavily iterated with the owner 2026-08-11 → 2026-08-14.
+The passage below is **as built**, superseding the original header/rail/sidebar layout:
 
-**Top category** (`/category/textiles-fabrics-yarn`):
-- **Header:** breadcrumb (Home › Textiles…) · category name as the page's one `h1` · product
-  count · optional image.
-- **Sub-category rail** — its leaf categories as small cards/chips → leaf pages.
-- **Result grid** — the category's products, with the full filter sidebar scoped to it.
-  Attribute facets at top level show the **intersection** of its leaves' filterable attributes
-  (server behaviour — the panel may legitimately be short here; that is correct, not broken).
+- **Masthead** — the page's one brand moment: category name in stepped display type
+  (2xl → 3xl → 4xl), one promise line ("Sourced directly from Indian exporters — every verified
+  tick is checked by MPX"), **real-data chips only** (specialisation count / "Part of {top}" /
+  listing count once loaded), and the category's own photo dissolving in from the right via a
+  CSS mask (photo hidden below `sm` — text leads on phones). The earlier "N results | {name}"
+  heading is gone; the count moved to the toolbar.
+- **Left rail (lg+)** — **Specialisations only**: sticky card of photo rows (thumb · name ·
+  marker; current row tinted + accent bar + check; "All {top}" row on sub pages), quiet
+  small-caps label. **No filters live in the rail.**
+- **Below lg** — a **specialisation selector card** (thumb · current name · "Change ⌄") opening
+  a full-height **searchable sheet** (the admin category manager's phone pattern; search matches
+  **names only** — synonyms are search-only and never public).
+- **Flat typographic toolbar** — "{N} products · | Filters (badge)" left, "Sort: {label} ⌄"
+  (pure `SortMenu` dropdown) right, over one hairline. No boxed bar.
+- **Filters** — the "Filters" button opens the facet surface at **every** width: full-screen
+  sheet on phones, right-side drawer at lg+ (see §2's shipped `FilterSidebar` subset).
+- **Products** — compact 2-up `ProductCard` grid below `md`; horizontal `ProductListCard` stack
+  from `md+` (scaling image column). Off-white canvas (`bg-surface-subtle/50`); **full-bleed
+  page width (standing owner preference — never cap it)**.
+- **Both levels use the same flat route and layout**; a sub page adds the parent to the
+  breadcrumb and the "All {top}" rail row. Attribute facets at top level show the
+  **intersection** of its leaves' filterable attributes (server behaviour — a short panel there
+  is correct, not broken).
 
-**Leaf category** (`/category/textiles-fabrics-yarn/cotton-fabric`):
-- Same layout minus the rail; breadcrumb gains the parent; the leaf's **full** attribute facet
-  set appears; goods/service-specific facets follow the leaf's type.
-
-**States:** loading · results · **empty category** ("No live listings in this category yet" +
-link back to browse — a real state for new categories) · filtered-to-zero (§1.4 with
-clear-filters) · error · **404** — an inactive/unknown category renders the standard not-found
-page (it must genuinely 404 for crawlers, not soft-render an empty shell).
+**States (all shipped):** loading (skeletons matched per-breakpoint card shape) · results ·
+**empty category** ("No products in this category yet" + browse link) · **filtered-to-zero**
+(distinct state: "No products match these filters" + Clear filters) · error (request-id +
+retry) · **404** — an inactive/unknown category renders the standard not-found page (genuinely
+404s, never a soft shell).
 
 **SEO (per §8):** clean URL indexable; **any filter/sort/page param → noindex + canonical to the
-clean category URL**. Title `"{Category} Suppliers & Products | MPX Global"`; meta description
-templated; JSON-LD `BreadcrumbList` + `ItemList`.
+clean category URL** (✅ shipped: canonical always points at the clean base, `noindex,follow`
+added whenever a filter or non-default sort is active). Title `"{Category} Suppliers & Products
+| MPX Global"` — ⚠️ shipped title is currently the simpler `"{Category} — MPX Global"`; align
+one way or the other when the SEO pass lands. JSON-LD `BreadcrumbList` + `ItemList` not yet
+emitted.
 
 **🔴 Copy constraint:** filtering inside a category never changes the visible URL identity in a
 way that reads as a new page — the canonical stays the clean category page; do not design
@@ -404,29 +473,33 @@ rules exists to prevent).
 
 ## 6. Detail pages (screens 6–7)
 
-### 6 · Product detail — `/product/:slug`
+### 6 · Product detail — `/product/:slug` ✅ SHIPPED
 
 The conversion surface. Everything shown is from the **public product projection** — the field
 list below is the complete license (`m3.md` §5c.1); nothing else exists to show.
 
-**Contains:**
-- **Gallery** — images with thumbnails; first image is the OG image; explicit dimensions; alt
-  from product name.
-- **Header block** — product name (`h1`) · category breadcrumb (Home › top › leaf) ·
-  **Price** (§1.3) · MOQ + unit (goods) · save heart · **"Send enquiry"** primary (M4 entry
-  point — see below).
-- **Seller strip** — company name + verified tick + country/general location + logo → links to
-  screen 7. This is the seller *public projection* — never contact details.
-- **Specs table** — the category attributes (key + value + unit), the differentiator content.
-- **Trade info** (goods): HS code, country of origin, supply ability, lead time, packaging.
-  **Service info** (services): engagement type, delivery model, team size, timeline. Render the
-  set matching the product's type; hide the other entirely.
-- **Description** — long text, rendered as plain text (user-generated; escaping is the law).
-- **Listed since** — from createdAt (a trust signal, the only date shown).
+**As built (2026-08-11 → 2026-08-14):**
+- **Gallery** — images with thumbnails + a working **fullscreen lightbox** (pure client-side
+  zoom); "+N" overflow tile past four thumbs; first image is the OG image; alt from product
+  name; sticky/self-start on desktop so a single photo doesn't strand dead space.
+- **Buy panel** (right) — category eyebrow · product name (`h1`) · "Listed {date}" · headline
+  **spec chips** · **tinted price block** (§1.3 price + MOQ/supply-ability row) · **supplier
+  card** (logo/monogram · name + tick · member-since · country · entity type → screen 7) ·
+  **trade-facts card** (icon per row; goods set OR service set per the product's type — the
+  other never renders) · disabled "Send Enquiry".
+- **Description | Specifications side by side at lg+** (owner, 2026-08-14 — reverses the
+  2026-08-12 full-width stacking; a lone panel still spans full width; stacked below lg).
+  `SpecTable` renders single-column rows in the half-width panel (`columns={1}`); description
+  text at `max-w-4xl` (a 65ch measure marooned in the full-bleed card was superseded the same
+  day). Long prose folds behind "Read more"; always plain text.
+- **"More in {category}"** — 2-up/4-up row of the **shared `ProductCard`** (chips · price ·
+  MOQ · seller row with tick). ⚠️ The page-scoped `RelatedProductCard` fork (owner call,
+  2026-08-12) was **deleted 2026-08-14** — the owner's "fix below cards" superseded it; the row
+  now matches `/category` exactly. Falls back to the parent category (relabelled honestly) when
+  the leaf has too few products.
 
-**Actions:** save (buyer) · Send enquiry → M4. Until M4's screens ship, the enquiry button is
-**visibly "coming soon" + disabled + a `docs/UiWebNotes.md` row in the same change** (strict
-ledger rule). Never a live-looking button that no-ops.
+**Actions:** ✅ shipped as designed — the heart and **"Send Enquiry"** are **visibly disabled
+placeholders** (M4 entry points, logged in `docs/UiWebNotes.md`). Never live-looking no-ops.
 
 **States:** loading (skeleton: gallery block + text lines) · loaded · **404 / gone** — a draft,
 archived, taken-down or dead-category product genuinely 404s (standard not-found page with a
@@ -446,11 +519,21 @@ product URL.
 
 ---
 
-### 7 · Seller public profile — `/supplier/:slug`
+### 7 · Seller public profile — `/supplier/:slug` ✅ SHIPPED
 
-The seller's public page — public **from signup**, tick or no tick. The whitelist below is the
-**complete** public surface (`m3.md` §5b.1 / projection rule); the design must be built to look
-good with exactly this and nothing more:
+The seller's public page — public **from signup**, tick or no tick.
+
+**As built (2026-08-11 → 2026-08-13):** brand **gradient cover band** with the ring-4
+overlapping logo, name + tick, **stat chips** (including the product-count chip with a box
+icon — deliberately not a badge shape on possibly-unverified pages), a products toolbar
+matching `/category`, and a 2/3/4-up grid of the shared `ProductCard`. The projection gained
+**`coverImage`** (2026-08-13, supplier-banner asset, same public-asset reasoning as `logo` —
+⚠️ **no upload endpoint exists yet**, so it renders only when seeded). ⚠️ **No enquiry CTA and
+no save heart shipped on this page** — the copy constraints held (no contact affordance of any
+kind); the M4 entry point and SaveButton remain future additions here.
+
+The whitelist below is the **complete** public surface (`m3.md` §5b.1 / projection rule); the
+design must be built to look good with exactly this and nothing more:
 
 | Field | Display |
 |---|---|
@@ -543,11 +626,11 @@ design. Source: `m3-seo-rules.md` + `.claude/rules/m3-seo.md`. The backend alrea
 | Landing `/` | ✅ | self | |
 | Product `/product/:slug` | ✅ | self (clean) | 404/410 when not active |
 | Seller `/supplier/:slug` | ✅ | self | |
-| Category `/category/:slug` (+ nested leaf) | ✅ | self (clean) | |
-| Category with any filter/sort/page params | ❌ `noindex,follow` | the clean category URL | the crawl-budget rule |
+| Category `/category/:slug` (⚠️ flat for both levels as built — no nested leaf URL) | ✅ | self (clean) | |
+| Category with any filter/sort/page params | ❌ `noindex,follow` (✅ shipped) | the clean category URL (✅ shipped) | the crawl-budget rule |
 | Search `/search?…` | ❌ `noindex,follow` | — | robots also disallows `/search` |
 | Saved `/saved` | ❌ (auth-gated) | — | |
-| Categories index `/categories` | route TBC (§11) | self | |
+| Categories index `/categories` | ✅ (route live) | self | |
 
 **Every indexable page emits:** a keyword-first `<title>` (templates in screens 5–7); a
 150–160-char meta description from the entity's description with a templated fallback; exactly
@@ -604,7 +687,8 @@ changes no URLs and no content.
    infinite scroll remains the app's pattern. Say the word to flip it.
 2. **AI search opens as a modal** (per the plan docs and demo), returning into the standard
    results screen — not a separate "AI results" page.
-3. **`/categories`** as the category-index route — the SEO doc doesn't name one (§11).
+3. ~~**`/categories`** as the category-index route — the SEO doc doesn't name one (§11).~~
+   ✅ Resolved — `/categories` shipped as the live index route.
 
 ### Still open
 
@@ -627,10 +711,10 @@ Kept strictly to screens named in the M3 folder. What that leaves:
 
 | Gap | Detail | Consequence / recommendation |
 |---|---|---|
-| **Category-index route unnamed** | `m3-seo-rules.md` §1 defines `/category/:slug` and nested leaf URLs but no "all categories" URL, while `m3.md` §8.5 clearly describes a browse screen. | This brief assumes `/categories`. Confirm the route (and whether it's indexable) before build. |
+| ~~**Category-index route unnamed**~~ | ✅ **Resolved as built:** `/categories` is live and indexable. Note also that leaf pages shipped on the **flat** `/category/:slug` (slugs globally unique) — the SEO doc's nested `/category/:parentSlug/:childSlug` form was never implemented; if nesting is ever wanted it is a URL migration (301s), not a tweak. | None — recorded. |
 | **Seller SEO title template references cancelled data** | `m3-seo-rules.md` §2 example: `"{companyName} — {mainCategory} Supplier"`, but main/working categories were **cancelled** (§A22.5). | Use `"{companyName} — Supplier \| MPX Global"` (as written into screen 7). The SEO doc predates the cancellation. |
-| **`web-design.md` stale tick line** | The rule still says render the tick from `kycStatus === 'verified'`; every M3 source says `verified` boolean, and the public API doesn't return `kycStatus`. | Brief follows `verified`. The rule file should be corrected (CLAUDE.md "when a decision changes" applies — stale rules outrank fixed docs). |
-| **Enquiry entry points dead until M4** | Screens 6–7 carry "Send enquiry" with no destination this milestone. | Ship visibly disabled/"coming soon" + `docs/UiWebNotes.md` rows in the same change — strict rule, already the M1 pattern. |
+| ~~**`web-design.md` stale tick line**~~ | ✅ **FIXED 2026-08-10** — the rule now reads the derived `verified` boolean (self-scoped own-status exception spelled out). | None — brief and rule agree. |
+| **Enquiry entry points dead until M4** | Screen 6 shipped its "Send Enquiry" (and heart) as visibly disabled placeholders, logged in `docs/UiWebNotes.md` ✅. Screen 7 shipped with **no** enquiry button at all — the entry point there is still to be added with M4. | Add screen 7's entry with M4; keep the disabled-until-real treatment. |
 | **Buyer shell nav** | The buyer sidebar's "Search suppliers" ledger row unlocks with these screens; a "Saved" entry must be added to the buyer shell (named in `Saved-items-ui.png`), which is a small M1-shell change owned by this milestone. | Add "Search" + "Saved" to buyer nav when wiring; flip the ledger rows. |
 | **Exporter-facing discovery** | Exporters may search (public pages) but never save. No exporter-shell nav entry for search is named anywhere. | Public pages are reachable by URL regardless; add no exporter nav entry without an owner nod. |
 | **SSR/prerender deferred** | Client-rendered SPA indexes imperfectly; accepted and recorded (SEO rules §8). | Not a design problem; emit correct head/meta client-side per §8. |

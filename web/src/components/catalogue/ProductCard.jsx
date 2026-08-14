@@ -43,7 +43,8 @@ function initials(name = '') {
 function specChips(attributes = []) {
   return attributes
     .filter((a) => a && a.value != null && a.value !== '' && typeof a.value !== 'boolean')
-    .map((a) => (typeof a.value === 'number' ? `${a.value} ${a.key}` : String(a.value)))
+    // Keys are snake_case identifiers (team_size) — humanise for display.
+    .map((a) => (typeof a.value === 'number' ? `${a.value} ${a.key.replace(/_/g, ' ')}` : String(a.value)))
     .filter((c) => c.length <= 26)
     .slice(0, 2);
 }

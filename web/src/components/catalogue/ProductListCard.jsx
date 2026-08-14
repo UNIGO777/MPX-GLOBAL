@@ -49,12 +49,16 @@ export function ProductListCard({ product, to }) {
 
   return (
     <li>
-      <article className="flex flex-col overflow-hidden rounded-xl border border-surface-border bg-white shadow-card transition-shadow hover:shadow-lift sm:flex-row">
-        <div className="relative w-full shrink-0 sm:h-auto sm:w-[400px]">
+      {/* Horizontal from md (the page's 2-up compact grid covers <md). The
+          image column SCALES with the room the layout leaves: md has the full
+          width, lg loses 280px to the rail, xl+ earns it back
+          (responsive audit, 2026-08-14). */}
+      <article className="flex flex-col overflow-hidden rounded-xl border border-surface-border bg-white shadow-card transition-shadow hover:shadow-lift md:flex-row">
+        <div className="relative w-full shrink-0 md:h-auto md:w-[320px] lg:w-[300px] xl:w-[360px] 2xl:w-[400px]">
           {cover ? (
-            <img src={cover} alt="" loading="lazy" className="h-64 w-full object-cover sm:h-full" />
+            <img src={cover} alt="" loading="lazy" className="h-64 w-full object-cover md:h-full" />
           ) : (
-            <NoImagePanel ratio="h-64 sm:h-full" className="w-full" />
+            <NoImagePanel ratio="h-64 md:h-full" className="w-full" />
           )}
           {/* Save/favourite — real endpoint exists (buyer-only `/saved`), not
               wired this pass. Disabled, not hidden — see file header. */}
@@ -69,12 +73,20 @@ export function ProductListCard({ product, to }) {
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col p-6">
+        {/* p-4 / my-2 / pt-2.5 (2026-08-14, owner: "reduce the height", then
+            "a bit more") — ~45px total trim off the desktop card. min-w-0 is
+            load-bearing: without it flexbox min-width:auto lets the stat
+            row's min-content width inflate the column past the card edge at
+            lg (Inquiry button rendered half-clipped). */}
+        <div className="flex min-w-0 flex-1 flex-col p-4">
           <div>
             <Link to={to} className="text-xl font-bold text-primary-800 hover:underline">
               {product.name}
             </Link>
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+            {/* flex-wrap: in the narrow lg column the VERIFIED tick used to
+                push past the card's clipped edge (responsive audit,
+                2026-08-14). */}
+            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted">
               {product.category?.name}
               {seller?.verified && (
                 <>
@@ -86,7 +98,7 @@ export function ProductListCard({ product, to }) {
             </p>
           </div>
 
-          <div className="my-4 flex flex-wrap gap-x-8 gap-y-4">
+          <div className="my-2 flex flex-wrap gap-x-8 gap-y-4">
             <div>
               <PriceLine price={product.price} unit={product.unit} size="lg" />
             </div>
@@ -100,17 +112,24 @@ export function ProductListCard({ product, to }) {
               </div>
             )}
             {leadAttr && (
-              <div className="border-l border-surface-border pl-8">
-                <p className="text-lg font-bold text-ink-900">
+              /* flex-1 + min-w + truncate keep this BESIDE the price: as a
+                 rigid block, a long value ("Cloud migration & platform
+                 engineering") wrapped the whole block under the price while
+                 short ones sat beside it — inconsistent card to card (owner
+                 screenshot, 2026-08-14). */
+              <div className="min-w-[180px] flex-1 border-l border-surface-border pl-8">
+                <p className="truncate text-lg font-bold text-ink-900">
                   {typeof leadAttr.value === 'number' ? `${leadAttr.value}${leadAttr.unit ? ` ${leadAttr.unit}` : ''}` : String(leadAttr.value)}
                 </p>
-                <p className="text-sm capitalize text-muted">{leadAttr.key}</p>
+                {/* Keys are snake_case identifiers (service_type) — humanise
+                    for display, never show the raw key (2026-08-14). */}
+                <p className="text-sm capitalize text-muted">{leadAttr.key.replace(/_/g, ' ')}</p>
               </div>
             )}
           </div>
 
           {product.description && (
-            <p className="mb-4 line-clamp-2 text-sm text-muted">{product.description}</p>
+            <p className="mb-2 line-clamp-2 text-sm text-muted">{product.description}</p>
           )}
 
           {/* `flex-col` on mobile — was a single `flex items-center
@@ -119,7 +138,10 @@ export function ProductListCard({ product, to }) {
               one word per line ("Seller •" / "India" / "Listed" / "Aug" ...).
               `sm:flex-row` restores the original side-by-side layout once
               there's room for both. */}
-          <div className="mt-auto flex flex-col gap-3 border-t border-surface-border pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          {/* md:flex-wrap: at lg's narrow column the shrink-0 buttons used to
+              crush the seller line to one word per line — wrapping drops the
+              buttons under it instead (responsive audit, 2026-08-14). */}
+          <div className="mt-auto flex flex-col gap-3 border-t border-surface-border pt-2.5 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-4">
             <div className="text-sm text-muted">
               {seller?.country ? `Seller • ${countryName(seller.country) ?? seller.country}` : 'Seller'}
               {product.listedSince && <br />}
