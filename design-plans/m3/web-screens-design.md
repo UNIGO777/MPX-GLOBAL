@@ -149,8 +149,9 @@ B2B merchandising card: image (hover zoom + "View details" slide-up) · name · 
 (first two short attribute values; numeric chips humanise snake_case keys) · price + /unit ·
 MOQ line · **seller row** (monogram · name · tick · country) — or a category line when the
 seller row is off. It has **no save heart yet** (SaveButton is still unbuilt M3 work; the
-hearts that exist today are visibly-disabled placeholders on `ProductListCard` and product
-detail, logged in `docs/UiWebNotes.md`). A second, **page-scoped horizontal card**
+heart placeholders that exist today are on `ProductListCard` AND — since later on
+2026-08-14, owner request during the Phase-1 review — the `/product/:slug` gallery. Two
+UiWebNotes rows; screen 8 wires both). A second, **page-scoped horizontal card**
 (`ProductListCard`) ships on `/category/:slug` from `md+`: wide image column that scales with
 the viewport (md 320 / lg 300 / xl 360 / 2xl 400px), title + category/tick line, hero price,
 lead-spec block beside the price (truncating), 2-line description, seller/listed footer, and
@@ -499,8 +500,12 @@ list below is the complete license (`m3.md` §5c.1); nothing else exists to show
   now matches `/category` exactly. Falls back to the parent category (relabelled honestly) when
   the leaf has too few products.
 
-**Actions:** ✅ shipped as designed — the heart and **"Send Enquiry"** are **visibly disabled
-placeholders** (M4 entry points, logged in `docs/UiWebNotes.md`). Never live-looking no-ops.
+**Actions:** "Send Enquiry" ✅ shipped as a **visibly disabled placeholder** (the M4 entry
+point, logged in `docs/UiWebNotes.md`). Heart: the page originally shipped WITHOUT one (F1,
+caught 2026-08-14) — a **disabled heart placeholder was added the same day** at owner request
+(gallery top-right, same treatment as `ProductListCard`'s, logged). Screen 8 wires both hearts
+for real, with the owner's non-buyer gate modal (`web-build-plan.md` Phase 5). Never
+live-looking no-ops.
 
 **States:** loading (skeleton: gallery block + text lines) · loaded · **404 / gone** — a draft,
 archived, taken-down or dead-category product genuinely 404s (standard not-found page with a
@@ -718,7 +723,7 @@ Kept strictly to screens named in the M3 folder. What that leaves:
 | ~~**Category-index route unnamed**~~ | ✅ **Resolved as built:** `/categories` is live and indexable. Note also that leaf pages shipped on the **flat** `/category/:slug` (slugs globally unique) — the SEO doc's nested `/category/:parentSlug/:childSlug` form was never implemented; if nesting is ever wanted it is a URL migration (301s), not a tweak. | None — recorded. |
 | ~~**Seller SEO title template references cancelled data**~~ | `m3-seo-rules.md` §2 example: `"{companyName} — {mainCategory} Supplier"`, but main/working categories were **cancelled** (§A22.5). | ✅ **FIXED 2026-08-14** — `/supplier/:slug` now emits `"{companyName} — Supplier \| MPX Global"` (verified in-browser). The SEO doc predates the cancellation. |
 | ~~**`web-design.md` stale tick line**~~ | ✅ **FIXED 2026-08-10** — the rule now reads the derived `verified` boolean (self-scoped own-status exception spelled out). | None — brief and rule agree. |
-| **Enquiry entry points dead until M4** | Screen 6 shipped "Send Enquiry" (and heart) as visibly disabled placeholders, logged in `docs/UiWebNotes.md` ✅. Screen 7 **also shipped a disabled "Start Conversation"** (2026-08-13 — corrected 2026-08-14; an earlier revision wrongly said none). Owner rulings 2026-08-14: screen 6's "Send Enquiry" is the ONE door M4 wires; the category-card "Inquiry" is deactivated at wiring; screen 7's button stays disabled pending the company-level-vs-product-scoped decision (m4 gap 7). | Keep all disabled-until-real; wire only screen 6's. |
+| **Enquiry entry points dead until M4** | Screen 6 shipped "Send Enquiry" as a visibly disabled placeholder, logged in `docs/UiWebNotes.md` ✅ (no heart there — corrected 2026-08-14, F1). Screen 7 **also shipped a disabled "Start Conversation"** (2026-08-13 — corrected 2026-08-14; an earlier revision wrongly said none). Owner rulings 2026-08-14: screen 6's "Send Enquiry" is the ONE door M4 wires; the category-card "Inquiry" is deactivated at wiring; screen 7's button stays disabled pending the company-level-vs-product-scoped decision (m4 gap 7). | Keep all disabled-until-real; wire only screen 6's. |
 | **Buyer shell nav** | The buyer sidebar's "Search suppliers" ledger row unlocks with these screens; a "Saved" entry must be added to the buyer shell (named in `Saved-items-ui.png`), which is a small M1-shell change owned by this milestone. | Add "Search" + "Saved" to buyer nav when wiring; flip the ledger rows. |
 | **Exporter-facing discovery** | Exporters may search (public pages) but never save. No exporter-shell nav entry for search is named anywhere. | Public pages are reachable by URL regardless; add no exporter nav entry without an owner nod. |
 | **SSR/prerender deferred** | Client-rendered SPA indexes imperfectly; accepted and recorded (SEO rules §8). | Not a design problem; emit correct head/meta client-side per §8. |

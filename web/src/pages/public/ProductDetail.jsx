@@ -22,6 +22,7 @@ import {
   DocIcon,
   ExpandIcon,
   GlobeIcon,
+  HeartIcon,
   ListIcon,
   MailIcon,
   MapPinIcon,
@@ -103,20 +104,45 @@ const SERVICE_FACTS = [
   ['timeline', 'Timeline', ClockIcon],
 ];
 
+/** Save heart — disabled placeholder (owner, 2026-08-14), same treatment as
+ *  `ProductListCard`'s: shown in position, inert, never fake-wired. Wired for
+ *  real (with the non-buyer gate modal) in M3 screen 8 — `web-build-plan.md`
+ *  Phase 5. Logged in `docs/UiWebNotes.md`. */
+function SaveHeartPlaceholder() {
+  return (
+    <button
+      type="button"
+      disabled
+      aria-label="Save (coming soon)"
+      title="Coming soon"
+      className="absolute right-3 top-3 flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-full bg-black/30 text-white/70"
+    >
+      <HeartIcon className="h-5 w-5" />
+    </button>
+  );
+}
+
 function Gallery({ images = [], name }) {
   const [active, setActive] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (images.length === 0) {
     // Publishing does not require a photo, so this is a normal listing, not a
-    // broken one — one designed panel, never an empty carousel.
-    return <NoImagePanel ratio="aspect-[4/3]" className="rounded-xl border border-surface-border" />;
+    // broken one — one designed panel, never an empty carousel. The heart
+    // overlays the panel exactly as it overlays a photo.
+    return (
+      <div className="relative">
+        <NoImagePanel ratio="aspect-[4/3]" className="rounded-xl border border-surface-border" />
+        <SaveHeartPlaceholder />
+      </div>
+    );
   }
 
   return (
     <div>
       <div className="relative overflow-hidden rounded-xl border border-surface-border bg-white">
         <img src={images[active]} alt={name} className="aspect-[4/3] w-full object-cover" />
+        <SaveHeartPlaceholder />
         {/* Fullscreen trigger (2026-08-12, owner's reference mockup) — real,
             working zoom, not a placeholder: it's pure client-side image
             display, nothing to wire to a backend, so unlike "Send Enquiry"

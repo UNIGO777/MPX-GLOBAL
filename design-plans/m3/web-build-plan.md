@@ -200,8 +200,9 @@ Smallest phase, two halves — one is a boundary:
 
 - [ ] **Route guard:** buyer-only (`ProtectedRoute` convention); guests hitting `/saved` → sign-in;
       exporters NEVER see the route or any save affordance (§A13 — affordance absent, not disabled).
-- [ ] **Hearts go live** on `ProductListCard` + product-page gallery (the two logged placeholders,
-      flip their UiWebNotes rows): filled/unfilled from saved state, optimistic toggle w/ rollback.
+- [ ] **Hearts go live** on `ProductListCard` + the `/product/:slug` gallery (both logged
+      placeholders — the product-page one was added 2026-08-14 after F1 caught its absence; flip
+      both UiWebNotes rows): filled/unfilled from saved state, optimistic toggle w/ rollback.
       `ProductCard` (compact) gains the heart ONLY if the brief's shipped-shape note allows —
       check §2 before adding; don't grow the card silently.
 - [ ] **Non-buyer save attempt → popup (owner ruling 2026-08-14, verbatim spec):** the heart is

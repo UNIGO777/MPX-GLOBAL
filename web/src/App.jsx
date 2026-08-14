@@ -10,6 +10,7 @@ import { Categories } from './pages/public/Categories.jsx';
 import { CategoryListing } from './pages/public/CategoryListing.jsx';
 import { ProductDetail } from './pages/public/ProductDetail.jsx';
 import { SupplierProfile } from './pages/public/SupplierProfile.jsx';
+import { Search } from './pages/public/Search.jsx';
 import { NotFound } from './pages/public/NotFound.jsx';
 import { Styleguide } from './pages/Styleguide.jsx';
 import { Spinner } from './components/ui/Spinner.jsx';
@@ -147,6 +148,7 @@ export function App() {
             <Route path="/category/:slug" element={<CategoryListing />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/supplier/:slug" element={<SupplierProfile />} />
+            <Route path="/search" element={<Search />} />
 
             {/* --- Party auth (buyer + exporter share screens; portal = the field change) ---
                    All of these are for signed-OUT visitors: RedirectIfAuthed sends a live

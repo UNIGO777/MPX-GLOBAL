@@ -309,7 +309,10 @@ export function SupplierProfile() {
               <h2 className="text-xl font-bold text-ink-900 sm:text-2xl">Product Catalogue</h2>
               {products.isSuccess && (
                 <span className="rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-semibold text-ink-700">
-                  {total} Active {total === 1 ? 'Listing' : 'Listings'}
+                  {/* "Listings", not "Active Listings" (owner, 2026-08-14 —
+                      F4): only active products are ever queryable, so "Active"
+                      is exactly the status-word family the copy rule bans. */}
+                  {total} {total === 1 ? 'Listing' : 'Listings'}
                 </span>
               )}
             </div>

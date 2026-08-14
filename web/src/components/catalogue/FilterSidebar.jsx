@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { countryName as countryNameOf } from '../../lib/countries.js';
 import { CheckIcon, ChevronDownIcon, PlusIcon, XIcon } from '../ui/icons.jsx';
 import { Skeleton } from '../ui/Skeleton.jsx';
 
@@ -68,6 +69,14 @@ export function FilterSidebar({
   onAttrRangeChange,
   onClearAll,
   bare = false,
+  // `/search` extras (2026-08-14, build-plan Phase 2) — SINGLE-select facet
+  // groups the API already served but `/category/:slug` deliberately omits
+  // (its category is fixed by the URL; country wasn't part of that ask).
+  // Rendered ONLY when the page passes the handler, so /category is untouched.
+  selectedCategory = null,
+  onCategoryChange = null,
+  selectedCountry = null,
+  onCountryChange = null,
 }) {
   const appliedChips = buildAppliedChips({
     verifiedOnly,
@@ -80,6 +89,12 @@ export function FilterSidebar({
     onPriceChange,
     onAttrToggle,
     onAttrRangeChange,
+    selectedCategory,
+    onCategoryChange,
+    categoryFacet: facets?.category ?? [],
+    selectedCountry,
+    onCountryChange,
+    countryName: countryNameOf,
   });
 
   return (
@@ -134,6 +149,30 @@ export function FilterSidebar({
         </button>
       </div>
       <hr className="mb-5 border-surface-border" />
+
+      {onCategoryChange && (facets?.category?.length ?? 0) > 0 && (
+        <FilterSection title="Category">
+          <SingleSelectPills
+            options={(facets.category ?? []).map((c) => ({ value: c.slug, label: c.name, count: c.count }))}
+            selected={selectedCategory}
+            onChange={onCategoryChange}
+          />
+        </FilterSection>
+      )}
+
+      {onCountryChange && (facets?.country?.length ?? 0) > 0 && (
+        <FilterSection title="Supplier country">
+          <SingleSelectPills
+            options={(facets.country ?? []).map((c) => ({
+              value: c.value,
+              label: countryNameOf(c.value) ?? c.value,
+              count: c.count,
+            }))}
+            selected={selectedCountry}
+            onChange={onCountryChange}
+          />
+        </FilterSection>
+      )}
 
       <FilterSection title={`Price${facets?.price?.currency ? ` (${facets.price.currency})` : ''}`}>
         <div className="flex items-center gap-2">
@@ -279,6 +318,61 @@ function AttrOptionPills({ attr, selected, onToggle }) {
   );
 }
 
+/** SINGLE-select pill row (`/search`'s category + country groups — the API
+ *  takes ONE value for each): picking a pill replaces the selection, picking
+ *  the selected pill clears it. Same pill anatomy as `AttrOptionPills`. */
+function SingleSelectPills({ options, selected, onChange }) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded
+    ? options
+    : (() => {
+        const head = options.slice(0, OPTIONS_SHOW_LIMIT);
+        const missingSelected = options
+          .slice(OPTIONS_SHOW_LIMIT)
+          .filter((o) => o.value === selected);
+        return [...head, ...missingSelected];
+      })();
+  const hiddenCount = options.length - visible.length;
+
+  return (
+    <>
+      <div className="flex flex-wrap gap-2">
+        {visible.map((opt) => {
+          const checked = opt.value === selected;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onChange(checked ? null : opt.value)}
+              title={`${opt.count} match${opt.count === 1 ? '' : 'es'}`}
+              aria-pressed={checked}
+              aria-label={`${opt.label}, ${opt.count} match${opt.count === 1 ? '' : 'es'}`}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                checked
+                  ? 'border-primary-600 bg-primary-600 text-white'
+                  : 'border-surface-border bg-white text-ink-700 hover:border-primary-600 hover:text-primary-700'
+              }`}
+            >
+              {checked ? <CheckIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+      {hiddenCount > 0 && (
+        <button type="button" onClick={() => setExpanded(true)} className="mt-3 text-sm font-medium text-primary-700 hover:underline">
+          + {hiddenCount} more
+        </button>
+      )}
+      {expanded && options.length > OPTIONS_SHOW_LIMIT && (
+        <button type="button" onClick={() => setExpanded(false)} className="mt-3 text-sm font-medium text-primary-700 hover:underline">
+          Show less
+        </button>
+      )}
+    </>
+  );
+}
+
 /** Builds the "Applied filters" chip list — each chip's `onRemove` reverses
  *  exactly that one selection via the same setter callbacks the controls
  *  above use, so removing a chip and unchecking its pill do the same
@@ -294,10 +388,31 @@ function buildAppliedChips({
   onPriceChange,
   onAttrToggle,
   onAttrRangeChange,
+  selectedCategory,
+  onCategoryChange,
+  categoryFacet,
+  selectedCountry,
+  onCountryChange,
+  countryName,
 }) {
   const chips = [];
   if (verifiedOnly) {
     chips.push({ id: 'verified', label: 'Verified sellers', onRemove: onToggleVerified });
+  }
+  if (selectedCategory && onCategoryChange) {
+    const cat = (categoryFacet ?? []).find((c) => c.slug === selectedCategory);
+    chips.push({
+      id: 'category',
+      label: cat?.name ?? selectedCategory,
+      onRemove: () => onCategoryChange(null),
+    });
+  }
+  if (selectedCountry && onCountryChange) {
+    chips.push({
+      id: 'country',
+      label: countryName?.(selectedCountry) ?? selectedCountry,
+      onRemove: () => onCountryChange(null),
+    });
   }
   if (priceMin || priceMax) {
     const label = `${priceCurrency ?? ''} ${priceMin || '0'} – ${priceMax || 'any'}`.trim();

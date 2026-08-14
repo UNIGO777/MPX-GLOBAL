@@ -289,7 +289,7 @@ function SpecialisationSheet({ open, top, currentId, onClose, onPick }) {
                 <button
                   type="button"
                   onClick={() => onPick(item)}
-                  aria-current={on || undefined}
+                  aria-current={on ? 'page' : undefined}
                   className={`flex w-full items-center gap-3 px-4 py-3 text-left ${
                     on ? 'bg-primary-50' : 'hover:bg-surface-subtle'
                   }`}
