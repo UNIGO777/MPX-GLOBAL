@@ -165,7 +165,9 @@ export function SupplierProfile() {
   useEffect(() => {
     if (!s) return undefined;
     const previous = document.title;
-    document.title = `${s.name} — MPX Global`;
+    // SEO title per m3 brief screen 7 — "Supplier" is the search keyword; the
+    // old SEO doc's "{mainCategory} Supplier" form references cancelled data.
+    document.title = `${s.name} — Supplier | MPX Global`;
     return () => { document.title = previous; };
   }, [s]);
 

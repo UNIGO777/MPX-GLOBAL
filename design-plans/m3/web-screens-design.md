@@ -43,7 +43,7 @@ honest empty states, no fake urgency, no decorative noise.
 |---|---|---|
 | Guest | not signed in — can use everything except save | zero friction, no login walls on browse |
 | Buyer | signed-in buyer account | same surface + save/saved-list |
-| Exporter | signed-in exporter account — may search but **cannot save** (§A13) | same public surface, save affordance absent |
+| Exporter | signed-in exporter account — may search but **cannot save** (§A13) | same public surface. ⚠️ Superseded 2026-08-14 (owner): the save heart is now VISIBLE to all; a non-buyer tap opens a gate modal — "Log in with a buyer account to save this product" (guest → Login button to sign-in; signed-in non-buyer → OK only). Capability stays buyer-only; the server rejects non-buyer saves regardless. Spec: `web-build-plan.md` Phase 5 |
 | Crawler | Googlebot | every public page carries correct head/meta — §8 |
 
 There is **no admin surface in M3**: *"admin has no search screens"* (`m3.md` §8 roles line). Do
@@ -459,10 +459,11 @@ retry) · **404** — an inactive/unknown category renders the standard not-foun
 
 **SEO (per §8):** clean URL indexable; **any filter/sort/page param → noindex + canonical to the
 clean category URL** (✅ shipped: canonical always points at the clean base, `noindex,follow`
-added whenever a filter or non-default sort is active). Title `"{Category} Suppliers & Products
-| MPX Global"` — ⚠️ shipped title is currently the simpler `"{Category} — MPX Global"`; align
-one way or the other when the SEO pass lands. JSON-LD `BreadcrumbList` + `ItemList` not yet
-emitted.
+added whenever a filter or non-default sort is active). Title: **owner ruled 2026-08-14 — keep
+the shipped `"{Category} — MPX Global"` for now; the brief's keyword-first
+`"{Category} Suppliers & Products | MPX Global"` template is PENDING**, to be revisited when
+the SEO pass lands (don't change it piecemeal before then). JSON-LD `BreadcrumbList` +
+`ItemList` not yet emitted.
 
 **🔴 Copy constraint:** filtering inside a category never changes the visible URL identity in a
 way that reads as a new page — the canonical stays the clean category page; do not design
@@ -528,9 +529,12 @@ overlapping logo, name + tick, **stat chips** (including the product-count chip 
 icon — deliberately not a badge shape on possibly-unverified pages), a products toolbar
 matching `/category`, and a 2/3/4-up grid of the shared `ProductCard`. The projection gained
 **`coverImage`** (2026-08-13, supplier-banner asset, same public-asset reasoning as `logo` —
-⚠️ **no upload endpoint exists yet**, so it renders only when seeded). ⚠️ **No enquiry CTA and
-no save heart shipped on this page** — the copy constraints held (no contact affordance of any
-kind); the M4 entry point and SaveButton remain future additions here.
+⚠️ **no upload endpoint exists yet**, so it renders only when seeded). The page DOES carry a
+**disabled "Start Conversation" button** (2026-08-13, owner-requested, `docs/UiWebNotes.md` —
+an earlier revision of this brief wrongly said none shipped; corrected 2026-08-14 against the
+code). **Owner ruling 2026-08-14: it stays visible and disabled through M4 wiring** — how a
+company-level conversation reconciles with M4's product-scoped threads is deferred (m4 brief
+gap 7). No save heart shipped here; the copy constraints held (no contact details of any kind).
 
 The whitelist below is the **complete** public surface (`m3.md` §5b.1 / projection rule); the
 design must be built to look good with exactly this and nothing more:
@@ -566,7 +570,7 @@ buyer-only org, or blocked org — all plain 404, indistinguishable) · error.
 
 **SEO (per §8):** indexable; title `"{Company} — Supplier | MPX Global"` (the old template's
 "{mainCategory}" is unavailable — categories-per-seller was cancelled; flag in §11); JSON-LD
-`Organization` (name, logo, url, address at **city level only**).
+`Organization` (name, logo, url, address at  **city level only**).
 
 ---
 
@@ -712,9 +716,9 @@ Kept strictly to screens named in the M3 folder. What that leaves:
 | Gap | Detail | Consequence / recommendation |
 |---|---|---|
 | ~~**Category-index route unnamed**~~ | ✅ **Resolved as built:** `/categories` is live and indexable. Note also that leaf pages shipped on the **flat** `/category/:slug` (slugs globally unique) — the SEO doc's nested `/category/:parentSlug/:childSlug` form was never implemented; if nesting is ever wanted it is a URL migration (301s), not a tweak. | None — recorded. |
-| **Seller SEO title template references cancelled data** | `m3-seo-rules.md` §2 example: `"{companyName} — {mainCategory} Supplier"`, but main/working categories were **cancelled** (§A22.5). | Use `"{companyName} — Supplier \| MPX Global"` (as written into screen 7). The SEO doc predates the cancellation. |
+| ~~**Seller SEO title template references cancelled data**~~ | `m3-seo-rules.md` §2 example: `"{companyName} — {mainCategory} Supplier"`, but main/working categories were **cancelled** (§A22.5). | ✅ **FIXED 2026-08-14** — `/supplier/:slug` now emits `"{companyName} — Supplier \| MPX Global"` (verified in-browser). The SEO doc predates the cancellation. |
 | ~~**`web-design.md` stale tick line**~~ | ✅ **FIXED 2026-08-10** — the rule now reads the derived `verified` boolean (self-scoped own-status exception spelled out). | None — brief and rule agree. |
-| **Enquiry entry points dead until M4** | Screen 6 shipped its "Send Enquiry" (and heart) as visibly disabled placeholders, logged in `docs/UiWebNotes.md` ✅. Screen 7 shipped with **no** enquiry button at all — the entry point there is still to be added with M4. | Add screen 7's entry with M4; keep the disabled-until-real treatment. |
+| **Enquiry entry points dead until M4** | Screen 6 shipped "Send Enquiry" (and heart) as visibly disabled placeholders, logged in `docs/UiWebNotes.md` ✅. Screen 7 **also shipped a disabled "Start Conversation"** (2026-08-13 — corrected 2026-08-14; an earlier revision wrongly said none). Owner rulings 2026-08-14: screen 6's "Send Enquiry" is the ONE door M4 wires; the category-card "Inquiry" is deactivated at wiring; screen 7's button stays disabled pending the company-level-vs-product-scoped decision (m4 gap 7). | Keep all disabled-until-real; wire only screen 6's. |
 | **Buyer shell nav** | The buyer sidebar's "Search suppliers" ledger row unlocks with these screens; a "Saved" entry must be added to the buyer shell (named in `Saved-items-ui.png`), which is a small M1-shell change owned by this milestone. | Add "Search" + "Saved" to buyer nav when wiring; flip the ledger rows. |
 | **Exporter-facing discovery** | Exporters may search (public pages) but never save. No exporter-shell nav entry for search is named anywhere. | Public pages are reachable by URL regardless; add no exporter nav entry without an owner nod. |
 | **SSR/prerender deferred** | Client-rendered SPA indexes imperfectly; accepted and recorded (SEO rules §8). | Not a design problem; emit correct head/meta client-side per §8. |
