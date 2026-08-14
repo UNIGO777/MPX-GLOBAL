@@ -11,6 +11,7 @@ import {
   ENTITY_LABELS,
   KYC_ACCEPT,
   checkKycFile,
+  normalizeKycFile,
 } from '../../lib/kycDocTypes.js';
 import { PortalLayout } from '../../layouts/PortalLayout.jsx';
 import { EXPORTER_NAV } from './exporterNav.js';
@@ -101,9 +102,11 @@ export function KycUpload() {
   const patchRow = (id, patch) =>
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
-  const pickFile = (id, file) => {
-    const clientError = checkKycFile(file);
-    patchRow(id, { file, status: clientError ? 'error' : 'idle', error: clientError, progress: 0 });
+  const pickFile = async (id, file) => {
+    // Camera captures may need an in-browser re-encode (HEIC / oversized JPEG).
+    const picked = await normalizeKycFile(file);
+    const clientError = checkKycFile(picked);
+    patchRow(id, { file: picked, status: clientError ? 'error' : 'idle', error: clientError, progress: 0 });
   };
 
   const readyRows = rows.filter((r) => r.file && r.docType && r.status !== 'done' && !r.error);
@@ -224,8 +227,18 @@ export function KycUpload() {
     );
   }
 
+  // An A22 demotion (verified details changed) re-queues the org as `submitted`
+  // with its previously APPROVED documents — recognisable because those carry
+  // `verifiedAt`. The exporter may genuinely need to send an updated file (say,
+  // a new address proof), and the server accepts uploads in `submitted`, so in
+  // that case the form stays available (QA, 2026-08-14: "only showing
+  // reverify"). A plain first submission keeps the wait panel below.
+  const demoted =
+    verification?.kycStatus === 'submitted' &&
+    (verification?.documents ?? []).some((d) => d.verifiedAt);
+
   // In review — nothing more to send; the form never renders (mockup).
-  if (verification?.kycStatus === 'submitted') {
+  if (verification?.kycStatus === 'submitted' && !demoted) {
     return shell(
       <div className="max-w-[860px] rounded-xl border border-surface-border bg-white p-8 text-center shadow-sm">
         <ClockIcon className="mx-auto h-10 w-10 text-warning" />
@@ -259,7 +272,7 @@ export function KycUpload() {
             </button>
             <div className="mt-0.5 flex flex-wrap items-center gap-2">
               <h1 className="text-lg font-bold leading-tight text-ink-900">
-                {rejected ? 'Send new documents' : 'Get verified'}
+                {rejected ? 'Send new documents' : demoted ? 'Send updated documents' : 'Get verified'}
               </h1>
               <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
                 {addedCount}/{rows.length} added
@@ -277,6 +290,17 @@ export function KycUpload() {
           </div>
         </div>
       </div>
+
+      {demoted && (
+        <Alert tone="info" className="mb-5">
+          <p className="font-semibold">Your details changed — we&apos;re re-checking your documents</p>
+          <p className="mt-1">
+            The documents you already sent are being reviewed against your updated details. If one
+            of them changed too (for example a new address proof), upload the updated file below —
+            otherwise there&apos;s nothing more you need to send.
+          </p>
+        </Alert>
+      )}
 
       {rejected && (
         <div className="mb-5 space-y-2">

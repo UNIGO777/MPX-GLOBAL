@@ -155,7 +155,22 @@ export function VerificationStatus() {
 
   const v = verification;
   const status = v?.kycStatus;
-  const state = v ? (STATES[status] ?? UNKNOWN_STATE) : null;
+  const baseState = v ? (STATES[status] ?? UNKNOWN_STATE) : null;
+
+  // A22 demotion: verified details changed, so the org is back in `submitted`
+  // with its previously APPROVED documents (they carry `verifiedAt`). Same
+  // status, different situation — say so, and surface the update-documents
+  // path the plain in-review state deliberately hides (QA, 2026-08-14).
+  const demoted = status === 'submitted' && (v?.documents ?? []).some((d) => d.verifiedAt);
+  const state = demoted
+    ? {
+        ...baseState,
+        title: 'Your details changed — we’re re-checking your documents',
+        body: (vv) =>
+          `In review since ${formatDate(vv.kycSubmittedAt)}. We're checking the documents you already sent against your updated details. If one of them changed too — a new address proof, for example — you can upload the updated file; otherwise there's nothing more to send.`,
+        cta: 'Upload updated documents',
+      }
+    : baseState;
   const showLimit = v && status !== 'verified';
 
   // Journey step states, all derived — no invented data.

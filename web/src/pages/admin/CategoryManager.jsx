@@ -324,6 +324,19 @@ export function CategoryManager() {
                 </span>
               </button>
             )}
+            {/* Phone-reachable create: the SubList header's own button sits
+                ~one viewport below the fold behind TopHeader + TopSettings, so
+                testers reported "create category not shown" (QA, 2026-08-14). */}
+            {top && canManage && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="mt-3 w-full"
+                onClick={() => setPanel({ mode: 'create' })}
+              >
+                + Add sub-category in “{top.name}”
+              </Button>
+            )}
             <CategorySheet
               open={pickerOpen}
               tops={tops}

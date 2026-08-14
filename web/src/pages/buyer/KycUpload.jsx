@@ -10,6 +10,7 @@ import {
   ENTITY_LABELS,
   KYC_ACCEPT,
   checkKycFile,
+  normalizeKycFile,
 } from '../../lib/kycDocTypes.js';
 import { PortalLayout } from '../../layouts/PortalLayout.jsx';
 import { BUYER_NAV } from './buyerNav.js';
@@ -117,9 +118,11 @@ export function KycUpload() {
   const patchRow = (id, patch) =>
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
-  const pickFile = (id, file) => {
-    const clientError = checkKycFile(file);
-    patchRow(id, { file, status: clientError ? 'error' : 'idle', error: clientError, progress: 0 });
+  const pickFile = async (id, file) => {
+    // Camera captures may need an in-browser re-encode (HEIC / oversized JPEG).
+    const picked = await normalizeKycFile(file);
+    const clientError = checkKycFile(picked);
+    patchRow(id, { file: picked, status: clientError ? 'error' : 'idle', error: clientError, progress: 0 });
   };
 
   const readyRows = rows.filter((r) => r.file && r.docType && r.status !== 'done' && !r.error);

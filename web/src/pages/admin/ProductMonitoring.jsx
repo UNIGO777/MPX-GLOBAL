@@ -265,13 +265,19 @@ export function ProductMonitoring() {
                       ) : (
                         <NoImagePanel ratio="h-11 w-11" className="shrink-0 rounded-lg" />
                       )}
-                      <div className="min-w-0 flex-1">
+                      {/* The card itself opens the drawer — on a phone the ⋮
+                          menu alone is too easy to miss (QA, 2026-08-14). */}
+                      <button
+                        type="button"
+                        onClick={() => setDetail(p)}
+                        className="min-w-0 flex-1 text-left"
+                      >
                         <p className="font-medium text-ink-900">{p.name}</p>
                         <p className="truncate text-xs text-muted">
                           {p.seller?.name ?? '—'}
                           {p.category?.name ? ` · ${p.category.name}` : ''}
                         </p>
-                      </div>
+                      </button>
                       <RowMenu
                         label={`Actions for ${p.name}`}
                         items={[
@@ -475,6 +481,13 @@ export function ProductMonitoring() {
       >
         {detail && (
           <dl className="space-y-3 text-sm">
+            {detail.image && (
+              <img
+                src={detail.image}
+                alt=""
+                className="mb-1 aspect-[2/1] w-full rounded-xl object-cover"
+              />
+            )}
             <div className="flex justify-between gap-4">
               <dt className="text-muted">Status</dt>
               <dd className="font-medium">{PRODUCT_STATUS_META[detail.status]?.label}</dd>
@@ -484,9 +497,36 @@ export function ProductMonitoring() {
               <dd className="font-medium">{detail.category?.name ?? '—'}</dd>
             </div>
             <div className="flex justify-between gap-4">
+              <dt className="text-muted">Seller</dt>
+              <dd className="text-right font-medium">
+                {detail.seller?.name ?? '—'}
+                {detail.seller?.takedownCount > 0 && (
+                  <span className="ml-2 rounded-full bg-danger-50 px-2 py-0.5 text-xs font-semibold text-danger">
+                    {detail.seller.takedownCount} takedowns
+                  </span>
+                )}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4">
               <dt className="text-muted">Listed</dt>
               <dd className="font-medium">{formatDate(detail.createdAt)}</dd>
             </div>
+            {/* Active products are the only ones with a public page (SEO §6). */}
+            {detail.status === 'active' && !detail.takedown?.isDown && detail.slug && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Public page</dt>
+                <dd>
+                  <a
+                    href={`/product/${detail.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium text-primary-700 underline underline-offset-2"
+                  >
+                    View listing
+                  </a>
+                </dd>
+              </div>
+            )}
             {detail.takedown?.isDown && (
               <div className="mt-4 rounded-lg border border-danger-200 bg-danger-50 p-4">
                 <p className="text-sm font-semibold text-danger">Taken down</p>

@@ -185,7 +185,7 @@ export function CompanyProfile() {
       // 🔴 A silent demotion reads as a lost tick with no explanation.
       setNotice(
         demoted
-          ? 'Saved. Because verified details changed, your company has returned to review — the verified tick will come back once our team re-approves.'
+          ? 'Saved. Because verified details changed, your company has returned to review — we re-check the documents you already sent against the new details. If a document changed too, upload the updated file from the Verification page. The tick comes back once our team re-approves.'
           : 'Saved.',
       );
     },
@@ -613,7 +613,8 @@ export function CompanyProfile() {
       >
         You&apos;re changing {lockedChanges.join(', ')} — details our team verified against your
         documents. The change is allowed, but your verified tick is withheld until we re-approve
-        your company.
+        your company. We re-check the documents you already sent; if one of them changed too, you
+        can upload the updated file from the Verification page afterwards.
       </Modal>
     </PortalLayout>
   );

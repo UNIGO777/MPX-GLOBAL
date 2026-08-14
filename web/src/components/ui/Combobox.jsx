@@ -185,11 +185,13 @@ export function Combobox({
                 role="option"
                 aria-selected={o.value === value}
                 tabIndex={-1}
-                // pointerdown so the pick lands before the input blurs.
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  pick(o);
-                }}
+                // preventDefault on pointerdown keeps the input focused; the
+                // pick itself waits for click — on touch screens pointerdown
+                // fires the moment a finger lands, so picking there made any
+                // scroll swipe select-and-close (QA, 2026-08-14). A click never
+                // fires when the touch turned into a scroll.
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => pick(o)}
                 onPointerEnter={() => setHi(i)}
                 className={`flex w-full items-baseline justify-between gap-4 whitespace-normal px-3 py-2 text-left text-sm ${
                   i === hi ? 'bg-primary-50' : ''
