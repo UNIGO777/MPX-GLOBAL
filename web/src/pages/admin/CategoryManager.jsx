@@ -207,6 +207,7 @@ export function CategoryManager() {
 
   const [panel, setPanel] = useState(null); // { mode: 'create'|'edit', sub? }
   const [pickerOpen, setPickerOpen] = useState(false); // phone category sheet
+  const [settingsOpen, setSettingsOpen] = useState(false); // top-category settings drawer
   const [cascade, setCascade] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [error, setError] = useState(null);
@@ -383,16 +384,13 @@ export function CategoryManager() {
                   busy={busyId === top.id}
                   onUpload={(file) => uploadImage.mutate({ id: top.id, file })}
                   onToggle={() => (top.active ? setCascade(top) : toggle.mutate({ id: top.id }))}
+                  onSettings={() => setSettingsOpen(true)}
                 />
 
-                <TopSettings
-                  key={`s-${top.id}`}
-                  top={top}
-                  canManage={canManage}
-                  saving={saveTop.isPending}
-                  onSave={(body) => saveTop.mutate({ id: top.id, body })}
-                />
-
+                {/* 2026-08-14 restructure: the settings form is no longer page
+                    furniture. Sub-categories — the daily surface — get the full
+                    width; name/order/keywords open in a DRAWER from the header,
+                    the same pattern a sub-category already edits with. */}
                 <SubList
                   top={top}
                   canManage={canManage}
@@ -404,6 +402,21 @@ export function CategoryManager() {
                 />
 
                 <p className="text-xs text-muted">Changes are recorded.</p>
+
+                <TopSettings
+                  key={`s-${top.id}`}
+                  top={top}
+                  open={settingsOpen}
+                  onClose={() => setSettingsOpen(false)}
+                  canManage={canManage}
+                  saving={saveTop.isPending}
+                  onSave={(body) =>
+                    saveTop.mutate(
+                      { id: top.id, body },
+                      { onSuccess: () => setSettingsOpen(false) },
+                    )
+                  }
+                />
               </>
             )}
           </div>
@@ -469,7 +482,7 @@ export function CategoryManager() {
  * control — click or drop a file on it (the 40 top images arrive through this,
  * not a seed). The switch's consequence is written beside it, not implied.
  */
-function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle }) {
+function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle, onSettings }) {
   const liveSubs = (top.subs ?? []).filter((s) => s.active).length;
   const fileRef = useRef(null);
 
@@ -512,6 +525,19 @@ function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle }) {
           )}
         </div>
         {!canManage && <StateDot on={top.active} onWord="Live" offWord="Hidden" />}
+        {/* Card-level action in the card's corner, where every other card puts
+            its actions (⋮ menus) — not crowding the image button under the
+            name. Opens the settings DRAWER; read-only staff get it too (fields
+            render disabled there, keeping the keyword list browsable). */}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="shrink-0 self-start"
+          onClick={onSettings}
+        >
+          <SettingsIcon className="mr-1.5 h-4 w-4" />
+          Settings
+        </Button>
       </div>
 
       {/* The master switch gets its OWN row — at no width does it fight the
@@ -541,12 +567,27 @@ function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle }) {
   );
 }
 
-/** Name · order · synonyms — the only editable pieces of a seeded top (§A12). */
-function TopSettings({ top, canManage, saving, onSave }) {
+/**
+ * Name · order · synonyms — the only editable pieces of a seeded top (§A12).
+ * A DRAWER since 2026-08-14 (owner rejected every on-page form placement):
+ * the page keeps header + full-width sub list; this opens from the header's
+ * Settings button, exactly like a sub-category's own edit panel.
+ */
+function TopSettings({ top, open, onClose, canManage, saving, onSave }) {
   const [name, setName] = useState(top.name);
   const [order, setOrder] = useState(top.order ?? '');
   const [synonyms, setSynonyms] = useState(top.synonyms ?? []);
   const [draft, setDraft] = useState('');
+
+  // Fresh copy on every opening — closing without saving discards edits, so a
+  // reopen must not resurrect them.
+  useEffect(() => {
+    if (!open) return;
+    setName(top.name);
+    setOrder(top.order ?? '');
+    setSynonyms(top.synonyms ?? []);
+    setDraft('');
+  }, [open, top]);
 
   const addSynonym = (raw) => {
     const v = raw.trim().toLowerCase();
@@ -560,133 +601,137 @@ function TopSettings({ top, canManage, saving, onSave }) {
     String(order) !== String(top.order ?? '') ||
     JSON.stringify(synonyms) !== JSON.stringify(top.synonyms ?? []);
 
-  const discard = () => {
-    setName(top.name);
-    setOrder(top.order ?? '');
-    setSynonyms(top.synonyms ?? []);
-    setDraft('');
-  };
-
   return (
-    <section className="rounded-2xl border border-surface-border bg-white shadow-card">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 px-5 py-4">
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
-            <SettingsIcon className="h-[18px] w-[18px]" />
-          </span>
-          <span className="min-w-0">
-            <h3 className="text-[15px] font-bold text-ink-900">Category settings</h3>
-            <p className="text-[13px] text-muted">
-              The structure is seeded and fixed — these are the editable pieces.
-            </p>
-          </span>
-        </div>
-        {/* Save lives in the HEADER, next to what it saves — no layout jump at
-            the card's foot when the form goes dirty. */}
-        {canManage && dirty && (
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="ghost" onClick={discard}>
-              Discard
+    <Drawer
+      open={open}
+      onClose={onClose}
+      title="Category settings"
+      subtitle={`${top.name} — the editable pieces of a seeded category.`}
+      footer={
+        canManage ? (
+          <>
+            <Button variant="ghost" onClick={onClose}>
+              Cancel
             </Button>
             <Button
-              size="sm"
+              disabled={!dirty}
               loading={saving}
               onClick={() => onSave({ name, synonyms, ...(order !== '' ? { order: Number(order) } : {}) })}
             >
               Save changes
             </Button>
-          </div>
-        )}
-      </header>
-
-      <div className="space-y-5 p-5">
-        <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_140px]">
-          <div>
-            <Field label="Name">
-              {(id) => (
-                <input
-                  id={id}
-                  className={inputClasses(false)}
-                  maxLength={120}
-                  value={name}
-                  disabled={!canManage}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              )}
-            </Field>
-            {/* A6: the slug is immutable — a rename never breaks /category/:slug. */}
-            {name !== top.name && (
-              <p className="mt-1.5 text-xs text-muted">
-                The public web address (/category/{top.slug}) stays the same.
-              </p>
-            )}
-          </div>
-          <Field label="Display order" helper="Lower shows first.">
+          </>
+        ) : null
+      }
+    >
+      <div className="space-y-5">
+        <div>
+          <Field label="Name">
             {(id) => (
               <input
                 id={id}
-                type="number"
                 className={inputClasses(false)}
-                value={order}
+                maxLength={120}
+                value={name}
                 disabled={!canManage}
-                onChange={(e) => setOrder(e.target.value)}
+                onChange={(e) => setName(e.target.value)}
               />
             )}
           </Field>
+          {/* A6: the slug is immutable — a rename never breaks the URL. Always
+              visible, so the lock explains itself before anyone wonders. */}
+          <p className="mt-1.5 truncate text-xs text-muted">
+            /category/{top.slug} — never changes
+          </p>
+        </div>
+
+        {/* A rank, not a paragraph: label left, tiny input right. The input
+            sits in a fixed-width WRAPPER — inputClasses bakes in `w-full`, so
+            a `w-20` on the input itself loses and the field swallowed the row
+            (owner screenshot, 2026-08-14). */}
+        <div className="flex items-center justify-between gap-4">
+          <label htmlFor="top-order" className="min-w-0 flex-1 text-sm font-medium text-ink-900">
+            Display order
+            <span className="block text-xs font-normal text-muted">Lower shows first</span>
+          </label>
+          <div className="w-20 shrink-0">
+            <input
+              id="top-order"
+              type="number"
+              inputMode="numeric"
+              className={inputClasses(false, 'text-center')}
+              value={order}
+              disabled={!canManage}
+              onChange={(e) => setOrder(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* 🔴 §A12: this tag input is the ONLY entry path for the top-40
             keyword list. Never shown publicly; search-matching only. Not built
             on inputClasses — its h-11 fights the growing tag box. */}
-        <Field
-          label="Synonyms"
-          helper="Keywords buyers might type — e.g. medicine, pharma, dawai. Enter or comma adds one. Never shown publicly."
-        >
-          {(id) => (
-            <div
-              className="flex min-h-[44px] w-full flex-wrap items-center gap-2 rounded-lg border border-surface-border bg-white px-3 py-2 transition-all focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-600/20"
-              onClick={() => document.getElementById(id)?.focus()}
-            >
-              {synonyms.map((syn) => (
-                <span key={syn} className="inline-flex items-center gap-1.5 rounded-md bg-ink-100 px-2 py-1 text-xs text-ink-800">
-                  {syn}
-                  {canManage && (
-                    <button
-                      type="button"
-                      aria-label={`Remove ${syn}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSynonyms((l) => l.filter((x) => x !== syn));
-                      }}
-                      className="text-ink-500 hover:text-danger"
-                    >
-                      <XIcon className="h-3 w-3" />
-                    </button>
-                  )}
-                </span>
-              ))}
-              {canManage && (
-                <input
-                  id={id}
-                  className="min-w-[140px] flex-1 border-0 bg-transparent p-0 text-sm outline-none placeholder:text-ink-500"
-                  placeholder={synonyms.length ? 'Add synonym…' : 'No keywords yet — add one'}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSynonym(draft); }
-                    if (e.key === 'Backspace' && !draft) setSynonyms((l) => l.slice(0, -1));
-                  }}
-                  onBlur={() => addSynonym(draft)}
-                />
-              )}
-              {!canManage && synonyms.length === 0 && (
-                <span className="text-sm text-muted">No keywords yet.</span>
-              )}
-            </div>
-          )}
-        </Field>
+        <div>
+          <label
+            htmlFor="top-synonyms"
+            className="flex items-center gap-2 text-sm font-medium text-ink-900"
+          >
+            Search keywords
+            {synonyms.length > 0 && (
+              <span className="rounded-full bg-primary-100 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-800">
+                {synonyms.length}
+              </span>
+            )}
+          </label>
+          <div
+            className="mt-1.5 flex min-h-[44px] w-full flex-wrap items-center gap-1.5 rounded-lg border border-surface-border bg-white px-3 py-2 transition-all focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-600/20"
+            onClick={() => document.getElementById('top-synonyms')?.focus()}
+          >
+            {synonyms.map((syn) => (
+              <span
+                key={syn}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary-50 px-2 py-1 text-xs font-medium text-primary-800"
+              >
+                {syn}
+                {canManage && (
+                  <button
+                    type="button"
+                    aria-label={`Remove ${syn}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSynonyms((l) => l.filter((x) => x !== syn));
+                    }}
+                    className="text-primary-400 hover:text-danger"
+                  >
+                    <XIcon className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            ))}
+            {canManage && (
+              <input
+                id="top-synonyms"
+                className="min-w-[120px] flex-1 border-0 bg-transparent p-0 text-sm outline-none placeholder:text-ink-500"
+                placeholder={synonyms.length ? 'Add keyword…' : 'e.g. medicine, pharma, dawai'}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSynonym(draft); }
+                  if (e.key === 'Backspace' && !draft) setSynonyms((l) => l.slice(0, -1));
+                }}
+                onBlur={() => addSynonym(draft)}
+              />
+            )}
+            {!canManage && synonyms.length === 0 && (
+              <span className="text-sm text-muted">No keywords yet.</span>
+            )}
+          </div>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted">
+            What buyers might type so search finds “{top.name}”. Enter adds one. Never shown
+            publicly.
+          </p>
+        </div>
       </div>
-    </section>
+    </Drawer>
   );
 }
 

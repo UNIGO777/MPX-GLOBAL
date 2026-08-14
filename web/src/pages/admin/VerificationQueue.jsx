@@ -277,9 +277,9 @@ export function VerificationQueue() {
             return (
               <div
                 key={org.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-surface-border bg-white px-5 py-4 shadow-card"
+                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-surface-border bg-white px-4 py-4 shadow-card sm:px-5"
               >
-                <div className="flex min-w-0 flex-1 items-start gap-4">
+                <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
                   <span
                     aria-hidden="true"
                     className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-sm font-bold text-primary-700"
@@ -315,11 +315,14 @@ export function VerificationQueue() {
                   </div>
                 </div>
 
-                <div className="flex shrink-0 flex-wrap items-center gap-3">
+                {/* Phones: the cluster takes its own full-width row (a shrink-0
+                    cluster beside flex-1 text overflowed the card and clipped
+                    "Verify" off-screen — QA, 2026-08-14). sm+: unchanged. */}
+                <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
                   {can(me, 'kyc:view') && (
                     <Link
                       to={`/admin/verification/${org.id}/kyc`}
-                      className="flex h-9 items-center gap-2 rounded-full border border-surface-border bg-white px-4 text-sm font-semibold text-ink-900 transition-colors hover:bg-ink-50"
+                      className="flex h-9 w-full items-center justify-center gap-2 rounded-full border border-surface-border bg-white px-4 text-sm font-semibold text-ink-900 transition-colors hover:bg-ink-50 sm:w-auto"
                     >
                       <DocIcon className="h-4 w-4" />
                       View documents
@@ -330,6 +333,7 @@ export function VerificationQueue() {
                       <Button
                         size="sm"
                         variant="dangerOutline"
+                        className="flex-1 sm:flex-initial"
                         disabled={processing === org.id}
                         onClick={() => {
                           setReason('');
@@ -341,6 +345,7 @@ export function VerificationQueue() {
                       <Button
                         size="sm"
                         variant="success"
+                        className="flex-1 sm:flex-initial"
                         loading={processing === org.id}
                         onClick={() => decide(org, 'approve')}
                       >

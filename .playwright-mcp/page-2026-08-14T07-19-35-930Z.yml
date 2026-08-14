@@ -1,0 +1,25 @@
+- main [ref=e57]:
+  - link "MPX Global — home" [ref=e58] [cursor=pointer]:
+    - /url: /
+    - img "MPX Global" [ref=e59]
+  - generic [ref=e60]:
+    - paragraph [ref=e61]: Step 2 of 2
+    - heading "Enter your code" [level=2] [ref=e62]
+    - paragraph [ref=e63]: We sent a 6-digit code to your registered mobile number
+    - generic [ref=e64]:
+      - generic [ref=e65]:
+        - text: Verification code
+        - group "Verification code" [ref=e66]:
+          - textbox "Digit 1" [active] [ref=e67]
+          - textbox "Digit 2" [ref=e68]
+          - textbox "Digit 3" [ref=e69]
+          - textbox "Digit 4" [ref=e70]
+          - textbox "Digit 5" [ref=e71]
+          - textbox "Digit 6" [ref=e72]
+        - paragraph [ref=e73]: Code expires in 5:00
+      - generic [ref=e74]:
+        - button "Verify and continue" [disabled] [ref=e75]
+        - button "Didn't get it? Resend in 60s" [disabled] [ref=e76]
+      - paragraph [ref=e77]:
+        - link "← Back to sign in" [ref=e78] [cursor=pointer]:
+          - /url: /signin/staff
