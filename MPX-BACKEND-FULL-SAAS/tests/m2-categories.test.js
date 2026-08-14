@@ -286,6 +286,42 @@ describe('admin category endpoints (M2-D)', () => {
     expect(bad.status).toBe(400); // A16 — tops carry no type
   });
 
+  it('order is positional: moving a sub re-sequences its siblings to 1..n (2026-08-14)', async () => {
+    const { top, subA, subB, offSub } = await makeTree();
+    const sa = await makeStaff('superadmin');
+
+    // Move Denim (position 3) to the front — Cotton and Silk must shift down.
+    const res = await request(app)
+      .patch(`/admin/categories/${offSub._id}`)
+      .set(bearer(sa.token))
+      .send({ order: 1 });
+    expect(res.status).toBe(200);
+    expect(res.body.category.order).toBe(1);
+
+    const rows = await Category.find({ parentId: top._id }).sort({ order: 1, _id: 1 }).lean();
+    expect(rows.map((r) => [r.name, r.order])).toEqual([
+      ['Denim', 1],
+      ['Cotton fabric', 2],
+      ['Silk fabric', 3],
+    ]);
+
+    // An out-of-range position clamps to the end instead of leaving a gap.
+    const clamp = await request(app)
+      .patch(`/admin/categories/${subA._id}`)
+      .set(bearer(sa.token))
+      .send({ order: 99 });
+    expect(clamp.status).toBe(200);
+    expect(clamp.body.category.order).toBe(3);
+
+    const after = await Category.find({ parentId: top._id }).sort({ order: 1, _id: 1 }).lean();
+    expect(after.map((r) => [r.name, r.order])).toEqual([
+      ['Denim', 1],
+      ['Silk fabric', 2],
+      ['Cotton fabric', 3],
+    ]);
+    void subB;
+  });
+
   it('attribute CRUD: key+inputType immutable (stripped), select needs options, dup key 409', async () => {
     const { subA } = await makeTree();
     const sa = await makeStaff('superadmin');

@@ -526,18 +526,18 @@ function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle, onSett
         </div>
         {!canManage && <StateDot on={top.active} onWord="Live" offWord="Hidden" />}
         {/* Card-level action in the card's corner, where every other card puts
-            its actions (⋮ menus) — not crowding the image button under the
-            name. Opens the settings DRAWER; read-only staff get it too (fields
+            its actions (⋮ menus). Gear icon only (owner, 2026-08-14) — the
+            drawer title says the rest. Read-only staff get it too (fields
             render disabled there, keeping the keyword list browsable). */}
-        <Button
-          size="sm"
-          variant="ghost"
-          className="shrink-0 self-start"
+        <button
+          type="button"
+          aria-label={`Settings for ${top.name}`}
+          title="Category settings"
           onClick={onSettings}
+          className="flex h-9 w-9 shrink-0 items-center justify-center self-start rounded-full text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900"
         >
-          <SettingsIcon className="mr-1.5 h-4 w-4" />
-          Settings
-        </Button>
+          <SettingsIcon className="h-[18px] w-[18px]" />
+        </button>
       </div>
 
       {/* The master switch gets its OWN row — at no width does it fight the
@@ -652,7 +652,9 @@ function TopSettings({ top, open, onClose, canManage, saving, onSave }) {
         <div className="flex items-center justify-between gap-4">
           <label htmlFor="top-order" className="min-w-0 flex-1 text-sm font-medium text-ink-900">
             Display order
-            <span className="block text-xs font-normal text-muted">Lower shows first</span>
+            <span className="block text-xs font-normal text-muted">
+              Lower shows first — the others shift around it.
+            </span>
           </label>
           <div className="w-20 shrink-0">
             <input
@@ -1015,6 +1017,27 @@ function SubPanel({ panel, top, saving, onClose, onSave }) {
             )}
           </Field>
         )}
+
+        {/* Position among this top's subs — the server shifts the siblings
+            (positional order semantics, 2026-08-14). */}
+        <div className="flex items-center justify-between gap-4">
+          <label htmlFor="sub-order" className="min-w-0 flex-1 text-sm font-medium text-ink-900">
+            Display order
+            <span className="block text-xs font-normal text-muted">
+              Lower shows first — the others shift around it.
+            </span>
+          </label>
+          <div className="w-20 shrink-0">
+            <input
+              id="sub-order"
+              type="number"
+              inputMode="numeric"
+              className={inputClasses(false, 'text-center')}
+              value={order}
+              onChange={(e) => setOrder(e.target.value)}
+            />
+          </div>
+        </div>
 
         <Field
           label="Synonyms"

@@ -217,16 +217,24 @@ export async function toggleCategory({ id, actor, meta }) {
   return cat;
 }
 
-export async function createSubCategory({ parentId, name, type, synonyms = [], order = 0, actor, meta }) {
+export async function createSubCategory({ parentId, name, type, synonyms = [], order, actor, meta }) {
   const parent = await Category.findOne({ _id: parentId, parentId: null });
   if (!parent) {
     // Depth stays 2: the parent must itself be a top.
     throw AppError.badRequest('parent must be a top category', 'Sub-categories can only be created under a top category.');
   }
 
+  // No explicit position → append to the end; an explicit one shifts siblings
+  // (same positional semantics as updateCategory, 2026-08-14).
+  const siblingCount = await Category.countDocuments({ parentId: parent._id });
+
   let sub;
   try {
-    sub = await Category.create({ name, parentId: parent._id, type, synonyms, order });
+    sub = await Category.create({ name, parentId: parent._id, type, synonyms, order: siblingCount + 1 });
+    if (order !== undefined && Number(order) !== siblingCount + 1) {
+      sub.order = await resequenceSiblings(sub, Number(order));
+      await sub.save();
+    }
   } catch (err) {
     if (err?.code === 11000) {
       // Slug insert-race (the pre-validate clash check passed on both sides) —
@@ -245,6 +253,37 @@ export async function createSubCategory({ parentId, name, type, synonyms = [], o
     meta,
   });
   return sub;
+}
+
+/**
+ * `order` is a POSITION, not a free number (2026-08-14 — owner: "when I change
+ * the order in one it's not updating others"). Moving a category to position N
+ * shifts its siblings and rewrites the whole scope to a clean 1..n sequence,
+ * so every list that sorts on `order` (admin rail, phone sheet, public tree,
+ * sub lists) reorders consistently. Returns the clamped final position.
+ */
+async function resequenceSiblings(cat, requestedPosition) {
+  const siblings = await Category.find({ parentId: cat.parentId ?? null, _id: { $ne: cat._id } })
+    .sort({ order: 1, _id: 1 })
+    .select('_id order')
+    .lean();
+
+  const position = Math.min(Math.max(Math.trunc(requestedPosition) || 1, 1), siblings.length + 1);
+  const sequence = [
+    ...siblings.slice(0, position - 1),
+    { _id: cat._id, order: cat.order },
+    ...siblings.slice(position - 1),
+  ];
+
+  const ops = [];
+  sequence.forEach((row, i) => {
+    const target = i + 1;
+    if (row.order !== target && !row._id.equals(cat._id)) {
+      ops.push({ updateOne: { filter: { _id: row._id }, update: { $set: { order: target } } } });
+    }
+  });
+  if (ops.length > 0) await Category.bulkWrite(ops);
+  return position;
 }
 
 // Slug is immutable everywhere; parentId is immutable (no re-parenting); a
@@ -266,12 +305,18 @@ export async function updateCategory({ id, patch, actor, meta }) {
     }
   }
 
-  for (const field of ['name', 'order', 'synonyms', 'type']) {
+  for (const field of ['name', 'synonyms', 'type']) {
     if (patch[field] !== undefined) {
       before[field] = cat[field];
       cat[field] = patch[field];
       after[field] = patch[field];
     }
+  }
+  if (patch.order !== undefined) {
+    // Positional move — siblings shift around it (see resequenceSiblings).
+    before.order = cat.order;
+    cat.order = await resequenceSiblings(cat, Number(patch.order));
+    after.order = cat.order;
   }
   if (Object.keys(after).length === 0) {
     throw AppError.badRequest('empty patch', 'Nothing to update.');
