@@ -77,6 +77,13 @@ export function FilterSidebar({
   onCategoryChange = null,
   selectedCountry = null,
   onCountryChange = null,
+  // AI search (build-plan Phase 3) can derive a moqMin the buyer never typed
+  // into a widget — `/public/search` has always accepted the param, there was
+  // just no manual control for it (deferred, "future /search work"). No input
+  // is added here on purpose; this only lets an AI-set MOQ show as a normal
+  // removable chip, same as everything else in this list.
+  moqMin = null,
+  onMoqChange = null,
 }) {
   const appliedChips = buildAppliedChips({
     verifiedOnly,
@@ -95,6 +102,8 @@ export function FilterSidebar({
     selectedCountry,
     onCountryChange,
     countryName: countryNameOf,
+    moqMin,
+    onMoqChange,
   });
 
   return (
@@ -376,8 +385,12 @@ function SingleSelectPills({ options, selected, onChange }) {
 /** Builds the "Applied filters" chip list — each chip's `onRemove` reverses
  *  exactly that one selection via the same setter callbacks the controls
  *  above use, so removing a chip and unchecking its pill do the same
- *  thing. */
-function buildAppliedChips({
+ *  thing. Exported so `/search` can render the identical chip row directly on
+ *  the page (not only inside this component's own drawer body) — the AI
+ *  search results treatment needs a visible "what did AI apply" row, and
+ *  reusing this is more honest than a second, parallel chip implementation
+ *  that could disagree with the drawer's. */
+export function buildAppliedChips({
   verifiedOnly,
   priceMin,
   priceMax,
@@ -394,6 +407,8 @@ function buildAppliedChips({
   selectedCountry,
   onCountryChange,
   countryName,
+  moqMin,
+  onMoqChange,
 }) {
   const chips = [];
   if (verifiedOnly) {
@@ -417,6 +432,9 @@ function buildAppliedChips({
   if (priceMin || priceMax) {
     const label = `${priceCurrency ?? ''} ${priceMin || '0'} – ${priceMax || 'any'}`.trim();
     chips.push({ id: 'price', label, onRemove: () => onPriceChange(null, null) });
+  }
+  if (moqMin && onMoqChange) {
+    chips.push({ id: 'moq', label: `MOQ ${moqMin}+`, onRemove: () => onMoqChange(null) });
   }
   for (const [key, val] of Object.entries(attrSelections ?? {})) {
     const attr = attributes.find((a) => a.key === key);

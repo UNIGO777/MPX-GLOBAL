@@ -1,4 +1,4 @@
-import { Calendar, CreditCard, Expand, KeyRound, Mail, MapPin, Shield, SlidersHorizontal } from 'lucide-react';
+import { Calendar, CreditCard, Expand, KeyRound, Mail, MapPin, Shield, SlidersHorizontal, Sparkles } from 'lucide-react';
 
 /**
  * Minimal inline SVG icon set (1.8 stroke, currentColor) — no icon-font network
@@ -214,3 +214,8 @@ export const HeartIcon = (p) => (
 
 /** An unselected filter-pill's leading glyph (`FilterSidebar.jsx`). */
 export const PlusIcon = (p) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;
+
+/** AI search trigger + answer-panel glyph (`AiSearchModal.jsx`). */
+export const SparkleIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Sparkles aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);

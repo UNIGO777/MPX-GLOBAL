@@ -18,10 +18,12 @@ import {
   GlobeIcon,
   SearchIcon,
   ShieldIcon,
+  SparkleIcon,
   UserIcon,
 } from '../../components/ui/icons.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
+import { AiSearchModal } from '../../components/search/AiSearchModal.jsx';
 
 /**
  * Public landing page (mockup: royal_blue_premium_landing_page). SEO surface —
@@ -35,10 +37,17 @@ import { PublicHeader } from '../../components/public/PublicHeader.jsx';
  * mockup's "Quotations" platform tab is dropped. Flagged to the owner.
  *
  * Non-operational elements (each in docs/UiWebNotes.md): store badges ("Coming
- * soon") and the footer directory (static text). The hero search bar and the
- * category section are REAL links now (2026-08-11): search → /categories (the
- * quick-find lives there; AI search stays Module 3), categories → live cards.
- * The hero match panel shows real listings, not invented suppliers.
+ * soon") and the footer directory (static text). The category section is a
+ * REAL link (2026-08-11, live cards). The hero match panel shows real
+ * listings, not invented suppliers.
+ *
+ * 🆕 2026-08-16 — hero search bar now opens `AiSearchModal` directly (owner:
+ * clicking it should go straight to "write what you want", not to a plain
+ * link). Superseded the 2026-08-11 interim behaviour (a real link to
+ * /categories, chosen back when AI search wasn't built yet). "Browse 40
+ * categories →" is its own separate `Link` now, sitting below the button
+ * rather than nested inside the same clickable area — the two actions
+ * diverge now, so they need distinct click targets.
  */
 
 /* ---------------------------------- data ---------------------------------- */
@@ -192,6 +201,7 @@ export function Landing() {
   const [journey, setJourney] = useState('buyer');
   const [tab, setTab] = useState('search');
   const [openFaq, setOpenFaq] = useState(0);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
   const activeTab = PLATFORM_TABS.find((t) => t.key === tab);
 
   // Real categories, so the landing page stops advertising an invented taxonomy.
@@ -254,21 +264,31 @@ export function Landing() {
                 directly — discovery to deal on one secure platform.
               </p>
 
-              {/* A real door, not a prop (2026-08-11): opens the catalogue,
-                  where the quick-find filter actually works. AI search itself
-                  is still Module 3. */}
-              <Link to="/categories" className="mt-6 block w-full max-w-lg" aria-label="Browse the catalogue">
-                <span className="flex items-center rounded-full border border-surface-border bg-white p-1.5 shadow-card transition-all hover:border-primary-400 hover:shadow-lift">
+              {/* Opens AI search directly (owner, 2026-08-16) — one click
+                  straight to "write what you want", no intermediate page.
+                  "Browse 40 categories" is its own real link now, separate
+                  from this button, since the two actions genuinely diverge. */}
+              <div className="mt-6 w-full max-w-lg">
+                <button
+                  type="button"
+                  onClick={() => setAiModalOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-label="Search with AI — describe what you're looking for"
+                  className="flex w-full items-center rounded-full border border-surface-border bg-white p-1.5 text-left shadow-card transition-all hover:border-primary-400 hover:shadow-lift"
+                >
                   <span className="pl-3 text-ink-400"><SearchIcon className="h-5 w-5" /></span>
                   <span className="flex-1 truncate px-3 text-sm text-ink-500">
                     Find suppliers — fabrics, machinery, IT services&hellip;
                   </span>
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-600 text-white">
-                    <SearchIcon className="h-4 w-4" />
+                    <SparkleIcon className="h-4 w-4" />
                   </span>
-                </span>
-                <span className="mt-1.5 block pl-4 text-xs text-ink-500">Browse 40 categories →</span>
-              </Link>
+                </button>
+                <Link to="/categories" className="mt-1.5 block pl-4 text-xs text-ink-500 hover:text-primary-700">
+                  Browse 40 categories →
+                </Link>
+              </div>
+              <AiSearchModal open={aiModalOpen} onClose={() => setAiModalOpen(false)} />
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {home ? (

@@ -175,6 +175,52 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-16 (later) — `AiSearchModal.jsx` visual pass against an owner-supplied mockup; 4
+  items RED-ALERTED and NOT built.** Owner shared AI-generated mockups of the hero + AI search
+  modal + search results. Built: full-screen sheet on mobile / centered card on desktop (same
+  breakpoint convention `FiltersOverlay` already uses — not a new pattern); a labeled
+  "Suggestions" row with a search-icon per example chip; a real spinner (reused the existing
+  `Spinner` component) in the "Thinking…" state instead of bare text; a footer divider with
+  stacked full-width buttons on mobile vs. side-by-side on desktop. 🔴 **Deliberately NOT
+  built, flagged to the owner, awaiting explicit confirmation**: (1) an "Orders" nav tab — `Order`/
+  `Shipment` are guarded Phase-2 skeleton models; (2) "AI-powered matchmaking"/"secure transaction
+  logistics" copy plus fabricated 98%/94% "Match" scores and "Analyzing 1,200+ profiles…" — no
+  match-scoring data exists anywhere in the backend, and "logistics" reads as escrow/shipping
+  (Bucket B); (3) "AI Search" as a persistent bottom-nav tab — turns the feature from an on-demand
+  overlay into a primary nav destination, confirmed `PublicHeader.jsx` has no nav-tabs structure
+  today; (4) a fabricated product "ID: TX-992" badge + a photo-overlay "Verified Supplier" badge —
+  confirmed `Product` has no SKU/reference-code field, and the tick already has an established
+  place next to the seller name on the shared `ProductCard`. Landing hero copy, nav, and the
+  results-page card treatment are untouched pending the owner's call on those four.
+- **2026-08-16 — M3 screen 3 (AI search) built + wired into the landing hero, web only.** Backend
+  (`POST /search/ai`) was already shipped 2026-07-31 — this session built the missing web UI
+  against it. New `web/src/components/search/AiSearchModal.jsx`: textarea + example-prompt chips
+  + "Search with AI" (loading = "Thinking…", genuinely cancellable — an in-flight response is
+  dropped, not navigated to, if the buyer cancels) → converts the validated `extracted` filters
+  into the SAME URL params `/search` already reads (AI results are normal results, never a
+  separate view) and navigates there with a one-shot router-state `{ aiAnswer, aiFallback }` for
+  the answer banner. 429 gets its own quota copy, never a raw error. ⚠️ **Deliberate deviation
+  from the written brief**: the Products|Suppliers toggle it specifies is OMITTED — `POST
+  /search/ai` takes only `{ query }`, the model infers target from the sentence itself, and a
+  toggle that can't influence the call would be a dead control (banned outright,
+  `web-ui-notes.md`). `Search.jsx` changes: AI answer panel (dismissible) + an "applied filters"
+  chip row now rendered directly on the page (previously only visible inside the Filters
+  drawer) — `FilterSidebar.jsx`'s `buildAppliedChips` is now exported and reused so both stay in
+  agreement; added full `moqMin` read/write/clear plumbing (the API already accepted it, nothing
+  in the UI could set or remove it until now — AI can set it, so it needed a working chip even
+  with no manual widget, which stays out of scope per the build plan). New `SparkleIcon`
+  (lucide `Sparkles`) added to `icons.jsx`. Then, owner-directed (screenshot + "open the ai box
+  directly where anyone can write what he want"): the landing hero search bar — a static `Link`
+  to `/categories` since 2026-08-11, chosen back when AI search didn't exist yet — now opens
+  `AiSearchModal` directly on click instead. "Browse 40 categories →" was nested inside that
+  same link before; split into its own separate real `Link` underneath the button, since the two
+  actions no longer do the same thing. `UiWebNotes.md` hero-search row updated, not re-added
+  (still Done, behaviour superseded). Verified: `vite build` clean after every change (no
+  screenshot — no browser-automation tool was available in this session to drive a live check).
+  **Not covered**: landing's own AI trigger reuse is the only Phase-4 slice touched — the rest of
+  Phase 4 (header search input, featured strips/F5b) is untouched; the OpenAI key was found
+  already configured in `.env` during this work (earlier docs assumed "owner-pending") — AI
+  search should be running live, not on its fallback path, worth confirming that's intended.
 - **2026-08-15 — App: fixed KYC hub "back" navigation error after signup.** Owner report:
   after signup, tapping "Verify now" then pressing back from the hub ("Verify your business
   details") errored instead of returning home. Root cause: `AppStack`'s

@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { FilterSidebar } from '../../components/catalogue/FilterSidebar.jsx';
+import { buildAppliedChips, FilterSidebar } from '../../components/catalogue/FilterSidebar.jsx';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { ProductListCard } from '../../components/catalogue/ProductListCard.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
+import { AiSearchModal } from '../../components/search/AiSearchModal.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
@@ -25,6 +26,7 @@ import {
   MapPinIcon,
   SearchIcon,
   SearchOffIcon,
+  SparkleIcon,
   XIcon,
 } from '../../components/ui/icons.jsx';
 import { countryName } from '../../lib/countries.js';
@@ -49,6 +51,16 @@ import { countryName } from '../../lib/countries.js';
  * Supplier mode: the API rejects product-only params and price sorts, so the
  * UI never sends them — filters collapse to Verified + country, and the sort
  * control hides (server relevance order only).
+ *
+ * 🆕 2026-08-16 — M3 screen 3 (AI search, build-plan Phase 3) lands here too:
+ * `AiSearchModal` converts its extraction into the SAME URL params this page
+ * already reads (AI results are normal results, never a separate view), plus
+ * a one-time router-state `{ aiAnswer, aiFallback }` for the answer banner.
+ * The applied-filter chip row (previously only visible inside the Filters
+ * drawer) is now ALSO shown directly on the page — `buildAppliedChips` is
+ * shared with `FilterSidebar` so both stay in agreement — because AI-derived
+ * filters need a visible, removable trail and `moqMin` (which the AI can set
+ * but no manual widget exists for yet) needs a way to be undone at all.
  */
 const PAGE_SIZE = 12;
 const LIST_MOBILE = 'grid grid-cols-2 gap-3 md:hidden';
@@ -296,7 +308,26 @@ function FiltersOverlay({ open, onClose, total, isPending, filterSidebarProps })
 
 export function Search() {
   const [params, setParams] = useSearchParams();
+  const location = useLocation();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  // AI search (screen 3) hands off its answer sentence via router state — a
+  // fresh navigation, never URL-persisted (a cold reload of the SAME URL just
+  // shows the normal filtered results; the sentence describes the moment the
+  // AI ran, not a durable page state). Dismissible.
+  //
+  // 🔴 Must be an effect, not a lazy useState initializer: the AI trigger
+  // lives ON this page, so submitting it is usually an IN-PLACE navigation
+  // (same route — the component never remounts, only `location` changes). A
+  // one-time initializer would miss every submission made from here.
+  const [aiInfo, setAiInfo] = useState(null);
+  useEffect(() => {
+    if (location.state?.aiAnswer || location.state?.aiFallback) {
+      setAiInfo({ answer: location.state.aiAnswer ?? null, fallback: Boolean(location.state.aiFallback) });
+    }
+    // Ordinary filter/sort navigations (setSearchParams) carry no state, so
+    // they correctly leave whatever aiInfo is already showing untouched.
+  }, [location.state]);
   const q = params.get('q') ?? '';
   const [draft, setDraft] = useState(q);
   const type = params.get('type') === 'supplier' ? 'supplier' : 'product';
@@ -305,6 +336,7 @@ export function Search() {
   const verifiedOnly = params.get('verified') === '1';
   const priceMin = params.get('priceMin') ?? '';
   const priceMax = params.get('priceMax') ?? '';
+  const moqMin = params.get('moqMin') ?? '';
   const category = params.get('category');
   const country = params.get('country');
   const { raw: attrRawParams, selections: attrSelections } = readAttrParams(params);
@@ -328,7 +360,7 @@ export function Search() {
       // them at the source instead of sending a 400.
       if (t === 'supplier') {
         for (const k of [...next.keys()]) {
-          if (k === 'category' || k === 'priceMin' || k === 'priceMax' || FILTER_KEY_RE.test(k)) next.delete(k);
+          if (k === 'category' || k === 'priceMin' || k === 'priceMax' || k === 'moqMin' || FILTER_KEY_RE.test(k)) next.delete(k);
         }
         if (next.get('sort') === 'priceAsc' || next.get('sort') === 'priceDesc') next.delete('sort');
       }
@@ -341,6 +373,11 @@ export function Search() {
       min ? next.set('priceMin', min) : next.delete('priceMin');
       max ? next.set('priceMax', max) : next.delete('priceMax');
     });
+  // No manual widget sets this yet (deferred — `FilterSidebar.jsx`'s own
+  // comment on the prop) — AI search is currently the only thing that CAN
+  // set it. Still needs a real setter so its chip is removable.
+  const onMoqChange = (val) =>
+    updateParams((next) => (val ? next.set('moqMin', val) : next.delete('moqMin')));
   const onAttrToggle = (key, value) =>
     updateParams((next) => {
       const current = (next.get(`attr[${key}]`) ?? '').split(',').filter(Boolean);
@@ -359,7 +396,7 @@ export function Search() {
   const onClearAllFilters = () =>
     updateParams((next) => {
       for (const k of [...next.keys()]) {
-        if (['verified', 'priceMin', 'priceMax', 'category', 'country'].includes(k) || FILTER_KEY_RE.test(k)) next.delete(k);
+        if (['verified', 'priceMin', 'priceMax', 'moqMin', 'category', 'country'].includes(k) || FILTER_KEY_RE.test(k)) next.delete(k);
       }
     });
   const onSortChange = (val) =>
@@ -368,6 +405,7 @@ export function Search() {
   const activeFilterCount =
     (verifiedOnly ? 1 : 0) +
     (priceMin || priceMax ? 1 : 0) +
+    (type === 'product' && moqMin ? 1 : 0) +
     (category ? 1 : 0) +
     (country ? 1 : 0) +
     Object.keys(attrSelections).length;
@@ -381,6 +419,7 @@ export function Search() {
     ...(verifiedOnly ? { verifiedOnly: 'true' } : {}),
     ...(type === 'product' && priceMin ? { priceMin } : {}),
     ...(type === 'product' && priceMax ? { priceMax } : {}),
+    ...(type === 'product' && moqMin ? { moqMin } : {}),
     ...(type === 'product' ? attrRawParams : {}),
   };
 
@@ -437,7 +476,14 @@ export function Search() {
     onAttrRangeChange,
     onClearAll: onClearAllFilters,
     ...(type === 'product'
-      ? { selectedCategory: category, onCategoryChange, selectedCountry: country, onCountryChange }
+      ? {
+          selectedCategory: category,
+          onCategoryChange,
+          selectedCountry: country,
+          onCountryChange,
+          moqMin,
+          onMoqChange,
+        }
       : {
           // supplier mode: Verified + country only — the API rejects the rest
           selectedCountry: country,
@@ -447,6 +493,31 @@ export function Search() {
         }),
   };
 
+  // Same chip list `FilterSidebar` renders inside its own drawer body, shown
+  // here too so AI-derived filters (build-plan Phase 3's "extracted-filter
+  // chip row") are visible without opening Filters — and so a moqMin the AI
+  // set (no manual widget exists for it yet) is still removable at a glance.
+  const appliedChips = buildAppliedChips({
+    verifiedOnly,
+    priceMin,
+    priceMax,
+    priceCurrency: facets.data?.facets?.price?.currency,
+    attrSelections,
+    attributes: facets.data?.facets?.attributes ?? [],
+    onToggleVerified,
+    onPriceChange,
+    onAttrToggle,
+    onAttrRangeChange,
+    selectedCategory: type === 'product' ? category : null,
+    onCategoryChange: type === 'product' ? onCategoryChange : null,
+    categoryFacet: facets.data?.facets?.category ?? [],
+    selectedCountry: country,
+    onCountryChange,
+    countryName,
+    moqMin: type === 'product' ? moqMin : null,
+    onMoqChange: type === 'product' ? onMoqChange : null,
+  });
+
   return (
     <div className="flex min-h-screen flex-col bg-white text-ink-900">
       <PublicHeader current="Categories" />
@@ -454,30 +525,41 @@ export function Search() {
       <main className="flex-1 bg-surface-subtle/50">
         <div className="w-full px-4 py-6 sm:px-6 md:py-8">
           {/* --- search bar --- */}
-          <form
-            role="search"
-            className="relative mx-auto w-full max-w-2xl"
-            onSubmit={(e) => {
-              e.preventDefault();
-              submitQuery(draft);
-            }}
-          >
-            <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
-            <input
-              type="search"
-              aria-label="Search products and suppliers"
-              placeholder="Search products or suppliers…"
-              className="h-12 w-full rounded-full border border-surface-border bg-white pl-11 pr-28 text-[15px] shadow-card outline-none placeholder:text-ink-500 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/20"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-            />
-            <button
-              type="submit"
-              className="absolute right-1.5 top-1/2 flex h-9 -translate-y-1/2 items-center rounded-full bg-ink-900 px-5 text-sm font-semibold text-white hover:bg-primary-800"
+          <div className="mx-auto flex w-full max-w-2xl items-center gap-2">
+            <form
+              role="search"
+              className="relative flex-1"
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitQuery(draft);
+              }}
             >
-              Search
+              <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
+              <input
+                type="search"
+                aria-label="Search products and suppliers"
+                placeholder="Search products or suppliers…"
+                className="h-12 w-full rounded-full border border-surface-border bg-white pl-11 pr-28 text-[15px] shadow-card outline-none placeholder:text-ink-500 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/20"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="absolute right-1.5 top-1/2 flex h-9 -translate-y-1/2 items-center rounded-full bg-ink-900 px-5 text-sm font-semibold text-white hover:bg-primary-800"
+              >
+                Search
+              </button>
+            </form>
+            {/* Guests can use AI search too — no sign-in gate on this button. */}
+            <button
+              type="button"
+              onClick={() => setAiModalOpen(true)}
+              className="flex h-12 shrink-0 items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-4 text-sm font-semibold text-primary-700 shadow-card transition-colors hover:border-primary-600 hover:bg-primary-100"
+            >
+              <SparkleIcon className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">AI Search</span>
             </button>
-          </form>
+          </div>
 
           {/* --- type toggle --- */}
           <div role="tablist" aria-label="Result type" className="mx-auto mt-4 flex w-fit rounded-full border border-surface-border bg-white p-1 shadow-sm">
@@ -501,6 +583,24 @@ export function Search() {
               );
             })}
           </div>
+
+          {/* --- AI answer panel (screen 3 result treatment) --- */}
+          {aiInfo && (
+            <div className="mx-auto mt-4 flex max-w-2xl items-start gap-2.5 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800">
+              <SparkleIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              {/* Fallback: the AI step itself failed server-side — render as a
+                  plain result, no apology, no error styling (m3 brief §3). */}
+              <p className="flex-1">{aiInfo.fallback ? 'Showing keyword results.' : aiInfo.answer}</p>
+              <button
+                type="button"
+                onClick={() => setAiInfo(null)}
+                aria-label="Dismiss"
+                className="shrink-0 text-primary-500 hover:text-primary-800"
+              >
+                <XIcon className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+          )}
 
           {/* --- flat toolbar --- */}
           <div className="mb-5 mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-surface-border pb-3">
@@ -527,6 +627,27 @@ export function Search() {
             </div>
             {type === 'product' && <SortMenu value={sort} onChange={onSortChange} />}
           </div>
+
+          {appliedChips.length > 0 && (
+            <div className="mb-5 -mt-2 flex flex-wrap items-center gap-2">
+              {appliedChips.map((chip) => (
+                <button
+                  key={chip.id}
+                  type="button"
+                  onClick={chip.onRemove}
+                  className="inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 py-1 pl-3 pr-2 text-sm font-medium text-primary-700"
+                >
+                  {chip.label}
+                  <XIcon className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ))}
+              <button type="button" onClick={onClearAllFilters} className="text-sm font-medium text-primary-700 hover:underline">
+                Clear all
+              </button>
+            </div>
+          )}
+
+          <AiSearchModal open={aiModalOpen} onClose={() => setAiModalOpen(false)} />
 
           <FiltersOverlay
             open={filtersOpen}

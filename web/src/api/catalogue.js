@@ -61,6 +61,20 @@ export const catalogueApi = {
    */
   facets: (params) => apiClient.get('/public/facets', { params }).then((r) => r.data),
 
+  /**
+   * M3 screen 3 — AI search. One free-text sentence in; the backend is a
+   * TRANSLATOR only (`aiSearch.service.js`) — it turns the sentence into the
+   * same filters `search()` above accepts and runs the identical engine, so
+   * the response's `products`/`suppliers` are already public-projected and
+   * paged. `extracted` is the validated filter set actually applied (null
+   * when `fallback: true` — the AI step failed and this is a plain keyword
+   * result instead, never a thrown error for that case). A 429 here is the
+   * per-organisation daily AI quota, not a network failure — callers should
+   * check `err.response?.status === 429` before falling back to a generic
+   * error message.
+   */
+  aiSearch: (query) => apiClient.post('/search/ai', { query }).then((r) => r.data),
+
   /** Public product detail by id or slug. */
   product: (idOrSlug) =>
     apiClient.get(`/public/products/${idOrSlug}`).then((r) => r.data.product),
