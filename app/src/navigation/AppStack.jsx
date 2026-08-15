@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { BuyerNavigator } from './BuyerNavigator.jsx';
@@ -18,6 +18,28 @@ import { postSignupPrompt } from '../screens/kyc/postSignupPrompt.js';
 const Stack = createNativeStackNavigator();
 
 /**
+ * Registered as the "Tabs" screen itself (not rendered as a child elsewhere),
+ * so it receives `navigation` as a normal screen prop. On first mount it pushes
+ * KycPrompt ON TOP of Tabs — never as the stack's initial route — so Tabs is
+ * always sitting underneath in history. That's what makes `goBack()` land
+ * somewhere real, both from KycPrompt's own "Not now" and from KycHub after
+ * the "Verify now" replace.
+ */
+function TabsRoot({ navigation, Tabs }) {
+  useEffect(() => {
+    // Consumed once, on mount. A signup lands on the nudge; every later launch —
+    // and every sign-in — lands on the tabs, so an unverified company is never
+    // nagged repeatedly.
+    if (postSignupPrompt.consume()) {
+      navigation.navigate('KycPrompt');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <Tabs />;
+}
+
+/**
  * The signed-in shell. The role's tab navigator is the root screen; verification
  * sits ON TOP of it as a stack so it can be pushed from the post-signup nudge or
  * from Profile without living inside a tab.
@@ -33,17 +55,9 @@ const Stack = createNativeStackNavigator();
 export function AppStack({ role }) {
   const Tabs = role === 'exporter' ? ExporterNavigator : BuyerNavigator;
 
-  // Consumed once, on mount. A signup lands on the nudge; every later launch —
-  // and every sign-in — lands on the tabs, so an unverified company is never
-  // nagged repeatedly.
-  const [openOnPrompt] = useState(() => postSignupPrompt.consume());
-
   return (
-    <Stack.Navigator
-      screenOptions={{ headerShown: false }}
-      initialRouteName={openOnPrompt ? 'KycPrompt' : 'Tabs'}
-    >
-      <Stack.Screen name="Tabs" component={Tabs} />
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Tabs">
+      <Stack.Screen name="Tabs">{(props) => <TabsRoot {...props} Tabs={Tabs} />}</Stack.Screen>
 
       {/* Shown once after signup; "Not now" simply pops back to the tabs. */}
       <Stack.Screen name="KycPrompt" component={VerificationPromptScreen} />
