@@ -59,7 +59,10 @@ export function BuyerNavigator() {
       />
       <Tab.Screen
         name="BuyerProfile"
-        options={{ title: 'Profile', tabBarLabel: 'Profile', tabBarIcon: tabIcon('person-circle') }}
+        // headerShown: false (2026-08-16) — Profile builds its own scroll-
+        // reactive sticky header (`ProfileScreen.jsx`); the native one just
+        // duplicated its title.
+        options={{ title: 'Profile', tabBarLabel: 'Profile', tabBarIcon: tabIcon('person-circle'), headerShown: false }}
         component={ProfileScreen}
       />
     </Tab.Navigator>

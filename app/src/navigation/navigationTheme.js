@@ -30,6 +30,9 @@ export const screenHeaderOptions = {
 export const tabBarOptions = {
   tabBarActiveTintColor: colors.primary[600],
   tabBarInactiveTintColor: colors.muted,
-  tabBarStyle: { borderTopColor: colors.surface.border },
+  // A touch taller than the platform default (2026-08-16) — the focused tab's
+  // icon now sits in a raised circle (`tabIcon.jsx`) that needs breathing room
+  // above the label so it doesn't crowd the bar's top edge.
+  tabBarStyle: { borderTopColor: colors.surface.border, height: 64, paddingTop: 10, paddingBottom: 10 },
   tabBarLabelStyle: { ...typography.tiny, fontWeight: '600' },
 };

@@ -175,6 +175,75 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-16 (later 5) — App Profile screen: removed the duplicate native header, header now
+  crossfades blue → white on scroll.** Owner asked to (1) remove the default header and (2) make
+  the custom one blue at scroll-top, white within the first ~2-3% of scroll. `headerShown: false`
+  added to the `BuyerProfile`/`ExporterProfile` tab entries in both navigators (scoped to Profile
+  only — it was duplicating the in-content title, other tabs untouched). `ProfileScreen.jsx`'s
+  in-content top bar became a genuinely STICKY header: `Animated.ScrollView` tracks scroll offset
+  into an `Animated.Value`; a `position: absolute`, `pointerEvents="none"` `Animated.View` pinned
+  at the top interpolates its background from navy to white (and its "Profile" text from white to
+  ink, and a hairline border from invisible to visible) over `HEADER_FADE_DISTANCE = 40` px of
+  scroll, clamped so it never overshoots. At scroll-top it's the exact same navy as the hero
+  beneath it, so it reads as one seamless surface, not a separate bar — confirmed via screenshot
+  (couldn't visually distinguish the sticky header from the hero at rest). The hero's own top
+  padding was bumped by the sticky header's approximate height so its content (wordmark, avatar)
+  clears it instead of rendering underneath. `pointerEvents="none"` was required so the sticky
+  overlay never intercepts the scroll gesture happening beneath it — verified scrolling still
+  works with the header pinned on top. Verified LIVE on-device across the full transition both
+  directions (scroll down → white, scroll up → back to navy) and confirmed only one "Profile"
+  label renders now (previously the untouched native tab header plus this screen's own title
+  showed it twice).
+- **2026-08-16 (later 4) — App Profile screen: fixed "only the bottom box scrolls" + pushed the
+  redesign to closer mockup fidelity on an explicit "make it exact" pass.** Owner flagged real
+  bad UX after the first redesign pass: `NavyCanopy`'s header is STATIC BY DESIGN (owner,
+  2026-08-03 — keeps a keyboard from covering a form's fields), but Profile has no text input at
+  all, so that trade-off never applied here — once the identity hero grew tall (avatar+name+
+  subtitle) plus a new top bar, the static header ate too much permanent screen height. Fixed:
+  `ProfileScreen.jsx` no longer uses `<NavyCanopy>` — it now builds one continuous `ScrollView`
+  (top bar → navy hero → white sheet of cards), everything scrolls together. Reverted the
+  `avatar` prop I'd added to `NavyCanopy.jsx` for this (would've gone unused, and every other
+  screen using it — forms, KYC, signup — is unaffected either way; added a note there so nobody
+  re-adds a tall hero and rediscovers the same problem). Also pushed closer to literal mockup
+  fidelity per an explicit "make it exact" ask: avatar now sits ON the navy hero (halo ring +
+  tinted glow shadow) with the real user's NAME as the big navy heading (not the screen name);
+  new light top bar carries "Profile" instead; "Terms & Privacy" row now shows "DISABLED" text
+  (matching the mockup's own row-specific label, left `Notifications`'s "Coming soon" alone —
+  matches what was actually shown, not artificially unified); bottom tab bar's raised-circle
+  active-tab treatment now shared app-wide (`navigation/tabIcon.jsx` + `navigationTheme.js`
+  height/padding bump), so all 5 tabs get it consistently, not just Profile. **Still held the
+  line on two things even on the "exact" pass** — no real photo (checked the backend again, no
+  avatar field anywhere on `User`/`Organisation` — hardcoding the mockup's stock photo would
+  show a fabricated person's face to every real user) and no hamburger/gear icons (nothing real
+  for either to open — a tap target that never responds is worse than omitting it). **Surfaced,
+  not hidden**: the app's native tab header (React Navigation, present on every tab screen
+  already, pre-dates this work) shows "Profile" in small text at the very top, and the new
+  in-content top bar now shows it again, bigger — a minor redundancy, left alone since fixing it
+  is a navigation-chrome change bigger than what was asked. Verified LIVE on-device across two
+  relaunches (Mi A3, wireless ADB reconnected once mid-session — port rotated again, unrelated
+  to this work): screenshots confirm the full page scrolls as one unit, no crash.
+- **2026-08-16 (later 2) — App Profile screen (screen 16) redesigned against an owner-approved
+  "Executive Navy" mockup direction.** `app/src/screens/ProfileScreen.jsx` rebuilt: avatar gets a
+  layered halo (soft primary-tinted glow shadow + ring, no photo — no upload capability exists,
+  kept the honest icon placeholder), bolder name typography, icon-in-a-circle treatment on every
+  row (primary-tinted for live rows, ink-muted for disabled ones — keeps the "obviously inert"
+  signal `web-ui-notes.md`'s spirit already requires on web), rows regrouped into 3 cards instead
+  of small-caps section labels. "Change password" row relabelled "Security" (same destination).
+  About condensed: "App version" is now one info row (no chevron), "Terms of Service" +
+  "Privacy Policy" merged into one "Terms & Privacy" row — both were already disabled
+  placeholders before this change, this only merges their display, introduces no new dead
+  control. Sign-out button got a `log-out-outline` icon, full pill radius, and a tinted shadow —
+  required adding an optional `icon` prop to the shared `Button.jsx` (additive, every other call
+  site is unaffected). **Deliberately NOT adopted from the mockup**: a hamburger + gear icon in
+  the header (no drawer nav or separate Settings screen exists — Profile IS the settings hub, so
+  both would be dead controls); a true gradient hero (`expo-linear-gradient` is not a current
+  dependency — flagged, not added silently; richness came from shadow/ring layering instead); the
+  bottom tab bar's "elevated circular active tab" style (that's the shared navigator, affecting
+  every tab everywhere — bigger than this screen, left untouched pending a separate ask); email/
+  mobile/portal/company identity content (the mockup's version dropped these — kept them, a
+  visual refresh should not regress real information). Verified LIVE on-device (Mi A3, wireless
+  ADB): screenshots confirm every row renders with real data (name, email, mobile, "Buyer
+  account", company "Not submitted" status chips) and no crash on reload.
 - **2026-08-16 (later) — `AiSearchModal.jsx` visual pass against an owner-supplied mockup; 4
   items RED-ALERTED and NOT built.** Owner shared AI-generated mockups of the hero + AI search
   modal + search results. Built: full-screen sheet on mobile / centered card on desktop (same

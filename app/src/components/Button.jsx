@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/index.js';
@@ -8,12 +9,16 @@ import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/i
  * A loading button is also disabled: every form submit in this app must be
  * un-double-tappable, because a duplicate OTP verify or signup is a real bug,
  * not a cosmetic one.
+ *
+ * `icon` (optional, 2026-08-16): an Ionicons name rendered before the label.
+ * Additive — every existing call site omits it and renders exactly as before.
  */
 export function Button({
   label,
   onPress,
   variant = 'primary',
   size = 'md',
+  icon,
   loading = false,
   disabled = false,
   fullWidth = true,
@@ -44,9 +49,12 @@ export function Button({
       {loading ? (
         <ActivityIndicator size="small" color={palette.fg} />
       ) : (
-        <Text numberOfLines={1} style={[typography.bodyStrong, { color: palette.fg }]}>
-          {label}
-        </Text>
+        <>
+          {icon ? <Ionicons name={icon} size={18} color={palette.fg} accessible={false} /> : null}
+          <Text numberOfLines={1} style={[typography.bodyStrong, { color: palette.fg }]}>
+            {label}
+          </Text>
+        </>
       )}
       {/* Reserves the label's slot while the spinner shows, so the button does
           not resize mid-submit and shift the layout under the user's thumb. */}

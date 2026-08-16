@@ -38,7 +38,18 @@ import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/i
  *
  * Do NOT "simplify" this by putting the canopy back inside the ScrollView: the
  * owner asked for a static header, and this is how a static header stays usable
- * on a short screen.
+ * on a short screen with a keyboard.
+ *
+ * ⚠️ 2026-08-16 — Profile (screen 16) stopped using this component. Its own
+ * identity hero grew tall enough (avatar + name + subtitle, plus its own light
+ * top bar) that a STATIC canopy ate too much permanent screen height and the
+ * owner correctly flagged it ("need to scroll on all the page why only the
+ * down box are scrolling"). Profile has no text input at all, so the
+ * keyboard-avoidance reasoning above never applied to it — it now builds its
+ * own single continuous `ScrollView` instead (`ProfileScreen.jsx`). This
+ * component's static-header behaviour is UNCHANGED for every screen that still
+ * uses it (forms, KYC, signup) — this note exists so nobody re-adds a tall
+ * hero here and rediscovers the same problem.
  *
  * The footer stays pinned outside the scroll area either way, so the primary
  * action never hides behind the keyboard.
