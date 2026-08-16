@@ -175,6 +175,33 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-16 (later 18) — backend suite back to GREEN: 1002/1002, 65/65 files** (was 5
+  failing in 2 files; both pre-dated today's work and neither was a code bug).
+  **(a) `kyc.test.js` — the B7 public-whitelist exact-key assertion.** The public exporter
+  response returns `coverImage`, which was DELIBERATELY whitelisted on 2026-08-13
+  (`.claude/rules/m3-public-projection.md`, same public-asset reasoning as `logo`) — the
+  assertion simply never followed the decision, so the guard had been red ever since. Added
+  `coverImage` to the expected list with the reason inline. 🔴 Note for future sessions: this
+  test failing means "someone widened the public surface" — always check the rules doc before
+  editing it; it is right to fail when a widening was NOT decided.
+  **(b) `otp-delivery.test.js` — 4 Fast2SMS payload tests.** They drive the REAL provider,
+  which throws unless Fast2SMS is configured, and the live credentials are correctly commented
+  out of `.env` (rotated). Gave that describe block DUMMY `process.env` values +
+  `vi.resetModules()` in `beforeEach`/`afterEach` — no real key in a test, and the assertions
+  (URL, headers, payload shape) prove exactly as much with a fake one. ⚠️ Gotcha recorded: my
+  first attempt mocked `../src/config/env.js` file-wide, which FROZE `env` at first parse and
+  broke the 4 dev-print tests that toggle `NODE_ENV` + `vi.resetModules()` — that module must
+  stay re-parsable, so scope config overrides to `process.env`, never to a module mock.
+- **2026-08-16 (later 17) — 🔴 scope miss self-reported, then owner-approved: "Recent
+  searches" on `/search` is search history = Bucket B.** `design-plans/m3/web-screens-design.md`
+  §"Do not design" lists **search history** as Phase 2 with "no UI hint… not even a coming-soon
+  tile", and I built the Recent chip row on 2026-08-16 without the required red alert (it came
+  in alongside the in-scope curated "Suggestions" row). Raised to the owner during the M3
+  status review; ruling: **"keep the recent search as it is"**. Recorded as a bounded carve-out
+  in the design doc: last 5 query strings in `localStorage` (`mpx:recent-searches`) ONLY — no
+  endpoint, no server storage, no per-user record, no analytics; chips individually removable
+  + Clear. Everything else in that bullet (semantic search, recommendations, similar products,
+  analytics, recently-viewed) still requires a red alert. **Do not "fix" the Recent row out.**
 - **2026-08-16 (later 16) — M3 Phase 6 close-out RUN; M3 WEB IS COMPLETE.** Swept 7 public
   screens × 4 widths (390/768/1024/1440): **zero horizontal overflow everywhere**, no clipped
   elements (the only hits are `pointer-events-none` decorative glows contained by
