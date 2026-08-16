@@ -47,6 +47,8 @@ export const EyeOffIcon = (p) => (
 );
 export const ChevronDownIcon = (p) => <Svg {...p}><path d="M6 9l6 6 6-6" /></Svg>;
 export const ChevronLeftIcon = (p) => <Svg {...p}><path d="M15 6l-6 6 6 6" /></Svg>;
+/** Directional arrow — AI composer submit + suggestion pills (`AiSearch.jsx`). */
+export const ArrowRightIcon = (p) => <Svg {...p}><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></Svg>;
 export const ChevronRightIcon = (p) => <Svg {...p}><path d="M9 6l6 6-6 6" /></Svg>;
 export const SearchIcon = (p) => (
   <Svg {...p}><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.8-3.8" /></Svg>
@@ -215,7 +217,7 @@ export const HeartIcon = (p) => (
 /** An unselected filter-pill's leading glyph (`FilterSidebar.jsx`). */
 export const PlusIcon = (p) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;
 
-/** AI search trigger + answer-panel glyph (`AiSearchModal.jsx`). */
+/** AI search trigger + answer-panel glyph (`AiSearch.jsx` page). */
 export const SparkleIcon = ({ className = 'h-5 w-5', ...rest }) => (
   <Sparkles aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
 );

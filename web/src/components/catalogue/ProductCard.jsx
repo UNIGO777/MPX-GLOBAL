@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { countryName } from '../../lib/countries.js';
 import { VerifiedTick } from '../ui/VerifiedTick.jsx';
+import { SaveButton } from '../saved/SaveButton.jsx';
 import { NoImagePanel } from './NoImagePanel.jsx';
 import { PriceLine } from './PriceLine.jsx';
 
@@ -141,13 +142,29 @@ export function ProductCard({ product, showSeller = true, to }) {
   const shell =
     'group flex h-full flex-col overflow-hidden rounded-xl border border-surface-border bg-white shadow-card transition-all';
 
-  if (!to) return <li className={shell}>{inner}</li>;
+  // Save heart (M3 Phase 5, owner 2026-08-16: "in phone view also add this
+  // heart to the cards"). Rendered OUTSIDE the Link — a <button> inside an
+  // <a> is invalid and would fight the card's own navigation — positioned
+  // over the photo by the <li>'s relative box. Guarded: the form preview
+  // feeds a partial product with no id.
+  const heart = product.id ? (
+    <SaveButton targetId={product.id} name={product.name} className="z-10" />
+  ) : null;
+
+  if (!to)
+    return (
+      <li className={`relative ${shell}`}>
+        {inner}
+        {heart}
+      </li>
+    );
 
   return (
-    <li className="h-full">
+    <li className="relative h-full">
       <Link to={to} className={`${shell} hover:border-primary-600 hover:shadow-lift`}>
         {inner}
       </Link>
+      {heart}
     </li>
   );
 }

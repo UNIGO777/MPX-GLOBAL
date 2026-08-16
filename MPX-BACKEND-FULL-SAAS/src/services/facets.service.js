@@ -137,8 +137,13 @@ async function productFacets(params) {
     categoryParams = { ...params, category: String(selected.parentId ?? selected._id) };
   }
 
-  const [categoryRows, countryRows, typeRows, verifiedRows, price, moq, attributes] = await Promise.all([
+  const [categoryRows, subCategoryRows, countryRows, typeRows, verifiedRows, price, moq, attributes] = await Promise.all([
     countBy(categoryParams, [], categoryField),
+    // 2026-08-16 (owner): the search rail shows related SUB-categories
+    // directly, so leaf-level counts are exposed alongside the drill-down
+    // facet above. Category dropped from the scope (like the top-level case)
+    // so a selected branch still shows its related siblings.
+    countBy(without(params, ['category']), [], 'categoryId'),
     countBy(params, ['country'], 'sellerCountry'),
     countBy(params, ['goodsOrService'], 'categoryType'),
     countBy(params, ['verifiedOnly'], 'sellerVerified'),
@@ -150,7 +155,7 @@ async function productFacets(params) {
     attributeFacets(params),
   ]);
 
-  const categoryIds = categoryRows.map((r) => r._id);
+  const categoryIds = [...categoryRows.map((r) => r._id), ...subCategoryRows.map((r) => r._id)];
   const categories = await Category.find({ _id: { $in: categoryIds } }).select('name slug').lean();
   const byId = new Map(categories.map((c) => [String(c._id), c]));
 
@@ -159,6 +164,16 @@ async function productFacets(params) {
 
   return {
     category: categoryRows
+      .filter((r) => byId.has(String(r._id)))
+      .map((r) => ({
+        id: String(r._id),
+        name: byId.get(String(r._id)).name,
+        slug: byId.get(String(r._id)).slug,
+        count: r.count,
+      })),
+    // Leaf-level counts for the "related subcategories" rails (search +
+    // AI-search). Same public fields as `category` — name/slug/count only.
+    subCategory: subCategoryRows
       .filter((r) => byId.has(String(r._id)))
       .map((r) => ({
         id: String(r._id),
