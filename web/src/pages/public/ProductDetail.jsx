@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
+import { SaveButton } from '../../components/saved/SaveButton.jsx';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { PriceLine } from '../../components/catalogue/PriceLine.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
@@ -22,7 +23,6 @@ import {
   DocIcon,
   ExpandIcon,
   GlobeIcon,
-  HeartIcon,
   ListIcon,
   MailIcon,
   MapPinIcon,
@@ -31,6 +31,7 @@ import {
   XIcon,
 } from '../../components/ui/icons.jsx';
 import { countryName } from '../../lib/countries.js';
+import { useCanonical } from '../../lib/seo.js';
 import { formatDate } from '../../lib/format.js';
 import { NotFound } from './NotFound.jsx';
 
@@ -104,25 +105,7 @@ const SERVICE_FACTS = [
   ['timeline', 'Timeline', ClockIcon],
 ];
 
-/** Save heart — disabled placeholder (owner, 2026-08-14), same treatment as
- *  `ProductListCard`'s: shown in position, inert, never fake-wired. Wired for
- *  real (with the non-buyer gate modal) in M3 screen 8 — `web-build-plan.md`
- *  Phase 5. Logged in `docs/UiWebNotes.md`. */
-function SaveHeartPlaceholder() {
-  return (
-    <button
-      type="button"
-      disabled
-      aria-label="Save (coming soon)"
-      title="Coming soon"
-      className="absolute right-3 top-3 flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-full bg-black/30 text-white/70"
-    >
-      <HeartIcon className="h-5 w-5" />
-    </button>
-  );
-}
-
-function Gallery({ images = [], name }) {
+function Gallery({ images = [], name, productId }) {
   const [active, setActive] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -133,7 +116,7 @@ function Gallery({ images = [], name }) {
     return (
       <div className="relative">
         <NoImagePanel ratio="aspect-[4/3]" className="rounded-xl border border-surface-border" />
-        <SaveHeartPlaceholder />
+        <SaveButton targetId={productId} name={name} />
       </div>
     );
   }
@@ -142,7 +125,7 @@ function Gallery({ images = [], name }) {
     <div>
       <div className="relative overflow-hidden rounded-xl border border-surface-border bg-white">
         <img src={images[active]} alt={name} className="aspect-[4/3] w-full object-cover" />
-        <SaveHeartPlaceholder />
+        <SaveButton targetId={productId} name={name} />
         {/* Fullscreen trigger (2026-08-12, owner's reference mockup) — real,
             working zoom, not a placeholder: it's pure client-side image
             display, nothing to wire to a backend, so unlike "Send Enquiry"
@@ -431,6 +414,8 @@ export function ProductDetail() {
   });
 
   const p = product.data;
+  // m3-seo §2 — canonical to the clean slug URL (never the current search).
+  useCanonical(p?.slug ? `/product/${p.slug}` : null);
 
   // The product stores `{ key, value }` snapshots only — the LABELS and units
   // live on the category's attribute definitions, so the spec table needs both.
@@ -543,7 +528,7 @@ export function ProductDetail() {
                       the taller column scrolls past, the standard pattern on
                       product-detail pages for exactly this height mismatch. */}
                   <div className="lg:sticky lg:top-24 lg:self-start">
-                    <Gallery images={p.images} name={p.name} />
+                    <Gallery images={p.images} name={p.name} productId={p.id} />
                   </div>
 
                   {/* ---- the buy panel ---- */}

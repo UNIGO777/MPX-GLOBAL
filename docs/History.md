@@ -175,6 +175,262 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-16 (later 18) — backend suite back to GREEN: 1002/1002, 65/65 files** (was 5
+  failing in 2 files; both pre-dated today's work and neither was a code bug).
+  **(a) `kyc.test.js` — the B7 public-whitelist exact-key assertion.** The public exporter
+  response returns `coverImage`, which was DELIBERATELY whitelisted on 2026-08-13
+  (`.claude/rules/m3-public-projection.md`, same public-asset reasoning as `logo`) — the
+  assertion simply never followed the decision, so the guard had been red ever since. Added
+  `coverImage` to the expected list with the reason inline. 🔴 Note for future sessions: this
+  test failing means "someone widened the public surface" — always check the rules doc before
+  editing it; it is right to fail when a widening was NOT decided.
+  **(b) `otp-delivery.test.js` — 4 Fast2SMS payload tests.** They drive the REAL provider,
+  which throws unless Fast2SMS is configured, and the live credentials are correctly commented
+  out of `.env` (rotated). Gave that describe block DUMMY `process.env` values +
+  `vi.resetModules()` in `beforeEach`/`afterEach` — no real key in a test, and the assertions
+  (URL, headers, payload shape) prove exactly as much with a fake one. ⚠️ Gotcha recorded: my
+  first attempt mocked `../src/config/env.js` file-wide, which FROZE `env` at first parse and
+  broke the 4 dev-print tests that toggle `NODE_ENV` + `vi.resetModules()` — that module must
+  stay re-parsable, so scope config overrides to `process.env`, never to a module mock.
+- **2026-08-16 (later 17) — 🔴 scope miss self-reported, then owner-approved: "Recent
+  searches" on `/search` is search history = Bucket B.** `design-plans/m3/web-screens-design.md`
+  §"Do not design" lists **search history** as Phase 2 with "no UI hint… not even a coming-soon
+  tile", and I built the Recent chip row on 2026-08-16 without the required red alert (it came
+  in alongside the in-scope curated "Suggestions" row). Raised to the owner during the M3
+  status review; ruling: **"keep the recent search as it is"**. Recorded as a bounded carve-out
+  in the design doc: last 5 query strings in `localStorage` (`mpx:recent-searches`) ONLY — no
+  endpoint, no server storage, no per-user record, no analytics; chips individually removable
+  + Clear. Everything else in that bullet (semantic search, recommendations, similar products,
+  analytics, recently-viewed) still requires a red alert. **Do not "fix" the Recent row out.**
+- **2026-08-16 (later 16) — M3 Phase 6 close-out RUN; M3 WEB IS COMPLETE.** Swept 7 public
+  screens × 4 widths (390/768/1024/1440): **zero horizontal overflow everywhere**, no clipped
+  elements (the only hits are `pointer-events-none` decorative glows contained by
+  `overflow-hidden`), exactly one `<h1>` per screen, no console/page errors beyond the
+  expected guest 401 from `GET /auth/me`. Touch pass on a real `hasTouch` context: filters
+  sheet, sort menu (applies — `?sort=priceAsc` / `?sort=newest`), verified toggle, search
+  submit and the save-gate modal all work by tap. 🐛 **SEO gap found and fixed: canonicals
+  existed ONLY on `/category`.** Added `web/src/lib/seo.js` (`useCanonical` / `useNoIndex` —
+  extracted rather than hand-rolling `document.head` churn a fifth time, which is exactly how
+  the gap happened) and wired `/`, `/categories`, `/product/:slug`, `/supplier/:slug`;
+  `/saved` now declares `noindex,follow` explicitly. Re-verified: one canonical per indexable
+  page, filtered category canonicalises to its clean base AND is `noindex,follow`, `/search`
+  + `/ai-search` stay `noindex,follow`. Ledger reconciled — hearts ×2 + buyer-nav search row
+  Done; the three still-inert controls (card "Inquiry", "Send Enquiry", "Start Conversation")
+  confirmed still `disabled` in the DOM and annotated with the owner's 2026-08-14 rulings.
+  Full results appended to `design-plans/m3/web-build-plan.md`. ⚠️ NOT covered: `/saved`'s
+  authenticated layout (owner-verified by screenshot, not scriptable — dev OTP prints only in
+  the owner's terminal); the 100-item saved-heart index cap; landing featured strips (F5b);
+  JSON-LD + SSR (deferred by m3-seo §8).
+- **2026-08-16 (later 15d) — saved product cards gained the seller row (owner):** monogram +
+  name + derived `verified` tick + country, identical to the browse card's, so a saved card
+  is not a poorer version of the card it was saved from. Data was already in the payload —
+  `publicProductView` embeds the seller's PUBLIC projection — so no API change and no
+  widening of the whitelist. Owner confirmed the result: **Phase 5 is DONE.**
+- **2026-08-16 (later 15c) — `/saved` verified by the owner in a real buyer session; one bug
+  fixed.** Owner screenshot confirms the whole Phase-5 buyer path works end-to-end: hearts
+  save, `/saved` lists them, the sidebar "Saved" entry shows the live count badge (4), remove
+  buttons render. 🐛 **Every card said "Price on request"** — `SavedItems.jsx` called
+  `<PriceLine product={target} />`, but the component's props are `price` / `unit` (every
+  other caller passes them correctly), so `price` was undefined and the component fell into
+  its on-request branch. Fixed to `price={target.price} unit={target.unit} size="base"`.
+- **2026-08-16 (later 15b) — 🔴 GOTCHA: `text-danger-DEFAULT` compiles to NOTHING.** The saved
+  heart rendered BLACK (owner screenshot) because `danger-DEFAULT` is not a Tailwind class —
+  a DEFAULT key is addressed by the bare name, `text-danger`. This is the exact trap
+  `tailwind.config.js`'s own comment documents (it bit the project twice in Aug 2026 with
+  invented shades). **Five occurrences, all written today, all fixed:** the saved-heart tone
+  (×2 in `SaveButton.jsx`), the `/saved` remove-button hover, and — worse — the TWO
+  `/ai-search` error messages, which had been rendering in body ink instead of red. Saved
+  heart is now `bg-white text-danger` (red fill on a white chip, verified computed
+  `rgb(217,45,32)`); unsaved stays an outline on the dark chip.
+- **2026-08-16 (later 15) — M3 Phase 5 BUILT: saved items, live hearts, buyer nav (owner:
+  "start phase 5").** New `web/src/api/saved.js` (list/save/unsave + a shared
+  `savedKeys.index()` map of `targetId → savedRowId`, since DELETE needs the ROW id;
+  ⚠️ capped at the API's 100 max page size — past 100 saved items older hearts render
+  unfilled until opened from `/saved`; an ids-only endpoint would fix it and was deliberately
+  NOT faked). New `components/saved/SaveButton.jsx` — ONE heart for every surface with
+  optimistic toggle + rollback, and the owner's gate modal verbatim ("Log in with a buyer
+  account to save this product"; guest → Cancel/Login returning to the page, signed-in
+  non-buyer → OK only). Hearts went live on `ProductListCard`, the `/product/:slug` gallery
+  AND the compact `ProductCard` (owner asked for phone cards — rendered OUTSIDE the card's
+  `<Link>`, since a button inside an anchor is invalid and fights navigation). New
+  `pages/buyer/SavedItems.jsx` at **`/saved`** (RequireAuth + RequireRole buyer; grid of
+  saved products/suppliers, "Currently unavailable" badge + greyed card with NEVER a reason,
+  per-card remove, pagination, all five states). `BUYER_NAV`: "Search suppliers" and "Saved"
+  are real routes now, with a **live saved-count badge** in `ConsoleShell` (the plan's 🧱
+  owner call — built per my recommendation; say the word to drop it). Modal centred at every
+  width (was a phone bottom sheet) and its icon sits beside the sentence.
+  ✅ Verified live as a guest: hearts render on category/search/product, gate modal copy and
+  buttons correct, `/saved` redirects to `/signin`, production build clean, no page overflow
+  at 390/1440. ⚠️ NOT verified end-to-end: the buyer-session paths (real toggle, filled
+  state, `/saved` list, count badge) — dev OTP prints only in the owner's backend terminal,
+  so a buyer login can't be automated here. Ledger rows for both hearts + the buyer-nav
+  search item flipped to Done in `docs/UiWebNotes.md`.
+- **2026-08-16 (later 14) — hero split into two doors + `/ai-search` UI fixes (owner).**
+  `Landing.jsx`: the hero is no longer one Link — it is a REAL search form (typing submits to
+  `/search?q=…`, empty submit opens `/search`) with the same inset gradient submit, plus the
+  animated AI Search pill beside it linking to `/ai-search`; "Browse 40 categories →" stays.
+  `AiSearch.jsx` answered stage: `pb-36 sm:pb-28` so the docked composer stops covering the
+  last product card and the "View all" button (owner screenshot); composer send button and
+  sparkle badge moved to the same gradient family; "Matching products" promoted from a caps
+  label to a real heading. Verified: hero "denim" → `/search?q=denim`; 1440 + 390 both pages.
+- **2026-08-16 (later 13) — Search + AI Search buttons redesigned (owner: "both are not
+  looking good… some effect or animation in the AI button").** The submit is no longer a
+  black slab cutting the bar: it is a **primary gradient pill inset 4px** inside the bar
+  (`from-primary-600 to-primary-800`, magnifier icon on sm+, lifts to `shadow-lift` on
+  hover), so it reads as one family with the AI pill. The **AI Search pill animates** — a
+  slow gradient sheen (`from-primary-800 via-primary-500 to-primary-800` at
+  `bg-[length:200%_200%]`) driven by new `ai-sheen` keyframes/animation in
+  `tailwind.config.js` (5s ease-in-out infinite), plus a sparkle that lifts/scales on hover.
+  🔴 `motion-reduce:animate-none` — the sheen is the page's ONE animated moment and it
+  respects reduced-motion (web-design.md). Verified 1440 idle + results and 390.
+- **2026-08-16 (later 12b) — `/search` nav-bar refinements (owner):** AI pill colour set to
+  brand navy `primary-800` (owner supplied a swatch screenshot; hover primary-700); the pill's
+  Search submit is now FULL-HEIGHT and flush to the pill border (form went `overflow-hidden`
+  with no padding, button has no radius of its own); on <lg the bar renders as a SECOND ROW
+  inside the sticky `PublicHeader` (new mobile branch of `centerSlot`) and the below-nav
+  strip was deleted — the bar is in the nav at every width.
+- **2026-08-16 (later 12) — `/search` results: bar IN the nav, dark AI pill, type toggle
+  REMOVED (owner).** `PublicHeader` gained an optional **`centerSlot`** prop — on lg+ it
+  replaces the centre nav links (TradeIndia pattern; links stay reachable via footer/burger
+  is lg-hidden so desktop loses them on /search results only — logo still goes home).
+  `/search` passes its pill (`withRef:false` — the <lg strip keeps the real ref) when in
+  search mode; the below-nav console strip is now `lg:hidden`. The AI Search pill is dark
+  (`bg-ink-900` → hover primary-800) everywhere on the page. ⚠️ The **Products|Suppliers
+  segmented control is deleted** and `onTypeChange` with it — supplier results still render
+  when `type=supplier` arrives via URL or AI extraction, but there is NO manual switch
+  anymore; if supplier browsing needs a UI door again, that's a deliberate re-add.
+- **2026-08-16 (later 11) — white canvas + card-rich sidebar on `/search` and `/ai-search`
+  (owner: "sidebar too plain… ours is too dull, change background colour semantics" + two
+  TradeIndia screenshots).** Both pages' canvas went `bg-surface-subtle/50` → **`bg-white`**
+  (cards carry the separation now); `/ai-search`'s dock fade follows. Sidebar restyle to the
+  reference's anatomy: "Related Categories" title INSIDE the card over a divider, rows
+  scroll inside the card past ~380px; the country chips' resting state is a soft
+  `surface-subtle` tint (borderless) with the primary-tinted active state. `FilterSidebar`
+  gained a **`split` prop** — every filter group renders as its OWN card with whitespace
+  between (Applied/Verified/Price/attribute cards), used ONLY by `/search`'s lg+ rail;
+  `/category` and the <lg drawer keep the single-card layout (`FilterSection` got a matching
+  `flat` prop). Verified at 1440 + 390 on both pages.
+- **2026-08-16 (later 10) — related-categories rails show SUB-categories; `/search` and
+  `/ai-search` unified on one architecture (owner).** Backend: `GET /public/facets` gained an
+  additive **`subCategory`** facet — leaf-level (`categoryId`) counts, category dropped from
+  its scope so a selected branch still shows related siblings; same public fields as
+  `category` (id/name/slug/count, active only); `m3-facets.test.js` 11/11 green (note: the
+  backend tests run under **vitest**, `npm test` — plain `npx jest` fails to parse ESM).
+  Frontend: both rails (`Search.jsx` left rail, `AiSearch.jsx` rail + phone chips) now read
+  `subCategory` instead of the top-level drill-down facet, and `/search`'s rail gained the
+  same "Browse all categories" link `/ai-search` already had — same card anatomy, same
+  `bg-surface-subtle/50` canvas on both pages.
+- **2026-08-16 (later 9) — `/search` post-search layout rebuilt against the owner's
+  TradeIndia results-page reference.** Search mode (query or supplier type) on lg+ now has a
+  persistent LEFT RAIL: a "Related categories" list (category facet; click = set/clear the
+  `category` param, which then drills into subcategories via the facet service's own
+  semantics) + the full `FilterSidebar` card with `onCategoryChange`/`onCountryChange` nulled
+  (a group renders only when its handler exists — the rail list and the new chips row own
+  those two). Heading reworded to **"Results found for “q”"**; a **country chip row** (the
+  reference's city chips mapped to our supplier-country facet: "All countries" + per-country
+  counts, single-select on the `country` param) sits under the status band, product mode
+  only (the facets query is product-gated). The Filters drawer trigger hides on lg+ in
+  search mode (rail replaces it) and remains the only filter surface <lg and in idle mode;
+  idle keeps the single-column discovery stage. 🚫 Deliberately NOT copied from the
+  reference: the "Tell Us Your Requirement / Get Best Quotes" RFQ form — quotation is
+  Bucket A (quote Module 4), red-alert before ever building it. Verified 1440 + 390.
+- **2026-08-16 (later 8) — `/ai-search` answers ON the page: AI message + product grid +
+  related-categories sidebar + docked composer (owner; 🔴 chatbot red-alert raised first and
+  the owner re-scoped to single-turn — NOT the Bucket-B chatbot).** Frontend
+  (`AiSearch.jsx`): two stages — the composer stage, then an ANSWERED stage where the AI's
+  sentence is the page headline (no chat bubbles — first bubble version was rejected as
+  clunky), a sticky "Related categories" rail from `GET /public/facets` (browsable
+  `/category/:slug` links; chip row on phones), the first 8 results via `GET /public/search`
+  (ProductCard grid / supplier rows), "View all N results with filters" → `/search`, and the
+  composer docked at the bottom as a floating pill over a gradient fade ("Search something
+  else…" — each send REPLACES results, nothing accumulates). Backend: the extraction
+  completion now also returns a REQUIRED buyer-facing **`message`** (1–2 sentences,
+  hard-ruled: model has not seen results, so it may never claim counts/availability/prices;
+  validated + whitespace-collapsed + 300-char cap in `validateExtraction`), returned as a new
+  `message` field by `aiSearch.service.js` AND passed through `search.controller.js` (the
+  controller destructures explicitly — forgetting it there silently dropped the field, found
+  via curl). `ai.client.js` MAX_TOKENS 300→400 (message would risk mid-JSON truncation).
+  Gotchas: nodemon did NOT restart on service edits — had to `touch src/server.js`; templated
+  `answer` (count-honest) is kept for the `/search` banner + fallback. Verified live:
+  message headline renders, categories rail real, 1440+390 clean.
+- **2026-08-16 (later 7) — AI search became a dedicated FULL-MODE page `/ai-search` (owner:
+  "open a separate page", then "make it a full ui mode page" + TradeIndia "Search AI"
+  reference screenshot).** New `web/src/pages/public/AiSearch.jsx`; `AiSearchModal.jsx`
+  DELETED (its logic/copy moved wholesale); route added in `App.jsx`; `/search`'s AI pill is
+  now a real `Link` to `/ai-search`. The page is a mode, not a marketing page: own slim header
+  (back button → `/search`, "AI Search · Your smart sourcing assistant") — no
+  PublicHeader/PublicFooter; centered greeting "What can we source for you today?"; ONE large
+  rounded-3xl composer with round arrow submit inside (Enter submits, Shift+Enter newline);
+  arrow-pill suggestion prompts that fill the composer. Deliberately NOT copied from the
+  reference: the attach icon (no upload backend — dead control) and its sign-in gate (guests
+  can use AI search). Same extraction→`/search` param hand-off + router-state banner, quota
+  (429) and error states, noindex,follow, unmount guard so a stale response can't navigate.
+  New `ArrowRightIcon` in icons.jsx. Verified live end-to-end: "cotton fabric in bulk from
+  verified suppliers" → `/search?type=supplier&q=cotton+fabric&verified=1`. 1440 + 390 clean.
+  **7b (owner: "kind of empty — enhance"):** added ambient blurred primary glows, a gradient
+  sparkle emblem over the greeting, a sparkle inside the composer, a "Try asking" label on the
+  suggestion pills, and a numbered 3-step "how it works" strip (describe → AI builds filters →
+  results open on /search) with honest mechanics copy.
+- **2026-08-16 (later 6b) — `/search` AI Search split back out of the bar (owner):** now its
+  own primary-tinted pill beside the search bar in both modes (sparkle-only on phones);
+  the focus ring belongs to the bar alone; entrance animation moved to the pair's wrapper.
+- **2026-08-16 (later 6) — `/search` complete two-mode redesign (owner: "redesign the whole
+  page… remake every aspect, position, tabs").** `Search.jsx` is now two exclusive modes on
+  `searchMode = q || type==='supplier'`. **Discovery stage** (no query): centered display
+  heading "What are you looking to source?", grand pill (h-14 on md+), Recent + Suggestions
+  chip rows centered beneath, then the Recommended feed (visible h2 + count — no tab
+  duplication since idle has no tabs) with Filters/Sort. **Results workspace** (query or
+  supplier mode): compact console — pill + segmented Products|Suppliers control (replaces the
+  underline tabs) on ONE row — that is `lg:sticky lg:top-16` with backdrop-blur so search
+  never scrolls away; below it the status narration band, chips, results. The pill markup is
+  a single `searchPill(height)` helper rendered once per mode (modes exclusive → ref/autofocus
+  stay valid); SortMenu dropdown bumped to z-40 to clear the sticky console. All prior
+  behaviour kept: lift-up entrance, analysing/showing/did-you-mean narration, AI banner,
+  noindex, supplier param stripping. Verified 1440 (idle/results/scrolled-sticky) + 390.
+- **2026-08-16 (later 5) — `/search` search-console redesign (owner: "rethink out of the box…
+  show recommended searches like the AI box; full authority on the bar").** `Search.jsx`:
+  (1) **one integrated pill** — search icon, input, AI Search trigger and the black Search
+  submit all inside a single elevated `rounded-full` control (focus ring on the whole pill;
+  AI button is sparkle-icon-only on phones); (2) header strip carries a **soft brand wash**
+  (`from-primary-50/70 to-white`) instead of flat white; (3) idle state is grander (taller bar
+  on md+, more top padding) and shows **two chip rows** in the AI-modal's suggestion anatomy —
+  **Recent** (localStorage `mpx:recent-searches`, newest-first, deduped, cap 5, per-chip remove
+  + Clear; recorded from the URL `q` so typed submits, suggestion chips, didYouMean and AI
+  hand-offs all count; only plain search terms stored — no PII) and **Suggestions** (curated
+  `SUGGESTED_SEARCHES`, terms the catalogue actually matches); a query compacts the strip and
+  hides the chips. Verified at 1440/390, idle + results, zero horizontal scroll.
+- **2026-08-16 (later 4) — `/search` alignment + responsive pass (owner: "think better for the
+  alignment… standard margins and paddings… full responsive").** `Search.jsx`: the status
+  heading and the Filters/Sort controls merged into ONE band (heading left, controls right,
+  one shared bottom border — previously two stacked strips); the idle "Recommended" h1 went
+  `sr-only` because the active tab directly above already said "Recommended" (visible line is
+  now the count, supplier-aware copy); tab touch targets raised to ~44px; chips row and
+  pagination spacing normalised. Desktop side margins widened (`lg:px-10 xl:px-16`) on both
+  page containers AND the shared `PublicHeader` nav (owner asked; note: the nav is shared, so
+  every public page's nav widened with it — content margins elsewhere untouched). Gotcha for
+  future edits: the blank-state placeholder strings in this file are **non-breaking spaces**
+  (`' '` U+00A0), which silently defeats exact-match editing. Verified at 1440/1024/768/390,
+  idle + results; zero horizontal scroll.
+- **2026-08-16 (later 3) — `/search` restructured to standard search-page anatomy (owner:
+  "too plain… not professional", then "remove the top blue colour… search bar aligned left…
+  tabs").** An intermediate navy-gradient masthead attempt was built and killed the same day
+  (owner: cartoonish). Final shape in `Search.jsx`: white header strip with the LEFT-aligned
+  bar + AI Search button and underline tabs on its bottom border — tab reads **"Recommended"**
+  when nothing is searched (single tab; type toggle appears only with a query or in supplier
+  mode), **Products | Suppliers** once a query exists. Below: a status `h1` that narrates the
+  search — "Recommended" (idle), "**Analysing your request…**" + spinner while `isFetching`
+  (owner's 1b ruling — honest copy, no fake counts), "Showing results for “q”" + count, or
+  "**Did you mean {term}?**" as the heading on a zero with a server suggestion (the zero-state
+  card keeps only the category-browse link — no duplicate term). Result count moved from the
+  toolbar into the status line; toolbar is now Filters + Sort only. Verified via Playwright
+  screenshots at 1440/390 across idle/results/zero/analysing; no horizontal scroll.
+- **2026-08-16 (later 2) — landing hero hands off to `/search` (owner: "remove the AI search
+  box… click the search in home hero it lifts up and url to /search", then "keep the AI logo").**
+  `Landing.jsx`: hero search is now a real `Link` to `/search` styled as the bar, sparkle badge
+  kept as the button visual; `AiSearchModal` import/state removed from Landing (it now opens
+  only from `/search`'s AI Search button). `Search.jsx`: on arrival the bar "lifts up"
+  (translate-y + opacity entrance, `motion-reduce` exempt) and autofocuses — but ONLY on a
+  query-less landing, so result visits don't scroll-jack. `docs/UiWebNotes.md` hero row updated.
 - **2026-08-16 (later 5) — App Profile screen: removed the duplicate native header, header now
   crossfades blue → white on scroll.** Owner asked to (1) remove the default header and (2) make
   the custom one blue at scroll-top, white within the first ~2-3% of scroll. `headerShown: false`
@@ -289,7 +545,7 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   **Not covered**: landing's own AI trigger reuse is the only Phase-4 slice touched — the rest of
   Phase 4 (header search input, featured strips/F5b) is untouched; the OpenAI key was found
   already configured in `.env` during this work (earlier docs assumed "owner-pending") — AI
-  search should be running live, not on its fallback path, worth confirming that's intended.
+  search should be running live, not on its fallback path, worth confirming that's intended. ✅ Owner confirmed 2026-08-16: the key is INTENTIONAL — AI search runs live; stop flagging it.
 - **2026-08-15 — App: fixed KYC hub "back" navigation error after signup.** Owner report:
   after signup, tapping "Verify now" then pressing back from the hub ("Verify your business
   details") errored instead of returning home. Root cause: `AppStack`'s

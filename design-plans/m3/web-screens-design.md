@@ -238,8 +238,17 @@ surfaces**; screen 2 is explicitly noindexed (§8).
 ### Do not design — confirmed by the M3 boundary (`m3.md` §11, backend plan §4)
 
 - **Semantic / embedding / vector search, recommendations, "similar products", analytics,
-  recently-viewed, search history** — all Phase 2 (Bucket B). No UI hint of any of them, not
+  recently-viewed** — all Phase 2 (Bucket B). No UI hint of any of them, not
   even a "coming soon" tile.
+  > ⚠️ **CARVE-OUT — search history, owner-approved 2026-08-16.** A **Recent searches** row
+  > ships on `/search`'s idle state. It was built before this boundary was re-read (my miss);
+  > raised to the owner as a 🔴 alert on 2026-08-16 and the owner ruled **"keep the recent
+  > search as it is"**. Scope of the exception, do not widen it: the last 5 query strings in
+  > the browser's `localStorage` only (`mpx:recent-searches`) — **no endpoint, no server
+  > storage, no per-user record, no analytics**, each chip individually removable plus a
+  > Clear action. The rest of this bullet (semantic search, recommendations, similar
+  > products, analytics, recently-viewed) is UNCHANGED and still needs a red-alert.
+  > **Do not remove the Recent row as "out of scope" — it is a conscious owner decision.**
 - **Enquiry / chat screens** — Module 4. Screens 6–7 carry an **entry point** ("Send enquiry"
   button) and nothing more — no chat drawer, no message composer, no enquiry form. Until M4's
   screens exist the button is visibly "coming soon" + a `docs/UiWebNotes.md` row (strict rule).

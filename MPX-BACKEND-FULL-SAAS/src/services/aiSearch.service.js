@@ -60,9 +60,11 @@ CATEGORIES — map the buyer's words, including the synonyms in brackets, to exa
 of these names. If none clearly fits, use null. NEVER output a name that is not listed:
 ${list}
 
-OUTPUT SHAPE (omit any field the buyer did not actually express):
+OUTPUT SHAPE — "target", "message" and "keywords" are ALWAYS present; omit any OTHER
+field the buyer did not actually express:
 {
   "target": "product" | "supplier",
+  "message": "<REQUIRED — one or two short sentences to the buyer, rules below>",
   "keywords": ["..."],
   "category": "<one name from the list above>" | null,
   "priceMax": <number> | null,
@@ -109,6 +111,13 @@ target — "supplier" ONLY when they ask for companies rather than goods (suppli
 manufacturer, exporter, vendor, factory, "kaun banata hai", "who supplies").
 Otherwise "product".
 
+message — REQUIRED. One or two short sentences spoken directly to the buyer: say what
+you understood them to need, and optionally add ONE practical sourcing tip (e.g. what
+spec or term to check). Plain professional English; mirror a Hindi/Hinglish buyer with
+simple English. HARD RULES: you have NOT seen the results — never state or imply how
+many matches exist, never promise availability or a price, never invent product or
+company names, no greetings, no emojis.
+
 Return valid JSON only.`;
 }
 
@@ -118,6 +127,11 @@ async function validateExtraction(raw) {
   const out = { attributesRaw: {} };
 
   out.target = raw?.target === 'supplier' ? 'supplier' : 'product';
+  // The model's buyer-facing sentence(s). Treated as untrusted display text:
+  // collapsed to one line and hard-capped — never interpreted, never logged.
+  if (typeof raw?.message === 'string' && raw.message.trim()) {
+    out.message = raw.message.trim().replace(/\s+/g, ' ').slice(0, 300);
+  }
   out.keywords = Array.isArray(raw?.keywords)
     ? raw.keywords.filter((k) => typeof k === 'string' && k.trim()).slice(0, 10)
     : [];
@@ -227,7 +241,7 @@ export async function aiSearch({ query }) {
     // No key configured (e.g. before the client provides one) — behave exactly
     // like a failure: keyword results, flagged, never a 5xx.
     const results = await runKeyword();
-    return { answer: null, extracted: null, results, target: 'product', fallback: true };
+    return { answer: null, message: null, extracted: null, results, target: 'product', fallback: true };
   }
 
   let extracted;
@@ -239,7 +253,7 @@ export async function aiSearch({ query }) {
     // Log the SHAPE of the failure only — never the key, never the raw payload.
     logger.warn({ err: { name: err?.name, message: err?.message } }, 'ai search failed; falling back to keyword');
     const results = await runKeyword();
-    return { answer: null, extracted: null, results, target: 'product', fallback: true };
+    return { answer: null, message: null, extracted: null, results, target: 'product', fallback: true };
   }
 
   const params = toSearchParams(extracted, query);
@@ -253,6 +267,10 @@ export async function aiSearch({ query }) {
 
   return {
     answer: answerFor(applied, results.total),
+    // The model's own words to the buyer (validated + capped above). The
+    // templated `answer` stays — it is the count-honest sentence and the
+    // fallback when the model returns no usable message.
+    message: extracted.message ?? null,
     extracted: {
       target: applied.target,
       keywords: applied.keywords,

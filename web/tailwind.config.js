@@ -109,6 +109,17 @@ export default {
         // referenced anywhere (verified by sweep). Scale them if that changes.
         muted: '#5A6B85', // secondary/help text
       },
+      // AI Search pill's living gradient (2026-08-16) — slow background-position
+      // sweep; pair with bg-[length:200%_200%] and motion-reduce:animate-none.
+      keyframes: {
+        'ai-sheen': {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+      },
+      animation: {
+        'ai-sheen': 'ai-sheen 5s ease-in-out infinite',
+      },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },

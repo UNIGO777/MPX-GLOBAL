@@ -14,6 +14,7 @@ import { Skeleton } from '../../components/ui/Skeleton.jsx';
 import { VerifiedTick } from '../../components/ui/VerifiedTick.jsx';
 import { BoxIcon, BuildingIcon, CalendarIcon, ChatIcon, MapPinIcon, TagIcon } from '../../components/ui/icons.jsx';
 import { countryName } from '../../lib/countries.js';
+import { useCanonical } from '../../lib/seo.js';
 import { NotFound } from './NotFound.jsx';
 
 /**
@@ -153,6 +154,9 @@ export function SupplierProfile() {
     queryFn: () => catalogueApi.exporter(slug),
     retry: false,
   });
+
+  // m3-seo §2 — canonical to the clean slug URL; paged views collapse to it.
+  useCanonical(seller.data?.slug ? `/supplier/${seller.data.slug}` : null);
 
   const products = useQuery({
     queryKey: catalogueKeys.products({ seller: slug, page, pageSize: PAGE_SIZE }),

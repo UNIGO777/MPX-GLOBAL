@@ -228,7 +228,7 @@ Smallest phase, two halves — one is a boundary:
 
 ---
 
-## Phase 6 · Close-out
+## Phase 6 · Close-out — ✅ RUN 2026-08-16 (results at the bottom of this file)
 
 - [ ] Full Playwright sweep of ALL eight screens (widths, overflow, clipped-element scan, touch).
 - [ ] UiWebNotes ledger reconciled — every flipped row marked Done; anything still inert
@@ -250,3 +250,40 @@ Smallest phase, two halves — one is a boundary:
 | Top-40 synonym list content | owner data entry; search works on literal names meanwhile |
 | OpenAI key | owner; AI search falls back until it lands |
 | JSON-LD + title-template alignment | SEO pass, per owner ruling 2026-08-14 |
+
+
+---
+
+## ✅ Phase 6 close-out results (2026-08-16)
+
+**Sweep:** 7 public screens × 4 widths (390 / 768 / 1024 / 1440) = 28 combinations.
+
+| Check | Result |
+|---|---|
+| Horizontal page overflow | **0px everywhere** |
+| Elements clipped past the viewport | none — the only hits are `pointer-events-none` decorative blur glows on `/` and `/ai-search`, contained by `overflow-hidden` |
+| Exactly one `<h1>` per screen | ✅ all 7 |
+| Console/page errors | none, except the expected guest `401` from `GET /auth/me` |
+| Touch pass (`hasTouch`, 390px) | filters sheet open/close ✅ · sort menu open + apply ✅ (`?sort=priceAsc`, `?sort=newest`) · verified toggle ✅ (`?verified=1`) · search submit ✅ (`?q=denim`) · save-heart gate modal open/dismiss ✅ |
+
+**SEO spot-check — one gap found and FIXED:** canonicals existed only on `/category`.
+Added `web/src/lib/seo.js` (`useCanonical` / `useNoIndex`) and wired `/`, `/categories`,
+`/product/:slug`, `/supplier/:slug`; `/saved` now declares `noindex,follow` explicitly.
+Verified after the fix: exactly one canonical per indexable page, the filtered category URL
+canonicalises to its clean base **and** carries `noindex,follow`, and `/search` + `/ai-search`
+stay `noindex,follow`. JSON-LD remains deferred (m3-seo §8) — deliberately not bolted on.
+
+**Ledger:** hearts ×2 + buyer-nav "Search suppliers" flipped to **Done**. Still Pending by
+owner ruling, all three verified still `disabled` in the DOM: card "Inquiry" (deactivated —
+M4 wires the product page instead), "Send Enquiry" (the single M4 door), "Start Conversation"
+(deferred). Remaining Pending rows are M1/marketing or other modules, not M3.
+
+**NOT covered — stated plainly:**
+- `/saved` (screen 8) was swept only as a guest redirect; its authenticated layout was
+  verified by the OWNER's own session screenshots (which found the PriceLine bug), not by an
+  automated pass — the dev OTP prints in the owner's terminal, so a buyer login can't be
+  scripted here.
+- The saved-heart INDEX is capped at 100 items (API max page size); past that, older hearts
+  render unfilled until opened from `/saved`. Needs an ids-only endpoint to fix properly.
+- Landing featured strips remain FINALIZE F5b territory, untouched.
+- JSON-LD / SSR-prerender: deferred by `m3-seo.md` §8, not attempted.

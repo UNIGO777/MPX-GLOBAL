@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { countryName } from '../../lib/countries.js';
 import { formatMonth } from '../../lib/format.js';
 import { VerifiedTick } from '../ui/VerifiedTick.jsx';
-import { HeartIcon } from '../ui/icons.jsx';
+import { SaveButton } from '../saved/SaveButton.jsx';
 import { NoImagePanel } from './NoImagePanel.jsx';
 import { PriceLine } from './PriceLine.jsx';
 
@@ -60,17 +60,9 @@ export function ProductListCard({ product, to }) {
           ) : (
             <NoImagePanel ratio="h-64 md:h-full" className="w-full" />
           )}
-          {/* Save/favourite — real endpoint exists (buyer-only `/saved`), not
-              wired this pass. Disabled, not hidden — see file header. */}
-          <button
-            type="button"
-            disabled
-            aria-label="Save (coming soon)"
-            title="Coming soon"
-            className="absolute right-4 top-4 flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-full bg-black/30 text-white/70"
-          >
-            <HeartIcon className="h-5 w-5" />
-          </button>
+          {/* Save/favourite — LIVE since 2026-08-16 (M3 Phase 5). Visible to
+              everyone; buyer toggles, anyone else gets the gate modal. */}
+          <SaveButton targetId={product.id} name={product.name} className="right-4 top-4" />
         </div>
 
         {/* p-4 / my-2 / pt-2.5 (2026-08-14, owner: "reduce the height", then

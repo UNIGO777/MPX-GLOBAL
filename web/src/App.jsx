@@ -11,6 +11,7 @@ import { CategoryListing } from './pages/public/CategoryListing.jsx';
 import { ProductDetail } from './pages/public/ProductDetail.jsx';
 import { SupplierProfile } from './pages/public/SupplierProfile.jsx';
 import { Search } from './pages/public/Search.jsx';
+import { AiSearch } from './pages/public/AiSearch.jsx';
 import { NotFound } from './pages/public/NotFound.jsx';
 import { Styleguide } from './pages/Styleguide.jsx';
 import { Spinner } from './components/ui/Spinner.jsx';
@@ -22,6 +23,7 @@ import { ChangePassword } from './pages/auth/ChangePassword.jsx';
 import { RequireRole } from './auth/RequireRole.jsx';
 import { VerificationStatus } from './pages/buyer/VerificationStatus.jsx';
 import { KycUpload } from './pages/buyer/KycUpload.jsx';
+import { SavedItems } from './pages/buyer/SavedItems.jsx';
 import { VerificationStatus as ExporterVerificationStatus } from './pages/exporter/VerificationStatus.jsx';
 import { KycUpload as ExporterKycUpload } from './pages/exporter/KycUpload.jsx';
 import { Products as ExporterProducts } from './pages/exporter/Products.jsx';
@@ -149,6 +151,7 @@ export function App() {
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/supplier/:slug" element={<SupplierProfile />} />
             <Route path="/search" element={<Search />} />
+            <Route path="/ai-search" element={<AiSearch />} />
 
             {/* --- Party auth (buyer + exporter share screens; portal = the field change) ---
                    All of these are for signed-OUT visitors: RedirectIfAuthed sends a live
@@ -188,6 +191,9 @@ export function App() {
                 <Route path="/buyer/verification" element={<VerificationStatus />} />
                 <Route path="/buyer/kyc" element={<KycUpload />} />
                 <Route path="/buyer/company" element={<CompanyProfile />} />
+                {/* M3 screen 8 — saved items. Buyer-only here AND on every
+                    /saved endpoint; guests land on sign-in via RequireAuth. */}
+                <Route path="/saved" element={<SavedItems />} />
               </Route>
             </Route>
 

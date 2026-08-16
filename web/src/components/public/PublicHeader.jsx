@@ -35,7 +35,7 @@ const NAV = [
 const pill =
   'inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition-colors';
 
-export function PublicHeader({ current }) {
+export function PublicHeader({ centerSlot = null, current }) {
   const { user } = useAuth();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -70,11 +70,15 @@ export function PublicHeader({ current }) {
 
   return (
     <header ref={rootRef} className="sticky top-0 z-40 bg-white shadow-sm">
-      <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6">
+      <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-10 xl:px-16">
         <Link to="/" aria-label="MPX Global — home">
           <Logo size="md" />
         </Link>
-        <nav aria-label="Main" className="hidden items-center gap-6 lg:flex">
+        {/* 2026-08-16 (owner, /search results): a page may put its search bar
+            IN the nav — the slot replaces the centre links on lg+ (TradeIndia
+            pattern; the links stay reachable via footer + logo). */}
+        {centerSlot && <div className="hidden min-w-0 flex-1 items-center justify-center px-6 lg:flex">{centerSlot}</div>}
+        <nav aria-label="Main" className={centerSlot ? 'hidden' : 'hidden items-center gap-6 lg:flex'}>
           {NAV.map((item) =>
             item.megaMenu ? (
               <CategoryMegaMenu key={item.label} current={current} linkClasses={linkClasses} />
@@ -128,6 +132,10 @@ export function PublicHeader({ current }) {
           </button>
         </div>
       </div>
+
+      {/* <lg: the slot page's bar gets its own row INSIDE the sticky header
+          (owner: "in phone view also fix inside nav"). */}
+      {centerSlot && <div className="px-4 pb-3 sm:px-6 lg:hidden">{centerSlot}</div>}
 
       {menuOpen && (
         <nav

@@ -33,11 +33,12 @@ export async function aiSearch(req, res) {
   // Per-organisation daily cap (guests: the per-IP limiter covers them).
   await consumeAiQuota(req.user?.orgId);
 
-  const { answer, extracted, results, target, fallback } = await svcAi.aiSearch({ query: req.body.query });
+  const { answer, message, extracted, results, target, fallback } = await svcAi.aiSearch({ query: req.body.query });
 
   if (target === 'supplier') {
     res.json({
       answer,
+      message,
       extracted,
       fallback,
       type: 'supplier',
@@ -53,6 +54,7 @@ export async function aiSearch(req, res) {
   const context = await loadProjectionContext(results.rows);
   res.json({
     answer,
+    message,
     extracted,
     fallback,
     type: 'product',
