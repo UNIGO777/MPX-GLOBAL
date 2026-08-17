@@ -1,6 +1,7 @@
 import {
   ShieldIcon,
   SearchIcon,
+  HeartIcon,
   ChatIcon,
   ListIcon,
   BuildingIcon,
@@ -16,7 +17,10 @@ import {
  */
 export const BUYER_NAV = [
   { to: '/buyer/verification', label: 'Verification', Icon: ShieldIcon },
-  { label: 'Search suppliers', Icon: SearchIcon, soon: true },
+  // M3 Phase 5 (2026-08-16): both are REAL routes now — "Search suppliers"
+  // points at the public search page, "Saved" at the buyer's own list.
+  { to: '/search', label: 'Search suppliers', Icon: SearchIcon },
+  { to: '/saved', label: 'Saved', Icon: HeartIcon, savedBadge: true },
   { label: 'Enquiries', Icon: ListIcon, soon: true },
   { label: 'Chat', Icon: ChatIcon, soon: true },
   { to: '/buyer/company', label: 'Company profile', Icon: BuildingIcon, dividerBefore: true },

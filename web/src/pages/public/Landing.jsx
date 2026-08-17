@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
+import { useCanonical } from '../../lib/seo.js';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { roleHome } from '../../auth/roleHome.js';
@@ -23,7 +24,6 @@ import {
 } from '../../components/ui/icons.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
-import { AiSearchModal } from '../../components/search/AiSearchModal.jsx';
 
 /**
  * Public landing page (mockup: royal_blue_premium_landing_page). SEO surface —
@@ -41,13 +41,12 @@ import { AiSearchModal } from '../../components/search/AiSearchModal.jsx';
  * REAL link (2026-08-11, live cards). The hero match panel shows real
  * listings, not invented suppliers.
  *
- * 🆕 2026-08-16 — hero search bar now opens `AiSearchModal` directly (owner:
- * clicking it should go straight to "write what you want", not to a plain
- * link). Superseded the 2026-08-11 interim behaviour (a real link to
- * /categories, chosen back when AI search wasn't built yet). "Browse 40
- * categories →" is its own separate `Link` now, sitting below the button
- * rather than nested inside the same clickable area — the two actions
- * diverge now, so they need distinct click targets.
+ * 🆕 2026-08-16 (2nd revision that day) — hero search is a LINK to `/search`
+ * (owner: "remove the AI search box… when we click the search in home hero it
+ * lifts up and url to /search"). Supersedes the same-day open-AI-modal
+ * behaviour and the 2026-08-11 /categories link before it. The lift-up lives
+ * on /search itself (entrance animation + autofocus). AI search remains
+ * reachable from /search. "Browse 40 categories →" stays its own link.
  */
 
 /* ---------------------------------- data ---------------------------------- */
@@ -201,12 +200,16 @@ export function Landing() {
   const [journey, setJourney] = useState('buyer');
   const [tab, setTab] = useState('search');
   const [openFaq, setOpenFaq] = useState(0);
-  const [aiModalOpen, setAiModalOpen] = useState(false);
+  useCanonical('/');
   const activeTab = PLATFORM_TABS.find((t) => t.key === tab);
 
   // Real categories, so the landing page stops advertising an invented taxonomy.
   // Shares its cache key with /categories, so that page loads instantly from here.
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
+  // Hero search is a REAL input now (owner, 2026-08-16) — typing here and
+  // submitting lands on /search?q=…; empty submit still opens /search.
+  const navigate = useNavigate();
+  const [heroQuery, setHeroQuery] = useState('');
 
   // The hero's match panel shows REAL live listings (2026-08-11) — the old
   // hardcoded supplier names advertised companies that may not exist.
@@ -264,31 +267,51 @@ export function Landing() {
                 directly — discovery to deal on one secure platform.
               </p>
 
-              {/* Opens AI search directly (owner, 2026-08-16) — one click
-                  straight to "write what you want", no intermediate page.
-                  "Browse 40 categories" is its own real link now, separate
-                  from this button, since the two actions genuinely diverge. */}
-              <div className="mt-6 w-full max-w-lg">
-                <button
-                  type="button"
-                  onClick={() => setAiModalOpen(true)}
-                  aria-haspopup="dialog"
-                  aria-label="Search with AI — describe what you're looking for"
-                  className="flex w-full items-center rounded-full border border-surface-border bg-white p-1.5 text-left shadow-card transition-all hover:border-primary-400 hover:shadow-lift"
-                >
-                  <span className="pl-3 text-ink-400"><SearchIcon className="h-5 w-5" /></span>
-                  <span className="flex-1 truncate px-3 text-sm text-ink-500">
-                    Find suppliers — fabrics, machinery, IT services&hellip;
-                  </span>
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-600 text-white">
-                    <SparkleIcon className="h-4 w-4" />
-                  </span>
-                </button>
-                <Link to="/categories" className="mt-1.5 block pl-4 text-xs text-ink-500 hover:text-primary-700">
+              {/* Hero search — TWO separate doors (owner, 2026-08-16), the same
+                  pair `/search` carries: a real search bar with its inset
+                  gradient submit, and the animated AI Search pill beside it.
+                  Typing here goes straight to results; an empty submit opens
+                  /search (whose bar lifts up + autofocuses). */}
+              <div className="mt-6 w-full max-w-xl">
+                <div className="flex items-center gap-2">
+                  <form
+                    role="search"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const q = heroQuery.trim();
+                      navigate(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
+                    }}
+                    className="flex h-12 min-w-0 flex-1 items-center overflow-hidden rounded-full border border-surface-border bg-white shadow-card focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-600/20"
+                  >
+                    <SearchIcon className="ml-4 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                    <input
+                      type="search"
+                      aria-label="Search products and suppliers"
+                      placeholder="Find suppliers — fabrics, machinery, IT services…"
+                      value={heroQuery}
+                      onChange={(e) => setHeroQuery(e.target.value)}
+                      className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-ink-400"
+                    />
+                    <button
+                      type="submit"
+                      className="m-1 flex h-[calc(100%-8px)] shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-primary-600 to-primary-800 px-4 text-sm font-semibold text-white shadow-card transition-all hover:from-primary-500 hover:to-primary-700 hover:shadow-lift sm:px-5"
+                    >
+                      Search
+                    </button>
+                  </form>
+                  {/* Same animated pill as /search — one AI door, one look. */}
+                  <Link
+                    to="/ai-search"
+                    className="group flex h-12 shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-primary-800 via-primary-500 to-primary-800 bg-[length:200%_200%] px-3.5 text-sm font-semibold text-white shadow-card transition-shadow animate-ai-sheen hover:shadow-lift motion-reduce:animate-none sm:px-4"
+                  >
+                    <SparkleIcon className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:scale-110" aria-hidden="true" />
+                    <span className="hidden sm:inline">AI Search</span>
+                  </Link>
+                </div>
+                <Link to="/categories" className="mt-2 block pl-4 text-xs text-ink-500 hover:text-primary-700">
                   Browse 40 categories →
                 </Link>
               </div>
-              <AiSearchModal open={aiModalOpen} onClose={() => setAiModalOpen(false)} />
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {home ? (

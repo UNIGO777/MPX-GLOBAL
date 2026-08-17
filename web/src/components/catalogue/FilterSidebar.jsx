@@ -84,6 +84,11 @@ export function FilterSidebar({
   // removable chip, same as everything else in this list.
   moqMin = null,
   onMoqChange = null,
+  // 2026-08-16 (owner, TradeIndia reference): `split` renders every filter
+  // group as its OWN card with whitespace between — the /search left rail's
+  // presentation. Default (false) keeps the single-card/drawer layout that
+  // /category and the <lg overlay use.
+  split = false,
 }) {
   const appliedChips = buildAppliedChips({
     verifiedOnly,
@@ -106,10 +111,12 @@ export function FilterSidebar({
     onMoqChange,
   });
 
+  const cardCls = 'rounded-2xl border border-surface-border bg-white p-4 shadow-card';
+
   return (
-    <div className={bare ? 'p-4' : 'rounded-2xl border border-surface-border bg-white p-4 shadow-card'}>
+    <div className={split ? 'space-y-4' : bare ? 'p-4' : cardCls}>
       {appliedChips.length > 0 && (
-        <div className="mb-5">
+        <div className={split ? cardCls : 'mb-5'}>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-primary-800">Applied Filters</h2>
             <button type="button" onClick={onClearAll} className="text-sm font-medium text-primary-700 hover:underline">
@@ -132,7 +139,7 @@ export function FilterSidebar({
         </div>
       )}
 
-      <div className="mb-5 flex items-center justify-between gap-2">
+      <div className={`flex items-center justify-between gap-2 ${split ? cardCls : 'mb-5'}`}>
         <div>
           <h2 className="text-lg font-bold text-primary-800">Verified sellers</h2>
           <span className="mt-1 inline-flex items-center gap-1 rounded bg-success-50 px-2 py-0.5 text-xs font-medium text-success-700">
@@ -157,10 +164,10 @@ export function FilterSidebar({
           />
         </button>
       </div>
-      <hr className="mb-5 border-surface-border" />
+      {!split && <hr className="mb-5 border-surface-border" />}
 
       {onCategoryChange && (facets?.category?.length ?? 0) > 0 && (
-        <FilterSection title="Category">
+        <FilterSection flat={split} title="Category">
           <SingleSelectPills
             options={(facets.category ?? []).map((c) => ({ value: c.slug, label: c.name, count: c.count }))}
             selected={selectedCategory}
@@ -170,7 +177,7 @@ export function FilterSidebar({
       )}
 
       {onCountryChange && (facets?.country?.length ?? 0) > 0 && (
-        <FilterSection title="Supplier country">
+        <FilterSection flat={split} title="Supplier country">
           <SingleSelectPills
             options={(facets.country ?? []).map((c) => ({
               value: c.value,
@@ -183,7 +190,7 @@ export function FilterSidebar({
         </FilterSection>
       )}
 
-      <FilterSection title={`Price${facets?.price?.currency ? ` (${facets.price.currency})` : ''}`}>
+      <FilterSection flat={split} title={`Price${facets?.price?.currency ? ` (${facets.price.currency})` : ''}`}>
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -206,7 +213,7 @@ export function FilterSidebar({
       </FilterSection>
 
       {loading ? (
-        <div className="space-y-3 border-t border-surface-border pt-4">
+        <div className={split ? `space-y-3 ${cardCls}` : 'space-y-3 border-t border-surface-border pt-4'}>
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-4/5" />
@@ -215,6 +222,7 @@ export function FilterSidebar({
         (facets?.attributes ?? []).map((attr) => (
           <FilterSection
             key={attr.key}
+            flat={split}
             title={`${attr.name}${attr.unit && attr.unit.toLowerCase() !== attr.name.toLowerCase() ? ` (${attr.unit})` : ''}`}
           >
             {attr.inputType === 'number' ? (
@@ -250,10 +258,16 @@ export function FilterSidebar({
 /** One collapsible section — bold heading + chevron (rotates open, same
  *  convention as `Combobox`'s own toggle) + content. Open by default; purely
  *  a display state, never affects which filters are active. */
-function FilterSection({ title, children }) {
+function FilterSection({ title, children, flat = false }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="border-b border-surface-border pb-5 pt-5 first-of-type:pt-0 last:border-b-0 last:pb-0">
+    <div
+      className={
+        flat
+          ? 'rounded-2xl border border-surface-border bg-white p-4 shadow-card'
+          : 'border-b border-surface-border pb-5 pt-5 first-of-type:pt-0 last:border-b-0 last:pb-0'
+      }
+    >
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between text-left">
         <span className="text-lg font-bold text-primary-800">{title}</span>
         <ChevronDownIcon className={`h-5 w-5 shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`} />

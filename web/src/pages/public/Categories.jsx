@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
+import { useCanonical } from '../../lib/seo.js';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
@@ -199,6 +200,7 @@ export function Categories() {
     queryFn: catalogueApi.tree,
   });
   const [q, setQ] = useState('');
+  useCanonical('/categories');
 
   // Public page — give it its own title rather than inheriting the landing
   // page's (m3-seo.md §2 wants a per-page title; full meta/canonical arrive with

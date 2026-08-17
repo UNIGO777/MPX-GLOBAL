@@ -11,7 +11,9 @@ import { env } from '../config/env.js';
 
 const MODEL = 'gpt-4o-mini';
 const TIMEOUT_MS = 8000;
-const MAX_TOKENS = 300;
+// 400 since 2026-08-16: the extraction JSON now also carries the buyer-facing
+// "message" sentence(s) — 300 left it at risk of truncating mid-JSON.
+const MAX_TOKENS = 400;
 
 let client;
 

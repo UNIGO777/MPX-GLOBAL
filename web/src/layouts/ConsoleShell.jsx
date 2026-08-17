@@ -1,5 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 
+import { useQuery } from '@tanstack/react-query';
+
+import { savedApi, savedKeys } from '../api/saved.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { LogOutIcon } from '../components/ui/icons.jsx';
 import { Logo } from '../components/ui/Logo.jsx';
@@ -35,8 +38,26 @@ import { Logo } from '../components/ui/Logo.jsx';
 const NAV_BASE =
   'flex items-center gap-3 whitespace-nowrap rounded-r-lg border-l-4 px-4 py-3 text-[15px] font-medium';
 
+/** Live saved-count badge (M3 Phase 5, owner's 🧱 call — recommended IN).
+ *  Buyer-only by construction: only BUYER_NAV sets `savedBadge`, and the
+ *  /saved endpoint is buyer-only anyway, so no other role ever fetches it. */
+function SavedCountBadge() {
+  const count = useQuery({
+    queryKey: savedKeys.list({ page: 1, pageSize: 1 }),
+    queryFn: () => savedApi.list({ page: 1, pageSize: 1 }),
+    staleTime: 60_000,
+  });
+  const total = count.data?.total ?? 0;
+  if (!count.isSuccess || total === 0) return null;
+  return (
+    <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white">
+      {total > 99 ? '99+' : total}
+    </span>
+  );
+}
+
 function NavRows({ nav }) {
-  return nav.map(({ to, label, Icon, soon, disabled, dividerBefore }) => {
+  return nav.map(({ to, label, Icon, soon, disabled, dividerBefore, savedBadge }) => {
     const row = (
       <li key={label}>
         {soon || disabled ? (
@@ -66,6 +87,7 @@ function NavRows({ nav }) {
           >
             {Icon && <Icon className="h-5 w-5 shrink-0" />}
             {label}
+            {savedBadge && <SavedCountBadge />}
           </NavLink>
         )}
       </li>

@@ -39,6 +39,7 @@ vi.mock('../src/services/email.provider.js', () => ({
 
 vi.mock('../src/utils/logger.js', () => ({ logger: log }));
 
+
 const { sendOtp, describeOtpTransports } = await import('../src/services/otp.sender.js');
 const { canDeliverTo } = await import('../src/services/sms.provider.js');
 
@@ -256,6 +257,26 @@ describe('🔴 the code never leaks (A3 / security-baseline #4)', () => {
 });
 
 describe('🔴 Fast2SMS OTP API — endpoint and payload, proven against the live gateway', () => {
+  // The REAL provider refuses to send unless Fast2SMS is configured, and the
+  // live credentials are deliberately NOT in `.env` (rotated out —
+  // secrets-and-hygiene), so this block supplies DUMMY values whose only job
+  // is to get past `isSmsConfigured()`. 🔴 Never put a real key here: every
+  // assertion below is about the URL, headers and payload SHAPE, which a fake
+  // key proves just as well. Set on `process.env` + `resetModules` (NOT by
+  // mocking `config/env.js`) so the NODE_ENV-toggling tests elsewhere in this
+  // file keep re-parsing a live env — mocking the module froze it for them.
+  beforeEach(() => {
+    process.env.FAST2SMS_API_KEY = 'test-api-key';
+    process.env.FAST2SMS_OTP_ID = 'test-otp-id';
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    delete process.env.FAST2SMS_API_KEY;
+    delete process.env.FAST2SMS_OTP_ID;
+    vi.resetModules();
+  });
+
   it('posts JSON to /dev/otp/send with a bare 10-digit mobile', async () => {
     // Regression guard. The first implementation used `bulkV2` + `route=dlt` and
     // the live gateway answered **"Invalid Sender ID"** — DLT also needs an

@@ -334,6 +334,11 @@ describe('A21 · public exporter read is side-based (M1-C)', () => {
     expect(fields).toEqual(
       [
         'country',
+        // 2026-08-13 — supplier-profile banner, whitelisted DELIBERATELY in
+        // `.claude/rules/m3-public-projection.md` on the same public-asset
+        // reasoning as `logo`. Added here 2026-08-16: the projection was
+        // widened by decision, this assertion just never followed.
+        'coverImage',
         'description',
         'entityType',
         'establishedYear',
