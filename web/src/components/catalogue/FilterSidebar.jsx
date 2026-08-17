@@ -84,11 +84,14 @@ export function FilterSidebar({
   // removable chip, same as everything else in this list.
   moqMin = null,
   onMoqChange = null,
-  // 2026-08-16 (owner, TradeIndia reference): `split` renders every filter
-  // group as its OWN card with whitespace between — the /search left rail's
-  // presentation. Default (false) keeps the single-card/drawer layout that
-  // /category and the <lg overlay use.
-  split = false,
+  // 2026-08-17 (owner: "not standard for a filter section" / "enhance the
+  // whole sidebar"): `panel` is the /search rail's presentation — ONE card,
+  // a real header row, hairline-divided sections, sidebar type scale, and an
+  // optional `leadingSection` (the categories list) INSIDE the same panel.
+  // It replaces the earlier `split` card-per-group layout, which read as six
+  // disconnected boxes floating in a column. Default (false) keeps the
+  // single-card/drawer layout that /category and the <lg overlay use.
+  panel = false,
 }) {
   const appliedChips = buildAppliedChips({
     verifiedOnly,
@@ -113,15 +116,44 @@ export function FilterSidebar({
 
   const cardCls = 'rounded-2xl border border-surface-border bg-white p-4 shadow-card';
 
-  return (
-    <div className={split ? 'space-y-4' : bare ? 'p-4' : cardCls}>
-      {appliedChips.length > 0 && (
-        <div className={split ? cardCls : 'mb-5'}>
+  // 🔴 A filter the buyer cannot actually narrow with is noise, not an option
+  // (owner design review, 2026-08-17). Two cases, both seen live:
+  //   · price with NO bounds → "No min / No max" over an empty range;
+  //   · a range whose min EQUALS its max (GSM 200–200), or a list with a
+  //     single option — picking it changes nothing.
+  // The server's counts are untouched; this only decides what is worth showing.
+  const showPrice = Boolean(facets?.price && facets.price.min !== facets.price.max);
+  const usefulAttributes = (facets?.attributes ?? []).filter((attr) =>
+    attr.inputType === 'number'
+      ? attr.bounds && attr.bounds.min !== attr.bounds.max
+      : (attr.options?.length ?? 0) > 1,
+  );
+
+  // Anything inside the "More filters" disclosure that is already set forces
+  // it open on arrival (price bound, MOQ, or any attribute selection).
+  const hasHiddenActive = Boolean(priceMin || priceMax || moqMin || Object.keys(attrSelections ?? {}).length);
+  const [moreOpen, setMoreOpen] = useState(hasHiddenActive);
+
+  const alwaysVisible = (
+    <>
+      {/* The rail's page already renders this exact chip row above the results
+          (`buildAppliedChips` is shared), so repeating it inside the panel was
+          the same control twice on one screen (owner screenshot, 2026-08-17).
+          The drawer keeps its copy — it covers the page, so it is the only
+          place the buyer can see what is applied. */}
+      {!panel && appliedChips.length > 0 && (
+        <div className={panel ? 'border-b border-surface-border px-4 py-3.5' : 'mb-5'}>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-primary-800">Applied Filters</h2>
-            <button type="button" onClick={onClearAll} className="text-sm font-medium text-primary-700 hover:underline">
-              Clear All
-            </button>
+            <h2 className={panel ? 'text-[13px] font-bold uppercase tracking-wide text-ink-400' : 'text-lg font-bold text-primary-800'}>
+              Applied
+            </h2>
+            {/* The panel's own header owns "Clear all" — a second one here
+                was pure duplication (owner, 2026-08-17). */}
+            {!panel && (
+              <button type="button" onClick={onClearAll} className="text-sm font-medium text-primary-700 hover:underline">
+                Clear All
+              </button>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             {appliedChips.map((chip) => (
@@ -139,10 +171,12 @@ export function FilterSidebar({
         </div>
       )}
 
-      <div className={`flex items-center justify-between gap-2 ${split ? cardCls : 'mb-5'}`}>
+      <div className={`flex items-center justify-between gap-3 ${panel ? 'border-b border-surface-border px-4 py-3.5' : 'mb-5'}`}>
         <div>
-          <h2 className="text-lg font-bold text-primary-800">Verified sellers</h2>
-          <span className="mt-1 inline-flex items-center gap-1 rounded bg-success-50 px-2 py-0.5 text-xs font-medium text-success-700">
+          <h2 className={panel ? 'text-sm font-semibold text-ink-900' : 'text-lg font-bold text-primary-800'}>
+            Verified sellers
+          </h2>
+          <span className={`mt-1 inline-flex items-center gap-1 rounded bg-success-50 px-2 py-0.5 font-medium text-success-700 ${panel ? 'text-[11px]' : 'text-xs'}`}>
             <CheckIcon className="h-3 w-3" aria-hidden="true" />
             Verified by MPX
           </span>
@@ -164,10 +198,15 @@ export function FilterSidebar({
           />
         </button>
       </div>
-      {!split && <hr className="mb-5 border-surface-border" />}
+      {!panel && <hr className="mb-5 border-surface-border" />}
+    </>
+  );
+
+  const moreSections = (
+    <>
 
       {onCategoryChange && (facets?.category?.length ?? 0) > 0 && (
-        <FilterSection flat={split} title="Category">
+        <FilterSection flat={panel} defaultOpen={!panel} title="Category">
           <SingleSelectPills
             options={(facets.category ?? []).map((c) => ({ value: c.slug, label: c.name, count: c.count }))}
             selected={selectedCategory}
@@ -177,7 +216,7 @@ export function FilterSidebar({
       )}
 
       {onCountryChange && (facets?.country?.length ?? 0) > 0 && (
-        <FilterSection flat={split} title="Supplier country">
+        <FilterSection flat={panel} defaultOpen={!panel} title="Supplier country">
           <SingleSelectPills
             options={(facets.country ?? []).map((c) => ({
               value: c.value,
@@ -190,7 +229,12 @@ export function FilterSidebar({
         </FilterSection>
       )}
 
-      <FilterSection flat={split} title={`Price${facets?.price?.currency ? ` (${facets.price.currency})` : ''}`}>
+      {showPrice && (
+      <FilterSection
+        flat={panel}
+        collapsible={!panel}
+        title={`Price${facets?.price?.currency ? ` (${facets.price.currency})` : ''}`}
+      >
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -211,18 +255,20 @@ export function FilterSidebar({
           />
         </div>
       </FilterSection>
+      )}
 
       {loading ? (
-        <div className={split ? `space-y-3 ${cardCls}` : 'space-y-3 border-t border-surface-border pt-4'}>
+        <div className={panel ? 'space-y-3 px-4 py-4' : 'space-y-3 border-t border-surface-border pt-4'}>
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-4/5" />
         </div>
       ) : (
-        (facets?.attributes ?? []).map((attr) => (
+        usefulAttributes.map((attr) => (
           <FilterSection
             key={attr.key}
-            flat={split}
+            flat={panel}
+            collapsible={!panel}
             title={`${attr.name}${attr.unit && attr.unit.toLowerCase() !== attr.name.toLowerCase() ? ` (${attr.unit})` : ''}`}
           >
             {attr.inputType === 'number' ? (
@@ -251,6 +297,48 @@ export function FilterSidebar({
           </FilterSection>
         ))
       )}
+    </>
+  );
+
+  if (panel) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
+        <div className="flex items-center justify-between gap-2 border-b border-surface-border px-4 py-3.5">
+          <h2 className="text-[15px] font-bold text-ink-900">Filters</h2>
+          {appliedChips.length > 0 && (
+            <button type="button" onClick={onClearAll} className="text-sm font-medium text-primary-700 hover:underline">
+              Clear all
+            </button>
+          )}
+        </div>
+        {alwaysVisible}
+        {/* Owner, 2026-08-17: the collapsed Price/GSM/Width ROWS were still
+            visible and they wanted them hidden too — so the whole set lives
+            behind ONE disclosure and only Verified sellers shows at rest. It
+            opens itself when any of those filters is active, so a hidden
+            panel can never conceal why results are narrowed. */}
+        {(showPrice || usefulAttributes.length > 0 || loading) && (
+          <>
+        <button
+          type="button"
+          onClick={() => setMoreOpen((o) => !o)}
+          aria-expanded={moreOpen}
+          className="flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left text-sm font-semibold text-ink-900 transition-colors hover:text-primary-700"
+        >
+          {moreOpen ? 'Hide filters' : 'More filters'}
+          <ChevronDownIcon className={`h-4 w-4 shrink-0 text-ink-400 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
+        </button>
+        {moreOpen && <div className="border-t border-surface-border">{moreSections}</div>}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={bare ? 'p-4' : cardCls}>
+      {alwaysVisible}
+      {moreSections}
     </div>
   );
 }
@@ -258,21 +346,35 @@ export function FilterSidebar({
 /** One collapsible section — bold heading + chevron (rotates open, same
  *  convention as `Combobox`'s own toggle) + content. Open by default; purely
  *  a display state, never affects which filters are active. */
-function FilterSection({ title, children, flat = false }) {
+/** `collapsible={false}` (owner, 2026-08-17) is how the rail renders: the ONE
+ *  "More filters" disclosure is the only collapse there, so the groups behind
+ *  it are plain sections — a heading and its controls, no second chevron to
+ *  fight. The drawer keeps its own per-group toggles. */
+function FilterSection({ title, children, flat = false, collapsible = true }) {
   const [open, setOpen] = useState(true);
+  const shown = collapsible ? open : true;
+  const headingCls = flat ? 'text-[15px] font-bold text-ink-900' : 'text-lg font-bold text-primary-800';
   return (
     <div
       className={
+        // `flat` = inside the unified rail panel: a hairline-divided row, NOT
+        // its own card (the card-per-group version read as floating boxes).
         flat
-          ? 'rounded-2xl border border-surface-border bg-white p-4 shadow-card'
+          ? 'border-b border-surface-border px-4 py-3.5 last:border-b-0'
           : 'border-b border-surface-border pb-5 pt-5 first-of-type:pt-0 last:border-b-0 last:pb-0'
       }
     >
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between text-left">
-        <span className="text-lg font-bold text-primary-800">{title}</span>
-        <ChevronDownIcon className={`h-5 w-5 shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && <div className="mt-4">{children}</div>}
+      {collapsible ? (
+        <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between gap-2 text-left">
+          <span className={headingCls}>{title}</span>
+          <ChevronDownIcon
+            className={`shrink-0 transition-transform ${flat ? 'h-4 w-4 text-ink-400' : 'h-5 w-5 text-muted'} ${open ? 'rotate-180' : ''}`}
+          />
+        </button>
+      ) : (
+        <h3 className={headingCls}>{title}</h3>
+      )}
+      {shown && <div className={flat ? 'mt-3' : 'mt-4'}>{children}</div>}
     </div>
   );
 }
@@ -432,7 +534,10 @@ export function buildAppliedChips({
     const cat = (categoryFacet ?? []).find((c) => c.slug === selectedCategory);
     chips.push({
       id: 'category',
-      label: cat?.name ?? selectedCategory,
+      // The server now pins a selected leaf into the facet even at count 0, so
+      // the real name is normally here. The fallback un-slugs rather than
+      // printing "silk-fabric" at the buyer (owner screenshot, 2026-08-17).
+      label: cat?.name ?? selectedCategory.replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase()),
       onRemove: () => onCategoryChange(null),
     });
   }

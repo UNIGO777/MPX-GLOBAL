@@ -175,6 +175,48 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-17 (later) — filter panel: one disclosure, plain inner groups, dead facets hidden,
+  + a real remount bug fixed.** Owner rulings: the collapsed Price/GSM/Width ROWS were still
+  visible and should be hidden too → they now sit behind ONE **"More filters"** disclosure
+  (only Verified sellers shows at rest), and the groups inside it render as PLAIN sections —
+  `FilterSection` gained `collapsible={false}` so there is no second chevron to fight.
+  🐛 **Remount bug:** "More filters" refused to stay open on a category page — the conditional
+  Related-Categories box appears when facets land and pushes the panel from child index 0 to
+  1, so React reconciled by POSITION and remounted it, wiping its state. Fixed with stable
+  `key`s on both boxes. 🎯 Design review (owner screenshot): a facet that cannot narrow
+  anything is now hidden — price with no bounds, a numeric range whose min equals its max
+  (GSM 200–200), a list with a single option — and the disclosure itself disappears when
+  nothing is left behind it. Verified: silk fabric (1 product) shows Verified only; cotton
+  fabric keeps Price 180–390 / GSM 65–400 / Width 44–60. Applies to the drawer too.
+- **2026-08-17 — `/search` sidebar rebuilt to a standard filter pattern (owner: "not standard
+  for a filter section", "enhance the whole sidebar", then two structural rulings).** The
+  card-per-group `split` layout read as six disconnected floating boxes; replaced in
+  `FilterSidebar` by a **`panel`** variant: ONE card, a real header row owning the single
+  "Clear all", hairline-divided section rows (not nested cards), sidebar type scale.
+  🔴 Owner rulings applied: (1) **Related Categories stays its OWN box** above the panel —
+  browsing sideways is not filtering, so it was pulled back out after a first pass had nested
+  it inside via a `leadingSection` prop (prop removed); (2) in the rail **only the
+  Verified-sellers row is always visible; every other group is collapsed** behind its chevron
+  (`FilterSection` gained `defaultOpen`). Added on top: a group holding an ACTIVE selection
+  opens itself (price bound set / attribute chosen), so a collapsed panel can never hide the
+  reason results are narrowed — verified `aria-expanded` false clean vs true with
+  `?priceMin=200`. The <lg drawer and `/category` keep everything expanded, unchanged.
+- **2026-08-17 — `/search` filter rail typography fixed (owner screenshot).** The rail reused
+  the DRAWER's display-scale headings (`text-lg` primary-800), which dwarfed a 256px column now
+  that every group is its own card. Scoped to the `split`/`flat` variant: headings drop to
+  `text-[15px] font-bold text-ink-900` (matching the "Related Categories" card header),
+  chevrons to `h-4 text-ink-400`, the "Verified by MPX" badge to 11px, card stack to
+  `space-y-3`. 🔴 The mobile drawer and `/category` keep their approved larger scale —
+  verified by screenshot that neither moved.
+- **2026-08-17 — `search` merged into `main` (local + origin) and one phone gap fixed.**
+  Merge `4b6a824`; the only conflict was `docs/History.md` (both branches appended change-log
+  entries) — resolved by KEEPING BOTH blocks, web/M3 entries above the app entries, nothing
+  dropped. Verified the merged tree before committing: web production build clean, 87/87 on
+  the whitelist/OTP/facets/saved suites. 🐛 Owner-reported: `/search` results showed **no
+  related categories on phones** — the rail is `lg:block` only, so <lg lost them entirely.
+  Added a horizontal, single-select chip row (`lg:hidden`) above the country chips, same
+  set/clear semantics as the rail. Verified by tap at 390px: `?q=fabric&category=cotton-fabric`,
+  zero overflow, desktop rail unchanged.
 - **2026-08-16 (later 18) — backend suite back to GREEN: 1002/1002, 65/65 files** (was 5
   failing in 2 files; both pre-dated today's work and neither was a code bug).
   **(a) `kyc.test.js` — the B7 public-whitelist exact-key assertion.** The public exporter

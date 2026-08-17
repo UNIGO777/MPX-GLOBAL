@@ -420,8 +420,17 @@ export function Search() {
     setParams(next);
   };
 
-  const submitQuery = (value) =>
-    updateParams((next) => (value.trim() ? next.set('q', value.trim()) : next.delete('q')));
+  // 🔴 A NEW search starts CLEAN (owner, 2026-08-17): submitting used to keep
+  // whatever category/verified/price/attribute filters were already applied,
+  // so searching "cotton fabric" while Silk fabric + verified were set
+  // answered "0 results" and read as broken search. `type` is NOT a filter —
+  // it is which KIND of result you are looking at — so it survives.
+  const submitQuery = (value) => {
+    const next = new URLSearchParams();
+    if (type === 'supplier') next.set('type', 'supplier');
+    if (value.trim()) next.set('q', value.trim());
+    setParams(next);
+  };
 
   const onToggleVerified = () =>
     updateParams((next) => (verifiedOnly ? next.delete('verified') : next.set('verified', '1')));
@@ -734,16 +743,21 @@ export function Search() {
               "Tell Us Your Requirement" RFQ form — quotation is Bucket A. */}
           <div className={searchMode ? 'lg:flex lg:items-start lg:gap-8' : ''}>
             {searchMode && (
-              <aside className="hidden shrink-0 lg:block lg:w-64 xl:w-72">
+              <aside className="hidden shrink-0 space-y-4 lg:block lg:w-64 xl:w-72">
+                {/* Its OWN box, kept out of the filter panel (owner,
+                    2026-08-17) — browsing sideways is not filtering. */}
+                {/* 🔴 STABLE KEYS. This block is conditional, so when the
+                    facets land it appears and pushes the filter panel from
+                    child index 0 to 1 — React reconciles by position and
+                    REMOUNTS the panel, wiping its open/closed state (found
+                    2026-08-17: "More filters" refused to stay open on a
+                    category page). Keys pin identity across that shift. */}
                 {type === 'product' && (facets.data?.facets?.subCategory?.length ?? 0) > 0 && (
-                  <div className="mb-6 rounded-2xl border border-surface-border bg-white shadow-card">
+                  <div key="categories" className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
                     <h2 className="border-b border-surface-border px-4 py-3.5 text-[15px] font-bold text-ink-900">
                       Related Categories
                     </h2>
-                    {/* SUB-categories (owner, 2026-08-16) — the leaf-level
-                        `subCategory` facet, not the top-level drill-down.
-                        Scrolls inside the card past ~8 rows (reference). */}
-                    <ul className="max-h-[380px] overflow-y-auto px-4 py-1.5">
+                    <ul className="max-h-[300px] overflow-y-auto px-4 py-1.5">
                       {facets.data.facets.subCategory.map((cat) => {
                         const on = category === cat.slug;
                         return (
@@ -751,7 +765,7 @@ export function Search() {
                             <button
                               type="button"
                               onClick={() => onCategoryChange(on ? null : cat.slug)}
-                              className={`flex min-h-[44px] w-full items-center justify-between gap-2 border-b border-surface-border/60 py-2.5 text-left text-sm transition-colors last:border-0 ${
+                              className={`flex min-h-[42px] w-full items-center justify-between gap-2 border-b border-surface-border/60 py-2 text-left text-sm transition-colors last:border-0 ${
                                 on ? 'font-semibold text-primary-700' : 'text-ink-700 hover:text-primary-700'
                               }`}
                             >
@@ -769,23 +783,19 @@ export function Search() {
                         );
                       })}
                     </ul>
+                    <div className="border-t border-surface-border px-4 py-2.5">
+                      <Link
+                        to="/categories"
+                        className="inline-flex min-h-[36px] items-center gap-1 text-xs font-semibold text-primary-700 hover:text-primary-800"
+                      >
+                        Browse all categories
+                        <ChevronRightIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Link>
+                    </div>
                   </div>
                 )}
-                <Link
-                  to="/categories"
-                  className="mb-6 mt-1 inline-flex min-h-[40px] items-center gap-1.5 px-1 text-sm font-semibold text-primary-700 hover:text-primary-800"
-                >
-                  Browse all categories
-                  <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
-                </Link>
-                <h2 className="px-1 text-xs font-bold uppercase tracking-wide text-ink-400">Filters</h2>
-                <div className="mt-2.5">
-                  {/* Category + country handled by the rail list / chips row —
-                      nulling the handlers hides those groups (FilterSidebar
-                      renders a group only when its handler exists). `split`:
-                      every group is its own card (TradeIndia reference). */}
-                  <FilterSidebar {...filterSidebarProps} onCategoryChange={null} onCountryChange={null} split />
-                </div>
+
+                <FilterSidebar key="filters" {...filterSidebarProps} onCategoryChange={null} onCountryChange={null} panel />
               </aside>
             )}
 
@@ -872,6 +882,38 @@ export function Search() {
               )}
             </div>
           </div>
+
+          {/* --- related categories, <lg (owner, 2026-08-17: the rail is
+              lg-only, so phones lost them entirely). Same single-select
+              behaviour as the rail — tapping sets/clears `category`. --- */}
+          {searchMode && type === 'product' && (facets.data?.facets?.subCategory?.length ?? 0) > 0 && (
+            <div className="-mx-4 mb-4 lg:hidden">
+              <h2 className="mb-2 px-4 text-xs font-bold uppercase tracking-wide text-ink-400">
+                Related categories
+              </h2>
+              <div className="flex gap-2 overflow-x-auto px-4 pb-1">
+                {facets.data.facets.subCategory.map((cat) => {
+                  const on = category === cat.slug;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => onCategoryChange(on ? null : cat.slug)}
+                      className={`inline-flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors ${
+                        on
+                          ? 'border-primary-600 bg-primary-50 text-primary-700'
+                          : 'border-surface-border bg-white text-ink-700'
+                      }`}
+                    >
+                      {cat.name}
+                      <span className="text-xs text-muted">{cat.count}</span>
+                      {on && <XIcon className="h-3.5 w-3.5 text-primary-600" aria-hidden="true" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* --- country chips (the reference's city-chip row, mapped to our
               supplier-country facet) — single-select, mirrors the `country`
