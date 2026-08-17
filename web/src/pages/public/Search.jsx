@@ -310,9 +310,9 @@ function FiltersOverlay({ open, onClose, total, isPending, filterSidebarProps })
         type="button"
         aria-label="Close filters"
         onClick={onClose}
-        className="absolute inset-0 hidden cursor-default bg-ink-900/40 lg:block"
+        className="absolute inset-0 hidden cursor-default bg-ink-900/40 xl:block"
       />
-      <div className="relative flex h-full w-full flex-col bg-white lg:ml-auto lg:max-w-md lg:shadow-lift">
+      <div className="relative flex h-full w-full flex-col bg-white xl:ml-auto xl:max-w-md xl:shadow-lift">
         <header className="flex shrink-0 items-center justify-between border-b border-surface-border px-4 py-4">
           <h2 className="text-lg font-bold text-ink-900">Filters</h2>
           <button
@@ -326,7 +326,12 @@ function FiltersOverlay({ open, onClose, total, isPending, filterSidebarProps })
           </button>
         </header>
         <div className="flex-1 overflow-y-auto px-4 py-5">
-          <FilterSidebar {...filterSidebarProps} bare />
+          {/* Category + country are owned by the page's own controls (the
+              related-categories box/chips and the country chip row, both
+              visible at EVERY width), so the drawer deliberately omits them —
+              otherwise a phone showed each of those filters twice. What is
+              left here is exactly what the desktop rail shows. */}
+          <FilterSidebar {...filterSidebarProps} bare compact />
         </div>
         <footer className="shrink-0 border-t border-surface-border p-4">
           <button
@@ -500,10 +505,15 @@ export function Search() {
     },
   });
 
+  // 🔴 Runs in BOTH modes. It used to be `enabled: type === 'product'`, while
+  // supplier mode still passed a country facet down to the filter panel — a
+  // facet that was therefore always empty, so the supplier country filter
+  // could never appear at all (found 2026-08-17). `/public/facets` accepts
+  // `type=supplier` and answers with exactly what that mode can filter on:
+  // country + verified.
   const facets = useQuery({
     queryKey: catalogueKeys.facets(searchParamsForApi),
     queryFn: () => catalogueApi.facets(searchParamsForApi),
-    enabled: type === 'product',
   });
 
   // keep the input in sync when navigation changes q (back/forward, didYouMean)
@@ -531,7 +541,7 @@ export function Search() {
 
   const filterSidebarProps = {
     facets: facets.data?.facets,
-    loading: type === 'product' && facets.isPending,
+    loading: facets.isPending,
     verifiedOnly,
     priceMin,
     priceMax,
@@ -551,12 +561,21 @@ export function Search() {
           onMoqChange,
         }
       : {
-          // supplier mode: Verified + country only — the API rejects the rest
+          // supplier mode: Verified + country only — the API rejects the rest,
+          // and the facets call itself returns just those two groups.
           selectedCountry: country,
           onCountryChange,
-          facets: { country: facets.data?.facets?.country ?? [] },
-          loading: false,
         }),
+  };
+
+  // What the DRAWER shows (<xl). Category is always the page's own control
+  // (the related-categories box/chips), so it never appears here. Country is
+  // the page's chip row in PRODUCT mode only — supplier mode has no chip row,
+  // so the drawer must keep country or that filter has no control at all.
+  const drawerSidebarProps = {
+    ...filterSidebarProps,
+    onCategoryChange: null,
+    ...(type === 'product' ? { onCountryChange: null } : {}),
   };
 
   // Same chip list `FilterSidebar` renders inside its own drawer body, shown
@@ -574,11 +593,18 @@ export function Search() {
     onPriceChange,
     onAttrToggle,
     onAttrRangeChange,
-    selectedCategory: type === 'product' ? category : null,
-    onCategoryChange: type === 'product' ? onCategoryChange : null,
+    // 🔴 Category and country are DELIBERATELY absent from this row in product
+    // mode (owner, 2026-08-17: "why showing categories again in filters here").
+    // Both already render their selection on the page — the Related Categories
+    // chip highlights with an ×, the country chip highlights — so repeating
+    // them here showed the same filter twice, one above the other. Supplier
+    // mode has no country chip row, so there the chip is the only way to see
+    // and clear it and it stays.
+    selectedCategory: null,
+    onCategoryChange: null,
     categoryFacet: facets.data?.facets?.category ?? [],
-    selectedCountry: country,
-    onCountryChange,
+    selectedCountry: type === 'supplier' ? country : null,
+    onCountryChange: type === 'supplier' ? onCountryChange : null,
     countryName,
     moqMin: type === 'product' ? moqMin : null,
     onMoqChange: type === 'product' ? onMoqChange : null,
@@ -990,7 +1016,7 @@ export function Search() {
             onClose={() => setFiltersOpen(false)}
             total={total}
             isPending={results.isPending}
-            filterSidebarProps={filterSidebarProps}
+            filterSidebarProps={drawerSidebarProps}
           />
 
           {/* --- states --- */}

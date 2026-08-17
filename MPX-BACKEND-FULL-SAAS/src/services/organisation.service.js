@@ -210,6 +210,55 @@ async function deleteOldLogo(org) {
   }
 }
 
+/** Same best-effort cleanup the logo does, for the cover asset. */
+async function deleteOldCover(org) {
+  const publicId = org.coverImage ? cloudinaryPublicIdFromUrl(org.coverImage) : null;
+  if (!publicId) return;
+  try {
+    await deletePublicImage(publicId);
+  } catch (err) {
+    logger.warn({ err: { name: err?.name, message: err?.message } }, 'old cover cleanup skipped');
+  }
+}
+
+/**
+ * The supplier-profile banner (§A22 storefront content, 2026-08-17).
+ *
+ * `coverImage` shipped with the 2026-08-13 profile redesign but had NO way to
+ * be set — only seeded rows had one, so 8 of 9 exporters could never have a
+ * banner. This is that missing half. Public by design, exactly like `logo`:
+ * it IS the public page's artwork, already on the whitelist, so nothing about
+ * what the public API exposes changes here.
+ */
+export async function setMyCover({ user, buffer }) {
+  const org = await loadOwnOrg(user);
+  if (!org.exporterSide) {
+    throw AppError.forbidden('buyer has no cover', 'Only exporter profiles have a cover image.');
+  }
+
+  const { url } = await uploadPublicImage({ buffer, folder: `mpx/covers/${org._id}` });
+
+  await deleteOldCover(org);
+  org.coverImage = url;
+  await org.save();
+
+  // Storefront content: kycStatus untouched, same as the logo (§A22).
+  return { organisation: ownerView(org) };
+}
+
+export async function removeMyCover({ user }) {
+  const org = await loadOwnOrg(user);
+  if (!org.exporterSide) {
+    throw AppError.forbidden('buyer has no cover', 'Only exporter profiles have a cover image.');
+  }
+
+  await deleteOldCover(org);
+  org.coverImage = undefined;
+  await org.save();
+
+  return { organisation: ownerView(org) };
+}
+
 export async function setMyLogo({ user, buffer }) {
   const org = await loadOwnOrg(user);
   if (!org.exporterSide) {

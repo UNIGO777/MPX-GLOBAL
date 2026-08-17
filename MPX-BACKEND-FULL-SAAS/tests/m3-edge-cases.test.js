@@ -74,6 +74,9 @@ async function makeProduct(extra = {}) {
     status: 'active',
     sellerCountry: 'IN',
     sellerVerified: true,
+    // goods need both to survive an API publish (2026-08-17 rule)
+    moq: 100,
+    unit: 'meter',
     ...extra,
   });
   await rebuildAll();

@@ -92,6 +92,11 @@ export function FilterSidebar({
   // disconnected boxes floating in a column. Default (false) keeps the
   // single-card/drawer layout that /category and the <lg overlay use.
   panel = false,
+  // Typography only (owner, 2026-08-17): the drawer used display-size blue
+  // headings while the rail had already moved to a tighter sidebar scale, so
+  // the same filters looked like two different products. `compact` aligns the
+  // drawer's headings WITHOUT removing its per-group collapsing.
+  compact = false,
 }) {
   const appliedChips = buildAppliedChips({
     verifiedOnly,
@@ -173,10 +178,10 @@ export function FilterSidebar({
 
       <div className={`flex items-center justify-between gap-3 ${panel ? 'border-b border-surface-border px-4 py-3.5' : 'mb-5'}`}>
         <div>
-          <h2 className={panel ? 'text-sm font-semibold text-ink-900' : 'text-lg font-bold text-primary-800'}>
+          <h2 className={panel || compact ? 'text-[15px] font-bold text-ink-900' : 'text-lg font-bold text-primary-800'}>
             Verified sellers
           </h2>
-          <span className={`mt-1 inline-flex items-center gap-1 rounded bg-success-50 px-2 py-0.5 font-medium text-success-700 ${panel ? 'text-[11px]' : 'text-xs'}`}>
+          <span className={`mt-1 inline-flex items-center gap-1 rounded bg-success-50 px-2 py-0.5 font-medium text-success-700 ${panel || compact ? 'text-[11px]' : 'text-xs'}`}>
             <CheckIcon className="h-3 w-3" aria-hidden="true" />
             Verified by MPX
           </span>
@@ -206,7 +211,7 @@ export function FilterSidebar({
     <>
 
       {onCategoryChange && (facets?.category?.length ?? 0) > 0 && (
-        <FilterSection flat={panel} defaultOpen={!panel} title="Category">
+        <FilterSection flat={panel || compact} defaultOpen={!panel} title="Category">
           <SingleSelectPills
             options={(facets.category ?? []).map((c) => ({ value: c.slug, label: c.name, count: c.count }))}
             selected={selectedCategory}
@@ -216,7 +221,7 @@ export function FilterSidebar({
       )}
 
       {onCountryChange && (facets?.country?.length ?? 0) > 0 && (
-        <FilterSection flat={panel} defaultOpen={!panel} title="Supplier country">
+        <FilterSection flat={panel || compact} defaultOpen={!panel} title="Supplier country">
           <SingleSelectPills
             options={(facets.country ?? []).map((c) => ({
               value: c.value,
@@ -231,30 +236,44 @@ export function FilterSidebar({
 
       {showPrice && (
       <FilterSection
-        flat={panel}
+        flat={panel || compact}
         collapsible={!panel}
         title={`Price${facets?.price?.currency ? ` (${facets.price.currency})` : ''}`}
       >
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            inputMode="decimal"
-            placeholder={facets?.price ? String(facets.price.min) : 'No min'}
-            value={priceMin ?? ''}
-            onChange={(e) => onPriceChange(e.target.value, priceMax)}
-            className="h-10 w-full rounded-lg border border-surface-border px-3 text-sm text-ink-700 outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
-          />
-          <span className="text-muted">–</span>
-          <input
-            type="number"
-            inputMode="decimal"
-            placeholder={facets?.price ? String(facets.price.max) : 'No max'}
-            value={priceMax ?? ''}
-            onChange={(e) => onPriceChange(priceMin, e.target.value)}
-            className="h-10 w-full rounded-lg border border-surface-border px-3 text-sm text-ink-700 outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
-          />
-        </div>
+        <RangeFields
+          min={priceMin}
+          max={priceMax}
+          minPlaceholder={facets?.price ? String(facets.price.min) : 'No min'}
+          maxPlaceholder={facets?.price ? String(facets.price.max) : 'No max'}
+          labelMin="Minimum price"
+          labelMax="Maximum price"
+          onCommit={onPriceChange}
+        />
       </FilterSection>
+      )}
+
+      {onMoqChange && facets?.moq && facets.moq.min !== facets.moq.max && (
+        <FilterSection flat={panel || compact} collapsible={!panel} title="Minimum order quantity">
+          {/* Buyer-facing MOQ ceiling: "show me listings I can order at or
+              below this quantity". Until 2026-08-17 only AI search could set
+              this — the chip existed with no way to create it. */}
+          <input
+            type="number"
+            inputMode="numeric"
+            aria-label="Maximum minimum-order quantity"
+            placeholder={`Up to ${facets.moq.max}`}
+            defaultValue={moqMin ?? ''}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v !== (moqMin ?? '')) onMoqChange(v);
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+            className="h-10 w-full rounded-lg border border-surface-border px-3 text-sm text-ink-700 outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+          />
+          <p className="mt-1.5 text-xs text-muted">
+            Sellers accept orders from {facets.moq.min} up to {facets.moq.max}.
+          </p>
+        </FilterSection>
       )}
 
       {loading ? (
@@ -267,30 +286,20 @@ export function FilterSidebar({
         usefulAttributes.map((attr) => (
           <FilterSection
             key={attr.key}
-            flat={panel}
+            flat={panel || compact}
             collapsible={!panel}
             title={`${attr.name}${attr.unit && attr.unit.toLowerCase() !== attr.name.toLowerCase() ? ` (${attr.unit})` : ''}`}
           >
             {attr.inputType === 'number' ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder={attr.bounds ? String(attr.bounds.min) : 'Min'}
-                  value={attrSelections[attr.key]?.min ?? ''}
-                  onChange={(e) => onAttrRangeChange(attr.key, e.target.value, attrSelections[attr.key]?.max)}
-                  className="h-10 w-full rounded-lg border border-surface-border px-3 text-sm text-ink-700 outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
-                />
-                <span className="text-muted">–</span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder={attr.bounds ? String(attr.bounds.max) : 'Max'}
-                  value={attrSelections[attr.key]?.max ?? ''}
-                  onChange={(e) => onAttrRangeChange(attr.key, attrSelections[attr.key]?.min, e.target.value)}
-                  className="h-10 w-full rounded-lg border border-surface-border px-3 text-sm text-ink-700 outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
-                />
-              </div>
+              <RangeFields
+                min={attrSelections[attr.key]?.min}
+                max={attrSelections[attr.key]?.max}
+                minPlaceholder={attr.bounds ? String(attr.bounds.min) : 'Min'}
+                maxPlaceholder={attr.bounds ? String(attr.bounds.max) : 'Max'}
+                labelMin={`Minimum ${attr.name}`}
+                labelMax={`Maximum ${attr.name}`}
+                onCommit={(lo, hi) => onAttrRangeChange(attr.key, lo, hi)}
+              />
             ) : (
               <AttrOptionPills attr={attr} selected={attrSelections[attr.key] ?? []} onToggle={onAttrToggle} />
             )}
@@ -317,7 +326,7 @@ export function FilterSidebar({
             behind ONE disclosure and only Verified sellers shows at rest. It
             opens itself when any of those filters is active, so a hidden
             panel can never conceal why results are narrowed. */}
-        {(showPrice || usefulAttributes.length > 0 || loading) && (
+        {(showPrice || usefulAttributes.length > 0 || (onMoqChange && facets?.moq) || loading) && (
           <>
         <button
           type="button"
@@ -346,6 +355,70 @@ export function FilterSidebar({
 /** One collapsible section — bold heading + chevron (rotates open, same
  *  convention as `Combobox`'s own toggle) + content. Open by default; purely
  *  a display state, never affects which filters are active. */
+/**
+ * A min–max pair that COMMITS on blur or Enter, never on every keystroke.
+ *
+ * 🔴 The bug this replaces (2026-08-17): both inputs called their `onChange`
+ * straight through to the URL, so typing "1200" ran FOUR searches and briefly
+ * filtered the catalogue to "min 1", then "min 12", then "min 120". The URL is
+ * the source of truth, so the field mirrors it while idle and only writes back
+ * a finished value — Escape abandons the edit and restores what is applied.
+ */
+function RangeFields({ min, max, minPlaceholder, maxPlaceholder, onCommit, labelMin, labelMax }) {
+  const applied = { min: min ?? '', max: max ?? '' };
+  const [draft, setDraft] = useState(applied);
+  // Re-sync when the URL changes underneath (chip removed, Clear all, back).
+  const [seen, setSeen] = useState(applied);
+  if (seen.min !== applied.min || seen.max !== applied.max) {
+    setSeen(applied);
+    setDraft(applied);
+  }
+
+  const commit = (next) => {
+    if (next.min === applied.min && next.max === applied.max) return;
+    onCommit(next.min, next.max);
+  };
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.currentTarget.blur();
+    } else if (e.key === 'Escape') {
+      setDraft(applied);
+      e.currentTarget.blur();
+    }
+  };
+  const field =
+    'h-10 w-full rounded-lg border border-surface-border px-3 text-sm text-ink-700 outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600';
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="number"
+        inputMode="decimal"
+        aria-label={labelMin}
+        placeholder={minPlaceholder}
+        value={draft.min}
+        onChange={(e) => setDraft((d) => ({ ...d, min: e.target.value }))}
+        onBlur={() => commit(draft)}
+        onKeyDown={onKeyDown}
+        className={field}
+      />
+      <span className="text-muted">–</span>
+      <input
+        type="number"
+        inputMode="decimal"
+        aria-label={labelMax}
+        placeholder={maxPlaceholder}
+        value={draft.max}
+        onChange={(e) => setDraft((d) => ({ ...d, max: e.target.value }))}
+        onBlur={() => commit(draft)}
+        onKeyDown={onKeyDown}
+        className={field}
+      />
+    </div>
+  );
+}
+
 /** `collapsible={false}` (owner, 2026-08-17) is how the rail renders: the ONE
  *  "More filters" disclosure is the only collapse there, so the groups behind
  *  it are plain sections — a heading and its controls, no second chevron to

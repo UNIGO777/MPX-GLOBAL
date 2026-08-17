@@ -353,6 +353,15 @@ export function ProductForm() {
       errs.price = 'Minimum must be less than maximum.';
     }
     if (pr.mode !== 'on_request' && pr.min == null) errs.price = 'A price is required.';
+    // MOQ is REQUIRED for goods and must be at least 1 (owner, 2026-08-17).
+    // The server enforces the same rule at publish; this only explains it
+    // earlier. Services never carry an MOQ.
+    if (!isService) {
+      const moq = String(form.moq ?? '').trim();
+      if (moq === '') errs.moq = 'A minimum order quantity is required.';
+      else if (!Number.isInteger(Number(moq)) || Number(moq) < 1) errs.moq = 'Must be a whole number of 1 or more.';
+      if (!String(form.unit ?? '').trim()) errs.unit = 'A unit is required.';
+    }
     setFieldErrors(errs);
     if (Object.keys(errs).length === 0) save.mutate();
   }
@@ -781,10 +790,17 @@ export function ProductForm() {
             step={3}
             done={infoDone}
             title={isService ? 'Service details' : 'Trade information'}
-            desc="All optional — fill what helps a buyer decide."
+            // Goods now REQUIRE a minimum order quantity, so this step is no
+            // longer wholly optional for them — saying otherwise would send a
+            // seller to a publish error they were told could not happen.
+            desc={
+              isService
+                ? 'All optional — fill what helps a buyer decide.'
+                : 'Minimum order quantity and unit are required; the rest is optional.'
+            }
             aside={
               <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
-                Optional
+                {isService ? 'Optional' : 'MOQ + unit required'}
               </span>
             }
             last={defs.length === 0}
@@ -792,24 +808,30 @@ export function ProductForm() {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {!isService && (
                 <>
-                  <Field label="Minimum order quantity" optional>
+                  <Field label="Minimum order quantity" error={fieldErrors.moq}>
                     {(fid) => (
                       <input
                         id={fid}
                         type="number"
-                        min="0"
-                        className={inputClasses(false)}
+                        min="1"
+                        step="1"
+                        required
+                        aria-invalid={Boolean(fieldErrors.moq)}
+                        className={inputClasses(Boolean(fieldErrors.moq))}
                         placeholder="e.g. 500"
                         value={form.moq}
                         onChange={(e) => set({ moq: e.target.value })}
                       />
                     )}
                   </Field>
-                  <Field label="Unit" optional helper="e.g. pieces, kg, meters">
+                  <Field label="Unit" error={fieldErrors.unit} helper="e.g. pieces, kg, meters">
                     {(fid) => (
                       <input
                         id={fid}
-                        className={inputClasses(false)}
+                        required
+                        aria-invalid={Boolean(fieldErrors.unit)}
+                        className={inputClasses(Boolean(fieldErrors.unit))}
+                        placeholder="e.g. meters"
                         value={form.unit}
                         onChange={(e) => set({ unit: e.target.value })}
                       />

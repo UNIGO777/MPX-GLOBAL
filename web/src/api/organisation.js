@@ -27,6 +27,17 @@ export const organisationApi = {
   },
 
   removeLogo: () => apiClient.delete('/me/organisation/logo').then((r) => r.data.organisation),
+
+  /** Exporter storefront only — the supplier page's banner. Field name
+   *  `cover`; same magic-byte checks as the logo, 8 MB cap (wider image). */
+  uploadCover: (file) => {
+    const form = new FormData();
+    form.append('cover', file);
+    return apiClient
+      .post('/me/organisation/cover', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+      .then((r) => r.data.organisation);
+  },
+  removeCover: () => apiClient.delete('/me/organisation/cover').then((r) => r.data.organisation),
 };
 
 export const organisationKeys = {

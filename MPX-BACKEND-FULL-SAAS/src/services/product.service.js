@@ -83,6 +83,24 @@ function assertTypeFields(leaf, doc) {
   }
 }
 
+/**
+ * Goods go live with a real minimum order quantity AND the unit it is measured
+ * in, or not at all (owner, 2026-08-17). Both are what a B2B buyer judges an
+ * offer by — "500" means nothing without "meters" — and the buyer-side MOQ
+ * filter is only meaningful when they are present. Services carry neither.
+ */
+function assertGoodsRequiredFields(leaf, doc) {
+  if (leaf.type !== 'goods') return;
+  const missing = [];
+  if (!(typeof doc.moq === 'number' && doc.moq >= 1)) missing.push('a minimum order quantity');
+  if (!String(doc.unit ?? '').trim()) missing.push('a unit');
+  if (missing.length === 0) return;
+  throw AppError.badRequest(
+    `goods publish missing: ${missing.join(',')}`,
+    `Add ${missing.join(' and ')} before publishing this listing.`,
+  );
+}
+
 // Validate submitted attributes against the leaf's CategoryAttribute defs.
 // Draft = shape-valid only; PUBLISH additionally requires every `required` def
 // to be present (a seller may save an incomplete draft — plan M2-E).
@@ -363,6 +381,10 @@ export async function setProductStatus({ user, id, status, meta }) {
     // Full publish validation: required attributes must be present now.
     const leaf = await loadLeafCategory(product.categoryId);
     await validateAttributes(leaf, product.attributes, { forPublish: true });
+    // 🔴 MOQ is REQUIRED for goods (owner, 2026-08-17). Enforced at PUBLISH,
+    // not on create, so a seller can still save an incomplete draft — the same
+    // rule required attributes already follow. Services never carry one.
+    assertGoodsRequiredFields(leaf, product);
     await assertActiveCap(org, user.orgId); // D1/A10 — applies to draft→active AND inactive→active
   }
 

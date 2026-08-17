@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
 import { validate } from '../middleware/validate.js';
 import { generalLimiter, uploadLimiter } from '../middleware/rateLimit.js';
-import { uploadKycDocument, uploadLogo } from '../middleware/upload.js';
+import { uploadCover, uploadKycDocument, uploadLogo } from '../middleware/upload.js';
 import * as orgCtrl from '../controllers/organisation.controller.js';
 import * as OV from '../validators/organisation.validators.js';
 import * as ctrl from '../controllers/kyc.controller.js';
@@ -47,3 +47,7 @@ meRouter.patch('/me/organisation', authenticate, generalLimiter, validate(OV.upd
 // upload limiter (storage-abuse surface), multipart field `logo`, images only.
 meRouter.post('/me/organisation/logo', authenticate, uploadLimiter, uploadLogo, orgCtrl.setLogo);
 meRouter.delete('/me/organisation/logo', authenticate, generalLimiter, orgCtrl.removeLogo);
+
+// Exporter cover banner — same shape and same guards as the logo above.
+meRouter.post('/me/organisation/cover', authenticate, uploadLimiter, uploadCover, orgCtrl.setCover);
+meRouter.delete('/me/organisation/cover', authenticate, generalLimiter, orgCtrl.removeCover);

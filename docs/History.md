@@ -175,6 +175,109 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-17 (later 8) — web→app parity captured for M3 (owner: "so when making app m3
+  model it all is build in app also").** Everything web changed on 2026-08-16/17 is now
+  written into **`design-plans/m3/app-screens-design.md` §0**, ahead of the rest of that brief
+  and marked as winning over any older line it contradicts. §0.1 lists the API-contract
+  changes an app build would otherwise miss — `POST /search/ai` returning **`message`**, the
+  new **`subCategory`** facet, the selected category being **pinned at count 0**, facets now
+  working in **supplier mode**, goods publish requiring **`moq` + `unit`** (integer ≥ 1), and
+  the new **`/me/organisation/cover`** endpoints. §0.2 lists the product decisions to copy
+  (single "More filters" disclosure, hiding facets that cannot narrow, commit-on-blur ranges,
+  new search clears filters, no duplicated applied chips, buyer-only save with the gate copy,
+  AI search as a full screen, no contact/address on supplier profiles). §0.3 flags the one
+  CONFLICT: that brief bans a "recent searches" list as Phase 2, while web now ships a bounded
+  device-local one by owner carve-out — the app version needs its own explicit go-ahead, and
+  the §3 boundary line now cross-references it rather than reading as a flat ban.
+- **2026-08-17 (later 7) — exporter cover-banner upload BUILT; the field is no longer dead
+  surface (owner chose "build it" over removing it).** `Organisation.coverImage` shipped with
+  the 2026-08-13 supplier-profile redesign with NO way to set it — only seeded rows had one
+  (**1 of 9 exporter orgs**), so every real exporter fell back to the gradient. Now:
+  `POST /me/organisation/cover` + `DELETE` (routes `me.routes.js`, controller, and
+  `setMyCover`/`removeMyCover` in `organisation.service.js`), mirroring the LOGO path exactly
+  rather than inventing a second one — exporter-side only (buyer → 403), magic-byte verified
+  via the shared `uploadPublicImage`, old asset cleaned up best-effort on replace/remove, and
+  **`kycStatus` never touched** (storefront content, §A22). New `uploadCover` multer
+  middleware: memory storage, single file, field name `cover`, 8 MB cap (wider than the
+  logo's 5 MB because a 4:1 banner is a bigger image); the storage service re-verifies
+  regardless. Frontend: `organisationApi.uploadCover/removeCover` and a dropzone on the
+  company-profile screen ABOVE the logo, with a 4:1 preview, the gradient shown as the
+  fallback, and client-side type/size guards mirroring the server's. 4 new tests in
+  `a22-company-profile.test.js` (upload keeps the tick · buyer 403 · missing file 400 · no
+  session 401) — 19/19 green. 📄 Both docs that said this was unbuilt are corrected in the
+  same pass: `m3-public-projection.md` and `SupplierProfile.jsx`'s header comment.
+  🔒 No public-surface change: `coverImage` was already whitelisted and already rendering.
+- **2026-08-17 (later 6) — supplier profile UI pass (owner: "nothing just fix ui").** Logo
+  seated deeper into the banner and enlarged (h-20 → h-24/28 with a lift shadow) — at the old
+  size it read as a stray thumbnail against a 4:1 cover; "About the Company" became a single
+  anchored card with its heading on a divider instead of a floating h2 over a sparse box.
+  🔴 Also raised and NOT built: the owner asked to show address/contact "and all". Street
+  address, phone, email and website are PRIVATE by `m3-public-projection.md` — the page was
+  already rendering every field the public API returns. Options were put to the owner
+  (city-level location is whitelisted and available; full address/contact would be a
+  conscious widening) and the answer was to leave the data alone.
+- **2026-08-17 (later 5) — `/category` filters solidified to match `/search` (owner).**
+  🔁 **Filters are back in the left rail, under Specialisations** — this REVERSES the
+  2026-08-14 decision that pulled them out ("I don't like the position of these filters below
+  the specialisation list"); the reversal is written into the code comment so nobody restores
+  the old layout citing the old instruction. Same `panel` presentation `/search` uses.
+  📌 **Applied filters now render as removable pills in the toolbar, where the Filters button
+  used to be** (owner's words), built by the SHARED `buildAppliedChips` so pills and panel
+  can never disagree; the Filters button is now `lg:hidden` since the rail owns filtering on
+  desktop, and phones/tablets keep the button + full-screen sheet unchanged.
+  🔄 **Left-rail scroll — attempted, then REVERTED at the owner's request.** The rail keeps
+  both cards inside ONE sticky `max-h-[calc(100vh-6rem)] overflow-y-auto` column, as before.
+  For the record, since it will be noticed again: opening a filter makes that box auto-scroll
+  to the focused control, which clips the specialisation list mid-row and puts a second
+  scrollbar beside the page's own. A fix was built (plain sticky stack; only the long list
+  scrolling, `max-h-[46vh]` + `overscroll-contain`; verified at 720/900px with nothing clipped
+  and the filter panel reachable), the owner then asked for specialisations not to scroll at
+  all, and immediately after for the structure change to be reversed — so the ORIGINAL
+  structure stands and the clipping behaviour stands with it. Re-fixing needs a fresh decision
+  on which of the two scrolls to give up.
+- **2026-08-17 (later 4) — `/search` chip de-duplication + a supplier-mode filter that never
+  worked (owner: "why showing categories again in filters here").** The applied-chip row
+  repeated category and country, which the Related Categories row and the country row already
+  show in their own selected state (highlighted, with an × to clear) — the same filter twice,
+  stacked. Those two now render in the chip row ONLY where the page has no other control for
+  them: category never, country in supplier mode only. 🐛 Which exposed a real bug: supplier
+  mode passed a country facet to the filter panel while the facets query was
+  `enabled: type === 'product'` — so the facet was always empty and the supplier country
+  filter could never appear anywhere. `/public/facets` accepts `type=supplier` (it answers
+  country + verified), so the query now runs in both modes and the hand-rolled empty facet
+  object is gone. Verified: supplier drawer shows "Supplier country" and applying India gives
+  `&country=IN`.
+- **2026-08-17 (later 3) — 🔴 MOQ + unit are now REQUIRED to publish a goods listing (owner).**
+  Owner asked for MOQ to be required, then explicitly ruled out a pre-filled default ("just
+  make it required"), then added the unit ("leave it as field just make it required" — free
+  text, NOT a dropdown; a dropdown was started and abandoned on that instruction).
+  **Server (authoritative):** `assertGoodsRequiredFields(leaf, doc)` in `product.service.js`
+  runs at PUBLISH — same stage as required attributes — so an incomplete DRAFT can still be
+  saved; services are exempt by leaf type. Validator now `z.coerce.number().int().min(1)` —
+  **MOQ cannot be 0** (owner) and cannot be fractional. **Form:** MOQ and Unit lost their
+  "optional" marker, gained `required` + inline errors mirroring the server rule, and step 3's
+  copy/badge changed from "All optional" to "MOQ + unit required" for goods only — telling a
+  seller a step is optional and then refusing their publish is the failure this avoids.
+  ⚠️ **17 tests broke** across `m1-m2-interactions` and `m1-m5-full-stack`: their fixtures
+  published goods with neither field, so the new 400 fired before the behaviour under test
+  (one asserted a 409 cap error). Fixtures updated with realistic values, not the rule
+  relaxed. 📊 **No data migration needed** — the owner asked to backfill existing listings to
+  MOQ 1, but a check found every no-MOQ product is a SERVICE (7 of them), which correctly has
+  none; **0 goods listings** lacked one, so nothing was written to the database.
+- **2026-08-17 (later 2) — `/search` filters solidified, desktop + mobile (owner).**
+  🐛 **Per-keystroke search:** price and numeric-attribute inputs wrote straight to the URL on
+  every `onChange`, so typing "1200" ran FOUR searches and briefly filtered on "1", then "12",
+  then "120". Replaced by a shared `RangeFields` control that mirrors the applied URL value
+  while idle and COMMITS on blur or Enter (Escape abandons the edit); it re-syncs when the URL
+  changes underneath, so removing a chip or "Clear all" empties the field. Verified by
+  counting requests: **0 searches while typing, exactly 1 on commit.**
+  🔧 **Desktop/mobile parity:** the phone drawer still rendered Category and Supplier-country
+  groups that the page already shows as the related-categories box and the country chip row —
+  the same filter twice on one screen. The drawer now nulls both, so both breakpoints offer
+  exactly one filter set: Verified · Price · MOQ · category attributes.
+  ✨ **MOQ filter now exists for buyers** — `/public/search` and the facets have always
+  supported `moqMin`, but only AI search could set it, so the chip could appear with no way to
+  create it. Rendered only when the facet reports a real range.
 - **2026-08-17 (later) — filter panel: one disclosure, plain inner groups, dead facets hidden,
   + a real remount bug fixed.** Owner rulings: the collapsed Price/GSM/Width ROWS were still
   visible and should be hidden too → they now sit behind ONE **"More filters"** disclosure

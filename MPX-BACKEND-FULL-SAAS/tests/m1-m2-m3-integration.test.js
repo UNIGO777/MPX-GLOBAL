@@ -332,6 +332,12 @@ describe('lifecycle end-states clean up across modules', () => {
         name: 'Cotton Item 4',
         categoryId: String(leaf._id),
         price: { mode: 'on_request' },
+        // moq + unit are REQUIRED for goods at publish (2026-08-17). Without
+        // them this publish now fails validation (400) BEFORE the cap is
+        // reached, and the test would stop proving what it claims — that the
+        // 4th listing is refused by the D1 cap (409).
+        moq: 100,
+        unit: 'meters',
         attributes: [{ key: 'gsm', value: 100 }],
       });
     const blocked = await request(app)

@@ -103,10 +103,12 @@ export function CompanyProfile() {
   const qc = useQueryClient();
   const isExporter = user?.role === 'exporter';
   const logoRef = useRef(null);
+  const coverRef = useRef(null);
 
   const [form, setForm] = useState(null); // null until the org loads
   const [confirmDemote, setConfirmDemote] = useState(false);
   const [draggingLogo, setDraggingLogo] = useState(false);
+  const [draggingCover, setDraggingCover] = useState(false);
   const [notice, setNotice] = useState(null);
   const [error, setError] = useState(null);
 
@@ -216,6 +218,19 @@ export function CompanyProfile() {
     logoUpload.mutate(file);
   };
 
+  const acceptCover = (file) => {
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Cover image must be a JPG, PNG or WEBP image.');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setError('Cover image must be 8 MB or smaller.');
+      return;
+    }
+    coverUpload.mutate(file);
+  };
+
   const logoUpload = useMutation({
     mutationFn: (file) => organisationApi.uploadLogo(file),
     onMutate: () => setError(null),
@@ -225,6 +240,27 @@ export function CompanyProfile() {
     },
     onError: (err) => setError(err?.response?.data?.error?.message ?? 'Could not upload the logo.'),
   });
+  // Cover banner (2026-08-17) — same cache handling as the logo: update the
+  // owner view AND invalidate the public preview so the page below refreshes.
+  const coverUpload = useMutation({
+    mutationFn: (file) => organisationApi.uploadCover(file),
+    onMutate: () => setError(null),
+    onSuccess: (organisation) => {
+      qc.setQueryData(organisationKeys.mine, organisation);
+      qc.invalidateQueries({ queryKey: catalogueKeys.exporter(organisation.slug) });
+    },
+    onError: (err) => setError(err?.response?.data?.error?.message ?? 'Could not upload the cover image.'),
+  });
+  const coverRemove = useMutation({
+    mutationFn: organisationApi.removeCover,
+    onMutate: () => setError(null),
+    onSuccess: (organisation) => {
+      qc.setQueryData(organisationKeys.mine, organisation);
+      qc.invalidateQueries({ queryKey: catalogueKeys.exporter(organisation.slug) });
+    },
+    onError: (err) => setError(err?.response?.data?.error?.message ?? 'Could not remove the cover image.'),
+  });
+
   const logoRemove = useMutation({
     mutationFn: organisationApi.removeLogo,
     onSuccess: (organisation) => {
@@ -365,6 +401,81 @@ export function CompanyProfile() {
       title="Public storefront"
       desc="Shown on your public supplier page — changing these never affects your verification."
     >
+      {/* COVER BANNER (2026-08-17). Sits above the logo because it is the
+          wider, more prominent asset on the public page — and because it was
+          previously impossible to set: the field shipped with the profile
+          redesign but had no upload path, so every real exporter fell back to
+          the gradient. Same dropzone interaction as the logo below. */}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={org.data?.coverImage ? 'Replace cover image' : 'Upload cover image'}
+        onClick={() => coverRef.current?.click()}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && coverRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDraggingCover(true); }}
+        onDragLeave={() => setDraggingCover(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDraggingCover(false);
+          acceptCover(e.dataTransfer.files?.[0]);
+        }}
+        className={`mb-4 cursor-pointer rounded-xl border-2 border-dashed p-4 transition-colors ${
+          draggingCover ? 'border-primary-600 bg-primary-50' : 'border-surface-border hover:bg-surface-subtle'
+        }`}
+      >
+        {org.data?.coverImage ? (
+          <img
+            src={org.data.coverImage}
+            alt=""
+            className="aspect-[4/1] w-full rounded-lg border border-surface-border object-cover"
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            className="aspect-[4/1] w-full rounded-lg bg-gradient-to-r from-primary-800 via-primary-700 to-primary-500"
+          />
+        )}
+        <div className="mt-3">
+          <span className="text-sm font-medium text-ink-900">Cover banner</span>
+          <p className="text-xs text-muted">
+            The wide image behind your name on your public page · a 4:1 landscape works best ·
+            JPG, PNG or WEBP · 8 MB max
+          </p>
+          <div className="mt-2 flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={coverUpload.isPending}
+              onClick={(e) => { e.stopPropagation(); coverRef.current?.click(); }}
+            >
+              <UploadIcon className="mr-1.5 h-4 w-4" />
+              {org.data?.coverImage ? 'Replace' : 'Upload'}
+            </Button>
+            {org.data?.coverImage && (
+              <Button
+                size="sm"
+                variant="ghost"
+                loading={coverRemove.isPending}
+                onClick={(e) => { e.stopPropagation(); coverRemove.mutate(); }}
+              >
+                <TrashIcon className="mr-1 h-4 w-4 text-danger" /> Remove
+              </Button>
+            )}
+          </div>
+          <input
+            ref={coverRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              acceptCover(e.target.files?.[0]);
+              e.target.value = '';
+            }}
+          />
+        </div>
+      </div>
+
       {/* The whole zone is a dropzone AND a click target — same interaction as
           the product image manager, one file. */}
       <div

@@ -35,7 +35,9 @@ whitelisted public fields below**. Everything else stays private.
 
 **Seller / Supplier** — company/business name · **`slug`** (`/supplier/:slug` link — §A6) · logo ·
 **`coverImage`** (2026-08-13 — supplier-profile banner, same public-asset reasoning as `logo`;
-**no upload endpoint exists yet**, see `SupplierProfile.jsx`'s own header comment) · description ·
+✅ **the exporter can now SET it** — `POST/DELETE /me/organisation/cover`, built 2026-08-17,
+mirroring the logo's guards exactly: exporter-side only, magic-byte verified, 8 MB cap,
+storefront content so it never touches `kycStatus`) · description ·
 verified tick = a **`verified` boolean** + `verifiedAt` (derived server-side from
 `kycStatus`; the raw `kycStatus` / `rejected` state is **never** exposed — frontend reads
 `verified`, not `kycStatus`) · general location (country / city, **not** street

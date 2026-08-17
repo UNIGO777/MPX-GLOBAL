@@ -29,6 +29,19 @@ export async function setLogo(req, res) {
   res.json({ organisation });
 }
 
+export async function setCover(req, res) {
+  if (!req.file?.buffer) {
+    throw AppError.badRequest('no file', 'Upload one image in the "cover" field.');
+  }
+  const { organisation } = await svc.setMyCover({ user: req.user, buffer: req.file.buffer });
+  res.json({ organisation });
+}
+
+export async function removeCover(req, res) {
+  const { organisation } = await svc.removeMyCover({ user: req.user });
+  res.json({ organisation });
+}
+
 export async function removeLogo(req, res) {
   const { organisation } = await svc.removeMyLogo({ user: req.user });
   res.json({ organisation });

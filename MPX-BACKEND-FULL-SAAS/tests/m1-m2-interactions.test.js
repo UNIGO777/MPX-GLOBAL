@@ -102,6 +102,9 @@ describe('M1 auth → M2 catalogue, end to end over real HTTP', () => {
         name: 'E2E Cotton Roll',
         categoryId: String(goodsLeaf._id),
         price: { mode: 'on_request' },
+        // goods publish requires both (2026-08-17)
+        moq: 100,
+        unit: 'meter',
       });
     expect(created.status).toBe(201);
 

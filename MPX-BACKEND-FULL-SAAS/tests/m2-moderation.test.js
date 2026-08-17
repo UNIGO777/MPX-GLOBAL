@@ -54,6 +54,9 @@ function productDoc(extra = {}) {
     categoryId: leaf._id,
     name: `Roll ${seq}`,
     status: 'active',
+    // goods need both to survive an API publish (2026-08-17 rule)
+    moq: 100,
+    unit: 'meter',
     ...extra,
   };
 }
