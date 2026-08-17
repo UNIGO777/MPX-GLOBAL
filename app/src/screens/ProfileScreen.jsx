@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useFocusEffect } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
 import { useCallback, useRef, useState } from 'react';
 import { Alert, Animated, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -66,6 +67,17 @@ import { PORTAL_LABEL } from './auth/portals.js';
  * nav bar with a hairline border that fades in with it. The React Navigation
  * native tab header is turned off for this screen (`headerShown: false` in
  * both navigators) — it was duplicating this title.
+ *
+ * 🆕 2026-08-16 (later 2) — status bar icons now switch light/dark WITH the
+ * header's own crossfade (`expo-status-bar`, was never used anywhere in the
+ * app — confirmed via a repo-wide search; `NavyCanopy.jsx`/`ScreenContainer.jsx`
+ * got the same fix, but both of THEIRS is a fixed style since their own
+ * backgrounds never change colour. Profile's does, so a fixed style would be
+ * wrong on one side of the scroll). `Animated.event`'s `listener` option
+ * (fires alongside the native-driver-free scrollY mapping, plain JS) flips a
+ * `useState` boolean past the same `HEADER_FADE_DISTANCE / 2` the visual
+ * crossfade uses, so the icon colour switches right as the header visually
+ * reads as "more white than navy" rather than at the very end of the fade.
  *
  * Two things still deliberately not built, even on the "match the mockup
  * exactly" pass — not a style call, an honesty one:
@@ -155,8 +167,22 @@ export function ProfileScreen({ navigation }) {
     extrapolate: 'clamp',
   });
 
+  // Status bar icons can't crossfade like the header can — `expo-status-bar`
+  // only takes a discrete style — so they flip once past the midpoint of the
+  // same fade distance, via the scroll listener below (plain JS state, not
+  // the Animated.Value itself).
+  const [statusBarDark, setStatusBarDark] = useState(false);
+  const onScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+    useNativeDriver: false,
+    listener: (e) => {
+      const solid = e.nativeEvent.contentOffset.y > HEADER_FADE_DISTANCE / 2;
+      setStatusBarDark((prev) => (prev === solid ? prev : solid));
+    },
+  });
+
   return (
     <View style={styles.screen}>
+      <StatusBar style={statusBarDark ? 'dark' : 'light'} />
       {/* Sticky, scroll-reactive header — blue at the top (blends into the
           navy hero underneath it), crossfades to a solid white bar with a
           hairline border within the first HEADER_FADE_DISTANCE px of scroll.
@@ -177,7 +203,7 @@ export function ProfileScreen({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+        onScroll={onScroll}
         refreshControl={<RefreshControl refreshing={loading && Boolean(org)} onRefresh={load} tintColor={colors.primary[600]} />}
       >
         {/* Navy hero — the PERSON's identity, not the screen name. Extra top
@@ -202,7 +228,7 @@ export function ProfileScreen({ navigation }) {
         {/* White sheet rising over the navy — same rounded-seam convention
             `NavyCanopy` uses everywhere else, just inline here since the
             whole page scrolls as one now. */}
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, spacing[8]) }]}>
           {loading && !org ? (
             <Spinner label="Loading your profile…" />
           ) : loadError ? (
@@ -437,6 +463,7 @@ const styles = StyleSheet.create({
   heroSubtitle: { ...typography.body, color: colors.primary[100], marginTop: spacing[2] },
 
   // Rises over the hero — same visual seam as NavyCanopy's sheet.
+  // paddingBottom is set inline (needs insets.bottom — see the JSX).
   sheet: {
     marginTop: -SHEET_RADIUS,
     borderTopLeftRadius: SHEET_RADIUS,
@@ -444,7 +471,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.DEFAULT,
     paddingHorizontal: spacing[5],
     paddingTop: spacing[6],
-    paddingBottom: spacing[8],
     flexGrow: 1,
   },
 

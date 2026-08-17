@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
@@ -14,6 +15,11 @@ import { colors, radii, spacing, typography } from '../../theme/index.js';
  *
  * The offline state is the important one: a dropped network during restore must
  * end in a message and a retry, never an indefinite hang.
+ *
+ * 🆕 2026-08-16 — the one screen in the app that renders neither `NavyCanopy`
+ * nor `ScreenContainer` (both fixed the same day to set the status bar style —
+ * `expo-status-bar` was installed but never used anywhere). This screen's own
+ * root is always navy too, so it needed the same `light` fix directly.
  */
 export function SplashScreen({ offline = false, onRetry }) {
   const progress = useRef(new Animated.Value(0)).current;
@@ -45,6 +51,7 @@ export function SplashScreen({ offline = false, onRetry }) {
 
   return (
     <View style={styles.root}>
+      <StatusBar style="light" />
       <View style={styles.center}>
         <BrandMark />
         {/* No text lockup here — BrandMark already carries the

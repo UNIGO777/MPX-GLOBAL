@@ -19,6 +19,7 @@ export function UnsupportedRoleScreen() {
   return (
     <ScreenContainer scroll={false}>
       <EmptyState
+        icon="business-outline"
         title="This account can't use the app"
         message="The MPX Global app is for buyers and exporters. Staff accounts are managed on the web platform."
       />
