@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
   Keyboard,
@@ -40,6 +41,22 @@ import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/i
  * owner asked for a static header, and this is how a static header stays usable
  * on a short screen with a keyboard.
  *
+ * 🆕 2026-08-16 (later) — renders `<StatusBar>` (`expo-status-bar`, installed but
+ * never actually used anywhere in the app until now — confirmed via a repo-wide
+ * search). Defaults to `style="light"`: for every PUSHED-stack caller (KYC,
+ * signup, company profile, change password…) this canopy's own navy is the
+ * first thing at y=0, so light icons are correct. ⚠️ **Not** correct for a
+ * TAB-ROOT caller where the native tab header still renders above this canopy
+ * (`BuyerHomeScreen`/`ExporterHomeScreen` are the only two) — there the status
+ * bar sits over that header's WHITE background, and light-on-white icons
+ * disappeared (caught live on a device: icons were literally invisible on
+ * Home). Those two callers pass `statusBarStyle="dark"` explicitly to override
+ * the default — every other caller is unaffected. `ScreenContainer.jsx` carries
+ * the matching (always-correct, its background never has this native-header
+ * complication) `style="dark"`. `ProfileScreen.jsx` (stopped using this
+ * component the same day) needs its OWN dynamic version since its header
+ * colour animates on scroll — see the note there.
+ *
  * ⚠️ 2026-08-16 — Profile (screen 16) stopped using this component. Its own
  * identity hero grew tall enough (avatar + name + subtitle, plus its own light
  * top bar) that a STATIC canopy ate too much permanent screen height and the
@@ -63,6 +80,8 @@ import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/i
  * @param {boolean} [refreshing]  pull-to-refresh spinner state — omit both this
  *   and `onRefresh` to leave the sheet non-refreshable (every existing caller)
  * @param {func}   [onRefresh]  enables RefreshControl on the sheet when provided
+ * @param {'light'|'dark'} [statusBarStyle]  override the default 'light' — pass
+ *   'dark' when a native header still renders above this canopy (tab roots)
  */
 export function NavyCanopy({
   title,
@@ -75,6 +94,7 @@ export function NavyCanopy({
   showWordmark = true,
   refreshing = false,
   onRefresh,
+  statusBarStyle = 'light',
 }) {
   const insets = useSafeAreaInsets();
   const sheetBackground = sheetTone === 'subtle' ? colors.ink[50] : colors.surface.DEFAULT;
@@ -93,6 +113,7 @@ export function NavyCanopy({
 
   return (
     <View style={styles.root}>
+      <StatusBar style={statusBarStyle} />
       {/* `padding` on BOTH platforms. Android's `adjustResize` alone is not
           enough here: Expo draws edge-to-edge (transparent system bars), so the
           window does not actually shrink under the keyboard and a pinned footer

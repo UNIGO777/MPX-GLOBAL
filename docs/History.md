@@ -175,6 +175,158 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-17 (later 6) — App: Buyer Home gets real animation ("make it look alive", owner).**
+  Five functional additions, none decorative-only:
+  1. Content fades + rises in once on the first successful load (`hasEnteredRef` stops it
+     replaying on every tab refocus — `useFocusEffect` already re-runs `load()` each time the
+     Home tab regains focus, and replaying the animation there would read as flicker, not alive).
+  2. Promo carousel now auto-advances every `PROMO_AUTOPLAY_MS` (4s) via real
+     `ScrollView.scrollTo`, loops, stays fully swipeable, and only runs while the tab is focused
+     (`useFocusEffect`, same pattern as `load`) — manual swipes and the auto-timer share
+     `promoIndexRef` so they can't fight each other.
+  3. The overlay header (from the "later 4"/"later 5" entries below) now slides down slightly as
+     it fades in, not a flat opacity swap.
+  4. New shared `usePressScale`/`PressScaleButton` — a real `onPressIn`/`onPressOut` spring
+     bounce, applied to the quick-action tiles, the Explore Categories circles (pulled into a new
+     `CategoryTile` component since a hook can't be called inside a `.map()`), and "Register as
+     Exporter". `Pressable` itself can't animate — only an `Animated.createAnimatedComponent`
+     (i.e. `Animated.View`) reacts to an `Animated.Value` — so each is a plain `Pressable` for
+     touch + layout sizing wrapping an `Animated.View` that carries the visual style + transform.
+  5. **Closed a real gap, not just animation:** `refreshing` state and `load(true)` already
+     existed in this file (left over from before the screen dropped `NavyCanopy`, which used to
+     supply pull-to-refresh itself) but no `RefreshControl` was ever attached, so pulling down did
+     nothing. Wired to the main `Animated.ScrollView`'s `refreshControl` prop.
+  Verified LIVE on-device: carousel auto-advanced and looped with zero manual input; quick-tile
+  tap still navigates correctly through the new `PressScaleButton` wrapper (Physical Goods →
+  filtered category browse); pull-to-refresh spinner appears on a real pull gesture and settles
+  cleanly.
+- **2026-08-17 (later 5) — App: Buyer Home header now reveals on scroll instead of staying
+  pinned; promo carousel gets real space between slides.** Two owner requests: "only show the
+  header after 2% or 5% scroll" and "in between banners make some space".
+  - **Header:** supersedes the "persistent, always-visible" behaviour from the entry just below —
+    that description is now stale for the main scroll view. The header (`scrollHeader`) is hidden
+    at the true top (only the in-content "Welcome, {name}" shows there) and fades in via an
+    `Animated.Value` driven by the ScrollView's own `onScroll` once scrolled past
+    `HEADER_REVEAL_THRESHOLD` (3% of screen height — inside the asked 2–5% range, scaled to
+    device size rather than a flat pixel guess). It's now `position: absolute` overlaying the
+    ScrollView (not a layout sibling pushing it down), with `pointerEvents` toggled by a plain
+    `headerVisible` state so an invisible header can't eat a tap meant for the content underneath.
+    The loading/error branches have no scroll position to react to, so they keep the original
+    always-visible, in-flow bar — factored into a shared `headerContent` fragment so the two
+    variants can't drift apart.
+  - **Promo carousel:** each slide now sits inside its own fixed-width "page"
+    (`styles.promoPage`) with `PROMO_GAP` as real padding inside that page, not a change to the
+    page width itself — `pagingEnabled` still snaps on the exact width the 2026-08-17 border-glitch
+    fix computed, so this can't reintroduce that drift.
+  - Verified LIVE on-device: header hidden with "Welcome, Naman" clean at the true top; header
+    visible and pinned once scrolled past Explore Categories; carousel still pages exactly one
+    slide per swipe with clean rounded edges (checked slide 1 → slide 2, no border artifact).
+- **2026-08-17 (later 4) — App: Buyer Home gets a persistent sticky header while scrolling**
+  (owner: "make a header for the home page in scrolling"). `BuyerHomeScreen.jsx` now renders a
+  fixed bar (MPX wordmark + a real, working avatar button to `BuyerProfile`) as a sibling ABOVE
+  the `ScrollView`, not inside its content — it stays pinned regardless of scroll position. Kept
+  deliberately simple/static (no `Animated.Value` crossfade like `ProfileScreen.jsx`'s header)
+  because Home's background doesn't change colour on scroll, so an animated version would add
+  complexity with no visible payoff. Removed the now-duplicate avatar from the in-content Welcome
+  row (`headerRow`/`flex1`/`avatarCircle`/`AVATAR_SIZE` all deleted, confirmed unreferenced).
+  Verified LIVE on-device at both scroll extremes: header stays fixed while Verified
+  Suppliers/Recently Listed scroll underneath it, and at the true top the "Welcome, {name}" /
+  identity card / verify card / search bar / quick tiles sit cleanly beneath the bar with no
+  overlap or clipping.
+- **2026-08-17 (later 3) — App: Buyer Home promo carousel edge glitch fixed** (owner screenshot:
+  "showing like you made a borders"). Root cause: each slide's width was a flat guessed `328`,
+  but `pagingEnabled` pages the carousel by the SCROLLVIEW'S OWN rendered width — a slide
+  narrower/wider than that drifts out of sync with the page boundary, so the next slide's
+  rounded top-left corner peeked through past the current one, reading as a stray jagged border.
+  Fixed: slide width is now computed (`Dimensions.get('window').width - spacing[5] * 2`),
+  exactly matching the carousel's real available width instead of a guess. Verified LIVE
+  on-device: clean rounded rectangle at rest, and clean corner alignment mid-swipe between
+  slides too (checked both, not just the settled state).
+- **2026-08-17 (later 2) — App: Buyer Home rebuilt against an owner-supplied mockup ("make
+  exact same"), a real departure from the app-wide Navy Canopy pattern.** `BuyerHomeScreen.jsx`
+  no longer uses `NavyCanopy` — plain white/light header, left-aligned "Welcome, {name}," no
+  native tab header (`headerShown: false` added to `BuyerHome`, same move as Profile's earlier
+  redesign). New real, working sections: **Physical Goods / Business Services quick-filter
+  tiles** — genuinely functional, not decorative: `CategoryBrowseScreen.jsx` gained an optional
+  `route.params.typeFilter` (`'goods'|'service'`); since §A16 stores `type` on SUB-categories
+  only (a top's own `type` is null), a top counts as matching when at least one real sub does,
+  and step 2 narrows to just the matching subs — verified live on-device, eyebrow correctly
+  reads "PHYSICAL GOODS" and the grid genuinely filters (Agriculture/Apparel/Textiles/Leather —
+  no service categories). **Explore Categories** (real category photos, now circular per the
+  mockup), **Verified Suppliers** and **Recently Listed** (both hitting `GET /public/search` —
+  new `catalogueApi.search()` added to the app's API layer, same endpoint the web app already
+  uses, not a shadow query) — confirmed live with real orgs/products (Bengaluru AI Labs,
+  Tirupur Knitwear, a real service listing "Web security" alongside goods, proving both target
+  types render correctly). Every new card/box uses `radii.lg` — the same radius this app's
+  existing cards already use, per the owner's explicit ask — no new radius value introduced.
+  **Two things kept but NOT silently dropped**: the identity card + `VerificationSummaryCard`
+  (the only entry point to the KYC hub) aren't in the mockup at all, but dropping real,
+  already-shipped functionality for a visual refresh would be a regression, not a redesign —
+  same principle applied to Profile's redesign earlier. **Two elements kept 100% visually
+  identical to the mockup but wired honestly, not left as silent dead controls**: the search bar
+  and "Register as Exporter" are real `Pressable`s that show a plain "Coming soon" message on
+  tap (`Alert.alert`) rather than doing nothing — M3 app search isn't built, and there's no
+  in-app path today for a signed-in buyer to also register as an exporter (that flow only exists
+  on the logged-out screens). **Two copy changes from the mockup**, both because the literal
+  text wasn't true of this product: "Top-rated global partners" → "Verified by our team" (no
+  rating/review system exists — nothing to rate suppliers ON); "Join thousands of verified
+  exporters" → "Join verified exporters" (this platform hasn't shipped long enough to honestly
+  claim "thousands" of anything). ⚠️ **No avatar photo** — checked the backend again, no avatar
+  field exists on `User`/`Organisation`; an icon-in-circle stands in for the mockup's stock
+  photo (same reasoning as Profile's redesign). Verified LIVE on-device across the full page —
+  header, identity/verification cards, search row, quick-filter tiles (including the real
+  Physical Goods filter test), promo carousel with working dot pagination, all three data
+  carousels — no crash, no JS error.
+- **2026-08-17 (later) — App: bottom tab bar's safe-area handling restored (owner correctly
+  pushed back — "safe screen view ki baat kar raha hu, wo fix nahi hua abhi tak", after I'd
+  misread the same screenshot as just an OS toast).** Real bug, found on the second look:
+  `@react-navigation/bottom-tabs` measures the bottom safe-area inset and pads the tab bar for
+  it automatically — UNLESS a caller sets its own explicit `height`, which fully disables that
+  automatic behaviour and makes the caller responsible for the inset itself. The 2026-08-16
+  `tabBarStyle: { height: 64, ... }` (added for the raised-circle active-tab icon) did exactly
+  that, and nothing added the inset back — invisible on this device (3-button nav, inset is 0)
+  but would sit tab bar content under a gesture-nav home indicator on any phone that has one.
+  Fixed: `navigationTheme.js`'s static `tabBarStyle` became `buildTabBarStyle(insetsBottom)`,
+  called from inside `BuyerNavigator`/`ExporterNavigator` (both now call `useSafeAreaInsets()` —
+  has to happen in the component, insets aren't known statically). Verified LIVE: renders
+  byte-identical on this device (inset 0 → same height/padding as before), and the underlying
+  fix is now correct for any device where the inset is real. Separately, also tightened
+  `ProfileScreen.jsx`'s own sheet bottom padding to `Math.max(insets.bottom, spacing[8])` (was a
+  flat `spacing[8]`, inconsistent with how `NavyCanopy`/`ScreenContainer` already handle their
+  own footers) — found while investigating, unrelated to the tab-bar bug itself. Confirmed via a
+  repo-wide grep that the actual toast in the owner's screenshot ("Calls and notifications will
+  vibrate") cannot come from this app — zero vibration/haptics code exists anywhere in it; that
+  part really was Android's own ringer-mode system toast, coincidentally overlapping the tab bar
+  in the same screenshot as the real bug.
+- **2026-08-17 — App: status bar icons fixed across every screen (owner: "screen safe... not
+  working, fix that over every page").** Root cause: `expo-status-bar` is an installed
+  dependency but was **never actually used anywhere in the app** (confirmed via a repo-wide
+  search) — no screen ever told Android whether to show light or dark status bar icons, so they
+  rendered on whatever the platform default happened to be, illegible against this app's navy
+  headers on most screens. Fixed at the two shared shell components so every screen using them
+  gets it automatically: `NavyCanopy.jsx` renders `<StatusBar style="light" />` (its navy is at
+  y=0 for every pushed-stack caller — KYC, signup, company profile, change password — confirmed
+  both `AppStack.jsx` and `AuthNavigator.jsx` set `headerShown: false` stack-wide, so none of
+  them have a native header above it); `ScreenContainer.jsx` renders `style="dark"` (its
+  background is always white). `SplashScreen.jsx` — the one screen using neither shell — got the
+  same `light` fix directly. 🐛 **Caught live on-device before shipping**: `BuyerHomeScreen`/
+  `ExporterHomeScreen` are `NavyCanopy` callers that are ALSO tab roots, so the native tab header
+  (white) still renders above the canopy — the status bar sits over THAT, not the navy, so
+  `NavyCanopy`'s new default made the icons light-on-white and literally invisible (screenshotted
+  before catching it). Fixed with a new optional `statusBarStyle` prop on `NavyCanopy` (default
+  `'light'`, unchanged for every other caller), explicitly overridden to `'dark'` from just those
+  two Home screens. `ProfileScreen.jsx` (which stopped using `NavyCanopy` the same day for an
+  unrelated reason — see the "(later 4)" entry below) needed its own dynamic version since its
+  header's background crossfades on scroll rather than being fixed: `Animated.event`'s `listener`
+  option flips a plain `useState` boolean past the halfway point of the same
+  `HEADER_FADE_DISTANCE` the visual crossfade already uses (`expo-status-bar`'s `style` prop only
+  takes a discrete value, it can't itself crossfade). Verified LIVE on-device across all cases:
+  light-on-navy (Profile at rest, KycHub — both pushed/no native header), dark-on-white (Profile
+  scrolled, Home — native header present). ⚠️ Gotcha for future sessions: hit the same known
+  pre-existing Fabric relaunch crash 3 times in a row this session (unrelated to this change —
+  confirmed via identical stack traces each time) before a longer force-stop→relaunch gap (10s)
+  finally avoided it; if a relaunch crashes here, don't assume the last edit caused it, just wait
+  longer before retrying.
 - **2026-08-16 (later 5) — App Profile screen: removed the duplicate native header, header now
   crossfades blue → white on scroll.** Owner asked to (1) remove the default header and (2) make
   the custom one blue at scroll-top, white within the first ~2-3% of scroll. `headerShown: false`

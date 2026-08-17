@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +12,13 @@ import { colors, spacing } from '../theme/index.js';
  * @param {boolean} scroll     content scrolls (default) — set false for a screen that manages its own list
  * @param {node}    footer     pinned above the keyboard and the home indicator; where a primary button belongs
  * @param {boolean} padded     apply the standard horizontal gutter (default true)
+ *
+ * 🆕 2026-08-16 — renders `<StatusBar style="dark" />`: this shell's own
+ * background is always white, extending edge-to-edge behind the OS status
+ * bar, so dark icons are always correct here. Pairs with `NavyCanopy.jsx`'s
+ * matching `style="light"` for its own always-navy background — see that
+ * component's note for the bug this fixes (status bar icons were never
+ * styled anywhere in the app, `expo-status-bar` was installed but unused).
  */
 export function ScreenContainer({
   children,
@@ -44,6 +52,7 @@ export function ScreenContainer({
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }, style]}>
+      <StatusBar style="dark" />
       {/* `padding` on both platforms — see the note in NavyCanopy.jsx: Expo's
           edge-to-edge Android window does not shrink under the keyboard, so
           relying on `adjustResize` alone leaves the footer unreachable. */}

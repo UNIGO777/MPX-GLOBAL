@@ -30,11 +30,20 @@ import { toAppError } from '../utils/errors.js';
  * screen 2 (category product listing) isn't built. Rather than do nothing or
  * look broken, it opens a small, honest "coming soon" screen naming that
  * exact sub-category (`CategoryComingSoon`) — logged in `docs/UiWebNotes.md`.
+ *
+ * 🆕 2026-08-17 — optional `route.params.typeFilter` (`'goods' | 'service'`),
+ * from Home's "Physical Goods" / "Business Services" quick-action tiles. Real
+ * filter, not decoration: §A16 stores `type` only on SUB-categories (leaves) —
+ * a top's own `type` field is genuinely null — so a top only counts as
+ * matching if at least one of its real subs does, and step 2 then narrows to
+ * just the matching subs (a "mixed" top shows only its goods subs when
+ * arrived at via the Goods tile, for example).
  */
-export function CategoryBrowseScreen({ navigation }) {
+export function CategoryBrowseScreen({ navigation, route }) {
   const [state, setState] = useState({ loading: true, error: null, categories: [] });
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTop, setSelectedTop] = useState(null);
+  const typeFilter = route?.params?.typeFilter ?? null;
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -80,15 +89,25 @@ export function CategoryBrowseScreen({ navigation }) {
   );
 
   const { loading, error, categories } = state;
-  const subs = selectedTop?.subs ?? [];
+  // A top has no `type` of its own (§A16 — leaf-only) — it matches a filter
+  // when at least one of its real subs does. Step 2 then narrows to just
+  // those matching subs, so a "mixed" top never shows the other type.
+  const tops = typeFilter ? categories.filter((top) => top.subs?.some((s) => s.type === typeFilter)) : categories;
+  const subs = selectedTop
+    ? typeFilter
+      ? (selectedTop.subs ?? []).filter((s) => s.type === typeFilter)
+      : (selectedTop.subs ?? [])
+    : [];
 
   const openSub = (sub) => {
     navigation.navigate('CategoryComingSoon', { name: sub.name, image: sub.image ?? null });
   };
 
+  const filterLabel = typeFilter === 'goods' ? 'PHYSICAL GOODS' : typeFilter === 'service' ? 'BUSINESS SERVICES' : 'CATALOGUE';
+
   return (
     <NavyCanopy
-      eyebrow={selectedTop ? 'SUB-CATEGORIES' : 'CATALOGUE'}
+      eyebrow={selectedTop ? 'SUB-CATEGORIES' : filterLabel}
       title={selectedTop ? selectedTop.name : 'Browse categories'}
       subtitle={
         selectedTop
@@ -125,9 +144,11 @@ export function CategoryBrowseScreen({ navigation }) {
             ))
           )}
         </View>
+      ) : tops.length === 0 ? (
+        <Text style={styles.empty}>No categories match this filter yet.</Text>
       ) : (
         <View style={styles.grid}>
-          {categories.map((top) => (
+          {tops.map((top) => (
             <Pressable
               key={top.id}
               onPress={() => setSelectedTop(top)}

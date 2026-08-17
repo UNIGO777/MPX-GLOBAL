@@ -64,6 +64,10 @@ export function ExporterHomeScreen({ navigation }) {
       subtitle={org?.country ? `${org.country} · Exporter account` : 'Your exporter account on MPX Global.'}
       refreshing={refreshing}
       onRefresh={() => load(true)}
+      // This is a tab ROOT — the native tab header still renders above this
+      // canopy (white background), so the status bar needs dark icons, not
+      // NavyCanopy's own 'light' default (which is right everywhere else).
+      statusBarStyle="dark"
     >
       {loading && !org ? (
         <Spinner label="Loading your home…" />
