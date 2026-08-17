@@ -174,7 +174,12 @@ Do not start the screens without surfacing this alert.
   Atlas is a **test-only** environment (owner-confirmed), so the dev superadmin password is not
   a production risk. The real/production superadmin must use a new secret, with
   `SEED_SUPERADMIN_PASSWORD` removed from `.env` after seeding.
-- **Remove the dev-only OTP terminal print** (`otp.sender.js`) and wire real OTP delivery.
+- **Remove the dev-only OTP terminal print** (`otp.sender.js`). ✅ **Real OTP delivery is
+  WIRED AND TESTED IN PRODUCTION (owner, 2026-08-17)** — only the dev print remains to strip;
+  do not describe OTP delivery as unbuilt (it was wrongly listed as a pre-launch task in a
+  client status report). Local `.env` has the Fast2SMS keys commented out, which is why the
+  dev print and the credential-gated tests exist here — that is a LOCAL config state, not the
+  production one.
 - **KYC docs on Cloudinary MUST be `type: authenticated` (or `private`), never default public
   `upload`.** The whole KYC security model (A7 / tracker E3) hinges on this: we store only the
   Cloudinary `public_id` as `Organisation.kycDocuments[].storageKey` and serve docs via

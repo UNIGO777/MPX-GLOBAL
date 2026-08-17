@@ -34,9 +34,10 @@ import { NotFound } from './NotFound.jsx';
  * alongside this redesign specifically so this page would have real data to
  * render (`m3-public-projection.md` updated to match — never widen a public
  * projection without updating that doc in the same pass). What was
- * DELIBERATELY NOT built: any upload endpoint or edit-screen UI for a seller
- * to actually SET this field — `logo` has its own dedicated upload path
- * (`organisation.service.js`), `coverImage` does not yet. Until that
+ * ✅ BUILT 2026-08-17 (owner): the seller CAN now set this — `setMyCover` /
+ * `removeMyCover` in `organisation.service.js`, `POST/DELETE
+ * /me/organisation/cover`, with the dropzone on the company-profile screen
+ * beside the logo. The paragraph below described the gap before that. Until
  * follow-up ships, every real seller on the platform renders the fallback
  * fill below, not a photo. Told to the owner directly, not just here.
  *
@@ -224,19 +225,22 @@ export function SupplierProfile() {
               </div>
             ) : (
               <div className="px-5 pb-6 sm:px-8">
-                <div className="-mt-10">
+                {/* Seated deeper into the banner and larger (2026-08-17 UI
+                    pass): at h-20 it read as a stray thumbnail against a 4:1
+                    cover. The shadow separates it from busy photography. */}
+                <div className="-mt-14 sm:-mt-16">
                   {s.logo ? (
                     <img
                       src={s.logo}
                       alt=""
-                      className="h-20 w-20 rounded-2xl object-cover ring-4 ring-white"
+                      className="h-24 w-24 rounded-2xl object-cover shadow-lift ring-4 ring-white sm:h-28 sm:w-28"
                     />
                   ) : (
                     <NoImagePanel
                       label={s.name}
                       monogram
-                      ratio="h-20 w-20"
-                      className="rounded-2xl ring-4 ring-white"
+                      ratio="h-24 w-24 sm:h-28 sm:w-28"
+                      className="rounded-2xl shadow-lift ring-4 ring-white"
                     />
                   )}
                 </div>
@@ -294,15 +298,23 @@ export function SupplierProfile() {
               hasn't written a description, never a silent gap. --- */}
           {!seller.isPending && (
             <section className="mt-8">
-              <h2 className="mb-3 text-xl font-bold text-ink-900 sm:text-2xl">About the Company</h2>
-              <div className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">
-                {s.description ? (
-                  <p className="max-w-prose text-sm leading-relaxed text-ink-700">{s.description}</p>
-                ) : (
-                  <p className="text-sm italic text-muted">
-                    This supplier hasn&apos;t added a company description yet.
-                  </p>
-                )}
+              {/* Header lives INSIDE the card (2026-08-17 UI pass) — a floating
+                  h2 over a card holding two lines of prose left a sparse,
+                  unanchored block. Same header-on-a-divider anatomy the filter
+                  and category cards use. */}
+              <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
+                <h2 className="border-b border-surface-border px-6 py-4 text-[15px] font-bold text-ink-900">
+                  About the Company
+                </h2>
+                <div className="px-6 py-5">
+                  {s.description ? (
+                    <p className="max-w-prose text-sm leading-relaxed text-ink-700">{s.description}</p>
+                  ) : (
+                    <p className="text-sm italic text-muted">
+                      This supplier hasn&apos;t added a company description yet.
+                    </p>
+                  )}
+                </div>
               </div>
             </section>
           )}

@@ -41,6 +41,33 @@ const parseLogo = multer({
   limits: { fileSize: LOGO_MAX_BYTES, files: 1 },
 }).single('logo');
 
+// Single-image upload for the exporter COVER (2026-08-17). Identical posture to
+// the logo — memory storage, magic-byte verified downstream — with a slightly
+// larger cap because a 4:1 banner is a wider image than a square mark. The
+// storage service re-verifies type and size regardless of what multer allowed.
+const COVER_MAX_BYTES = 8 * 1024 * 1024;
+
+const parseCover = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: COVER_MAX_BYTES, files: 1 },
+}).single('cover');
+
+export function uploadCover(req, res, next) {
+  parseCover(req, res, (err) => {
+    if (!err) return next();
+    if (err instanceof multer.MulterError) {
+      const message =
+        err.code === 'LIMIT_FILE_SIZE'
+          ? 'Cover image exceeds the 8 MB limit.'
+          : err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE'
+            ? 'Upload one image in the "cover" field.'
+            : 'Could not read the uploaded image.';
+      return next(AppError.badRequest(`upload: ${err.code}`, message));
+    }
+    return next(AppError.badRequest('upload failed', 'Could not read the uploaded image.'));
+  });
+}
+
 export function uploadLogo(req, res, next) {
   parseLogo(req, res, (err) => {
     if (!err) return next();

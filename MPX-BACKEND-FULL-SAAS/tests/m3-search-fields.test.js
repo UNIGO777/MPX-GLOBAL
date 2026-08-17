@@ -87,6 +87,9 @@ const productBody = (extra = {}) => ({
   categoryId: String(leaf._id),
   price: { mode: 'on_request' },
   attributes: [{ key: 'form', value: 'Tablet' }],
+  // goods publish requires both (2026-08-17)
+  moq: 100,
+  unit: 'boxes',
   ...extra,
 });
 

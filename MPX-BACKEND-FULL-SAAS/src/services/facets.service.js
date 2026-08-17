@@ -155,6 +155,22 @@ async function productFacets(params) {
     attributeFacets(params),
   ]);
 
+  // 🔴 A buyer's OWN selection must never fall out of the facet it was chosen
+  // from (owner, 2026-08-17: picking Silk fabric then toggling "verified"
+  // made Silk vanish from the list, so the selection could not be seen or
+  // cleared, and its chip fell back to the raw slug). Other filters can drive
+  // its count to 0 — that is honest and worth SHOWING, but it must still be
+  // listed. Pin it into whichever facet it belongs to, with its real count.
+  // Only a LEAF is pinned: both facets are leaf-level lists once a branch is
+  // chosen, so a selected TOP legitimately does not appear in them (it is the
+  // branch being drilled INTO, not one of its children).
+  if (selected?.parentId) {
+    const id = String(selected._id);
+    for (const rows of [categoryRows, subCategoryRows]) {
+      if (!rows.some((r) => String(r._id) === id)) rows.push({ _id: selected._id, count: 0 });
+    }
+  }
+
   const categoryIds = [...categoryRows.map((r) => r._id), ...subCategoryRows.map((r) => r._id)];
   const categories = await Category.find({ _id: { $in: categoryIds } }).select('name slug').lean();
   const byId = new Map(categories.map((c) => [String(c._id), c]));

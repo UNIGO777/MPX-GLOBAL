@@ -18,6 +18,64 @@
 
 ---
 
+## 0. 🔴 WEB SHIPPED AHEAD — what the app must match (added 2026-08-17)
+
+**Read this before designing or building anything below.** The web M3 surfaces were built,
+reviewed by the owner and revised many times over 2026-08-16/17. Several revisions changed the
+**API contract** or set **product decisions** that this brief predates. The two surfaces must
+feel like one product, so the app inherits all of it. Where a line here contradicts a later
+section, **this section wins** — it is newer.
+
+### 0.1 API contract changes — the app WILL break or under-deliver without these
+
+| Change | What the app must do |
+|---|---|
+| `POST /search/ai` now also returns **`message`** — a short sentence the model writes to the buyer (what it understood, sometimes one sourcing tip). The old templated `answer` is still there and stays the count-honest fallback. | Show `message` as the assistant's reply; fall back to `answer` when it is null (AI-failure path). Never claim counts from `message` — the model has not seen the results. |
+| `GET /public/facets` returns a new **`subCategory`** facet — leaf-level counts, independent of the drill-down `category` facet. | Use it for a "related categories" strip; it is what makes sideways browsing work when no category is selected. |
+| The **selected leaf category is pinned into the facets even at count 0**. | A chosen category never disappears from the list when another filter zeroes it. Render the 0 honestly; do not filter it out. |
+| **Facets now work in supplier mode** (`type=supplier` → `country` + `verified`). Previously the web disabled the call and the supplier country filter could never appear. | Call facets in BOTH modes. Supplier mode filters = verified + country only. |
+| **Goods listings require `moq` AND `unit` to publish** — the server refuses with 400 at publish (drafts may still be saved incomplete). `moq` must be a whole number **≥ 1** (0 is rejected). | Any seller-side app screen that publishes goods must collect both and mirror the rule; services must never send them. |
+| **New: `POST` / `DELETE /me/organisation/cover`** — the exporter's public banner (field `cover`, images only, 8 MB, exporter-side only, never affects `kycStatus`). | The app's company-profile screen should offer the same upload; the supplier profile screen should render `coverImage` with the brand gradient as fallback. |
+
+### 0.2 Product decisions made on web that the app should copy
+
+- **Search results = one filter set, one place.** Verified sellers is always visible; everything
+  else sits behind a single **"More filters"** disclosure. A group holding an active selection
+  opens itself, so a collapsed panel can never hide why results are narrowed.
+- **A filter that cannot narrow anything is not shown** — price with no bounds, a numeric range
+  whose min equals its max, a single-option list. Facet counts come from the server; this is
+  purely what is worth rendering.
+- **Range inputs commit on blur/submit, never per keystroke.** On web, typing "1200" used to run
+  four searches and briefly filter on "1". The app must not repeat that.
+- **A new search clears previous filters.** Otherwise a fresh query silently returns nothing.
+- **Applied filters never appear twice.** If a control already shows its own selected state
+  (the category strip, the country chips), it is not repeated as an applied chip.
+- **Related categories are separate from filters** — browsing sideways is not narrowing.
+- **A buyer-facing MOQ filter exists** (`moqMin`). The API always supported it; until 2026-08-17
+  only AI search could set it.
+- **Saved:** the heart is visible to everyone, the capability is buyer-only. A guest tapping it
+  gets "Log in with a buyer account to save this product" + a login route; a signed-in
+  non-buyer gets the same sentence and an OK. Saved rows show price, seller identity and a
+  neutral **"Currently unavailable"** badge for items that have gone; they stay removable.
+- **AI search is its own full screen** (not a modal on web any more): composer → the AI's
+  written reply → matching products → related categories → a docked "search something else"
+  composer. Results are normal results; a quota or AI failure degrades to keyword search.
+- **Supplier profile carries no contact details, address or website** — asked for on
+  2026-08-17 and refused as a projection violation. Country/city only.
+
+### 0.3 ⚠️ One conflict this brief must resolve before the app is built
+
+§3 of this document says: *"do not design a 'recent searches' list — it is named Phase 2"*.
+**Web now ships one** — a Recent row on the search screen's idle state, approved by the owner
+on 2026-08-17 as a bounded carve-out: last 5 query strings in the browser's local storage
+only, no endpoint, no server record, no analytics, individually removable.
+
+The app has no equivalent decision. Treat "recent searches in the app" as **needing the
+owner's explicit go-ahead** — do not assume web parity grants it, and do not build a
+server-backed version of it either way.
+
+---
+
 ## 1. Before anything else — what M3 is in the app
 
 **Discovery is the buyer's reason to open the app.** M1 gave the app auth and profile; M3 gives
@@ -197,7 +255,9 @@ contract) · staff surfaces.
 
 **Not in M3 (the boundary — `m3.md` §11, backend plan §4):** semantic/AI-embedding search,
 recommendations, "similar products", recently-viewed, **search history** (do not design a
-"recent searches" list — it is named Phase 2) · enquiry/chat screens (M4 — screens 6–7 carry an
+"recent searches" list — it is named Phase 2; ⚠️ **see §0.3** — web shipped a bounded,
+device-local one by owner carve-out on 2026-08-17, and the app equivalent needs its OWN
+explicit go-ahead) · enquiry/chat screens (M4 — screens 6–7 carry an
 entry-point button only) · quotation (deferred) · autocomplete/search-as-you-type (lost with
 Atlas, out of scope).
 

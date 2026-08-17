@@ -63,7 +63,11 @@ const productFields = {
   attributes: z.array(attributeInput).max(50).optional(),
 
   // goods-only:
-  moq: z.coerce.number().nonnegative().optional(),
+  // 🔴 min 1, integer (owner, 2026-08-17): "cannot be 0". A zero minimum-order
+  // is meaningless to a buyer and made the MOQ filter nonsense. Still
+  // `.optional()` here because a DRAFT may be saved incomplete — publishing a
+  // goods listing without one is refused in `product.service.js`.
+  moq: z.coerce.number().int().min(1).optional(),
   unit: zString({ min: 1, max: 40 }).optional(),
   hsCode: zString({ min: 1, max: 20 }).optional(),
   countryOfOrigin: countryCode.optional(),

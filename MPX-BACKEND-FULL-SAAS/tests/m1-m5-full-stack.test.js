@@ -96,6 +96,8 @@ async function seedWorld() {
 async function listProduct(name = 'Cotton Roll') {
   const created = await request(app).post('/products').set(bearer(seller.token)).send({
     name, categoryId: String(leaf._id), price: { mode: 'fixed', min: 300, currency: 'INR' },
+    // goods publish requires both (2026-08-17)
+    moq: 50, unit: 'meter',
   });
   expect(created.status).toBe(201);
   const id = created.body.product.id;

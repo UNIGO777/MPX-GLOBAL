@@ -256,6 +256,45 @@ describe('entityType and storefront boundaries', () => {
   });
 });
 
+describe('cover-image endpoints (2026-08-17)', () => {
+  it('exporter uploads a cover; kycStatus untouched', async () => {
+    const { token, user } = await makeParty('exporter');
+    await verifyOrg(user.orgId);
+
+    const res = await request(app)
+      .post('/me/organisation/cover')
+      .set(bearer(token))
+      .attach('cover', Buffer.from([0x89, 0x50, 0x4e, 0x47]), 'cover.png');
+
+    expect(res.status).toBe(200);
+    expect(res.body.organisation.coverImage).toContain('mpx/covers/');
+    // Storefront content, exactly like the logo: it must NEVER cost the tick.
+    expect(res.body.organisation.kycStatus).toBe('verified');
+
+    const removed = await request(app).delete('/me/organisation/cover').set(bearer(token));
+    expect(removed.status).toBe(200);
+    expect(removed.body.organisation.coverImage).toBeNull();
+  });
+
+  it('a buyer is refused — no public page, no cover', async () => {
+    const { token } = await makeParty('buyer');
+    await request(app)
+      .post('/me/organisation/cover')
+      .set(bearer(token))
+      .attach('cover', Buffer.from([0x89, 0x50]), 'cover.png')
+      .expect(403);
+  });
+
+  it('a missing file is a 400, not a crash', async () => {
+    const { token } = await makeParty('exporter');
+    await request(app).post('/me/organisation/cover').set(bearer(token)).expect(400);
+  });
+
+  it('is refused without a session', async () => {
+    await request(app).post('/me/organisation/cover').expect(401);
+  });
+});
+
 describe('logo endpoints', () => {
   it('exporter uploads a logo; kycStatus untouched', async () => {
     const { token, user } = await makeParty('exporter');

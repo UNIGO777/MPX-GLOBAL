@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { CategoryThumb } from '../../components/catalogue/CategoryThumb.jsx';
-import { FilterSidebar } from '../../components/catalogue/FilterSidebar.jsx';
+import { buildAppliedChips, FilterSidebar } from '../../components/catalogue/FilterSidebar.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { ProductListCard } from '../../components/catalogue/ProductListCard.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
@@ -586,9 +586,9 @@ function MobileFiltersSheet({ open, onClose, total, isPending, top, cat, onSubPa
         type="button"
         aria-label="Close filters"
         onClick={onClose}
-        className="absolute inset-0 hidden cursor-default bg-ink-900/40 lg:block"
+        className="absolute inset-0 hidden cursor-default bg-ink-900/40 xl:block"
       />
-      <div className="relative flex h-full w-full flex-col bg-white lg:ml-auto lg:max-w-md lg:shadow-lift">
+      <div className="relative flex h-full w-full flex-col bg-white xl:ml-auto xl:max-w-md xl:shadow-lift">
         <header className="flex shrink-0 items-center justify-between border-b border-surface-border px-4 py-4">
           <h2 className="text-lg font-bold text-ink-900">Filters</h2>
           <button
@@ -608,7 +608,7 @@ function MobileFiltersSheet({ open, onClose, total, isPending, top, cat, onSubPa
           <div className="lg:hidden">
             <SubGrid top={top} currentId={cat?.id} onSubPage={onSubPage} />
           </div>
-          <FilterSidebar {...filterSidebarProps} bare />
+          <FilterSidebar {...filterSidebarProps} bare compact />
         </div>
 
         <footer className="shrink-0 border-t border-surface-border p-4">
@@ -785,6 +785,23 @@ export function CategoryListing() {
     onClearAll: onClearAllFilters,
   };
 
+  // The same chip list the drawer renders, shown in the toolbar so the applied
+  // filters are visible without opening anything (owner, 2026-08-17). Built by
+  // the SHARED `buildAppliedChips`, so the pills and the panel can never
+  // disagree about what is applied.
+  const appliedChips = buildAppliedChips({
+    verifiedOnly,
+    priceMin,
+    priceMax,
+    priceCurrency: facets.data?.facets?.price?.currency,
+    attrSelections,
+    attributes: facets.data?.facets?.attributes ?? [],
+    onToggleVerified,
+    onPriceChange,
+    onAttrToggle,
+    onAttrRangeChange,
+  });
+
   return (
     <div className="flex min-h-screen flex-col bg-white text-ink-900">
       <PublicHeader current="Categories" />
@@ -811,14 +828,35 @@ export function CategoryListing() {
                 original overlap bug: a child's own sticky had the whole
                 <aside> as its containing block). */}
             <aside className="hidden lg:block">
-              <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border border-surface-border bg-white shadow-card">
-                <div className="p-4">
-                  {tree.isPending ? (
-                    <Skeleton className="h-96 w-full rounded-2xl" />
-                  ) : (
-                    <SubRail top={top} currentId={cat?.id} onSubPage={onSubPage} />
-                  )}
+              {/* Sticky rail with its OWN scroll (owner keeps this). It could
+                  not reach its end: the scroll area was capped at
+                  `100vh-6rem` while sticking at `top-20`, and its content
+                  finished flush against that edge — so the last filter sat
+                  under the viewport lip and read as cut off, with a 1px
+                  overshoot at the very bottom (measured 2026-08-17).
+                  `top-16` matches the 64px header exactly, the cap is derived
+                  from that same offset, and `pb-4` gives the final control
+                  room to clear the edge. `overscroll-contain` keeps the wheel
+                  in the rail instead of chaining to the page mid-list. */}
+              <div className="sticky top-16 max-h-[calc(100vh-5rem)] space-y-4 overflow-y-auto overscroll-contain pb-4">
+                <div className="rounded-2xl border border-surface-border bg-white shadow-card">
+                  <div className="p-4">
+                    {tree.isPending ? (
+                      <Skeleton className="h-96 w-full rounded-2xl" />
+                    ) : (
+                      <SubRail top={top} currentId={cat?.id} onSubPage={onSubPage} />
+                    )}
+                  </div>
                 </div>
+                {/* 🔴 Filters are BACK in the rail, beneath Specialisations
+                    (owner, 2026-08-17). This deliberately REVERSES the
+                    2026-08-14 decision that pulled them out ("I don't like the
+                    position of these filters below the specialisation list") —
+                    do not "restore" that on the strength of the old comment.
+                    Same `panel` presentation `/search` uses, so both discovery
+                    pages now filter identically. Below lg the Filters button +
+                    full-screen sheet still own this. */}
+                <FilterSidebar {...filterSidebarProps} panel />
               </div>
             </aside>
 
@@ -924,15 +962,20 @@ export function CategoryListing() {
                   "Filters" is a text-button opening the sheet (phones,
                   2026-08-13) or the right-side drawer (lg+). */}
               <div className="mb-5 mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-surface-border pb-3">
-                <div className="flex min-h-[44px] items-center gap-4">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
                   <span className="text-sm text-muted" aria-live="polite">
                     {products.isSuccess ? `${total} product${total === 1 ? '' : 's'}` : ' '}
                   </span>
-                  <span aria-hidden="true" className="h-4 w-px bg-surface-border" />
+                  {/* The rail owns filtering on lg+, so this button is the
+                      phone/tablet control only. In its place on desktop the
+                      APPLIED filters read back as removable pills (owner,
+                      2026-08-17: "the applied filters will appear in pill
+                      forms where the filter button currently is"). */}
+                  <span aria-hidden="true" className="h-4 w-px bg-surface-border lg:hidden" />
                   <button
                     type="button"
                     onClick={() => setMobileFiltersOpen(true)}
-                    className="flex min-h-[44px] items-center gap-2 text-sm font-semibold text-ink-900 transition-colors hover:text-primary-700"
+                    className="flex min-h-[44px] items-center gap-2 text-sm font-semibold text-ink-900 transition-colors hover:text-primary-700 lg:hidden"
                   >
                     <FilterIcon className="h-4 w-4" aria-hidden="true" />
                     Filters
@@ -942,6 +985,28 @@ export function CategoryListing() {
                       </span>
                     )}
                   </button>
+                  {appliedChips.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {appliedChips.map((chip) => (
+                        <button
+                          key={chip.id}
+                          type="button"
+                          onClick={chip.onRemove}
+                          className="inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 py-1 pl-3 pr-2 text-sm font-medium text-primary-700"
+                        >
+                          {chip.label}
+                          <XIcon className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={onClearAllFilters}
+                        className="text-sm font-medium text-primary-700 hover:underline"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <SortMenu value={sort} onChange={onSortChange} />
               </div>
