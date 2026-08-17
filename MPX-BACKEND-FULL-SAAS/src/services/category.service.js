@@ -51,8 +51,19 @@ export async function getActiveLeafIds() {
 // Public reads
 // ---------------------------------------------------------------------------
 
-export async function getPublicTree() {
-  const tops = await Category.find({ parentId: null, active: true }).sort({ order: 1, _id: 1 }).lean();
+/**
+ * The public tree. No args = everything (the web app's one-shot load).
+ * `{ limit, offset }` = a slice of TOPS in the same admin-defined order, each
+ * still carrying ALL of its subs — the app's browse list loads in chunks as
+ * the user scrolls (2026-08-17). Chunking is by top category, never by sub:
+ * half a section's chips would render as a lie ("this category has 3 subs")
+ * rather than a smaller page.
+ */
+export async function getPublicTree({ limit, offset = 0 } = {}) {
+  const filter = { parentId: null, active: true };
+  let topsQuery = Category.find(filter).sort({ order: 1, _id: 1 });
+  if (limit != null) topsQuery = topsQuery.skip(offset).limit(limit);
+  const tops = await topsQuery.lean();
   const subs = await Category.find({ parentId: { $in: tops.map((t) => t._id) }, active: true })
     .sort({ order: 1, _id: 1 })
     .lean();
@@ -62,7 +73,10 @@ export async function getPublicTree() {
     if (!byParent.has(key)) byParent.set(key, []);
     byParent.get(key).push(sub);
   }
-  return tops.map((top) => ({ top, subs: byParent.get(String(top._id)) ?? [] }));
+  const tree = tops.map((top) => ({ top, subs: byParent.get(String(top._id)) ?? [] }));
+  if (limit == null) return { tree, total: tree.length };
+  const total = await Category.countDocuments(filter);
+  return { tree, total };
 }
 
 export async function getTopCategories() {

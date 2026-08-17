@@ -23,7 +23,9 @@ import { findCountry } from '../constants/countries.js';
 import { BrandWordmark } from '../components/BrandMark.jsx';
 import { VerifiedBadge } from '../components/Badge.jsx';
 import { ErrorState, Spinner } from '../components/Feedback.jsx';
+import { ProductCard } from '../components/ProductCard.jsx';
 import { VerificationSummaryCard } from '../components/VerificationSummaryCard.jsx';
+import { useSavedProducts } from '../hooks/useSavedProducts.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { PORTAL_LABEL } from './auth/portals.js';
 import { colors, radii, spacing, typography } from '../theme/index.js';
@@ -121,6 +123,7 @@ export function BuyerHomeScreen({ navigation }) {
   });
   const [refreshing, setRefreshing] = useState(false);
   const [promoIndex, setPromoIndex] = useState(0);
+  const { savedIndex, loadIndex, toggleSave } = useSavedProducts();
 
   // Drives the overlay header's fade-in. `headerVisible` (plain state, not
   // the Animated value itself) toggles `pointerEvents` so the header can't
@@ -186,6 +189,9 @@ export function BuyerHomeScreen({ navigation }) {
         catalogueApi.tree(),
         catalogueApi.search({ type: 'product', sort: 'newest', pageSize: CAROUSEL_PAGE_SIZE }),
         catalogueApi.search({ type: 'supplier', sort: 'newest', verifiedOnly: 'true', pageSize: CAROUSEL_PAGE_SIZE }),
+        // Hearts on the product rail — a failed index never blocks Home,
+        // hearts just start unfilled (`useSavedProducts` owns that policy).
+        loadIndex(),
       ]);
       setState({
         loading: false,
@@ -201,7 +207,7 @@ export function BuyerHomeScreen({ navigation }) {
     } finally {
       if (isRefresh) setRefreshing(false);
     }
-  }, []);
+  }, [loadIndex]);
 
   useFocusEffect(
     useCallback(() => {
@@ -226,6 +232,8 @@ export function BuyerHomeScreen({ navigation }) {
   const verified = org?.kycStatus === 'verified';
 
   const notComingSoon = (feature) => () => Alert.alert('Coming soon', `${feature} isn't built yet — hang tight.`);
+  // 2026-08-18 — real destination at last: M2 screen 3.
+  const openProduct = (product) => navigation.navigate('ProductDetail', { idOrSlug: product.slug ?? product.id });
 
   // Shared row content for both header variants below — kept in one place
   // so the loading/error bar and the scroll-reveal overlay can never drift
@@ -425,7 +433,18 @@ export function BuyerHomeScreen({ navigation }) {
                 <Text style={styles.viewAll}>View All</Text>
               </Pressable>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
+            {/* Bleeds to the screen edges (owner: no space around the circular
+                cards, title keeps its normal margin) — the negative margin
+                cancels the page's own horizontal padding, then
+                `categoryHScroll` restores it as real content padding so the
+                first/last card still lines up with the title instead of
+                touching the screen edge. */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.categoryScroll}
+              contentContainerStyle={styles.categoryHScroll}
+            >
               {categories.slice(0, CAROUSEL_PAGE_SIZE).map((cat) => (
                 <CategoryTile key={cat.id} cat={cat} onPress={() => navigation.navigate('CategoryBrowse')} />
               ))}
@@ -441,7 +460,14 @@ export function BuyerHomeScreen({ navigation }) {
             <Text style={styles.sectionSubheading}>Verified by our team</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
               {suppliers.map((supplier) => (
-                <SupplierMiniCard key={supplier.id} supplier={supplier} />
+                <SupplierMiniCard
+                  key={supplier.id}
+                  supplier={supplier}
+                  // 2026-08-18 — real destination at last: M2 screen 4.
+                  onPress={() =>
+                    navigation.navigate('SupplierProfile', { idOrSlug: supplier.slug ?? supplier.id })
+                  }
+                />
               ))}
             </ScrollView>
           </View>
@@ -452,7 +478,14 @@ export function BuyerHomeScreen({ navigation }) {
             <Text style={styles.sectionHeading}>Recently Listed</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
               {products.map((product) => (
-                <ProductMiniCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onPress={openProduct}
+                  savedId={savedIndex[product.id]}
+                  onToggleSave={toggleSave}
+                  style={styles.productRailSlot}
+                />
               ))}
             </ScrollView>
           </View>
@@ -556,53 +589,20 @@ function CategoryTile({ cat, onPress }) {
   );
 }
 
-/** Real product data, but deliberately NOT tappable-through — there's no
- *  product detail screen (M2 screen 3) yet to open. Purely informational
- *  until that screen ships; see the file's own note. */
-function ProductMiniCard({ product }) {
-  const cover = product.images?.[0];
-  const price = formatPrice(product.price);
-  return (
-    <View style={styles.miniCard}>
-      {cover ? (
-        <Image source={{ uri: cover }} style={styles.miniCardImage} />
-      ) : (
-        <View style={[styles.miniCardImage, styles.imageFallback]}>
-          <Ionicons name="image-outline" size={20} color={colors.ink[400]} accessible={false} />
-        </View>
-      )}
-      <View style={styles.miniCardBody}>
-        <Text style={styles.miniCardTitle} numberOfLines={2}>
-          {product.name}
-        </Text>
-        <View style={styles.priceRow}>
-          <Text style={styles.priceAmount} numberOfLines={1}>
-            {price.amount}
-          </Text>
-          {price.unit ? <Text style={styles.priceUnit}> {price.unit}</Text> : null}
-        </View>
-        {product.seller?.name ? (
-          <>
-            <View style={styles.miniDivider} />
-            <View style={styles.sellerRow}>
-              <Ionicons name="checkmark-circle" size={13} color={colors.success} accessible={false} />
-              <Text style={styles.sellerName} numberOfLines={1}>
-                {product.seller.name}
-              </Text>
-            </View>
-          </>
-        ) : null}
-      </View>
-    </View>
-  );
-}
+// Product cards moved to the SHARED `components/ProductCard.jsx` (owner,
+// 2026-08-17: one product card everywhere) — the old local ProductMiniCard
+// and its formatPrice were deleted with the swap.
 
-/** Same non-interactive reasoning as `ProductMiniCard` — no supplier profile
- *  screen (M2 screen 4) exists yet. */
-function SupplierMiniCard({ supplier }) {
+/** Tappable since 2026-08-18 — opens the supplier's public profile
+ *  (M2 screen 4, `SupplierProfileScreen`). */
+function SupplierMiniCard({ supplier, onPress }) {
   const country = supplier.country ? findCountry(supplier.country)?.name ?? supplier.country : null;
   return (
-    <View style={[styles.miniCard, styles.supplierCard]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={supplier.name}
+      style={({ pressed }) => [styles.miniCard, styles.supplierCard, pressed && styles.pressedOpacity]}>
       <View style={styles.supplierLogoWrap}>
         {supplier.logo ? (
           <Image source={{ uri: supplier.logo }} style={styles.supplierLogo} />
@@ -625,7 +625,7 @@ function SupplierMiniCard({ supplier }) {
           <Text style={styles.verifiedPillText}>Verified</Text>
         </View>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
@@ -638,17 +638,6 @@ function initials(name = '') {
       .map((w) => w[0]?.toUpperCase())
       .join('') || '?'
   );
-}
-
-/** Mirrors the web app's `PriceLine` rules: three modes, all normal — "on
- *  request" is real information, never styled as an absence; no currency
- *  conversion exists in this phase (§A27.1), print the ISO code as-is. */
-function formatPrice(price) {
-  const { mode, min, max, currency } = price ?? {};
-  const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('en-IN') : n);
-  if (mode === 'on_request' || (min == null && max == null)) return { amount: 'Price on request', unit: null };
-  if (mode === 'range') return { amount: `${currency} ${fmt(min)}–${fmt(max)}`, unit: null };
-  return { amount: `${currency} ${fmt(min)}`, unit: null };
 }
 
 // Every card/box below uses `radii.lg` — the same radius this app's other
@@ -774,7 +763,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickLabel: { ...typography.caption, fontWeight: '600', color: colors.ink[900], textAlign: 'center' },
+  quickLabel: { ...typography.caption, fontWeight: '800', color: colors.ink[900], textAlign: 'center' },
 
   // Fixed-width page `pagingEnabled` snaps to — see `PROMO_PAGE_WIDTH`'s own
   // note. `paddingHorizontal` is the real gap between slides.
@@ -801,6 +790,11 @@ const styles = StyleSheet.create({
   sectionSubheading: { ...typography.caption, color: colors.muted, marginTop: -spacing[1] },
   viewAll: { ...typography.label, color: colors.primary[700] },
   hScroll: { gap: spacing[3], paddingRight: spacing[4], paddingTop: spacing[1] },
+  // Full-bleed variant for Explore Categories only — cancels `scrollContent`'s
+  // paddingHorizontal (spacing[5]) so the row's own viewport reaches the
+  // screen edges instead of being inset like the rest of the page.
+  categoryScroll: { marginHorizontal: -spacing[5] },
+  categoryHScroll: { gap: spacing[3], paddingHorizontal: spacing[5], paddingTop: spacing[1] },
 
   // Explicit width on both — the touchable needs it since a `Pressable`
   // inside a horizontal ScrollView's row otherwise has nothing to size
@@ -820,13 +814,10 @@ const styles = StyleSheet.create({
     borderColor: colors.surface.border,
     overflow: 'hidden',
   },
-  miniCardImage: { width: '100%', height: 96 },
-  miniCardBody: { padding: spacing[3], gap: 3 },
+  // Fixed slot for the shared ProductCard on the horizontal rail — grids
+  // size it with flex instead.
+  productRailSlot: { width: 170 },
   miniCardTitle: { ...typography.caption, fontWeight: '600', color: colors.ink[900] },
-  priceRow: { flexDirection: 'row', alignItems: 'baseline' },
-  priceAmount: { ...typography.label, fontWeight: '700', color: colors.primary[700] },
-  priceUnit: { ...typography.tiny, color: colors.muted },
-  miniDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.surface.border, marginVertical: 2 },
   sellerRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   sellerName: { ...typography.tiny, color: colors.muted, flexShrink: 1 },
 

@@ -175,6 +175,177 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-18 (later 3) — App: REAL Send Enquiry on product detail (M4-B goes live in the app)
+  + listing filters + bottom safe-area floor.** Three owner asks, all verified live on-device.
+  - **Send Enquiry (buyers only):** new `api/inquiries.js` → `POST /inquiries` (M4 backend —
+    month-1 scope, already built + tested server-side). Pinned footer button on
+    `ProductDetailScreen` opens a compose sheet: the required 1–200-char note (the enquiry's
+    ONLY free text, M4-7) with live counter + "MPX Global stays part of the thread" line. 201 vs
+    200 told honestly (M4-5: a second enquiry returns the existing thread); server rejections
+    (self-enquiry guard, rate limit) surface via the server's own message in a danger toast.
+    Button hidden for non-buyers; server enforces regardless. Verified LIVE: sent a real enquiry
+    to Tirupur Knitwear Exports → 201 → success toast; the full server pipeline fired (Inquiry →
+    Conversation → composed message → welcome + seller FCM/email attempt). The thread UI itself
+    is still M4's chat screens — the toast says where the conversation will appear.
+  - **Listing filters:** filter button (active-dot indicator) beside the search pill opens a
+    bottom sheet — Sort (Newest / Price low→high / high→low, each price row carrying the honest
+    server-tier hint: "INR first, other currencies after, on-request last" — §A27.1, price sorts
+    NEVER drop results) + a '"Price on request" only' switch (`onRequest` engine toggle). Drafts
+    apply on Apply; Reset restores defaults. Verified LIVE on Textiles (5 mixed-currency
+    products): priceAsc ordered INR 180→220→390, then USD 3.4, then ALL 2,000 — exactly the
+    documented tiers, still 5 results.
+  - **Bottom safe-area:** all four pushed catalogue screens (browse / listing / detail /
+    supplier) now pad `Math.max(insets.bottom, spacing[6]) + …` — the floor keeps the last row
+    clear of Android's translucent gesture-nav strip even when the inset reports 0 (the
+    owner-reported "bottom safe screen view not working"); detail's clearance also accounts for
+    the new pinned enquiry bar.
+- **2026-08-18 (later 2) — App: M2 screen 4 SHIPPED (`SupplierProfileScreen.jsx`) + detail
+  screen gets a reveal-on-scroll title bar + heart logic extracted to a hook.** With this,
+  ALL FOUR buyer M2 screens exist. (owner: "on scroll we also need a header… and design a
+  seller public profile page next")
+  - **Supplier profile (M2 screen 4):** B7 public projection only (`GET /exporters/:idOrSlug`,
+    new `catalogueApi.exporter`) — cover/logo/name+tick/country/entity type/member-since/
+    description, NEVER contact details or a website; no "unverified" anything. Catalogue =
+    shared `ProductCard` grid via `GET /public/search?seller=` (paginated, hearts real), so the
+    profile's product count and grid CANNOT disagree — both server-derived, taken-down excluded.
+    Zero-products state renders the full profile + calm "No products listed yet" (sellers are
+    public from signup). 404 → indistinguishable "Supplier not available". Wired from BOTH
+    entry points: detail's seller card (ledger row → Done) and Home's Verified Suppliers rail
+    (`SupplierMiniCard` became a real `Pressable`).
+  - **Detail title bar:** same reveal pattern as Home — floating back circle serves the
+    top-of-page state over the gallery; as the square gallery scrolls ~half away a solid bar
+    (back + product name) fades in while the circle fades out, `pointerEvents` swapped so the
+    invisible control never eats a tap.
+  - **`hooks/useSavedProducts.js` (new):** the optimistic-heart logic reached its THIRD user
+    (supplier profile) — extracted per duplicate-twice-then-generalise; listing + Home
+    refactored onto it, both local copies deleted.
+  Verified LIVE on-device (port 41345): supplier profile rendered real data (NXT logo,
+  "NxtGenDigitals", "India · Business · Member since 2026", description, "3 products" grid —
+  and correctly NO tick, this seller is unverified); detail's title bar revealed on scroll
+  ("← Silk fabric" solid bar over the scrolled facts/specs). Gotcha observed: a fast
+  edge-adjacent vertical swipe can register as a back-gesture and pop the stack — worth
+  remembering during scripted verification, not an app bug.
+- **2026-08-18 (later) — App: M2 screen 3 SHIPPED (`ProductDetailScreen.jsx`) — product cards
+  everywhere now tap through for real** (owner: "design product details screen now"). Two
+  fetches by design: `GET /public/products/:idOrSlug` + the category's attribute DEFINITIONS
+  (`catalogueApi.categoryAttributes`, new) — the product stores `{key,value}` snapshots only,
+  labels/units live on the category (same split web's SpecTable documents); a failed defs read
+  renders specs under raw keys rather than blocking the product. Sections per the design brief:
+  full-width gallery pager (dots + "2/5" counter only with 2+ images; designed no-image
+  fallback), name + "Listed Mar 2026", large 3-mode price with real unit, seller card (name +
+  tick + country + entity type — NEVER contact details; taps to the honest coming-soon alert,
+  supplier profile is M2 screen 4, new Pending ledger row), Trade/Service details strip
+  (goods vs service field sets, only FILLED rows — service-ness derived from which fields are
+  set), collapsible description ("Read more" past ~6 lines), specifications card (booleans
+  Yes/No, numbers carry the definition's unit — "200 gsm"). 404 → indistinguishable
+  "Product not available" empty state (covers draft/hidden/archived/taken-down/dead-category
+  alike); loading = skeleton, not a spinner page. **Share deliberately OMITTED** (brief allows
+  it only against the real public URL; the app has no web-origin config — flagged, not faked).
+  No enquiry CTA (M4's brief adds it; web's disabled button is its own ledgered decision).
+  Wired: new `ProductDetail` stack route; listing + Home `openProduct` both navigate (the
+  "coming soon" product alert is gone; UiWebNotes row → Done). Verified LIVE on-device: tapped
+  "Silk fabric" from Home's rail → screen rendered real Trade details (MOQ "500 Pieces",
+  ISO→"India"), description, and specs with proper labels + units from the live category defs;
+  wireless-ADB dropped before the gallery/price top could be screenshotted — worth one look
+  next session, though the full screen rendered without error.
+- **2026-08-18 — App: ONE shared product card app-wide + listing page rebuilt to the owner's
+  mockup + saved-items (hearts) wired for real.** Owner supplied a reference design ("make the
+  searching page like that… for all my app use exact same product card everywhere").
+  - **`components/ProductCard.jsx` (new)** — THE product card, used by the listing grid AND
+    Home's "Recently Listed" rail (old local `ProductMiniCard` + its `formatPrice` deleted from
+    Home): borderless/image-first per the mockup — square `radii.lg` tile on `ink-50`, name,
+    seller + tick, large bold price **with the product's real unit** ("INR 220 / meter"), spring
+    press-response. Honest deviations from the mockup, flagged not hidden: tick stays GREEN
+    (the app-wide verified colour — the mockup's blue seal would fork the trust signal), no
+    ★ratings (no rating system exists), no strikethrough compare-at price (no discount data).
+    Post-review fix (owner: "that blank space fix it"): dropped the name's reserved-two-line
+    `minHeight` — a one-line name read as a hole in the card; now the stack sits tight and a
+    two-line name just grows its own card, like the reference.
+  - **Hearts are REAL** — new `api/saved.js` mirroring web's (`GET/POST /saved`,
+    `DELETE /saved/:id`, buyer-only server-side; productId→rowId index capped at pageSize 100,
+    same documented honesty cap as web). Optimistic toggle with visible rollback + danger toast
+    on failure; index loads alongside each screen's data and NEVER blocks it (`catch → null`,
+    hearts just start unfilled). Verified LIVE: heart filled on tap, stayed filled, and CAME BACK
+    FILLED after a full app restart (server persistence, not local state).
+  - **`CategoryProductsScreen` rebuilt to the mockup**: circular back + REAL pill search field —
+    submit re-runs the page with `q`, and inside a category the server combines `q`+`category`
+    (search-within-category); `Results for "{q}"`/category heading + real `{total} results` in
+    primary; skeleton grid while loading (no more blank spinner page); pagination/empty/error/
+    refresh kept. This is the app's first live product-search surface; AI search is a separate
+    later page per the owner.
+  - `docs/UiWebNotes.md`: product-card row broadened (shared card, listing + Home; tap still
+    "coming soon" until M2 screen 3). Session note: device sat signed-out once mid-verification
+    (session dropped during a string of failed Metro reloads) — sign-in restored it; wireless-ADB
+    port rotation remains the recurring interruption.
+- **2026-08-17 (later 10) — App: M2 screen 2 SHIPPED (`CategoryProductsScreen.jsx`);
+  `CategoryComingSoonScreen.jsx` DELETED** (owner: "remove categories subcategories page… when we
+  open any subcategory what product will come we can show that; also this page will work for
+  search products"). Real, paginated product listing: 2-col grid (photo / name / price line /
+  seller + tick — same honesty rules as Home's cards), header = category name + live count,
+  20/page appended from `onEndReached` (same ref-guard pattern as the chunked browse), pull-to-
+  refresh, designed empty/error states. Dual-purpose BY DESIGN: takes `categoryId` (browse mode —
+  server resolves a top to all its leaf subs, so top headers and sub chips both just work) OR
+  `query` (search mode, same `GET /public/search` engine as web) — nothing passes `query` yet
+  (Search tab still M3 placeholder), so wiring search later is navigation only. Product-card tap
+  = honest "Coming soon" alert (product detail / M2 screen 3 not built — new Pending row in
+  `docs/UiWebNotes.md`; the old CategoryComingSoon row is now Done). 🐛 Caught + fixed live: with
+  `numColumns={2}` an odd item count made the last card stretch FULL width (flex:1 with nothing
+  beside it) — `maxWidth: '48.5%'` on the card; verified on the real 3-product "Cotton fabric"
+  category. Verified LIVE on-device: populated grid (3 real Tirupur Knitwear products, prices,
+  ticks), empty category ("Grains, pulses & cereals" → 0 products + honest EmptyState + Browse
+  action), offline ErrorState → Try again → recovered, and the browse search-filter → chip →
+  listing flow end to end. Also removed (owner ask, same session): the `>` chevron on browse
+  section headers.
+- **2026-08-17 (later 9) — Category browse loads in CHUNKS while scrolling (backend + app)**
+  (owner: "dont load all the categories at the time… ask categories in chunks… make backend and
+  frontend both"). **Backend:** `GET /categories` grew an optional `?limit/offset` mode —
+  validated (zod, `limit` capped at 50 per B7 bounded-pagination; bad values 400) — returning a
+  slice of TOPS (each still carrying ALL its subs, never half a section) plus
+  `total/offset/limit/hasMore`. **No params = byte-identical original response** — the web app's
+  one-shot load is untouched, asserted by a test. 4 new tests in `m2-categories.test.js`
+  (22/22 green): both modes, admin ordering, inactive-top exclusion from slice AND total,
+  validation rejections. **App:** `catalogueApi.treeChunk()` + `CategoryBrowseScreen` now loads
+  10 tops at a time, appending from `onEndReached` (footer spinner, visible tap-to-retry on a
+  failed chunk — never a silent stall). Two deliberate full-load exceptions, both noted in the
+  file: search (first keystroke upgrades to ONE full load so the filter never lies about what
+  matches; failure shows an honest "results may be incomplete" line) and typeFilter mode (the
+  goods/services filter drops whole tops client-side, which would stall `onEndReached` when a
+  chunk contributes nothing). In-flight guards are refs, not state (`onEndReached` re-fires
+  before setState lands → duplicate chunk). Verified LIVE: curl both modes (limit=2 → 2/40
+  hasMore:true; bare → 40, no paging keys), then on-device — scrolled the full list top to
+  bottom, chunks appended seamlessly through all 40 categories to "Other" with no hang.
+  ⚠️ Gotcha: the dev backend on :3000 was a STALE Friday process (nodemon's child couldn't bind);
+  killed it + touched `server.js` so nodemon serves current code — if the app ever seems to
+  ignore fresh backend edits, check for a stale listener first.
+- **2026-08-17 (later 8) — App: Category browse redesigned FULL-PAGE + de-lagged** (owner: "not
+  in two portion… full page… too much lagging… more professional"). Dropped `NavyCanopy` (the
+  "two portions") for a single white page with its own back button — same departure Profile and
+  Buyer Home already made. The lag was structural: all 40 sections × ~260 image-carrying chips
+  mounted at once in NavyCanopy's plain ScrollView, and every search keystroke re-rendered the
+  whole tree. Fixed: virtualized `FlatList` (memoized rows) + chips became TEXT-ONLY pills
+  (~300 remote images → 40 section thumbnails; deliberate deviation from web's phone view whose
+  chips carry 20px thumbs — the images WERE the lag). Search input pinned outside the FlatList
+  so virtualization can't unmount a focused field. Earlier the same day ("round 2") it had been
+  rebuilt to mirror web's `Categories.jsx` phone layout (sections + chips + local filter) —
+  that layout survives; only the shell and rendering strategy changed.
+- **2026-08-17 (later 7) — New doc: `docs/CLIENT-PROGRESS-REPORT-WEB-APP.md`** (owner: "make a
+  document for app and web for the client that how much we completed"). Client-facing, plain
+  English, no internal codenames (M2/M3/D1/§A-numbers etc. all translated) — same conventions as
+  the existing `docs/CLIENT-REPORT-PROMPT.md` backend report, but this one is the frontend/product
+  companion: what a buyer, exporter or staff member can actually see and do on web vs mobile
+  today, module by module, built from a real inventory of both codebases (not from this file's own
+  stale §4/§10 summary, which still says "Current milestone: M1" — confirmed out of date against
+  the changelog and left alone rather than silently trusted). Explicitly scopes out backend/test
+  results (separate report), Quotation (later phase), and Phase 2. Key facts captured: web has
+  full seller product management, buyer discovery, search + AI search, the complete verification
+  workflow, and a permission-gated staff console (verification queue, category/product moderation,
+  audit log, employee permission assignment) — but no oversight dashboard or banner-management
+  screen yet, and no chat/enquiry UI on web at all (buttons present but disabled, per
+  `docs/UiWebNotes.md`). Mobile has the full account/KYC journey and a real-data buyer home +
+  category browser, but no product-detail/supplier-profile screens and no chat/enquiry UI either
+  (FCM push wiring for two future chat events already built ahead of the screens that'll trigger
+  it — noted as a real, verifiable fact, not a promise). Mobile has no staff portal at all, by
+  design (`UnsupportedRoleScreen.jsx`) — staff use web only.
 - **2026-08-17 (later 6) — App: Buyer Home gets real animation ("make it look alive", owner).**
   Five functional additions, none decorative-only:
   1. Content fades + rises in once on the first successful load (`hasEnteredRef` stops it

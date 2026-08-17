@@ -79,15 +79,16 @@ reads as tappable.
 ### 📱 Mobile app — Category browse (2026-08-11)
 
 `CategoryBrowseScreen.jsx` (M2 app screen 1, design brief `design-plans/m2/app-screens-design.md`
-§4) is fully wired — real 40-category tree, real drill-in, real sub-category `slug`s. The one gap:
-tapping a sub-category can't land on a real product listing yet, because M2 app screen 2 (category
-product listing) doesn't exist. Rather than do nothing, it opens `CategoryComingSoonScreen.jsx`,
-which names the exact category and says plainly the listing isn't built — not a dead tap, not a
-crash, but not a real result either.
+§4) is fully wired — real 40-category tree, real sections + chips, real chunked loading. As of
+2026-08-17 a category tap lands on the REAL product listing (`CategoryProductsScreen.jsx`, M2 app
+screen 2 — `CategoryComingSoonScreen.jsx` deleted). The listing's own remaining gap is the row
+below.
 
 | Date | Page / Component | Element (label) | What's missing / expected behaviour | Why deferred | Status |
 |------|------------------|-----------------|-------------------------------------|--------------|--------|
-| 2026-08-11 | `app/src/screens/CategoryBrowseScreen.jsx` → `CategoryComingSoonScreen.jsx` | Every sub-category row (all ~260 of them) | Should open the category's real product listing | M2 app screen 2 isn't built yet — this is the natural next screen to build | Pending |
+| 2026-08-11 | `app/src/screens/CategoryBrowseScreen.jsx` → `CategoryComingSoonScreen.jsx` | Every sub-category row (all ~260 of them) | Should open the category's real product listing | ✅ Done 2026-08-17 — opens `CategoryProductsScreen` (M2 app screen 2), real paginated products | Done |
+| 2026-08-17 | `app/src/screens/CategoryProductsScreen.jsx` | Every product card | Should open the product detail page (M2 app screen 3) | ✅ Done 2026-08-18 — `ProductDetailScreen.jsx` shipped; cards on the listing AND Home both navigate to it | Done |
+| 2026-08-18 | `app/src/screens/ProductDetailScreen.jsx` | Seller card | Should open the supplier profile (M2 app screen 4) | ✅ Done 2026-08-18 — `SupplierProfileScreen.jsx` shipped; detail's seller card AND Home's supplier cards both navigate to it | Done |
 
 ---
 

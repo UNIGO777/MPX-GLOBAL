@@ -12,7 +12,9 @@ import { withUnverifiedGuard } from '../screens/kyc/RequireUnverified.jsx';
 import { CompanyProfileScreen } from '../screens/profile/CompanyProfileScreen.jsx';
 import { ChangePasswordScreen } from '../screens/profile/ChangePasswordScreen.jsx';
 import { CategoryBrowseScreen } from '../screens/CategoryBrowseScreen.jsx';
-import { CategoryComingSoonScreen } from '../screens/CategoryComingSoonScreen.jsx';
+import { CategoryProductsScreen } from '../screens/CategoryProductsScreen.jsx';
+import { ProductDetailScreen } from '../screens/ProductDetailScreen.jsx';
+import { SupplierProfileScreen } from '../screens/SupplierProfileScreen.jsx';
 import { postSignupPrompt } from '../screens/kyc/postSignupPrompt.js';
 
 const Stack = createNativeStackNavigator();
@@ -70,11 +72,17 @@ export function AppStack({ role }) {
       {/* Screen 16 sub-screen — pushed from Profile's Security section. */}
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
 
-      {/* M2 app screen 1 — buyer-only, reached from Buyer Home (no tab-bar
-          entry, owner decision 2026-08-07). CategoryComingSoon is the honest
-          landing for a sub-category tap until screen 2 (product listing) ships. */}
+      {/* M2 app screens 1 + 2 — buyer-only, reached from Buyer Home (no
+          tab-bar entry, owner decision 2026-08-07). CategoryProducts is the
+          REAL product listing (2026-08-17) — it replaced the interim
+          CategoryComingSoon landing, deleted the same day. It also accepts a
+          `query` param (search mode) for when the Search tab gets wired. */}
       <Stack.Screen name="CategoryBrowse" component={CategoryBrowseScreen} />
-      <Stack.Screen name="CategoryComingSoon" component={CategoryComingSoonScreen} />
+      <Stack.Screen name="CategoryProducts" component={CategoryProductsScreen} />
+      {/* M2 app screens 3 + 4 (2026-08-18) — product cards / seller surfaces
+          everywhere tap here. */}
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Stack.Screen name="SupplierProfile" component={SupplierProfileScreen} />
 
       <Stack.Screen name="KycEntityType" component={withUnverifiedGuard(EntityTypeScreen)} />
       <Stack.Screen name="KycDocumentType" component={withUnverifiedGuard(DocumentTypeScreen)} />

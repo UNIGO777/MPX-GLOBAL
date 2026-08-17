@@ -15,7 +15,9 @@ export const categoryRouter = Router();
 // --- Public reads (active-only; buyers, sellers and guests) --------------------
 // Order matters: the literal paths register BEFORE the :idOrSlug catch-all.
 
-categoryRouter.get('/categories', publicRoute, generalLimiter, ctrl.getTree);
+// `?limit/offset` = optional chunked mode for the app; both omitted = the
+// original send-everything response the web app uses (see the controller).
+categoryRouter.get('/categories', publicRoute, generalLimiter, validate(V.treeQuery), ctrl.getTree);
 categoryRouter.get('/categories/top', publicRoute, generalLimiter, ctrl.getTops);
 categoryRouter.get(
   '/categories/:parentId/subcategories',

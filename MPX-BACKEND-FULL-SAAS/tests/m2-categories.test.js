@@ -145,6 +145,55 @@ describe('public category reads (M2-D)', () => {
       filterable: true,
     });
   });
+
+  // 2026-08-17 — optional chunked tree for the app's browse screen. The
+  // no-param call must stay byte-compatible (the web app's one-shot load).
+  describe('GET /categories chunked mode (?limit/offset)', () => {
+    async function makeManyTops(n) {
+      for (let i = 1; i <= n; i += 1) {
+        const top = await Category.create({ name: `Top ${String(i).padStart(2, '0')}`, slug: `top-${i}`, order: i });
+        await Category.create({ name: `Sub of ${i}`, parentId: top._id, type: 'goods', order: 1 });
+      }
+    }
+
+    it('no params → original everything-at-once shape, no paging fields', async () => {
+      await makeManyTops(5);
+      const res = await request(app).get('/categories');
+      expect(res.status).toBe(200);
+      expect(res.body.categories).toHaveLength(5);
+      expect(res.body).not.toHaveProperty('total');
+      expect(res.body).not.toHaveProperty('hasMore');
+    });
+
+    it('limit/offset slice the TOPS in admin order, each still carrying all subs', async () => {
+      await makeManyTops(5);
+      const page1 = await request(app).get('/categories?limit=2');
+      expect(page1.status).toBe(200);
+      expect(page1.body.categories.map((c) => c.slug)).toEqual(['top-1', 'top-2']);
+      expect(page1.body.categories[0].subs).toHaveLength(1); // subs never paged away
+      expect(page1.body).toMatchObject({ total: 5, offset: 0, limit: 2, hasMore: true });
+
+      const page3 = await request(app).get('/categories?limit=2&offset=4');
+      expect(page3.body.categories.map((c) => c.slug)).toEqual(['top-5']);
+      expect(page3.body.hasMore).toBe(false);
+    });
+
+    it('inactive tops are excluded from both the slice and the total', async () => {
+      await makeTree(); // 1 active top + 1 inactive top
+      const res = await request(app).get('/categories?limit=10');
+      expect(res.body.categories.map((c) => c.slug)).toEqual(['textiles']);
+      expect(res.body.total).toBe(1);
+      expect(res.body.hasMore).toBe(false);
+    });
+
+    it('rejects a non-numeric, zero, or over-cap limit (B7: bounded pagination)', async () => {
+      await makeManyTops(2);
+      expect((await request(app).get('/categories?limit=abc')).status).toBe(400);
+      expect((await request(app).get('/categories?limit=0')).status).toBe(400);
+      expect((await request(app).get('/categories?limit=51')).status).toBe(400);
+      expect((await request(app).get('/categories?offset=-1')).status).toBe(400);
+    });
+  });
 });
 
 describe('admin category endpoints (M2-D)', () => {
