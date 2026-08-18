@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { MoreVerticalIcon } from './icons.jsx';
@@ -50,23 +50,30 @@ export function RowMenu({ items, label = 'Row actions' }) {
     };
   }, [open]);
 
-  // Place after render, when the menu's real height is measurable: below the
-  // trigger by default, above it when the space below can't fit the menu.
-  useLayoutEffect(() => {
-    if (!open) {
+  /**
+   * Place the menu once its real height is measurable: below the trigger by
+   * default, above it when the space below cannot fit it.
+   *
+   * Done in a REF CALLBACK, which React runs as soon as the node is attached —
+   * earlier than an effect, and neither render nor effect, so the menu is
+   * positioned before it is painted rather than being moved afterwards.
+   */
+  const measureMenu = useCallback((el) => {
+    menuRef.current = el;
+    if (!el) {
       setPos(null);
       return;
     }
     const btn = btnRef.current?.getBoundingClientRect();
-    const menuH = menuRef.current?.offsetHeight ?? 0;
     if (!btn) return;
+    const menuH = el.offsetHeight ?? 0;
     const spaceBelow = window.innerHeight - btn.bottom;
     const up = spaceBelow < menuH + 8 && btn.top > menuH + 8;
     setPos({
       top: up ? btn.top - menuH - 4 : btn.bottom + 4,
       left: Math.max(8, btn.right - MENU_WIDTH),
     });
-  }, [open]);
+  }, []);
 
   if (!items.length) return null;
 
@@ -86,7 +93,7 @@ export function RowMenu({ items, label = 'Row actions' }) {
 
       {open && (
         <div
-          ref={menuRef}
+          ref={measureMenu}
           role="menu"
           style={{
             position: 'fixed',

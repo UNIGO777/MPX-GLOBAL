@@ -186,12 +186,17 @@ export function FilterSidebar({
             Verified by MPX
           </span>
         </div>
+        {/* 🔴 a11y (2026-08-17): this had NO accessible name — a screen reader
+            announced "switch, not checked" with nothing to say what it toggles.
+            The `before:` inset gives it a ~44px tap target without changing the
+            24px pill the design draws. */}
         <button
           type="button"
           role="switch"
           aria-checked={verifiedOnly}
+          aria-label="Show verified sellers only"
           onClick={onToggleVerified}
-          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors before:absolute before:-inset-x-2 before:-inset-y-3 before:content-[''] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:ring-offset-2 ${
             verifiedOnly ? 'bg-primary-600' : 'bg-ink-200'
           }`}
         >

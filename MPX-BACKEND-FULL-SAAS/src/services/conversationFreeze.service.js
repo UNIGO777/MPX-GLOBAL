@@ -109,7 +109,11 @@ export async function freezeThreadsForProduct({ productId, reason }) {
   const conversations = await Conversation.find({ productId, frozen: { $ne: true } });
   for (const conversation of conversations) {
     await applyFreeze({ conversation, reason });
-    await postSystemMessage({ conversationId: conversation._id, body: FREEZE_NOTICES.takedown });
+    await postSystemMessage({
+      conversationId: conversation._id,
+      body: FREEZE_NOTICES.takedown,
+      systemKind: 'product_takedown',
+    });
     // §7.4 — pushed, not polled: both composers disable without a refresh.
     emitFreeze(conversation._id, reason);
   }
@@ -127,7 +131,11 @@ export async function unfreezeThreadsForProduct({ productId }) {
     const state = await recomputeFreeze(conversation);
     if (!state.frozen) {
       reopened += 1;
-      await postSystemMessage({ conversationId: conversation._id, body: FREEZE_NOTICES.restored });
+      await postSystemMessage({
+        conversationId: conversation._id,
+        body: FREEZE_NOTICES.restored,
+        systemKind: 'product_restored',
+      });
       emitUnfreeze(conversation._id);
     }
   }

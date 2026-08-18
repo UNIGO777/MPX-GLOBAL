@@ -159,7 +159,15 @@ describe('M4-C · projections leak nothing (G1 / G2)', () => {
     expect(res.status).toBe(200);
 
     for (const m of res.body.messages) {
-      expect(Object.keys(m).sort()).toEqual(['body', 'createdAt', 'id', 'senderType'].sort());
+      // EXACT key list — this is the guard that fails the moment anything is
+      // added to a message payload, which is how a person field would be
+      // caught. `systemKind` was added deliberately on 2026-08-18.
+      expect(Object.keys(m).sort()).toEqual(
+        ['body', 'createdAt', 'id', 'senderType', 'systemKind'].sort(),
+      );
+      // It describes the PLATFORM's own notices and nothing else: a party
+      // message must never carry one.
+      if (m.senderType !== 'system') expect(m.systemKind).toBeNull();
     }
     const blob = JSON.stringify(res.body);
     expect(blob).not.toContain('senderUserId');
@@ -272,6 +280,96 @@ describe('M4-C · list search (§8.4 / G5) — names OR ids, never message conte
     await openThread(otherBuyer);
     const res = await request(app).get('/conversations').query({ q: 'TextileHub' }).set(bearer(buyer.token));
     expect(res.body.conversations).toEqual([]); // buyer has no thread of their own yet
+  });
+});
+
+/**
+ * §8.3 — the partial-match fallback (owner, 2026-08-17).
+ *
+ * Native `$text` matches whole words, so "Tex" never found "TextileHub" and the
+ * search box read as broken. When the indexed search finds NOTHING we retry with
+ * an anchored regex. These tests pin both halves: that partials now match, and
+ * that the fallback did not quietly widen the search into everything.
+ */
+describe('M4-C · list search falls back to partial matching', () => {
+  const search = (q, token = buyer.token, extra = {}) =>
+    request(app).get('/conversations').query({ q, ...extra }).set(bearer(token));
+
+  it('a partial company or product name matches (what `$text` alone could not do)', async () => {
+    await openThread();
+
+    const partialSeller = await search('Text');
+    expect(partialSeller.body.conversations).toHaveLength(1);
+
+    const partialProduct = await search('Cot');
+    expect(partialProduct.body.conversations).toHaveLength(1);
+  });
+
+  it('matches only at a WORD START — not anywhere inside a word', async () => {
+    await openThread();
+    // "ileHub" sits mid-word inside "TextileHub"; an unanchored regex would
+    // match it and make every short query match nearly everything.
+    expect((await search('ileHub')).body.conversations).toEqual([]);
+  });
+
+  it('regex metacharacters are escaped — a pasted pattern is literal text, not a program', async () => {
+    await openThread();
+
+    // Unescaped, each of these would match every row (or hang the engine).
+    for (const hostile of ['.*', '.+', '(a+)+$', '^', '[', '.*Hub']) {
+      const res = await search(hostile);
+      expect(res.status).toBe(200);
+      expect(res.body.conversations).toEqual([]);
+    }
+
+    // ⚠️ NOT a leak, and worth pinning so nobody "fixes" it: `Text|Cotton` DOES
+    // return the thread — but through the indexed `$text` branch, which splits
+    // the input into words and legitimately matches "Cotton" in the product
+    // name. The regex fallback never runs, because the first query found a row.
+    expect((await search('Text|Cotton')).body.conversations).toHaveLength(1);
+  });
+
+  it('M4-32 holds on the fallback too — message CONTENT is still never searched', async () => {
+    await openThread(buyer, product, 'zebracrossing is a very distinctive word');
+    // A PARTIAL of a word that exists only inside a message body.
+    expect((await search('zebracros')).body.conversations).toEqual([]);
+  });
+
+  it('the fallback never widens scope — a partial still only sees your own threads', async () => {
+    await openThread(otherBuyer);
+    expect((await search('Text')).body.conversations).toEqual([]);
+  });
+
+  it('an id query never reaches the fallback — an unknown id stays empty', async () => {
+    await openThread();
+    const unknown = await search(String(new mongoose.Types.ObjectId()));
+    expect(unknown.body.conversations).toEqual([]);
+  });
+
+  it('🔴 paging stays in the mode page 1 settled on', async () => {
+    // Three products sharing a prefix that `$text` cannot match on its own.
+    for (const name of ['Polyblend Alpha', 'Polyblend Beta', 'Polyblend Gamma']) {
+      await openThread(buyer, await makeProduct(name));
+    }
+
+    const first = await search('Polyb', buyer.token, { limit: 2 });
+    expect(first.body.conversations).toHaveLength(2);
+    expect(first.body.nextCursor).toBeTruthy();
+
+    // Without the mode in the cursor this second page re-runs `$text`, finds
+    // nothing, and the list appears to end after one page.
+    const second = await search('Polyb', buyer.token, { limit: 2, cursor: first.body.nextCursor });
+    expect(second.body.conversations).toHaveLength(1);
+    expect(second.body.nextCursor).toBeNull();
+
+    const ids = [...first.body.conversations, ...second.body.conversations].map((c) => c.id);
+    expect(new Set(ids).size).toBe(3); // no row repeated, none skipped
+  });
+
+  it('a whole-word hit still goes through the indexed path and is unaffected', async () => {
+    await openThread();
+    const exact = await search('Cotton');
+    expect(exact.body.conversations).toHaveLength(1);
   });
 });
 

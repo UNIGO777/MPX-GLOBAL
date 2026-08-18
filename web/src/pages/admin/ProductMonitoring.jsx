@@ -45,11 +45,19 @@ import { PRODUCT_STATUS_META } from '../../lib/productStatus.js';
  * row drawer and must never reach anything the seller sees — their own listing
  * shows reason + date only (§A9).
  */
-const PAGE_SIZES = [20, 50, 100];
-
 function PurgeCountdown({ purgeAt }) {
+  /**
+   * `Date.now()` used to be read straight in the render body, which makes the
+   * component impure: two renders of the same row can disagree, and under
+   * concurrent rendering React may discard and re-run a render, so the number
+   * shown is not guaranteed to be the number computed. Reading the clock once
+   * per mount into state keeps the render a pure function of its inputs.
+   *
+   * The value only needs day granularity, so it never needs to tick.
+   */
+  const [now] = useState(() => Date.now());
   if (!purgeAt) return null;
-  const days = Math.ceil((new Date(purgeAt) - Date.now()) / 86_400_000);
+  const days = Math.ceil((new Date(purgeAt) - now) / 86_400_000);
   if (days < 0) return null;
   // §A8 is the one place the 180-day purge is user-visible. Under 30 days it
   // turns amber — a countdown that only appears on the last day is no warning.

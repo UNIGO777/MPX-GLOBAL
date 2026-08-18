@@ -8,12 +8,12 @@ import { conversationPartyView, messageView } from '../views/conversation.view.j
 
 export async function list(req, res) {
   const { user } = req;
-  const { rows, products, nextCursor } = await svc.listConversations({ user, ...req.validated.query });
+  const { rows, products, logos, nextCursor } = await svc.listConversations({ user, ...req.validated.query });
   const viewerSide = svc.viewerSideFor(user);
 
   res.json({
     conversations: rows.map((c) =>
-      conversationPartyView(c, { viewerSide, product: products.get(String(c.productId)) ?? null }),
+      conversationPartyView(c, { viewerSide, product: products.get(String(c.productId)) ?? null, logos }),
     ),
     nextCursor,
   });
@@ -28,11 +28,15 @@ export async function byProduct(req, res) {
 }
 
 export async function get(req, res) {
-  const { conversation, product } = await svc.getConversation({ user: req.user, id: req.params.id });
+  const { conversation, product, logos } = await svc.getConversation({ user: req.user, id: req.params.id });
   res.json({
     conversation: conversationPartyView(conversation, {
       viewerSide: svc.viewerSideFor(req.user),
       product,
+      // Without this the THREAD HEADER fell back to a monogram while the list
+      // beside it showed the real icon — the detail response simply never
+      // carried the logo map.
+      logos,
     }),
   });
 }

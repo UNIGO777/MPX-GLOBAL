@@ -314,13 +314,31 @@ describe('logo endpoints', () => {
     expect(removed.body.organisation.logo).toBeNull();
   });
 
-  it('a buyer is refused — no public page, no logo', async () => {
+  /**
+   * 🔴 RULE CHANGED 2026-08-17 (owner). A buyer may now set a company icon; this
+   * used to 403 with "Only exporter profiles have a logo".
+   *
+   * The distinction that survives is about VISIBILITY, not about who may upload:
+   * an exporter's logo is public (it is the seller page's image), a buyer's is
+   * not — there is no public buyer page, and no public projection gained a
+   * field. A buyer's icon is seen in their own portal and by a company they are
+   * already in a conversation with. The assertions below pin exactly that.
+   */
+  it('a BUYER may set a company icon (2026-08-17) — and it costs no tick', async () => {
     const { token } = await makeParty('buyer');
-    await request(app)
+    const res = await request(app)
       .post('/me/organisation/logo')
       .set(bearer(token))
-      .attach('logo', Buffer.from([0x89, 0x50]), 'logo.png')
-      .expect(403);
+      .attach('logo', Buffer.from([0x89, 0x50, 0x4e, 0x47]), 'logo.png');
+
+    expect(res.status).toBe(200);
+    expect(res.body.organisation.logo).toContain('mpx/logos/');
+    // Storefront/display content: it must never touch verification (§A22).
+    expect(res.body.organisation.kycStatus).not.toBe('rejected');
+
+    const removed = await request(app).delete('/me/organisation/logo').set(bearer(token));
+    expect(removed.status).toBe(200);
+    expect(removed.body.organisation.logo).toBeNull();
   });
 
   it('a missing file is a 400, not a crash', async () => {

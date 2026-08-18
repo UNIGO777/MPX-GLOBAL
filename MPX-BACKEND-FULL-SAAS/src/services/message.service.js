@@ -3,6 +3,7 @@ import { Message } from '../models/Message.js';
 import { AppError } from '../utils/AppError.js';
 import { loadPartyConversation, viewerSideFor } from './conversation.service.js';
 import { notifyNewMessage } from './push.service.js';
+import { emitNewMessage } from '../realtime/socket.js';
 
 /**
  * M4-D — writing a line into a thread.
@@ -65,6 +66,11 @@ export async function sendMessage({ user, conversationId, body }) {
     { $set: { lastMessageAt: sentAt, lastMessagePreview: body.slice(0, PREVIEW_LENGTH), [readField]: sentAt } },
   );
 
+  // §7.1 — LIVE delivery, from the one place every send path passes through.
+  // The socket handler used to do this itself, which meant a REST send (the
+  // path of record, and what both clients actually use) reached nobody live.
+  emitNewMessage(conversation._id, message);
+
   // M4-H — fire-and-forget, deliberately NOT awaited. A message being saved and
   // delivered must never depend on Firebase being reachable.
   notifyNewMessage({ conversation, senderSide: side, senderUserId: user.userId });
@@ -81,12 +87,13 @@ export async function sendMessage({ user, conversationId, body }) {
  * Deliberately NOT subject to the frozen guard: the message explaining WHY a
  * thread just froze has to be written after it is frozen.
  */
-export async function postSystemMessage({ conversationId, body }) {
+export async function postSystemMessage({ conversationId, body, systemKind }) {
   const sentAt = new Date();
   const message = await Message.create({
     conversationId,
     senderType: 'system',
     body,
+    systemKind,
   });
 
   // A system notice updates the list ordering and preview, but must not mark
@@ -95,6 +102,11 @@ export async function postSystemMessage({ conversationId, body }) {
     { _id: conversationId },
     { $set: { lastMessageAt: sentAt, lastMessagePreview: body.slice(0, PREVIEW_LENGTH) } },
   );
+
+  // Freeze and unfreeze notices are the platform EXPLAINING what just happened;
+  // they have to land in an open thread at the same moment the composer swaps
+  // for the banner, not on the next reload.
+  emitNewMessage(conversationId, message);
 
   return message;
 }

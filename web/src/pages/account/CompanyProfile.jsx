@@ -395,6 +395,82 @@ export function CompanyProfile() {
     </SectionCard>
   );
 
+  /**
+   * The company ICON dropzone.
+   *
+   * Extracted 2026-08-17 so BOTH parties can use it. For an exporter it is
+   * storefront content — the image on their public seller page. For a buyer
+   * it is not public at all: it appears in their own portal and as the
+   * counterparty avatar inside conversations they are already party to.
+   */
+  // The whole zone is a dropzone AND a click target — same interaction as the
+  // product image manager, one file.
+  const logoDropzone = (
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={org.data?.logo ? 'Replace logo' : 'Upload logo'}
+        onClick={() => logoRef.current?.click()}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && logoRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDraggingLogo(true); }}
+        onDragLeave={() => setDraggingLogo(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDraggingLogo(false);
+          acceptLogo(e.dataTransfer.files?.[0]);
+        }}
+        className={`flex cursor-pointer items-start gap-4 rounded-xl border-2 border-dashed p-4 transition-colors ${
+          draggingLogo
+            ? 'border-primary-600 bg-primary-50'
+            : 'border-surface-border hover:bg-surface-subtle'
+        }`}
+      >
+        {org.data?.logo ? (
+          <img src={org.data.logo} alt="" className="h-20 w-20 rounded-lg border border-surface-border object-cover" />
+        ) : (
+          <NoImagePanel label={org.data?.name} monogram ratio="h-20 w-20" className="shrink-0 rounded-lg" />
+        )}
+        <div>
+          <span className="text-sm font-medium text-ink-900">Logo</span>
+          <p className="text-xs text-muted">
+            Drag an image here, or click to browse · JPG, PNG or WEBP · 5 MB max
+          </p>
+          <div className="mt-2 flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={logoUpload.isPending}
+              onClick={(e) => { e.stopPropagation(); logoRef.current?.click(); }}
+            >
+              <UploadIcon className="mr-1.5 h-4 w-4" />
+              {org.data?.logo ? 'Replace' : 'Upload'}
+            </Button>
+            {org.data?.logo && (
+              <Button
+                size="sm"
+                variant="ghost"
+                loading={logoRemove.isPending}
+                onClick={(e) => { e.stopPropagation(); logoRemove.mutate(); }}
+              >
+                <TrashIcon className="mr-1 h-4 w-4 text-danger" /> Remove
+              </Button>
+            )}
+          </div>
+          <input
+            ref={logoRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              acceptLogo(e.target.files?.[0]);
+              e.target.value = '';
+            }}
+          />
+        </div>
+      </div>
+  );
+
   const storefrontCard = form && isExporter && (
     <SectionCard
       icon={GlobeIcon}
@@ -476,71 +552,7 @@ export function CompanyProfile() {
         </div>
       </div>
 
-      {/* The whole zone is a dropzone AND a click target — same interaction as
-          the product image manager, one file. */}
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label={org.data?.logo ? 'Replace logo' : 'Upload logo'}
-        onClick={() => logoRef.current?.click()}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && logoRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setDraggingLogo(true); }}
-        onDragLeave={() => setDraggingLogo(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDraggingLogo(false);
-          acceptLogo(e.dataTransfer.files?.[0]);
-        }}
-        className={`flex cursor-pointer items-start gap-4 rounded-xl border-2 border-dashed p-4 transition-colors ${
-          draggingLogo
-            ? 'border-primary-600 bg-primary-50'
-            : 'border-surface-border hover:bg-surface-subtle'
-        }`}
-      >
-        {org.data?.logo ? (
-          <img src={org.data.logo} alt="" className="h-20 w-20 rounded-lg border border-surface-border object-cover" />
-        ) : (
-          <NoImagePanel label={org.data?.name} monogram ratio="h-20 w-20" className="shrink-0 rounded-lg" />
-        )}
-        <div>
-          <span className="text-sm font-medium text-ink-900">Logo</span>
-          <p className="text-xs text-muted">
-            Drag an image here, or click to browse · JPG, PNG or WEBP · 5 MB max
-          </p>
-          <div className="mt-2 flex gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              loading={logoUpload.isPending}
-              onClick={(e) => { e.stopPropagation(); logoRef.current?.click(); }}
-            >
-              <UploadIcon className="mr-1.5 h-4 w-4" />
-              {org.data?.logo ? 'Replace' : 'Upload'}
-            </Button>
-            {org.data?.logo && (
-              <Button
-                size="sm"
-                variant="ghost"
-                loading={logoRemove.isPending}
-                onClick={(e) => { e.stopPropagation(); logoRemove.mutate(); }}
-              >
-                <TrashIcon className="mr-1 h-4 w-4 text-danger" /> Remove
-              </Button>
-            )}
-          </div>
-          <input
-            ref={logoRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="sr-only"
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              acceptLogo(e.target.files?.[0]);
-              e.target.value = '';
-            }}
-          />
-        </div>
-      </div>
+      {logoDropzone}
 
       <Field
         label="Description"
@@ -559,6 +571,24 @@ export function CompanyProfile() {
           />
         )}
       </Field>
+    </SectionCard>
+  );
+
+  /**
+   * 🔴 Buyers can set a company icon too (owner, 2026-08-17). It used to be
+   * exporter-only, because the logo existed to fill the public seller page.
+   *
+   * A buyer's icon is NOT public — there is no public buyer page — so this card
+   * says where it actually shows up, rather than implying a storefront the buyer
+   * does not have. Description and cover stay exporter-only for that reason.
+   */
+  const buyerIconCard = form && !isExporter && (
+    <SectionCard
+      icon={BuildingIcon}
+      title="Company icon"
+      desc="Shown in your portal and to suppliers you are in conversation with. It is not published anywhere public, and changing it never affects your verification."
+    >
+      {logoDropzone}
     </SectionCard>
   );
 
@@ -699,6 +729,7 @@ export function CompanyProfile() {
             /* ---------- buyer: single calm column ---------- */
             <>
               {registeredCard}
+              {buyerIconCard}
               <SectionCard icon={ShieldIcon} title="Account" desc="Sign-in settings for your own user.">
                 {/* The change-password screen has existed since M1 and works for
                     every role — this is its first party-side entry point. */}

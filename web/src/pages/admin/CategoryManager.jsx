@@ -98,20 +98,21 @@ function TopRowBody({ t }) {
  * A full-height SHEET with search — type-to-filter on names AND synonyms —
  * replaces it; the page shows only a compact "current category" selector.
  */
-function CategorySheet({ open, tops, selectedId, onPick, onClose }) {
+/**
+ * Mounted only while open (wrapper below), so the search box starts empty each
+ * time without an effect clearing it — remounting is React's own answer to
+ * "reset state when this reopens".
+ */
+function CategorySheetBody({ tops, selectedId, onPick, onClose }) {
   const [q, setQ] = useState('');
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return undefined;
-    setQ('');
     inputRef.current?.focus();
     const onKey = (e) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
+  }, [onClose]);
 
   const norm = q.trim().toLowerCase();
   const list = norm
@@ -177,6 +178,13 @@ function CategorySheet({ open, tops, selectedId, onPick, onClose }) {
   );
 }
 
+/** Gate: mounting only while open is what gives the body fresh state. */
+function CategorySheet({ open, ...props }) {
+  if (!open) return null;
+  return <CategorySheetBody {...props} />;
+}
+
+
 /** Plain category thumbnail — image or neutral monogram. Never a control. */
 function CategoryThumb({ name, image, sizeClasses, monogram = true }) {
   return image ? (
@@ -215,7 +223,9 @@ export function CategoryManager() {
 
   const tree = useQuery({ queryKey: adminCatalogueKeys.tree, queryFn: adminCatalogueApi.tree });
 
-  const tops = tree.data ?? [];
+  // Memoised because `tree.data ?? []` produces a NEW array on every render
+  // while the query is loading, which re-ran every downstream memo with it.
+  const tops = useMemo(() => tree.data ?? [], [tree.data]);
   const selectedId = params.get('top') ?? tops[0]?.id;
   const top = useMemo(() => tops.find((t) => t.id === selectedId), [tops, selectedId]);
 
@@ -573,21 +583,20 @@ function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle, onSett
  * the page keeps header + full-width sub list; this opens from the header's
  * Settings button, exactly like a sub-category's own edit panel.
  */
-function TopSettings({ top, open, onClose, canManage, saving, onSave }) {
+/**
+ * Fresh copy on every opening — closing without saving discards edits, so a
+ * reopen must not resurrect them.
+ *
+ * That reset used to be an effect. It is now achieved by MOUNTING this only
+ * while the drawer is open (wrapper below), so the initial state IS the fresh
+ * copy: no cascading render, and no window in which the drawer shows last
+ * time's values before the effect corrects them.
+ */
+function TopSettingsBody({ top, onClose, canManage, saving, onSave }) {
   const [name, setName] = useState(top.name);
   const [order, setOrder] = useState(top.order ?? '');
   const [synonyms, setSynonyms] = useState(top.synonyms ?? []);
   const [draft, setDraft] = useState('');
-
-  // Fresh copy on every opening — closing without saving discards edits, so a
-  // reopen must not resurrect them.
-  useEffect(() => {
-    if (!open) return;
-    setName(top.name);
-    setOrder(top.order ?? '');
-    setSynonyms(top.synonyms ?? []);
-    setDraft('');
-  }, [open, top]);
 
   const addSynonym = (raw) => {
     const v = raw.trim().toLowerCase();
@@ -736,6 +745,14 @@ function TopSettings({ top, open, onClose, canManage, saving, onSave }) {
     </Drawer>
   );
 }
+
+/** Gate: mounting only while open is what makes the body's initial state the
+ *  fresh copy of `top`. */
+function TopSettings({ open, ...props }) {
+  if (!open) return null;
+  return <TopSettingsBody {...props} />;
+}
+
 
 /**
  * The sub-categories as a LIST with a real switch per row. While the parent is

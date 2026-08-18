@@ -17,6 +17,23 @@ export const adminApi = {
   listOrgs: (params) => apiClient.get('/admin/orgs', { params }).then((r) => r.data),
   getOrg: (id) => apiClient.get(`/admin/orgs/${id}`).then((r) => r.data.organisation),
 
+  /**
+   * F1-A · take a whole COMPANY offline, or bring it back.
+   *
+   * 🔴 Hard superadmin gate on the server (`requireRole('superadmin')`), never a
+   * grantable employee permission — an employee able to take a company offline
+   * is a privilege-escalation path. The screen hides the control for anyone
+   * else; that is presentation, and the server refuses regardless.
+   *
+   * It cascades: every user of the org is signed out and cannot log back in, the
+   * catalogue goes dark, and every conversation the org is party to freezes with
+   * a system notice. `reason` is required to block (3–500) and optional to
+   * unblock — the reversal explains itself, the decision is the record.
+   */
+  blockOrg: (id, reason) => apiClient.post(`/admin/orgs/${id}/block`, { reason }).then((r) => r.data),
+  unblockOrg: (id, reason) =>
+    apiClient.post(`/admin/orgs/${id}/unblock`, reason ? { reason } : {}).then((r) => r.data),
+
   // --- verification decisions (:id is the ORG id) ---------------------------
   approveBuyer: (orgId) => apiClient.post(`/employee/buyers/${orgId}/approve`).then((r) => r.data.organisation),
   rejectBuyer: (orgId, reason) =>

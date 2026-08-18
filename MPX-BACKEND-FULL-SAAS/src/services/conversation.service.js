@@ -3,8 +3,18 @@ import mongoose from 'mongoose';
 import { Conversation } from '../models/Conversation.js';
 import { Message } from '../models/Message.js';
 import { Product } from '../models/Product.js';
+import { Organisation } from '../models/Organisation.js';
 import { AppError } from '../utils/AppError.js';
 import { isObjectIdLike } from '../utils/idOrSlug.js';
+import {
+  searchClause,
+  isNameSearch,
+  loadOrgLogos,
+  encodeCursor,
+  decodeCursor,
+  cursorClause,
+  combineFilter,
+} from './conversationSearch.js';
 
 /**
  * M4-C — reading threads.
@@ -44,44 +54,6 @@ function scopeFilter(user) {
   return { parties: null };
 }
 
-// Cursor is (lastMessageAt, _id): a timestamp alone is not unique, and two
-// threads sharing one would silently skip or repeat a row across pages.
-function encodeCursor(row) {
-  return Buffer.from(`${row.lastMessageAt.getTime()}:${row._id}`).toString('base64url');
-}
-
-function decodeCursor(cursor) {
-  try {
-    const [at, id] = Buffer.from(cursor, 'base64url').toString('utf8').split(':');
-    const millis = Number(at);
-    if (!Number.isFinite(millis) || !isObjectIdLike(id)) return null;
-    return { at: new Date(millis), id: new mongoose.Types.ObjectId(id) };
-  } catch {
-    return null;
-  }
-}
-
-/**
- * §8.1/§8.4 — the list search matches three NAMES and two IDS.
- *
- * 🔴 They cannot be one query. Native `$text` must be the first `$match` and
- * MongoDB refuses it inside an `$or`, so "name OR id" is not expressible. So the
- * input decides the branch: an ObjectId is an exact id match with no `$text` at
- * all; anything else is a text search. One shared scope filter and one shared
- * projection keep §8.4's "one path" intent where it actually matters.
- *
- * Message CONTENT is never searched (M4-32) — the text index covers only the
- * three denormalised name fields.
- */
-function searchClause(q) {
-  if (!q) return {};
-  if (isObjectIdLike(q)) {
-    const id = new mongoose.Types.ObjectId(q);
-    return { $or: [{ buyerOrgId: id }, { exporterOrgId: id }] };
-  }
-  return { $text: { $search: q } };
-}
-
 // Batch-load the page's products in ONE query — the title and the purged label
 // both need to know whether the row still exists (M4-18 / C5).
 async function loadProducts(conversations) {
@@ -94,26 +66,38 @@ async function loadProducts(conversations) {
 export async function listConversations({ user, q, cursor, limit }) {
   const pageSize = Math.min(limit ?? 20, MAX_PAGE);
 
-  const filter = { ...scopeFilter(user), ...searchClause(q) };
+  let decoded = null;
   if (cursor) {
-    const decoded = decodeCursor(cursor);
+    decoded = decodeCursor(cursor);
     if (!decoded) throw AppError.badRequest('bad cursor', 'Invalid page cursor.');
-    // Kept in `$and` so it can never collide with the id-branch's own `$or`.
-    filter.$and = [
-      {
-        $or: [
-          { lastMessageAt: { $lt: decoded.at } },
-          { lastMessageAt: decoded.at, _id: { $lt: decoded.id } },
-        ],
-      },
-    ];
   }
 
-  // One extra row tells us whether another page exists, without a count.
-  const rows = await Conversation.find(filter)
-    .sort({ lastMessageAt: -1, _id: -1 })
-    .limit(pageSize + 1)
-    .lean();
+  // Page 1 always tries the indexed `$text` path. Later pages stay in whichever
+  // mode page 1 settled on — the cursor carries it.
+  let mode = decoded?.mode ?? 'text';
+
+  const runQuery = (searchMode) =>
+    Conversation.find(
+      combineFilter(
+        scopeFilter(user),
+        searchClause(q, searchMode),
+        decoded ? cursorClause(decoded) : null,
+      ),
+    )
+      .sort({ lastMessageAt: -1, _id: -1 })
+      // One extra row tells us whether another page exists, without a count.
+      .limit(pageSize + 1)
+      .lean();
+
+  let rows = await runQuery(mode);
+
+  // The partial-match fallback (§8.3). Only on a FIRST page — mid-pagination the
+  // mode is already fixed — and only when the indexed search found nothing, so
+  // the scan is paid for exclusively by searches that were about to fail.
+  if (rows.length === 0 && !cursor && mode === 'text' && isNameSearch(q)) {
+    mode = 'regex';
+    rows = await runQuery(mode);
+  }
 
   const hasMore = rows.length > pageSize;
   const page = hasMore ? rows.slice(0, pageSize) : rows;
@@ -121,7 +105,8 @@ export async function listConversations({ user, q, cursor, limit }) {
   return {
     rows: page,
     products: await loadProducts(page),
-    nextCursor: hasMore && page.length > 0 ? encodeCursor(page[page.length - 1]) : null,
+    logos: await loadOrgLogos(Organisation, page),
+    nextCursor: hasMore && page.length > 0 ? encodeCursor(page[page.length - 1], mode) : null,
   };
 }
 
@@ -152,7 +137,11 @@ export async function loadPartyConversation({ user, id }) {
 export async function getConversation({ user, id }) {
   const conversation = await loadPartyConversation({ user, id });
   const products = await loadProducts([conversation]);
-  return { conversation, product: products.get(String(conversation.productId)) ?? null };
+  return {
+    conversation,
+    product: products.get(String(conversation.productId)) ?? null,
+    logos: await loadOrgLogos(Organisation, [conversation]),
+  };
 }
 
 /**

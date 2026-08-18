@@ -218,13 +218,18 @@ function SortMenu({ value, onChange }) {
  * page, this searchable sheet on tap. Search filters by NAME only — the
  * public projection carries no synonyms (search-only field, never public).
  */
-function SpecialisationSheet({ open, top, currentId, onClose, onPick }) {
+/**
+ * Mounted only while open (see the wrapper below), so its search box starts
+ * empty on every opening WITHOUT an effect resetting it. The component used to
+ * stay mounted behind `if (!open) return null`, which meant last time's query
+ * survived and had to be cleared in an effect — a cascading render, and the
+ * kind of state-syncing React asks you to solve by remounting instead.
+ */
+function SpecialisationSheetBody({ top, currentId, onClose, onPick }) {
   const [q, setQ] = useState('');
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return undefined;
-    setQ('');
     inputRef.current?.focus();
     document.body.style.overflow = 'hidden';
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -233,9 +238,7 @@ function SpecialisationSheet({ open, top, currentId, onClose, onPick }) {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
-  }, [open, onClose]);
-
-  if (!open) return null;
+  }, [onClose]);
 
   const items = [
     { id: top.id, slug: top.slug, name: `All ${top.name}`, image: top.image, isAll: true },
@@ -317,6 +320,13 @@ function SpecialisationSheet({ open, top, currentId, onClose, onPick }) {
     document.body,
   );
 }
+
+/** Gate: mounting only while open is what gives the body fresh state. */
+function SpecialisationSheet({ open, ...props }) {
+  if (!open) return null;
+  return <SpecialisationSheetBody {...props} />;
+}
+
 
 function CardSkeleton() {
   return (

@@ -159,6 +159,42 @@ Do not start the screens without surfacing this alert.
 
 ---
 
+## D7 · Organisation **claim** at signup (A21 step 2)  ⏸ ON HOLD (owner, 2026-08-18)
+
+- **What it is:** A21's step-2 branch — after both OTPs pass, show whether an Organisation already
+  exists for that verified email/mobile and offer **claim** or **create-new**. A claimed org
+  *"carries its verification over — no second KYC, one tick, one public profile"*; declining creates
+  a fresh org that verifies separately (build-prompt **§A21**, lines 246–252).
+- **Owner decision 2026-08-18: build it LATER.** Not month-1 / not now. Do not start it without an
+  explicit go-ahead.
+- **Status today:** `signup.service.js` `completeSignup` **always creates** — the 🚧 comment at
+  the top of that function says so. `createUserWithOrg` → `Organisation.create` + `User.create`.
+- **🔴 The consequence while it is deferred — bigger than "a colleague cannot join".**
+  `Organisation.name` is intentionally NOT unique and complete always creates, so one company
+  signing up twice (buyer, then exporter — which `assertIdentityAvailable` explicitly allows on one
+  email) ends up with **two Organisations**, the second carrying a random slug suffix. That means
+  **two KYC submissions, two ticks to earn, two public profiles**, and an admin **"Block company"
+  hits only one of them while the twin keeps trading**. "One company = one Organisation" is a stated
+  intention, not an enforced invariant, until claim ships.
+- **What it needs when built (no schema work is expected):**
+  1. A lookup keyed on the **verified identity held in `PendingSignup`** — find Users with that
+     email/mobile and take their `orgId`. There is no other route: an `Organisation` carries no
+     contact fields of its own (the email/mobile on it belong to `authorisedSignatory`, captured for
+     Phase-2 contracts).
+  2. A branch in `completeSignup` that attaches to that `orgId` and sets the missing side flag
+     (`buyerSide` / `exporterSide`) instead of creating.
+  3. Carry `kycStatus` over — no second KYC.
+- **✅ Security question ANSWERED — do not re-open it as a blocker.** `docs/UiWebNotes.md` recorded
+  claim as blocked partly on account enumeration ("it confirms to an anonymous caller that a company
+  is registered to a given email"). That is overstated: **§A21 line 248** — *"Because step 2 is
+  behind OTP, the existing company's name may be shown on the claim screen. That is safe here and
+  better UX."* The caller has already proved they own both channels, so they learn nothing about a
+  stranger. The one rule that keeps it true: the lookup must key **only** on the verified identity,
+  **never** on a company name the user types. The remaining blocker is the missing endpoint, nothing
+  more.
+
+---
+
 ## 🔒 Project-close checklist (raise these BEFORE final handover)
 - **D4** — restore Super Admin TOTP 2FA (currently OTP-only).
 - 🔴 **ROTATE THE FIREBASE SERVICE ACCOUNT before production (2026-08-01).** The key currently in

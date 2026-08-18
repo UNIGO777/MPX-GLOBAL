@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 
 import { adminApi } from '../../api/admin.js';
@@ -35,9 +36,6 @@ export function VerificationQueue() {
   const { user: me } = useAuth();
 
   const [tab, setTab] = useState('exporter'); // 'exporter' | 'buyer'
-  const [lists, setLists] = useState({ exporter: null, buyer: null });
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   const [detail, setDetail] = useState({}); // orgId -> {loading, data, error}
   const [processing, setProcessing] = useState(null); // orgId mid-request
@@ -48,26 +46,30 @@ export function VerificationQueue() {
 
   const canDecide = tab === 'exporter' ? can(me, 'exporter:verify') : can(me, 'buyer:approve');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [exporters, buyers] = await Promise.all([
+  /**
+   * TanStack Query rather than a fetch in an effect (`web-frontend.md` mandates
+   * it for server data). Both sides load together because the two tabs are one
+   * queue — switching tabs must not re-fetch or re-spinner.
+   */
+  const qc = useQueryClient();
+  const queue = useQuery({
+    queryKey: ['admin', 'verification', 'queue'],
+    queryFn: async () => {
+      const [exporter, buyer] = await Promise.all([
         adminApi.listOrgs({ side: 'exporter', verification: 'submitted', pageSize: 50 }),
         adminApi.listOrgs({ side: 'buyer', verification: 'submitted', pageSize: 50 }),
       ]);
-      setLists({ exporter: exporters, buyer: buyers });
-      setStaleNotice(false);
-    } catch (err) {
-      setError(apiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return { exporter, buyer };
+    },
+  });
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const lists = queue.data ?? { exporter: null, buyer: null };
+  const loading = queue.isLoading;
+  const error = queue.error ? apiError(queue.error) : null;
+  const load = useCallback(async () => {
+    setStaleNotice(false);
+    await queue.refetch();
+  }, [queue]);
 
   // Mockup cards show entity type / submitted date / doc count FLAT on the card
   // (no accordion), and the LIST view carries none of those — so each row needs
@@ -102,14 +104,18 @@ export function VerificationQueue() {
       } else if (action === 'approve') await adminApi.approveBuyer(org.id);
       else await adminApi.rejectBuyer(org.id, reasonText);
       setStaleNotice(false);
-      setLists((l) => ({
-        ...l,
-        [tab]: {
-          ...l[tab],
-          organisations: (l[tab]?.organisations ?? []).filter((o) => o.id !== org.id),
-          total: Math.max(0, (l[tab]?.total ?? 1) - 1),
-        },
-      }));
+      // Decided rows leave the queue immediately. Written into the query cache
+      // rather than a parallel `useState` copy, so there is exactly one source
+      // of truth for this list and a later refetch cannot resurrect the row.
+      qc.setQueryData(['admin', 'verification', 'queue'], (l) =>
+        (l ? {
+          ...l,
+          [tab]: {
+            ...l[tab],
+            organisations: (l[tab]?.organisations ?? []).filter((o) => o.id !== org.id),
+            total: Math.max(0, (l[tab]?.total ?? 1) - 1),
+          },
+        } : l));
       setRejectTarget(null);
       setReason('');
     } catch (err) {

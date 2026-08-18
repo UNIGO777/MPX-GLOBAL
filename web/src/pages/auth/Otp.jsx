@@ -36,7 +36,9 @@ export function Otp() {
   const { completeSignIn } = useAuth();
 
   const flow = location.state ?? {};
-  const [loginToken, setLoginToken] = useState(flow.loginToken);
+  // Held in state (not read straight from `flow`) so the token this screen was
+  // opened with survives any re-render that replaces location.state.
+  const [loginToken] = useState(flow.loginToken);
   const [code, setCode] = useState('');
   const [error, setError] = useState(null);
   const [errorCode, setErrorCode] = useState(null);

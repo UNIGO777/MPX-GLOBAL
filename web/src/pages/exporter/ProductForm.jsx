@@ -209,6 +209,9 @@ export function ProductForm() {
 
   // The leaf decides the field group AND the spec definitions (§A14). The top
   // is kept alongside for the rail's "Top → Leaf" summary.
+  /* eslint-disable-next-line react-hooks/preserve-manual-memoization -- the
+     compiler cannot prove this memo safe across the two data sources it reads;
+     it is correct and cheap, and dropping it re-derives on every keystroke. */
   const { leaf, top } = useMemo(() => {
     for (const t of tree.data ?? []) {
       const sub = (t.subs ?? []).find((s) => s.id === cat.subId);
@@ -223,7 +226,16 @@ export function ProductForm() {
     enabled: Boolean(leaf?.slug),
   });
 
-  // Load an existing product into the form once.
+  /**
+   * Load an existing product into the form once.
+   *
+   * ⚠️ Deliberate exception (see the KYC upload screens for the same call): the
+   * compiler rules want this seeded via a wrapper + keyed body instead of an
+   * effect. This is the largest form in the app — images, category-driven spec
+   * fields, and publish rules that changed on 2026-08-17 — so it is not being
+   * restructured for a compiler hint. Revisit deliberately, with tests.
+   */
+  /* eslint-disable react-hooks/set-state-in-effect -- see note above */
   useEffect(() => {
     const p = existing.data;
     if (!p || !tree.data) return;
@@ -252,6 +264,7 @@ export function ProductForm() {
       }
     }
   }, [existing.data, tree.data]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -276,7 +289,8 @@ export function ProductForm() {
   }, [cat.subId]);
 
   function applyCategory(next) {
-    setFieldErrors(({ category, ...rest }) => rest);
+    // Destructure-and-drop: `_category` is named only to remove that key.
+    setFieldErrors(({ category: _category, ...rest }) => rest);
     // Changing the leaf re-renders the spec fields and drops values that belong
     // to the old category — warn before discarding entered work.
     const hasSpecs = Object.keys(specs).length > 0;
@@ -727,7 +741,7 @@ export function ProductForm() {
                       onChange={(e) => {
                         set({ name: e.target.value });
                         setNameEdited(true);
-                        setFieldErrors(({ name, ...rest }) => rest);
+                        setFieldErrors(({ name: _name, ...rest }) => rest);
                       }}
                     />
                   )}

@@ -23,7 +23,12 @@ export function Modal({ open, onClose, title, children, footer, danger = false, 
   // whatever field was being typed into. Hold it in a ref and depend on `open`
   // alone, so the focus/scroll-lock setup happens once per opening.
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  // Written in an effect, not during render: mutating a ref while rendering is
+  // unsafe under concurrent rendering (a render can be thrown away, leaving the
+  // ref pointing at a handler from an abandoned attempt).
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return undefined;

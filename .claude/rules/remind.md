@@ -92,6 +92,11 @@ while any close-time security commitment remains unraised.
   deferral rather than a cancellation — **raise it again at close**. Do not read the earlier ask
   as standing approval. Detail (what is already built, and the two decisions it still needs):
   `docs/Note.md` D4.
+- **D7** — **Organisation claim at signup (A21 step 2).** Owner said **build it later** (2026-08-18).
+  Until then `completeSignup` always CREATES an Organisation, so one company signing up as buyer and
+  as exporter gets **two orgs → two KYCs, two public profiles, and a "Block company" that hits only
+  one of them**. The enumeration worry logged in `UiWebNotes` is already answered by §A21 line 248
+  (step 2 sits behind both OTPs) — do not re-raise it as a blocker. Detail: `docs/Note.md` **D7**.
 - **D5** — Notifications (email, **WhatsApp**, in-app centre, admin controls, non-M4 events).
   ✅ **CARVE-OUT 2026-07-31 — FCM push is APPROVED into month 1** (owner-confirmed), built in M4:
   `firebase-admin` + `DeviceToken` + dead-token cleanup + **two events only** (new enquiry → seller,

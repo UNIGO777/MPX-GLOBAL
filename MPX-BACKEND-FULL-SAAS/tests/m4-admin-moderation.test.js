@@ -110,6 +110,27 @@ describe('M4-E · blocking one chat (M4-23)', () => {
     expect((await Product.findById(product._id)).takedown?.isDown).toBeFalsy();
   });
 
+  it('block and unblock stamp their systemKind, and a still-frozen unblock does NOT say reopened', async () => {
+    await block(sa.token);
+    const blocked = await Message.findOne({ conversationId, senderType: 'system', body: /restricted/ });
+    expect(blocked.systemKind).toBe('blocked');
+
+    await request(app).post(`/admin/conversations/${conversationId}/unblock`).set(bearer(sa.token)).send({});
+    const reopened = await Message.findOne({ conversationId, senderType: 'system', body: /reopened/ });
+    expect(reopened.systemKind).toBe('unblocked');
+
+    // 🔴 The kind follows the COPY, not the action. Take the product down, then
+    // block and unblock: the thread stays frozen under the takedown, the notice
+    // says so, and the kind has to agree — a 'unblocked' stamp here would paint
+    // a green "reopened" chrome over a sentence that says messaging is paused.
+    await Product.updateOne({ _id: product._id }, { $set: { 'takedown.isDown': true } });
+    await block(sa.token);
+    await request(app).post(`/admin/conversations/${conversationId}/unblock`).set(bearer(sa.token)).send({});
+    const [latest] = await Message.find({ conversationId, senderType: 'system' }).sort({ createdAt: -1 }).limit(1);
+    expect(latest.body).toMatch(/under review/);
+    expect(latest.systemKind).toBe('product_takedown');
+  });
+
   it('other chats on the same product are unaffected', async () => {
     const other = await makeUser('buyer', { buyerSide: true, country: 'NZ' });
     const otherRes = await request(app).post('/inquiries').set(bearer(other.token))
@@ -294,5 +315,65 @@ describe('M4-E · the staff view shows what a moderator needs', () => {
     // Screen 5: read-only. There is no admin send route at all.
     expect((await request(app).post(`/admin/conversations/${conversationId}/messages`)
       .set(bearer(sa.token)).send({ body: 'admin speaking' })).status).toBe(404);
+  });
+
+  /**
+   * 🔴 Regression, found 2026-08-17 while building the moderation screen.
+   *
+   * `freezeLabel()` reads a MISSING product as purged, and both actions built
+   * their response with `product: null` — so the payload announced "Product no
+   * longer available" about a listing that was never touched. A moderator would
+   * have read it as "the product is gone", which is a different decision.
+   */
+  it('block and unblock report the product HONESTLY in their own response', async () => {
+    const blocked = await block(sa.token);
+    expect(blocked.status).toBe(200);
+    // The product is alive and well — the label must be the block, not a purge.
+    expect(blocked.body.conversation.frozenLabel).toEqual({
+      tone: 'red', text: 'Conversation blocked by MPX Global',
+    });
+    expect(blocked.body.conversation.product.name).toBe('Cotton Roll');
+    expect(blocked.body.conversation.product.id).toBeTruthy();
+
+    const reopened = await unblock(sa.token);
+    expect(reopened.status).toBe(200);
+    // Nothing is holding it shut, so there is no label at all.
+    expect(reopened.body.conversation.frozenLabel).toEqual({ tone: 'none', text: null });
+    expect(reopened.body.conversation.frozen).toBe(false);
+    expect(reopened.body.conversation.product.name).toBe('Cotton Roll');
+  });
+
+  it('blocking an ALREADY taken-down thread keeps the takedown label (M4-29)', async () => {
+    await Product.updateOne({ _id: product._id }, { $set: { 'takedown.isDown': true } });
+    await Conversation.updateOne(
+      { _id: conversationId },
+      { $set: { frozen: true, frozenReason: 'takedown' } },
+    );
+
+    const res = await block(sa.token);
+    expect(res.status).toBe(200);
+    // First reason wins — and it is emphatically not "no longer available".
+    expect(res.body.conversation.frozenLabel).toEqual({ tone: 'yellow', text: 'Product under review' });
+    expect(res.body.conversation.frozenReason).toBe('takedown');
+    expect(res.body.conversation.blockedReason).toBeTruthy();
+  });
+
+  /**
+   * §8.4 — roles differ ONLY in scope. The partial-match fallback added on
+   * 2026-08-17 therefore has to reach the moderator's list too: one shared
+   * branch (`conversationSearch.js`), not two that drift apart.
+   */
+  it('the admin list gets the SAME partial matching as the party list', async () => {
+    const partial = await request(app).get('/admin/conversations')
+      .query({ q: 'Cot' }).set(bearer(sa.token));
+    expect(partial.status).toBe(200);
+    expect(partial.body.conversations).toHaveLength(1);
+
+    // Mid-word still does not match, and a pasted pattern is literal text.
+    for (const miss of ['otton', '.*', '(a+)+$']) {
+      const res = await request(app).get('/admin/conversations').query({ q: miss }).set(bearer(sa.token));
+      expect(res.status).toBe(200);
+      expect(res.body.conversations).toEqual([]);
+    }
   });
 });

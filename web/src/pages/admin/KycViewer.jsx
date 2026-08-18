@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 
 import { adminApi } from '../../api/admin.js';
@@ -62,10 +63,6 @@ const isPdf = (url) => fileFormat(url) === 'pdf';
 export function KycViewer() {
   const { orgId } = useParams();
   const { user: me } = useAuth();
-
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(0);
   const [expired, setExpired] = useState(false);
 
@@ -76,42 +73,53 @@ export function KycViewer() {
   const [reason, setReason] = useState('');
   // Applicant name / country / submitted date live on the org record, not on
   // the KYC payload. Needs `organisation:read`, so it degrades to blank cells.
-  const [org, setOrg] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setExpired(false);
-    try {
+  /**
+   * TanStack Query rather than a fetch in an effect (`web-frontend.md`).
+   *
+   * The org detail is supporting context — its failure must degrade the header,
+   * never blank the document viewer — hence `allSettled` and rethrowing only
+   * the documents' own failure.
+   *
+   * ⚠️ `staleTime: 0` and no background refetch: these are SIGNED URLs that
+   * expire in ~120s, so a silently re-served cached payload would show a
+   * moderator dead images. Reloading is explicit, via the Reload overlay.
+   */
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ['admin', 'kyc', orgId],
+    queryFn: async () => {
       const [kyc, detail] = await Promise.allSettled([
         adminApi.orgKycDocuments(orgId),
         adminApi.getOrg(orgId),
       ]);
       if (kyc.status === 'rejected') throw kyc.reason;
-      setData(kyc.value);
-      setOrg(detail.status === 'fulfilled' ? detail.value : null);
-      setSelected(0);
-    } catch (err) {
-      setError(apiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId]);
+      return { data: kyc.value, org: detail.status === 'fulfilled' ? detail.value : null };
+    },
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+  });
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const data = query.data?.data ?? null;
+  const org = query.data?.org ?? null;
+  const loading = query.isLoading;
+  const error = query.error ? apiError(query.error) : null;
+  const load = useCallback(async () => {
+    setExpired(false);
+    setSelected(0);
+    await query.refetch();
+  }, [query]);
 
   // Flip to the Reload overlay when the earliest signed URL dies (~120s).
   useEffect(() => {
     if (!data?.documents?.length) return undefined;
     const soonest = Math.min(...data.documents.map((d) => new Date(d.expiresAt).getTime()));
     const ms = soonest - Date.now();
-    if (ms <= 0) {
-      setExpired(true);
-      return undefined;
-    }
-    const t = setTimeout(() => setExpired(true), ms);
+    // An ALREADY-expired URL used to flip the flag synchronously here, which is
+    // a cascading render. A zero-delay timer reaches the same state on the next
+    // tick — indistinguishable to the moderator, and one render cheaper.
+    const t = setTimeout(() => setExpired(true), Math.max(0, ms));
     return () => clearTimeout(t);
   }, [data]);
 
@@ -134,7 +142,13 @@ export function KycViewer() {
       } else if (action === 'approve') await adminApi.approveBuyer(orgId);
       else await adminApi.rejectBuyer(orgId, reasonText);
       setDecidedNote(action === 'approve' ? 'Approved — the verified tick is now live.' : 'Rejected — the applicant sees your reason and can resubmit.');
-      setData((d) => (d ? { ...d, kycStatus: action === 'approve' ? 'verified' : 'rejected' } : d));
+      // Reflect the decision in the query cache — the single source of truth
+      // for this screen now — instead of a parallel copy that a refetch would
+      // silently overwrite.
+      qc.setQueryData(['admin', 'kyc', orgId], (prev) =>
+        (prev?.data
+          ? { ...prev, data: { ...prev.data, kycStatus: action === 'approve' ? 'verified' : 'rejected' } }
+          : prev));
       setRejectOpen(false);
       setReason('');
     } catch (err) {

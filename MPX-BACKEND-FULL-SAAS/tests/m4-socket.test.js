@@ -191,8 +191,12 @@ describe('M4-G · rooms (§7.2)', () => {
     const payload = await delivered;
     expect(payload.conversationId).toBe(String(conversationId));
     expect(payload.message.body).toBe('live hello');
-    // The wire carries the same projection as REST — no person, ever.
-    expect(Object.keys(payload.message).sort()).toEqual(['body', 'createdAt', 'id', 'senderType'].sort());
+    // The wire carries the same projection as REST — no person, ever. Keep this
+    // list in step with the two REST guards (m4-messages, m4-conversations):
+    // three exact-key assertions is what makes a projection change deliberate.
+    expect(Object.keys(payload.message).sort()).toEqual(
+      ['body', 'createdAt', 'id', 'senderType', 'systemKind'].sort(),
+    );
   });
 
   it('an outsider is not in the room and receives nothing', async () => {

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { adminApi } from '../../api/admin.js';
 import { config } from '../../config.js';
@@ -33,6 +34,19 @@ import { CheckCircleIcon, CopyIcon, InfoIcon, UsersIcon } from '../../components
  * The "saving replaces the whole set" warning stays: PATCH is a REPLACE, not a
  * merge, so unticking is how access is removed.
  */
+/**
+ * 🔴 The whole TEAM (owner, 2026-08-18) — superadmins included, not only
+ * employees. A staff directory that omitted the superadmins was the one list
+ * where "who can reach this console?" could not be answered, which is the
+ * question the screen exists for.
+ *
+ * A superadmin row is read-only here: its authority comes from the ROLE, there
+ * is no permission set to grant or revoke, and `PATCH /admin/employees/:id/
+ * permissions` refuses one anyway. Rendering an Edit button on it would be a
+ * control that can only ever fail.
+ */
+const STAFF_ROLES = 'employee,superadmin';
+
 const PERMISSION_COUNT = PERMISSION_LIST.length;
 
 function initials(name = '') {
@@ -78,9 +92,6 @@ const EMPTY_FORM = {
 export function Employees() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(config.table.pageSizes[0]);
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   // `GET /admin/users` now returns each employee's granted set to a superadmin
   // (owner-approved 2026-08-04), so the list IS the source of truth. This map
@@ -102,21 +113,16 @@ export function Employees() {
   const [toast, setToast] = useState(null);
   const [permsView, setPermsView] = useState(null); // {row, perms} for the (i) popup
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setData(await adminApi.listUsers({ role: 'employee', page, pageSize }));
-    } catch (err) {
-      setError(apiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  // TanStack Query rather than a fetch in an effect (`web-frontend.md`).
+  const list = useQuery({
+    queryKey: ['admin', 'employees', { page, pageSize }],
+    queryFn: () => adminApi.listUsers({ role: STAFF_ROLES, page, pageSize }),
+    placeholderData: (prev) => prev,
+  });
+  const data = list.data ?? null;
+  const loading = list.isLoading;
+  const error = list.error ? apiError(list.error) : null;
+  const load = list.refetch;
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -202,7 +208,7 @@ export function Employees() {
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-2xl font-bold leading-tight text-ink-900">Employees</h1>
+            <h1 className="text-2xl font-bold leading-tight text-ink-900">Staff</h1>
             {data && (
               <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
                 {(data.total ?? rows.length).toLocaleString()} staff
@@ -210,7 +216,8 @@ export function Employees() {
             )}
           </div>
           <p className="mt-1 text-sm text-muted">
-            Create staff accounts and manage what each person can do.
+            Everyone who can reach this console. Employees hold granted permissions; super
+            admins have full access by role.
           </p>
         </div>
         <Button onClick={openAdd}>
@@ -234,7 +241,7 @@ export function Employees() {
         {!loading && !error && rows.length === 0 && (
           <EmptyState
             icon={UsersIcon}
-            title="No employees yet"
+            title="No staff accounts yet"
             action={
               <Button size="sm" onClick={openAdd}>
                 Add employee
@@ -269,7 +276,11 @@ export function Employees() {
                       </div>
                     </div>
                     <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                      {!perms ? (
+                      {row.role === 'superadmin' ? (
+                        <span className="whitespace-nowrap rounded-md bg-primary-600 px-2 py-1 text-xs font-semibold text-white">
+                          Full access
+                        </span>
+                      ) : !perms ? (
                         <span className="text-xs text-muted">—</span>
                       ) : perms.length === 0 ? (
                         <span className="text-xs text-muted">No access yet</span>
@@ -302,9 +313,13 @@ export function Employees() {
                         </span>
                       </span>
                       <span className="ml-auto">
-                        <Button variant="secondary" size="sm" onClick={() => openEdit(row)}>
-                          Edit permissions
-                        </Button>
+                        {row.role === 'superadmin' ? (
+                          <span className="text-xs text-muted">Role-based — nothing to grant</span>
+                        ) : (
+                          <Button variant="secondary" size="sm" onClick={() => openEdit(row)}>
+                            Edit permissions
+                          </Button>
+                        )}
                       </span>
                     </div>
                   </li>
@@ -351,7 +366,11 @@ export function Employees() {
                             the row, so they collapse to a count with an (i)
                             that opens the full list. */}
                         <td className="whitespace-nowrap px-5 py-3.5">
-                          {!perms ? (
+                          {row.role === 'superadmin' ? (
+                            <span className="inline-block whitespace-nowrap rounded-md bg-primary-600 px-2 py-1 text-xs font-semibold text-white">
+                              Full access
+                            </span>
+                          ) : !perms ? (
                             <span className="text-muted" title="Not returned for this account">
                               —
                             </span>
@@ -390,14 +409,20 @@ export function Employees() {
                           </span>
                         </td>
                         <td className="px-5 py-3.5 text-right">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="whitespace-nowrap"
-                            onClick={() => openEdit(row)}
-                          >
-                            Edit permissions
-                          </Button>
+                          {row.role === 'superadmin' ? (
+                            <span className="whitespace-nowrap text-xs text-muted">
+                              Role-based — nothing to grant
+                            </span>
+                          ) : (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="whitespace-nowrap"
+                              onClick={() => openEdit(row)}
+                            >
+                              Edit permissions
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     );
