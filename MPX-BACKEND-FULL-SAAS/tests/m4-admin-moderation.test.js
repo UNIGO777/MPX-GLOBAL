@@ -131,6 +131,34 @@ describe('M4-E · blocking one chat (M4-23)', () => {
     expect(latest.systemKind).toBe('product_takedown');
   });
 
+  it('the state filter splits open from each freeze REASON', async () => {
+    const all = () => request(app).get('/admin/conversations?limit=50').set(bearer(sa.token));
+
+    // Open before anything happens to it.
+    const openFirst = await request(app).get('/admin/conversations?state=open&limit=50').set(bearer(sa.token));
+    expect(openFirst.body.conversations.some((c) => c.id === String(conversationId))).toBe(true);
+
+    await block(sa.token);
+
+    const open = await request(app).get('/admin/conversations?state=open&limit=50').set(bearer(sa.token));
+    expect(open.body.conversations.some((c) => c.id === String(conversationId))).toBe(false);
+
+    const blocked = await request(app).get('/admin/conversations?state=blocked&limit=50').set(bearer(sa.token));
+    expect(blocked.body.conversations.some((c) => c.id === String(conversationId))).toBe(true);
+
+    // The umbrella catches it; the WRONG reason does not.
+    const frozen = await request(app).get('/admin/conversations?state=frozen&limit=50').set(bearer(sa.token));
+    expect(frozen.body.conversations.some((c) => c.id === String(conversationId))).toBe(true);
+    const takedown = await request(app).get('/admin/conversations?state=takedown&limit=50').set(bearer(sa.token));
+    expect(takedown.body.conversations.some((c) => c.id === String(conversationId))).toBe(false);
+
+    // Unfiltered still returns it, so the filter narrows rather than hides.
+    expect((await all()).body.conversations.some((c) => c.id === String(conversationId))).toBe(true);
+
+    // Unknown states are rejected, never silently ignored.
+    expect((await request(app).get('/admin/conversations?state=nonsense').set(bearer(sa.token))).status).toBe(400);
+  });
+
   it('other chats on the same product are unaffected', async () => {
     const other = await makeUser('buyer', { buyerSide: true, country: 'NZ' });
     const otherRes = await request(app).post('/inquiries').set(bearer(other.token))

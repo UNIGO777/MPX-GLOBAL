@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi } from '../../api/catalogue.js';
@@ -140,11 +140,21 @@ function SupplierResult({ supplier }) {
 
 export function AiSearch() {
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('idle'); // idle | loading | error | quota
-  // One answered question at a time — the page's whole "session". Replaced on
-  // every send; deliberately never accumulated (single-turn, not a chatbot).
-  const [session, setSession] = useState(null); // { question, answer, fallback, api, url, target }
+
+  /**
+   * 🔴 The answered question lives in the URL, not in component state.
+   *
+   * It used to be a `session` useState. Clicking a result unmounted this page,
+   * which threw the answer away — coming BACK from a product landed on a blank
+   * AI page with the results gone, even though react-query still had them
+   * cached under a key nothing could name any more.
+   *
+   * With `?q=` in the URL the page is reconstructible: back restores the same
+   * question, and the answer below is read straight from the cache.
+   */
+  const asked = params.get('q') ?? '';
   const goneRef = useRef(false);
   const textareaRef = useRef(null);
   const dockRef = useRef(null);
@@ -173,34 +183,56 @@ export function AiSearch() {
   const trimmed = query.trim();
   const valid = trimmed.length >= MIN_LEN && trimmed.length <= MAX_LEN;
 
-  const submit = async () => {
-    if (!valid || status === 'loading') return;
-    setStatus('loading');
-    try {
-      const data = await catalogueApi.aiSearch(trimmed);
-      if (goneRef.current) return;
-      const { api, url, target } = paramsFromExtraction(data.fallback ? null : data.extracted, trimmed);
-      setSession({
-        question: trimmed,
-        answer: data.answer ?? null,
-        message: data.message ?? null,
-        fallback: Boolean(data.fallback),
-        api,
-        url: url.toString(),
-        target,
-      });
-      setStatus('idle');
-      setQuery('');
-      // Composer just docked (first search) — keep the keyboard flow alive.
-      setTimeout(() => dockRef.current?.focus({ preventScroll: true }), 0);
-      window.scrollTo({ top: 0 });
-    } catch (err) {
-      if (goneRef.current) return;
-      // 429 is the per-organisation daily AI quota (aiQuota.service.js), not
-      // a network failure — it gets its own honest copy, never a raw error.
-      setStatus(err?.response?.status === 429 ? 'quota' : 'error');
-    }
+  /**
+   * The answer for the question in the URL.
+   *
+   * 🔴 `staleTime: Infinity` and a long `gcTime` are not a performance tweak —
+   * every miss spends a real OpenAI call against the organisation's DAILY quota
+   * (`aiQuota.service.js`). Returning from a product must never cost a second
+   * ask for a question already answered.
+   */
+  const ai = useQuery({
+    queryKey: ['ai-search', asked],
+    queryFn: () => catalogueApi.aiSearch(asked),
+    enabled: Boolean(asked),
+    staleTime: Infinity,
+    gcTime: 30 * 60 * 1000,
+    retry: false,
+  });
+
+  // Asking = putting the question in the URL. `replace` keeps the AI page as a
+  // SINGLE history entry, so Back from a product returns here rather than
+  // stepping through every question asked along the way.
+  const submit = () => {
+    if (!valid || ai.isFetching) return;
+    setParams({ q: trimmed }, { replace: Boolean(asked) });
+    setQuery('');
+    setTimeout(() => dockRef.current?.focus({ preventScroll: true }), 0);
+    window.scrollTo({ top: 0 });
   };
+
+  const status = ai.isFetching
+    ? 'loading'
+    : ai.error
+      // 429 is the per-organisation daily AI quota, not a network failure — it
+      // keeps its own honest copy, never a raw error.
+      ? (ai.error?.response?.status === 429 ? 'quota' : 'error')
+      : 'idle';
+
+  const session = useMemo(() => {
+    if (!asked || !ai.data) return null;
+    const data = ai.data;
+    const { api, url, target } = paramsFromExtraction(data.fallback ? null : data.extracted, asked);
+    return {
+      question: asked,
+      answer: data.answer ?? null,
+      message: data.message ?? null,
+      fallback: Boolean(data.fallback),
+      api,
+      url: url.toString(),
+      target,
+    };
+  }, [asked, ai.data]);
 
   // Results for the answered question — the SAME engine `/search` uses.
   const results = useQuery({

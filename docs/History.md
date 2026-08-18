@@ -175,6 +175,36 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-18 — `/admin/conversations` gains a moderation-STATE filter (owner).**
+  Search could never express it: `q` only ever matches the three denormalised names and the two org
+  ids. New `state` query param — `open` · `frozen` (umbrella) · `blocked` · `takedown` · `account` —
+  validated as an enum, so an unknown value is a 400 rather than a silently ignored filter.
+  🔴 It reads `frozen` + `frozenReason`, never `frozenLabel`: the label is a VIEW concern computed per
+  request (a purged product turns a takedown into "no longer available"), so filtering on it would mean
+  filtering on something the database does not store. `open` is `{ $ne: true }`, not `false` — rows
+  written before the field existed carry no `frozen` key and `false` would hide every one.
+  The reasons are split rather than rolled together because they are different jobs: a block is a
+  decision that may need reversing, a takedown clears itself when the product returns, an account pause
+  is not about this thread at all.
+  UI: one row with the search at every width (owner — on a phone the filter used to wrap below the
+  fold); the search gives up the width, since a truncated placeholder still reads while "Product
+  under…" does not. The empty state now names what produced it and offers **Clear filters** — "No
+  conversations yet" under an active filter is a lie that sends a moderator hunting a bug.
+  Tests: each reason matches only itself, the umbrella catches all three, unfiltered still returns the
+  row, and `state=nonsense` is a 400. 23 passing on that file.
+- **2026-08-18 — 🔴 BUG: Back from a result landed on a BLANK AI Search page.**
+  `AiSearch` held the answered question in a `session` useState and never touched the URL, so clicking
+  a result unmounted the page and threw the answer away — Back reconstructed an empty one. React-query
+  still had the results cached, under a key nothing could name any more.
+  The question is now **the URL** (`/ai-search?q=…`), and the answer is a cached query keyed on it, so
+  the page is reconstructible from an address: back restores the question, the answer sentence and the
+  matches, and `session` is derived from `asked` + the cache rather than stored.
+  🔴 `staleTime: Infinity` + a 30-minute `gcTime` are NOT a performance tweak: every miss spends a real
+  OpenAI call against the organisation's **daily** quota (`aiQuota.service.js`), so returning from a
+  product must never cost a second ask. Asking uses `replace` when a question is already in the URL, so
+  the AI page stays ONE history entry and Back from a product does not step back through every question.
+  Verified live: ask → open a supplier → Back restores the question, the answer and both matches, with
+  **zero AI requests** on the round trip.
 - **2026-08-18 — `/admin/users` shows each account's company mark instead of initials.**
   The row projection never carried a logo, so the directory rendered two letters for every account
   even where the company had uploaded one. `listUsers` now projects `orgLogo`, and a shared

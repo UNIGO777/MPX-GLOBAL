@@ -6,6 +6,7 @@ import { adminConversationsApi, conversationKeys } from '../../api/conversations
 import { CompanyAvatar } from '../../components/chat/CompanyAvatar.jsx';
 import { FreezeChip } from '../../components/chat/FreezeChip.jsx';
 import { Button } from '../../components/ui/Button.jsx';
+import { Combobox } from '../../components/ui/Combobox.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
@@ -88,11 +89,28 @@ function OrgPair({ conversation }) {
 export function Conversations() {
   const [draft, setDraft] = useState('');
   const [query, setQuery] = useState('');
+  /**
+   * The moderation state. `q` cannot express it — search only ever matches the
+   * three denormalised names and the two org ids — and it is the split a
+   * moderator actually works in: "what is blocked right now" is a different
+   * question from "what is paused because a product is under review".
+   *
+   * The reasons are separated rather than rolled into one "frozen" because they
+   * are different jobs: a block is a decision someone made and may need
+   * reversing, a takedown clears itself when the product returns, and an account
+   * pause is not about this thread at all.
+   */
+  const [state, setState] = useState('');
 
   const list = useInfiniteQuery({
-    queryKey: conversationKeys.admin.list({ q: query }),
+    queryKey: conversationKeys.admin.list({ q: query, state }),
     queryFn: ({ pageParam }) =>
-      adminConversationsApi.list({ q: query || undefined, cursor: pageParam, limit: PAGE_LIMIT }),
+      adminConversationsApi.list({
+        q: query || undefined,
+        state: state || undefined,
+        cursor: pageParam,
+        limit: PAGE_LIMIT,
+      }),
     initialPageParam: undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
@@ -108,12 +126,16 @@ export function Conversations() {
         </p>
       </header>
 
+      {/* Search and state sit on ONE row: they narrow the same list and a
+          moderator sets them together. The search box keeps the width — it is
+          the field that holds a pasted organisation id. */}
+      <div className="mb-4 flex items-center gap-2 sm:gap-3">
       <form
         onSubmit={(e) => {
           e.preventDefault();
           setQuery(draft.trim());
         }}
-        className="relative mb-4 max-w-xl"
+        className="relative min-w-0 flex-1"
       >
         <label htmlFor="admin-chat-search" className="sr-only">Search conversations</label>
         <SearchIcon
@@ -125,7 +147,7 @@ export function Conversations() {
           type="search"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Search names or organisation ID"
+          placeholder="Search names or org ID"
           className="h-11 w-full rounded-lg border border-surface-border bg-white pl-9 pr-9 text-sm text-ink-900 placeholder:text-ink-500 focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20"
         />
         {query && (
@@ -143,6 +165,28 @@ export function Conversations() {
         )}
       </form>
 
+        {/* Narrower on a phone so both fit: the SEARCH gives up width first,
+            because a truncated placeholder still reads while a truncated state
+            label ("Product under…") does not. */}
+        <div className="w-[8.5rem] shrink-0 sm:w-[13rem]">
+          <label htmlFor="admin-chat-state" className="sr-only">Filter by state</label>
+          <Combobox
+            id="admin-chat-state"
+            value={state}
+            placeholder="Any state"
+            options={[
+              { value: '', label: 'Any state' },
+              { value: 'open', label: 'Open' },
+              { value: 'frozen', label: 'Frozen — any reason' },
+              { value: 'blocked', label: 'Blocked by MPX' },
+              { value: 'takedown', label: 'Product under review' },
+              { value: 'account', label: 'Account paused' },
+            ]}
+            onChange={setState}
+          />
+        </div>
+      </div>
+
       <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
         {list.isLoading ? (
           <SkeletonRows rows={8} />
@@ -153,10 +197,33 @@ export function Conversations() {
             onRetry={list.refetch}
           />
         ) : rows.length === 0 ? (
-          <EmptyState icon={ChatIcon} title={query ? 'No conversations match' : 'No conversations yet'}>
+          /* An empty result has to name what produced it. "No conversations yet"
+             under an active state filter is a lie — there may be plenty, just
+             none in that state — and it sends a moderator looking for a bug. */
+          <EmptyState
+            icon={ChatIcon}
+            title={query || state ? 'No conversations match' : 'No conversations yet'}
+            action={
+              query || state ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setDraft('');
+                    setQuery('');
+                    setState('');
+                  }}
+                >
+                  Clear filters
+                </Button>
+              ) : null
+            }
+          >
             {query
-              ? `Nothing found for “${query}”. Names match whole words or the start of one; an organisation ID matches exactly.`
-              : 'Threads appear here as soon as buyers start enquiring.'}
+              ? `Nothing found for “${query}”${state ? ' in that state' : ''}. Names match whole words or the start of one; an organisation ID matches exactly.`
+              : state
+                ? 'No thread is in that state right now.'
+                : 'Threads appear here as soon as buyers start enquiring.'}
           </EmptyState>
         ) : (
           <>

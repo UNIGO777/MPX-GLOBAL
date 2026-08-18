@@ -43,6 +43,25 @@ const MAX_PAGE = 50;
  *              own field. `q` always `$or`s both, so a company holding both
  *              sides could never be split.
  */
+/**
+ * The moderation-state filter.
+ *
+ * 🔴 Reads `frozen` + `frozenReason`, never a derived label: `frozenLabel` is a
+ * VIEW concern computed per request (a purged product turns a takedown into
+ * "no longer available"), so filtering on it would mean filtering on something
+ * the database does not store.
+ *
+ * `open` is `frozen: { $ne: true }` rather than `frozen: false` — rows written
+ * before the field existed have no `frozen` key at all, and `false` would hide
+ * every one of them.
+ */
+function stateClause(state) {
+  if (!state) return null;
+  if (state === 'open') return { frozen: { $ne: true } };
+  if (state === 'frozen') return { frozen: true };
+  return { frozen: true, frozenReason: state };
+}
+
 function targetClause({ productId, side, orgId }) {
   const clause = {};
   if (productId) clause.productId = new mongoose.Types.ObjectId(productId);
@@ -75,7 +94,7 @@ async function loadProducts(conversations) {
  * correctly; only the admin one used `skip`, and it is the one where rows churn
  * fastest.
  */
-export async function listAdminConversations({ q, productId, side, orgId, cursor, limit }) {
+export async function listAdminConversations({ q, productId, side, orgId, state, cursor, limit }) {
   const size = Math.min(limit ?? 20, MAX_PAGE);
 
   let decoded = null;
@@ -93,6 +112,7 @@ export async function listAdminConversations({ q, productId, side, orgId, cursor
     Conversation.find(
       combineFilter(
         targetClause({ productId, side, orgId }),
+        stateClause(state),
         searchClause(q, searchMode),
         decoded ? cursorClause(decoded) : null,
       ),
