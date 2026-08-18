@@ -56,11 +56,23 @@ function adminCategoryView(cat) {
 
 // --- public reads --------------------------------------------------------------
 
-export async function getTree(_req, res) {
-  const tree = await svc.getPublicTree();
-  res.json({
-    categories: tree.map(({ top, subs }) => ({ ...pub(top), subs: subs.map(pub) })),
-  });
+/**
+ * `GET /categories` — two modes (2026-08-17):
+ * - no `limit` → the original shape, everything at once: `{ categories }`.
+ *   The web app's one-shot load; byte-identical to before, nothing breaks.
+ * - `?limit=N[&offset=M]` → that slice of tops (each with all its subs) plus
+ *   paging metadata: `{ categories, total, offset, limit, hasMore }` — the
+ *   app's browse screen loads chunks as the user scrolls.
+ */
+export async function getTree(req, res) {
+  const { limit, offset = 0 } = req.validated?.query ?? {};
+  const { tree, total } = await svc.getPublicTree({ limit, offset });
+  const categories = tree.map(({ top, subs }) => ({ ...pub(top), subs: subs.map(pub) }));
+  if (limit == null) {
+    res.json({ categories });
+    return;
+  }
+  res.json({ categories, total, offset, limit, hasMore: offset + categories.length < total });
 }
 
 export async function getTops(_req, res) {

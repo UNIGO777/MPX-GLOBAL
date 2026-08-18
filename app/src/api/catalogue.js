@@ -25,6 +25,29 @@ export const catalogueApi = {
   tree: () => apiClient.get('/categories').then((r) => r.data.categories),
 
   /**
+   * Chunked tree (2026-08-17) — same endpoint with `?limit/offset`, returning
+   * `{ categories, total, offset, limit, hasMore }`. The browse screen loads
+   * tops in pages as the user scrolls instead of all 40 up front; chunks are
+   * whole tops (each with ALL its subs) — the server never pages subs away.
+   */
+  treeChunk: (params) => apiClient.get('/categories', { params }).then((r) => r.data),
+
+  /** Public product detail by id or slug (M2 screen 3) — same projection the
+   *  web detail page renders; 404 covers every unavailable case
+   *  indistinguishably (draft/hidden/archived/taken down/dead category). */
+  product: (idOrSlug) => apiClient.get(`/public/products/${idOrSlug}`).then((r) => r.data.product),
+
+  /** A category's attribute DEFINITIONS (labels/units per key) — the product
+   *  payload carries `{key, value}` snapshots only; labels live on the
+   *  category (same split web's SpecTable documents). */
+  categoryAttributes: (idOrSlug) =>
+    apiClient.get(`/categories/${idOrSlug}/attributes`).then((r) => r.data.attributes),
+
+  /** Public exporter/supplier profile by id or slug (M2 screen 4) — the B7
+   *  whitelist projection incl. `productCount` (live listings only). */
+  exporter: (idOrSlug) => apiClient.get(`/exporters/${idOrSlug}`).then((r) => r.data.exporter),
+
+  /**
    * `type: 'product' | 'supplier'`, `sort`, `pageSize` — same contract as the
    * web app's search. Home only ever asks for `sort: 'newest'` (real,
    * server-supported — never a fabricated "popular"/"best seller" ranking

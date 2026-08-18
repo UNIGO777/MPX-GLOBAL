@@ -10,6 +10,19 @@ export const idOrSlugParam = {
   params: z.object({ idOrSlug }),
 };
 
+// GET /categories — optional chunked mode (2026-08-17, for the app's category
+// browse). BOTH params omitted = the original send-everything behaviour the
+// web app relies on; `limit` present = that slice of TOP categories (each
+// still carrying all its subs) plus paging metadata. `limit` is capped (B7:
+// pagination never ships without a maximum page size); `offset` bounded well
+// past any real catalogue size.
+export const treeQuery = {
+  query: z.object({
+    limit: z.coerce.number().int().min(1).max(50).optional(),
+    offset: z.coerce.number().int().min(0).max(10000).optional(),
+  }),
+};
+
 export const parentIdParam = {
   params: z.object({ parentId: zObjectId() }),
 };
