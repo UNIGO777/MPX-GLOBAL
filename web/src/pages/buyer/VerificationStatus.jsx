@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 import { kycApi } from '../../api/kyc.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
@@ -118,25 +118,20 @@ function RailCard({ label, children }) {
 export function VerificationStatus() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [verification, setVerification] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setVerification(await kycApi.myVerification());
-    } catch (err) {
-      setError(apiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  /**
+   * TanStack Query, not a hand-rolled fetch in an effect.
+   *
+   * `web-frontend.md` mandates it for all server data, and it removes the
+   * effect that called `setState` synchronously on mount (a cascading render).
+   * Caching also means returning to this tab does not re-show a spinner for
+   * data that is already known.
+   */
+  const query = useQuery({ queryKey: ['me','verification'], queryFn: kycApi.myVerification });
+  const verification = query.data ?? null;
+  const loading = query.isLoading;
+  const error = query.error ? apiError(query.error) : null;
+  const load = query.refetch;
 
   const v = verification;
   const status = v?.kycStatus;

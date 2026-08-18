@@ -21,6 +21,54 @@ export function formatMonth(value) {
   return Number.isNaN(d.getTime()) ? '' : MONTH_FMT.format(d);
 }
 
+const TIME_FMT = new Intl.DateTimeFormat(config.locale.dates, { hour: '2-digit', minute: '2-digit' });
+const DAY_FMT = new Intl.DateTimeFormat(config.locale.dates, { weekday: 'short' });
+const DAY_MONTH_FMT = new Intl.DateTimeFormat(config.locale.dates, { day: '2-digit', month: 'short' });
+
+/** Clock time only — the per-message stamp inside a chat thread. */
+export function formatTime(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? '' : TIME_FMT.format(d);
+}
+
+/**
+ * Chat-list timestamps, the convention every messaging surface uses: today →
+ * clock, this week → weekday, this year → day + month, older → full date.
+ *
+ * Deliberately NOT "3 minutes ago": a relative string is stale the moment it
+ * renders and would need a ticking timer on every row to stay honest.
+ */
+export function formatListTime(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) return TIME_FMT.format(d);
+
+  const daysApart = Math.floor((now - d) / 86_400_000);
+  if (daysApart < 7) return DAY_FMT.format(d);
+  if (d.getFullYear() === now.getFullYear()) return DAY_MONTH_FMT.format(d);
+  return DATE_FMT.format(d);
+}
+
+/** The date-separator label between days of messages. */
+export function formatDayLabel(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return 'Today';
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+
+  return DATE_FMT.format(d);
+}
+
 /**
  * Mask the identifier the user typed for the OTP screen ("+91 ••••• 43210" /
  * "ni••••@gmail.com"). The API never returns the destination, so this is

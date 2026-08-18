@@ -8,6 +8,7 @@ import {
   UserIcon,
   ListIcon,
   BoxIcon,
+  ChatIcon,
   SettingsIcon,
 } from '../components/ui/icons.jsx';
 
@@ -42,7 +43,13 @@ const NAV = [
     Icon: ListIcon,
     perms: ['product:read', 'product:takedown'],
   },
-  { to: '/admin/employees', label: 'Employees', Icon: UserIcon, superadminOnly: true },
+  {
+    to: '/admin/conversations',
+    label: 'Conversations',
+    Icon: ChatIcon,
+    perms: ['conversation:read'],
+  },
+  { to: '/admin/staff', label: 'Staff', Icon: UserIcon, superadminOnly: true },
   { to: '/admin/audit', label: 'Audit log', Icon: ListIcon, perms: ['audit:read'], dividerBefore: true },
   { to: '/admin/settings', label: 'Settings', Icon: SettingsIcon },
 ];

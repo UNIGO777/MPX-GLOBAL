@@ -61,6 +61,16 @@ export const listAdminConversations = {
       productId: zObjectId().optional(),
       orgId: zObjectId().optional(),
       side: z.enum(['buyer', 'exporter']).optional(),
+      /**
+       * The moderation state, which `q` cannot express at all.
+       *
+       * `frozen` is the umbrella ("anything that takes no new messages"); the
+       * three reasons below split it because they are DIFFERENT jobs — a
+       * blocked chat is a decision someone made and may need reversing, a
+       * takedown clears itself when the product returns, and an account pause
+       * is not about this thread at all.
+       */
+      state: z.enum(['open', 'frozen', 'blocked', 'takedown', 'account']).optional(),
       cursor: zString({ min: 1, max: 200 }).optional(),
       limit: z.coerce.number().int().min(1).max(50).default(20),
     })

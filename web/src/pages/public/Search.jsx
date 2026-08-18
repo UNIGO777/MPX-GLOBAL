@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -374,35 +374,62 @@ export function Search() {
   // (same route — the component never remounts, only `location` changes). A
   // one-time initializer would miss every submission made from here.
   const [aiInfo, setAiInfo] = useState(null);
-  useEffect(() => {
+  // ADJUSTED DURING RENDER, not in an effect: React supports setting state
+  // while rendering to react to a changed input, and it re-renders immediately
+  // instead of painting the stale value first and correcting it after.
+  // Ordinary filter/sort navigations (setSearchParams) carry no state, so they
+  // correctly leave whatever aiInfo is already showing untouched.
+  const [seenNavState, setSeenNavState] = useState(location.state);
+  if (seenNavState !== location.state) {
+    setSeenNavState(location.state);
     if (location.state?.aiAnswer || location.state?.aiFallback) {
-      setAiInfo({ answer: location.state.aiAnswer ?? null, fallback: Boolean(location.state.aiFallback) });
+      setAiInfo({
+        answer: location.state.aiAnswer ?? null,
+        fallback: Boolean(location.state.aiFallback),
+      });
     }
-    // Ordinary filter/sort navigations (setSearchParams) carry no state, so
-    // they correctly leave whatever aiInfo is already showing untouched.
-  }, [location.state]);
+  }
   const q = params.get('q') ?? '';
   const [draft, setDraft] = useState(q);
   // Recent searches: every query that reaches the URL is remembered (that
   // covers typed submits, suggestion chips, didYouMean and AI hand-offs
   // alike), newest first, deduped, capped.
-  const [recent, setRecent] = useState(readRecentSearches);
+  const [storedRecent, setStoredRecent] = useState(readRecentSearches);
+  // The current query is folded in by DERIVING the list rather than writing it
+  // back into state — the effect below now only talks to localStorage, which is
+  // exactly what an effect is for (an external system), and no longer triggers
+  // a second render of this page on every search.
+  // Terms the user removed in THIS session. Needed because the active query is
+  // folded into the list by derivation, so without it, removing the chip for
+  // the search you are currently looking at would do nothing visible.
+  const [dismissed, setDismissed] = useState([]);
+  const recent = useMemo(() => {
+    const head = q && !dismissed.includes(q) ? [q] : [];
+    const rest = storedRecent.filter((t) => t !== q && !dismissed.includes(t));
+    return [...head, ...rest].slice(0, RECENT_MAX);
+  }, [q, storedRecent, dismissed]);
+
   useEffect(() => {
-    if (!q) return;
-    setRecent((prev) => {
-      const next = [q, ...prev.filter((t) => t !== q)].slice(0, RECENT_MAX);
-      writeRecentSearches(next);
-      return next;
-    });
-  }, [q]);
-  const removeRecent = (term) =>
-    setRecent((prev) => {
+    if (q && !dismissed.includes(q)) writeRecentSearches(recent);
+  }, [q, recent, dismissed]);
+  /**
+   * Removing operates on the STORED list and on the current query's own chip.
+   * `recent` is derived, so dropping the active term also means dropping it
+   * from the URL-derived head — handled by filtering what we store and letting
+   * the derivation reflect it.
+   */
+  const removeRecent = (term) => {
+    setDismissed((prev) => (prev.includes(term) ? prev : [...prev, term]));
+    setStoredRecent((prev) => {
       const next = prev.filter((t) => t !== term);
       writeRecentSearches(next);
       return next;
     });
+  };
   const clearRecent = () => {
-    setRecent([]);
+    // Dismiss the live query too, or it reappears immediately by derivation.
+    if (q) setDismissed((prev) => (prev.includes(q) ? prev : [...prev, q]));
+    setStoredRecent([]);
     writeRecentSearches([]);
   };
   const type = params.get('type') === 'supplier' ? 'supplier' : 'product';
@@ -516,8 +543,14 @@ export function Search() {
     queryFn: () => catalogueApi.facets(searchParamsForApi),
   });
 
-  // keep the input in sync when navigation changes q (back/forward, didYouMean)
-  useEffect(() => setDraft(q), [q]);
+  // Keep the input in sync when navigation changes `q` (back/forward,
+  // didYouMean). Adjusted during render for the same reason as `aiInfo` above:
+  // an effect would paint the old term for one frame first.
+  const [lastQ, setLastQ] = useState(q);
+  if (lastQ !== q) {
+    setLastQ(q);
+    setDraft(q);
+  }
 
   useEffect(() => {
     const previous = document.title;

@@ -259,14 +259,28 @@ export async function removeMyCover({ user }) {
   return { organisation: ownerView(org) };
 }
 
+/**
+ * The company icon.
+ *
+ * 🔴 SCOPE CHANGED 2026-08-17 (owner): buyers may set one too. It used to be
+ * exporter-only, because the logo existed to fill the public seller page and a
+ * buyer has no public page.
+ *
+ * What a BUYER's icon is, precisely — it is NOT public. There is no public buyer
+ * page to carry it, and no public projection gained a field. It appears in two
+ * authenticated places: the buyer's own portal, and as the counterparty avatar
+ * inside a conversation the two companies are already party to. A seller
+ * therefore sees the icon of a buyer who has enquired with them, and nobody
+ * else can see it at all.
+ *
+ * An EXPORTER's logo is unchanged: still public, still the seller page's image.
+ */
 export async function setMyLogo({ user, buffer }) {
   const org = await loadOwnOrg(user);
-  if (!org.exporterSide) {
-    throw AppError.forbidden('buyer has no logo', 'Only exporter profiles have a logo.');
-  }
 
-  // Public asset by design — the logo IS the public page's image. Magic-byte
-  // verified, images only (no PDF), 5 MB cap — all inside uploadPublicImage.
+  // Magic-byte verified, images only (no PDF), 5 MB cap — all inside
+  // uploadPublicImage. For an exporter the asset is public by design; for a
+  // buyer it is only ever served to a counterparty in a live conversation.
   const { url } = await uploadPublicImage({ buffer, folder: `mpx/logos/${org._id}` });
 
   await deleteOldLogo(org);
@@ -279,9 +293,6 @@ export async function setMyLogo({ user, buffer }) {
 
 export async function removeMyLogo({ user }) {
   const org = await loadOwnOrg(user);
-  if (!org.exporterSide) {
-    throw AppError.forbidden('buyer has no logo', 'Only exporter profiles have a logo.');
-  }
 
   await deleteOldLogo(org);
   org.logo = undefined;

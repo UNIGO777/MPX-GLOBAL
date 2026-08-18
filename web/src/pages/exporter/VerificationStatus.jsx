@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 import { kycApi } from '../../api/kyc.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
@@ -125,33 +125,33 @@ export function VerificationStatus() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [verification, setVerification] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  /**
+   * TanStack Query rather than a hand-rolled fetch in an effect —
+   * `web-frontend.md` mandates it for server data, and it removes the mount
+   * effect that set state synchronously (a cascading render).
+   *
+   * The two calls stay in ONE query because they fill one screen: the
+   * verification is required, while the public profile is header garnish whose
+   * failure must degrade rather than error the page — hence `allSettled` and
+   * the rethrow of only the first.
+   */
+  const query = useQuery({
+    queryKey: ['me', 'verification', 'with-profile', user.orgId],
+    queryFn: async () => {
       const [v, p] = await Promise.allSettled([
         kycApi.myVerification(),
         kycApi.publicExporter(user.orgId),
       ]);
       if (v.status === 'rejected') throw v.reason;
-      setVerification(v.value);
-      // Profile is header garnish — its failure degrades, never errors the page.
-      setProfile(p.status === 'fulfilled' ? p.value : null);
-    } catch (err) {
-      setError(apiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [user.orgId]);
+      return { verification: v.value, profile: p.status === 'fulfilled' ? p.value : null };
+    },
+  });
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const verification = query.data?.verification ?? null;
+  const profile = query.data?.profile ?? null;
+  const loading = query.isLoading;
+  const error = query.error ? apiError(query.error) : null;
+  const load = query.refetch;
 
   const v = verification;
   const status = v?.kycStatus;

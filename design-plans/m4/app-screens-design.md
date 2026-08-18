@@ -1,5 +1,48 @@
 # M4 · Mobile App Screens — Design Brief (Enquiry & Chat)
 
+---
+
+## 🔴 0. WEB SHIPPED FIRST — what the app must match (added 2026-08-17)
+
+The M4 **web** client is built. Where this brief and the shipped web behaviour differ, **the web
+behaviour is the contract** — it is running, verified against real accounts, and the backend was
+corrected to match it.
+
+### 0.1 A backend fix that changes app behaviour
+
+**`POST /conversations/:id/messages` now BROADCASTS.** The emit used to live only in the socket's
+`message:send` handler, so a REST send reached nobody live. It now happens inside `sendMessage()`,
+which means:
+
+- The app can send over **REST** and the counterparty still receives `message:new` live.
+- The app must **de-duplicate by server message id** — the sender gets their own message back over
+  the socket as well as in the send response.
+- **System messages broadcast too**, so a freeze notice arrives in an open thread at the moment the
+  composer must swap for the banner.
+
+### 0.2 Decisions the app should copy
+
+| Decision | Why |
+|---|---|
+| One **Chat** entry, no "Enquiries" list | M4-35 — an enquiry and its thread are one-to-one; two lists show the same rows twice |
+| Consecutive messages form a **run**: company name once at the top, clock once at the bottom, 5-min gap breaks it | Repeating the name on every bubble made a real change of speaker invisible |
+| The **enquiry form is note-first**, structured fields behind an "Add details" disclosure | Only the note is required; six inputs as a first impression suppress enquiries |
+| Product page is the **one door**; the category-card button was deleted | Owner ruling, applied at wiring |
+| Supplier "Start Conversation" = **product picker**, not a product-less thread | M4-4 — every thread is anchored to one product |
+| Failed send reports **on the message** with a retry | A toast detaches the error from the words the sender lost |
+| Freeze **replaces** the composer, and a typed draft stays visible | Never silently eat what someone typed |
+| A moderator's view labels **every** run with the sending company | Otherwise buyer and seller are indistinguishable |
+
+### 0.3 What is web-only — do NOT port
+
+**The docked chat window is a web idea.** It exists because a desktop buyer compares suppliers in
+one tab while negotiating in another. The app has a real chat screen and a real navigation stack;
+a floating mini-window on a phone is strictly worse. The web dock itself collapses to a full-screen
+route below 768px for exactly this reason.
+
+**The tab-title unread count** is likewise web-only. The app's equivalent is the approved FCM push
+slice plus a tab badge — **not** a second notification mechanism.
+
 > **5 screens** for the M4 (Enquiry & Chat) milestone, **mobile app only** (React Native / Expo,
 > iOS + Android).
 > This is a **design** document: what each screen contains, every field on it, and the states

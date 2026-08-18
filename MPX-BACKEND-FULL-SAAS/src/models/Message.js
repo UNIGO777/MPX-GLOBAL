@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 import { baseSchemaOptions } from './baseSchema.js';
 import { declareScope, SCOPE } from './scoping.js';
-import { MESSAGE_SENDER_TYPE } from './enums.js';
+import { MESSAGE_SENDER_TYPE, MESSAGE_SYSTEM_KIND } from './enums.js';
 
 const { Schema } = mongoose;
 
@@ -38,6 +38,11 @@ const messageSchema = new Schema(
     senderUserId: { type: Schema.Types.ObjectId, ref: 'User' },
 
     body: { type: String, required: true, trim: true, maxlength: BODY_CEILING },
+
+    // Only ever present on a `system` message, and only on ones written after
+    // 2026-08-18 — older notices predate the field and cannot be backfilled
+    // (M4-13: append-only). Absent means "render it neutrally", not "invalid".
+    systemKind: { type: String, enum: MESSAGE_SYSTEM_KIND },
   },
   // updatedAt is meaningless on a record that can never be edited.
   { ...baseSchemaOptions, timestamps: { createdAt: true, updatedAt: false } },

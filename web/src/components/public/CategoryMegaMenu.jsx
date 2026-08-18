@@ -77,9 +77,15 @@ export function CategoryMegaMenu({ current, linkClasses }) {
   // A route change is the real "did we navigate" signal — PublicHeader (and
   // this menu) never unmounts between pages, so without this the panel would
   // still be sitting open over whatever page a tile click landed on.
-  useEffect(() => {
+  //
+  // Adjusted DURING RENDER rather than in an effect: React re-renders
+  // immediately with the corrected value, so the panel is never painted open
+  // over the new page for a frame before closing itself.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => cancelClose, [cancelClose]);
 

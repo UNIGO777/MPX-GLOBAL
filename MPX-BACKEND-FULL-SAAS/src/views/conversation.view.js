@@ -81,7 +81,7 @@ export function isUnread(conversation, viewerSide) {
 }
 
 /** The view for a party to the thread (buyer or exporter). */
-export function conversationPartyView(conversation, { viewerSide, product }) {
+export function conversationPartyView(conversation, { viewerSide, product, logos }) {
   const productExists = Boolean(product);
   return {
     id: String(conversation._id),
@@ -94,6 +94,15 @@ export function conversationPartyView(conversation, { viewerSide, product }) {
     },
     counterparty: {
       name: viewerSide === 'buyer' ? conversation.exporterOrgName : conversation.buyerOrgName,
+      // 🔴 One display field, added 2026-08-17 (owner) — the company ICON, for
+      // the list avatar and the thread header. Deliberately NOT the org: no id,
+      // no country, no verification. An exporter's logo is public anyway; a
+      // BUYER's is not, and reaches the seller only because the two are already
+      // party to this conversation.
+      logo:
+        (logos?.get(
+          String(viewerSide === 'buyer' ? conversation.exporterOrgId : conversation.buyerOrgId),
+        )) ?? null,
     },
     participants: participants(conversation),
     lastMessageAt: conversation.lastMessageAt ?? null,
@@ -111,7 +120,7 @@ export function conversationPartyView(conversation, { viewerSide, product }) {
  * The staff view. Adds what a moderator needs and a party must never have:
  * both org identities, the acting admin, and the raw freeze reason.
  */
-export function conversationStaffView(conversation, { product }) {
+export function conversationStaffView(conversation, { product, logos }) {
   const productExists = Boolean(product);
   return {
     id: String(conversation._id),
@@ -121,8 +130,16 @@ export function conversationStaffView(conversation, { product }) {
       slug: product?.slug ?? null,
       name: productName(conversation, product),
     },
-    buyerOrg: { id: String(conversation.buyerOrgId), name: conversation.buyerOrgName },
-    exporterOrg: { id: String(conversation.exporterOrgId), name: conversation.exporterOrgName },
+    buyerOrg: {
+      id: String(conversation.buyerOrgId),
+      name: conversation.buyerOrgName,
+      logo: logos?.get(String(conversation.buyerOrgId)) ?? null,
+    },
+    exporterOrg: {
+      id: String(conversation.exporterOrgId),
+      name: conversation.exporterOrgName,
+      logo: logos?.get(String(conversation.exporterOrgId)) ?? null,
+    },
     participants: participants(conversation),
     lastMessageAt: conversation.lastMessageAt ?? null,
     lastMessagePreview: conversation.lastMessagePreview ?? null,
@@ -154,6 +171,11 @@ export function messageView(message) {
   return {
     id: String(message._id),
     senderType: message.senderType,
+    // What the platform's own notice is ABOUT, so a client can tone a block
+    // differently from a reopen without matching on the copy. Null on every
+    // party message, and on system notices written before the field existed —
+    // messages are append-only (M4-13), so those can never be backfilled.
+    systemKind: message.senderType === 'system' ? (message.systemKind ?? null) : null,
     body: message.body,
     createdAt: message.createdAt,
   };

@@ -1,4 +1,4 @@
-import { Calendar, CreditCard, Expand, KeyRound, Mail, MapPin, Shield, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Calendar, CreditCard, Expand, KeyRound, LayoutGrid, Mail, MapPin, MessageSquarePlus, MessagesSquare, Send, Shield, SlidersHorizontal, Sparkles } from 'lucide-react';
 
 /**
  * Minimal inline SVG icon set (1.8 stroke, currentColor) — no icon-font network
@@ -105,8 +105,15 @@ export const GlobeIcon = (p) => (
 export const ExternalIcon = (p) => (
   <Svg {...p}><path d="M14 5h5v5M19 5l-8 8" /><path d="M19 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h5" /></Svg>
 );
-export const ChatIcon = (p) => (
-  <Svg {...p}><path d="M21 12a8 8 0 01-8 8H4l2.3-2.7A8 8 0 1121 12z" /></Svg>
+/**
+ * Chat / conversations.
+ *
+ * TWO overlapping bubbles, not one: this marks a two-party CONVERSATION (nav
+ * item, dock launcher, admin "Conversations"), and a single bubble read as
+ * "a message" or, worse, as a support-widget bubble.
+ */
+export const ChatIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <MessagesSquare className={className} strokeWidth={1.8} aria-hidden="true" {...rest} />
 );
 export const BoxIcon = (p) => (
   <Svg {...p}><path d="M21 8l-9-5-9 5v8l9 5 9-5z" /><path d="M3 8l9 5 9-5M12 13v8" /></Svg>
@@ -173,6 +180,29 @@ export const CreditCardIcon = ({ className = 'h-5 w-5', ...rest }) => (
 
 /** The disabled "Send Enquiry" placeholder (`ProductDetail.jsx` — Module 4,
  *  not built; see the button's own comment). */
+/**
+ * M4 chat glyphs.
+ *
+ * `SendIcon` — the composer's submit. It was a generic right-arrow, which reads
+ * as "next" rather than "send" beside a message box.
+ *
+ * `EnquiryIcon` — the product page's enquiry button. That was an ENVELOPE, and
+ * on this platform an envelope is actively misleading: contact details are
+ * hidden by design and an enquiry starts a thread, never an email (m4.md §1).
+ */
+/** Category grid — the shape of the categories page itself. */
+export const GridIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <LayoutGrid className={className} strokeWidth={1.8} aria-hidden="true" {...rest} />
+);
+
+export const SendIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Send className={className} strokeWidth={1.8} aria-hidden="true" {...rest} />
+);
+
+export const EnquiryIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <MessageSquarePlus className={className} strokeWidth={1.8} aria-hidden="true" {...rest} />
+);
+
 export const MailIcon = ({ className = 'h-5 w-5', ...rest }) => (
   <Mail aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
 );

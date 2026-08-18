@@ -268,6 +268,803 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
     "+ Add product"/"View all"/card-tap all went from coming-soon to real (ledger rows →
     Done). Babel-checked ×9; on-device verification is the next step (needs a port + the
     exporter login).
+- **2026-08-18 — `/admin/conversations` gains a moderation-STATE filter (owner).**
+  Search could never express it: `q` only ever matches the three denormalised names and the two org
+  ids. New `state` query param — `open` · `frozen` (umbrella) · `blocked` · `takedown` · `account` —
+  validated as an enum, so an unknown value is a 400 rather than a silently ignored filter.
+  🔴 It reads `frozen` + `frozenReason`, never `frozenLabel`: the label is a VIEW concern computed per
+  request (a purged product turns a takedown into "no longer available"), so filtering on it would mean
+  filtering on something the database does not store. `open` is `{ $ne: true }`, not `false` — rows
+  written before the field existed carry no `frozen` key and `false` would hide every one.
+  The reasons are split rather than rolled together because they are different jobs: a block is a
+  decision that may need reversing, a takedown clears itself when the product returns, an account pause
+  is not about this thread at all.
+  UI: one row with the search at every width (owner — on a phone the filter used to wrap below the
+  fold); the search gives up the width, since a truncated placeholder still reads while "Product
+  under…" does not. The empty state now names what produced it and offers **Clear filters** — "No
+  conversations yet" under an active filter is a lie that sends a moderator hunting a bug.
+  Tests: each reason matches only itself, the umbrella catches all three, unfiltered still returns the
+  row, and `state=nonsense` is a 400. 23 passing on that file.
+- **2026-08-18 — 🔴 BUG: Back from a result landed on a BLANK AI Search page.**
+  `AiSearch` held the answered question in a `session` useState and never touched the URL, so clicking
+  a result unmounted the page and threw the answer away — Back reconstructed an empty one. React-query
+  still had the results cached, under a key nothing could name any more.
+  The question is now **the URL** (`/ai-search?q=…`), and the answer is a cached query keyed on it, so
+  the page is reconstructible from an address: back restores the question, the answer sentence and the
+  matches, and `session` is derived from `asked` + the cache rather than stored.
+  🔴 `staleTime: Infinity` + a 30-minute `gcTime` are NOT a performance tweak: every miss spends a real
+  OpenAI call against the organisation's **daily** quota (`aiQuota.service.js`), so returning from a
+  product must never cost a second ask. Asking uses `replace` when a question is already in the URL, so
+  the AI page stays ONE history entry and Back from a product does not step back through every question.
+  Verified live: ask → open a supplier → Back restores the question, the answer and both matches, with
+  **zero AI requests** on the round trip.
+- **2026-08-18 — `/admin/users` shows each account's company mark instead of initials.**
+  The row projection never carried a logo, so the directory rendered two letters for every account
+  even where the company had uploaded one. `listUsers` now projects `orgLogo`, and a shared
+  `AccountAvatar` renders it — falling back to the monogram when there is none, which is every STAFF
+  row (they have no company mark, and inventing a placeholder face would be worse). Deactivated
+  accounts render theirs greyscale, matching the dimmed monogram it replaces.
+  `object-contain`, as everywhere else a company mark is shown: `cover` crops a wordmark and eats the
+  ends of the word.
+- **2026-08-18 — Admin conversation screens: the company logos the server was already sending are
+  finally rendered.** `conversationStaffView` carries `buyerOrg.logo` and `exporterOrg.logo`, and NO
+  admin surface used them — `loadOrgLogos` ran on every page of the moderation list and the result was
+  discarded. Now: an **overlapped buyer × seller pair** (new `xs` avatar size, 28px) leads each row of
+  the list in both the table and the phone cards, the same pair leads the **staff thread header** (a
+  party sees one mark, staff are neither party so they see both, in the order the title reads), and
+  the viewer's **rail rows show each company's mark** beside its name.
+  Also: the block record shows the TIME, not just the date — two blocks on one day were
+  indistinguishable on a moderation record.
+  🔴 Trap avoided for the third time today: the overlap separator was written as `ring-2 ring-white`
+  passed through `className`, which RACES `CompanyAvatar`'s own `ring-1 ring-inset` (Tailwind resolves
+  conflicting utilities by stylesheet order, not attribute order). It is an `outline` now — a different
+  property, so it cannot be raced.
+- **2026-08-18 — Dock audit: freeze banner scaled, and no placeholder identity while a thread loads.**
+  *(1)* `FreezeBanner` never got the dock's scale even though it REPLACES the composer — so in a 352px
+  window the largest thing on screen was the banner. It takes `compact` now (11.5px text, `py-2 pl-3`,
+  a 14px icon), completing the set: bubbles, notices, day markers, composer and banner all scale
+  together. *(2)* While a thread loaded, the dock header showed a **"?" monogram** beside the word
+  "Conversation" — a placeholder identity for a company not yet known. The avatar simply waits for a
+  name now.
+  Checked and correct as-is: Esc closes and the panel takes focus on open, but focus is deliberately
+  NOT trapped (the dock is non-modal — the page behind it must stay usable); `z-40` keeps it below
+  modals and drawers at `z-50`; the launcher hides while the panel is open; the dock hides itself on
+  the full inbox route, for guests, for staff and on auth screens; rows already render `compact`; and
+  the list scroller contains its overscroll.
+- **2026-08-18 — M4 UI audit: found the dock's compact mode was never actually wired.**
+  🔴 **The real defect:** `ThreadView` passed `compact` to `DateSeparator` and `Composer` but **not to
+  `MessageBubble`** — so every bubble and platform notice in the 352px dock had been rendering at page
+  scale, despite two turns reporting the compaction as shipped. Cause is the same aborted-edit-script
+  drift as the sidebar gap: the script that added the hand-off died before writing, and the follow-up
+  re-applied the changes INSIDE `MessageBubble.jsx` without restoring the caller. Fixed, and the audit
+  is what caught it — not a screenshot.
+  Also removed a dead prop: `endsGroup` was computed for every message and passed to a component that
+  never accepted it (left over from the run-grouping simplification), along with the now-unused `next`
+  lookup that fed it.
+  Clean on inspection: every chat file has a consumer (no dead modules), no hardcoded hex anywhere in
+  the chat components (all theme tokens), every icon-only control carries an `aria-label`, all three
+  `ThreadView` callers pass a consistent prop set, and the admin viewer is still `readOnly`.
+  Verified live on the surfaces that need no session: supplier profile at 390/640/768/1024/1440 with
+  **zero body overflow and no page errors**, the "Start Conversation" entry present, and the removed
+  category-card "Inquiry" button confirmed still absent. The one console error on public pages is
+  `POST /auth/refresh` → 401, which is the silent session restore failing for a guest — expected, since
+  the refresh token is `httpOnly` and the client cannot know whether one exists.
+- **2026-08-18 — M4 responsiveness in the middle band (640–1023px), which had been getting the PHONE layout.**
+  The chat inbox split into two panes only at `lg`, so a tablet — with room for both — showed one pane
+  at a time behind a back button. Two panes from **`md`** now: a 17rem list beside the thread (widening
+  to 22rem at `lg`), because a list is the one thing that reads fine narrow and keeping the
+  conversation on screen while you switch threads is the entire point of a two-pane inbox. The back
+  arrow follows the split (`lg:hidden` → `md:hidden`) instead of appearing beside a list that is
+  already visible.
+  Audited and deliberately left alone: the **dock** (already a launcher below 768, a 352px panel above);
+  the **admin viewer** (a 20rem rail at 768 would leave a 368px transcript — the ⓘ modal is right there
+  until `lg`); the **admin list** (table from `md`, cards below, no overflow at 768).
+  Verified live where a session is not needed — the public product page carrying the enquiry entry
+  point: **zero body overflow at 640 / 768 / 900 / 1024** with the button present at each.
+  ⚠️ The authed chat screens are reasoned from the CSS, not measured: the backend now runs in the
+  owner's terminal, so the dev OTP needed to sign in is no longer readable from here.
+- **2026-08-18 — Unread rows carry `#E1E3FF` — the fill only, on top of the reverted baseline.**
+  Re-applied after the revert, and ONLY this: `surface.unread` back in the theme (a token, not an
+  inline hex) and one branch in the row's surface chain. Everything the revert restored stays as it is
+  — the dot on the avatar's corner, the accent bar reserved for the selected row, bold-name unread
+  type. No hover variant on the fill: the colour IS the state, and shifting it under the cursor made it
+  read as a hover effect. Precedence: frozen tint → selected white → unread fill.
+- **2026-08-18 — 🔙 REVERTED: the last ~30 minutes of chat-sidebar unread work (owner).** Four
+  iterations on the unread state — a `primary-50/70` wash, then `primary-100/60` with a full-bleed
+  accent bar, then the whole state-system rebuild (bar removed, read rows quieted, dot moved beside the
+  time), then the `#E1E3FF` `surface.unread` fill — are all backed out. `ConversationRow` is as it was
+  before that run: **unread = bold name + the dot on the avatar's corner + accented time**, **selected
+  = white fill + inset accent bar**, **frozen = danger tint**. The `surface.unread` token is removed
+  from `tailwind.config.js` rather than left as a colour nothing references.
+  KEPT (older than the revert window and separately asked for): flush rows with no gap, the ~83px row
+  height with its equal third-line slot, the `via-ink-200` fading divider under every row including the
+  last, `object-contain` logos, the tinted rail with the product chip, and the end-of-list terminus.
+  The entries below describing those four iterations are superseded — kept for the record only.
+- **2026-08-18 — Unread rows get a fill again, in the owner's colour: `#E1E3FF`.**
+  Added as a TOKEN (`surface.unread`) rather than an inline hex — `web-design.md` bans magic values in
+  components. Deliberately its own name and not an alias of `primary-100` (#DEE1FF): the two are three
+  points apart, and a later tweak to the brand scale must not silently move a colour the owner picked.
+  Precedence unchanged and still one device per state: **frozen** tint wins, then **selected** keeps the
+  white fill (an open row owns the right-hand pane, and opening it clears unread within a second
+  anyway), then **unread** takes `surface-unread`. The type emphasis on unread rows stays on top of it.
+- **2026-08-18 — The 8px gap between sidebar rows is gone.** `ChatInbox` still carried `space-y-2 p-3`
+  on both its lists while the dock had already gone flush — rows separated by the fading hairline AND
+  by a gap, which fights the rhythm the hairline creates and turns every filled row back into a card.
+  Both lists are `px-2 py-1` now, identical to the dock.
+  🔴 Cause worth remembering: an earlier edit script asserted mid-way and aborted **before** its single
+  `write_text`, so its inbox changes never landed while the dock's (a separate script) did — the two
+  surfaces silently drifted for several turns. This is the second time today. Assert every anchor
+  first, then apply, then write once — and re-read the file to confirm, never trust the script's own
+  success message.
+- **2026-08-18 — Chat row STATE SYSTEM rebuilt (third attempt; the first two failed the same way).**
+  A row expresses three orthogonal things — **selected**, **unread**, **frozen** — and the earlier
+  passes spent the same two devices (a fill and a left accent bar) on all three. The result was on
+  screen: an unread row and a selected row both drew a navy bar AND a fill, so neither meant anything,
+  and two adjacent fills turned the list back into a stack of cards with the dividers lost between them.
+  One device per state now: **selected → the white fill** (it lifts the row out of the tinted field and
+  suits the single row tied to the big pane); **unread → TYPE** (bold name, darker preview, accented
+  time, a dot — it survives being selected at the same time, which a second fill could not);
+  **frozen → the danger tint** beside the chip it already has. **The accent bar is gone entirely** — it
+  was a third device doing whichever job the other two had not claimed.
+  The move that finally made unread visible: **quieting the READ rows** instead of shouting on the
+  unread ones. A read row is `font-medium text-ink-600` with a grey product chip and an `ink-400`
+  preview, so a caught-up column is calm and the unread rows carry the only colour in it. Piling
+  saturation onto unread is what produced both rejected versions.
+  (Superseding the two entries below, kept for the record.)
+  **Same-day correction:** the first cut keyed emphasis on `unread` alone, so the SELECTED row got the
+  quiet treatment too and the thread you were reading looked disabled. "Read" is not the same as "not
+  being looked at" — the open row owns the entire right-hand pane. Emphasis is `unread || active` now:
+  a read row is `font-semibold text-ink-700` with a grey chip, the selected row goes `text-ink-900`
+  with the coloured chip back, and unread keeps the loudest step (bold + accent time + dot) on top.
+- **2026-08-18 — Unread threads in the chat sidebar, second pass (owner: the first was "not good").**
+  The wash was `primary-50/70` — but the rail is `#F5F7FD` and primary-50 is `#EAEEFF`, so it was not a
+  state, it was a rounding error. Now `primary-100/60`, visible at a glance. The two states also stopped
+  competing: **unread = a full-bleed accent bar** (the row is waiting for you), **active = the white
+  fill** (the row you are reading), and the bar insets when both are true, where the fill already
+  carries it. Dot up to 10px with a ring so it holds on any surface; the product chip flips to
+  `bg-white/80` on unread rows because `primary-50` vanished into the new wash.
+  🚫 **Owner asked for a per-thread message COUNTER first, then withdrew it.** It was buildable — an
+  aggregation over `{conversationId, createdAt}` (the index the thread history already uses), bounded to
+  one page and skipping threads the viewer is caught up on — but nothing was left behind: the service
+  helper is reverted and no counter reached the projection. Standing constraint unchanged: no unread
+  counter is STORED anywhere, because a stored counter is a second source of truth that drifts the
+  first time a write path forgets it.
+ The rail redesign left unread
+  as weight plus a dot, and against flat rows on a tinted field that read as almost nothing — while
+  unread is the one state a person scans this column FOR. Now: a **`bg-primary-50/70` surface**, the
+  **accent bar** the row already draws (selection still wins — a row you are reading is not also
+  "waiting for you"), bold name, accented time, and the **blue dot moved off the avatar's corner onto
+  the row's own line beside the time**. It had a white ring and sat on the avatar, which became
+  invisible once avatars started rendering white logo tiles.
+  ⚠️ Started the wrong feature first: read "unread highlight on thread" as an in-thread "New messages"
+  divider and had already added `lastReadAt` to the party projection (own side only — the
+  counterparty's stamp is a read receipt this product deliberately has none of) with tests. Owner
+  clarified they meant the sidebar; **the projection change and its tests were reverted** rather than
+  left in as unused surface area. Suite back to 42 on that file.
+
+- **2026-08-18 — Chat scrollers no longer chain to the page (`overscroll-contain`).**
+  Reaching the end of a chat scroller handed the gesture to the document behind it. Worst in the dock:
+  scroll to the top of a short thread and the whole site moves under a floating window that stays put.
+  Applied to all three chat scrollers — the transcript, the inbox rail and the dock's list. Same
+  treatment `CategoryListing` already uses for its filter panel, so this is the house pattern rather
+  than a one-off.
+
+- **2026-08-18 — The dock reads as a mini chat: everything inside the transcript scales down.**
+  Second compaction pass, this time below the header. Bubbles 13→**12px** on a 1.35 line with tighter
+  padding (`px-2.5 pb-0.5 pt-1`); the sender's company name 12→10.5px; the clock 10→9.5px; notice body
+  12→**11px**, its label 10→9px and its icon 14→12px, padding down to `py-1 pl-2.5 pr-2`; the day
+  marker 11→9.5px on a tighter margin; the jump-to-latest button 40→32px and moved in, since at 352px
+  it was landing on top of a notice.
+  🔴 The clock's size is now ONE constant (`timeSize`) used by both the visible time and the invisible
+  spacer that reserves its width — they must measure identical text or short messages collide with
+  their own timestamp, which is the bug that was fixed earlier today.
+  Process note worth keeping: a python edit script asserted mid-way and aborted **before** its single
+  `write_text`, so none of its edits landed while a follow-up script then referenced a constant the
+  aborted run was meant to define — lint caught it as `no-undef`, but `npm run build` passed, because
+  vite does not lint. Assert every anchor FIRST, then apply, then write once.
+
+- **2026-08-18 — 🔴 M4-1 DOCK EXCEPTION: the standing platform-disclosure line is gone from the docked
+  window (owner's call, raised first).** M4-1 asks for the platform's presence "in the thread header or
+  participant list, not just in the opening message", and the dock was the surface carrying it in a
+  352px window. Owner judged it too costly there. What still holds: the full chat page and the admin
+  viewer keep the standing line, and the **welcome system message opens every thread naming MPX
+  Global** — so the disclosure is made, just not restated persistently in the dock.
+  What is lost, stated plainly: a buyer who scrolls past the welcome message has no visible reminder
+  in the dock that MPX Global can read the thread. Recorded in `m4.md` M4-1 itself and in the code, so
+  a later session does not "fix" it back.
+
+- **2026-08-18 — The dock has ONE header, and it is the blue one (owner).** `ThreadView` rendered a
+  white sub-header under the dock's navy title bar carrying the product link and the M4-1 platform
+  line — a second header repeating facts, for ~66px of a 512px window. `variant === 'dock'` now
+  renders no header at all and the navy bar carries everything: back · **company avatar** · company
+  name with the **product link stacked underneath it** · expand · close, then the platform disclosure
+  on its own quiet line.
+  🔴 The disclosure moved WITH the product rather than being dropped: M4-1 requires the platform's
+  presence to stay visible in every surface and never sit behind a control. Given its own line so the
+  product above keeps the width it needs to stay readable at 352px.
+  New `productPage.js` holds the "is this product page still reachable" rule (purged → no slug, and
+  under review → publicly unreachable while the slug survives), because the dock now needs the same
+  test the thread header uses and two copies would drift.
+  Gotcha avoided: the avatar's ring was nearly passed in via `className`, which would have raced the
+  component's own ring — both set `--tw-ring-color` and Tailwind resolves that by stylesheet order,
+  not attribute order. Same trap as the FreezeChip padding earlier today.
+
+- **2026-08-18 — The docked window gets a COMPACT thread; it was rendering page-sized type in 352px.**
+  `ThreadView` already knew it was in a dock (`variant === 'dock'`) but only used that for its own
+  header, so everything below it — bubbles, platform notices, composer — came through at page scale.
+  Two stacked notices filled roughly a third of the window. `compact` now flows to `MessageBubble`
+  (bubble text 14→13px; notice body 13→12px, padding `py-2 pl-[1.125rem]`→`py-1.5 pl-3`, and the
+  `max-w-[30rem]` page measure dropped, which does nothing in a narrow window but cost padding) and to
+  `Composer` (textarea 14→13px, its margins and the send button 36→32px inside a 44→36px slot).
+  The character-count ring needed no change: its `viewBox` scales with the slot.
+  ⚠️ Unverified live — the dock is party-only and this session is staff.
+
+- **2026-08-18 — 🔴 BUG: the dock said "No conversations yet" while the inbox listed the same threads.**
+  Cache-SHAPE collision. Both surfaces used the key `conversationKeys.list({})`, but the inbox stored
+  an infinite-query shape (`{ pages: [...] }`) and the dock a plain `useQuery` shape
+  (`{ conversations: [...] }`). One entry, two writers — whichever fetched last won, so after the inbox
+  page ran, the dock read `data.conversations` off an infinite-shaped entry, got `undefined`, and
+  rendered its empty state. It also silently capped the dock at 20 threads with no way to load more.
+  Fixed by extracting **`useConversationList`** (+ `conversationRowsOf`) and pointing both surfaces at
+  it — one key, one shape, one fetch. Splitting the keys instead would have been the worse fix and the
+  key factory already says why: two entries mean the list is fetched twice and reading a thread in one
+  surface leaves the other showing it unread. Verified no other caller builds the list itself.
+
+- **2026-08-18 — Chat rail: shorter rows, a divider you can actually see, and the logo stops being
+  cropped.** Four owner corrections in one pass. *(1)* Rows ran ~95px; `py-3`→`py-2.5`, inner gaps
+  `mt-1.5`→`mt-1`, and the third-line slot 20px→18px (`leading-[18px]` on both the preview and the
+  product chip, chip padding dropped) → **~83px**, the slot still identical in both states.
+  *(2)* The divider is drawn under the LAST row too — hiding it made the list trail off instead of
+  closing. *(3)* `via-surface-border`→`via-ink-200` and `inset-x-3`→`inset-x-2`: the old hairline was
+  too faint to do the one job it exists for. *(4)* `CompanyAvatar` logos were `object-cover`, which
+  fills the tile by CROPPING — fatal for a wordmark, which is what most company marks are. Now
+  `object-contain p-1`, so any aspect ratio lands intact, plus a stronger `ring-ink-200` so the tile
+  stays visible on the white selected row.
+
+- **2026-08-18 — Chat rail rows are all one height.** The third line of a row is a SLOT holding either
+  the preview or the freeze chip, and the two did not match: 12px text on a 1.5 line box is 18px
+  against the chip's 20px, and the margins above them differed too (`mt-1` vs `mt-1.5`), so a frozen
+  row stood ~4px taller than its neighbours. Rows that are *almost* the same height read as a mistake
+  rather than as rhythm. Preview now carries `leading-5` and the same `mt-1.5`. The skeleton was also
+  ~9px shorter than the real row (14+16+12 on 8px gaps vs 14+20+20 on 6px), so the list jumped the
+  moment data landed — sized to match.
+
+- **2026-08-18 — Message text ran into its own timestamp on short bubbles.**
+  The clock flows with the text: an invisible copy is appended inline to reserve exactly its width on
+  the last line, and the real one is absolutely positioned over that gap. The spacer carried
+  `text-[10px]` but **not `tabular-nums`**, while the visible clock did — tabular digits are wider, so
+  the reservation was a few pixels short and a two-character message ("jj") collided with its time.
+  Spacer now matches the clock's metrics and reserves `ml-2` instead of `ml-1.5`. Gotcha for next
+  time: these two spans must be changed together, and the comment in the file now says so.
+
+- **2026-08-18 — Chat height: `--shell-chrome`, because the tablet range was ~36px over the viewport.**
+  The card subtracted two regimes when the shell has three. The mobile nav strip is **`lg:hidden`, not
+  `sm:hidden`** — a tablet still carries it — so between 640px and 1023px nothing subtracted its 44px
+  and the page scrolled; phones were 20px short and desktop 8px short, all from literals tuned by eye
+  at one width. `index.css` now defines `--shell-chrome` (132px = 88 header + 44 strip, dropping to
+  88px at `lg` where the sidebar takes over) and the chat card is
+  `calc(100dvh - var(--shell-chrome))` below `sm`, where its negative margins already reclaim the
+  page padding, and `- 5rem` on top of that from `sm` up where `p-10` is back.
+  The admin viewer's `19rem`/`16rem` had the same strip height buried inside them and now derives the
+  same way. ⚠️ Arithmetic verified from the CSS, not measured in a browser — the party screen needs a
+  session this environment does not have.
+
+- **2026-08-18 — Chat rail redesigned (second pass): a tinted FIELD with a fading divider.**
+  Diagnosis first, because the first pass had polished the wrong things: four surfaces sat within a
+  few percent of each other (rail #F5F7FD, canvas #EDF1FC, white head, white bubbles) so nothing
+  declared "column" vs "canvas"; rows had **no rest state** (transparent, becoming objects only on
+  hover, so a list at rest was floating text); type was 15/12/12.5px in three greys with no ladder;
+  and the most distinctive fact in the product was styled as noise.
+  Shipped: the head joins the list on ONE tinted field (it was white with a hairline seam across the
+  column); the **product becomes a tinted chip** — every thread is bound to exactly one product
+  (M4-4/M4-5) and the same supplier recurs with different ones, so the product is the DISAMBIGUATOR
+  and is now the only colour in the rail; type ladder cut to two sizes with weight and colour doing
+  the rest; a **terminus** under the last row (`All N conversations`), shown only once the server says
+  there is no next page, so a short list ends instead of trailing into a tall blank field.
+  🔴 **Owner correction mid-build:** the first cut gave every row a ring + shadow (cards on the field).
+  That drew eight boxes down a narrow column — "instead of these borders around whole chat just make a
+  fading line between chats". Rows are flush now, separated by a hairline that is solid where the text
+  is and **dissolves at both edges**, hidden under the last row. Selection is fill + accent bar, no ring.
+  The dock's list takes the same tinted field, or the two surfaces would disagree about what a
+  conversation looks like.
+
+- **2026-08-18 — Organisation CLAIM deferred by the owner; recorded as `docs/Note.md` D7.**
+  Not built, not now. Recorded because the consequence is easy to under-read: `completeSignup` always
+  CREATES, and `Organisation.name` is deliberately not unique, so one company signing up as a buyer
+  and then as an exporter (which `assertIdentityAvailable` explicitly permits on one email) gets
+  **two Organisations** — two KYC submissions, two ticks, two public profiles, and an admin "Block
+  company" that takes down only one of them. "One company = one Organisation" is an intention, not an
+  invariant, until claim ships.
+  Also **withdrew a blocker that was not one**: `UiWebNotes` had claim flagged as an account-
+  enumeration surface needing an owner security decision. §A21 line 248 already answers it — step 2
+  sits behind BOTH OTPs, so the caller has proved they own the address being matched. Row corrected,
+  with the one rule that keeps it true: match only on the verified identity, never on a typed company
+  name. Mirrored into `.claude/rules/remind.md` so a session that never opens Note.md still sees it.
+
+- **2026-08-18 — Chat list rows PATCH on a live message instead of refetching (owner-asked).**
+  Every new message invalidated `conversationKeys.all` — twice, since the server emits
+  `conversation:updated` alongside `message:new` — so each line cost a network round-trip and a full
+  list re-render for data the client was already holding. `useConversationSocket` now rewrites the row
+  from the message itself (preview truncated at 200 to match `PREVIEW_LENGTH` server-side, timestamp,
+  unread dot) and moves it to the head of page 0, across EVERY cached list variant. A thread that is in
+  no cached page still refetches — a first message opens a conversation the cache cannot invent a row
+  for (no product, no counterparty, no logo). `conversation:updated` now acts only in that same case.
+  Also: `send` no longer invalidates the list at all (the socket echoes the sender's own message back
+  and patches it), `markRead` clears the row's bold in place instead of refetching the list, and the
+  freeze handler narrowed `all` → `lists()` (it was re-fetching detail and messages a second time on
+  top of its own two explicit lines).
+  **Kept as a refetch on purpose:** the nav badge (`unread()`), a server-derived COUNT of unread
+  threads — putting a guessed number in the chrome is worse than a small request; and the freeze
+  label, which the server decides (M4-30: after an unblock a thread may stay frozen for another reason).
+  New key: `conversationKeys.lists()`, the prefix behind every list variant — matching on `list()`
+  would have patched only the unsearched entry and left a filtered list stale.
+  ⚠️ **Not verified live** — two party sessions are needed and the browser here is staff-only.
+
+- **2026-08-18 — `Message.systemKind` — platform notices now render per EVENT (owner-approved).**
+  A system message carried only `senderType: 'system'` + a body, so a block and a reopen rendered
+  identically. Added an additive enum (`welcome` · `blocked` · `unblocked` · `product_takedown` ·
+  `product_restored` · `account_paused` · `account_restored`), set at all 7 `postSystemMessage`/create
+  sites, projected in `messageView`, and dispatched client-side to a tone + label per kind.
+  **Deliberately NOT derived from the body text:** the blocked notice has the moderator's free-text
+  reason appended, so there is no fixed string to match, and copy-matching would fail silently the day
+  the wording changes.
+  **No backfill, by rule.** Messages are append-only (M4-13), so every notice sent before today keeps
+  `systemKind: null` forever and renders as the neutral default — the client treats the field as
+  optional, and a test pins that. The unblock path stamps `product_takedown` when the thread stays
+  frozen, so a still-paused thread can never show a green "reopened" chrome over a "under review" sentence.
+  M4-19 holds: the LABEL changes with the colour ("Conversation blocked" / "Conversation reopened").
+  🔴 **Three exact-key projection guards fired** (m4-messages, m4-conversations, m4-socket) — that is
+  them working, not breaking: they are what makes any message-payload change deliberate. All three
+  updated in the same pass, which also proves REST and the socket still share one projection.
+  Verified end-to-end against the live API: an existing welcome notice returns `null`, a fresh block
+  returns `blocked`, the unblock returns `unblocked`. **Backend suite 1020/1020.**
+
+- **2026-08-18 — Chat page meets the portal header with no gap (phones).** `ChatInbox`'s card already
+  reclaimed the shell's side and bottom page padding but not the top, leaving a 24px band of canvas
+  between the navy portal header and the thread header. Added `-mt-6`, and the height goes
+  `calc(100dvh-11rem)` → `calc(100dvh-9.5rem)` below `sm` — 88px shell header + 64px nav = 9.5rem, so
+  without that the card would only shift up and re-open the gap at the BOTTOM. The card takes the
+  shell's own `rounded-tl-[32px]` on phones, because a square white card cut the corner the canvas
+  draws under it. `sm+` is unchanged.
+
+- **2026-08-18 — Chat header: frosted brand tint, and 8px of height back.** Plain white sat between a
+  lavender canvas and white bubbles and belonged to neither; the bar is now `bg-gradient-to-b from-white
+  to-primary-50/90` with the shadow re-tinted to the brand navy, so the header reads as part of the
+  thread's surface and gives the white bubbles a ground. Padding `py-1.5` → `py-2.5` at the owner's
+  request — **60px at every width** (was 88 on a phone before the row work, 52 after it).
+
+- **2026-08-18 — Chat UI sweep (admin + shared components), verified at 390 / 768 / 1280.**
+  · **Thread header is two rows at every width** (was three on a phone: title, sub-line, product on its
+    own line). The product joined the sub-line, the row is `flex-nowrap` and the PRODUCT is what
+    truncates — a wrapping sub-line was the third line coming back. Staff line shortens to "Read-only"
+    below `sm`. **88px → 52px at 390.** Gotcha: the first cut used a leading `·` before the product,
+    which orphaned itself at the start of the wrapped line; the product's own `BoxIcon` is the
+    separator, because an icon reads correctly at the head of a line and a bare middot never does.
+  · `ParticipantsLine` gained `shrink-0 whitespace-nowrap`: it now shares that nowrap row, and the M4-1
+    platform disclosure is not the element that gives way.
+  · Admin phone card: freeze chip → `size="sm"` and the "Open" chip resized to match, so chips sitting
+    beside the unread flags are one size; the preview is hidden when a freeze chip renders (same rule as
+    the party sidebar). The **table keeps its preview** — there the state is a separate column and a
+    moderator scanning a grid still wants the last message's wording.
+  · Search placeholder shortened — "…paste an organisation ID" cut mid-word at 390px.
+  · Checked live: zero body overflow at 390/768/1280 on both admin screens; the ⓘ details button appears
+    only below `lg`; the modal opens and closes on Escape; **staff view has no textarea at any width**
+    (§7.3 — admin can read, admin cannot speak).
+
+- **2026-08-18 — `FreezeChip` gained a `sm` size so a frozen chat row is the same height as a normal one.**
+  The chip (12px semibold + `py-1`) is taller than the preview line it replaces (12.5px text), so a
+  frozen row sat ~7px taller than its neighbours and broke the list's rhythm. Gotcha worth keeping:
+  passing `py-0.5` through the existing `className` prop does NOT work — Tailwind resolves conflicting
+  utilities by stylesheet order, not by their position in the class attribute, so `py-1` still won. A
+  real size variant was the fix. `sm` = `px-2 py-0.5 text-[11.5px] leading-4` + a 12px icon; every other
+  caller keeps `md` untouched.
+
+- **2026-08-18 — A frozen chat row shows the chip INSTEAD of the preview, not above it.**
+  Every freeze posts a system message, so the last message in a frozen thread is always the notice the
+  chip already states — the row read "This conversation has been restricted by …" directly above
+  "Conversation blocked by MPX Global". The chip now replaces the preview line. An account-cascade
+  freeze carries no chip (`tone: none`), so that case keeps the preview rather than losing the line.
+  `/admin/conversations` deliberately left alone: there the state is its own scan column and a
+  moderator may still want the last message text.
+
+- **2026-08-18 — Frozen threads carry the admin list's wash in the party chat sidebar too.**
+  `ConversationRow` now tints a frozen row `bg-danger-50/40` — the exact value `/admin/conversations`
+  already used — with a matching hover and ring. Keyed on the projection's `frozen` boolean (present on
+  both the party and staff views), NOT on `frozenLabel.tone`: an account-cascade freeze deliberately
+  carries no chip, and it still takes no new messages. **Selecting the row keeps the wash** (deepened to
+  full `bg-danger-50`, danger ring, danger accent bar) — the first cut turned the active row white and
+  so hid the freeze at the one moment the reader is looking straight at it. Selection is carried by the
+  lift, the ring and the bar; the FILL belongs to the state.
+
+- **2026-08-18 — Freeze banner is a status strip, not a slab; top-of-transcript fade removed.**
+  The blocked-thread banner was a full-width block of pale red ~90px tall — the loudest thing on the
+  screen, for a state the thread's own notice already announced. Rebuilt in the same vocabulary as the
+  in-thread notice (accent bar + tint fading away from it) in the freeze's own tone, heading and reason
+  on ONE wrapping line: roughly half the height. It stays full width because it REPLACES the composer,
+  and a narrow strip where a composer used to be reads as a leftover control.
+  Separately, the 20px `from-[#F9FAFF]` gradient at the top of the scroller was deleted: it painted the
+  canvas colour over anything entering the viewport, invisible on a white bubble but a bleach stain
+  across the top of a saturated own-side one — and pointless, since the header is a sibling above the
+  scroller, not an overlay, so nothing ever scrolled under it.
+
+- **2026-08-18 — System announcements are notices, not messages (settled after four attempts).**
+  The in-thread system message was a white card with a sender name top-left and a timestamp
+  top-right — the bubble's exact grammar, so it read as "MPX Global said something". Rejected on the
+  way to the answer, recorded so nobody repeats them: an inset box on a **dashed** rule read as an
+  upload dropzone; a **full-bleed tinted band** was visually heavy; **no container at all** read as
+  stray text. Shipped: notice vocabulary — a solid accent bar down the leading edge, a tinted (not
+  white) fill, flat with no elevation, an uppercase tracked "PLATFORM NOTICE" label, and the time
+  inline after a middot. Every one of those is something a bubble never has. The label is a
+  CATEGORY, not a name (M4-17) — a name in that position is what made it look like a sender in the
+  first place; attribution is not lost because the server copy says "by MPX Global" in the sentence.
+  Polished the same day: the flat tint became a left-to-right fade (anchored at the accent, dissolving
+  into the canvas), 4px bar → 3px, leading and padding tightened, ring softened — three boundary
+  devices were one too many. **Known gap:** a *restricted* notice and a *reopened* notice render
+  identically, because `Message` carries no system-event kind — only `senderType: 'system'` and a body
+  string. Tone-per-event needs a `systemKind` enum on the model + the ~6 `postSystemMessage` call
+  sites + the projection; NOT done, raised with the owner. Matching on the copy text was rejected —
+  the block notice has the admin's free-text reason appended to it.
+- **2026-08-18 — /admin/conversations phone list rebuilt: the ROW is the link.** Each card carried a
+  full-width "View conversation" button; three of them filled the screen and made the row above look
+  inert. Now one tap target per thread with a trailing chevron, tighter type, and the em-dash unread
+  placeholder dropped on cards (kept in the table, where a column needs a value). Four threads fit
+  where two did. Verified at 390px: zero body overflow.
+
+- **2026-08-18 — Chat thread header made shorter.** `py-2.5`→`py-1.5`, counterparty avatar `lg`→`sm`
+  (44px→36px), sub-line and phone product row gaps tightened, product chip `py-1.5`→`py-1`. The admin
+  ⓘ button keeps its 44px touch target via `-my-2` so it bleeds into the header padding instead of
+  setting the bar's height — shrinking the button would have broken `web-design.md`'s touch-target rule.
+
+- **2026-08-18 — Admin conversation viewer: phone tabs replaced by a header info button + modal.**
+  The segmented Transcript/Details control is gone. The transcript is now the whole phone screen;
+  the facts panel lives behind an ⓘ button at the right end of the thread header (`ThreadView` gained
+  a generic `headerAction` slot, so the component still knows nothing about moderation). One
+  `detailsBody` definition feeds both the desktop rail and the phone modal — two copies would drift,
+  and this is where a moderator reads org ids and the block actor before acting. Button is a 44px
+  target (`web-design.md`) with no border — the icon is already a circle. Modal body scrolls at 65vh
+  because a blocked thread's rail is taller than a phone. Block/Unblock stays pinned at the bottom.
+  Gotcha: the extraction script's first run matched the wrong `return (` (a module-level helper, not
+  the page component) and put `detailsBody` where `conversation` is undefined — lint caught it as
+  `no-undef`, but a script that anchors on `return (` needs to anchor on the component first.
+
+- **2026-08-18 — CHAT REDESIGN (owner: "too plain and stale… complete enhanced redesign").** The
+  previous passes adjusted the composer and little else; this one changes the material, the
+  information design and the signature.
+  **Thesis:** this is a negotiation room with the platform as witness, anchored to exactly ONE
+  product (M4-4) — not a consumer messenger. The design now says that.
+  **Surfaces** (`index.css`, the sanctioned place for component classes — no magic hex in JSX):
+  `.chat-canvas` is a three-layer field (soft vertical gradient, 3.5%-ink dot texture, warm bottom
+  edge) instead of flat graph paper; `.chat-foot` continues the gradient's end colour under the
+  composer so there is no seam; `.chat-rail` tints the list column so its rows can be WHITE CARDS —
+  white rows on a white column had nothing to lift them.
+  🔴 **The list row is an INFORMATION fix, not a paint job.** It printed the server's composed
+  `title` on one line, truncating to "Combed Cotton Yarn 30s × Text…" — burying both facts a
+  person scans for. It now separates them: the counterparty COMPANY leads, the PRODUCT sits on its
+  own line with a glyph (the anchor that makes this a trade thread), the preview is quietened,
+  and unread shows as weight + a dot on the avatar + an accented time.
+  **Bubbles:** the 1px border is gone — on a tinted canvas a white card separates by ELEVATION, and
+  the border made the thread look like stacked form fields. Own-side messages get a soft
+  primary-600→700 gradient so a long block of accent has depth. **Tails** are drawn on the FIRST
+  bubble of each run only (verified: 5 tails on 5 run-starters, correct colour and direction per
+  side), so a burst reads as one turn with a single point of origin.
+  ✳️ **The signature: the 200-char cap is DRAWN, not counted.** Past 160 characters a ring closes
+  around the send button — amber filling, red at the limit. A number has to be read and converted;
+  a ring is seen filling while you type. It earns its place because the cap is a REAL server rule
+  (M4-12), not decoration. The numeric count survives as `sr-only` for screen readers, which cannot
+  see a ring.
+  **Composer** is now a floating elevated card on the canvas rather than a bar bolted to the bottom
+  with a hairline, with the keyboard model (`Enter` / `Shift+Enter`) taught on FOCUS rather than
+  printed permanently. Header is frosted so the transcript scrolls under it; a top fade replaces
+  the hard clip; system notices and the date pill match the new material; a jump-to-latest button
+  appears once the reader is well away from the bottom.
+  ✅ Zero horizontal overflow at 1440 / 1024 / 390, zero console errors, lint + build clean.
+  🚫 Still deliberately absent, and each for a reason: delivery/read ticks (no per-message state
+  exists — they would fake a receipt), a paperclip (M4-14; a picker that refuses files is worse
+  than none), and an All/Unread filter — the list is cursor-paginated, so a client-side filter
+  would claim "no unread" while unread threads sat on later pages.
+- **2026-08-17 (later 18) — chat UI pass: company icons, WhatsApp bubble metrics, list + thread
+  headers rebuilt. 🔴 Buyers can now upload a company icon (backend rule change).**
+  **Scope change, stated plainly:** `setMyLogo` used to 403 a buyer — *"Only exporter profiles
+  have a logo"* — because the logo existed to fill the public seller page. Buyers may now set one.
+  ⚠️ **A buyer's icon is NOT public**: there is no public buyer page and **no public projection
+  gained a field**. It appears in their own portal and as the counterparty avatar inside
+  conversations they are already party to. An exporter's logo is unchanged (still public). The
+  test that pinned the old rule was rewritten to assert the new one rather than deleted, and the
+  buyer's profile card says where the icon shows up so nobody uploads assuming it is private.
+  **Conversation projection widened by ONE display field** (M4 brief gap 4 asked for a flag before
+  this): `counterparty.logo` on the party view, `buyerOrg.logo` / `exporterOrg.logo` on the staff
+  view, batch-loaded via `loadOrgLogos()` — `select('logo')` only, never the Organisation document.
+  **UI:** new shared `CompanyAvatar` (icon, else monogram — a first-class state, since most
+  companies will never upload one) used by the list rows, the thread header and the portal identity
+  block; the unread dot moved onto the avatar corner. Bubble metrics now match WhatsApp — the
+  timestamp FLOWS with the text via an invisible inline spacer, so a one-line message is one line
+  tall instead of carrying an empty strip beneath it, and a long message pushes the clock to the
+  end of its last line. Bubbles capped at ~34rem (68% of a wide pane was ~750px, a wall of text).
+  Sender company printed INSIDE the bubble in a per-side colour (blue buyer / amber seller).
+  **List header rebuilt** — "Messages" + unread badge + thread count, over a tinted strip; the
+  search box used to float unanchored in white space with nothing naming the column.
+  **Thread header rebuilt** — it stacked three lines that printed the product name twice and the
+  company name twice. Now: counterparty leads, the product is a chip on the right (link only while
+  its page exists), and the platform line became the DISCLOSURE it is meant to be —
+  "MPX Global is in this conversation" — instead of a roster repeating the title. Staff still get
+  the full participant list, because a moderator is neither party and needs to see both companies.
+  🔴 **Two real bugs fixed in the same pass:** the composer did not clear after send (so the sender
+  saw their line twice and could re-send it), and the textarea never shrank back — it tracked a
+  `rows` state that flipped to 2, and `rows` sets a MINIMUM height, so the reset-to-`auto`
+  measurement still read two lines. It could grow and never return.
+- **2026-08-17 (later 17) — 🔴 DOUBLE-MESSAGE BUG FIXED (owner-reported: "sending from the
+  exporter account shows the message twice, then it re-renders").** Two distinct defects, both in
+  `hooks/useThread.js`, both caused by the same thing: **a sent message now reaches the client by
+  TWO paths** — the send response and the socket echo — since the broadcast moved into
+  `sendMessage()` earlier today.
+  1. **Both paths appended to the cache.** The socket handler de-duplicated by message id, but the
+     send's `onSuccess` appended unconditionally, so whichever arrived second wrote a SECOND copy
+     carrying an identical React key. Both writes are now behind the same id guard.
+  2. **The optimistic bubble outlived its twin.** It was removed only when the mutation resolved,
+     but the socket echo routinely wins that race — so the server copy and the pending copy were
+     on screen together until the mutation settled, which is exactly the "twice, then re-renders"
+     the owner saw. The pending row is now hidden the moment its confirmed twin exists, whichever
+     path delivered it.
+     ⚠️ Matching is by BODY (the server cannot echo a client id back) but **counted, and only
+     against the sender's own messages newer than the pending row** — so sending the same text
+     twice still shows two bubbles, and an identical line sent yesterday cannot swallow today's.
+     Both cases verified.
+  **Verified by sampling the DOM 16× through the send→echo→settle window**: exactly one bubble at
+  every sample, and identical-text-twice correctly yields two. Also fixed alongside: the composer
+  now clears on send.
+  ⚠️ Two notes from the session: the earlier "settled: 2" reading was my own selector counting the
+  conversation-list PREVIEW as well as the bubble — not a duplicate; and hammering the send button
+  in a test trips the 429 limiter, which correctly renders the thread's error state (the query
+  client already refuses to retry 4xx, so there is no retry storm).
+  ⚠️ The dev test thread now contains throwaway messages (`DUPE-`, `BURST-`, `SAME-`) — messages
+  are append-only (M4-13), so they cannot be deleted; open a fresh enquiry for clean demos.
+- **2026-08-17 (later 16) — chat message design reworked (owner: "make messages like WhatsApp,
+  sender name highlighted, different colours for sender and receiver") + a real composer bug fixed.**
+  🔴 **Bug found while screenshotting: the composer did not clear after a successful send.** The
+  message went, but its text stayed in the box — so the sender saw their line twice and could
+  fire it again. Cleared on send now; the optimistic bubble carries the text, and a failed send
+  keeps it on that bubble with Retry.
+  **Message design:** the sender's COMPANY now sits INSIDE the bubble in its own colour —
+  **blue for the buying side, amber for the selling side** (distinct in hue AND lightness, so it
+  survives greyscale and colour-blindness), shown once per run and never on your own messages.
+  Own messages stay brand navy on white counterparty bubbles, so the two sides are unmistakable.
+  Timestamps moved INSIDE the bubble bottom-right with reserved padding so they can never overlap
+  the last word. Date separators became centred pills instead of hairline rules. The transcript
+  sits on a tinted canvas with a faint dot texture (`.chat-canvas`) so white bubbles have a
+  surface to sit on rather than floating on near-white.
+  🚫 **Deliberately NOT copied from WhatsApp: delivery/read ticks.** There is no per-message
+  delivered/seen state on the server — unread is a per-THREAD boolean derived from two timestamps
+  (§7.5) — so ✓✓ would be decoration pretending to be a receipt. The only status shown is the
+  sender's own "Sending…" and "Not sent".
+  ⚠️ **Deploy note (cost an hour of confusion):** live delivery appeared broken on the owner's
+  long-running dev server. The cause was simply that the backend process predated the broadcast
+  fix — `emitNewMessage()` now lives in `sendMessage()`, so **the API must be restarted** before
+  REST-sent messages reach anyone live. The Vite proxy's `ws: true` matters only for the websocket
+  upgrade; socket.io falls back to polling without it, which is why the handshake still succeeded.
+- **2026-08-17 (later 15) — web lint taken to ZERO (27 → 0), and it found a real bug.**
+  `npm run lint` in `web/` now exits clean. What the 27 React-Compiler warnings actually were, and
+  what each fix bought:
+  🔴 **A genuine impurity:** `ProductMonitoring`'s `PurgeCountdown` read `Date.now()` in the render
+  body, so two renders of the same row could disagree and a discarded render's number could be the
+  one shown. Now read once per mount.
+  **8 screens migrated OFF hand-rolled fetching onto TanStack Query** — `web-frontend.md` has
+  always mandated it for server data, so these were a standing deviation: `admin/Users`,
+  `admin/Employees`, `admin/VerificationQueue`, `admin/KycViewer`, buyer + exporter
+  `VerificationStatus`. Optimistic updates (row de-activation, a verification decision, a queue
+  row leaving) now write into the **query cache** instead of a parallel `useState` copy that a
+  refetch would silently overwrite. `KycViewer` additionally pins `staleTime: 0` / `gcTime: 0` —
+  its payload is SIGNED URLs that die in ~120s, so a cached re-serve would show a moderator dead
+  images.
+  **4 "reset on open" effects became remounts** (`CategorySheet`, `TopSettings`,
+  `SpecialisationSheet`): the components used to stay mounted behind `if (!open) return null` and
+  clear themselves in an effect; each is now a thin gate + body, so initial state IS the fresh
+  state — no cascading render, and no frame showing last time's values.
+  **2 measurement effects became ref callbacks** (`Combobox` popover alignment, `RowMenu`
+  placement): the ref runs as soon as the node attaches, so the menu is positioned before paint
+  instead of being moved afterwards. Verified: RowMenu still flips above the trigger near the
+  viewport bottom.
+  **3 state-syncs became render adjustments** (`Search`'s `draft`←`q` and AI-answer banner,
+  `CategoryMegaMenu` closing on navigation) — React re-renders immediately, so the stale value is
+  never painted first. `Search`'s recent-searches list is now DERIVED with the effect writing only
+  to localStorage; a `dismissed` set preserves the ability to remove the chip for the search you
+  are currently looking at (which naive derivation would have silently broken).
+  **2 ref-during-render writes moved into effects** (`Drawer`, `Modal`) — unsafe under concurrent
+  rendering, where a discarded render would leave the ref pointing at an abandoned handler.
+  **Socket connection state now uses `useSyncExternalStore`** instead of mirroring socket.io into
+  React state — correct on a remount into an already-open socket, which fires no `connect` event.
+  ⚠️ **4 warnings were deliberately EXEMPTED, not fixed**, each with a scoped
+  `eslint-disable … -- reason` naming the proper fix: both `KycUpload` screens and `ProductForm`
+  seed an editable form from fetched data. The sanctioned fix is a wrapper + body keyed by record
+  id; these three handle document/image uploads and publish rules that changed the same day, so
+  restructuring them buys a compiler hint at the cost of real regression risk. Revisit with tests.
+  ✅ **Re-verified after the refactor** with a real staff session (test employee granted the
+  matching permissions): `/admin/users` · `/admin/employees` · `/admin/verification` ·
+  `/admin/products` · `/admin/categories` · `/admin/conversations` all render real data with zero
+  page errors; RowMenu opens fully on-screen; the mega menu closes on navigation; recent-search
+  add/remove/persist still correct; exporter verification screen renders through its new query.
+  Backend 1017/1017 green.
+- **2026-08-17 (later 14) — M4 FULL AUDIT: every screen, state, role and breakpoint tested
+  against real data; 7 defects found and fixed.** Method: real accounts (buyer · exporter · two
+  scoped employees), all four widths (390/768/1024/1440), automated sweep for overflow, missing
+  accessible names and undersized targets, plus API-level assertions for the security invariants.
+  **Fixed (data layer):** (1) 🔴 **the dock and the inbox page cached the SAME list under two
+  different keys** — the dock passed `{q: undefined}`, the page `{q: ''}` — so the list was fetched
+  twice and reading a thread in one surface left the other showing it unread; the key now
+  normalises `q` to null. (2) 🔴 **drafts were stored twice** (page state + dock context), so a
+  half-typed message vanished when you hit "open in full screen"; the page now reads the dock's
+  drafts. (3) **guest intent was silently dropped** — `EnquiryButton` passed `intent: 'enquire'` in
+  router state, but sign-in forwards only `from` through the OTP step, so a guest returned to the
+  product with the form closed; the intent now rides in the return PATH (`?enquire=1`) and is
+  stripped after opening.
+  **Fixed (UI / a11y):** (4) 🔴 **a link to a page that 404s** — a product UNDER REVIEW is
+  unreachable publicly but the thread still carried its slug, so the header linked a buyer from
+  "this product is under review" to a not-found page; M4-22 only covered the purged case. Now
+  `productPageLive` gates both header variants. (5) **the "Verified sellers" toggle had NO
+  accessible name** (pre-existing M3 defect — it hand-rolls a `role="switch"` button instead of
+  using the `Switch` primitive, which does take a label): a screen reader announced "switch, not
+  checked" with nothing to identify it; added `aria-label` + a `before:` inset giving it a ~44px
+  tap target without changing the 24px pill. (6) the thread header's product link was a 20px-tall
+  target; padded. (7) **icons corrected** — the composer used a generic right-arrow (reads as
+  "next", not "send") and the enquiry button used an **envelope**, which is actively misleading on
+  a platform where contact details are hidden and an enquiry starts a thread, never an email. New
+  `SendIcon` + `EnquiryIcon` wrap lucide glyphs at this set's stroke weight.
+  **Also added:** Esc closes the dock and focus moves into the panel on open — deliberately NOT a
+  focus trap, because the dock is non-modal and trapping would contradict the feature.
+  ✅ **Verified clean:** zero horizontal overflow at all four widths on every M4 surface · zero
+  console errors · frozen thread keeps full history with the composer replaced · role-aware titles
+  (seller sees the BUYER company) · exporter empty state offers no CTA (a seller cannot start a
+  thread) · dock (z-40) correctly sits under the filter drawer (z-50) · read-only employee sees no
+  action buttons and the server 403s the block anyway · staff send 403 · non-party thread 404
+  (never 403) · 201-char message 400 · party payload carries the block reason but never
+  `blockedBy`/`frozenReason` · wrong-portal login returns the same generic "Invalid credentials".
+  108/108 M4 tests green, backend lint clean, web lint 0 errors, build clean.
+- **2026-08-17 (later 13) — M4 WEB COMPLETE (Phases 3–7): dock · buyer entry · live socket ·
+  admin moderation. 1017/1017 green, backend lint clean, web lint 0 errors.**
+  🔴 **A REAL BUG FOUND IN THE SHIPPED BACKEND — the REST send path never broadcast.**
+  `io.emit('message:new')` lived only inside the socket's own `message:send` handler, so a message
+  sent through `POST /conversations/:id/messages` — **the path of record (§7.1), and what both the
+  web client and the future mobile app actually use** — reached nobody live: the counterparty saw
+  nothing until they reloaded. Found by watching a real two-account conversation fail to update.
+  Fixed by moving the broadcast into `sendMessage()` + `postSystemMessage()` (new
+  `emitNewMessage()` in `realtime/socket.js`), and REMOVING the socket handler's own emit so
+  socket sends don't deliver twice. System notices now also land live, which is what makes a
+  freeze explain itself the moment the composer swaps for the banner. 80/80 M4 tests still green.
+  **Phase 3 · the dock** (`src/chat/`): `ChatDockContext` above the router (a conversation must
+  survive navigation — that IS the feature), `ChatDock` rendered through `createPortal` to
+  `document.body` at **z-40, below modals** so a filter drawer correctly covers it. Launcher with
+  unread badge · single window · per-thread drafts in memory (never storage) · **tab-title count**
+  `(2) MPX Global` via a MutationObserver, because pages rewrite `document.title` on navigation and
+  a prefix written once is silently lost. Below 768px the launcher routes to the full page instead.
+  Hidden for guests, staff, auth screens, and on the inbox itself.
+  **Phase 4 · entry points.** `EnquiryButton` replaces the disabled placeholder IN PLACE:
+  guest → sign-in and back · buyer with no thread → the form · buyer with a thread → **"Open chat"
+  in the dock** · exporter account or own-company listing → **nothing rendered at all**.
+  `EnquiryModal` is note-first with an "Add details" disclosure (owner's call). Sending opens the
+  thread in the dock **without leaving the product page**. Category-card "Inquiry" **deleted**;
+  supplier "Start Conversation" now jumps to that supplier's catalogue as a **product picker** —
+  the owner's resolution to a company-level button vs product-scoped threads (M4-4).
+  **Phase 5 · live.** `socket.io-client` added. ⚠️ **Vite needed `ws: true`** on the `/api` proxy and
+  the client connects on `${base}/socket.io` — without it the upgrade is served by Vite, the client
+  retries forever, and the UI just says "Reconnecting…". Same-origin in dev keeps the refresh
+  cookie first-party, the same reason XHR is proxied.
+  **Phase 6 · moderation.** `/admin/conversations` (+ viewer), both lazy, gated on
+  `conversation:read`; block/unblock behind `conversation:block` with **both unblock outcomes**
+  reported as real results. Verified with two purpose-made scoped EMPLOYEES (never a superadmin).
+  🎨 Two flaws caught on screen: the staff monogram rendered "?" (staff payload has no
+  `counterparty`), and **both parties' messages looked identical** to a moderator — now each run is
+  labelled with the sending COMPANY, which is the whole job of that screen.
+  ✅ **Security invariants re-verified live:** a party's payload carries the block REASON but no
+  `blockedBy` and no `frozenReason`; a send into a frozen thread is refused; the admin viewer has
+  no composer at any permission level; opening a thread writes an audit row.
+  ⚠️ Dev-DB accounts added: `m4reader…@` (conversation:read only) and `m4moderator…@example.com`
+  (read + block), password in the session notes only — **rotate/remove before handover**.
+- **2026-08-17 (later 12) — M4 Phase 2: the chat list + thread SHIP, verified against REAL data.**
+  `pages/chat/ChatInbox.jsx` serves four routes (`/buyer/chat`, `/exporter/chat`, each ±`/:id`) —
+  one role-aware inbox (M4-35), list left + thread right at `lg`, thread replacing list below it.
+  `components/chat/ThreadView.jsx` is the one thread for all three future surfaces (page, dock,
+  admin viewer); `hooks/useThread.js` owns its data (infinite-query history, optimistic send,
+  mark-read) so the dock and the admin viewer inherit it rather than re-implementing.
+  **Nav: "Enquiries" DELETED in both portals, "Chat" is now real** with a live unread-**threads**
+  badge in `ConsoleShell` (4 UiWebNotes rows closed — 2 Done, 2 Removed).
+  🔍 **Verified end-to-end against real data, not fixtures** (owner authorised reading the dev OTP
+  print): created a real exporter + buyer through the actual signup flow, published a product,
+  opened a genuine enquiry thread and sent replies — then drove the UI as the buyer through
+  password → OTP → inbox. Screenshots at 1440 and 390, zero horizontal overflow at both.
+  🎨 **Design pass after seeing it rendered** — the first cut was functional and ugly: the
+  counterparty's company name repeated above EVERY bubble and a timestamp under every one, so a
+  three-message reply became a wall of the same words and a real change of speaker was invisible.
+  Now consecutive messages form a **run** (name once at the top, clock once at the bottom, 5-minute
+  gap breaks it), the header carries a company **monogram**, the back arrow is `lg:hidden` (on
+  desktop the list is right there), and at phone width the participants line moves behind an info
+  toggle instead of stacking a third header row — **never removed**, since M4-1 requires the
+  platform's presence to stay visible. The card also goes `-mx-6` below `sm`: on a 390px screen the
+  shell's own padding was a sixth of the message column.
+  ⚠️ **Verification gotchas worth keeping.** (1) The Playwright `run_code_unsafe` sandbox has **no
+  `URL`, no `require`, no `process`** — so `page.route()` with a predicate OR a glob throws
+  `URL is not defined`, and network stubbing is not available there at all; drive the real app
+  instead. (2) A `**/api/**` route glob also matches the app's OWN modules at `/src/api/client.js`
+  and serves them as JSON → blank page. (3) The web app proxies to :3000, so to read dev OTPs a
+  SECOND backend (`PORT=3001`, logs to a file) + a second Vite (`--port 5174
+  VITE_DEV_API_PROXY=…3001`) is the working setup — and :5174 must be added to `CORS_ORIGINS`
+  **on the command line**, never by editing the tracked `.env`. (4) Repeated logins trip the
+  Redis-backed auth limiter; clear `rl:*` keys rather than touching the limiter.
+  ⚠️ Dev-DB test accounts added: `m4buyer1786965235@` / `m4seller1786965235@example.com`.
+- **2026-08-17 (later 11) — M4 Phase 1: web foundation + 🔴 a real backend bug found and fixed.
+  1017/1017 green** (1015 → +2), backend lint clean, web build clean.
+  🔴 **The bug: `POST /admin/conversations/:id/block` and `/unblock` lied about the product.** Both
+  built their response with `conversationStaffView(conversation, { product: null })`, and
+  `freezeLabel()` reads a missing product as **purged** — so every unblock of a healthy thread, and
+  every block of an already-taken-down one, answered *"Product no longer available"* about a
+  listing that was never touched. A moderator would have read "the product is gone" and decided
+  differently. The list and detail endpoints always loaded products; only these two did not. Fixed
+  with `reloadWithProduct()` in `adminConversations.service.js` (both actions now return
+  `{ conversation, product }`) + controller update, pinned by two tests — one proving block/unblock
+  report the product honestly, one proving a block on a taken-down thread keeps the **yellow**
+  "Product under review" (M4-29 first-reason-wins) instead of the red purge label.
+  **Foundation built (nothing rendered yet — deliberately no routes and no nav this phase, because
+  a "Chat" nav item pointing at a route that does not exist is exactly the dead control
+  `web-ui-notes.md` forbids; nav + routes land with the real pages in Phase 2):**
+  `api/conversations.js` (party + staff halves, with a comment block listing what the server
+  deliberately never sends — person names, `blockedBy`, per-thread counts, `verified`),
+  `api/inquiries.js` (goods/service field sets + `compactFields`, since the server REJECTS unknown
+  keys rather than stripping them, and stores `fields` verbatim so a blank would render as
+  "Quantity: " in the thread's first message), `hooks/useUnreadCount.js` (threads, not messages;
+  disabled for staff), and 7 chat primitives in `components/chat/` — `FreezeChip` · `FreezeBanner`
+  · `MessageBubble` · `Composer` · `ConversationRow` (+ skeleton) · `ParticipantsLine` ·
+  `DateSeparator` · `ThreadSkeleton`. Plus `formatTime` / `formatListTime` / `formatDayLabel` in
+  `lib/format.js` (deliberately NOT "3 minutes ago" — a relative string is stale on render and
+  needs a ticking timer per row to stay honest).
+  **Design decisions pinned in the primitives:** the platform's system voice is a centred notice
+  with a brand glyph, never a bubble that could read as a party (M4-1/M4-11); attribution is
+  company-level only, since `senderType` is all the server sends (M4-17/G2); a failed send reports
+  **on the message** with a Retry, never a toast that floats away from the words the sender lost;
+  `MessageBubble` dispatches on message kind as the **quotation seam** the owner asked for — a
+  Phase-2 quote card becomes a branch, not a rewrite, and no unused branch ships today.
+  ⚠️ **Gotcha for the next session:** `npm run build` in `web/` does NOT verify new files — Vite
+  tree-shakes anything not yet imported, so the whole batch compiled "clean" while unreachable.
+  Parse-check unimported work with `npx esbuild <files> --loader:.jsx=jsx --outdir=…` until a page
+  imports it. Web has **no eslint config at all** (backend does).
+- **2026-08-17 (later 10) — M4 web build STARTED · Phase 0 shipped: chat-list search now does
+  partial matching. 1015/1015 green** (1006 → +9), lint clean. Owner-approved plan at
+  `~/.claude/plans/wondrous-sauteeing-wind.md`; **the shape changed during planning — chat ships as
+  an Instagram-style DOCKED WINDOW that persists while browsing, plus full pages** (owner,
+  2026-08-17). Phase 0 is the one backend change in an otherwise web milestone: native `$text`
+  matches WHOLE WORDS, so "Tex" never found "TextileHub" and the box read as broken. New
+  `src/services/conversationSearch.js` holds the **one** search branch — §8.4 says roles differ only
+  in scope, so the party list and the admin list now literally share it rather than keeping two
+  copies that drift. When `$text` returns nothing the query retries with an **anchored
+  word-prefix regex** (`(^|\s)` + escaped literal, input capped at 60 chars): partials match,
+  mid-word does not ("ileHub" finds nothing), and a pasted `(a+)+$` is literal text, not a program.
+  🔴 **Two gotchas the build surfaced.** (1) **The cursor had to carry the mode** — page 1 of "Polyb"
+  is answered by regex, and without the mode page 2 re-ran `$text`, found nothing, and the list
+  appeared to end after one page. Cursors are now `(lastMessageAt, _id, mode)`; two-part cursors
+  still decode as text. (2) **A latent `$or` collision is fixed**: the admin filter spread the
+  search clause and the org-target clause into one object, and both can carry an `$or` — the second
+  silently overwrote the first, so `q=<orgId>` + `orgId=` meant something other than it read.
+  Everything optional now goes through `combineFilter()` into `$and`. Test note worth keeping:
+  `q="Text|Cotton"` DOES return a row — via the indexed branch, which splits input into words and
+  legitimately matches "Cotton"; pinned with a comment so nobody "fixes" it. ⚠️ The
+  `m4-push` cross-file intermittent appeared once again (30s timeout + `MongoClientClosedError` =
+  teardown race); passes 16/16 in isolation and the whole suite was green on re-run.
+- **2026-08-17 (later 9) — M4 (Enquiry & Chat) read end-to-end; web build plan written at
+  `design-plans/m4/web-build-plan.md`. No code yet.** Scope confirmed month-1 in scope (build
+  folder `m4` = quote Module 3's chat half; the quote's Module 4 = Quotation stays Bucket A1) —
+  no alert needed. **The backend is 100% built and tested** (M4-A…H, 2026-08-01, untouched
+  since), so the plan is written against the CODE, not the plan docs: the contract table pins the
+  13 endpoints, the 7 socket events, the exact party/staff payloads, and the three limits
+  (20 enquiries/hr · 60 messages/min · 200-char user bodies, with the composed first message and
+  system notices exempt). Seven phases, REST-first so phases 1–4/6 stand even if the socket
+  dependency is declined: foundation+nav → buyer entry (screens 1–2) → chat list → thread (375
+  first) → live layer → admin moderation → close-out. 🧱 **Four owner decisions raised, each
+  gating only its own step:** (a) `socket.io-client` is a NEW DEPENDENCY — needed for live
+  delivery, nothing else; (b) both portals carry separate "Enquiries" AND "Chat" nav placeholders
+  while M4-35 says there is no enquiry inbox — recommend keeping Chat and deleting Enquiries,
+  which changes the M1-approved nav; (c) an account-block freeze returns `tone: none` so the list
+  row shows no chip — recommend leaving as-is (changing it is a backend `frozenLabel` change);
+  (d) conversation payloads carry no `verified` flag, so there is no tick inside chat — recommend
+  leaving as-is, since adding one widens a projection. Standing 2026-08-14 rulings restated
+  rather than re-opened: product-page "Send Enquiry" is the ONE door, category-card "Inquiry"
+  stays deactivated, supplier "Start Conversation" stays visible-but-disabled.
 - **2026-08-18 (later 3) — App: REAL Send Enquiry on product detail (M4-B goes live in the app)
   + listing filters + bottom safe-area floor.** Three owner asks, all verified live on-device.
   - **Send Enquiry (buyers only):** new `api/inquiries.js` → `POST /inquiries` (M4 backend —

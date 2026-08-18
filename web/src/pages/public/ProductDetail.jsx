@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
+import { EnquiryButton } from '../../components/chat/EnquiryButton.jsx';
 import { SaveButton } from '../../components/saved/SaveButton.jsx';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { PriceLine } from '../../components/catalogue/PriceLine.jsx';
@@ -24,7 +25,6 @@ import {
   ExpandIcon,
   GlobeIcon,
   ListIcon,
-  MailIcon,
   MapPinIcon,
   TagIcon,
   UsersIcon,
@@ -55,10 +55,9 @@ import { NotFound } from './NotFound.jsx';
  *    (was a plain label/value list folded under the seller card);
  *  - Description + Specifications go full-width stacked instead of side by
  *    side — a 2-3 row spec table in a half-width card read as very sparse.
- *  - a disabled "Send Enquiry" button now sits under trade facts, in the
- *    reference's exact position — the same treatment as `ProductListCard`'s
- *    "Inquiry" button (Module 4 isn't wired on the web client yet): shown,
- *    disabled, never fake-functional, logged in `docs/UiWebNotes.md`.
+ *  - an enquiry button sits under trade facts, in the reference's exact
+ *    position. It shipped disabled on 2026-08-12 and became REAL on
+ *    2026-08-17 with M4 (`EnquiryButton`) — the one door into chat.
  * Two things the reference shows that this screen deliberately does NOT
  * add, because there is no real data behind them and this is a page buyers
  * make sourcing decisions from: a view counter and a star supplier rating.
@@ -72,10 +71,10 @@ import { NotFound } from './NotFound.jsx';
  *    "Available" or "In stock" would be noise at best and a leak at worst.
  *  - No negative verification text. An unverified seller's block is identical,
  *    minus the tick — there is no badge, chip or sentence in its place.
- *  - No WORKING enquiry / contact / quote button — the create-enquiry flow
- *    isn't wired on the web client yet. 2026-08-12 added a "Send Enquiry"
- *    button (owner's reference mockup shows one), but it's disabled, same
- *    treatment as `ProductListCard`'s "Inquiry" button — never fake-functional.
+ *  - The enquiry button is the ONLY contact affordance, and it opens a
+ *    THREAD (M4-4) — never an email, a phone number or a quote form. It
+ *    renders nothing at all for an exporter account, or for a buyer looking at
+ *    their own company's listing (the F4 self-enquiry guard would refuse it).
  *  - The gallery shows ONLY the seller's own images. Never stock filler.
  *  - Never email, phone, street address or website — `website` in particular is
  *    internal and has reached a public response once before.
@@ -659,21 +658,13 @@ export function ProductDetail() {
                       <Facts product={p} />
                     </div>
 
-                    {/* Disabled placeholder — same treatment as
-                        `ProductListCard`'s "Inquiry" button: Module 4
-                        (enquiry/chat) has no create-enquiry flow wired on the
-                        web client yet, so this can't be real. Shown in the
-                        reference's exact position, visibly inert, not
-                        fake-functional — logged in docs/UiWebNotes.md. */}
-                    <button
-                      type="button"
-                      disabled
-                      title="Enquiries are coming soon"
-                      className="mt-5 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-ink-200 px-6 py-3 text-sm font-bold text-ink-500"
-                    >
-                      <MailIcon className="h-4 w-4" aria-hidden="true" />
-                      Send Enquiry
-                    </button>
+                    {/* M4 (2026-08-17): the disabled "Send Enquiry" placeholder
+                        that sat here is now the REAL entry point — the one door
+                        into chat (M4-4), in the same position. It decides its
+                        own label ("Create enquiry" vs "Open chat") and renders
+                        nothing at all for an exporter account or for a buyer
+                        looking at their own company's listing. */}
+                    <EnquiryButton product={p} />
                   </div>
                 </div>
               </section>

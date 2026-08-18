@@ -97,6 +97,28 @@ export const FEATURED_KIND = ['banner', 'product', 'category', 'supplier'];
 // welcome template, freeze notices) — it has no org and no user (M4-11).
 export const MESSAGE_SENDER_TYPE = ['buyer', 'exporter', 'system'];
 
+/**
+ * What a `system` message is ABOUT.
+ *
+ * The body already says it in words, but only to a human — a client cannot tell
+ * a block from a reopen without this, because the blocked notice has the
+ * moderator's free-text reason appended and so has no fixed string to match.
+ * Rendering keyed on copy would also fail silently the day the copy is reworded.
+ *
+ * ⚠️ Set at creation and never after. Messages are append-only (M4-13), so the
+ * notices already sent carry no kind and never will — a reader must treat the
+ * field as optional, not assume every system message has one.
+ */
+export const MESSAGE_SYSTEM_KIND = [
+  'welcome',
+  'blocked',
+  'unblocked',
+  'product_takedown',
+  'product_restored',
+  'account_paused',
+  'account_restored',
+];
+
 // Why messaging is frozen. FIRST REASON WINS and is never overwritten (M4-29).
 // `account` is F1-B's org-block cascade: the COMPANY is blocked, which is a
 // different fact from this chat being blocked or this product being taken down —

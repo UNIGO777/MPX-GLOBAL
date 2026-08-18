@@ -29,7 +29,9 @@ export function PortalLayout({ nav, subline, wide = false, children }) {
   const identity = [ROLE_LABELS[user?.role] ?? user?.role, company].filter(Boolean).join(' · ');
 
   return (
-    <ConsoleShell nav={nav} identity={identity} signOutTo="/signin">
+    // The org's icon rides along with the name it already fetches (§A22), so the
+    // portal shows the company's own mark rather than initials once it has one.
+    <ConsoleShell nav={nav} identity={identity} logo={org.data?.logo} signOutTo="/signin">
       {/* The panels' design measure (860px) — right for M1's forms and status
           screens. `wide` opts a page out of it: M2's product TABLE needs the
           full canvas (the design draws it at ~1200px) and would otherwise be

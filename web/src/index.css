@@ -32,3 +32,62 @@
     @apply ring-2 ring-primary-600 ring-offset-2 ring-offset-surface-subtle;
   }
 }
+
+@layer components {
+  /**
+   * The chat surfaces.
+   *
+   * The transcript is a LIGHT FIELD framed by the console's navy — a record
+   * being kept inside an institution, which is what this module actually is
+   * (m4.md §1: "administered", not casual). Three layers make it read as a
+   * material rather than a blank div:
+   *
+   *   1. a soft vertical gradient, lightest at the top where the header meets it
+   *   2. a very faint dot grid — texture at 3.5% ink, not graph paper
+   *   3. a warm bottom edge that the composer sits on
+   *
+   * The dots MUST be declared before the gradient: the first background is the
+   * topmost layer.
+   */
+  .chat-canvas {
+    background-color: #EDF1FC;
+    background-image:
+      radial-gradient(rgba(26, 46, 143, 0.035) 1px, transparent 1px),
+      linear-gradient(180deg, #F9FAFF 0%, #EDF1FC 60%, #E9EEFB 100%);
+    background-size: 22px 22px, 100% 100%;
+  }
+
+  /* The strip the composer floats on — the canvas gradient's own end colour, so
+     the two read as one continuous field rather than a panel with a seam. */
+  .chat-foot {
+    background-color: #E9EEFB;
+  }
+
+  /* The conversation column. Tinted, so the rows can be WHITE CARDS on it —
+     white rows on a white column had nothing to lift them off the page. */
+  /**
+   * The height of the console chrome sitting above a page's canvas, in ONE
+   * place, because a full-height screen (the chat) has to subtract it and doing
+   * that with literals meant three magic numbers that drifted apart.
+   *
+   *   88px  the navy header (`ConsoleShell` header is h-[88px] at every width)
+   *   44px  the mobile nav strip — px-3 py-2 rows on a 20px line, plus the
+   *         nav's own pb-2. It is `lg:hidden`, NOT `sm:hidden`: the sidebar
+   *         only takes over at lg, so a tablet still carries the strip. That is
+   *         exactly what the chat page failed to subtract, and why it ran ~36px
+   *         past the viewport between 640px and 1023px.
+   */
+  :root {
+    --shell-chrome: 132px;
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      --shell-chrome: 88px;
+    }
+  }
+
+  .chat-rail {
+    background-color: #F5F7FD;
+  }
+}

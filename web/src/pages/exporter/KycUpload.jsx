@@ -90,9 +90,24 @@ export function KycUpload() {
     }
   }, [user.orgId]);
 
+  /**
+   * ⚠️ Deliberate exception, not an oversight.
+   *
+   * This seeds an EDITABLE form from fetched data, which React's compiler rules
+   * flag because the value is copied into state rather than derived. The
+   * sanctioned fix is to split the form into a wrapper (query + loading/error)
+   * and a body keyed by record id, so the initial state IS the data.
+   *
+   * Not done here on purpose: this screen handles document uploads and its
+   * fields carry validation that changed recently, so restructuring it buys a
+   * compiler hint at the cost of real regression risk in a security-relevant
+   * flow. Revisit when this screen is next worked on properly.
+   */
+  /* eslint-disable react-hooks/set-state-in-effect -- see note above */
   useEffect(() => {
     load();
   }, [load]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Exporters set this at signup — always present; guard anyway so a bad record
   // degrades to the business list instead of a blank page.

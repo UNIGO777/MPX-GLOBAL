@@ -2,7 +2,6 @@ import {
   HomeIcon,
   ShieldIcon,
   BoxIcon,
-  ListIcon,
   ChatIcon,
   BuildingIcon,
 } from '../../components/ui/icons.jsx';
@@ -17,7 +16,9 @@ export const EXPORTER_NAV = [
   { label: 'Dashboard', Icon: HomeIcon, soon: true },
   { to: '/exporter/verification', label: 'Verification', Icon: ShieldIcon },
   { to: '/exporter/products', label: 'Products', Icon: BoxIcon },
-  { label: 'Enquiries', Icon: ListIcon, soon: true },
-  { label: 'Chat', Icon: ChatIcon, soon: true },
+  // M4 (2026-08-17): one chat item, replacing the "Enquiries" + "Chat" pair.
+  // The seller's entry point is the FULL inbox (owner's call) — answering a
+  // day's enquiries is inbox work, not something to do in a 380px window.
+  { to: '/exporter/chat', label: 'Chat', Icon: ChatIcon, unreadBadge: true },
   { to: '/exporter/company', label: 'Company profile', Icon: BuildingIcon, dividerBefore: true },
 ];

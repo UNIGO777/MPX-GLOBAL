@@ -78,7 +78,11 @@ async function cascadeConversations(orgId) {
     await Conversation.updateOne({ _id: row._id }, { $set: { frozen: true, frozenReason: 'account' } });
     // Posted AFTER the freeze on purpose — `postSystemMessage` bypasses the
     // frozen guard so the notice explaining the freeze can survive it.
-    await postSystemMessage({ conversationId: row._id, body: FREEZE_NOTICES.account });
+    await postSystemMessage({
+      conversationId: row._id,
+      body: FREEZE_NOTICES.account,
+      systemKind: 'account_paused',
+    });
     emitFreeze(row._id, 'account');
   }
   return toFreeze.length;
@@ -106,7 +110,11 @@ async function restoreConversations(orgId) {
     const state = await recomputeFreeze(conversation);
     if (!state.frozen) {
       reopened += 1;
-      await postSystemMessage({ conversationId: conversation._id, body: FREEZE_NOTICES.accountRestored });
+      await postSystemMessage({
+        conversationId: conversation._id,
+        body: FREEZE_NOTICES.accountRestored,
+        systemKind: 'account_restored',
+      });
       emitUnfreeze(conversation._id);
     }
   }

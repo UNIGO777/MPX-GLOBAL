@@ -15,7 +15,21 @@ const GRANTABLE_PERMISSIONS = Object.values(PERMISSIONS);
 // operator injection; zString already rejects non-string operator payloads).
 export const listUsers = {
   query: z.object({
-    role: z.enum(ROLES).optional(),
+    /**
+     * One role, or several as a comma list (`buyer,exporter`).
+     *
+     * The console splits its directory in two — /admin/users is the MARKETPLACE
+     * (buyers + exporters) and /admin/staff is the team (employees +
+     * superadmins) — and neither is expressible with a single role. Each entry
+     * is still checked against the role allowlist, so nothing free-text can
+     * reach the query.
+     */
+    role: zString({ min: 1, max: 100 })
+      .optional()
+      .transform((v) => (v === undefined ? undefined : v.split(',').map((r) => r.trim())))
+      .refine((v) => v === undefined || (v.length > 0 && v.every((r) => ROLES.includes(r))), {
+        message: 'Unknown role',
+      }),
     kycStatus: z.enum(KYC_STATUS).optional(),
     q: zString({ min: 1, max: 100 }).optional(),
     page: z.coerce.number().int().min(1).default(1),

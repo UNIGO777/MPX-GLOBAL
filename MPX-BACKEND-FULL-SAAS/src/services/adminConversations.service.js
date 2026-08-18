@@ -3,9 +3,19 @@ import mongoose from 'mongoose';
 import { Conversation } from '../models/Conversation.js';
 import { Message } from '../models/Message.js';
 import { Product } from '../models/Product.js';
+import { Organisation } from '../models/Organisation.js';
 import { AppError } from '../utils/AppError.js';
 import { isObjectIdLike } from '../utils/idOrSlug.js';
 import { recordAudit } from './audit.service.js';
+import {
+  searchClause,
+  isNameSearch,
+  loadOrgLogos,
+  encodeCursor,
+  decodeCursor,
+  cursorClause,
+  combineFilter,
+} from './conversationSearch.js';
 import { postSystemMessage } from './message.service.js';
 import { recomputeFreeze, FREEZE_NOTICES } from './conversationFreeze.service.js';
 import { emitFreeze, emitUnfreeze } from '../realtime/socket.js';
@@ -22,18 +32,6 @@ import { emitFreeze, emitUnfreeze } from '../realtime/socket.js';
 
 const MAX_PAGE = 50;
 
-// Same branch as the party list: native `$text` must be the first `$match` and
-// cannot sit inside an `$or`, so "three names OR two ids" is two queries, chosen
-// by the shape of the input.
-function searchClause(q) {
-  if (!q) return {};
-  if (isObjectIdLike(q)) {
-    const id = new mongoose.Types.ObjectId(q);
-    return { $or: [{ buyerOrgId: id }, { exporterOrgId: id }] };
-  }
-  return { $text: { $search: q } };
-}
-
 /**
  * G3/G4 — the two targeted filters M5's screens navigate by. `q` alone cannot
  * express either:
@@ -45,6 +43,25 @@ function searchClause(q) {
  *              own field. `q` always `$or`s both, so a company holding both
  *              sides could never be split.
  */
+/**
+ * The moderation-state filter.
+ *
+ * 🔴 Reads `frozen` + `frozenReason`, never a derived label: `frozenLabel` is a
+ * VIEW concern computed per request (a purged product turns a takedown into
+ * "no longer available"), so filtering on it would mean filtering on something
+ * the database does not store.
+ *
+ * `open` is `frozen: { $ne: true }` rather than `frozen: false` — rows written
+ * before the field existed have no `frozen` key at all, and `false` would hide
+ * every one of them.
+ */
+function stateClause(state) {
+  if (!state) return null;
+  if (state === 'open') return { frozen: { $ne: true } };
+  if (state === 'frozen') return { frozen: true };
+  return { frozen: true, frozenReason: state };
+}
+
 function targetClause({ productId, side, orgId }) {
   const clause = {};
   if (productId) clause.productId = new mongoose.Types.ObjectId(productId);
@@ -56,23 +73,6 @@ function targetClause({ productId, side, orgId }) {
     else clause.$or = [{ buyerOrgId: id }, { exporterOrgId: id }];
   }
   return clause;
-}
-
-// Cursor is (lastMessageAt, _id) — see listAdminConversations for why this list
-// cannot use page numbers.
-function encodeCursor(row) {
-  return Buffer.from(`${row.lastMessageAt.getTime()}:${row._id}`).toString('base64url');
-}
-
-function decodeCursor(cursor) {
-  try {
-    const [at, id] = Buffer.from(cursor, 'base64url').toString('utf8').split(':');
-    const millis = Number(at);
-    if (!Number.isFinite(millis) || !isObjectIdLike(id)) return null;
-    return { at: new Date(millis), id: new mongoose.Types.ObjectId(id) };
-  } catch {
-    return null;
-  }
 }
 
 async function loadProducts(conversations) {
@@ -94,30 +94,41 @@ async function loadProducts(conversations) {
  * correctly; only the admin one used `skip`, and it is the one where rows churn
  * fastest.
  */
-export async function listAdminConversations({ q, productId, side, orgId, cursor, limit }) {
+export async function listAdminConversations({ q, productId, side, orgId, state, cursor, limit }) {
   const size = Math.min(limit ?? 20, MAX_PAGE);
-  const filter = { ...searchClause(q), ...targetClause({ productId, side, orgId }) };
 
+  let decoded = null;
   if (cursor) {
-    const decoded = decodeCursor(cursor);
+    decoded = decodeCursor(cursor);
     if (!decoded) throw AppError.badRequest('bad cursor', 'Invalid page cursor.');
-    // Held in `$and` so it can never collide with an `$or` from either clause
-    // above — both the id search and the side-less org filter use one.
-    filter.$and = [
-      {
-        $or: [
-          { lastMessageAt: { $lt: decoded.at } },
-          { lastMessageAt: decoded.at, _id: { $lt: decoded.id } },
-        ],
-      },
-    ];
   }
 
-  // One extra row answers "is there another page?" without a count.
-  const rows = await Conversation.find(filter)
-    .sort({ lastMessageAt: -1, _id: -1 })
-    .limit(size + 1)
-    .lean();
+  let mode = decoded?.mode ?? 'text';
+
+  // 🔴 Everything optional goes into `$and`. Three of these clauses can each
+  // carry their own `$or` — the id search, the side-less org filter and the
+  // cursor — and spreading two of them into one object silently drops the first.
+  const runQuery = (searchMode) =>
+    Conversation.find(
+      combineFilter(
+        targetClause({ productId, side, orgId }),
+        stateClause(state),
+        searchClause(q, searchMode),
+        decoded ? cursorClause(decoded) : null,
+      ),
+    )
+      .sort({ lastMessageAt: -1, _id: -1 })
+      // One extra row answers "is there another page?" without a count.
+      .limit(size + 1)
+      .lean();
+
+  let rows = await runQuery(mode);
+
+  // Identical fallback to the party list (§8.4 — roles differ only in scope).
+  if (rows.length === 0 && !cursor && mode === 'text' && isNameSearch(q)) {
+    mode = 'regex';
+    rows = await runQuery(mode);
+  }
 
   const hasMore = rows.length > size;
   const page = hasMore ? rows.slice(0, size) : rows;
@@ -125,7 +136,8 @@ export async function listAdminConversations({ q, productId, side, orgId, cursor
   return {
     rows: page,
     products: await loadProducts(page),
-    nextCursor: hasMore && page.length > 0 ? encodeCursor(page[page.length - 1]) : null,
+    logos: await loadOrgLogos(Organisation, page),
+    nextCursor: hasMore && page.length > 0 ? encodeCursor(page[page.length - 1], mode) : null,
   };
 }
 
@@ -149,6 +161,26 @@ async function loadConversation(id) {
   return conversation;
 }
 
+/**
+ * Re-read the thread WITH its product, for the moderation actions' responses.
+ *
+ * 🔴 Not cosmetic. `freezeLabel()` reads a missing product as PURGED, so a
+ * response built with `product: null` told the moderator "Product no longer
+ * available" about a listing that is perfectly fine — on every unblock, and on
+ * any block of an already-taken-down thread (where the label should stay the
+ * yellow "Product under review", M4-29). The list and detail endpoints always
+ * loaded products; only these two did not.
+ */
+async function reloadWithProduct(id) {
+  const conversation = await loadConversation(id);
+  const products = await loadProducts([conversation]);
+  return {
+    conversation,
+    product: products.get(String(conversation.productId)) ?? null,
+    logos: await loadOrgLogos(Organisation, [conversation]),
+  };
+}
+
 /** M4-34 — reading a thread is an audited act, for employees and superadmins alike. */
 export async function getAdminConversation({ id, actor, meta }) {
   const conversation = await loadConversation(id);
@@ -164,7 +196,11 @@ export async function getAdminConversation({ id, actor, meta }) {
     meta,
   });
 
-  return { conversation, product: products.get(String(conversation.productId)) ?? null };
+  return {
+    conversation,
+    product: products.get(String(conversation.productId)) ?? null,
+    logos: await loadOrgLogos(Organisation, [conversation]),
+  };
 }
 
 /** The content itself — audited for the same reason. */
@@ -218,7 +254,11 @@ export async function blockConversation({ id, reason, actor, meta }) {
   if (!conversation.frozen) update.frozenReason = 'blocked';
   await Conversation.updateOne({ _id: conversation._id }, { $set: update });
 
-  await postSystemMessage({ conversationId: conversation._id, body: FREEZE_NOTICES.blocked(reason) });
+  await postSystemMessage({
+    conversationId: conversation._id,
+    body: FREEZE_NOTICES.blocked(reason),
+    systemKind: 'blocked',
+  });
   emitFreeze(conversation._id, 'blocked');
 
   await recordAudit({
@@ -232,7 +272,7 @@ export async function blockConversation({ id, reason, actor, meta }) {
     meta,
   });
 
-  return Conversation.findOne({ _id: conversation._id });
+  return reloadWithProduct(conversation._id);
 }
 
 /**
@@ -259,6 +299,9 @@ export async function unblockConversation({ id, reason, actor, meta }) {
     conversationId: conversation._id,
     // Only claim it is reopened if it actually is.
     body: state.frozen ? FREEZE_NOTICES.takedown : FREEZE_NOTICES.unblocked,
+    // …and the kind follows the copy, or a still-frozen thread would render a
+    // green "reopened" notice over a takedown sentence.
+    systemKind: state.frozen ? 'product_takedown' : 'unblocked',
   });
   // §7.4 — and only announce a reopening that actually happened (M4-30).
   if (!state.frozen) emitUnfreeze(conversation._id);
@@ -274,5 +317,5 @@ export async function unblockConversation({ id, reason, actor, meta }) {
     meta,
   });
 
-  return Conversation.findOne({ _id: conversation._id });
+  return reloadWithProduct(conversation._id);
 }

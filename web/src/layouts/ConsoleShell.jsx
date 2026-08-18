@@ -1,10 +1,11 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 
 import { useQuery } from '@tanstack/react-query';
 
 import { savedApi, savedKeys } from '../api/saved.js';
 import { useAuth } from '../auth/AuthContext.jsx';
-import { LogOutIcon } from '../components/ui/icons.jsx';
+import { useUnreadCount } from '../hooks/useUnreadCount.js';
+import { ChevronRightIcon, GridIcon, LogOutIcon } from '../components/ui/icons.jsx';
 import { Logo } from '../components/ui/Logo.jsx';
 
 /**
@@ -56,8 +57,24 @@ function SavedCountBadge() {
   );
 }
 
+/**
+ * Unread CHAT THREADS (M4). Not messages — the server keeps no per-thread
+ * message count, so this badge counts conversations with something unread and
+ * a "3 new messages" number could only ever be invented.
+ */
+function UnreadCountBadge() {
+  const count = useUnreadCount();
+  if (count === 0) return null;
+  return (
+    <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white">
+      {count > 99 ? '99+' : count}
+      <span className="sr-only"> unread conversations</span>
+    </span>
+  );
+}
+
 function NavRows({ nav }) {
-  return nav.map(({ to, label, Icon, soon, disabled, dividerBefore, savedBadge }) => {
+  return nav.map(({ to, label, Icon, soon, disabled, dividerBefore, savedBadge, unreadBadge }) => {
     const row = (
       <li key={label}>
         {soon || disabled ? (
@@ -88,6 +105,7 @@ function NavRows({ nav }) {
             {Icon && <Icon className="h-5 w-5 shrink-0" />}
             {label}
             {savedBadge && <SavedCountBadge />}
+            {unreadBadge && <UnreadCountBadge />}
           </NavLink>
         )}
       </li>
@@ -106,7 +124,71 @@ function NavRows({ nav }) {
   });
 }
 
-export function ConsoleShell({ nav, identity, signOutTo = '/signin', children }) {
+/**
+ * Name · role · company · avatar · sign-out.
+ *
+ * Moved to the SIDEBAR FOOTER at lg+ (owner, 2026-08-17) — it used to sit in the
+ * top bar. Below lg there is no sidebar, so the same block stays in the header:
+ * dropping it there would leave a phone with no way to sign out.
+ *
+ * `align` flips the text side because the two placements read differently — in
+ * a 260px column the avatar leads and the text runs left; in the top bar the
+ * block is flush right, so the text is right-aligned against the avatar.
+ */
+function IdentityBlock({ user, identity, initials, logo, onSignOut, align = 'left' }) {
+  const leading = align === 'left';
+  return (
+    // Tight gaps in the sidebar: a 260px column has ~150px for the text once
+    // the avatar and the sign-out button take their share, and the company name
+    // is the first thing to be truncated away.
+    <div className={`flex items-center ${leading ? 'gap-2.5' : 'gap-4'}`}>
+      {leading && <Avatar initials={initials} logo={logo} compact />}
+      <div className={`min-w-0 ${leading ? 'flex-1' : 'text-right'}`}>
+        <p className="truncate text-sm font-semibold leading-none text-white">{user?.name}</p>
+        {identity && <p className="mt-1 truncate text-xs font-normal text-white/70">{identity}</p>}
+      </div>
+      {!leading && <Avatar initials={initials} logo={logo} />}
+      <button
+        type="button"
+        onClick={onSignOut}
+        aria-label="Sign out"
+        title="Sign out"
+        className="shrink-0 rounded-lg p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+      >
+        <LogOutIcon className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
+/**
+ * The company's own icon in its portal, falling back to initials.
+ *
+ * It is the ORGANISATION's mark, not a personal photo — there is no user avatar
+ * anywhere in this product, and uploading one is not a thing a person can do.
+ */
+function Avatar({ initials, logo, compact = false }) {
+  const size = compact ? 'h-9 w-9 text-[13px]' : 'h-10 w-10 text-sm';
+  if (logo) {
+    return (
+      <img
+        src={logo}
+        alt=""
+        className={`shrink-0 rounded-full bg-white object-cover ring-1 ring-inset ring-white/25 ${size}`}
+      />
+    );
+  }
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex shrink-0 items-center justify-center rounded-full bg-primary-600 font-bold text-white ${size}`}
+    >
+      {initials}
+    </span>
+  );
+}
+
+export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', children }) {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
@@ -141,34 +223,61 @@ export function ConsoleShell({ nav, identity, signOutTo = '/signin', children })
             <NavRows nav={nav} />
           </ul>
         </nav>
+
+        {/* Identity, pinned to the bottom with a rule above it (owner,
+            2026-08-17). `nav` carries flex-1, so this needs no margin trick to
+            sit at the foot of the column. */}
+        <div className="shrink-0 border-t border-white/15 px-3 py-3.5">
+          <IdentityBlock
+            user={user}
+            identity={identity}
+            initials={initials}
+            logo={logo}
+            onSignOut={handleSignOut}
+          />
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col bg-primary-800">
-        {/* Top bar — identity only; the wordmark lives in the sidebar */}
+        {/* Top bar — the wordmark below lg, where the sidebar is hidden. The
+            identity block lives in the SIDEBAR FOOTER at lg+ and only appears
+            here on small screens, which have no sidebar to put it in. */}
+        {/* `lg:justify-end` matters: the wordmark is hidden at lg+, so without
+            it the remaining group is the only child and drifts to the LEFT.
+            Explore belongs where the identity block used to sit — top right. */}
         <header className="flex h-[88px] shrink-0 items-center justify-between gap-4 px-4 sm:px-8 lg:justify-end lg:px-12">
           <span className="lg:hidden">
             <Logo size="sm" variant="white" />
           </span>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm font-semibold leading-none text-white">{user?.name}</p>
-              {identity && <p className="mt-1 text-xs font-normal text-white/70">{identity}</p>}
+          <div className="flex items-center gap-3">
+            {/* Explore — the way back out to the public catalogue from inside a
+                console. It fills the space the identity block left at lg+
+                (owner, 2026-08-17); below lg the bar already carries the
+                wordmark and the identity, so it would only crowd them. */}
+            <Link
+              to="/categories"
+              className="group hidden items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary-800 shadow-sm transition-colors hover:bg-primary-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-primary-800 lg:inline-flex"
+            >
+              <GridIcon className="h-4 w-4" aria-hidden="true" />
+              Explore categories
+              {/* The nudge on hover says "this leaves the console" without
+                  spending a permanent second icon on saying it. */}
+              <ChevronRightIcon
+                className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
+                aria-hidden="true"
+              />
+            </Link>
+
+            <div className="lg:hidden">
+              <IdentityBlock
+                user={user}
+                identity={identity}
+                initials={initials}
+                logo={logo}
+                onSignOut={handleSignOut}
+                align="right"
+              />
             </div>
-            <span
-              aria-hidden="true"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white"
-            >
-              {initials}
-            </span>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              aria-label="Sign out"
-              title="Sign out"
-              className="rounded-lg p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              <LogOutIcon className="h-5 w-5" />
-            </button>
           </div>
         </header>
 

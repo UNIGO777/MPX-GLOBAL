@@ -26,7 +26,9 @@ function escapeRegex(input) {
 // exporter row is byte-identical to before.
 export async function listUsers({ role, kycStatus, q, page, pageSize, includePermissions = false }) {
   const match = {};
-  if (role) match.role = role;
+  // The validator hands over an ARRAY (one entry or several) — `$in` covers
+  // both, so there is no single-role special case to keep in step.
+  if (role) match.role = Array.isArray(role) ? { $in: role } : role;
   if (q) {
     // Anchored, case-insensitive prefix match on the escaped input.
     const rx = new RegExp(`^${escapeRegex(q)}`, 'i');
@@ -56,6 +58,20 @@ export async function listUsers({ role, kycStatus, q, page, pageSize, includePer
               role: 1,
               isActive: 1,
               orgId: 1,
+              // F1-A · what the org-block control on /admin/users needs, and
+              // nothing more: the company's NAME (a governance action that
+              // cascades to every user of a company must name it in the
+              // confirmation) and whether it is currently blocked (so the row
+              // offers Block or Unblock, never a guess). Staff-only endpoint —
+              // `org.isActive` is a moderation fact and never reaches a public
+              // projection (Organisation.PUBLIC_FIELDS / toPublic).
+              orgName: '$org.name',
+              orgIsActive: '$org.isActive',
+              // The company's uploaded mark, so the directory can show WHO an
+              // account belongs to rather than two initials. There is no
+              // personal photo anywhere in this product to show instead — the
+              // model has never carried one (companies, never people).
+              orgLogo: '$org.logo',
               kycStatus: '$org.kycStatus',
               createdAt: 1,
               ...(includePermissions

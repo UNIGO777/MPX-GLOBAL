@@ -172,15 +172,14 @@ export function attachSocket(httpServer) {
         // re-implementing party/frozen/length checks.
         const { message } = await sendMessage({ user: fresh, conversationId, body: trimmed });
 
-        // Make sure this socket has finished joining its rooms before we
-        // broadcast, or the sender misses their own message on a fast send.
+        // Make sure this socket has finished joining its rooms before the ack,
+        // or a fast first send races its own room join.
+        //
+        // ⚠️ The broadcast itself is NOT done here any more — `sendMessage()`
+        // emits it, so REST sends reach the room too. Emitting in both places
+        // would deliver every socket-sent message twice.
         await socket.data.roomsReady;
 
-        io.to(ROOM(conversationId)).emit('message:new', {
-          conversationId: String(conversationId),
-          message: messageView(message),
-        });
-        io.to(ROOM(conversationId)).emit('conversation:updated', { conversationId: String(conversationId) });
         ack?.({ ok: true, message: messageView(message) });
       } catch (err) {
         logger.warn({ err: { name: err?.name, message: err?.message } }, 'socket message:send rejected');
@@ -305,6 +304,27 @@ export async function usersInConversationRoom(conversationId) {
   } catch {
     return new Set();
   }
+}
+
+/**
+ * Broadcast a saved message to everyone in the thread.
+ *
+ * 🔴 This lives here and is called by the SERVICE, not by the socket handler,
+ * because the socket is not the only way a message is written. `POST
+ * /conversations/:id/messages` is the path of record (§7.1) and is what the web
+ * client and the mobile app actually use — while the emit sat in the socket
+ * handler alone, a REST send reached nobody live and the counterparty saw
+ * nothing until they reloaded. Found 2026-08-17 wiring the web client.
+ *
+ * Safe when there is no socket server (tests, a REST-only process): `io` is
+ * null and this is a no-op, exactly as the freeze emitters are.
+ */
+export function emitNewMessage(conversationId, message) {
+  const room = ROOM(conversationId);
+  const payload = { conversationId: String(conversationId), message: messageView(message) };
+  io?.to(room).emit('message:new', payload);
+  // Moves the row to the top of every open list and refreshes the unread badge.
+  io?.to(room).emit('conversation:updated', { conversationId: String(conversationId) });
 }
 
 /** §7.4 — freeze is PUSHED, not polled: both composers disable immediately. */

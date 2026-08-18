@@ -90,8 +90,14 @@ describe('M4-D · sending', () => {
     expect(fromSeller.status).toBe(201);
     expect(fromSeller.body.message.senderType).toBe('exporter');
 
-    // The response carries no person, ever (M4-17).
-    expect(Object.keys(fromSeller.body.message).sort()).toEqual(['body', 'createdAt', 'id', 'senderType'].sort());
+    // The response carries no person, ever (M4-17). This is an EXACT key list on
+    // purpose: it is the guard that fails the moment a field is added to the
+    // message projection, so widening it is always a deliberate edit here.
+    // `systemKind` joined it on 2026-08-18 — null on every party message.
+    expect(Object.keys(fromSeller.body.message).sort()).toEqual(
+      ['body', 'createdAt', 'id', 'senderType', 'systemKind'].sort(),
+    );
+    expect(fromSeller.body.message.systemKind).toBeNull();
   });
 
   it('updates the list ordering and preview', async () => {
@@ -216,6 +222,37 @@ describe('M4-D · guard 3 — 200 characters, USER SENDS ONLY (M4-12 / C1)', () 
     await postSystemMessage({ conversationId, body: long });
     const stored = await Message.findOne({ conversationId, senderType: 'system', body: /restricted/ });
     expect(stored.body.length).toBeGreaterThan(200);
+  });
+
+  it('a system notice carries its KIND, and a party message never does', async () => {
+    await postSystemMessage({ conversationId, body: 'Reopened.', systemKind: 'unblocked' });
+
+    const res = await request(app)
+      .get(`/conversations/${conversationId}/messages`)
+      .set(bearer(buyer.token));
+    expect(res.status).toBe(200);
+
+    const notice = res.body.messages.find((m) => m.body === 'Reopened.');
+    expect(notice.systemKind).toBe('unblocked');
+
+    // A buyer's or seller's own message has no kind — the field exists only so
+    // the platform's notices can be told apart from one another.
+    const party = res.body.messages.find((m) => m.senderType !== 'system');
+    expect(party.systemKind).toBeNull();
+  });
+
+  it('a system notice written WITHOUT a kind still projects, as null', async () => {
+    // Every notice sent before 2026-08-18 is in this state, and messages are
+    // append-only (M4-13) so they can never be backfilled. The client must be
+    // able to render them, not treat the missing field as an error.
+    await postSystemMessage({ conversationId, body: 'Legacy notice.' });
+
+    const res = await request(app)
+      .get(`/conversations/${conversationId}/messages`)
+      .set(bearer(buyer.token));
+    const legacy = res.body.messages.find((m) => m.body === 'Legacy notice.');
+    expect(legacy.senderType).toBe('system');
+    expect(legacy.systemKind).toBeNull();
   });
 
   it('a system notice does NOT mark the thread read for either side', async () => {

@@ -24,6 +24,9 @@ import { RequireRole } from './auth/RequireRole.jsx';
 import { VerificationStatus } from './pages/buyer/VerificationStatus.jsx';
 import { KycUpload } from './pages/buyer/KycUpload.jsx';
 import { SavedItems } from './pages/buyer/SavedItems.jsx';
+import { ChatInbox } from './pages/chat/ChatInbox.jsx';
+import { ChatDock } from './chat/ChatDock.jsx';
+import { ChatDockProvider } from './chat/ChatDockContext.jsx';
 import { VerificationStatus as ExporterVerificationStatus } from './pages/exporter/VerificationStatus.jsx';
 import { KycUpload as ExporterKycUpload } from './pages/exporter/KycUpload.jsx';
 import { Products as ExporterProducts } from './pages/exporter/Products.jsx';
@@ -66,6 +69,12 @@ const AttributeManager = lazy(() =>
 );
 const ProductMonitoring = lazy(() =>
   import('./pages/admin/ProductMonitoring.jsx').then((m) => ({ default: m.ProductMonitoring })),
+);
+const Conversations = lazy(() =>
+  import('./pages/admin/Conversations.jsx').then((m) => ({ default: m.Conversations })),
+);
+const ConversationViewer = lazy(() =>
+  import('./pages/admin/ConversationViewer.jsx').then((m) => ({ default: m.ConversationViewer })),
 );
 const AuditLog = lazy(() =>
   import('./pages/admin/AuditLog.jsx').then((m) => ({ default: m.AuditLog })),
@@ -143,6 +152,10 @@ export function App() {
       <AuthProvider>
         <BrowserRouter>
           <ScrollToTop />
+          {/* M4 · the docked chat. Mounted OUTSIDE <Routes> on purpose: a
+              conversation must survive navigation, which is the entire point of
+              a dock. It renders nothing for guests, staff or auth screens. */}
+          <ChatDockProvider>
           <Routes>
             {/* --- Public (guest-visible; no auth guard by design — B7) --- */}
             <Route path="/" element={<Landing />} />
@@ -194,6 +207,11 @@ export function App() {
                 {/* M3 screen 8 — saved items. Buyer-only here AND on every
                     /saved endpoint; guests land on sign-in via RequireAuth. */}
                 <Route path="/saved" element={<SavedItems />} />
+                {/* M4 screens 3+4. One component serves the list and the
+                    thread: at lg+ both panes show at once, below that the
+                    thread replaces the list. */}
+                <Route path="/buyer/chat" element={<ChatInbox />} />
+                <Route path="/buyer/chat/:id" element={<ChatInbox />} />
               </Route>
             </Route>
 
@@ -208,6 +226,10 @@ export function App() {
                 <Route path="/exporter/products" element={<ExporterProducts />} />
                 <Route path="/exporter/products/new" element={<ProductForm />} />
                 <Route path="/exporter/products/:id/edit" element={<ProductForm />} />
+                {/* Same component as the buyer's — one role-aware inbox
+                    (M4-35), scoped server-side by the caller's own org. */}
+                <Route path="/exporter/chat" element={<ChatInbox />} />
+                <Route path="/exporter/chat/:id" element={<ChatInbox />} />
               </Route>
             </Route>
 
@@ -227,9 +249,19 @@ export function App() {
                   <Route path="/admin/categories/:id/attributes" element={<AttributeManager />} />
                   <Route path="/admin/products" element={<ProductMonitoring />} />
                   <Route path="/admin/verification" element={<VerificationQueue />} />
+                  {/* M4 screens 5-6 — permissioned per endpoint on the server;
+                      the sidebar item hides without `conversation:read`. */}
+                  <Route path="/admin/conversations" element={<Conversations />} />
+                  <Route path="/admin/conversations/:id" element={<ConversationViewer />} />
                   <Route path="/admin/verification/:orgId/kyc" element={<KycViewer />} />
                   <Route element={<RequireRole roles={['superadmin']} />}>
-                    <Route path="/admin/employees" element={<Employees />} />
+                    <Route path="/admin/staff" element={<Employees />} />
+                    {/* The screen was /admin/employees until 2026-08-18. Kept as
+                        a redirect rather than deleted: the old path is in the
+                        owner's bookmarks and in older History entries, and a
+                        superadmin hitting a dead admin URL has no way to tell a
+                        rename from a permission problem. */}
+                    <Route path="/admin/employees" element={<Navigate to="/admin/staff" replace />} />
                   </Route>
                   <Route path="/admin/dashboard" element={<ComingSoon title="Dashboard" />} />
                   <Route path="/admin/audit" element={<AuditLog />} />
@@ -248,6 +280,8 @@ export function App() {
                 bouncing them to the homepage did neither. */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <ChatDock />
+          </ChatDockProvider>
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>

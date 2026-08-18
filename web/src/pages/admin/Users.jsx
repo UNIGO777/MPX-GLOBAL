@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { adminApi } from '../../api/admin.js';
 import { config } from '../../config.js';
@@ -27,6 +28,7 @@ import {
   EyeIcon,
   BadgeCheckIcon,
   FileIcon,
+  BuildingIcon,
   CheckCircleIcon,
   SlashIcon,
 } from '../../components/ui/icons.jsx';
@@ -42,12 +44,23 @@ import {
  * employees, AND the server refusals (self, superadmin target, org-blocked)
  * surface as inline messages when they fire anyway.
  */
+/**
+ * 🔴 Buyers and exporters ONLY (owner, 2026-08-18). Staff — employees and
+ * superadmins — are the team, not the marketplace, and they live on
+ * /admin/staff. Mixing them here meant the KYC column, the company chips and
+ * every org-level action were blank on a third of the rows, and a search for a
+ * trading partner returned colleagues.
+ *
+ * "All roles" is not "no filter": it asks for `buyer,exporter` explicitly, so
+ * the SERVER decides who is in this directory and the count in the header is
+ * the truth rather than a page-local guess.
+ */
+const MARKETPLACE_ROLES = 'buyer,exporter';
+
 const ROLE_OPTIONS = [
-  { value: '', label: 'All roles' },
+  { value: '', label: 'Buyers and exporters' },
   { value: 'buyer', label: 'Buyer' },
   { value: 'exporter', label: 'Exporter' },
-  { value: 'employee', label: 'Employee' },
-  { value: 'superadmin', label: 'Super Admin' },
 ];
 
 const KYC_OPTIONS = [
@@ -69,6 +82,61 @@ const ROLE_LABELS = {
   superadmin: 'Super Admin',
 };
 
+/**
+ * F1-A · "this account is dark because its COMPANY is blocked".
+ *
+ * Deliberately distinct from the account's own Active/Deactivated state, which
+ * sits beside it: an individually deactivated user inside a healthy company and
+ * a healthy user inside a blocked company look identical on the account chip,
+ * and they are undone by different actions.
+ */
+function OrgBlockedChip({ row }) {
+  if (row.orgIsActive !== false) return null;
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-danger-50 px-2 py-0.5 text-[11px] font-semibold text-danger-700">
+      <BuildingIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+      Company blocked
+    </span>
+  );
+}
+
+/**
+ * The account's mark: its COMPANY's uploaded logo when there is one, its
+ * initials when there is not.
+ *
+ * 🔒 There is no personal profile photo anywhere in this product and the model
+ * has never carried one — an account is shown by the company it belongs to.
+ * Staff rows have no company logo, so they keep the monogram, which is the
+ * honest rendering rather than a placeholder face.
+ *
+ * `object-contain` because a company mark is usually a WORDMARK: `cover` fills
+ * the tile by cropping and eats the ends of the word.
+ */
+function AccountAvatar({ row }) {
+  if (row.orgLogo) {
+    return (
+      <img
+        src={row.orgLogo}
+        alt=""
+        loading="lazy"
+        className={`h-9 w-9 shrink-0 rounded-full bg-white object-contain p-0.5 ring-1 ring-inset ring-ink-200 ${
+          row.isActive ? '' : 'opacity-60 grayscale'
+        }`}
+      />
+    );
+  }
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+        row.isActive ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
+      }`}
+    >
+      {initials(row.name)}
+    </span>
+  );
+}
+
 export function Users() {
   const navigate = useNavigate();
   const { user: me } = useAuth();
@@ -79,11 +147,13 @@ export function Users() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(config.table.pageSizes[0]);
 
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
-
   const [confirmTarget, setConfirmTarget] = useState(null); // user row awaiting deactivate confirm
+  // F1-A · the company-level action. Separate state from `confirmTarget` on
+  // purpose: deactivating a PERSON and taking a COMPANY offline are different
+  // decisions with different blast radii, and sharing one dialog would make it
+  // possible to confirm the wrong one.
+  const [orgTarget, setOrgTarget] = useState(null); // { row, blocking }
+  const [orgReason, setOrgReason] = useState('');
   const [actionError, setActionError] = useState(null);
   const [actingId, setActingId] = useState(null);
   // The design's "View details". `GET /admin/users/:id` already returns the
@@ -91,25 +161,28 @@ export function Users() {
   // the company name surfaces, since the list projection omits it.
   const [detail, setDetail] = useState(null); // {loading, row, data, error}
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = { page, pageSize };
-      if (filters.role) params.role = filters.role;
-      if (filters.kycStatus) params.kycStatus = filters.kycStatus;
-      if (filters.q) params.q = filters.q;
-      setData(await adminApi.listUsers(params));
-    } catch (err) {
-      setError(apiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, page, pageSize]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  /**
+   * TanStack Query rather than a fetch in an effect (`web-frontend.md`).
+   * `placeholderData` keeps the previous page on screen while the next one
+   * loads, so paging no longer blanks the table.
+   */
+  const params = {
+    page,
+    pageSize,
+    role: filters.role || MARKETPLACE_ROLES,
+    ...(filters.kycStatus ? { kycStatus: filters.kycStatus } : {}),
+    ...(filters.q ? { q: filters.q } : {}),
+  };
+  const qc = useQueryClient();
+  const list = useQuery({
+    queryKey: ['admin', 'users', params],
+    queryFn: () => adminApi.listUsers(params),
+    placeholderData: (prev) => prev,
+  });
+  const data = list.data ?? null;
+  const loading = list.isLoading;
+  const error = list.error ? apiError(list.error) : null;
+  const load = list.refetch;
 
   // Debounce the prefix search so typing doesn't fire a request per keystroke.
   useEffect(() => {
@@ -127,15 +200,53 @@ export function Users() {
       const updated = active
         ? await adminApi.activateUser(row.id)
         : await adminApi.deactivateUser(row.id);
-      setData((d) => ({
-        ...d,
-        rows: d.rows.map((r) => (r.id === row.id ? { ...r, isActive: updated.isActive } : r)),
-      }));
+      // Written into the query cache, which is now the single source of truth
+      // for this table — a parallel `useState` copy would go stale on refetch.
+      qc.setQueryData(['admin', 'users', params], (d) =>
+        (d ? {
+          ...d,
+          rows: d.rows.map((r) => (r.id === row.id ? { ...r, isActive: updated.isActive } : r)),
+        } : d));
     } catch (err) {
       setActionError(apiError(err, 'Could not update this account.'));
     } finally {
       setActingId(null);
       setConfirmTarget(null);
+    }
+  };
+
+  /**
+   * F1-A · block or unblock the whole ORGANISATION behind a row.
+   *
+   * Every row of the same company flips together, because they describe one
+   * org — refetching would do it too, but rewriting the cache keeps the table
+   * from blanking, and a stale "Block" on a sibling row is an invitation to
+   * fire a governance action twice.
+   */
+  const setOrgBlocked = async (row, blocking, reason) => {
+    setActionError(null);
+    setActingId(row.id);
+    try {
+      const res = blocking
+        ? await adminApi.blockOrg(row.orgId, reason)
+        : await adminApi.unblockOrg(row.orgId, reason || undefined);
+      const isActive = res.organisation?.isActive ?? !blocking;
+      qc.setQueryData(['admin', 'users', params], (d) =>
+        (d ? {
+          ...d,
+          rows: d.rows.map((r) => (r.orgId === row.orgId ? { ...r, orgIsActive: isActive } : r)),
+        } : d));
+      // The cascade also flips each user's own `isActive`, and that is NOT
+      // derivable here (unblock restores each user's PRIOR state, m5-rules §122
+      // — a user deactivated before the block stays deactivated). So the server
+      // is asked rather than guessed at.
+      await load();
+    } catch (err) {
+      setActionError(apiError(err, 'Could not update this company.'));
+    } finally {
+      setActingId(null);
+      setOrgTarget(null);
+      setOrgReason('');
     }
   };
 
@@ -180,6 +291,24 @@ export function Users() {
           ? { label: 'Deactivate', Icon: SlashIcon, danger: true, onSelect: () => setConfirmTarget(row) }
           : { label: 'Activate', Icon: CheckCircleIcon, onSelect: () => setActive(row, true) },
       );
+      // F1-A — company-level, and superadmin-only on the server too. Staff have
+      // no org, so the entry simply does not exist on their rows.
+      if (row.orgId) {
+        items.push(
+          row.orgIsActive === false
+            ? {
+                label: 'Unblock company',
+                Icon: CheckCircleIcon,
+                onSelect: () => { setOrgReason(''); setOrgTarget({ row, blocking: false }); },
+              }
+            : {
+                label: 'Block company',
+                Icon: BuildingIcon,
+                danger: true,
+                onSelect: () => { setOrgReason(''); setOrgTarget({ row, blocking: true }); },
+              },
+        );
+      }
     }
     return items;
   };
@@ -199,7 +328,7 @@ export function Users() {
   const emptyLine = () => {
     const scope = [
       filters.kycStatus ? kycLabel.toLowerCase() : null,
-      filters.role ? `${roleLabel.toLowerCase()}s` : 'accounts',
+      filters.role ? `${roleLabel.toLowerCase()}s` : 'buyers or exporters',
     ]
       .filter(Boolean)
       .join(' ');
@@ -219,7 +348,7 @@ export function Users() {
             </span>
           </div>
           <p className="mt-1 text-sm text-muted">
-            Every account on the platform — buyers, exporters and staff.
+            Buyers and exporters on the marketplace. Your own team is under Staff.
           </p>
         </div>
       </div>
@@ -323,14 +452,7 @@ export function Users() {
               {rows.map((row) => (
                 <li key={row.id} className="p-4">
                   <div className="flex items-start gap-3">
-                    <span
-                      aria-hidden="true"
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                        row.isActive ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
-                      }`}
-                    >
-                      {initials(row.name)}
-                    </span>
+                    <AccountAvatar row={row} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-ink-900">{row.name}</p>
                       <p className="truncate text-xs text-muted">{row.email}</p>
@@ -353,6 +475,7 @@ export function Users() {
                     {row.kycStatus && KYC_STATUS_META[row.kycStatus] && (
                       <StatusChip status={row.kycStatus} />
                     )}
+                    <OrgBlockedChip row={row} />
                     <span className="inline-flex items-center gap-1.5 text-[12px] font-medium">
                       <span
                         aria-hidden="true"
@@ -390,14 +513,7 @@ export function Users() {
                     <tr key={row.id} className="group transition-colors hover:bg-surface-subtle/50">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <span
-                            aria-hidden="true"
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                              row.isActive ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
-                            }`}
-                          >
-                            {initials(row.name)}
-                          </span>
+                          <AccountAvatar row={row} />
                           <div className="min-w-0">
                             <p className="truncate font-semibold text-ink-900">{row.name}</p>
                             <p className="truncate text-xs text-muted">{row.email}</p>
@@ -435,6 +551,9 @@ export function Users() {
                             {row.isActive ? 'Active' : 'Deactivated'}
                           </span>
                         </span>
+                        {row.orgIsActive === false && (
+                          <span className="mt-1 flex"><OrgBlockedChip row={row} /></span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-5 py-3.5 text-muted">{formatDate(row.createdAt)}</td>
                       <td className="px-5 py-3.5 text-right">
@@ -500,6 +619,73 @@ export function Users() {
           </dl>
         )}
       </Drawer>
+
+      {/* F1-A · company-level block. NOT the centred one-button confirm the
+          person-level deactivate uses: this one takes a written reason, and the
+          reason is the moderation record. The consequences are spelled out
+          because they reach past this screen — the catalogue and every live
+          conversation the company is in. */}
+      <Modal
+        open={Boolean(orgTarget)}
+        onClose={() => setOrgTarget(null)}
+        danger={orgTarget?.blocking}
+        title={
+          orgTarget?.blocking
+            ? `Block ${orgTarget?.row?.orgName ?? 'this company'}?`
+            : `Unblock ${orgTarget?.row?.orgName ?? 'this company'}?`
+        }
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setOrgTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant={orgTarget?.blocking ? 'danger' : 'primary'}
+              loading={actingId === orgTarget?.row?.id}
+              // A reason is required to block (server: 3–500) and optional to
+              // unblock. Disabling beats a round-trip to a 400 the user cannot
+              // see the cause of.
+              disabled={orgTarget?.blocking && orgReason.trim().length < 3}
+              onClick={() => setOrgBlocked(orgTarget.row, orgTarget.blocking, orgReason.trim())}
+            >
+              {orgTarget?.blocking ? 'Block company' : 'Unblock company'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-[14px] leading-relaxed text-ink-700">
+          {orgTarget?.blocking ? (
+            <>
+              This is a company-level action, not just this account. Everyone at{' '}
+              <span className="font-semibold text-ink-900">{orgTarget?.row?.orgName}</span> is signed
+              out and cannot log back in, its products stop appearing anywhere public, and every
+              conversation it is part of freezes — both sides keep reading, neither can reply.
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-ink-900">{orgTarget?.row?.orgName}</span> can sign
+              in again and its catalogue returns. Accounts that were deactivated individually before
+              the block stay deactivated. Conversations reopen unless something else is holding them
+              frozen.
+            </>
+          )}
+        </p>
+
+        <label htmlFor="org-block-reason" className="mt-4 block text-sm font-medium text-ink-800">
+          Reason {orgTarget?.blocking ? '' : <span className="font-normal text-muted">(optional)</span>}
+        </label>
+        <textarea
+          id="org-block-reason"
+          value={orgReason}
+          onChange={(e) => setOrgReason(e.target.value)}
+          maxLength={500}
+          rows={3}
+          className="mt-1.5 block w-full rounded-lg border border-surface-border px-4 py-2.5 text-sm text-ink-900 focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20"
+        />
+        <p className="mt-1.5 text-xs text-muted">
+          Kept in the audit record. It is not shown to the company.
+        </p>
+      </Modal>
 
       {/* Design confirm: medallion icon, centred copy, Cancel + Deactivate */}
       <Modal

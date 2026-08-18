@@ -50,6 +50,12 @@ export default {
           DEFAULT: '#ffffff',
           subtle: '#EAEEFF',
           border: '#C5C6CF',
+          // The chat sidebar's unread row (owner-specified, 2026-08-18). A TOKEN
+          // rather than an inline hex — `web-design.md` bans magic values in
+          // components — and its own name rather than an alias of `primary-100`
+          // (#DEE1FF): the two are three points apart, so a later tweak to the
+          // brand scale must not silently move a colour the owner chose.
+          unread: '#E1E3FF',
         },
         // Semantic — status & feedback.
         //

@@ -33,3 +33,8 @@ dist/
 
 # OS / editor
 .DS_Store
+
+# Playwright MCP scratch output — screenshots, page snapshots and throwaway
+# test scripts from browser verification. Not project source, and it has held a
+# test-account password before: nothing in here belongs in a public repo.
+.playwright-mcp/

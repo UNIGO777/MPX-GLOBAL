@@ -82,6 +82,70 @@ describe('user management — reads (M1-E)', () => {
     expect(res.status).toBe(200);
   });
 
+  it('a row carries its company name and block state, so the org control can render (F1-A)', async () => {
+    const sa = await makeUser('superadmin');
+    const buyer = await makeUser('buyer', { buyerSide: true });
+
+    const before = await request(app)
+      .get('/admin/users')
+      .query({ q: buyer.user.email.slice(0, 8) })
+      .set(bearer(sa.token));
+    const row = before.body.rows.find((r) => r.email === buyer.user.email);
+    expect(row.orgName).toBeTruthy();
+    expect(row.orgIsActive).toBe(true);
+
+    await request(app)
+      .post(`/admin/orgs/${row.orgId}/block`)
+      .set(bearer(sa.token))
+      .send({ reason: 'F1-A row state check' });
+
+    const after = await request(app)
+      .get('/admin/users')
+      .query({ q: buyer.user.email.slice(0, 8) })
+      .set(bearer(sa.token));
+    // The list is what the screen decides Block-vs-Unblock from, so the flip has
+    // to be visible here — not only on the block response.
+    expect(after.body.rows.find((r) => r.email === buyer.user.email).orgIsActive).toBe(false);
+  });
+
+  it('the row NEVER carries the org block reason or the moderator behind it', async () => {
+    const sa = await makeUser('superadmin');
+    const buyer = await makeUser('buyer', { buyerSide: true });
+    const first = await request(app).get('/admin/users').query({ q: buyer.user.email.slice(0, 8) }).set(bearer(sa.token));
+    const orgId = first.body.rows.find((r) => r.email === buyer.user.email).orgId;
+
+    await request(app).post(`/admin/orgs/${orgId}/block`).set(bearer(sa.token))
+      .send({ reason: 'a moderator note that must not travel on a list row' });
+
+    const res = await request(app).get('/admin/users').query({ q: buyer.user.email.slice(0, 8) }).set(bearer(sa.token));
+    const blob = JSON.stringify(res.body);
+    for (const leak of ['blockReason', 'blockedBy', 'blockedAt', 'must not travel']) {
+      expect(blob).not.toContain(leak);
+    }
+  });
+
+  it('role accepts a comma list, and rejects an unknown entry', async () => {
+    const sa = await makeUser('superadmin');
+    await makeUser('buyer', { buyerSide: true });
+    await makeUser('exporter');
+    await makeUser('employee', { permissions: ['user:read'] });
+
+    // What /admin/users asks for: the marketplace, never the team.
+    const market = await request(app).get('/admin/users?role=buyer,exporter&pageSize=100').set(bearer(sa.token));
+    expect(market.status).toBe(200);
+    expect(market.body.rows.length).toBeGreaterThan(0);
+    expect(market.body.rows.every((r) => ['buyer', 'exporter'].includes(r.role))).toBe(true);
+
+    // What /admin/staff asks for: the team, never the marketplace.
+    const staff = await request(app).get('/admin/users?role=employee,superadmin&pageSize=100').set(bearer(sa.token));
+    expect(staff.body.rows.every((r) => ['employee', 'superadmin'].includes(r.role))).toBe(true);
+    expect(staff.body.rows.some((r) => r.role === 'superadmin')).toBe(true);
+
+    // Still an allowlist — a CSV is not a way in.
+    expect((await request(app).get('/admin/users?role=buyer,root').set(bearer(sa.token))).status).toBe(400);
+    expect((await request(app).get('/admin/users?role=$ne').set(bearer(sa.token))).status).toBe(400);
+  });
+
   it('pageSize is hard-capped (>100 rejected)', async () => {
     const sa = await makeUser('superadmin');
     const res = await request(app).get('/admin/users?pageSize=9999').set(bearer(sa.token));

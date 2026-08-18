@@ -29,11 +29,9 @@ import { PriceLine } from './PriceLine.jsx';
  *     (`POST/DELETE /saved`) but wiring auth-gating + optimistic UI wasn't
  *     asked for in this pass. Shown in the exact position, disabled, not
  *     hidden and not fake-functional — logged in docs/UiWebNotes.md.
- *   - "Inquiry" button — Module 4 (enquiry/chat), not built, same story:
- *     shown, disabled, logged. Every OTHER product surface in this codebase
- *     withholds this entirely; this page now shows it as a visible
- *     placeholder specifically because "exact same" was asked twice more
- *     after the first pass omitted it.
+ *   - "Inquiry" button — shipped disabled for mockup fidelity, then REMOVED
+ *     on 2026-08-17 when M4 wired chat: the product page's enquiry button is
+ *     the single door (owner's ruling), and every card links there already.
  *
  * Real stat row: Price (hero) · MOQ · the product's lead spec/attribute value
  * — three divided columns, the honest equivalent of the mockup's three
@@ -147,6 +145,11 @@ export function ProductListCard({ product, to }) {
                 </>
               )}
             </div>
+            {/* 🔴 The card's "Inquiry" button was REMOVED with M4
+                (2026-08-17, owner's 2026-08-14 ruling). The product page's
+                enquiry button is the ONE door into chat (M4-4), and every card
+                already links to that page — so nothing is lost, and a second
+                entry point would have needed its own form on a list row. */}
             <div className="flex shrink-0 gap-3">
               <Link
                 to={to}
@@ -154,16 +157,6 @@ export function ProductListCard({ product, to }) {
               >
                 View details
               </Link>
-              {/* Enquiry — Module 4, not built. Disabled, not hidden and not
-                  fake-wired. See file header + docs/UiWebNotes.md. */}
-              <button
-                type="button"
-                disabled
-                title="Coming soon"
-                className="cursor-not-allowed rounded-lg bg-ink-200 px-8 py-2 text-sm font-bold text-ink-500"
-              >
-                Inquiry
-              </button>
             </div>
           </div>
         </div>

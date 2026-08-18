@@ -33,6 +33,12 @@ export default defineConfig(({ mode }) => {
               [basePath]: {
                 target,
                 changeOrigin: true,
+                // M4 (2026-08-17): the chat socket rides this same prefix
+                // (`/api/socket.io`) so it stays SAME-ORIGIN in dev, exactly as
+                // the XHR calls do. Without `ws: true` the upgrade request is
+                // served by Vite instead of being forwarded, and the client
+                // retries forever showing "Reconnecting…".
+                ws: true,
                 rewrite: (path) => path.replace(new RegExp(`^${basePath}`), ''),
                 // 🔴 The refresh cookie is scoped `Path=/auth` by the server, but
                 // through this proxy the browser calls `/api/auth/refresh` — a

@@ -259,22 +259,21 @@ export function SupplierProfile() {
                     )}
                   </div>
 
-                  {/* "Start Conversation" — disabled placeholder, same
-                      treatment as `ProductDetail.jsx`'s "Send Enquiry" and
-                      `ProductListCard.jsx`'s "Inquiry": the M4 backend
-                      (Inquiry/Conversation/Message, real and tested) exists,
-                      but no create-conversation flow is wired on the web
-                      client yet — shown, disabled, never fake-functional,
-                      logged in docs/UiWebNotes.md. */}
-                  <button
-                    type="button"
-                    disabled
-                    title="Conversations are coming soon"
-                    className="flex min-h-[44px] shrink-0 cursor-not-allowed items-center justify-center gap-2 rounded-full bg-ink-200 px-5 text-sm font-semibold text-ink-500"
+                  {/* "Start Conversation" — REAL since 2026-08-17 (M4).
+                      🔴 It cannot open a thread directly: every conversation is
+                      anchored to exactly one product (M4-4), and a company-level
+                      thread does not exist in the model. The owner's resolution
+                      (2026-08-17) is a product picker — this jumps to the
+                      supplier's catalogue below, where each product carries the
+                      real enquiry button. The company-level entry survives
+                      without inventing a product-less thread. */}
+                  <a
+                    href="#products"
+                    className="flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-full bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
                   >
                     <ChatIcon className="h-4 w-4" aria-hidden="true" />
                     Start Conversation
-                  </button>
+                  </a>
                 </div>
 
                 {factPills.length > 0 && (
@@ -320,7 +319,7 @@ export function SupplierProfile() {
           )}
 
           {/* --- Catalogue --- */}
-          <section className="mt-8">
+          <section id="products" className="mt-8 scroll-mt-24">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-bold text-ink-900 sm:text-2xl">Product Catalogue</h2>
               {products.isSuccess && (

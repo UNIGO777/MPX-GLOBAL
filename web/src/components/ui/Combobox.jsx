@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { inputClasses } from './Field.jsx';
 import { ChevronDownIcon } from './icons.jsx';
@@ -75,20 +75,26 @@ export function Combobox({
       ?.scrollIntoView({ block: 'nearest' });
   }, [hi, open]);
 
-  // The popover sizes to its CONTENT (long labels were colliding with their
-  // hints inside narrow fields — owner, 2026-08-11). Content-sized means it
-  // can poke past the right viewport edge for fields near it, so measure once
-  // open and flip to right-alignment when needed.
-  useEffect(() => {
-    if (!open) {
+  /**
+   * The popover sizes to its CONTENT (long labels were colliding with their
+   * hints inside narrow fields — owner, 2026-08-11). Content-sized means it can
+   * poke past the right viewport edge for fields near it, so it is measured and
+   * flipped to right-alignment when needed.
+   *
+   * Measured in a REF CALLBACK rather than an effect: the callback runs once the
+   * node exists, which is the earliest the width can be known, and it is neither
+   * render nor an effect — so there is no cascading-render round trip and no
+   * frame where the popover is visibly mis-aligned before correcting itself.
+   */
+  const measureList = useCallback((el) => {
+    listRef.current = el;
+    if (!el) {
       setAlignRight(false);
       return;
     }
-    const el = listRef.current;
-    if (!el) return;
     const r = el.getBoundingClientRect();
-    if (r.right > window.innerWidth - 8) setAlignRight(true);
-  }, [open, query]);
+    setAlignRight(r.right > window.innerWidth - 8);
+  }, []);
 
   const pick = (opt) => {
     onChange(opt.value);
@@ -168,7 +174,7 @@ export function Combobox({
 
       {open && (
         <ul
-          ref={listRef}
+          ref={measureList}
           id={listId}
           role="listbox"
           className={`absolute z-30 mt-1 max-h-60 w-max min-w-full max-w-[340px] overflow-y-auto rounded-lg border border-surface-border bg-white py-1 shadow-lift ${

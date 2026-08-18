@@ -192,6 +192,7 @@ export async function createInquiry({ user, productId, note, fields, meta }) {
       conversationId: conversation._id,
       senderType: 'system',
       body: WELCOME_MESSAGE,
+      systemKind: 'welcome',
     });
   } catch (err) {
     // No transactions on standalone Mongo — undo by hand so a failure never
