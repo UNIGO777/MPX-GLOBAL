@@ -13,7 +13,9 @@ import { CompanyProfileScreen } from '../screens/profile/CompanyProfileScreen.js
 import { ChangePasswordScreen } from '../screens/profile/ChangePasswordScreen.jsx';
 import { CategoryBrowseScreen } from '../screens/CategoryBrowseScreen.jsx';
 import { CategoryProductsScreen } from '../screens/CategoryProductsScreen.jsx';
+import { ProductCategoryPickerScreen } from '../screens/ProductCategoryPickerScreen.jsx';
 import { ProductDetailScreen } from '../screens/ProductDetailScreen.jsx';
+import { ProductFormScreen } from '../screens/ProductFormScreen.jsx';
 import { SupplierProfileScreen } from '../screens/SupplierProfileScreen.jsx';
 import { postSignupPrompt } from '../screens/kyc/postSignupPrompt.js';
 
@@ -83,6 +85,12 @@ export function AppStack({ role }) {
           everywhere tap here. */}
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="SupplierProfile" component={SupplierProfileScreen} />
+
+      {/* M2 app screens 6 + 7 (2026-08-18) — the exporter add/edit flow.
+          Screen 5 (My products) lives in the ExporterNavigator's Catalogue
+          tab; these two push over it. */}
+      <Stack.Screen name="ProductCategoryPicker" component={ProductCategoryPickerScreen} />
+      <Stack.Screen name="ProductForm" component={ProductFormScreen} />
 
       <Stack.Screen name="KycEntityType" component={withUnverifiedGuard(EntityTypeScreen)} />
       <Stack.Screen name="KycDocumentType" component={withUnverifiedGuard(DocumentTypeScreen)} />

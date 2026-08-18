@@ -436,14 +436,14 @@ export function BuyerHomeScreen({ navigation }) {
             {/* Bleeds to the screen edges (owner: no space around the circular
                 cards, title keeps its normal margin) — the negative margin
                 cancels the page's own horizontal padding, then
-                `categoryHScroll` restores it as real content padding so the
+                `railContent` restores it as real content padding so the
                 first/last card still lines up with the title instead of
                 touching the screen edge. */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              style={styles.categoryScroll}
-              contentContainerStyle={styles.categoryHScroll}
+              style={styles.railBleed}
+              contentContainerStyle={styles.railContent}
             >
               {categories.slice(0, CAROUSEL_PAGE_SIZE).map((cat) => (
                 <CategoryTile key={cat.id} cat={cat} onPress={() => navigation.navigate('CategoryBrowse')} />
@@ -458,7 +458,12 @@ export function BuyerHomeScreen({ navigation }) {
             {/* Not "Top-rated" — no rating/review system exists on this
                 product to back that claim. */}
             <Text style={styles.sectionSubheading}>Verified by our team</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.railBleed}
+              contentContainerStyle={styles.railContent}
+            >
               {suppliers.map((supplier) => (
                 <SupplierMiniCard
                   key={supplier.id}
@@ -476,7 +481,12 @@ export function BuyerHomeScreen({ navigation }) {
         {products.length > 0 ? (
           <View style={styles.section}>
             <Text style={styles.sectionHeading}>Recently Listed</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.railBleed}
+              contentContainerStyle={styles.railContent}
+            >
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -789,12 +799,13 @@ const styles = StyleSheet.create({
   sectionHeading: { ...typography.h3, color: colors.ink[900] },
   sectionSubheading: { ...typography.caption, color: colors.muted, marginTop: -spacing[1] },
   viewAll: { ...typography.label, color: colors.primary[700] },
-  hScroll: { gap: spacing[3], paddingRight: spacing[4], paddingTop: spacing[1] },
-  // Full-bleed variant for Explore Categories only — cancels `scrollContent`'s
-  // paddingHorizontal (spacing[5]) so the row's own viewport reaches the
-  // screen edges instead of being inset like the rest of the page.
-  categoryScroll: { marginHorizontal: -spacing[5] },
-  categoryHScroll: { gap: spacing[3], paddingHorizontal: spacing[5], paddingTop: spacing[1] },
+  // Full-bleed rails — ALL three horizontal rows (Explore Categories,
+  // Verified Suppliers, Recently Listed — owner extended it to the other two
+  // 2026-08-18): cancels `scrollContent`'s paddingHorizontal (spacing[5]) so
+  // each rail's viewport reaches the screen edges, then restores it as
+  // content padding so the first/last card still lines up with the headings.
+  railBleed: { marginHorizontal: -spacing[5] },
+  railContent: { gap: spacing[3], paddingHorizontal: spacing[5], paddingTop: spacing[1] },
 
   // Explicit width on both — the touchable needs it since a `Pressable`
   // inside a horizontal ScrollView's row otherwise has nothing to size

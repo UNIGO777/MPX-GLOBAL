@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { catalogueApi } from '../api/catalogue.js';
 import { inquiriesApi } from '../api/inquiries.js';
+import { sellerProductsApi } from '../api/sellerProducts.js';
 import { findCountry } from '../constants/countries.js';
 import { Button } from '../components/Button.jsx';
 import { EmptyState, ErrorState, Skeleton } from '../components/Feedback.jsx';
@@ -65,6 +66,15 @@ import { toAppError } from '../utils/errors.js';
  *   link. Flagged, not silently skipped.
  */
 const WINDOW_WIDTH = Dimensions.get('window').width;
+
+// Owner-mode lifecycle chip (§1.2 vocabulary). Seller surfaces only — a
+// buyer-facing view never shows status.
+const OWNER_STATUS = {
+  active: { label: 'Live', fg: '#05603A', bg: '#E7F7EF' },
+  draft: { label: 'Draft', fg: colors.ink[600], bg: colors.ink[100] },
+  inactive: { label: 'Hidden', fg: '#93370D', bg: '#FEF0DC' },
+  archived: { label: 'Archived', fg: colors.ink[500], bg: colors.ink[100] },
+};
 // Title bar fades in as the square gallery scrolls mostly out of view.
 const BAR_REVEAL_START = WINDOW_WIDTH * 0.45;
 const BAR_REVEAL_END = WINDOW_WIDTH * 0.75;
@@ -91,7 +101,15 @@ export function ProductDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const { role } = useAuth();
-  const { idOrSlug } = route.params ?? {};
+  // Two modes (owner mode added 2026-08-19 — owner: tapping your own product
+  // card should open its DETAILS, whatever state it's in):
+  // - buyer/public: `idOrSlug` → `GET /public/products/:idOrSlug`, live
+  //   listings only.
+  // - owner: `ownerProductId` → the seller read, which serves ANY status.
+  //   A draft/hidden product has no public page at all (the public endpoint
+  //   404s by design), so the seller's own view must not go through it.
+  const { idOrSlug, ownerProductId } = route.params ?? {};
+  const ownerMode = ownerProductId != null;
   const [state, setState] = useState({ loading: true, error: null, product: null, defs: [] });
   const [refreshing, setRefreshing] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -126,15 +144,25 @@ export function ProductDetailScreen({ navigation, route }) {
     extrapolate: 'clamp',
   });
 
+  // Guarded: a stale callback surviving a Fast Refresh would otherwise
+  // dispatch GO_BACK at the stack root ("not handled by any navigator").
+  const goBackSafely = () => {
+    if (navigation.canGoBack()) navigation.goBack();
+  };
+
   const load = useCallback(
     async (isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
       else setState((s) => ({ ...s, loading: true, error: null }));
       try {
-        const product = await catalogueApi.product(idOrSlug);
+        const product = ownerMode
+          ? await sellerProductsApi.get(ownerProductId)
+          : await catalogueApi.product(idOrSlug);
         // Labels ride along but never block the product — a failed defs read
-        // just renders specs under their raw keys.
-        const defs = await catalogueApi.categoryAttributes(product.category?.slug ?? product.category?.id).catch(() => []);
+        // just renders specs under their raw keys. The owner payload carries
+        // `categoryId`; the public one carries a nested `category`.
+        const catRef = ownerMode ? product.categoryId : (product.category?.slug ?? product.category?.id);
+        const defs = await catalogueApi.categoryAttributes(catRef).catch(() => []);
         setState({ loading: false, error: null, product, defs });
       } catch (error) {
         setState((s) => ({ ...s, loading: false, error: toAppError(error) }));
@@ -142,7 +170,7 @@ export function ProductDetailScreen({ navigation, route }) {
         if (isRefresh) setRefreshing(false);
       }
     },
-    [idOrSlug],
+    [idOrSlug, ownerMode, ownerProductId],
   );
 
   useEffect(() => {
@@ -157,7 +185,7 @@ export function ProductDetailScreen({ navigation, route }) {
       style={[styles.headerOverlay, { top: insets.top + spacing[2], opacity: circleOpacity }]}
     >
       <Pressable
-        onPress={() => navigation.goBack()}
+        onPress={goBackSafely}
         hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel="Go back"
@@ -189,7 +217,7 @@ export function ProductDetailScreen({ navigation, route }) {
             title="Product not available"
             message="It may have been removed or the link is out of date."
             actionLabel="Go back"
-            onAction={() => navigation.goBack()}
+            onAction={goBackSafely}
           />
         ) : (
           <ErrorState error={error} onRetry={load} />
@@ -199,9 +227,12 @@ export function ProductDetailScreen({ navigation, route }) {
     );
   }
 
-  const images = product.images ?? [];
+  // Public projection sends bare URL strings; the owner read sends REFS
+  // ({url, publicId}) because PATCH replaces the whole array. Normalise.
+  const images = (product.images ?? []).map((i) => (typeof i === 'string' ? i : i?.url)).filter(Boolean);
   const price = formatPrice(product.price, product.unit);
-  const listed = formatListedSince(product.listedSince);
+  // Owner payload has no `listedSince` — it carries `createdAt`.
+  const listed = formatListedSince(product.listedSince ?? product.createdAt);
   const seller = product.seller ?? {};
   const sellerCountry = seller.country ? findCountry(seller.country)?.name ?? seller.country : null;
 
@@ -222,7 +253,9 @@ export function ProductDetailScreen({ navigation, route }) {
   // 2026-08-18 — real destination: M2 screen 4.
   const openSeller = () => navigation.navigate('SupplierProfile', { idOrSlug: seller.slug ?? seller.id });
 
-  const isBuyer = role === 'buyer';
+  // Never on your own product: the server's self-enquiry guard would refuse
+  // it anyway, and an exporter session isn't a buyer to begin with.
+  const isBuyer = role === 'buyer' && !ownerMode;
 
   const sendEnquiry = async () => {
     const trimmed = note.trim();
@@ -252,11 +285,21 @@ export function ProductDetailScreen({ navigation, route }) {
   // gesture-nav strip even when the inset reports 0 — the "bottom safe area
   // not working" fix (owner, 2026-08-18), same treatment on every pushed
   // catalogue screen.
-  const bottomClearance = Math.max(insets.bottom, spacing[6]) + (isBuyer ? spacing[16] + spacing[6] : spacing[8]);
+  // Buyers clear the pinned enquiry bar; everyone clears the gesture-nav
+  // strip via the floor (the inset reads 0 on 3-button nav, which is what
+  // made this look wrong on device).
+  const bottomClearance = Math.max(insets.bottom, spacing[6]) + (isBuyer ? spacing[16] + spacing[6] : spacing[10]);
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="dark" />
+      {/* 🆕 2026-08-19 — the gallery is full-bleed under the status bar, so a
+          FIXED icon style was wrong at one end or the other: dark icons
+          vanished on a dark photo, light ones on a pale one. Now it follows
+          the same scroll position the title bar does — light while the photo
+          is behind the status bar, dark once the white bar has taken over —
+          and a soft scrim behind the status bar guarantees the light icons
+          read on a pale photo too. */}
+      <StatusBar style={barVisible ? 'dark' : 'light'} />
       <Animated.ScrollView
         onScroll={handleScroll}
         scrollEventThrottle={16}
@@ -283,14 +326,23 @@ export function ProductDetailScreen({ navigation, route }) {
               ))}
             </ScrollView>
           ) : (
-            <View style={[styles.galleryImage, styles.galleryFallback]}>
+            /* Pad the empty-gallery fallback by the top inset — with no photo
+               there is nothing meant to bleed under the status bar, and its
+               icon sat behind the clock without it. */
+            <View style={[styles.galleryImage, styles.galleryFallback, { paddingTop: insets.top }]}>
               <Ionicons name="image-outline" size={42} color={colors.ink[300]} accessible={false} />
               <Text style={styles.galleryFallbackText}>No photos yet</Text>
             </View>
           )}
           {images.length > 1 ? (
             <>
-              <View style={styles.galleryCounter}>
+              {/* 🔴 Offset by the top inset: the gallery is full-bleed from
+                  y=0, so a fixed `top` put this counter INSIDE the status
+                  bar, overlapping the clock and battery icons (owner-
+                  reported). Anything absolutely positioned against a
+                  full-bleed surface has to clear the inset itself — the
+                  screen has no SafeAreaView to do it for them. */}
+              <View style={[styles.galleryCounter, { top: insets.top + spacing[3] }]}>
                 <Text style={styles.galleryCounterText}>
                   {galleryIndex + 1}/{images.length}
                 </Text>
@@ -309,8 +361,44 @@ export function ProductDetailScreen({ navigation, route }) {
           {listed ? <Text style={styles.listed}>Listed {listed}</Text> : null}
           <Text style={styles.price}>{price}</Text>
 
-          {/* Seller card — name + tick + country + entity type. Never contact
-              details (brief). */}
+          {/* Owner mode replaces the seller card (pointless on your own
+              product) with what a seller actually needs here: the lifecycle
+              status, the takedown reason if any, and a way into the editor. */}
+          {ownerMode ? (
+            <View style={styles.ownerCard}>
+              {product.takedown ? (
+                <View style={styles.ownerBlocked}>
+                  <Ionicons name="alert-circle" size={16} color={colors.danger.DEFAULT} accessible={false} />
+                  <Text style={styles.ownerBlockedText}>
+                    Removed by the MPX team
+                    {product.takedown.at ? ` on ${formatListedSince(product.takedown.at)}` : ''}
+                    {product.takedown.reason ? ` — “${product.takedown.reason}”` : ''}.
+                  </Text>
+                </View>
+              ) : null}
+              <View style={styles.ownerRow}>
+                <View style={[styles.ownerChip, { backgroundColor: OWNER_STATUS[product.status]?.bg }]}>
+                  <Text style={[styles.ownerChipText, { color: OWNER_STATUS[product.status]?.fg }]}>
+                    {OWNER_STATUS[product.status]?.label ?? product.status}
+                  </Text>
+                </View>
+                <Text style={styles.ownerHint}>This is your listing</Text>
+                {product.status === 'archived' ? null : (
+                  <Pressable
+                    onPress={() => navigation.navigate('ProductForm', { productId: product.id })}
+                    accessibilityRole="button"
+                    accessibilityLabel="Edit product"
+                    style={({ pressed }) => [styles.ownerEdit, pressed && styles.pressed]}
+                  >
+                    <Ionicons name="create-outline" size={16} color={colors.primary[700]} accessible={false} />
+                    <Text style={styles.ownerEditText}>Edit</Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
+          ) : (
+          /* Seller card — name + tick + country + entity type. Never contact
+             details (brief). */
           <Pressable
             onPress={openSeller}
             accessibilityRole="button"
@@ -339,6 +427,7 @@ export function ProductDetailScreen({ navigation, route }) {
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.ink[400]} accessible={false} />
           </Pressable>
+          )}
 
           {facts.length > 0 ? (
             <View style={styles.section}>
@@ -390,6 +479,13 @@ export function ProductDetailScreen({ navigation, route }) {
           ) : null}
         </View>
       </Animated.ScrollView>
+      {/* Scrim behind the status bar only — keeps the light icons legible
+          over a pale photo. Fades out as the solid title bar fades in, so
+          the two never stack. `pointerEvents none`: it must not eat taps. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.statusScrim, { height: insets.top, opacity: circleOpacity }]}
+      />
       {header}
       {/* Revealed title bar — solid, above everything once scrolled. */}
       <Animated.View
@@ -397,7 +493,7 @@ export function ProductDetailScreen({ navigation, route }) {
         style={[styles.titleBar, { paddingTop: insets.top + spacing[2], opacity: barOpacity }]}
       >
         <Pressable
-          onPress={() => navigation.goBack()}
+          onPress={goBackSafely}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -516,6 +612,14 @@ function initials(name = '') {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface.DEFAULT },
 
+  statusScrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9,
+    backgroundColor: 'rgba(0, 5, 23, 0.28)',
+  },
   headerOverlay: { position: 'absolute', left: spacing[5], zIndex: 10 },
   titleBar: {
     position: 'absolute',
@@ -551,8 +655,10 @@ const styles = StyleSheet.create({
   galleryFallbackText: { ...typography.caption, color: colors.muted },
   galleryCounter: {
     position: 'absolute',
-    top: spacing[3],
+    // `top` is supplied inline from the safe-area inset — see the note at
+    // the call site. Never hard-code it here again.
     right: spacing[3],
+    zIndex: 11, // above the status scrim, or the scrim greys it out
     backgroundColor: colors.scrim,
     borderRadius: radii.full,
     paddingHorizontal: spacing[2],
@@ -573,6 +679,40 @@ const styles = StyleSheet.create({
   name: { ...typography.h2, color: colors.ink[900] },
   listed: { ...typography.caption, color: colors.muted, marginTop: 2 },
   price: { ...typography.h1, color: colors.ink[900], marginTop: spacing[2] },
+
+  ownerCard: {
+    marginTop: spacing[4],
+    padding: spacing[3],
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surface.border,
+    backgroundColor: colors.ink[50],
+    gap: spacing[2],
+  },
+  ownerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
+  ownerChip: { borderRadius: radii.full, paddingHorizontal: spacing[2], paddingVertical: 3 },
+  ownerChipText: { ...typography.tiny, fontWeight: '700' },
+  ownerHint: { ...typography.caption, color: colors.muted, flex: 1 },
+  ownerEdit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: radii.full,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.primary[300],
+    backgroundColor: colors.surface.DEFAULT,
+  },
+  ownerEditText: { ...typography.label, color: colors.primary[700] },
+  ownerBlocked: {
+    flexDirection: 'row',
+    gap: spacing[2],
+    backgroundColor: colors.danger[50],
+    borderRadius: radii.md,
+    padding: spacing[2],
+  },
+  ownerBlockedText: { ...typography.tiny, color: '#912018', flex: 1 },
 
   sellerCard: {
     flexDirection: 'row',

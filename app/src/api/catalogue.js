@@ -37,6 +37,12 @@ export const catalogueApi = {
    *  indistinguishably (draft/hidden/archived/taken down/dead category). */
   product: (idOrSlug) => apiClient.get(`/public/products/${idOrSlug}`).then((r) => r.data.product),
 
+  /** One category by id or slug (public projection — name/slug/image/type).
+   *  ⚠️ 404s for a deactivated category or a sub under a cascade-off top —
+   *  callers that only decorate (the product form's summary row) degrade
+   *  rather than fail. */
+  category: (idOrSlug) => apiClient.get(`/categories/${idOrSlug}`).then((r) => r.data.category),
+
   /** A category's attribute DEFINITIONS (labels/units per key) — the product
    *  payload carries `{key, value}` snapshots only; labels live on the
    *  category (same split web's SpecTable documents). */

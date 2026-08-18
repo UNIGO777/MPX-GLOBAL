@@ -175,6 +175,99 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-19 (later 3) — M2 app: the three remaining brief gaps closed.**
+  - **Draft-cap explained BEFORE the form** (brief §5's "the Add action explains rather than
+    silently failing"): new `utils/productCaps.js` → `draftCapBlock(caps)` returns the message
+    when an unverified seller is at the draft limit, else null. Both "+ Add" surfaces (Exporter
+    Home button, My products header pill + empty-state action) run it first and offer
+    "Get verified" → KycHub instead of letting a whole form be filled and refused at save. 🔴
+    Guards the DRAFT cap only — the live cap is a publish-time refusal, and the server stays
+    the authority either way; this is courtesy, never enforcement.
+  - **Category on the My products row** (brief §5's row spec): the owner payload carries only
+    `categoryId`, so the screen loads the tree once and maps id → name. Non-blocking by design
+    (`.catch` → no map): a failed tree read omits the category line rather than breaking the
+    list, and an unresolved id renders nothing rather than a raw ObjectId.
+  - **Photo REORDER replaces "Make cover"**: each uploaded photo now has ← → controls that move
+    it one position (first = cover), so any photo can reach any position — the capability the
+    brief's drag-to-reorder was for. ⚠️ Deliberately NOT literal dragging: that needs a gesture
+    library (a new dependency is the owner's call per CLAUDE.md) and hand-rolling a drag inside
+    a wrapping grid is fragile. Explicit moves are also more precise on a phone and reachable by
+    screen readers. Say the word if real drag is wanted and the dependency is approved.
+- **2026-08-19 (later 2) — App: product card → OWNER-MODE detail; detail safe-area + form
+  field spacing.** Three owner asks in one pass.
+  - **Card tap opens DETAILS, any status** (owner: "when i click on the card … send me to
+    product details page"). A draft/hidden listing has no public page — `/public/products/:id`
+    404s by design — so `ProductDetailScreen` gained an **owner mode**
+    (`route.params.ownerProductId` → the seller read, which serves every status). Same screen,
+    with the seller card swapped for what a seller needs: lifecycle chip (Live/Draft/Hidden/
+    Archived), the takedown reason when blocked, and an **Edit** button. Enquiry bar hidden
+    (self-enquiry is refused server-side anyway). Image REFS vs URL strings and
+    `createdAt` vs `listedSince` both normalised — the two payload shapes differ.
+    Wired from Exporter Home cards AND My products rows; ⋮ → Edit still jumps straight to the
+    form, and archived stays read-only (never opens the editor).
+  - **Detail safe area** ("not perfact"): the gallery is full-bleed under the status bar, so a
+    FIXED icon style was wrong at one end or the other — dark icons vanished on a dark photo.
+    Status-bar style now follows the same scroll position the title bar does (light over the
+    photo → dark once the white bar takes over), with a soft scrim behind the status bar so
+    light icons also read on a PALE photo. The empty-gallery fallback now pads by the top inset
+    (nothing is meant to bleed when there's no photo — its icon sat behind the clock), and the
+    non-buyer bottom clearance went up a step (the inset reads 0 on 3-button nav).
+  - **Form field spacing** ("make some space between feilds"): `Input` carries no outer margin,
+    so stacked fields touched. `styles.body` now sets a single `gap`, and the hand-rolled
+    margins on section labels / helpers / the price segments were trimmed so that gap is the
+    one source of rhythm.
+- **2026-08-19 — 🐛 App: product form "Couldn't save — Invalid request" fixed, + validation
+  errors stop being swallowed app-wide** (owner hit it on the first real save).
+  - **Root cause:** `CountryPicker` speaks in country OBJECTS both ways — its `value` is the
+    object (it renders `.name`/`.dial`) and `onChange` hands the object back, NOT the code.
+    `ProductFormScreen` passed a string in and stored what came out, so every goods save sent
+    `countryOfOrigin: {name,code,dial}` and zod rejected it. Fixed: the object lives in its own
+    `originCountry` state, `buildPayload` sends `.code`, and edit-mode hydration converts the
+    stored ISO code back via `findCountry`. Proven against the REAL schema, both directions:
+    old payload → `countryOfOrigin: expected string, received object`; new payload → valid.
+  - **The bigger fix — why it was hard to diagnose:** `validate()` 400s carry
+    `fields: [{field, message}]`, and `toAppError` was DROPPING it, so every schema rejection in
+    the whole app surfaced as the bare "Invalid request." with no clue which field was wrong.
+    `toAppError` now appends up to 3 field errors to the message (and exposes `fields`),
+    stripping the `body.`/`query.` prefix that means nothing to a user. These are the caller's
+    own inputs — safe to show, and the server sends them for exactly this purpose. Every form
+    in the app gets this for free.
+  - ⚠️ Gotcha for future screens: `CountryPicker`'s object-in/object-out contract is easy to
+    get wrong (`SignupCompanyScreen` stores the object; anything sending an ISO code to the API
+    must send `.code`).
+- **2026-08-18 (later 5) — App: M2 COMPLETE — screens 5+6+7 shipped (My products / category
+  picker / product form); the Catalogue tab went LIVE.** All seven M2 app screens now exist.
+  Pure UI over the long-shipped M2 backend — new `sellerProductsApi`
+  (get/create/update/setStatus/archive/uploadImage over `/products*`) + `catalogueApi.category`
+  + `constants/currencies.js` (mirror of the server's 154 codes, same as web's copy).
+  - **Screen 5 `MyProductsScreen`** (replaces the Catalogue-tab placeholder): segment chips
+    with live counts (All/Live/Drafts/Hidden/Archived — All excludes archived, server rule),
+    unverified cap strip → KycHub, paginated rows (thumb/name/price/status chip/taken-down
+    chip/date), bottom action sheet by state (Draft/Hidden→Publish·Edit·Delete;
+    Live→Hide·Edit·Delete; blocked→Edit·Delete + reason/date, never who, no appeal — D6;
+    archived→terminal notice, never opens the form). Archive confirm says what really happens
+    ("leaves the catalogue, can't be restored — re-list as new"). Publish/Hide refusals show
+    the SERVER's message verbatim (cap, required specs, goods moq+unit).
+  - **Screen 6 `ProductCategoryPickerScreen`**: one screen, two internal steps (tops with
+    LOCAL name filter — explicitly not M3 search — then subs), hardware back pops the step
+    first. 🔴 No goods/service toggle anywhere — the picked sub's `type` decides silently
+    (§A14/§A16). Doubles as the form's "Change category" via `changeFor` + `popTo` back to the
+    same form instance (nav v7).
+  - **Screen 7 `ProductFormScreen`**: static header, scrolling sections, Save pinned above the
+    keyboard. Category summary + Change (warns before clearing filled specs) · name (rename on
+    edit shows "web address stays the same", §A6) · description w/ counter · photos (camera
+    FIRST then gallery, no file browser; limits stated up front; each photo uploads on capture
+    with per-photo progress/retry, one failure never blocks; Cover tag + "Make cover" instead
+    of hand-rolled drag) · 3-mode price with searchable 154-code currency sheet ·
+    type-driven fixed fields (goods: MOQ+Unit marked "Required to publish" per M3-parity §0.1,
+    CountryPicker for origin; service: the 5 text fields) · dynamic spec renderer per
+    inputType (text/number-with-unit/select sheet/boolean switch — required enforced at
+    publish, not draft). Create saves a DRAFT then offers Publish; leave-guard on dirty create
+    ("Discard this product?"); blocked edit shows the banner and drops Publish/Hide.
+  - Wired everywhere: Catalogue tab → screen 5 (`headerShown:false`); Exporter Home's
+    "+ Add product"/"View all"/card-tap all went from coming-soon to real (ledger rows →
+    Done). Babel-checked ×9; on-device verification is the next step (needs a port + the
+    exporter login).
 - **2026-08-18 (later 3) — App: REAL Send Enquiry on product detail (M4-B goes live in the app)
   + listing filters + bottom safe-area floor.** Three owner asks, all verified live on-device.
   - **Send Enquiry (buyers only):** new `api/inquiries.js` → `POST /inquiries` (M4 backend —

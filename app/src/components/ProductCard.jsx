@@ -33,9 +33,14 @@ import { colors, radii, spacing, typography } from '../theme/index.js';
  * @param {func}   [onToggleSave] (product, savedId) => void — omit to hide the heart
  * @param {object} [style]       width override for horizontal rails
  */
-export function ProductCard({ product, onPress, savedId, onToggleSave, style }) {
-  const cover = product.images?.[0];
+export function ProductCard({ product, onPress, savedId, onToggleSave, showStatus = false, style }) {
+  // `ownView` (seller's own list) returns image REFS `{url, publicId}`; the
+  // public projections return bare URL strings. Accept both rather than making
+  // every call site normalise.
+  const first = product.images?.[0];
+  const cover = typeof first === 'string' ? first : first?.url;
   const saved = savedId != null;
+  const statusChip = showStatus ? statusChipFor(product) : null;
 
   // Same spring press-response Home's tiles use — a touch response, not a loop.
   const scale = useRef(new Animated.Value(1)).current;
@@ -60,6 +65,17 @@ export function ProductCard({ product, onPress, savedId, onToggleSave, style }) 
               <Ionicons name="image-outline" size={28} color={colors.ink[300]} accessible={false} />
             </View>
           )}
+          {/* Seller-side only (2026-08-18): the owner's own list shows
+              lifecycle; a buyer-facing card must NEVER carry status. White
+              pill so it stays legible on any photo; top-LEFT so it can never
+              collide with the heart. `takedown` outranks status — a blocked
+              product reads as blocked, not as Live. */}
+          {statusChip ? (
+            <View style={styles.statusChip}>
+              <View style={[styles.statusDot, { backgroundColor: statusChip.fg }]} />
+              <Text style={[styles.statusText, { color: statusChip.fg }]}>{statusChip.label}</Text>
+            </View>
+          ) : null}
           {onToggleSave ? (
             <Pressable
               onPress={() => onToggleSave(product, savedId)}
@@ -100,6 +116,28 @@ export function ProductCard({ product, onPress, savedId, onToggleSave, style }) 
   );
 }
 
+/**
+ * Seller-facing lifecycle chip (§1.2 vocabulary — Draft / Live / Hidden /
+ * Archived). "Blocked" is an OVERLAY, not a status: a taken-down product
+ * returns the takedown chip whatever its underlying status, because that is
+ * the fact the seller has to act on. Never called for a buyer-facing card.
+ */
+function statusChipFor(product) {
+  if (product.takedown) return { label: 'Taken down', fg: colors.danger.DEFAULT };
+  switch (product.status) {
+    case 'active':
+      return { label: 'Live', fg: '#05603A' };
+    case 'draft':
+      return { label: 'Draft', fg: colors.ink[600] };
+    case 'inactive':
+      return { label: 'Hidden', fg: '#93370D' };
+    case 'archived':
+      return { label: 'Archived', fg: colors.ink[500] };
+    default:
+      return null;
+  }
+}
+
 /** Three real modes (mirrors web's PriceLine): fixed / range / on request.
  *  No currency conversion in this phase (§A27.1) — ISO code as-is; the unit
  *  suffix renders only when the product genuinely has one. */
@@ -122,6 +160,22 @@ const styles = StyleSheet.create({
   },
   image: { width: '100%', height: '100%' },
   imageFallback: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  statusChip: {
+    position: 'absolute',
+    top: spacing[2],
+    left: spacing[2],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    height: 22,
+    paddingHorizontal: spacing[2],
+    borderRadius: radii.full,
+    backgroundColor: colors.white,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surface.border,
+  },
+  statusDot: { width: 6, height: 6, borderRadius: radii.full },
+  statusText: { ...typography.tiny, fontWeight: '600' },
   heart: {
     position: 'absolute',
     top: spacing[2],

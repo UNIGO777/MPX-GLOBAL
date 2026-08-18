@@ -72,9 +72,26 @@ export function toAppError(error) {
   const envelope = data?.error ?? {};
   const serverMessage = typeof envelope.message === 'string' ? envelope.message : null;
 
+  // 🆕 2026-08-19 — validation 400s carry `fields: [{field, message}]` and the
+  // app was DROPPING it, so every schema rejection surfaced as the bare
+  // "Invalid request." with no clue which field was wrong (it cost a real
+  // debugging round on the product form). These are the caller's own inputs,
+  // so they are safe to show — the server sends them for exactly this reason.
+  // Field paths arrive prefixed by request part ("body.countryOfOrigin");
+  // strip that, it means nothing to a user.
+  const fields = Array.isArray(envelope.fields) ? envelope.fields : null;
+  const fieldDetail =
+    fields && fields.length > 0
+      ? fields
+          .slice(0, 3)
+          .map((f) => `${String(f.field ?? '').replace(/^(body|query|params)\./, '')}: ${f.message}`)
+          .join('\n')
+      : null;
+
   return {
     kind: kindForStatus(status),
-    message: serverMessage ?? DEFAULT_MESSAGE,
+    message: fieldDetail ? `${serverMessage ?? DEFAULT_MESSAGE}\n\n${fieldDetail}` : (serverMessage ?? DEFAULT_MESSAGE),
+    fields,
     status,
     // Surfaced so a user can quote it in a support ticket; it identifies a
     // server-side log entry and carries no data of its own.

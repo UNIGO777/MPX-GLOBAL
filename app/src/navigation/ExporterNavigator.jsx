@@ -2,6 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ExporterHomeScreen } from '../screens/ExporterHomeScreen.jsx';
+import { MyProductsScreen } from '../screens/MyProductsScreen.jsx';
 import { ProfileScreen } from '../screens/ProfileScreen.jsx';
 import { makePlaceholder } from '../screens/PlaceholderScreen.jsx';
 import { buildTabBarStyle, screenHeaderOptions, tabBarOptions } from './navigationTheme.js';
@@ -32,21 +33,18 @@ export function ExporterNavigator() {
     >
       <Tab.Screen
         name="ExporterHome"
-        options={{ title: 'Home', tabBarLabel: 'Home', tabBarIcon: tabIcon('home') }}
+        // headerShown: false (2026-08-18) — Home was rebuilt to the owner's
+        // mockup with its own white sticky header (same move Buyer Home and
+        // Profile already made); the native one just sat above it.
+        options={{ title: 'Home', tabBarLabel: 'Home', tabBarIcon: tabIcon('home'), headerShown: false }}
         component={ExporterHomeScreen}
       />
       <Tab.Screen
         name="ExporterCatalogue"
-        options={{ title: 'Catalogue', tabBarLabel: 'Catalogue', tabBarIcon: tabIcon('cube') }}
-        component={makePlaceholder({
-          title: 'Catalogue',
-          icon: 'cube-outline',
-          blurb: "You'll list and manage your products from here — it's on the way.",
-          module: 'Module 2 · Products',
-          milestone: 'M2',
-          // Real compliance detail, not filler copy — kept verbatim.
-          note: 'While unverified: max 3 active listings + 10 drafts (D1). The cap is enforced server-side — the app only reflects it.',
-        })}
+        // headerShown: false (2026-08-18) — the tab went LIVE with M2 screen 5
+        // (My products), which draws its own header + "+ Add" action.
+        options={{ title: 'Catalogue', tabBarLabel: 'Catalogue', tabBarIcon: tabIcon('cube'), headerShown: false }}
+        component={MyProductsScreen}
       />
       <Tab.Screen
         name="ExporterEnquiries"
