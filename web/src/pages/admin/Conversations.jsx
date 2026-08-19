@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { adminConversationsApi, conversationKeys } from '../../api/conversations.js';
+import { useAuth } from '../../auth/AuthContext.jsx';
+import { can } from '../../auth/roleHome.js';
 import { CompanyAvatar } from '../../components/chat/CompanyAvatar.jsx';
+import { BlockModal, UnblockModal } from '../../components/chat/ModerationModals.jsx';
 import { FreezeChip } from '../../components/chat/FreezeChip.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { Combobox } from '../../components/ui/Combobox.jsx';
@@ -38,7 +41,7 @@ const PAGE_LIMIT = 20;
 function UnreadFlags({ unread, placeholder = false }) {
   const flags = [
     ['Buyer', unread?.buyer],
-    ['Seller', unread?.exporter],
+    ['Exporter', unread?.exporter],
   ].filter(([, value]) => value);
 
   if (flags.length === 0) return placeholder ? <span className="text-xs text-ink-400">—</span> : null;
@@ -102,12 +105,41 @@ export function Conversations() {
    */
   const [state, setState] = useState('');
 
+  /**
+   * An organisation filter arrives in the URL, from the Organisations list's
+   * "View conversations" (§3: cross-links between sections are the paths an
+   * investigation actually follows). It is not a control on this screen — there
+   * is no org picker here — so it renders as a removable chip rather than a
+   * fourth empty dropdown.
+   */
+  const [params, setParams] = useSearchParams();
+  const orgId = params.get('orgId') ?? '';
+  // §7 — "as buyer" / "as exporter" for ONE org: what splits a both-sides
+  // company into two clean lists. Meaningless alone (the server refuses it),
+  // so it is only ever read alongside orgId and clears with it.
+  const side = orgId ? (params.get('side') ?? '') : '';
+  /**
+   * A product scope arrives from the monitoring list's "View chats" (§4). The
+   * endpoint has always accepted `productId`; like `orgId` it is not a control
+   * on this screen, so it renders as a removable chip.
+   */
+  const productId = params.get('productId') ?? '';
+  const clearParam = (key) => () => {
+    const next = new URLSearchParams(params);
+    next.delete(key);
+    if (key === 'orgId') next.delete('side'); // side cannot outlive its org
+    setParams(next, { replace: true });
+  };
+
   const list = useInfiniteQuery({
-    queryKey: conversationKeys.admin.list({ q: query, state }),
+    queryKey: conversationKeys.admin.list({ q: query, state, orgId, side, productId }),
     queryFn: ({ pageParam }) =>
       adminConversationsApi.list({
         q: query || undefined,
         state: state || undefined,
+        orgId: orgId || undefined,
+        side: side || undefined,
+        productId: productId || undefined,
         cursor: pageParam,
         limit: PAGE_LIMIT,
       }),
@@ -116,6 +148,28 @@ export function Conversations() {
   });
 
   const rows = (list.data?.pages ?? []).flatMap((page) => page.conversations);
+
+  // ── Row-level moderation (§7 screen 9) — same dialogs as the viewer. ──
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const mayBlock = can(user, 'conversation:block');
+  const [blockTarget, setBlockTarget] = useState(null);
+  const [unblockTarget, setUnblockTarget] = useState(null);
+
+  const closeModeration = () => {
+    setBlockTarget(null);
+    setUnblockTarget(null);
+  };
+  const refreshList = () => qc.invalidateQueries({ queryKey: conversationKeys.admin.all });
+
+  const blockRow = useMutation({
+    mutationFn: ({ id, reason }) => adminConversationsApi.block(id, reason),
+    onSuccess: () => { closeModeration(); refreshList(); },
+  });
+  const unblockRow = useMutation({
+    mutationFn: ({ id, reason }) => adminConversationsApi.unblock(id, reason),
+    onSuccess: () => { closeModeration(); refreshList(); },
+  });
 
   return (
     <AdminLayout>
@@ -187,6 +241,50 @@ export function Conversations() {
         </div>
       </div>
 
+      {productId && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-800 ring-1 ring-inset ring-primary-100">
+            One product&apos;s threads
+            <code className="font-mono text-[11px] text-primary-700">{productId}</code>
+            <button
+              type="button"
+              onClick={clearParam('productId')}
+              aria-label="Show threads about every product"
+              className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-800"
+            >
+              <XIcon className="h-3.5 w-3.5" />
+            </button>
+          </span>
+        </div>
+      )}
+
+      {orgId && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-800 ring-1 ring-inset ring-primary-100">
+            One organisation&apos;s threads{side ? ` · as ${side}` : ''}
+            <code className="font-mono text-[11px] text-primary-700">{orgId}</code>
+            {side && (
+              <button
+                type="button"
+                onClick={clearParam('side')}
+                aria-label="Show both sides for this organisation"
+                className="font-semibold text-primary-700 underline decoration-primary-300 underline-offset-2 hover:text-primary-800"
+              >
+                both sides
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={clearParam('orgId')}
+              aria-label="Show all organisations"
+              className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-800"
+            >
+              <XIcon className="h-3.5 w-3.5" />
+            </button>
+          </span>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
         {list.isLoading ? (
           <SkeletonRows rows={8} />
@@ -245,7 +343,7 @@ export function Conversations() {
                   <col className="w-[9rem]" />
                   <col className="w-[7rem]" />
                   <col className="hidden w-[8rem] xl:table-column" />
-                  <col className="w-[5.5rem]" />
+                  <col className={mayBlock ? 'w-[10.5rem]' : 'w-[5.5rem]'} />
                 </colgroup>
                 <thead className="border-b border-surface-border bg-ink-50 text-[11px] uppercase tracking-wider text-ink-500">
                   <tr>
@@ -303,12 +401,32 @@ export function Conversations() {
                         {formatDate(c.createdAt)}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Link
-                          to={`/admin/conversations/${c.id}`}
-                          className="inline-flex items-center rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-ink-800 transition-colors hover:border-primary-600 hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
-                        >
-                          View
-                        </Link>
+                        <span className="inline-flex items-center justify-end gap-1.5">
+                          <Link
+                            to={`/admin/conversations/${c.id}`}
+                            className="inline-flex items-center rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-ink-800 transition-colors hover:border-primary-600 hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
+                          >
+                            View
+                          </Link>
+                          {mayBlock &&
+                            (c.blockedReason ? (
+                              <button
+                                type="button"
+                                onClick={() => setUnblockTarget(c)}
+                                className="inline-flex items-center rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-ink-800 transition-colors hover:border-primary-600 hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
+                              >
+                                Unblock
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setBlockTarget(c)}
+                                className="inline-flex items-center rounded-lg border border-danger-200 px-3 py-1.5 text-xs font-semibold text-danger-700 transition-colors hover:bg-danger-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-danger-300"
+                              >
+                                Block
+                              </button>
+                            ))}
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -388,6 +506,22 @@ export function Conversations() {
           </>
         )}
       </div>
+      <BlockModal
+        key={`block-${blockTarget?.id ?? 'none'}`}
+        open={Boolean(blockTarget)}
+        onClose={closeModeration}
+        pending={blockRow.isPending}
+        error={blockRow.error ? 'Could not block this conversation. Try again.' : null}
+        onConfirm={(reason) => blockRow.mutate({ id: blockTarget.id, reason })}
+      />
+      <UnblockModal
+        key={`unblock-${unblockTarget?.id ?? 'none'}`}
+        open={Boolean(unblockTarget)}
+        onClose={closeModeration}
+        pending={unblockRow.isPending}
+        error={unblockRow.error ? 'Could not unblock this conversation. Try again.' : null}
+        onConfirm={(reason) => unblockRow.mutate({ id: unblockTarget.id, reason })}
+      />
     </AdminLayout>
   );
 }

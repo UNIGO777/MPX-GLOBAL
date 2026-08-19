@@ -148,6 +148,42 @@ describe('F5b · access control', () => {
   });
 });
 
+describe('F5b · admin list resolves the pointer (M6 screen 3, 2026-08-19)', () => {
+  async function feature(kind, targetId) {
+    return FeaturedItem.create({ kind, targetId, createdBy: sa.user._id });
+  }
+
+  it('a live product row carries target identity and targetLive: true', async () => {
+    await feature('product', product._id);
+    const res = await request(app).get('/admin/featured').set(bearer(curator.token));
+    expect(res.status).toBe(200);
+    const row = res.body.items.find((i) => i.kind === 'product');
+    expect(row.target).toMatchObject({ name: product.name });
+    expect(row.targetLive).toBe(true);
+  });
+
+  it('a taken-down product row keeps its identity but reports targetLive: false', async () => {
+    await feature('product', product._id);
+    await Product.updateOne(
+      { _id: product._id },
+      { $set: { takedown: { isDown: true, reason: 'x', at: new Date() } } },
+    );
+    const res = await request(app).get('/admin/featured').set(bearer(curator.token));
+    const row = res.body.items.find((i) => i.kind === 'product');
+    expect(row.target).toMatchObject({ name: product.name });
+    expect(row.targetLive).toBe(false);
+  });
+
+  it('a hard-deleted target renders as target: null, targetLive: false — never a crash', async () => {
+    const row = await feature('product', product._id);
+    await Product.deleteOne({ _id: product._id });
+    const res = await request(app).get('/admin/featured').set(bearer(curator.token));
+    const item = res.body.items.find((i) => i.id === String(row._id));
+    expect(item.target).toBeNull();
+    expect(item.targetLive).toBe(false);
+  });
+});
+
 describe('F5b · the landing page heals itself', () => {
   async function feature(kind, targetId) {
     return FeaturedItem.create({ kind, targetId, createdBy: sa.user._id });

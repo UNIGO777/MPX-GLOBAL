@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { adminApi } from '../../api/admin.js';
@@ -27,7 +26,6 @@ import {
   AlertIcon,
   EyeIcon,
   BadgeCheckIcon,
-  FileIcon,
   BuildingIcon,
   CheckCircleIcon,
   SlashIcon,
@@ -138,7 +136,6 @@ function AccountAvatar({ row }) {
 }
 
 export function Users() {
-  const navigate = useNavigate();
   const { user: me } = useAuth();
   const isSuperadmin = me?.role === 'superadmin';
 
@@ -271,18 +268,21 @@ export function Users() {
     const items = [
       { label: 'View details', Icon: EyeIcon, onSelect: () => openDetails(row) },
     ];
-    if (row.orgId && can(me, 'organisation:read', 'buyer:approve', 'exporter:verify')) {
+    if (row.orgId && can(me, 'organisation:read')) {
       items.push({
-        label: 'Review verification',
-        Icon: BadgeCheckIcon,
-        onSelect: () => navigate('/admin/verification'),
+        label: 'Open company',
+        Icon: BuildingIcon,
+        to: `/admin/organisations/${row.orgId}`,
       });
     }
+    // One KYC entry, not two (owner, 2026-08-19): it goes straight to the
+    // company's documents, so it is gated by what THAT screen needs — kyc:view,
+    // the permission whose use is audited — not the broader review perms.
     if (row.orgId && can(me, 'kyc:view')) {
       items.push({
-        label: 'View KYC documents',
-        Icon: FileIcon,
-        onSelect: () => navigate(`/admin/verification/${row.orgId}/kyc`),
+        label: 'Review KYC',
+        Icon: BadgeCheckIcon,
+        to: `/admin/verification/${row.orgId}/kyc`,
       });
     }
     if (isSuperadmin) {

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { useCanonical } from '../../lib/seo.js';
+import { FeaturedStrips } from '../../components/catalogue/FeaturedStrips.jsx';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { roleHome } from '../../auth/roleHome.js';
@@ -399,6 +400,11 @@ export function Landing() {
             </div>
           </div>
         </section>
+
+        {/* M6 §4a — curated strips from /public/featured. The component renders
+            NOTHING until the owner curates content (empty groups hide, the
+            whole block hides when all four are empty). */}
+        <FeaturedStrips />
 
         {/* Categories — REAL top categories from the catalogue. These were
             invented groupings ("Raw Materials", "Home & Garden") until the

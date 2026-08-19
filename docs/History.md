@@ -268,6 +268,463 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
     "+ Add product"/"View all"/card-tap all went from coming-soon to real (ledger rows →
     Done). Babel-checked ×9; on-device verification is the next step (needs a port + the
     exporter login).
+- **2026-08-18 — 🔴 FIX #2: the detail page blanked only for VERIFIED companies — `verifiedBy` is an
+  object.** "Sometimes renders, sometimes blank" was the tell: `verification.verifiedBy` is
+  `{ id, name, role }` once someone has verified the company, and `null` before that, so unverified
+  orgs rendered and verified ones threw the same "objects are not valid as a React child". Now renders
+  the name, the role, and the id beneath — with "Account removed" when the verifier's account is gone,
+  which the server explicitly allows for (`name: null`). Fixed `claimHistory` in the same pass: entries
+  are `{ at, byUserId }` with **no `side`**, and the mapping read `c.side` — it would have printed
+  "undefined" the day claim rows start being written (D7).
+  **Swept all 23 companies** (4 verified) through the exact leaf paths the screen interpolates: no
+  object left in any render path, no detail request failing. That is the check the first fix should
+  have run — one payload proved one bug, and the second was in a company I had not looked at.
+- **2026-08-19 — M6 SCREENS SHIPPED: error log viewer, featured content manager, landing strips.**
+  **`/admin/errors` (+ `?entry=` drawer)** — F5 viewer, `errorlog:read`, read-only (the backend has no
+  write verb and the screen renders none; "kept 90 days" caption instead of a purge button). URL
+  filters: requestId (headline, copyable) / route prefix / method / 5xx-only status / date pair.
+  Two distinct empties (calm "no server errors" vs "no entries match"+clear); the detail drawer
+  handles the expired-between-list-and-click 404 as its own state; stack = mono scrollable block
+  with copy. New `api/errorLog.js`.
+  **`/admin/featured`** — F5b manager, `featured:manage`. Four ordered sections; create dialogs
+  (banner = multipart with image + title/subtitle/linkUrl counters + the relative-or-http(s) helper;
+  product/supplier picked via PUBLIC search, category via the public tree — no extra admin perm
+  needed to curate); per-row order input (PATCH on blur), active Switch, schedule display, banner
+  edit + replace-image, delete confirm ("removes it from the landing page immediately"). Pointer
+  rule drawn: no retarget control anywhere, dead target = greyed "no longer exists", live-but-hidden
+  target = amber "not shown on the landing page right now". **Backend addition:** the admin list now
+  resolves each pointer — `target {name,slug,image}` + `targetLive` (identity lookup without the
+  availability filter, liveness with it) — f5b tests 37/37 incl. 3 new. New `api/featured.js`.
+  **Landing strips (§4a)** — new `FeaturedStrips.jsx` between the brand band and categories: banner
+  rotation (6s auto-advance, dots, honours prefers-reduced-motion via matchMedia — a CSS class can't
+  stop a JS timer), then products/categories/suppliers strips using the SAME shared public cards
+  (ProductCard, CategoryThumb tiles, supplier cards w/ tick + live listing count). Empty group hides
+  its strip; all-empty (and loading/error) renders NOTHING — no skeleton, no placeholder on a public
+  page. One call, `staleTime` 5 min.
+  Sidebar: Errors (`errorlog:read`) + Featured (`featured:manage`) after Audit log. Routes lazy in
+  the admin Suspense block. ⚠️ Banner aspect ratio is still the brief's §6 open gap — shipped at
+  16/6 (16/5 ≥sm) as a starter; owner to confirm. ⚠️ Owner's running backend needs a RESTART to
+  serve the new `target`/`targetLive` fields on `/admin/featured`.
+- **2026-08-19 — M5 CLOSED OUT: the seven spec elements still missing inside shipped screens (audit
+  vs `design-plans/m5/web-screens-design.md`), all frontend, no new endpoints.**
+  **Org detail:** chat pill split into "Chats as buyer" / "Chats as exporter" linking
+  `?orgId=&side=` (§5: never merge them); "Saved items" pill added (server already sent it);
+  the audit section is now an EMBEDDED 6-row list pre-filtered to the org (+ "View in audit log"),
+  honest no-permission copy when `audit:read` is missing; cascade **running** state rendered with a
+  pulse line, and the org query polls every 4s while `cascade.status === 'running'` so done/failed
+  arrives on its own.
+  **Conversations list:** reads `side` (only ever with `orgId` — the server refuses it alone; clearing
+  the org chip clears side too, and the chip offers "both sides"); row-level **Block / Unblock** for
+  `conversation:block` holders — the two dialogs moved to `components/chat/ModerationModals.jsx`,
+  shared with the viewer so the party-facing copy can't drift; dialogs are keyed by target id so a
+  typed reason never leaks from one row's dialog to another's. Phone cards stay view-only (whole row
+  is the link); moderation there is one tap away in the viewer.
+  **Employees:** permission checklist now grouped by §10's exact areas (Verification / Users /
+  Catalogue / Conversations / Governance records / Debugging & content) as fieldsets;
+  `PERMISSION_GROUPS` in `lib/permissions.js` re-cut to the spec table with the two heavy-grant
+  helper strings verbatim (`conversation:read`, `audit:read`); `PERMISSION_LIST` still derives from
+  the groups so every consumer follows.
+  **Dashboard:** health tile label pinned to the spec's "Average days to verify" (unit dropped as
+  redundant).
+  NOT touched, on purpose: `/admin/errors` + `/admin/featured` (M6-finalize), `/admin/settings`
+  placeholder (month 2), org claim (D7), seller picker on monitoring (owner-accepted URL-param-only).
+- **2026-08-19 — Dashboard polish pass (owner screenshots): worklist rows, activity fallback, phone view.**
+  Needs-action rows: every row now carries a hint line and the count sits in a tone-tinted badge
+  (amber/red, matching the row dot) instead of a bare 2xl numeral floating in the stretched row.
+  Recent activity: the `auth.*` filter had left an EMPTY card when sign-ins were the only audit rows —
+  they now render as a fallback (hidden again once real actions exist) with a pinned footer note, and
+  `auditFormat.js` gained proper auth-family labels ("Signed in", "Password changed"…) shared with the
+  audit log screen. The queue×activity grid dropped `items-start` so the two cards share a bottom edge.
+  Phone: Panel headers wrap (`flex-wrap`) so the chart's range control drops to its own full-width
+  4-way row (36px targets) instead of crushing the title; the "cumulative · last N days" caption hides
+  below `sm` (the active segment already says it); wide name cells (queue company, conversation
+  parties) use the `w-full max-w-0` + `min-w-0` trick so they truncate instead of pushing the table
+  past the viewport.
+- **2026-08-19 — The chart gained a time-window filter (owner): 7d · 14d · 30d · 90d.**
+  Backend: the dashboard endpoint takes `?days=`, **allowlisted** (7/14/30/90 — a pasted
+  `days=100000` is a 400, not a pointless giant aggregation), threaded through
+  `buildDashboard({seriesDays})` with the 14-day default unchanged. Tests: 7-day axis, default 14,
+  arbitrary values 400. 20/20.
+  Frontend: a segmented control in the chart card's top right (`aria-pressed`, `role="group"`), the
+  dashboard query keyed by the window with `placeholderData` so a range flip never blanks the console,
+  the card caption follows ("cumulative · last 30 days"), and the stat-bar delta hints follow too
+  ("+9 in 30 days") — the deltas are sums of the visible window, so their labels must move with it.
+  Panel gained a `trailing` slot for the control.
+- **2026-08-18 — Chart reskin (owner: "the graph itself is not the problem — the colour theme,
+  background and design elements").** The form stays; the skin changes. *(1)* **One brand family in two
+  lightness steps** — companies `primary-600`, enquiries `primary-300` — instead of the stock blue+green
+  pairing; distinguishable in greyscale, and M4-19 holds since dot+name ride in legend and tooltip.
+  *(2)* The plot sits on a **softly tinted panel** (`primary-50/60` fading to white, hairline
+  `primary-100` ring) instead of raw card white. *(3)* **All dashes deleted** — solid low-opacity
+  hairlines only; dashed gridlines read as a draft. *(4)* The boxy legend chips became **boxless
+  entries** — dot · label · bold total, toggled-off = dimmed + struck-through, still `aria-pressed`.
+  *(5)* The guide line took the brand periwinkle. Tooltip anchoring preserved by keeping the relative
+  wrapper tight around the svg inside the new padded panel.
+  **Amended:** the two-lightness-steps-of-blue pairing was not distinct enough side by side (owner) —
+  enquiries recoloured to `warning-500` amber: navy × amber is maximally separated in hue AND
+  lightness, and both are core console tokens rather than a stock palette.
+  **And the details box:** the centred tooltip ran off the card on the first and last days, cutting
+  "+N that day" clean off. Edge-aware anchoring now — within the outer 18% it opens away from the
+  nearer edge (rightward from the guide on early days, leftward on late ones), centred otherwise.
+- **2026-08-18 — The chart's FINAL form: a cumulative GROWTH curve (owner: "design not looking good at
+  all — complete redesign for this section").** The insight that ended the churn: the daily series are
+  sparse small counts, and ANY per-day line of that shape draws circus-tent humps touching zero
+  between spikes — no styling could save it. The section now plots the RUNNING TOTAL: monotone
+  up-and-right growth curves (companies 0→23, enquiries kicking to 5), the classic dashboard form and
+  an honest one — the card is labelled "cumulative · last 14 days", and the tooltip shows the day's
+  own +N beside the running total, so the daily figure is never lost. The legend merged with the
+  summary: one button per series carrying dot + name + fortnight TOTAL, still the toggle. Straight
+  crisp 2px segments (smoothing gone with the humps it existed for), quiet 16% fills, chrome reduced
+  to baseline + one dashed midline + max/0 labels, the dotted plot texture deleted. Guide, ringed
+  active marker, keyboard, sr-only live region all kept. Lint zero, build clean.
+- **2026-08-18 — The chart settles: a REFINED LINE graph (owner rejected bars — "i want the graph" —
+  and before that the heavy glowing curves).** What changed against the version they disliked, whose
+  screenshot also predated the grey-fill fix: strokes 3px→**2px**, the **glow deleted entirely** (its
+  grey pooling was most of the mud), gradient fills at a quiet 0.18 in the series' true colour, and a
+  **data-point dot on every day** (enlarging on the active day) so a 14-day line still reads as 14
+  discrete days. Smoothing kept but disciplined — control points clamped to the plot. **Amended same
+  turn:** the per-day dots studded the line like beads (owner: "points not look good") — the marker now
+  appears only on the ACTIVE day, ringed, where the guide line and tooltip already are; the clean line
+  carries the rest. The bars version
+  lived for one commit-less interlude and is gone; `bar-grow` CSS swapped back to
+  `chart-draw`/`chart-fade`. Interactivity unchanged throughout: legend toggles, nearest-day pointer +
+  keyboard, tooltip, sr-only live region, reduced-motion kill. Lint zero, build clean.
+- **2026-08-18 — 🔴 FIX: the chart's fills rendered GREY under coloured lines.** SVG scoping, not a
+  palette choice: `currentColor` inside a `<linearGradient>` (and a filter's `feDropShadow
+  flood-color`) resolves from the gradient/filter ELEMENT's own context, not from the path that
+  references it. Defined bare in `<defs>`, both inherited the page's ink colour — so a blue line sat
+  on a grey wash and the "glow" was grey too, which is what had been muddying every render of this
+  chart. Each gradient and a now PER-SERIES glow filter carry the series' own colour class on the def
+  element itself. The blue fill is finally blue, the green one green.
+- **2026-08-18 — Dashboard: the toolbar became a full-width DARK greeting banner (owner).** Navy
+  `primary-800→900` gradient with the twin blurred glows and top edge highlight, greeting back at
+  display size with the date eyebrow above it, the status pill in an on-dark variant (`StatusPill`
+  gained `onDark` — its light tints vanished on navy), the live refresh control frosted `white/10`, and
+  Review verifications inverted to a white pill. Deliberately NO chart and NO KPIs inside the banner —
+  that was the rejected fifth-pass deck; the banner is a greeting strip, and the operations console
+  (stat bar · chart · worklist · tables · timeline) continues untouched beneath it.
+  **Background enhanced same turn (owner):** five layers — fine white dot grid (`.banner-texture`),
+  two blurred brand glows that BREATHE (`banner-drift`, 14s/20s counter-phase, killed under
+  prefers-reduced-motion), an engraved concentric-ring motif on the right (SVG, white strokes fading
+  9%→3.6%, two satellite dots — the radar/globe read suits a global trade console), a 24° diagonal
+  light streak, and the top edge highlight. Every layer is white or a brand token at low alpha;
+  nothing figurative, nothing outside the palette.
+- **2026-08-18 — Dashboard, sixth pass / fourth architecture: the OPERATIONS CONSOLE (owner: "doesn't
+  give the feel of a company dashboard panel").** The diagnosis that finally names the gap: every prior
+  pass read as CONSUMER SaaS — gradient greeting, floating pretty cards, chat-style rows — when a
+  company panel is an operations console. Three structural moves:
+  *(1)* **A toolbar, not a greeting card** — title "Overview" + status pill, greeting demoted to the
+  sub-line, and a REAL refresh control: all four queries refetch, the icon spins while any is fetching,
+  and a live "Updated X minutes ago" reads from `dash.dataUpdatedAt` against a clock held in STATE
+  (the compiler rule forbids `Date.now()` in render; a 30s interval ticks it).
+  *(2)* **One connected stat bar** — six hairline-divided cells in a single panel (the enterprise
+  topline idiom) instead of five floating KPI cards; pending-review number warns when non-zero, deltas
+  are success chips, turnaround sits as the sixth cell.
+  *(3)* **Real tables** — the verification queue (Company/Country/Side/Status/Open) and latest
+  conversations (Parties/Product/State/Last activity/Open) became proper `<table>`s with uppercase
+  column headers, aligned cells, row hover, responsive column drops, and the conversations table
+  full-width. Column headers are the single strongest "operations panel" signal.
+  Also: the light-surface chart glow was greying the plot (the drop-shadow pooled under the fills) —
+  tightened per-surface (`glowStd`); companies line brightened to `primary-500`. Activity timeline and
+  worklist kept. Two compiler-rule warnings fixed along the way (impure `Date.now()` in render; a
+  redundant fetch-settled effect removed — the interval alone is enough). Lint zero, build clean.
+- **2026-08-18 — Dashboard, fifth pass: the MATERIAL pass (owner on the bento render: "too plain").**
+  The structure held; the surfaces were wireframes. *(1)* The chart's hard polylines became
+  **Catmull-Rom curves rendered as cubic beziers** — data points stay exact, and control-point y is
+  CLAMPED to the plot so a spike beside a zero can never overshoot the baseline and draw activity that
+  does not exist; stroke 3, deeper gradient fills, slightly stronger light-surface glow, and the plot
+  sits on a faint ink dot grid (`.plot-texture`, the light twin of `.chat-canvas`). *(2)* **KPI cards
+  got hue families** — icon chip, a blurred corner wash, and the hint in the same hue (companies
+  primary · products success · conversations warning · accounts ink), numbers staying neutral ink; the
+  accent card deepened to a `primary-600→700` gradient; cards lift 2px on hover. *(3)* The greeting
+  carries a `primary-800→500` gradient via `bg-clip-text` — typography as the flourish, precisely
+  because there is no banner left to carry colour. *(4)* Worklist rows flex to share the card's full
+  height, killing the void beside the tall chart. Lint zero, build clean.
+- **2026-08-18 — Dashboard redesign, FOURTH pass: the BENTO BOARD (owner rejected the banner and the
+  chart-in-header outright — "completely rethink").** The architecture change, not a restyle: there is
+  **no hero surface at all**. The page opens with a slim utility header — greeting as typography, a
+  live status pill (pulsing amber "7 waiting" / green "All clear"), date line, two quick actions — and
+  everything else is one mosaic: *(1)* five KPI cards anchored by exactly ONE saturated `primary-600`
+  accent card (**Pending review**, the number this console exists to drive to zero, with the avg
+  turnaround as its hint) — the board's focal point comes from one saturated card in a light grid
+  instead of a banner; *(2)* the 14-day chart as a **first-class light card** (3/5 width) beside the
+  needs-action **worklist** (rows with tone dots and counted numbers, not a field of tiles; the
+  both-sides caveat and nothing-waiting line became card footers); *(3)* the three previews —
+  verification queue, latest conversations, audit timeline — closing the board.
+  `TrendChart` gained an `onDark` surface switch (legend, axis, grid, guide, tooltip, glow strength all
+  follow; series colours were already caller-owned) — the dashboard now draws it in `primary-600` +
+  `success-500` on white. New `ChartIcon` in the house icon set. The dead `.hero-texture` class was
+  removed with the banner. Motion kept from pass 3 (staggered rise-ins, count-ups, draw-in, live dot)
+  — it was the density and the banner that were rejected, not the life. Lint zero, build clean.
+- **2026-08-18 — 🔴 OWNER OVERRIDE: trend graphs built; then the dashboard rebuilt as a COMMAND DECK.**
+  *Graphs (§5's deferral red-alerted, owner explicitly confirmed):* `series` on the dashboard payload —
+  14 days of new companies (`organisation:read`) and new enquiries (`conversation:read`; Inquiry↔thread
+  is 1:1, message counts stay excluded), zero-filled, **UTC-bucketed**, `null` when the caller holds
+  neither permission. Tests caught that `timestamps: true` makes `createdAt` immutable — backdating a
+  fixture needs the NATIVE driver or the update silently no-ops. 18/18 on the dashboard suite.
+  `TrendChart`: dependency-free interactive SVG (a chart lib = new dependency, forbidden without
+  asking) — pointer nearest-day snapping with guide + tooltip, keyboard ←/→/Home/End/Esc on a focusable
+  svg, sr-only live region, legend chips that toggle series with `aria-pressed`, honest states for an
+  all-zero fortnight and all-series-hidden.
+  *Second pass (owner: "engaging and mesmerizing… redesign everything"):* one dark luminous **command
+  deck** — dot-grid texture, twin blurred glows, top edge highlight — carrying the greeting, the
+  workload sentence, quick actions, the chart at full column width (now with a currentColor
+  `feDropShadow` glow and a draw-itself-in `pathLength` animation), and a **KPI strip** of counted-up
+  numbers (`AnimatedNumber`, rAF ease-out) whose deltas are SUMS of the server's own series — no
+  invented figures, KPIs without a series show no delta. The Platform rail card dissolved into the
+  strip. Below: accent-barred action tiles with counted numbers, staggered `rise-in` entrances, the
+  audit feed as a **timeline** (rail joining ring-punched tone dots) with a pulsing live dot — and
+  `auth.*` rows filtered out of it, because an admin watching their own logins is not platform
+  activity; they stay in the full log and the empty state says so.
+  All motion dies under `prefers-reduced-motion` and nothing is conveyed only by animation. Two traps
+  hit and fixed: an interpolated `lg:grid-cols-${n}` (Tailwind extracts classes STATICALLY — literal
+  map instead) and a sync `setState` in an effect (compiler rule; the Search.jsx adjust-during-render
+  pattern). Lint zero, build clean.
+- **2026-08-18 — Dashboard rebuilt as the console's HOME (owner: "full fledged… international brand").**
+  New composition: a **navy hero** (the shell's own brand surface — greeting, date, the workload in one
+  sentence, permission-gated quick actions with a live pending-count badge) → **needs-action tiles**
+  (only non-empty queues, white cards with tinted icon chips; empty queues stay collapsed in the quiet
+  line) → **work previews**: the verification queue itself (next companies to review — rows open the
+  company file, the header opens the queue) and the latest conversations (org-pair avatars, product
+  line, freeze chip) → a **rail** of verification turnaround, platform stat rows, and a live audit
+  activity feed with tone-dotted rows.
+  Every panel is gated by the same `can()` the sidebar uses (D1 — the page still takes no permission of
+  its own), every figure is a server count with a clickable path, and a failed PANEL stays inside its
+  own card with a retry instead of taking the page down. `actionTone`/`actionLabel` moved from
+  AuditLog.jsx into shared `lib/auditFormat.js` (+ `actionDot`) so the feed and the log can never
+  describe one action differently.
+  Verified before shipping, against live data: every leaf the panels interpolate is primitive (the
+  `address`/`verifiedBy` lesson, now standard practice) — 8 audit rows, 5 conversations, 1 queued org,
+  6 tiles. 🚫 **Trend graphs still absent** — owner asked for graphs mid-turn; that is the §5/§9
+  deferred item ("detailed trend charts in a later phase" per the quote), red-alerted in the reply for
+  an explicit owner decision rather than built on momentum. An interactive chart would also need either
+  a new dependency (forbidden without asking) or a hand-built SVG, plus a new per-day aggregation on
+  the dashboard endpoint.
+- **2026-08-18 — The last two M5 gaps closed. M5 screens are COMPLETE (15/15).**
+  **#8 Product monitoring — the three missing row actions.** §4 asks a row to reach that product's
+  chats, the exporter's public profile and the exporter's Organisation; only the last was ever possible
+  before screen 15 shipped today. Added all three. The public-profile link needed one backend field:
+  the monitoring row carried `seller { orgId, name, takedownCount }` and no **slug**, which is what the
+  public page is addressed by.
+  🔴 And the destination had to READ the param: `/admin/conversations` now takes `?productId=`, shown
+  as a removable chip like `?orgId=`. That check is only reflex because of the `?seller=` bug earlier
+  today — a menu item pointing at a param nothing reads looks wired and silently lies.
+  **#13 Audit log — actor and target.** §6 lists four filters and two were built. The actor is a
+  PICKER, not an id box: nobody types an ObjectId from memory, and the possible actors are exactly the
+  staff list (fetched with the multi-role `role=employee,superadmin` filter added earlier today —
+  buyers and exporters never write audit rows, so listing them would be a picker full of names that can
+  never match). The target is the `entityType` + `entityId` PAIR, with the id input disabled until a
+  type is chosen, because the index is the pair and an id alone is a 400 by design.
+  Verified against the live API before shipping: `actorId` 200 · target pair 200 · **id without type
+  400** (the guard works) · `productId` 200 · multi-role staff list 200 · seller slug present. M5 org
+  suites 28 passing; web lint and build clean.
+- **2026-08-18 — Dashboard: (a) it was not rendering, (b) it was a metrics wall.**
+  🔴 **Not rendering** — `adminApi.dashboard` was never added. The edit that should have added it was
+  prefixed `cd web && python3 …` while the shell was ALREADY in `web`, so the `cd` failed and the whole
+  command short-circuited; the screen then called `useQuery` with an undefined `queryFn` and threw.
+  Second time today that prefix has silently skipped an edit — check `pwd`, do not assume it.
+  🔴 **The redesign.** §5 says "not a metrics wall: only things that ask for work", and equal-sized
+  tiles broke exactly that — a zero looked identical to a queue with five companies in it, so the page
+  showed the SHAPE of the work rather than the work. Now: tiles with a count lead, large (4xl number,
+  toned border); everything at zero collapses into a quiet linked "Nothing waiting: …" line — still
+  visible, because confirming an empty queue is a real need, but no longer competing. When every queue
+  is empty the band becomes a single "all clear" card instead of five zeroes. The header counts the
+  actual backlog ("6 items need attention"). Health and Totals merged into one "At a glance" band, with
+  totals as PILLS rather than six more cards — they are reference, not work — and the turnaround's
+  sample size sits with the number, since an average over three companies is a different claim from one
+  over three hundred.
+- **2026-08-18 — M5 screen 12 SHIPPED: the Dashboard (`/admin/dashboard`). M5 is now 14/15.**
+  Three bands in the order they are acted on — **needs action** (buyer and exporter verifications
+  counted separately, rejected awaiting resubmit, products taken down, nearing purge), **health**
+  (average days from KYC submission to verification, with its sample size), **totals** (orgs by side ·
+  live products · conversations · accounts). Not a metrics wall: no saved-item counts, no message
+  counts, no trend graphs, no error tile (§5, and the error log moved to FINALIZE).
+  🔴 **It takes no permission of its own.** The server builds only the tiles the caller already holds a
+  permission for, so the screen renders what it is given and a tile can never link an employee to a
+  list they would be refused. An employee holding none of them gets an honest empty state rather than
+  a wall of zeroes.
+  🔴 **The both-sides caveat is rendered, not buried.** `kycStatus` is ONE value per company, so a
+  both-sides company in `submitted` is counted in BOTH verification tiles and whichever review runs
+  first verifies the whole company — without saying so the two numbers sum to more work than exists.
+  Server paths are mapped explicitly (`/admin/orgs` → `/admin/organisations`) rather than used raw:
+  the endpoint and the console route differ, and a silent mismatch would ship a tile that 404s. Then —
+  the lesson from the `?seller=` bug — I verified every destination actually READS its param: `side`,
+  `verification`, `status`, `nearingPurge` all confirmed live. Payload checked against the real
+  endpoint before wiring (6 tiles, health 4.1 days over 3 companies, 4 totals).
+- **2026-08-18 — Organisation detail, last defects.** The accounts row's role pill was **stretched** to
+  fill its 6rem grid column — `sm:contents` promotes the chip itself to a grid item, so it filled the
+  track instead of hugging its text (`justify-self-start` fixes it). And "1 documents" / "1 products" /
+  "1 conversations" — every count on this screen now pluralises.
+- **2026-08-18 — Organisation detail alignment.** The verification grid was ragged: "Sides reviewed"
+  spanned all three columns at EVERY width, so STATUS sat alone in row 1 with two empty cells and
+  RESUBMITS sat alone in the last. A grid only reads as a grid when its cells fill it. `Fact` now takes
+  a `span` — `auto` (one cell), `phone` (full width on a phone only, for a short sentence that wraps
+  badly in a half cell but sits fine in a third) or `full` (everywhere, for prose like an address or a
+  rejection reason). Verification is two clean rows of three again.
+  Also: values now share a baseline (`items-start` on the grid + a min-height on the value), because a
+  chip is taller than a line of text and was pushing its neighbours' values out of line; and the
+  company mark is aligned to the name's first LINE rather than the top of a 24px heading, where it read
+  as floating above it.
+- **2026-08-18 — Organisation detail: fact grids go 2-up on a phone.** They were one-per-row below
+  `sm`, so a company with nothing to show yet — submitted —, verified —, verified by — — spent half a
+  screen on dashes. These values are a date, a word or a dash and sit two abreast at 390px comfortably.
+  Address, rejection reason and "sides reviewed" span the full row instead: they are sentences, not
+  values, and wrap badly in a half-width cell.
+- **2026-08-18 — Organisation detail: identity beside the mark, and the strip became PILLS (owner).**
+  · The avatar had its own row below `sm`, spending a full line on a 44px tile and pushing the company
+    name down the page. Mark and identity are one unit and stay on one row at every width; the TYPE
+    steps down instead (name 17px on a phone, 24px from `sm`), and the avatar drops from `lg` to `md`.
+  · **Five bordered tiles → five pills.** Five cards was a lot of furniture for five small numbers, and
+    on a phone the 2-up grid ran three rows deep and pushed the actual record below the fold. As pills
+    they wrap into a line or two and read as a summary, which is what they are. Everything else holds:
+    each still links to its filtered list where one exists (§3), the two with no list stay unlinked, and
+    non-zero takedown pills keep the danger tone that makes a repeat offender visible at a glance.
+- **2026-08-18 — Organisation detail on a phone (owner).**
+  · **The header action was inline with the title**, squeezing "Erode Textile House" onto two lines and
+    pushing its chips onto two more. Below `sm` the identity stacks and the button goes full width —
+    which is also the 44px touch target.
+  · **The pills were three different sizes** (13px status chip · 12px blocked · 11px side badge) sharing
+    a baseline with a 24px heading. They describe one thing — the company's state — so they now sit on
+    a row of their own, all at one scale. Three paddings and three text sizes read as three unrelated
+    things.
+  · **The accounts row** collapsed into a ragged stack on a phone (role floated right, state and last
+    login left). Below `sm` the identity leads and the three facts sit on one chip line under it;
+    `sm:contents` puts them back into the 4-column grid above that.
+  · Card chrome `p-5` → `p-4` below `sm`: 20px each side of a 390px screen is a tenth of the width.
+- **2026-08-18 — Organisation detail, third pass (owner: "still room for improvement").**
+  · **`IN` → India.** The card printed the raw ISO code the database stores; `countryName()` (already
+    used by the supplier profile and the KYC viewer) turns it into what a person reads, falling back to
+    the code for anything the table does not know.
+  · **Facts stack label-over-value in a 3-up grid** instead of label-left/value-right. The row layout
+    is right for prose and wrong here: most values are one word or a date, so a fixed 8rem label column
+    pushed them into a strip with half the card empty beside them. Address spans the full width.
+  · ~~The catalogue card stopped repeating the strip.~~ **REVERTED same day (owner): the live count is
+    back, with taken-down, and a total.** Removing them to avoid duplication was the wrong trade — a
+    card called "Catalogue" that omits the live count is not a breakdown, it is a puzzle with a
+    footnote saying where the missing pieces went. The two views answer different questions: the strip
+    is "should I act", the card is "what does this company actually have", and the card has to be
+    complete to answer it. Taken-down reads in danger tone when non-zero.
+  · **Accounts became a real grid** (name+email · role · state · last login). They were floated right
+    with no alignment, which reads fine with one user and falls apart with several. A deactivated
+    account now reads in danger tone rather than muted grey — it is a state, not an absence.
+- **2026-08-18 — Organisation detail REDESIGNED (owner: "you can do it better"), and the grid was
+  broken.** The screenshots showed the rail's cards stacked at the LEFT edge with two-thirds of the
+  page empty: the Activity card had ended up a direct child of the 3-column grid instead of sitting
+  inside the `col-span-2` column, so the rail wrapped onto a new row. Rewrote the body rather than
+  patching the nesting, and verified structurally afterwards (the outer grid now has exactly two
+  children).
+  The redesign follows what a moderator actually does — **decide**, not read:
+  · a **metric strip** directly under the header — live products · taken down · takedowns all time ·
+    conversations · enquiries · accounts — because those are the numbers the block decision rests on,
+    and they were previously rows buried three scrolls down. Taken-down and all-time-takedown tiles turn
+    danger-toned when non-zero, so a repeat offender is visible without reading a single label. Each
+    tile links to its own list (§3); the two with no list behind them render as plain tiles rather than
+    links to nowhere.
+  · **Verification first** in the record column — it is the trust question — with the shared-status
+    caveat moved to the TOP of that card, since it qualifies everything under it.
+  · Facts in **two columns** instead of one long ladder (values are a word each and were costing a row
+    apiece), the description promoted to a paragraph, catalogue split into its own card.
+  · The rail now carries reference only: sides, **"What a block does"** (the server's own `blockReach`
+    note, beside the button that does it), and the audit link.
+- **2026-08-18 — 🔴 FIX: Organisation detail rendered a BLANK page — `address` is a sub-document.**
+  `Organisation.address` is `{ line1, line2, city, state, postalCode, country }`, not a string, and the
+  screen interpolated it straight into JSX. React throws "Objects are not valid as a React child" on
+  that, which takes down the whole route — hence blank rather than a broken row. Added `formatAddress`
+  (joins the populated parts; an EMPTY sub-document is `{}` rather than null, so "has an address" means
+  "has a populated part", not "is present").
+  Diagnosis note, because guessing wasted a round: the import graph, the icon names and the component
+  contracts all checked out, so the fault had to be in the DATA. Fetched a real payload and dumped the
+  type of every leaf — `address → dict` fell out immediately. Then swept all 20 companies for any other
+  object-valued leaf rendered as a child: none, so this was the only instance.
+  Method worth reusing: a second backend on **:3001** (same DB, same JWT secret) gives a staff session
+  without touching the owner's `:3000` or reading their terminal's OTP. It needs `NODE_ENV=development
+  OTP_DEV_PRINT=true` explicitly — a bare `node src/server.js` does not print the dev code. Stopped and
+  its token/handoff files deleted afterwards.
+- **2026-08-18 — M5 screen 15 SHIPPED: Organisation detail (`/admin/organisations/:id`).**
+  The company's whole file: header (name · slug · sides · verified since · blocked · block/unblock),
+  company fields, verification, sides, activity, users, and the audit-trail link. Backend was already
+  complete (`orgDetailView`); this is the screen.
+  §7 names **three things this screen must be honest about**, and each is a rendering decision here:
+  *(1)* **What a block actually reaches** — the dialog states the server's own `blockReach.note`
+  (company + users + live products + conversations; drafts and archived untouched), and a **failed
+  background cascade raises a danger alert**, because otherwise the console says "blocked" while the
+  catalogue is still live. *(2)* **`kycStatus` is ONE value across both sides** — "Sides reviewed" is a
+  row of its own, and when a company is verified with a side nobody reviewed, the screen says so in a
+  warning rather than leaving it to be worked out. *(3)* **Fields that never fill** — the server's
+  `notCaptured` list is named as not captured, never rendered as empty rows awaiting input.
+  Two more honesty details taken from the payload: claim history says "not recorded yet — organisation
+  claim is not built" rather than "no claims" (D7), and the archived product count deliberately does
+  NOT link, because the monitoring list refuses to show archived rows (W3).
+  Cross-links now work in both directions: the list's rows and company names open the detail; the
+  detail links to monitoring (`?seller=`), conversations (`?orgId=`), the public profile, KYC documents
+  (`kyc:view`) and the audit log (`?orgId=`).
+  🔴 **And the audit viewer had the same bug as the seller link:** it never read `orgId`, which the
+  endpoint has always accepted and indexes precisely because a company's record is NOT expressible as
+  entityType+entityId (a product takedown carries entityType 'Product' with the exporter's orgId). Now
+  read, counted as a filter, and shown as a scope chip that links back to the company.
+  `docs/UiWebNotes.md`'s "Open detail — not rendered" row is closed. 28 backend tests passing on the
+  org suites; web lint and build clean. ⚠️ Not verified in a browser — no staff session here.
+- **2026-08-18 — Admin console says EXPORTER, and the seller chip names the company (owner).**
+  "Exporter" is the role the product actually defines (CLAUDE.md: buyer · exporter · employee ·
+  superadmin); "seller" was a synonym that had crept into the console while the permissions, the org
+  sides and the API all said exporter. Renamed across every user-facing string in `/admin`: the
+  monitoring table's column, its detail drawer, the "Exporter had it Live" line, the conversation
+  list's unread flags, and the viewer's rail row + unread line. The staff transcript's fallback name
+  went with them. Left alone deliberately: the public Landing's "Join as Seller" — marketing copy for
+  visitors, not the console's role vocabulary — and every `sellerOrgId`/`seller=` identifier, which are
+  API contracts, not labels.
+  The filter chip named an **ObjectId**. Every row in a seller-scoped list belongs to the same company,
+  so the name is already in the data: it now reads "Products from **Tirupur Knitwear Exports**". The id
+  still shows when the filter matched nothing — there is no row to read a name from, and it is what a
+  moderator would paste elsewhere.
+- **2026-08-18 — Product monitoring: two filters both read "All", and the takedown date read as a
+  duplicate.** The sub-category and status boxes sat side by side showing the same bare word, naming
+  neither of the things they filter. Cause worth remembering: a combobox renders the **empty option's
+  label** once `''` is selected, so the placeholder never gets a chance — the fix is in the option, not
+  the placeholder. Now "All sub-categories" and "All statuses" (both, so neither box relies on the
+  other for context). Swept the rest of `/admin`: no bare "All" left in any filter.
+  Separately the takedown date sat unlabelled under the chip, directly beside a LISTED column showing
+  its own date — two identical-looking dates, one meaningless. It reads **"Down since 09 Aug 2026"**.
+- **2026-08-18 — Product monitoring: a taken-down product no longer reads as "Live".**
+  The status cell showed a green **Live** chip and a red **Taken down** chip side by side. That is
+  technically true — a takedown never touches `status`, which is the seller's own field — but the green
+  chip leading made a product that is publicly INVISIBLE look live, which is the one thing a
+  moderation screen must not imply. The takedown now leads and the seller's status drops to
+  subordinate text ("Seller had it Live"), so both facts survive (the product really does return to
+  that status on restore) without the contradiction. Recorded in `productStatus.js` itself, since that
+  file's rule says "render it beside" and a later session would otherwise put the green chip back.
+  Also fixed **"1 takedowns"** in all three places it appeared (card, table, detail drawer).
+- **2026-08-18 — 🔴 BUG (mine, same day): "View products" from an Organisation opened EVERY product.**
+  `/admin/products` reads its filters from the URL but never read `seller`, so the cross-link I had
+  just added passed a param the screen dropped on the floor — and an unfiltered catalogue looks
+  identical to a filtered one, so it read as "the filter is broken" rather than "the link is wrong".
+  The endpoint has always accepted `seller` (`product.validators.js`); only the screen was missing it.
+  Now read, passed to the API, counted in `hasFilters`, and shown as a **removable chip** — there is no
+  seller picker on that screen, so without the chip one company's catalogue is indistinguishable from
+  the platform's. Same treatment `?orgId=` gets on the conversations screen.
+  Lesson worth keeping: a cross-link is only built when the DESTINATION reads the param. Adding
+  `?seller=` to a menu item and stopping there produced a control that looked wired and was not.
+- **2026-08-18 — M5 screen 14 SHIPPED: the Organisation list (`/admin/organisations`).**
+  The backend was already complete — filters (side · verification · blocked · prefix search), the
+  takedown-count sort and live product counts all existed and nothing called them. This is the web
+  screen: **five columns exactly** (company · verification · products · takedowns · state) per §7,
+  because a wider table breaks on responsive; country and slug ride as the second line under the
+  company name that the spec asks for (names collide), and the sides badge sits under the
+  verification chip rather than taking a sixth column. Phones get cards. Sorted by takedowns
+  server-side — that ordering is load-bearing, not neatness: A10 means a takedown FREES a slot in the
+  seller's active cap, so this column is the only place a repeat offender surfaces.
+  Filters live in the URL, so "blocked exporters" is a linkable view — which is exactly what the
+  unbuilt dashboard (§5) is specified to link into.
+  🚫 **No "open detail" action:** M5 #15 does not exist, and rendering a link into a missing route
+  would be a dead control. Each row offers only what is built — products (`?seller=`), conversations
+  (`?orgId=`), KYC documents (`kyc:view`). The absent action is logged in `docs/UiWebNotes.md`.
+  Also: `/admin/conversations` now accepts `?orgId=`, so the cross-link works; it renders as a
+  removable chip rather than a fourth dropdown, since there is no org picker on that screen. And
+  `orgListView` gained `logo` (public data, already on the seller page) so the list identifies a
+  company the way every other surface does.
+  Gate `organisation:read` — grantable, pure read, never returns KYC documents. Backend suites
+  touching orgs: 109 passing (m5-admin-gaps, m5-adversarial, f1b-block-cascade, f5-error-log-viewer,
+  userManagement). ⚠️ Not verified in a browser — no staff session available here.
 - **2026-08-18 — `/admin/conversations` gains a moderation-STATE filter (owner).**
   Search could never express it: `q` only ever matches the three denormalised names and the two org
   ids. New `state` query param — `open` · `frozen` (umbrella) · `blocked` · `takedown` · `account` —

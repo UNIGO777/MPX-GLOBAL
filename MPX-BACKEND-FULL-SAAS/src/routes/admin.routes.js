@@ -214,5 +214,6 @@ adminRouter.get(
   '/admin/dashboard',
   authenticate,
   requireRole('employee', 'superadmin'),
+  validate(V.dashboard),
   dashboardCtrl.get,
 );

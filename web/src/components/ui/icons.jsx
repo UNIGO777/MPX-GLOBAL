@@ -45,6 +45,7 @@ export const EyeIcon = (p) => (
 export const EyeOffIcon = (p) => (
   <Svg {...p}><path d="M3 3l18 18M10.7 5.1A10 10 0 0122 12a16 16 0 01-3.2 3.9M6.6 6.6A16 16 0 002 12s3.5 6.5 10 6.5c1.5 0 2.9-.3 4.1-.8" /><path d="M9.9 9.9a2.8 2.8 0 004 4" /></Svg>
 );
+export const ChartIcon = (p) => <Svg {...p}><path d="M4 19h16" /><path d="M6 16l4-5 4 3 4-7" /></Svg>;
 export const ChevronDownIcon = (p) => <Svg {...p}><path d="M6 9l6 6 6-6" /></Svg>;
 export const ChevronLeftIcon = (p) => <Svg {...p}><path d="M15 6l-6 6 6 6" /></Svg>;
 /** Directional arrow — AI composer submit + suggestion pills (`AiSearch.jsx`). */

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { adminCatalogueApi, adminCatalogueKeys } from '../../api/adminCatalogue.js';
@@ -17,7 +17,7 @@ import { Pagination } from '../../components/ui/Pagination.jsx';
 import { RowMenu } from '../../components/ui/RowMenu.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
-import { ClockIcon, SearchIcon, SearchOffIcon, ShieldIcon, TrashIcon } from '../../components/ui/icons.jsx';
+import { BuildingIcon, ChatIcon, ClockIcon, ExternalIcon, SearchIcon, SearchOffIcon, ShieldIcon, TrashIcon, XIcon } from '../../components/ui/icons.jsx';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
@@ -71,6 +71,7 @@ function PurgeCountdown({ purgeAt }) {
 export function ProductMonitoring() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const canModerate = can(user, 'product:takedown');
 
@@ -84,6 +85,17 @@ export function ProductMonitoring() {
   const status = params.get('status') ?? '';
   const category = params.get('category') ?? '';
   const nearingPurge = params.get('nearingPurge') === 'true';
+  /**
+   * 🔴 A seller filter arrives in the URL from the Organisations list's "View
+   * products" (§4: "open the seller's Organisation" and back again are the
+   * paths an investigation follows). The endpoint has always accepted
+   * `seller`; this screen simply never read it, so the link opened EVERY
+   * product and looked like a broken filter.
+   *
+   * It is not a control here — there is no seller picker — so it renders as a
+   * removable chip rather than a dropdown that would sit empty.
+   */
+  const seller = params.get('seller') ?? '';
   const page = Math.max(1, Number(params.get('page')) || 1);
   const pageSize = Number(params.get('pageSize')) || 20;
 
@@ -92,6 +104,7 @@ export function ProductMonitoring() {
     ...(status ? { status } : {}),
     ...(category ? { category } : {}),
     ...(nearingPurge ? { nearingPurge: 'true' } : {}),
+    ...(seller ? { seller } : {}),
     page,
     pageSize,
   };
@@ -126,7 +139,7 @@ export function ProductMonitoring() {
     for (const k of Object.keys(next)) if (!next[k]) delete next[k];
     setParams(next);
   };
-  const hasFilters = Boolean(q || status || nearingPurge || category);
+  const hasFilters = Boolean(q || status || nearingPurge || category || seller);
 
   // ONE `category` param serves both boxes (the server resolves a top to its
   // leaves): a top slug selects only the Category box, a sub slug selects its
@@ -138,6 +151,9 @@ export function ProductMonitoring() {
     null;
   const selSub = selTop?.subs?.find((sub) => sub.slug === category) ?? null;
   const rows = list.data?.rows ?? [];
+  // Only meaningful while the seller filter is on, and only from a row that
+  // actually came back — never guessed.
+  const sellerName = seller ? (rows[0]?.seller?.name ?? null) : null;
   const total = list.data?.total ?? 0;
 
   return (
@@ -188,9 +204,9 @@ export function ProductMonitoring() {
               id="mod-subcategory"
               value={selSub?.slug ?? ''}
               disabled={!selTop}
-              placeholder={selTop ? `All in ${selTop.name}` : 'Sub-category'}
+              placeholder={selTop ? `All in ${selTop.name}` : 'All sub-categories'}
               options={[
-                { value: '', label: selTop ? `All in ${selTop.name}` : 'All' },
+                { value: '', label: selTop ? `All in ${selTop.name}` : 'All sub-categories' },
                 ...(selTop?.subs ?? []).map((sub) => ({ value: sub.slug, label: sub.name })),
               ]}
               onChange={(v) => setFilter({ category: v || selTop.slug })}
@@ -201,9 +217,9 @@ export function ProductMonitoring() {
             <Combobox
               id="mod-status"
               value={status}
-              placeholder="All"
+              placeholder="All statuses"
               options={[
-                { value: '', label: 'All' },
+                { value: '', label: 'All statuses' },
                 { value: 'active', label: 'Active' },
                 { value: 'inactive', label: 'Inactive' },
                 { value: 'blocked', label: 'Blocked' },
@@ -234,6 +250,38 @@ export function ProductMonitoring() {
             </button>
           )}
         </div>
+
+        {/* The seller filter has no control of its own, so it says so here —
+            otherwise one company's catalogue is indistinguishable from the whole
+            platform's, which is exactly how this bug read. */}
+        {seller && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-800 ring-1 ring-inset ring-primary-100">
+              {/* Every row in a seller-scoped list belongs to the same company,
+                  so the NAME is already in the data. The id only shows when the
+                  filter matched nothing — there is no row to read a name from,
+                  and it is still what a moderator would paste somewhere else. */}
+              {sellerName ? (
+                <>
+                  Products from <span className="font-semibold">{sellerName}</span>
+                </>
+              ) : (
+                <>
+                  One exporter&apos;s products
+                  <code className="font-mono text-[11px] text-primary-700">{seller}</code>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => setFilter({ seller: '' })}
+                aria-label="Show every exporter's products"
+                className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-800"
+              >
+                <XIcon className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
@@ -290,6 +338,21 @@ export function ProductMonitoring() {
                         label={`Actions for ${p.name}`}
                         items={[
                           { label: 'View details', Icon: ShieldIcon, onSelect: () => setDetail(p) },
+                          {
+                            label: 'View chats',
+                            Icon: ChatIcon,
+                            onSelect: () => navigate(`/admin/conversations?productId=${p.id}`),
+                          },
+                          p.seller?.orgId && {
+                            label: 'Open exporter',
+                            Icon: BuildingIcon,
+                            onSelect: () => navigate(`/admin/organisations/${p.seller.orgId}`),
+                          },
+                          p.seller?.slug && {
+                            label: 'Public profile',
+                            Icon: ExternalIcon,
+                            onSelect: () => window.open(`/supplier/${p.seller.slug}`, '_blank', 'noopener'),
+                          },
                           canModerate && !blocked && {
                             label: 'Take down',
                             Icon: TrashIcon,
@@ -305,11 +368,17 @@ export function ProductMonitoring() {
                       />
                     </div>
                     <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                      <StatusChip label={meta?.label} tone={meta?.tone} />
-                      {blocked && <StatusChip label="Taken down" tone="danger" />}
+                      {blocked ? (
+                        <>
+                          <StatusChip label="Taken down" tone="danger" />
+                          <span className="text-[11px] text-muted">Exporter had it {meta?.label}</span>
+                        </>
+                      ) : (
+                        <StatusChip label={meta?.label} tone={meta?.tone} />
+                      )}
                       {p.seller?.takedownCount > 0 && (
                         <span className="rounded-full bg-danger-50 px-2 py-0.5 text-xs font-semibold text-danger">
-                          {p.seller.takedownCount} takedowns
+                          {p.seller.takedownCount} {p.seller.takedownCount === 1 ? 'takedown' : 'takedowns'}
                         </span>
                       )}
                       <span className="ml-auto text-[11px] text-muted">{formatDate(p.createdAt)}</span>
@@ -325,7 +394,7 @@ export function ProductMonitoring() {
                 <thead>
                   <tr className="bg-ink-50 text-left text-xs uppercase tracking-wide text-muted">
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">Product</th>
-                    <th className="border-b border-surface-border px-4 py-3 font-semibold">Seller</th>
+                    <th className="border-b border-surface-border px-4 py-3 font-semibold">Exporter</th>
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">Category</th>
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">Status</th>
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">Listed</th>
@@ -359,7 +428,7 @@ export function ProductMonitoring() {
                               reduced by a restore. */}
                           {p.seller?.takedownCount > 0 && (
                             <span className="ml-2 rounded-full bg-danger-50 px-2 py-0.5 text-xs font-semibold text-danger">
-                              {p.seller.takedownCount} takedowns
+                              {p.seller.takedownCount} {p.seller.takedownCount === 1 ? 'takedown' : 'takedowns'}
                             </span>
                           )}
                         </td>
@@ -368,12 +437,20 @@ export function ProductMonitoring() {
                         </td>
                         <td className="border-b border-surface-border px-4 py-3">
                           <div className="flex flex-wrap items-center gap-2">
-                            <StatusChip label={meta?.label} tone={meta?.tone} />
-                            {blocked && <StatusChip label="Taken down" tone="danger" />}
+                            {blocked ? (
+                              <>
+                                <StatusChip label="Taken down" tone="danger" />
+                                <span className="text-[11px] text-muted">
+                                  Exporter had it {meta?.label}
+                                </span>
+                              </>
+                            ) : (
+                              <StatusChip label={meta?.label} tone={meta?.tone} />
+                            )}
                           </div>
                           {blocked && (
                             <span className="mt-1 block text-xs text-muted">
-                              {formatDate(p.takedown.at)}
+                              Down since {formatDate(p.takedown.at)}
                               <PurgeCountdown purgeAt={p.purgeAt} />
                             </span>
                           )}
@@ -386,6 +463,21 @@ export function ProductMonitoring() {
                           <RowMenu
                             items={[
                               { label: 'View details', Icon: ShieldIcon, onSelect: () => setDetail(p) },
+                              {
+                                label: 'View chats',
+                                Icon: ChatIcon,
+                                onSelect: () => navigate(`/admin/conversations?productId=${p.id}`),
+                              },
+                              p.seller?.orgId && {
+                                label: 'Open exporter',
+                                Icon: BuildingIcon,
+                                onSelect: () => navigate(`/admin/organisations/${p.seller.orgId}`),
+                              },
+                              p.seller?.slug && {
+                                label: 'Public profile',
+                                Icon: ExternalIcon,
+                                onSelect: () => window.open(`/supplier/${p.seller.slug}`, '_blank', 'noopener'),
+                              },
                               canModerate && !blocked && {
                                 label: 'Take down',
                                 Icon: TrashIcon,
@@ -505,12 +597,13 @@ export function ProductMonitoring() {
               <dd className="font-medium">{detail.category?.name ?? '—'}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted">Seller</dt>
+              <dt className="text-muted">Exporter</dt>
               <dd className="text-right font-medium">
                 {detail.seller?.name ?? '—'}
                 {detail.seller?.takedownCount > 0 && (
                   <span className="ml-2 rounded-full bg-danger-50 px-2 py-0.5 text-xs font-semibold text-danger">
-                    {detail.seller.takedownCount} takedowns
+                    {detail.seller.takedownCount}{' '}
+                    {detail.seller.takedownCount === 1 ? 'takedown' : 'takedowns'}
                   </span>
                 )}
               </dd>

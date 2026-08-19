@@ -10,6 +10,8 @@
  */
 
 export const PERMISSION_GROUPS = [
+  // §10's exact areas (m5 web brief). The heavy grants carry the brief's own
+  // warning copy verbatim — a grant whose cost isn't stated gets handed out.
   {
     group: 'Verification',
     items: [
@@ -19,10 +21,9 @@ export const PERMISSION_GROUPS = [
     ],
   },
   {
-    group: 'Directory',
+    group: 'Users',
     items: [
       { value: 'user:read', label: 'View user directory', help: 'Read-only access to the user list' },
-      { value: 'organisation:read', label: 'View organisations', help: 'Company list and detail (read-only)' },
     ],
   },
   {
@@ -30,21 +31,27 @@ export const PERMISSION_GROUPS = [
     items: [
       { value: 'category:read', label: 'View categories', help: 'Admin category tree (read-only)' },
       { value: 'category:manage', label: 'Manage categories', help: 'Sub-category and attribute management' },
-      { value: 'product:read', label: 'Monitor products', help: 'Product monitoring list (read-only)' },
-      { value: 'product:takedown', label: 'Take down products', help: 'Take down and restore listings' },
+      { value: 'product:read', label: 'View products', help: 'Product monitoring list (read-only)' },
+      { value: 'product:takedown', label: 'Take down / restore products', help: 'Take down and restore listings' },
     ],
   },
   {
     group: 'Conversations',
     items: [
-      { value: 'conversation:read', label: 'Read conversations', help: 'Open any chat thread (every read is audited)' },
-      { value: 'conversation:block', label: 'Block conversations', help: 'Block and unblock a chat' },
+      { value: 'conversation:read', label: 'Read conversations', help: 'Every conversation they open is recorded in the audit log' },
+      { value: 'conversation:block', label: 'Block / unblock chats', help: 'Block and unblock a chat' },
     ],
   },
   {
-    group: 'Oversight',
+    group: 'Governance records',
     items: [
-      { value: 'audit:read', label: 'View audit log', help: 'The record of every staff action' },
+      { value: 'organisation:read', label: 'View organisations', help: 'Company list and detail (read-only)' },
+      { value: 'audit:read', label: 'View audit log', help: 'Includes the record of every KYC document and chat staff have viewed' },
+    ],
+  },
+  {
+    group: 'Debugging & content',
+    items: [
       { value: 'errorlog:read', label: 'View error log', help: 'Server error entries (debugging)' },
       { value: 'featured:manage', label: 'Manage featured content', help: 'Landing-page banners and featured items' },
     ],

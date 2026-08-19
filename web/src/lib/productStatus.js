@@ -10,6 +10,12 @@
  * the blocked chip as an OVERLAY stacked beside whatever status chip the row
  * already has, never as a fifth value in this map, and never as a separate tab.
  *
+ * ⚠️ ORDER MATTERS (owner, 2026-08-18). When both are true the TAKEDOWN leads and
+ * the seller's own status drops to subordinate text ("Seller had it Live"). A
+ * green "Live" chip in front made a taken-down product read as publicly visible,
+ * which is the one thing a moderation screen must never imply. Both facts still
+ * show — the product really does return to that status on restore.
+ *
  * 🔴 `draft` is ONE-WAY. Once published a product can never return to it, so no
  * screen offers a "revert to draft" action.
  */

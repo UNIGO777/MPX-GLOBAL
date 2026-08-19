@@ -38,6 +38,12 @@ The backend for both already exists (`views/adminOrg.view.js`).
 > `/admin/errors` or `/admin/featured` route exists in `web/src/App.jsx`, and the landing does
 > not yet call `GET /public/featured` (§4a). Only the backend halves (F-A, F5b server-side,
 > 2026-08-01) are done. This brief is still forward-looking, not a record of shipped UI.
+>
+> ✅ **SUPERSEDED 2026-08-19 — ALL BUILT.** `/admin/errors` (detail as a `?entry=` drawer),
+> `/admin/featured`, and the landing's `FeaturedStrips` shipped per this brief; the admin
+> featured list gained server-side pointer resolution (`target` + `targetLive`) to draw the
+> §3 unresolved-row state. Still open from §6: the banner aspect ratio (shipped 16/6 as a
+> starter, owner to confirm). See `docs/History.md` 2026-08-19.
 
 ---
 

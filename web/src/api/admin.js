@@ -13,6 +13,13 @@ export const adminApi = {
   activateUser: (id) => apiClient.post(`/admin/users/${id}/activate`).then((r) => r.data.user),
   deactivateUser: (id) => apiClient.post(`/admin/users/${id}/deactivate`).then((r) => r.data.user),
 
+  /**
+   * M5 §5 — the dashboard. NO permission of its own: the server builds only the
+   * tiles the caller already holds the permission for, so a tile can never link
+   * an employee to a list they cannot open.
+   */
+  dashboard: (params) => apiClient.get('/admin/dashboard', { params }).then((r) => r.data),
+
   // --- organisations (organisation:read) — the org-centric verification queue
   listOrgs: (params) => apiClient.get('/admin/orgs', { params }).then((r) => r.data),
   getOrg: (id) => apiClient.get(`/admin/orgs/${id}`).then((r) => r.data.organisation),

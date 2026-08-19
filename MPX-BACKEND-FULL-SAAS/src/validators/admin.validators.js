@@ -13,6 +13,19 @@ const GRANTABLE_PERMISSIONS = Object.values(PERMISSIONS);
 // so a caller can never request an unbounded page (api-endpoints rule). `q` is a
 // plain string — the service regex-escapes it before querying (no ReDoS / no
 // operator injection; zString already rejects non-string operator payloads).
+/**
+ * The dashboard's one input: the chart window. Allowlisted (7/14/30/90) so a
+ * pasted `days=100000` cannot commission a pointless giant aggregation.
+ */
+export const dashboard = {
+  query: z.object({
+    days: z
+      .union([z.literal('7'), z.literal('14'), z.literal('30'), z.literal('90')])
+      .transform(Number)
+      .default('14'),
+  }),
+};
+
 export const listUsers = {
   query: z.object({
     /**
