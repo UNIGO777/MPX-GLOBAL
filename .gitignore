@@ -38,3 +38,8 @@ dist/
 # test scripts from browser verification. Not project source, and it has held a
 # test-account password before: nothing in here belongs in a public repo.
 .playwright-mcp/
+
+# Claude Code's per-machine tool permissions — created by the local
+# permission prompts, meaningless to anyone else and noisy in review.
+# The shared config (.claude/settings.json, .claude/rules/) stays tracked.
+.claude/settings.local.json

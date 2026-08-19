@@ -346,9 +346,12 @@ export function BuyerHomeScreen({ navigation }) {
 
         {/* Search + filter — visually real, honestly not wired yet (M3 app
             search isn't built) */}
+        {/* Real since 2026-08-19 (M3): both land on the live Search tab —
+            the bar to type, the filter button the same place (filters live
+            on the results screen). Ledger rows → Done. */}
         <View style={styles.searchRow}>
           <Pressable
-            onPress={notComingSoon('Search')}
+            onPress={() => navigation.navigate('BuyerSearch')}
             accessibilityRole="button"
             accessibilityLabel="Search products or suppliers"
             style={styles.searchBar}
@@ -357,9 +360,9 @@ export function BuyerHomeScreen({ navigation }) {
             <Text style={styles.searchPlaceholder}>Search products or suppliers…</Text>
           </Pressable>
           <Pressable
-            onPress={notComingSoon('Search filters')}
+            onPress={() => navigation.navigate('BuyerSearch')}
             accessibilityRole="button"
-            accessibilityLabel="Filters"
+            accessibilityLabel="Search filters"
             style={styles.filterButton}
           >
             <Ionicons name="options-outline" size={20} color={colors.ink[800]} accessible={false} />

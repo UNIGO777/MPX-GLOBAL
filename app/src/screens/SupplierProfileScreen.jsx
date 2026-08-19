@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { catalogueApi } from '../api/catalogue.js';
 import { findCountry } from '../constants/countries.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import { EmptyState, ErrorState, Skeleton } from '../components/Feedback.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { useSavedProducts } from '../hooks/useSavedProducts.js';
@@ -44,6 +45,11 @@ const PAGE_SIZE = 20;
 
 export function SupplierProfileScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
+  const { role } = useAuth();
+  // 🔴 Hearts are buyer-only and ABSENT otherwise (§A13/§7 — never disabled;
+  // the server would 403 anyway). Fixed 2026-08-19: they rendered for
+  // exporters before this.
+  const isBuyer = role === 'buyer';
   const { idOrSlug } = route.params ?? {};
   const [state, setState] = useState({ loading: true, error: null, supplier: null, products: [], total: 0, page: 1 });
   const [refreshing, setRefreshing] = useState(false);
@@ -61,7 +67,7 @@ export function SupplierProfileScreen({ navigation, route }) {
         const [supplier, res] = await Promise.all([
           catalogueApi.exporter(idOrSlug),
           catalogueApi.search({ type: 'product', seller: idOrSlug, sort: 'newest', pageSize: PAGE_SIZE, page: 1 }),
-          loadIndex(),
+          isBuyer ? loadIndex() : Promise.resolve(),
         ]);
         setState({
           loading: false,
@@ -77,7 +83,7 @@ export function SupplierProfileScreen({ navigation, route }) {
         if (isRefresh) setRefreshing(false);
       }
     },
-    [idOrSlug, loadIndex],
+    [idOrSlug, loadIndex, isBuyer],
   );
 
   useEffect(() => {
@@ -128,12 +134,12 @@ export function SupplierProfileScreen({ navigation, route }) {
       <ProductCard
         product={item}
         onPress={openProduct}
-        savedId={savedIndex[item.id]}
-        onToggleSave={toggleSave}
+        savedId={isBuyer ? savedIndex[item.id] : undefined}
+        onToggleSave={isBuyer ? toggleSave : undefined}
         style={styles.gridSlot}
       />
     ),
-    [openProduct, savedIndex, toggleSave],
+    [openProduct, savedIndex, toggleSave, isBuyer],
   );
 
   const backButton = (

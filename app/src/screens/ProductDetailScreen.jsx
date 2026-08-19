@@ -25,6 +25,7 @@ import { Button } from '../components/Button.jsx';
 import { EmptyState, ErrorState, Skeleton } from '../components/Feedback.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useSavedProducts } from '../hooks/useSavedProducts.js';
 import { colors, radii, spacing, typography } from '../theme/index.js';
 import { toAppError } from '../utils/errors.js';
 
@@ -150,6 +151,11 @@ export function ProductDetailScreen({ navigation, route }) {
     if (navigation.canGoBack()) navigation.goBack();
   };
 
+  // M3 extension (2026-08-19): the save heart, buyers only and never on
+  // your own product — same rules as every card (§A13/§7).
+  const { savedIndex, loadIndex, toggleSave } = useSavedProducts();
+  const canSave = role === 'buyer' && !ownerMode;
+
   const load = useCallback(
     async (isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
@@ -163,6 +169,7 @@ export function ProductDetailScreen({ navigation, route }) {
         // `categoryId`; the public one carries a nested `category`.
         const catRef = ownerMode ? product.categoryId : (product.category?.slug ?? product.category?.id);
         const defs = await catalogueApi.categoryAttributes(catRef).catch(() => []);
+        if (canSave) await loadIndex();
         setState({ loading: false, error: null, product, defs });
       } catch (error) {
         setState((s) => ({ ...s, loading: false, error: toAppError(error) }));
@@ -170,7 +177,7 @@ export function ProductDetailScreen({ navigation, route }) {
         if (isRefresh) setRefreshing(false);
       }
     },
-    [idOrSlug, ownerMode, ownerProductId],
+    [idOrSlug, ownerMode, ownerProductId, canSave, loadIndex],
   );
 
   useEffect(() => {
@@ -487,6 +494,30 @@ export function ProductDetailScreen({ navigation, route }) {
         style={[styles.statusScrim, { height: insets.top, opacity: circleOpacity }]}
       />
       {header}
+      {/* Save heart — buyers only, never on your own product (§A13). Fades
+          with the back circle; the title bar carries no duplicate. */}
+      {canSave ? (
+        <Animated.View
+          pointerEvents={barVisible ? 'none' : 'auto'}
+          style={[styles.heartOverlay, { top: insets.top + spacing[2], opacity: circleOpacity }]}
+        >
+          <Pressable
+            onPress={() => toggleSave(product, savedIndex[product.id])}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={savedIndex[product.id] != null ? 'Remove from saved' : 'Save product'}
+            accessibilityState={{ selected: savedIndex[product.id] != null }}
+            style={styles.backCircle}
+          >
+            <Ionicons
+              name={savedIndex[product.id] != null ? 'heart' : 'heart-outline'}
+              size={20}
+              color={savedIndex[product.id] != null ? colors.primary[600] : colors.ink[700]}
+              accessible={false}
+            />
+          </Pressable>
+        </Animated.View>
+      ) : null}
       {/* Revealed title bar — solid, above everything once scrolled. */}
       <Animated.View
         pointerEvents={barVisible ? 'auto' : 'none'}
@@ -621,6 +652,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 5, 23, 0.28)',
   },
   headerOverlay: { position: 'absolute', left: spacing[5], zIndex: 10 },
+  heartOverlay: { position: 'absolute', right: spacing[5], zIndex: 10 },
   titleBar: {
     position: 'absolute',
     top: 0,

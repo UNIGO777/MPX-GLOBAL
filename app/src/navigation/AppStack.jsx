@@ -13,7 +13,9 @@ import { CompanyProfileScreen } from '../screens/profile/CompanyProfileScreen.js
 import { ChangePasswordScreen } from '../screens/profile/ChangePasswordScreen.jsx';
 import { CategoryBrowseScreen } from '../screens/CategoryBrowseScreen.jsx';
 import { CategoryProductsScreen } from '../screens/CategoryProductsScreen.jsx';
+import { AiSearchScreen } from '../screens/AiSearchScreen.jsx';
 import { ProductCategoryPickerScreen } from '../screens/ProductCategoryPickerScreen.jsx';
+import { SavedItemsScreen } from '../screens/SavedItemsScreen.jsx';
 import { ProductDetailScreen } from '../screens/ProductDetailScreen.jsx';
 import { ProductFormScreen } from '../screens/ProductFormScreen.jsx';
 import { SupplierProfileScreen } from '../screens/SupplierProfileScreen.jsx';
@@ -91,6 +93,11 @@ export function AppStack({ role }) {
           tab; these two push over it. */}
       <Stack.Screen name="ProductCategoryPicker" component={ProductCategoryPickerScreen} />
       <Stack.Screen name="ProductForm" component={ProductFormScreen} />
+
+      {/* M3 (2026-08-19) — AI search (screen 4) + the buyer's saved list
+          (screen 8; buyer-only server-side, entry points buyer-only too). */}
+      <Stack.Screen name="AiSearch" component={AiSearchScreen} />
+      <Stack.Screen name="SavedItems" component={SavedItemsScreen} />
 
       <Stack.Screen name="KycEntityType" component={withUnverifiedGuard(EntityTypeScreen)} />
       <Stack.Screen name="KycDocumentType" component={withUnverifiedGuard(DocumentTypeScreen)} />

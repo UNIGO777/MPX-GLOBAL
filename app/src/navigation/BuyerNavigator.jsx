@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BuyerHomeScreen } from '../screens/BuyerHomeScreen.jsx';
 import { ProfileScreen } from '../screens/ProfileScreen.jsx';
+import { SearchHomeScreen } from '../screens/SearchHomeScreen.jsx';
 import { makePlaceholder } from '../screens/PlaceholderScreen.jsx';
 import { buildTabBarStyle, screenHeaderOptions, tabBarOptions } from './navigationTheme.js';
 import { tabIcon } from './tabIcon.jsx';
@@ -43,19 +44,10 @@ export function BuyerNavigator() {
       />
       <Tab.Screen
         name="BuyerSearch"
-        options={{ title: 'Search', tabBarLabel: 'Search', tabBarIcon: tabIcon('search') }}
-        // Not a dead end — Browse Categories (CategoryBrowseScreen) already
-        // covers real search-by-category today, so this points there instead
-        // of just apologising for a tab that isn't built yet.
-        component={makePlaceholder({
-          title: 'Search',
-          icon: 'search-outline',
-          blurb: "Full search is on the way. For now, Browse Categories from Home covers the same ground.",
-          module: 'Module 3 · Search & discovery',
-          milestone: 'M3',
-          actionLabel: 'Browse Categories',
-          actionRoute: 'CategoryBrowse',
-        })}
+        // LIVE (2026-08-19, M3 screen 1) — the tab was a placeholder since
+        // M1. headerShown: false — the screen draws its own header.
+        options={{ title: 'Search', tabBarLabel: 'Search', tabBarIcon: tabIcon('search'), headerShown: false }}
+        component={SearchHomeScreen}
       />
       <Tab.Screen
         name="BuyerEnquiries"

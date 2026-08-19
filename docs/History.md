@@ -175,6 +175,95 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-20 (later) — "searching not working" → it WAS working; the app failed to explain
+  itself. Copy fixed.** Owner typed **"cand"**, got 0 results, and reasonably read that as
+  broken. It isn't: the engine is native MongoDB `$text` (§A26 — never Atlas `$search`), which
+  matches **whole words only**, and prefix/as-you-type search was explicitly ruled out of scope
+  when Atlas was dropped. Verified against the live API: `cand` → 0 (suggests "hand"),
+  `candle` → 0 (suggests "candles"), `cotton` → 5. Web already says this out loud —
+  *"Search matches whole words — try a different word"* — and the app's zero state didn't.
+  The app now carries the same sentence (plus ", or remove a filter" only when filters are
+  actually on). ⚠️ Lesson worth keeping: a correct-but-unexplained constraint is
+  indistinguishable from a bug to the person using it — the empty state is where the
+  explanation belongs, not the changelog.
+- **2026-08-20 — 🐛 CRASH FIXED: `didYouMean` is an OBJECT, not a string** (owner hit it on
+  device: *"Objects are not valid as a React child (found: object with keys {term,
+  categorySlug})"*). The zero-results suggestion is `{ term, categorySlug }` — M3's search and
+  AI endpoints both return it that way, and web reads both halves. The app rendered the whole
+  object as a React child, so **any zero-result search crashed the results screen**, and the AI
+  screen would have printed `[object Object]`. Fixed in both: `.term` drives the re-search, and
+  `categorySlug` now also offers web's second way out of a dead end ("Or browse the matching
+  category") instead of being dropped. Reproduced exactly with the owner's own query — "I need
+  candies in bulk" → 0 results → `{term:'feed', categorySlug:'animal-feed-fodder'}`.
+  ⚠️ **Process note — how this got through:** the code was babel-checked and every *endpoint*
+  was probed, but `didYouMean` was only ever null in those probes (it is populated ONLY on zero
+  results), so the shape was never seen. Probing an endpoint's happy path is not the same as
+  probing the branch the UI renders. The zero-result path is now a case worth probing directly.
+  Also checked while in there, both fine: the Mac's LAN IP still matches `EXPO_PUBLIC_API_BASE_URL`,
+  and a real AI call takes ~4.5s against the app's 20s axios timeout (the logged
+  `/search/ai` "Network Error" was the backend being down earlier, not a timeout).
+- **2026-08-19 (later 5) — M3 app bug audit (owner: "check bug and fix all"): live-contract
+  probes + code review over the new batch; 3 real fixes.**
+  - **🐛 attr wire format**: `filterParams` emitted attributes as a NESTED object left to
+    axios' serializer. Rewritten to LITERAL bracket-string keys (`"attr[gsm][min]": "100"`),
+    exactly as web does — the wire format no longer depends on any client serialization rule.
+    Proven end-to-end with the app's own axios against the live server (200, correct totals).
+  - **🐛 category listings lost newest-first**: the M3 rewrite defaulted every context to
+    `sort:'relevance'`, silently changing M2's category-listing contract ("newest first").
+    `contextDefaults()` now keeps category arrivals on `newest`; every filter reset
+    (new search, type switch, clear) goes through it.
+  - **🐛 (caught by a combo probe) `attr` without `category` is a server 400** ("Pick a
+    category before filtering by specification"). Verified the UI cannot reach that state:
+    category-less facets return ZERO attributes, so no attribute group ever renders outside
+    category mode, and category mode always sends `category`. No code change needed — but the
+    probe is what proved it, not hope.
+  - Contract probes all green: supplier search returns `suppliers`; supplier facets collapse
+    to country+verified; `country` valid in product mode; `sort=relevance` valid; encoded
+    bracket attr keys parse; AI endpoint returns `suppliers` for supplier targets; boolean
+    attribute facets arrive with empty `options` (the modal's hardcoded Yes/No covers them).
+  - Minor: unused import dropped, `submitSearch` deps fixed. Known small gaps, stated not
+    hidden: the filters modal has no currency selector yet (INR-scoped price only, helper says
+    so); the detail screen's save heart fades out with the floating circle and has no
+    title-bar twin when scrolled.
+- **2026-08-19 (later 4) — App M3 SHIPPED: Search tab live, full-screen filters, AI search,
+  Saved items — plus the exporter-heart bug fixed.** All 8 M3 app screens now exist (5–7 were
+  already M2's screens; 2 was mostly the listing screen). Web's flow copied, not re-invented
+  (§0.1/§0.2 of the M3 app brief).
+  - **`SearchHomeScreen`** (screen 1 — the Search tab was a placeholder since M1): search pill
+    → results, ✨ AI card above the fold (headline feature), top-category grid → pre-filtered
+    results, Saved shortcut (buyer-only, absent otherwise). 🚫 NO recent-searches list — web's
+    device-local Recent row was a web-specific owner carve-out; the brief (§0.3) requires the
+    app's own explicit go-ahead, which hasn't been given. Buyer Home's coming-soon search bar +
+    filter button now navigate here for real (ledger row → Done).
+  - **`SearchFiltersModal`** (screen 3): full-screen, facets lazy-load from `GET /public/facets`
+    (counts rendered VERBATIM), live "Show N results" count (debounced pageSize:1 search,
+    sequence-guarded), apply-on-button, Clear-all keeps sort, commit-on-blur ranges (never
+    per-keystroke), filters that can't narrow are dropped, supplier mode collapses to
+    Country+Verified, goods-only groups vanish for services, dynamic attribute groups
+    (number bounds / select counts / boolean). Shared `filterParams()` so the modal and the
+    results screen can never disagree on the wire format (bracket-notation `attr[k][min]`).
+  - **`CategoryProductsScreen` rewired** (screen 2): Products|Suppliers toggle in search mode
+    (supplier rows + navigation; switching DROPS product filters visibly), removable
+    applied-filter chips, "new search clears filters", price-sort tier note ("Sorted by price
+    in INR; other currencies and price-on-request after"), `didYouMean` tappable on zero
+    results, sort moved into the modal (relevance default).
+  - **`AiSearchScreen`** (screen 4, full page like web): composer + example chips → ONE
+    `POST /search/ai` call which returns message + extracted + page-1 results; "Thinking…"
+    cancellable (sequence-guarded); `fallback:true` renders as a NORMAL search with one quiet
+    "Showing keyword results." line; per-org quota → calm copy; results are the same shared
+    cards; "See all" hands off to the results screen. V1 bound stated in-file: renders the
+    response's own page 1, pagination lives on the results screen.
+  - **`SavedItemsScreen`** (screen 8, buyer-only): Products|Suppliers tabs over `GET /saved`,
+    optimistic unsave (snackbar, no confirm), greyed "Currently unavailable" rows stay listed
+    and tappable (never explains WHY — §1.3), inviting first-run empty state. Entries: Search
+    home's heart button (buyer-only) — the Profile-row entry the brief also suggests is left
+    for a future pass.
+  - **🐛 Exporter-heart bug fixed**: hearts rendered for exporter sessions on the listing +
+    supplier screens (server would 403 the tap). Now buyer-only and ABSENT otherwise (§A13/§7)
+    everywhere, including the new save heart on product detail (never on your own product).
+  - Babel-checked ×11. ⚠️ Backend on :3000 was down again (nothing listening) — restarted with
+    `npm start` (log: /tmp/mpx-backend.log); contracts (facets shape, AI response) verified
+    against the LIVE server before building.
 - **2026-08-19 (later 3) — M2 app: the three remaining brief gaps closed.**
   - **Draft-cap explained BEFORE the form** (brief §5's "the Add action explains rather than
     silently failing"): new `utils/productCaps.js` → `draftCapBlock(caps)` returns the message
