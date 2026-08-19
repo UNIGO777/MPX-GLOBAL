@@ -135,7 +135,68 @@ async function assertTargetExists({ kind, targetId }) {
 export async function listFeatured() {
   // The admin screen shows EVERYTHING — inactive and expired rows included.
   // Hiding them would leave an admin unable to find the row they need to fix.
-  return FeaturedItem.find({}).sort(CURATED_SORT).lean();
+  const rows = await FeaturedItem.find({}).sort(CURATED_SORT).lean();
+
+  // The pointer rule's admin half (M6 brief §3): each row must show what it
+  // points AT (identity lookup, NO availability filter — a dead pointer still
+  // names its target) and whether that target still resolves on the landing
+  // page (the same strict rules the public read applies).
+  const ids = { product: [], category: [], supplier: [] };
+  for (const r of rows) if (ids[r.kind]) ids[r.kind].push(r.targetId);
+
+  const [products, categories, suppliers, livePublicProducts] = await Promise.all([
+    ids.product.length
+      ? Product.find({ _id: { $in: ids.product } }).select('name slug images').lean()
+      : [],
+    ids.category.length
+      ? Category.find({ _id: { $in: ids.category } }).select('name slug image active').lean()
+      : [],
+    ids.supplier.length
+      ? Organisation.find({ _id: { $in: ids.supplier } })
+          .select('name slug logo exporterSide isActive')
+          .lean()
+      : [],
+    ids.product.length
+      ? Product.find({ _id: { $in: ids.product }, ...(await buildAvailabilityFilter()) })
+          .select('_id')
+          .lean()
+      : [],
+  ]);
+
+  const byId = {
+    product: new Map(products.map((t) => [String(t._id), t])),
+    category: new Map(categories.map((t) => [String(t._id), t])),
+    supplier: new Map(suppliers.map((t) => [String(t._id), t])),
+  };
+  const liveProduct = new Set(livePublicProducts.map((t) => String(t._id)));
+
+  return rows.map((row) => {
+    if (row.kind === 'banner') return row;
+    const t = byId[row.kind].get(String(row.targetId)) ?? null;
+    const live =
+      t &&
+      (row.kind === 'product'
+        ? liveProduct.has(String(t._id))
+        : row.kind === 'category'
+          ? t.active === true
+          : t.exporterSide === true && t.isActive === true);
+    return {
+      ...row,
+      _target: t
+        ? {
+            name: t.name,
+            slug: t.slug ?? null,
+            image:
+              (row.kind === 'product'
+                ? t.images?.[0]?.url
+                : row.kind === 'supplier'
+                  ? t.logo
+                  : t.image) ?? null,
+          }
+        : null,
+      _targetLive: Boolean(live),
+    };
+  });
 }
 
 export async function createFeatured({ data, actor, meta }) {

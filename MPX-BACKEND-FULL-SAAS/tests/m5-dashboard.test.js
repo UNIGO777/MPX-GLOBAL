@@ -100,6 +100,55 @@ describe('M5-E · gate (V1)', () => {
   });
 });
 
+describe('M5-E · 14-day series (owner override, 2026-08-18)', () => {
+  it('buckets by UTC day, zero-fills, and the window is exactly 14 days', async () => {
+    // Two orgs today, one three days ago — the fixture exporter org also counts.
+    await makeUser('exporter', { exporterSide: true, country: 'IN' });
+    const old = await makeUser('exporter', { exporterSide: true, country: 'IN' });
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    // Native driver, not Mongoose: `timestamps: true` makes createdAt
+    // immutable, so a Mongoose update silently drops the backdate.
+    await Organisation.collection.updateOne({ _id: old.org._id }, { $set: { createdAt: threeDaysAgo } });
+
+    const res = await request(app).get('/admin/dashboard').set(bearer(sa.token));
+    const { series } = res.body;
+    expect(series.days).toHaveLength(14);
+    expect(series.organisations).toHaveLength(14);
+    // The last entry is TODAY's bucket and the axis is date-keyed.
+    expect(series.days[13]).toBe(new Date().toISOString().slice(0, 10));
+    expect(series.organisations[13]).toBeGreaterThanOrEqual(2);
+    expect(series.organisations[10]).toBeGreaterThanOrEqual(1);
+    // A quiet day is 0, not a hole.
+    expect(series.organisations.every((n) => typeof n === 'number')).toBe(true);
+  });
+
+  it('each series needs its own permission, and no permission means NO series at all', async () => {
+    const orgOnly = await makeUser('employee', {}, ['organisation:read']);
+    const r1 = await request(app).get('/admin/dashboard').set(bearer(orgOnly.token));
+    expect(r1.body.series.organisations).toBeDefined();
+    expect(r1.body.series.enquiries).toBeUndefined();
+
+    const none = await makeUser('employee', {}, ['user:read']);
+    const r2 = await request(app).get('/admin/dashboard').set(bearer(none.token));
+    // Not an empty axis — null, so the client can hide the panel outright.
+    expect(r2.body.series).toBeNull();
+  });
+});
+
+describe('M5-E · chart window (owner, 2026-08-19)', () => {
+  it('days=7 returns a 7-day axis; the default stays 14', async () => {
+    const seven = await request(app).get('/admin/dashboard?days=7').set(bearer(sa.token));
+    expect(seven.body.series.days).toHaveLength(7);
+    const dflt = await request(app).get('/admin/dashboard').set(bearer(sa.token));
+    expect(dflt.body.series.days).toHaveLength(14);
+  });
+
+  it('the window is an allowlist — an arbitrary number is a 400, not a giant aggregation', async () => {
+    expect((await request(app).get('/admin/dashboard?days=100000').set(bearer(sa.token))).status).toBe(400);
+    expect((await request(app).get('/admin/dashboard?days=15').set(bearer(sa.token))).status).toBe(400);
+  });
+});
+
 describe('M5-E · tiles are filtered by what the caller already holds (D1)', () => {
   it('exporter:verify alone shows the exporter queue and NOT the buyer one', async () => {
     const emp = await makeUser('employee', {}, ['exporter:verify']);

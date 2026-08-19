@@ -138,7 +138,7 @@ export function ThreadView({
   const nameFor = (senderType) => {
     if (viewerSide !== 'staff') return senderType === viewerSide ? null : counterparty;
     if (senderType === 'buyer') return conversation?.buyerOrg?.name ?? 'Buyer';
-    if (senderType === 'exporter') return conversation?.exporterOrg?.name ?? 'Seller';
+    if (senderType === 'exporter') return conversation?.exporterOrg?.name ?? 'Exporter';
     return null;
   };
 

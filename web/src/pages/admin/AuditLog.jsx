@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
+import { adminApi } from '../../api/admin.js';
+import { actionLabel, actionTone } from '../../lib/auditFormat.js';
 import { adminCatalogueApi, adminCatalogueKeys } from '../../api/adminCatalogue.js';
+import { Combobox } from '../../components/ui/Combobox.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { Drawer } from '../../components/ui/Drawer.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
@@ -10,7 +13,7 @@ import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Field, inputClasses } from '../../components/ui/Field.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
-import { ListIcon } from '../../components/ui/icons.jsx';
+import { ListIcon, XIcon } from '../../components/ui/icons.jsx';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 
 /**
@@ -32,20 +35,6 @@ import { AdminLayout } from '../../layouts/AdminLayout.jsx';
  */
 const PAGE_SIZE = 20; // the server caps this route at 50
 
-/** Chip tint per action family — the word always rides with the colour. */
-function actionTone(action) {
-  if (/takedown|reject|delete|deactivate|purge/.test(action)) return 'bg-danger-50 text-danger-700';
-  if (/restore|verify|approve|activate|publish/.test(action)) return 'bg-success-50 text-success-700';
-  return 'bg-ink-100 text-ink-700';
-}
-
-/** Turn `product.takedown` into "Product taken down". */
-function actionLabel(action) {
-  const [entity, ...rest] = action.split('.');
-  const verb = rest.join(' ').replace(/[._]/g, ' ');
-  const noun = entity.charAt(0).toUpperCase() + entity.slice(1);
-  return `${noun} ${verb}`.trim();
-}
 
 function timestamp(value) {
   if (!value) return '—';
@@ -76,11 +65,46 @@ function diffRows(before, after) {
   }));
 }
 
+/**
+ * The targets an audit row can carry. Not read from the server: there is no
+ * endpoint that enumerates them, and an allowlist here is better than a free
+ * text box that 400s on a typo. Add to this when a new entity starts writing
+ * audit rows.
+ */
+const ENTITY_TYPE_OPTIONS = [
+  { value: '', label: 'Any target' },
+  { value: 'Organisation', label: 'Organisation' },
+  { value: 'User', label: 'User' },
+  { value: 'Product', label: 'Product' },
+  { value: 'Conversation', label: 'Conversation' },
+  { value: 'Category', label: 'Category' },
+];
+
 export function AuditLog() {
   const [params, setParams] = useSearchParams();
   const [openId, setOpenId] = useState(null);
 
   const action = params.get('action') ?? '';
+  /**
+   * An organisation filter arrives from the Organisation detail's "Open full
+   * record". The endpoint indexes `orgId` precisely because a company's history
+   * is NOT expressible as entityType+entityId — a product takedown carries
+   * entityType 'Product' with the exporter's orgId, so filtering by target
+   * would miss most of a company's own record (audit.validators.js).
+   */
+  const orgId = params.get('orgId') ?? '';
+  /**
+   * §6 lists FOUR filters — actor · action · date range · target — and only the
+   * middle two were built. The endpoint has always accepted `actorId`, and a
+   * target as the PAIR `entityType` + `entityId` (the pair is what makes it an
+   * index lookup, so `entityId` alone is a 400).
+   *
+   * The actor is a picker, not an id box: nobody types an ObjectId from memory,
+   * and the set of possible actors is exactly the staff list.
+   */
+  const actorId = params.get('actorId') ?? '';
+  const entityType = params.get('entityType') ?? '';
+  const entityId = params.get('entityId') ?? '';
   const from = params.get('from') ?? '';
   const to = params.get('to') ?? '';
   const page = Math.max(1, Number(params.get('page')) || 1);
@@ -94,9 +118,27 @@ export function AuditLog() {
     ...(action ? { action } : {}),
     ...(from ? { from } : {}),
     ...(to ? { to } : {}),
+    ...(orgId ? { orgId } : {}),
+    ...(actorId ? { actorId } : {}),
+    ...(entityType ? { entityType } : {}),
+    ...(entityType && entityId ? { entityId } : {}),
     page,
     pageSize: PAGE_SIZE,
   };
+
+  /**
+   * Everyone who can act. Staff only — a buyer or exporter never writes an audit
+   * row, so listing them would be a picker full of names that can never match.
+   */
+  const staff = useQuery({
+    queryKey: ['admin', 'users', { role: 'employee,superadmin', pageSize: 100 }],
+    queryFn: () => adminApi.listUsers({ role: 'employee,superadmin', pageSize: 100 }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const actorOptions = [
+    { value: '', label: 'Any actor' },
+    ...(staff.data?.rows ?? []).map((u) => ({ value: u.id, label: `${u.name} · ${u.role}` })),
+  ];
 
   const list = useQuery({
     queryKey: adminCatalogueKeys.audit(query),
@@ -119,7 +161,7 @@ export function AuditLog() {
 
   const rows = list.data?.entries ?? [];
   const total = list.data?.total ?? 0;
-  const hasFilters = Boolean(action || from || to);
+  const hasFilters = Boolean(action || from || to || orgId || actorId || entityType || entityId);
 
   return (
     <AdminLayout>
@@ -179,10 +221,82 @@ export function AuditLog() {
               )}
             </Field>
           </div>
+          <div className="min-w-[200px] flex-1">
+            <Field label="Actor">
+              {(id) => (
+                <Combobox
+                  id={id}
+                  value={actorId}
+                  placeholder="Any actor"
+                  options={actorOptions}
+                  onChange={(v) => setFilter({ actorId: v })}
+                />
+              )}
+            </Field>
+          </div>
+          <div className="w-full sm:w-44">
+            <Field label="Target type">
+              {(id) => (
+                <Combobox
+                  id={id}
+                  value={entityType}
+                  placeholder="Any target"
+                  options={ENTITY_TYPE_OPTIONS}
+                  onChange={(v) => setFilter({ entityType: v, ...(v ? {} : { entityId: '' }) })}
+                />
+              )}
+            </Field>
+          </div>
+          <div className="min-w-[200px] flex-1">
+            {/* 🔴 Disabled until a type is chosen: `entityId` without
+                `entityType` is a 400 by design — the index is the PAIR, and an
+                id alone would scan every collection. */}
+            <Field
+              label="Target ID"
+              helper={entityType ? 'Paste the id' : 'Pick a target type first'}
+            >
+              {(id) => (
+                <input
+                  id={id}
+                  disabled={!entityType}
+                  className={inputClasses(false)}
+                  placeholder={entityType ? `${entityType} id` : '—'}
+                  defaultValue={entityId}
+                  onKeyDown={(e) => e.key === 'Enter' && setFilter({ entityId: e.currentTarget.value.trim() })}
+                  onBlur={(e) => e.target.value.trim() !== entityId && setFilter({ entityId: e.target.value.trim() })}
+                />
+              )}
+            </Field>
+          </div>
           {hasFilters && (
             <Button size="sm" variant="ghost" onClick={() => setParams({})}>Clear filters</Button>
           )}
         </div>
+
+        {/* There is no organisation picker on this screen, so a scoped record
+            has to announce itself — otherwise one company's history is
+            indistinguishable from the whole platform's. */}
+        {orgId && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-800 ring-1 ring-inset ring-primary-100">
+              One company&apos;s record
+              <Link
+                to={`/admin/organisations/${orgId}`}
+                className="font-semibold text-primary-700 hover:underline"
+              >
+                open company
+              </Link>
+              <button
+                type="button"
+                onClick={() => setFilter({ orgId: '' })}
+                aria-label="Show the whole platform's record"
+                className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-800"
+              >
+                <XIcon className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          </div>
+        )}
         {inverted && (
           <p className="mt-3 text-sm text-danger" role="alert">
             The end date is before the start date — no window to search.

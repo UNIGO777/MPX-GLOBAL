@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '../../api/admin.js';
 import { config } from '../../config.js';
 import { apiError } from '../../lib/format.js';
-import { PERMISSION_LIST, PERMISSION_LABELS } from '../../lib/permissions.js';
+import { PERMISSION_GROUPS, PERMISSION_LIST, PERMISSION_LABELS } from '../../lib/permissions.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -62,20 +62,31 @@ function generatePassword() {
 }
 
 function PermissionChecklist({ value, onToggle, disabled }) {
+  // §10 — grouped by area, matching the server catalogue: 14 flat checkboxes
+  // stopped being scannable when the set grew from 3.
   return (
-    <div className="space-y-1">
-      {PERMISSION_LIST.map((p) => (
-        <Checkbox
-          key={p.value}
-          plain
-          label={p.label}
-          help={p.help}
-          checked={value.includes(p.value)}
-          disabled={disabled}
-          onChange={(checked) =>
-            onToggle(checked ? [...value, p.value] : value.filter((v) => v !== p.value))
-          }
-        />
+    <div className="space-y-4">
+      {PERMISSION_GROUPS.map((g) => (
+        <fieldset key={g.group}>
+          <legend className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+            {g.group}
+          </legend>
+          <div className="space-y-1">
+            {g.items.map((p) => (
+              <Checkbox
+                key={p.value}
+                plain
+                label={p.label}
+                help={p.help}
+                checked={value.includes(p.value)}
+                disabled={disabled}
+                onChange={(checked) =>
+                  onToggle(checked ? [...value, p.value] : value.filter((v) => v !== p.value))
+                }
+              />
+            ))}
+          </div>
+        </fieldset>
       ))}
     </div>
   );

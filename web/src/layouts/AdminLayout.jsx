@@ -1,16 +1,7 @@
 import { ConsoleShell } from './ConsoleShell.jsx';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { can } from '../auth/roleHome.js';
-import {
-  HomeIcon,
-  UsersIcon,
-  ShieldIcon,
-  UserIcon,
-  ListIcon,
-  BoxIcon,
-  ChatIcon,
-  SettingsIcon,
-} from '../components/ui/icons.jsx';
+import { AlertIcon, BoxIcon, BuildingIcon, ChatIcon, HomeIcon, ImageIcon, ListIcon, SettingsIcon, ShieldIcon, UserIcon, UsersIcon } from '../components/ui/icons.jsx';
 
 /**
  * Staff console. Same standard shell as the buyer/exporter panels
@@ -23,7 +14,13 @@ import {
  * docs/UiWebNotes.md.
  */
 const NAV = [
-  { label: 'Dashboard', Icon: HomeIcon, soon: true },
+  { to: '/admin/dashboard', label: 'Dashboard', Icon: HomeIcon },
+  {
+    to: '/admin/organisations',
+    label: 'Organisations',
+    Icon: BuildingIcon,
+    perms: ['organisation:read'],
+  },
   { to: '/admin/users', label: 'Users', Icon: UsersIcon, perms: ['user:read'] },
   {
     to: '/admin/verification',
@@ -51,6 +48,8 @@ const NAV = [
   },
   { to: '/admin/staff', label: 'Staff', Icon: UserIcon, superadminOnly: true },
   { to: '/admin/audit', label: 'Audit log', Icon: ListIcon, perms: ['audit:read'], dividerBefore: true },
+  { to: '/admin/errors', label: 'Errors', Icon: AlertIcon, perms: ['errorlog:read'] },
+  { to: '/admin/featured', label: 'Featured', Icon: ImageIcon, perms: ['featured:manage'] },
   { to: '/admin/settings', label: 'Settings', Icon: SettingsIcon },
 ];
 

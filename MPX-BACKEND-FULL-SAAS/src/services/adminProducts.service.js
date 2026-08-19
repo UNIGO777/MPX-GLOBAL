@@ -101,7 +101,15 @@ export async function listAdminProducts({ category, status, seller, q, nearingPu
               // 2026-08-11); the public projections are untouched.
               image: { $arrayElemAt: ['$images.url', 0] },
               category: { id: '$category._id', name: '$category.name', slug: '$category.slug' },
-              seller: { orgId: '$org._id', name: '$org.name', takedownCount: '$org.takedownCount' },
+              // `slug` addresses the PUBLIC profile — §4 asks a monitoring row to
+              // reach the admin Organisation AND the public page, which are two
+              // different destinations.
+              seller: {
+                orgId: '$org._id',
+                name: '$org.name',
+                slug: '$org.slug',
+                takedownCount: '$org.takedownCount',
+              },
             },
           },
         ],

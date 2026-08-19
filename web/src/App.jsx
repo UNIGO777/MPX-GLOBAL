@@ -67,6 +67,15 @@ const CategoryManager = lazy(() =>
 const AttributeManager = lazy(() =>
   import('./pages/admin/AttributeManager.jsx').then((m) => ({ default: m.AttributeManager })),
 );
+const OrganisationDetail = lazy(() =>
+  import('./pages/admin/OrganisationDetail.jsx').then((m) => ({ default: m.OrganisationDetail })),
+);
+const Dashboard = lazy(() =>
+  import('./pages/admin/Dashboard.jsx').then((m) => ({ default: m.Dashboard })),
+);
+const Organisations = lazy(() =>
+  import('./pages/admin/Organisations.jsx').then((m) => ({ default: m.Organisations })),
+);
 const ProductMonitoring = lazy(() =>
   import('./pages/admin/ProductMonitoring.jsx').then((m) => ({ default: m.ProductMonitoring })),
 );
@@ -78,6 +87,12 @@ const ConversationViewer = lazy(() =>
 );
 const AuditLog = lazy(() =>
   import('./pages/admin/AuditLog.jsx').then((m) => ({ default: m.AuditLog })),
+);
+const ErrorLog = lazy(() =>
+  import('./pages/admin/ErrorLog.jsx').then((m) => ({ default: m.ErrorLog })),
+);
+const Featured = lazy(() =>
+  import('./pages/admin/Featured.jsx').then((m) => ({ default: m.Featured })),
 );
 const ComingSoon = lazy(() =>
   import('./pages/admin/ComingSoon.jsx').then((m) => ({ default: m.ComingSoon })),
@@ -244,6 +259,8 @@ export function App() {
                     </Suspense>
                   }
                 >
+                  <Route path="/admin/organisations" element={<Organisations />} />
+                  <Route path="/admin/organisations/:id" element={<OrganisationDetail />} />
                   <Route path="/admin/users" element={<Users />} />
                   <Route path="/admin/categories" element={<CategoryManager />} />
                   <Route path="/admin/categories/:id/attributes" element={<AttributeManager />} />
@@ -263,8 +280,10 @@ export function App() {
                         rename from a permission problem. */}
                     <Route path="/admin/employees" element={<Navigate to="/admin/staff" replace />} />
                   </Route>
-                  <Route path="/admin/dashboard" element={<ComingSoon title="Dashboard" />} />
+                  <Route path="/admin/dashboard" element={<Dashboard />} />
                   <Route path="/admin/audit" element={<AuditLog />} />
+                  <Route path="/admin/errors" element={<ErrorLog />} />
+                  <Route path="/admin/featured" element={<Featured />} />
                   <Route path="/admin/settings" element={<ComingSoon title="Settings" />} />
                   <Route path="/admin/no-access" element={<NoAccess />} />
                 </Route>

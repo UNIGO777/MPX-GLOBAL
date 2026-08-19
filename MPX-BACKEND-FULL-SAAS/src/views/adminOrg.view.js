@@ -32,6 +32,10 @@ export function orgListView(org, liveProducts) {
     // Exports" rows are otherwise indistinguishable.
     slug: org.slug ?? null,
     country: org.country ?? null,
+    // The company's own mark, so the list identifies a company the way every
+    // other surface does. Public data — the seller page already shows it — and
+    // it is not a column: it rides in the company cell beside the name.
+    logo: org.logo ?? null,
     verification: org.kycStatus,
     products: liveProducts ?? 0,
     takedowns: org.takedownCount ?? 0,
