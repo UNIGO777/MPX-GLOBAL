@@ -5,6 +5,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -19,7 +20,7 @@ import { EmptyState } from '../components/Feedback.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useSavedProducts } from '../hooks/useSavedProducts.js';
-import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/index.js';
+import { colors, radii, shadows, spacing, typography, MIN_TOUCH_TARGET } from '../theme/index.js';
 import { toAppError } from '../utils/errors.js';
 
 /**
@@ -47,7 +48,16 @@ import { toAppError } from '../utils/errors.js';
  * results (page 1). "See more" hands off to the regular results screen with
  * the query — same engine, and pagination/filter-editing live there.
  */
-const EXAMPLES = ['cheap cotton fabric in bulk', 'verified textile suppliers in India', 'industrial solvent under 100'];
+// Each example carries an icon: three identical text rows read as a list of
+// strings, whereas an icon makes each one a distinct *kind* of question —
+// a product, a supplier, a budget — which is what they are demonstrating.
+const EXAMPLES = [
+  { text: 'cheap cotton fabric in bulk', icon: 'layers-outline' },
+  { text: 'verified textile suppliers in India', icon: 'shield-checkmark-outline' },
+  { text: 'industrial solvent under 100', icon: 'flask-outline' },
+];
+
+const MAX_QUERY = 500;
 
 export function AiSearchScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -71,6 +81,14 @@ export function AiSearchScreen({ navigation }) {
         const [res] = await Promise.all([searchApi.aiSearch(q), isBuyer ? loadIndex() : Promise.resolve()]);
         if (seq.current !== mySeq) return; // cancelled or superseded
         setResult({ ...res, query: q });
+        // Clear the box on SUCCESS only (owner, 2026-08-20). The query it ran
+        // is still on screen in the count line, so nothing is lost — and the
+        // docked composer is "search something else", which reads wrong
+        // pre-filled with what you just searched.
+        //
+        // Deliberately NOT cleared on failure: after an error the text is the
+        // only copy of what they typed, and they will most likely retry it.
+        setQuery('');
       } catch (e) {
         if (seq.current !== mySeq) return;
         const err = toAppError(e);
@@ -107,55 +125,120 @@ export function AiSearchScreen({ navigation }) {
     <View style={styles.screen}>
       <StatusBar style="dark" />
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        {/* 2026-08-20 — this screen is the buyer bar's CENTRE TAB, so it is
+            always a tab root. The old back arrow was rendered behind a
+            `canGoBack()` check, but from inside a tab navigator that is TRUE
+            whenever another tab was visited first — so it appeared on a root
+            screen and "went back" to whichever tab you happened to come from.
+            Removed: the tab bar is the way out. */}
         <View style={[styles.header, { paddingTop: insets.top + spacing[2] }]}>
-          <Pressable
-            onPress={() => navigation.canGoBack() && navigation.goBack()}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.ink[900]} />
-          </Pressable>
-          <View style={styles.titleRow}>
-            <Ionicons name="sparkles" size={20} color={colors.primary[600]} accessible={false} />
-            <Text style={styles.title}>AI Search</Text>
+          <View style={styles.headerMark}>
+            <Ionicons name="sparkles" size={15} color={colors.white} accessible={false} />
           </View>
+          <Text style={styles.title}>AI Search</Text>
         </View>
 
         {result == null && !thinking ? (
-          /* Composer state — before any search. */
-          <View style={styles.composerScreen}>
-            <Text style={styles.lead}>Describe what you're sourcing, in plain words.</Text>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder='e.g. "cheap cotton fabric in bulk"'
-              placeholderTextColor={colors.ink[400]}
-              multiline
-              maxLength={500}
-              style={styles.composer}
-              accessibilityLabel="Describe what you need"
-            />
-            <View style={styles.exampleWrap}>
-              {EXAMPLES.map((ex) => (
+          /* Composer state — before any search. Scrollable so the content
+             still reaches the button on a short screen with the keyboard up. */
+          <ScrollView
+            // Plain bottom padding: the tab bar is a flow sibling below this
+            // ScrollView, not an overlay, so its height needs no reserving
+            // here — and neither does the safe-area inset, which the bar
+            // already pads for.
+            contentContainerStyle={styles.composerScreen}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Hero — this screen's whole proposition in two lines. Without it
+                the page opened on a bare label above an empty box, which is
+                what made it feel unfinished. */}
+            <View style={styles.hero}>
+              <View style={styles.heroMark}>
+                <Ionicons name="sparkles" size={26} color={colors.white} accessible={false} />
+              </View>
+              <Text style={styles.heroTitle}>Tell us what you need</Text>
+              <Text style={styles.heroLead}>
+                Plain words work best — the product, the quantity, the budget.
+              </Text>
+            </View>
+
+            {/* Composer card — the input and its action live in ONE raised
+                card, so the box reads as a thing you write in rather than a
+                stray outline with a detached button below it. */}
+            <View style={styles.composerCard}>
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder='e.g. "cheap cotton fabric in bulk, 500 metres"'
+                placeholderTextColor={colors.ink[400]}
+                multiline
+                maxLength={MAX_QUERY}
+                style={styles.composerInput}
+                accessibilityLabel="Describe what you need"
+                // Android draws a hard black rule under a multiline input by
+                // default — it was showing through the card as a stray line.
+                underlineColorAndroid="transparent"
+              />
+              <View style={styles.composerFoot}>
+                <Text style={styles.counter}>
+                  {query.length}/{MAX_QUERY}
+                </Text>
                 <Pressable
-                  key={ex}
-                  onPress={() => setQuery(ex)}
+                  onPress={() => run()}
+                  disabled={query.trim().length < 2}
                   accessibilityRole="button"
-                  style={styles.exampleChip}
+                  accessibilityLabel="Search with AI"
+                  accessibilityState={{ disabled: query.trim().length < 2 }}
+                  style={({ pressed }) => [
+                    styles.sendButton,
+                    query.trim().length < 2 && styles.sendButtonDisabled,
+                    pressed && styles.sendButtonPressed,
+                  ]}
                 >
-                  <Text style={styles.exampleText}>{ex}</Text>
+                  <Ionicons name="sparkles" size={16} color={colors.white} accessible={false} />
+                  <Text style={styles.sendLabel}>Search</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            {error ? (
+              <View style={styles.errorCard}>
+                <Ionicons name="information-circle-outline" size={16} color={colors.muted} accessible={false} />
+                <Text style={styles.errorLine}>{error}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.examples}>
+              <Text style={styles.examplesTitle}>Try an example</Text>
+              {EXAMPLES.map((ex, i) => (
+                <Pressable
+                  key={ex.text}
+                  onPress={() => run(ex.text)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Search: ${ex.text}`}
+                  style={({ pressed }) => [
+                    styles.exampleRow,
+                    i === 0 && styles.exampleRowFirst,
+                    i === EXAMPLES.length - 1 && styles.exampleRowLast,
+                    pressed && styles.exampleRowPressed,
+                  ]}
+                >
+                  <View style={styles.exampleIcon}>
+                    <Ionicons name={ex.icon} size={16} color={colors.primary[600]} accessible={false} />
+                  </View>
+                  <Text style={styles.exampleText} numberOfLines={1}>
+                    {ex.text}
+                  </Text>
+                  <Ionicons name="arrow-forward" size={16} color={colors.ink[400]} accessible={false} />
                 </Pressable>
               ))}
             </View>
-            {error ? <Text style={styles.errorLine}>{error}</Text> : null}
-            <Button label="Search with AI" icon="sparkles" onPress={() => run()} disabled={query.trim().length < 2} />
-          </View>
+          </ScrollView>
         ) : thinking ? (
           <View style={styles.thinking}>
             <ActivityIndicator size="large" color={colors.primary[600]} />
-            <Text style={styles.thinkingText}>Thinking…</Text>
+            <Text style={styles.thinkingText}>Reading your request…</Text>
             <Text style={styles.thinkingHint}>This can take a few seconds</Text>
             <Button label="Cancel" variant="secondary" fullWidth={false} onPress={cancel} />
           </View>
@@ -235,17 +318,20 @@ export function AiSearchScreen({ navigation }) {
                 }
               />
             }
-            contentContainerStyle={[
-              styles.listContent,
-              { paddingBottom: Math.max(insets.bottom, spacing[6]) + spacing[16] + spacing[8] },
-            ]}
+            // Same reasoning as the composer: the dock is a flow sibling
+            // directly below, so the list's viewport already ends above it.
+            contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
           />
         )}
 
-        {/* Docked composer — "search something else" (results state only). */}
+        {/* Docked composer — "search something else" (results state only).
+            🔴 No safe-area inset on it. The tab bar sits BELOW this dock in
+            normal flow (`buildTabBarStyle` sets no `position: absolute`) and
+            already pads for the inset itself — adding it again stacked a
+            second gesture-bar's worth of dead space under the field. */}
         {result != null && !thinking ? (
-          <View style={[styles.dock, { paddingBottom: Math.max(insets.bottom, spacing[4]) }]}>
+          <View style={styles.dock}>
             <TextInput
               value={query}
               onChangeText={setQuery}
@@ -285,35 +371,128 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.surface.border,
   },
-  backButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'flex-start', justifyContent: 'center' },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
+  headerMark: {
+    width: 26,
+    height: 26,
+    borderRadius: radii.full,
+    backgroundColor: colors.primary[600],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: { ...typography.h2, color: colors.ink[900] },
 
-  composerScreen: { padding: spacing[5], gap: spacing[4] },
-  lead: { ...typography.body, color: colors.muted },
-  composer: {
-    ...typography.body,
-    color: colors.ink[900],
-    minHeight: 110,
-    textAlignVertical: 'top',
+  composerScreen: { padding: spacing[5], paddingBottom: spacing[8], gap: spacing[5] },
+
+  // Hero — solid brand navy. The one place in the app where a full-bleed
+  // colour block is warranted: it marks AI as a distinct capability rather
+  // than another white form.
+  hero: {
+    backgroundColor: colors.primary[700],
+    borderRadius: radii.lg,
+    padding: spacing[5],
+    gap: spacing[2],
+  },
+  heroMark: {
+    width: 52,
+    height: 52,
+    borderRadius: radii.full,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing[1],
+  },
+  heroTitle: { ...typography.h2, color: colors.white },
+  heroLead: { ...typography.body, color: colors.primary[100] },
+
+  composerCard: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.surface.border,
     borderRadius: radii.lg,
-    padding: spacing[4],
+    backgroundColor: colors.surface.DEFAULT,
+    overflow: 'hidden',
+    ...shadows.card,
   },
-  exampleWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
-  exampleChip: {
+  composerInput: {
+    ...typography.body,
+    color: colors.ink[900],
+    minHeight: 88,
+    textAlignVertical: 'top',
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[2],
+  },
+  composerFoot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingBottom: spacing[3],
+    paddingTop: spacing[1],
+  },
+  counter: { ...typography.tiny, color: colors.ink[400] },
+  sendButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    minHeight: 40,
+    paddingHorizontal: spacing[4],
+    borderRadius: radii.full,
+    backgroundColor: colors.primary[600],
+  },
+  sendButtonPressed: { backgroundColor: colors.primary[700] },
+  sendButtonDisabled: { backgroundColor: colors.ink[300] },
+  sendLabel: { ...typography.label, color: colors.white },
+
+  errorCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing[2],
+    backgroundColor: colors.ink[50],
+    borderRadius: radii.lg,
+    padding: spacing[3],
+  },
+  errorLine: { ...typography.caption, color: colors.muted, flex: 1 },
+
+  // Examples as a grouped list, not loose pills — a list says "pick one",
+  // which is the actual instruction.
+  examples: { gap: 0 },
+  examplesTitle: { ...typography.label, color: colors.ink[900], marginBottom: spacing[3] },
+  exampleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    minHeight: MIN_TOUCH_TARGET + spacing[2],
+    paddingHorizontal: spacing[4],
+    backgroundColor: colors.surface.DEFAULT,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surface.border,
+    // Rows share a border, so only the outer corners round.
+    marginTop: -StyleSheet.hairlineWidth,
+  },
+  exampleRowFirst: {
+    marginTop: 0,
+    borderTopLeftRadius: radii.lg,
+    borderTopRightRadius: radii.lg,
+  },
+  exampleRowLast: {
+    borderBottomLeftRadius: radii.lg,
+    borderBottomRightRadius: radii.lg,
+  },
+  exampleRowPressed: { backgroundColor: colors.primary[50] },
+  exampleIcon: {
+    width: 32,
+    height: 32,
     borderRadius: radii.full,
     backgroundColor: colors.primary[50],
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[3],
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  exampleText: { ...typography.caption, color: colors.primary[700] },
-  errorLine: { ...typography.caption, color: colors.muted },
+  exampleText: { ...typography.body, color: colors.ink[900], flex: 1 },
 
   thinking: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing[3], padding: spacing[6] },
   thinkingText: { ...typography.h3, color: colors.ink[900] },
-  thinkingHint: { ...typography.caption, color: colors.muted, marginBottom: spacing[2] },
+  thinkingHint: { ...typography.caption, color: colors.muted, marginBottom: spacing[2], textAlign: 'center' },
 
   resultHead: { gap: spacing[3], marginBottom: spacing[4] },
   answerCard: {
@@ -329,7 +508,12 @@ const styles = StyleSheet.create({
   countText: { ...typography.label, color: colors.ink[900], flexShrink: 1 },
   seeAll: { ...typography.label, color: colors.primary[700] },
 
-  listContent: { paddingHorizontal: spacing[5], paddingTop: spacing[4], flexGrow: 1 },
+  listContent: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[4],
+    flexGrow: 1,
+  },
   columnWrap: { gap: spacing[4] },
   gridSlot: { flex: 1, maxWidth: '48%', marginBottom: spacing[5] },
 
@@ -349,7 +533,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing[2],
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[3],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[2],
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.surface.border,
     backgroundColor: colors.surface.DEFAULT,

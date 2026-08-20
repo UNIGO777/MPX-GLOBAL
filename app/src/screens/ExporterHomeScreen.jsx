@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { organisationApi } from '../api/organisation.js';
-import { conversationsApi, sellerProductsApi } from '../api/sellerProducts.js';
+import { conversationsApi } from '../api/conversations.js';
+import { sellerProductsApi } from '../api/sellerProducts.js';
 import { BrandWordmark } from '../components/BrandMark.jsx';
 import { ErrorState, Spinner } from '../components/Feedback.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
@@ -292,7 +293,7 @@ export function ExporterHomeScreen({ navigation }) {
         )}
 
         <Pressable
-          onPress={() => navigation.navigate('ExporterEnquiries')}
+          onPress={() => navigation.navigate('ExporterChats')}
           accessibilityRole="button"
           accessibilityLabel="Buyer enquiries"
           style={({ pressed }) => [styles.rowCard, pressed && styles.pressed]}

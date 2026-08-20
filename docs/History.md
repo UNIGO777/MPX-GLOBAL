@@ -175,6 +175,107 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-20 — AI Search: dead space under the docked search bar removed (safe-area
+  double-count).** Owner: "fix the extra space in search bar and bottom of that this is
+  toomuch."
+  - 🔴 **The gotcha, worth knowing app-wide: the bottom tab bar is NOT an overlay.**
+    `buildTabBarStyle` sets `height`/`paddingTop`/`paddingBottom` but **no
+    `position: absolute`**, so the bar is a normal flex-column sibling — the screen's viewport
+    already ends where the bar begins, and **the bar already pads for `insets.bottom` itself**.
+    Any screen that adds `insets.bottom` (or reserves the bar's height) at the bottom of its own
+    content is **double-counting**, and on a gesture-nav phone that is a visible ~48dp of dead
+    space. The dock's `paddingBottom: Math.max(insets.bottom, spacing[4])` was exactly that.
+  - Fixed: dock now `paddingTop/Bottom: spacing[2]` flat, no inset. The composer `ScrollView`
+    and the results `FlatList` likewise dropped their reserved-height padding (an over-correction
+    made earlier the same day on the wrong premise — the entry below is amended).
+  - ⚠️ **Not audited: other screens.** The same `Math.max(insets.bottom, …)`-at-the-bottom
+    pattern appears on other tab-root screens (`SearchHomeScreen`, and others). They likely carry
+    the same extra gap. Left alone deliberately — only the AI screen was reported. Worth a sweep.
+  - Verified on-device after the fix; the zero-result state ("Nothing matched") rendered
+    correctly alongside it.
+  - Gotcha, self-inflicted: a `{/* … */}` comment placed directly after a ternary's `?` is
+    parsed as an **object literal**, not a comment → `Unexpected token, expected ","`. JSX
+    comments only work in *children* position. Also: the on-device red error screen is **stale**
+    after the bundle is fixed — it must be dismissed/relaunched, the line number it shows refers
+    to the old file.
+- **2026-08-20 — AI Search: the composer clears after a successful search.** Owner: "after one
+  search clear my field". `run()` calls `setQuery('')` after `setResult(...)`, inside the same
+  sequence guard. **On success only** — after a failure the typed text is the only copy of what
+  they wrote and a retry is the likely next action, so clearing there would cost them the query.
+  Nothing is lost either way: the count line keeps showing `N results for "<query>"`, and the
+  docked composer's "Search something else…" placeholder now reads correctly instead of sitting
+  pre-filled with the search just run. Verified on-device.
+- **2026-08-20 (latest) — AI tab press-feedback removed + AI Search screen redesigned.**
+  Owner: "remove normal animation of clicking animation on ai search tab / redesign the ai
+  search page its not looking too good."
+  - **`aiTabButton`** (`navigation/tabIcon.jsx`, wired via `tabBarButton` in
+    `BuyerNavigator`) replaces React Navigation's default `PlatformPressable` with a plain
+    `Pressable` + `android_ripple={null}`. **Gotcha:** the default ripple is a rectangle
+    clipped to the tab's box, so on a raised, circular, overhanging icon it painted a grey
+    square across it. The `aiTabIcon` pulse is now the tab's only motion — deliberate: it
+    advertises itself rather than reacting to a tap already committed to.
+  - **`AiSearchScreen` composer state rebuilt** — was a bare lead line, an empty outlined box
+    and a detached button over ~40% dead space. Now: brand-navy hero (mark + headline + one
+    lead line), a single raised composer card holding the input *and* its action with a
+    `0/500` counter, and the three examples as a grouped icon list ("Try an example") that
+    **searches on tap** rather than only filling the box. Wrapped in a `ScrollView` so the
+    button stays reachable with the keyboard up.
+  - **Three real bugs fixed on the way:**
+    1. **Stray back arrow on a tab root.** It was behind a `navigation.canGoBack()` check,
+       but inside a tab navigator that is TRUE as soon as another tab has been visited — so
+       it rendered on a root screen and "went back" to whichever tab you came from. Removed;
+       the tab bar is the way out. **Worth remembering: `canGoBack()` is not a
+       "was-I-pushed?" test inside a tab navigator.**
+    2. **Black rule under the input** — Android draws a default underline on a multiline
+       `TextInput`; it was showing through the card. `underlineColorAndroid="transparent"`.
+    3. **Last example row sat below the fold** — fixed by shortening the hero, not by padding.
+       ⚠️ **Correction (same day, see the spacing entry above this one):** the first fix here
+       added `spacing[16] + inset + spacing[6]` of bottom padding on the theory that the tab bar
+       *floats over* content. **It does not** — `buildTabBarStyle` sets no `position: absolute`,
+       so the bar is a normal flow sibling and the screen's viewport already ends above it.
+       That padding was reverted.
+  - Verified on-device end to end: example tap → "Reading your request…" → real AI reply,
+    `6 results for "cheap cotton fabric in bulk"`, standard `ProductCard`s with buyer hearts
+    and verified ticks. Public projection untouched; no new dependency.
+- **2026-08-20 (later) — App M4 SHIPPED (screens 1–4 of 5): live chat lands on mobile.**
+  Buyer + exporter both. Web's shipped behaviour treated as the contract (brief §0), not
+  re-derived. `socket.io-client@4` added — the client half of Socket.io, which is already in
+  the approved stack; live delivery only (§7.1), every action works over REST with the socket
+  down.
+  - **`ChatListScreen`** (screen 3, ONE design, both portals): WhatsApp-style rows — company
+    logo/monogram + name, product line, preview, compact time, unread dot, freeze chip from
+    the server's own `frozenLabel {tone,text}` (M4-19: colour never alone). Server-side search
+    (`q`), cursor pagination, live refresh on `message:new`/`conversation:updated` — the
+    reorder/preview/unread all stay server-derived. Role-specific empty states (the exporter's
+    says what the tab IS: their inbox).
+  - **`ChatThreadScreen`** (screen 4, the hardest): inverted list over newest-first pages;
+    RUNS (name once at top, clock once at bottom, >5-min gap breaks — computed against both
+    neighbours in inverted order); optimistic send with the failure ON the message
+    ("Not sent · Retry/Discard", never a toast); de-dup by SERVER id (REST response and the
+    socket echo of your own send — §0.1's broadcast fix — merge to one bubble); freeze
+    REPLACES the composer with the server's label (+ `blockedReason`, both parties may see it;
+    the acting admin never leaves the server) while the typed draft survives in state;
+    `conversation:open` on mount (joins rooms created after connect); reconnect + focus
+    resync via REST refetch-and-merge; mark-read on open and on every focused incoming.
+  - **`EnquiryFormScreen`** (screen 2): full-screen, NOTE-FIRST — only the note required, the
+    typed fields behind one "Add details" disclosure (goods: quantity/unit/target price+
+    currency/delivery country/timeline · service: engagement/budget+currency/timeline/
+    delivery model — the server's own field sets, unknown keys rejected). Success lands IN THE
+    THREAD (`navigation.replace` → back = product page); 200-existing says "continuing it".
+    Product detail's note-only modal sheet is deleted; Send Enquiry pushes this form.
+  - **Tab consolidation (M4-35, the brief's recommendation now applied):** Enquiries +
+    Messages placeholders are GONE from both portals — one live **Chats** tab each, with an
+    unread-THREADS badge. New `ChatContext` owns the socket lifecycle (torn down on logout —
+    the next user must not inherit rooms) and the badge (server-derived count, refreshed on
+    socket events, never incremented locally). Exporter Home's "Buyer enquiries" card →
+    the live tab. Deep links now real AND fixed: `mpxglobal://chats` + `mpxglobal://chat/:id`
+    — the old flat linking config could never have resolved (it ignored the `Tabs` nesting);
+    the new one mirrors it.
+  - **⏳ Screen 5 (push) NOT in this pass, stated plainly:** FCM needs the native Firebase
+    client module + `google-services.json` (NOT in the repo — checked) + a NEW dev-client
+    build installed on the phone. That's its own step with the owner (new APK). The deep-link
+    landing it needs is already wired above; `DeviceToken` registration exists server-side.
+  - Babel ×14 green; full Metro bundle compiles. On-device walk pending a port.
 - **2026-08-20 (later) — "searching not working" → it WAS working; the app failed to explain
   itself. Copy fixed.** Owner typed **"cand"**, got 0 results, and reasonably read that as
   broken. It isn't: the engine is native MongoDB `$text` (§A26 — never Atlas `$search`), which

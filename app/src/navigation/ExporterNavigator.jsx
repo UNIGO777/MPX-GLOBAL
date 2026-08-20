@@ -3,9 +3,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ExporterHomeScreen } from '../screens/ExporterHomeScreen.jsx';
 import { MyProductsScreen } from '../screens/MyProductsScreen.jsx';
+import { ChatListScreen } from '../screens/ChatListScreen.jsx';
+import { useChat } from '../context/ChatContext.jsx';
 import { ProfileScreen } from '../screens/ProfileScreen.jsx';
-import { makePlaceholder } from '../screens/PlaceholderScreen.jsx';
 import { buildTabBarStyle, screenHeaderOptions, tabBarOptions } from './navigationTheme.js';
+import { colors } from '../theme/index.js';
 import { tabIcon } from './tabIcon.jsx';
 
 const Tab = createBottomTabNavigator();
@@ -23,6 +25,7 @@ const Tab = createBottomTabNavigator();
  * Tab icons — see the note in BuyerNavigator.
  */
 export function ExporterNavigator() {
+  const { unread } = useChat();
   // `tabBarStyle` sets its own explicit height (raised-circle active icon),
   // which disables React Navigation's automatic safe-area padding for the
   // bar — see `buildTabBarStyle`'s own note. Real inset, computed here.
@@ -46,27 +49,25 @@ export function ExporterNavigator() {
         options={{ title: 'Catalogue', tabBarLabel: 'Catalogue', tabBarIcon: tabIcon('cube'), headerShown: false }}
         component={MyProductsScreen}
       />
+      {/* M4 (2026-08-20): Enquiries + Messages collapsed into ONE live Chats
+          tab (M4-35). The app IS the seller's inbox — there is no email in
+          month 1, so this tab plus its badge is how an enquiry reaches them. */}
       <Tab.Screen
-        name="ExporterEnquiries"
-        options={{ title: 'Enquiries', tabBarLabel: 'Enquiries', tabBarIcon: tabIcon('document-text') }}
-        component={makePlaceholder({
-          title: 'Enquiries',
-          icon: 'document-text-outline',
-          blurb: "Buyer questions on your listings will land here — this is on the way.",
-          module: 'Module 3 · Enquiry & chat',
-          milestone: 'M4',
-        })}
-      />
-      <Tab.Screen
-        name="ExporterMessages"
-        options={{ title: 'Messages', tabBarLabel: 'Messages', tabBarIcon: tabIcon('chatbubbles') }}
-        component={makePlaceholder({
-          title: 'Messages',
-          icon: 'chatbubbles-outline',
-          blurb: "Real-time chat with buyers is on the way.",
-          module: 'Module 3 · Real-time chat',
-          milestone: 'M4',
-        })}
+        name="ExporterChats"
+        options={{
+          title: 'Chats',
+          tabBarLabel: 'Chats',
+          tabBarIcon: tabIcon('chatbubbles'),
+          headerShown: false,
+          tabBarBadge: unread > 0 ? unread : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: colors.primary[600],
+            color: colors.white,
+            fontSize: 11,
+            fontWeight: '700',
+          },
+        }}
+        component={ChatListScreen}
       />
       <Tab.Screen
         name="ExporterProfile"

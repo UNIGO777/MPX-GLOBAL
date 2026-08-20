@@ -22,15 +22,25 @@
 
 const PREFIXES = ['mpxglobal://'];
 
-// Same paths on both sides; only the screen names differ.
+// M4 (2026-08-20): the placeholder Enquiries/Messages tabs collapsed into one
+// Chats tab per portal (M4-35), and the thread screen now exists — so the
+// links a push notification actually needs are these:
+//   mpxglobal://chats     → the Chats tab
+//   mpxglobal://chat/<id> → one thread (the notification-tap landing)
+//
+// ⚠️ The config must mirror the NAVIGATOR NESTING: the tab navigators are
+// mounted as the root stack's `Tabs` screen (`AppStack.jsx`), so the tab has
+// to be declared under `Tabs` — a flat entry (as this file originally had for
+// the placeholder tabs) never resolves. `ChatThread` is a root-stack screen,
+// so it IS flat, and identical for both roles.
 const BUYER_SCREENS = {
-  BuyerEnquiries: 'enquiries',
-  BuyerMessages: 'messages',
+  Tabs: { screens: { BuyerChats: 'chats' } },
+  ChatThread: 'chat/:id',
 };
 
 const EXPORTER_SCREENS = {
-  ExporterEnquiries: 'enquiries',
-  ExporterMessages: 'messages',
+  Tabs: { screens: { ExporterChats: 'chats' } },
+  ChatThread: 'chat/:id',
 };
 
 /**

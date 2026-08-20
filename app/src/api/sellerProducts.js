@@ -55,12 +55,3 @@ export const sellerProductsApi = {
       .then((r) => r.data.images[0]);
   },
 };
-
-/**
- * Unread messages across the seller's conversations (M4). Used as the
- * enquiries badge — a badge means "needs attention", so unread is the honest
- * number; total threads would nag forever. Authenticated, no role gate.
- */
-export const conversationsApi = {
-  unreadCount: () => apiClient.get('/conversations/unread-count').then((r) => r.data.unread),
-};

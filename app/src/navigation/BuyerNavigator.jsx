@@ -4,9 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BuyerHomeScreen } from '../screens/BuyerHomeScreen.jsx';
 import { ProfileScreen } from '../screens/ProfileScreen.jsx';
 import { SearchHomeScreen } from '../screens/SearchHomeScreen.jsx';
-import { makePlaceholder } from '../screens/PlaceholderScreen.jsx';
+import { AiSearchScreen } from '../screens/AiSearchScreen.jsx';
+import { ChatListScreen } from '../screens/ChatListScreen.jsx';
+import { useChat } from '../context/ChatContext.jsx';
 import { buildTabBarStyle, screenHeaderOptions, tabBarOptions } from './navigationTheme.js';
-import { tabIcon } from './tabIcon.jsx';
+import { colors, typography } from '../theme/index.js';
+import { aiTabButton, aiTabIcon, tabIcon } from './tabIcon.jsx';
 
 const Tab = createBottomTabNavigator();
 
@@ -25,6 +28,7 @@ const Tab = createBottomTabNavigator();
  * missing, which renders as an empty box on Android.
  */
 export function BuyerNavigator() {
+  const { unread } = useChat();
   // `tabBarStyle` sets its own explicit height (raised-circle active icon),
   // which disables React Navigation's automatic safe-area padding for the
   // bar — see `buildTabBarStyle`'s own note. Real inset, computed here.
@@ -49,27 +53,50 @@ export function BuyerNavigator() {
         options={{ title: 'Search', tabBarLabel: 'Search', tabBarIcon: tabIcon('search'), headerShown: false }}
         component={SearchHomeScreen}
       />
+      {/* ✨ AI — the bar's centre and its primary action (owner, 2026-08-20).
+          Deliberately at index 2 of five: a permanently-raised tab only reads
+          as centre-stage if it IS the centre. Buyer-only — AI search is buyer
+          discovery, and no exporter search tab is named in any source
+          (M3 brief §8: don't add one without an owner nod). */}
       <Tab.Screen
-        name="BuyerEnquiries"
-        options={{ title: 'Enquiries', tabBarLabel: 'Enquiries', tabBarIcon: tabIcon('document-text') }}
-        component={makePlaceholder({
-          title: 'Enquiries',
-          icon: 'document-text-outline',
-          blurb: "Ask suppliers questions right from a listing — this is on the way.",
-          module: 'Module 3 · Enquiry & chat',
-          milestone: 'M4',
-        })}
+        name="BuyerAi"
+        options={{
+          title: 'AI Search',
+          tabBarLabel: 'AI',
+          tabBarIcon: aiTabIcon(),
+          // No press ripple / no press fade — the pulse is this tab's only
+          // motion (owner, 2026-08-20). See `aiTabButton`.
+          tabBarButton: aiTabButton,
+          headerShown: false,
+          // The raised circle carries the identity; the active tint would
+          // otherwise recolour the label away from the accent it shares
+          // with the circle.
+          tabBarActiveTintColor: colors.primary[700],
+          tabBarLabelStyle: { ...typography.tiny, fontWeight: '700', color: colors.primary[700] },
+        }}
+        component={AiSearchScreen}
       />
+
+      {/* M4 (2026-08-20): the separate Enquiries + Messages placeholders
+          collapsed into ONE live Chats tab (M4-35 — an enquiry and its
+          thread are one-to-one; two lists would show the same rows twice).
+          Badge = unread THREADS, server-derived via ChatContext. */}
       <Tab.Screen
-        name="BuyerMessages"
-        options={{ title: 'Messages', tabBarLabel: 'Messages', tabBarIcon: tabIcon('chatbubbles') }}
-        component={makePlaceholder({
-          title: 'Messages',
-          icon: 'chatbubbles-outline',
-          blurb: "Real-time chat with suppliers is on the way.",
-          module: 'Module 3 · Real-time chat',
-          milestone: 'M4',
-        })}
+        name="BuyerChats"
+        options={{
+          title: 'Chats',
+          tabBarLabel: 'Chats',
+          tabBarIcon: tabIcon('chatbubbles'),
+          headerShown: false,
+          tabBarBadge: unread > 0 ? unread : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: colors.primary[600],
+            color: colors.white,
+            fontSize: 11,
+            fontWeight: '700',
+          },
+        }}
+        component={ChatListScreen}
       />
       <Tab.Screen
         name="BuyerProfile"

@@ -4,26 +4,21 @@ import {
   Animated,
   Dimensions,
   Image,
-  KeyboardAvoidingView,
-  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { catalogueApi } from '../api/catalogue.js';
-import { inquiriesApi } from '../api/inquiries.js';
 import { sellerProductsApi } from '../api/sellerProducts.js';
 import { findCountry } from '../constants/countries.js';
 import { Button } from '../components/Button.jsx';
 import { EmptyState, ErrorState, Skeleton } from '../components/Feedback.jsx';
-import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useSavedProducts } from '../hooks/useSavedProducts.js';
 import { colors, radii, spacing, typography } from '../theme/index.js';
@@ -50,18 +45,12 @@ import { toAppError } from '../utils/errors.js';
  *   a sparse listing must still look intentional.
  * - 🔴 No status word, no takedown trace, no "seller not yet verified" line.
  *   404 covers every unavailable case indistinguishably.
- * - 🆕 2026-08-18 — REAL "Send Enquiry" (owner ask; M4 Enquiry & Chat is
- *   month-1 scope and its backend shipped): a pinned footer button opens a
- *   compose sheet — the required 1–200-char note (the enquiry's only free
- *   text, M4-7) — and `POST /inquiries` creates the whole thread server-side.
- *   Buyers only (`role === 'buyer'` hides it; the server enforces the role,
- *   the buyer-side-org check AND the self-enquiry guard — a rejection's
- *   message surfaces in the toast). 201 vs 200 is told to the user honestly:
- *   a second enquiry never opens a second thread (M4-5). The thread itself
- *   lives in the Messages tab once M4's chat screens ship — the toast says
- *   where it went rather than pretending there's nothing to see yet.
- * - Seller card taps toward the supplier profile — NOT BUILT (M2 screen 4),
- *   so it shows the honest coming-soon alert; ledgered in UiWebNotes.
+ * - "Send Enquiry" (buyers only; the server enforces the role, the
+ *   buyer-side-org check AND the self-enquiry guard): 2026-08-18 it was a
+ *   note-only compose sheet; 2026-08-20 (M4 screens) it pushes the
+ *   full-screen note-first enquiry form, and success lands IN THE THREAD —
+ *   a second enquiry continues the existing one (M4-5).
+ * - Seller card taps through to the supplier profile (M2 screen 4).
  * - Share omitted for now: the OS share needs the real public web URL and
  *   the app has no web-origin config — inventing one would ship a broken
  *   link. Flagged, not silently skipped.
@@ -100,7 +89,6 @@ const SERVICE_FACTS = [
 
 export function ProductDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const toast = useToast();
   const { role } = useAuth();
   // Two modes (owner mode added 2026-08-19 — owner: tapping your own product
   // card should open its DETAILS, whatever state it's in):
@@ -115,9 +103,6 @@ export function ProductDetailScreen({ navigation, route }) {
   const [refreshing, setRefreshing] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [descExpanded, setDescExpanded] = useState(false);
-  const [enquiryOpen, setEnquiryOpen] = useState(false);
-  const [note, setNote] = useState('');
-  const [sending, setSending] = useState(false);
 
   // Reveal-on-scroll title bar (owner, 2026-08-18: "on scroll we also need a
   // header") — same pattern as Home's: the floating back circle serves the
@@ -264,28 +249,17 @@ export function ProductDetailScreen({ navigation, route }) {
   // it anyway, and an exporter session isn't a buyer to begin with.
   const isBuyer = role === 'buyer' && !ownerMode;
 
-  const sendEnquiry = async () => {
-    const trimmed = note.trim();
-    if (!trimmed) return;
-    setSending(true);
-    try {
-      const result = await inquiriesApi.create({ productId: product.id, note: trimmed });
-      setEnquiryOpen(false);
-      setNote('');
-      toast.show(
-        result.created
-          ? `Enquiry sent to ${seller.name}. Find the conversation in Messages once chat launches.`
-          : 'You already have a conversation about this product — this seller can see it.',
-        { tone: 'success', duration: 5000 },
-      );
-    } catch (error) {
-      // The server's own message (self-enquiry guard, rate limit…) — never
-      // invent detail it withheld.
-      toast.show(toAppError(error).message, { tone: 'danger' });
-    } finally {
-      setSending(false);
-    }
-  };
+  // M4 (2026-08-20): the note-only compose sheet grew into the full-screen
+  // note-first enquiry form (screen 2) — Send Enquiry now pushes it. Success
+  // lands directly IN THE THREAD (M4-5), because the thread exists now.
+  const openEnquiryForm = () =>
+    navigation.navigate('EnquiryForm', {
+      productId: product.id,
+      productName: product.name,
+      productImage: images[0] ?? null,
+      sellerName: seller.name ?? null,
+      categoryType: isService ? 'service' : 'goods',
+    });
 
   // Footer clearance: the pinned Send Enquiry bar (buyers only). The guard
   // floor (spacing[6]) keeps the last content clear of Android's translucent
@@ -537,46 +511,13 @@ export function ProductDetailScreen({ navigation, route }) {
         </Text>
       </Animated.View>
 
-      {/* Pinned enquiry bar — buyers only (server re-checks regardless). */}
+      {/* Pinned enquiry bar — buyers only (server re-checks regardless).
+          Opens the full-screen enquiry form (M4 screen 2). */}
       {isBuyer ? (
         <View style={[styles.enquiryBar, { paddingBottom: Math.max(insets.bottom, spacing[4]) }]}>
-          <Button label="Send Enquiry" onPress={() => setEnquiryOpen(true)} />
+          <Button label="Send Enquiry" onPress={openEnquiryForm} />
         </View>
       ) : null}
-
-      {/* Compose sheet — the note is the enquiry's ONLY free text (M4-7). */}
-      <Modal visible={enquiryOpen} transparent animationType="slide" onRequestClose={() => setEnquiryOpen(false)}>
-        <KeyboardAvoidingView style={styles.sheetScrim} behavior="padding">
-          <Pressable style={styles.sheetScrimTouch} onPress={() => !sending && setEnquiryOpen(false)} />
-          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, spacing[5]) }]}>
-            <Text style={styles.sheetTitle}>Send enquiry</Text>
-            <Text style={styles.sheetSubtitle} numberOfLines={2}>
-              {product.name} · {seller.name}
-            </Text>
-            <TextInput
-              value={note}
-              onChangeText={setNote}
-              placeholder="What would you like to ask? Quantity, specs, delivery…"
-              placeholderTextColor={colors.ink[400]}
-              multiline
-              maxLength={200}
-              style={styles.sheetInput}
-              accessibilityLabel="Enquiry message"
-              autoFocus
-            />
-            <Text style={styles.sheetCounter}>{note.trim().length}/200</Text>
-            <Text style={styles.sheetNote}>
-              This starts a conversation with the seller. MPX Global stays part of the thread.
-            </Text>
-            <Button
-              label="Send"
-              onPress={sendEnquiry}
-              loading={sending}
-              disabled={note.trim().length === 0}
-            />
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
     </View>
   );
 }
@@ -808,30 +749,4 @@ const styles = StyleSheet.create({
     borderTopColor: colors.surface.border,
   },
 
-  sheetScrim: { flex: 1, backgroundColor: colors.scrim, justifyContent: 'flex-end' },
-  sheetScrimTouch: { flex: 1 },
-  sheet: {
-    backgroundColor: colors.surface.DEFAULT,
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-    paddingHorizontal: spacing[5],
-    paddingTop: spacing[5],
-    gap: spacing[2],
-  },
-  sheetTitle: { ...typography.h3, color: colors.ink[900] },
-  sheetSubtitle: { ...typography.caption, color: colors.muted },
-  sheetInput: {
-    ...typography.body,
-    color: colors.ink[900],
-    minHeight: 96,
-    maxHeight: 160,
-    textAlignVertical: 'top',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.surface.border,
-    borderRadius: radii.lg,
-    padding: spacing[3],
-    marginTop: spacing[2],
-  },
-  sheetCounter: { ...typography.tiny, color: colors.ink[400], alignSelf: 'flex-end' },
-  sheetNote: { ...typography.tiny, color: colors.muted, marginBottom: spacing[2] },
 });

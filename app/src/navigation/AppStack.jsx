@@ -13,7 +13,8 @@ import { CompanyProfileScreen } from '../screens/profile/CompanyProfileScreen.js
 import { ChangePasswordScreen } from '../screens/profile/ChangePasswordScreen.jsx';
 import { CategoryBrowseScreen } from '../screens/CategoryBrowseScreen.jsx';
 import { CategoryProductsScreen } from '../screens/CategoryProductsScreen.jsx';
-import { AiSearchScreen } from '../screens/AiSearchScreen.jsx';
+import { ChatThreadScreen } from '../screens/ChatThreadScreen.jsx';
+import { EnquiryFormScreen } from '../screens/EnquiryFormScreen.jsx';
 import { ProductCategoryPickerScreen } from '../screens/ProductCategoryPickerScreen.jsx';
 import { SavedItemsScreen } from '../screens/SavedItemsScreen.jsx';
 import { ProductDetailScreen } from '../screens/ProductDetailScreen.jsx';
@@ -94,10 +95,17 @@ export function AppStack({ role }) {
       <Stack.Screen name="ProductCategoryPicker" component={ProductCategoryPickerScreen} />
       <Stack.Screen name="ProductForm" component={ProductFormScreen} />
 
-      {/* M3 (2026-08-19) — AI search (screen 4) + the buyer's saved list
-          (screen 8; buyer-only server-side, entry points buyer-only too). */}
-      <Stack.Screen name="AiSearch" component={AiSearchScreen} />
+      {/* M3 — the buyer's saved list (screen 8; buyer-only server-side,
+          entry points buyer-only too). AI search (screen 4) moved OUT of this
+          stack on 2026-08-20: it is now the buyer tab bar's centre tab, so a
+          duplicate stack route would be a second, unreachable instance. */}
       <Stack.Screen name="SavedItems" component={SavedItemsScreen} />
+
+      {/* M4 (2026-08-20) — the enquiry form (screen 2, pushed from product
+          detail) and the thread (screen 4, pushed from the Chats tab or
+          straight from a sent enquiry). */}
+      <Stack.Screen name="EnquiryForm" component={EnquiryFormScreen} />
+      <Stack.Screen name="ChatThread" component={ChatThreadScreen} />
 
       <Stack.Screen name="KycEntityType" component={withUnverifiedGuard(EntityTypeScreen)} />
       <Stack.Screen name="KycDocumentType" component={withUnverifiedGuard(DocumentTypeScreen)} />

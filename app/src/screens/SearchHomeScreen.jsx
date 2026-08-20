@@ -74,7 +74,7 @@ export function SearchHomeScreen({ navigation }) {
     <View style={styles.top}>
       {/* ✨ AI — headline feature, above the fold by design. */}
       <Pressable
-        onPress={() => navigation.navigate('AiSearch')}
+        onPress={() => navigation.navigate('BuyerAi')}
         accessibilityRole="button"
         accessibilityLabel="AI search"
         style={({ pressed }) => [styles.aiCard, pressed && styles.aiCardPressed]}
