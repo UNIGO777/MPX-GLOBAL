@@ -24,7 +24,22 @@ dotenv.config({ path: path.join(packageRoot, '.env') });
 // malformed the process exits before the server can bind — a misconfigured
 // payments-adjacent service must fail loudly, not run half-configured.
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  // 🔴 NO DEFAULT — deliberately (2026-08-21). This used to be
+  // `.default('development')`, which made the variable FAIL OPEN: a production
+  // deploy that simply forgot to set it ran the whole service in development
+  // mode with no error anywhere. That is not hypothetical — the live API was
+  // found running without NODE_ENV=production on 2026-08-07 (see
+  // `otp.sender.js`). What silently degrades when it happens:
+  //   · REDIS_URL stops being required (`rateLimit.js`), so rate limits fall
+  //     back to in-memory — they no longer survive a restart or hold across
+  //     processes, which is the OTP/login brute-force defence weakening.
+  //   · TRUST_PROXY goes unset, so `req.ip` is the proxy and every caller
+  //     shares one rate-limit bucket.
+  //   · The OTP dev-print's first lock (`NODE_ENV === 'development'`) is
+  //     SATISFIED rather than blocked.
+  // Required, so a misconfigured deploy dies at boot instead of running
+  // half-protected. `tests/setup.js` sets it to 'test' explicitly.
+  NODE_ENV: z.enum(['development', 'test', 'production']),
   PORT: z.coerce.number().int().positive().default(3000),
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
@@ -97,6 +112,20 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
 
+  // 🔴 Guest AI-search ceiling — agreement §3.3 ("a configurable daily ceiling
+  // on total AI-assisted search usage by visitors who are not signed in") and
+  // §5.1, which makes the VALUE a Client-supplied input.
+  //
+  // One number for ALL unauthenticated visitors combined, per day — not per IP.
+  // Per-IP was considered and rejected: CGNAT puts thousands of legitimate
+  // Indian mobile users behind one address, so a per-IP daily cap locks out real
+  // users while an abuser simply rotates addresses. The thing being protected is
+  // the Client's OpenAI bill, which is a global quantity, so the cap is global.
+  //
+  // The CLIENT sets this. Never hardcode a number here, and never give it a
+  // default — see the refine below for why "absent means off" is not acceptable.
+  AI_GUEST_DAILY_MAX: z.coerce.number().int().positive().optional(),
+
   // M4-H · FCM push. The Firebase service account JSON, base64-encoded into a
   // single line so deployment needs only environment variables and no file.
   // Optional by design: with it absent the push layer is INERT — never a crash,
@@ -162,7 +191,28 @@ const envSchema = z.object({
   SEED_SUPERADMIN_MOBILE_CC: z.string().optional(),
   SEED_SUPERADMIN_MOBILE_NUMBER: z.string().optional(),
   SEED_SUPERADMIN_PASSWORD: z.string().optional(),
-});
+})
+  // Cross-field rules. Kept here rather than as per-field defaults so the
+  // failure is a loud boot-time error naming the variable, not a quiet
+  // fallback.
+  .superRefine((cfg, ctx) => {
+    // 🔴 AI_GUEST_DAILY_MAX is REQUIRED in production.
+    //
+    // Treating "absent" as "no ceiling" would rebuild the exact fail-open that
+    // NODE_ENV's missing default was just removed for: agreement §5.1 makes the
+    // value a Client input, so if MPX never supplies one, production would run
+    // with no guest ceiling and unbounded OpenAI billing on their account —
+    // while §3.3 describes a control the live system does not actually have.
+    // Outside production it stays optional so a dev box needs no ceremony.
+    if (cfg.NODE_ENV === 'production' && cfg.AI_GUEST_DAILY_MAX == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['AI_GUEST_DAILY_MAX'],
+        message:
+          'is required in production — the Client sets the daily guest AI-search ceiling (agreement §3.3 / §5.1)',
+      });
+    }
+  });
 
 const parsed = envSchema.safeParse(process.env);
 

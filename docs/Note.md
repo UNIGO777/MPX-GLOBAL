@@ -120,6 +120,14 @@ Do not start the screens without surfacing this alert.
 > NOT yet built** — which events, and their copy, still need the owner's list (see
 > `docs/History.md` 2026-08-04). Do not invent them.
 >
+> ✅ **2026-08-21 — owner approved a FIFTH email event: "request more information" → seller.**
+> Alert was raised (`emailNotifications.service.js` carries an explicit "do not add a fifth without
+> a new alert" guard) and the owner approved it. **Do not re-alert on this one.** Driver: agreement
+> §3.7 requires "the seller sees … what is needed if more information is requested", and email is
+> what makes a resubmission prompt rather than dependent on the seller happening to open the portal.
+> The event belongs to the request-more-info / `in_review` work — build it there, not on its own.
+> **The guard itself stays**: a SIXTH event still needs a fresh alert.
+>
 > 🔴 **Still ON HOLD and still needing an alert:** **WhatsApp**, the `Notification` model / in-app
 > centre, admin per-type enable-disable, and delivery tracking + retry.
 - **WhatsApp** additionally depends on external template approval (outside the build). Build later.
@@ -192,6 +200,35 @@ Do not start the screens without surfacing this alert.
   stranger. The one rule that keeps it true: the lookup must key **only** on the verified identity,
   **never** on a company name the user types. The remaining blocker is the missing endpoint, nothing
   more.
+
+## D8 · Platform settings page (§3.5)  ⏸ ON HOLD — build next month (owner, 2026-08-21)
+
+**Why it is on this list at all:** every other outstanding Clause-3 item is scheduled by agreement
+**§4.2** (quotation, employee-panel query handling, the notification layer, app-store submission).
+**Platform settings is the one exception** — §4.1 puts the super admin dashboard in month one and
+§3.5 lists "Platform settings" inside it, but §4.2 never mentions it. So it is a month-one item
+still sitting as `<ComingSoon title="Settings" />` (`web/src/App.jsx`). Owner has consciously moved
+it to next month — it is **deferred, not descoped**.
+
+**Contents already decided (2026-08-21) — do not re-derive them:**
+- ✅ **AI guest daily ceiling.** The strongest reason this page exists at all: §3.3 says the ceiling
+  "may be changed by the Client **at any time**", but it currently lives in `AI_GUEST_DAILY_MAX`,
+  which needs a `.env` edit and a restart. A settings page is what makes that clause literally true.
+  The env var stays as the boot-time floor (`env.js` requires it in production); the setting
+  overrides it at runtime.
+- ✅ **Support contact email / phone** shown in emails and on the site.
+- 🚫 **NOT the D1 caps (3 active / 10 drafts).** Those numbers are now written into **agreement
+  §3.2**. Making them editable invites someone to set 5 and silently put the platform out of step
+  with the contract. They stay as constants in `product.service.js`.
+- 🚫 **NOT OTP knobs** (TTL, attempts, lock) — security controls, `security-baseline.md`'s area,
+  env-only.
+- 🚫 **Never a secret** (API keys, SMTP password).
+- 🚫 Featured/banner content is already `/admin/featured` — do not duplicate it here.
+
+**Shape:** one single-document `Settings` model, read at request time. Every change **must write an
+AuditLog entry** — agreement §11.1 covers it under "administrative actions, recording the actor and
+the time". Keep the page small: §3.11.1 fixes scope to Clause 3, and "Platform settings" is
+undefined there, so anything elaborate is scope creep rather than delivery.
 
 ---
 

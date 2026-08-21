@@ -56,7 +56,26 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   process.env.NODE_ENV = 'test';
+  delete process.env.AI_GUEST_DAILY_MAX;
 });
+
+/**
+ * Flip the process into production for a re-import.
+ *
+ * 🔴 Setting NODE_ENV alone is no longer enough (2026-08-21). `env.js` now
+ * REQUIRES `AI_GUEST_DAILY_MAX` in production — the Client-set guest AI-search
+ * ceiling, agreement §3.3/§5.1 — so a bare NODE_ENV='production' re-import now
+ * fails validation and exits before the module under test is reached.
+ *
+ * The right fix is to give the test a COMPLETE production environment rather
+ * than to relax the check: a real production deploy carries this variable, and
+ * a schema that let it be absent would rebuild the fail-open it exists to
+ * remove. The value is irrelevant to anything in this file.
+ */
+function enterProduction() {
+  process.env.NODE_ENV = 'production';
+  process.env.AI_GUEST_DAILY_MAX = '500';
+}
 
 describe('canDeliverTo — Fast2SMS is India-only', () => {
   it('accepts a well-formed Indian mobile', () => {
@@ -114,7 +133,7 @@ describe('failure posture', () => {
   it('THROWS in production when nothing can deliver', async () => {
     // A warn-and-return would leave the user on a code screen forever and make a
     // broken deploy look healthy.
-    process.env.NODE_ENV = 'production';
+    enterProduction();
     vi.resetModules();
     const { sendOtp: prodSendOtp } = await import('../src/services/otp.sender.js');
 
@@ -153,7 +172,8 @@ describe('🔴 dev OTP terminal print needs BOTH locks', () => {
   // `{ devPrint: undefined }` would silently become 'true' and the test would
   // assert the opposite of what it claims (this exact bug, caught 2026-08-07).
   async function sendUnder(nodeEnv, { devPrint = 'true', channel = 'mobile', ...overrides } = {}) {
-    process.env.NODE_ENV = nodeEnv;
+    if (nodeEnv === 'production') enterProduction();
+    else process.env.NODE_ENV = nodeEnv;
     if (devPrint === null) delete process.env.OTP_DEV_PRINT;
     else process.env.OTP_DEV_PRINT = devPrint;
     vi.resetModules();

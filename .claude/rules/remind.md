@@ -97,6 +97,13 @@ while any close-time security commitment remains unraised.
   as exporter gets **two orgs → two KYCs, two public profiles, and a "Block company" that hits only
   one of them**. The enumeration worry logged in `UiWebNotes` is already answered by §A21 line 248
   (step 2 sits behind both OTPs) — do not re-raise it as a blocker. Detail: `docs/Note.md` **D7**.
+- **D8** — **Platform settings page (§3.5).** Owner moved it to next month (2026-08-21). Notable
+  because it is the **only** outstanding Clause-3 item that agreement **§4.2 does not schedule** —
+  §4.1 puts the super admin dashboard in month one and §3.5 lists Platform settings inside it, so it
+  is a month-one item still rendering `<ComingSoon>`. **Deferred, not descoped.** Its contents are
+  already decided — AI guest ceiling (§3.3 promises the Client may change it "at any time", which
+  the env var alone does not deliver) + support contact; **never** the D1 caps (now written into
+  §3.2), OTP knobs or secrets. Detail: `docs/Note.md` **D8**.
 - **D5** — Notifications (email, **WhatsApp**, in-app centre, admin controls, non-M4 events).
   ✅ **CARVE-OUT 2026-07-31 — FCM push is APPROVED into month 1** (owner-confirmed), built in M4:
   `firebase-admin` + `DeviceToken` + dead-token cleanup + **two events only** (new enquiry → seller,

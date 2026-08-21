@@ -175,6 +175,68 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-21 — Agreement v7 vs code: full gap sweep, and everything outstanding placed on a
+  schedule.** After the guest-AI-ceiling build, v7's §3.3 is true for the first time, so the sweep
+  was re-run against the current code rather than the older notes.
+  - **Closed today:** §3.3 guest ceiling + Client-set value (§5.1) + degradation on ceiling/infra
+    failure. §3.2's 3-active/10-draft caps, §3.1's no-publish-gate, §3.10 self-hosted DB and all 18
+    §11.1 controls were already matching.
+  - **Outstanding, and scheduled by §4.2** (owed but on time): §3.4 quotation in full · §3.6's
+    ticket/query queue, seller-query handling, buyer-enquiry routing, internal notes, employee
+    reports · §3.6/§3.7 request-more-info + `in_review` · §3.8 WhatsApp / in-app centre / admin
+    toggles · FCM push (backend built, **app has no Firebase at all** so it is dead end-to-end) ·
+    app-store submission.
+  - **Outstanding and NOT scheduled anywhere → `docs/Note.md` D8:** **§3.5 Platform settings.** §4.1
+    puts the super admin dashboard in month one and §3.5 lists settings inside it, but §4.2 never
+    names it. Owner moved it to next month; its contents are decided in D8 so nobody re-derives them.
+  - **Corrected mid-sweep:** §3.7's "history of every action taken on a seller" is **already built**
+    — `OrganisationDetail.jsx` embeds the audit trail pre-filtered by `orgId`. It had been listed as
+    missing; only request-more-info and `in_review` actually are.
+  - **Gotcha worth keeping: a model existing is not a feature.** `Ticket.js` (18 lines) and
+    `Notification.js` (23 lines) both exist and both look like delivered work in a file listing.
+    Neither is wired to anything but `models/index.js`; `Ticket` has no `status` field at all,
+    though §3.6 requires open/in-progress/resolved tracking. Also note these two are **not** in
+    `scope-guard.md`'s Phase-2 skeleton list — they are Phase-1 models stubbed early and never
+    filled, so building them needs no override.
+  - Not agreement gaps, despite feeling like them: the audit DB-level append-only grant (C10, our
+    own standard — §11.1 only requires actor+time, which is satisfied) and the required `NODE_ENV`.
+- **2026-08-21 — `NODE_ENV` made required + guest AI-search ceiling built (agreement v7 §3.3/§5.1).**
+  Both come out of the agreement review: v7 now *describes* a guest ceiling, so not having one was
+  a contractual gap, not a nice-to-have.
+  - **`NODE_ENV` no longer defaults to `'development'`** (`config/env.js`). The default made the
+    variable **fail open**: a production deploy that forgot it ran the whole service in dev mode
+    silently — REDIS_URL stops being required so rate limits fall back to in-memory (they no
+    longer survive a restart or hold across processes, i.e. the OTP/login brute-force defence
+    weakens), TRUST_PROXY goes unset so every caller shares one rate-limit bucket, and the OTP
+    dev-print's first lock is *satisfied* rather than blocked. Not hypothetical — the live API was
+    found running without it on 2026-08-07.
+  - **`AI_GUEST_DAILY_MAX`** — new env var, **optional outside production, REQUIRED in production**
+    (one `.superRefine`). Deliberately NOT "absent means off": §5.1 makes the value a Client input,
+    so defaulting it to off would rebuild the same fail-open one line after removing it, and leave
+    §3.3 describing a control the live system lacks.
+  - **`guestAiAllowed()`** (`aiQuota.service.js`) — ONE global daily counter for all
+    not-signed-in visitors, `q:ai:guest:<YYYY-MM-DD>`. **Not per-IP, on purpose:** CGNAT puts
+    thousands of legitimate Indian mobile users behind one address, so a per-IP daily cap locks out
+    real users while an abuser rotates addresses; the bill is a global quantity so the cap is too.
+    The per-IP `aiLimiter` (20/10min) stays as the burst control.
+  - 🔴 **Fail-CLOSED**, unlike the per-org quota which no-ops when Redis is down. A spend control
+    that cannot count must not spend. §3.3 covers it: "or where the supporting infrastructure for
+    these controls is temporarily unavailable".
+  - **Over the ceiling a guest gets 200 + keyword results, never a 429.** Reuses the existing
+    `skipAi`/`fallback: true` branch in `aiSearch.service.js` — no new response shape, no new UI.
+    §3.3 records this as "designed behaviour … not a Defect within the meaning of Clause 9".
+    Signed-in users are unaffected either way.
+  - **Reset boundary = UTC midnight (05:30 IST)** — `toISOString()` is UTC. §3.3 says "for the
+    remainder of that period" without defining the period; this is the definition. Documented in
+    `.env.example` so a later "why did it reset at half five" has an answer.
+  - Tests: `tests/m3-ai-guest-ceiling.test.js` (12 cases — counting, boundary, TTL repair,
+    day-scoping, fail-closed, and the endpoint asserting 200-not-429).
+  - **Gotcha for future tests:** any test that flips `NODE_ENV='production'` and re-imports `env`
+    must now also set `AI_GUEST_DAILY_MAX`, or validation exits before the module under test
+    loads. `tests/otp-delivery.test.js` gained an `enterProduction()` helper for exactly this —
+    the fix is to give the test a *complete* production env, never to relax the schema.
+  - ⚠️ `tests/m5-organisations.test.js` "returns the five columns plus country and slug" was
+    **already failing before these changes** (verified against a clean stash) — untouched here.
 - **2026-08-20 — AI Search: dead space under the docked search bar removed (safe-area
   double-count).** Owner: "fix the extra space in search bar and bottom of that this is
   toomuch."

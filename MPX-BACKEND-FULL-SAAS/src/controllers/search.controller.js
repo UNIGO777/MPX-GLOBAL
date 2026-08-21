@@ -1,6 +1,6 @@
 import * as svc from '../services/search.service.js';
 import * as svcAi from '../services/aiSearch.service.js';
-import { consumeAiQuota } from '../services/aiQuota.service.js';
+import { consumeAiQuota, guestAiAllowed } from '../services/aiQuota.service.js';
 import { getFacets } from '../services/facets.service.js';
 import { suggest } from '../services/didYouMean.service.js';
 import { resolveCategoryLeafIds } from '../services/search.query.js';
@@ -30,10 +30,19 @@ async function attributeFilters(query) {
 }
 
 export async function aiSearch(req, res) {
-  // Per-organisation daily cap (guests: the per-IP limiter covers them).
-  await consumeAiQuota(req.user?.orgId);
+  // Two different controls, because the two audiences are different (§3.3):
+  //  · Signed-in org → daily quota; over it, a 429 they can act on.
+  //  · Guest → the Client-configured global daily ceiling; over it there is NO
+  //    error, they simply get keyword results. The agreement records that
+  //    degradation as designed behaviour, not a Defect.
+  const orgId = req.user?.orgId;
+  await consumeAiQuota(orgId);
+  const skipAi = orgId ? false : !(await guestAiAllowed());
 
-  const { answer, message, extracted, results, target, fallback } = await svcAi.aiSearch({ query: req.body.query });
+  const { answer, message, extracted, results, target, fallback } = await svcAi.aiSearch({
+    query: req.body.query,
+    skipAi,
+  });
 
   if (target === 'supplier') {
     res.json({

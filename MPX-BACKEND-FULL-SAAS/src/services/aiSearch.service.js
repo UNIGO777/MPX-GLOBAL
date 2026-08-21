@@ -231,13 +231,19 @@ function answerFor(extracted, total) {
  * Runs the AI pipeline. NEVER throws for an AI-side problem: on any failure the
  * caller gets plain keyword results with `fallback: true`.
  */
-export async function aiSearch({ query }) {
+export async function aiSearch({ query, skipAi = false }) {
   const runKeyword = async (target = 'product') => {
     const params = { q: query, page: 1, pageSize: 20, currency: 'INR', sort: 'relevance', attributes: [] };
     return target === 'supplier' ? searchSuppliers(params) : searchProducts(params);
   };
 
-  if (!isAiConfigured()) {
+  // `skipAi` is the guest ceiling having been reached (or being unevaluable) —
+  // see `guestAiAllowed`. It takes the SAME path as "no key configured": the
+  // caller gets ordinary keyword results flagged `fallback: true`, never an
+  // error. Reusing this branch is deliberate — the degraded experience is
+  // already built, tested and described in agreement §3.3, so a ceiling hit
+  // needs no second code path and no new response shape.
+  if (skipAi || !isAiConfigured()) {
     // No key configured (e.g. before the client provides one) — behave exactly
     // like a failure: keyword results, flagged, never a 5xx.
     const results = await runKeyword();
