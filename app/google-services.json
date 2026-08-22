@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "924703842302",
+    "project_id": "mpx-global",
+    "storage_bucket": "mpx-global.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:924703842302:android:3be2a0f22daeaddaedaaaf",
+        "android_client_info": {
+          "package_name": "com.mpxglobal.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMe7yW-UxvGszoZIRsIYZevI5kX16GmYY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

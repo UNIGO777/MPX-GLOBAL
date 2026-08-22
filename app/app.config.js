@@ -54,6 +54,16 @@ export default ({ config }) => ({
 
   android: {
     package: BUNDLE_ID,
+    // M4-H · FCM. Firebase matches this file to the app by package name, so it
+    // is only valid while `BUNDLE_ID` stays `com.mpxglobal.app` — change the
+    // package and push goes silently dead rather than erroring.
+    //
+    // 🔒 Not a secret. This file ships inside the APK and anyone who unpacks it
+    // can read the values; that is by design for a client config. The SECRET
+    // half is the backend's `FIREBASE_SERVICE_ACCOUNT_JSON`, which never leaves
+    // the server — and which `docs/Note.md` already flags for rotation before
+    // production, since the current key passed through a chat transcript.
+    googleServicesFile: './google-services.json',
     adaptiveIcon: {
       backgroundColor: '#EAEEFF',
       foregroundImage: './assets/android-icon-foreground.png',

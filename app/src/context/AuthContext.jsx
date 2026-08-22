@@ -4,6 +4,7 @@ import { authApi } from '../api/auth.js';
 import { mergeUser, normalizeUser } from '../api/normalizeUser.js';
 import { tokenStore } from '../api/tokenStore.js';
 import { useToast } from '../components/Toast.jsx';
+import { registerForPush, unregisterFromPush } from '../push/push.js';
 import { logger } from '../utils/logger.js';
 import { toAppError } from '../utils/errors.js';
 
@@ -80,6 +81,12 @@ export function AuthProvider({ children }) {
       try {
         const user = await authApi.me();
         if (!cancelled) applyUser(normalizeUser(user));
+        // M4-H · re-register on every launch, not only at login. FCM rotates
+        // tokens (reinstall, restore-to-new-device, app-data clear) and most
+        // users sign in once and never again — registering only at login would
+        // leave those devices silently unreachable. Server-side it is an
+        // upsert, so repeating it is free.
+        if (!cancelled) registerForPush();
       } catch (error) {
         if (cancelled) return;
         const appError = toAppError(error);
@@ -151,6 +158,11 @@ export function AuthProvider({ children }) {
       }
 
       applyUser(user);
+      // M4-H · register this device for push. Deliberately NOT awaited: it
+      // prompts for a permission and hits the network, and a login must not
+      // wait on either. It is fire-and-forget by construction (see `push.js`),
+      // so nothing here can reject.
+      registerForPush();
       return user;
     },
     [applyUser],
@@ -163,6 +175,12 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     const refreshToken = tokenStore.getRefreshToken();
+    // 🔴 BEFORE the session is torn down — the unregister call needs the access
+    // token that `clearSession` is about to wipe. Awaited (unlike registration)
+    // so the next person to sign in on this device cannot inherit the previous
+    // account's enquiries; it swallows its own failures, so it cannot block
+    // logout either.
+    await unregisterFromPush();
     try {
       // Tell the server first so the refresh family is revoked; a failure here
       // must still clear the device, or the user stays signed in locally.

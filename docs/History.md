@@ -175,6 +175,42 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-22 — FCM push wired APP-SIDE. The backend half has existed since M4; this is what was
+  missing end to end.** Owner supplied `google-services.json` (Firebase project `mpx-global`,
+  package `com.mpxglobal.app`). Scope: the **D5 carve-out** approved 2026-07-31 — no alert needed,
+  and no new events beyond M4's two.
+  - **Dependencies added** (told the owner first, per CLAUDE.md): `expo-notifications` and
+    `expo-linking`. 🔴 **`getDevicePushTokenAsync()`, NOT `getExpoPushTokenAsync()`** — the server
+    delivers through `firebase-admin` straight to FCM, so an Expo push token would be accepted by
+    `POST /me/devices` (it passes the 20–4096-char validator) and then silently never deliver.
+    That failure mode is invisible until someone waits for a notification that never comes.
+  - `src/push/push.js` — permission → Android channel → native token → register. **Fire-and-forget
+    everywhere**: a denied permission, an emulator without Play Services, or a build with no
+    Firebase config must never block a login. Never logs the token itself.
+  - **Registered on login AND on every launch-restore**, not just login. FCM rotates tokens
+    (reinstall, device restore, app-data clear) and most users sign in once and never again —
+    login-only registration would leave those devices quietly unreachable. Server-side it is an
+    upsert, so repeating is free.
+  - **Unregistered on logout, awaited and BEFORE `clearSession()`** — the call needs the access
+    token that clearing is about to wipe. Otherwise the next person to sign in on that device
+    inherits the previous account's enquiries.
+  - **Notification taps reuse the existing deep link** rather than a second navigation path: the
+    payload's `conversationId` becomes `mpxglobal://chat/<id>`, fed through React Navigation's own
+    `getInitialURL`/`subscribe`. `getInitialURL` covers a COLD start (app killed) and `subscribe`
+    the warm one — handling only the warm case is the classic "works in dev, dead from the
+    notification tray" bug. Trust rule unchanged: the payload only selects a destination; the
+    screen still fetches through the API and the server still checks party membership.
+  - `npx expo prebuild --platform android` applied the native half — `google-services.json` copied
+    into `android/app/`, `com.google.gms:google-services` classpath and plugin added. ⚠️ Prebuild
+    **regenerates `android/`**; it was safe here only because that folder is untracked and carries
+    no hand edits. Anything hand-written there in future dies on the next prebuild.
+  - 🔒 **Two Firebase files, only one is secret.** `google-services.json` ships inside the APK and
+    is readable by anyone who unpacks it — that is normal for a client config. The backend's
+    `FIREBASE_SERVICE_ACCOUNT_JSON` is the real secret, and `docs/Note.md` already flags it for
+    rotation before production because the current key passed through a chat transcript.
+  - ⚠️ **Not yet proven on a device.** Push cannot work in Expo Go or the old dev client — it needs
+    this new native build. End-to-end proof needs two accounts: a buyer sends an enquiry, the
+    seller's phone shows the notification, and tapping it opens that thread.
 - **2026-08-21 (latest) — Search tab rebuilt, `SearchPill` extracted, endless home feed, first
   production APK.**
   - **`components/SearchPill.jsx` — NEW shared component.** The search field was written inline in
