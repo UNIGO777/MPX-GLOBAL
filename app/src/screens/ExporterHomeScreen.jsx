@@ -18,37 +18,54 @@ import { toAppError } from '../utils/errors.js';
 import { draftCapBlock } from '../utils/productCaps.js';
 
 /**
- * Exporter home — first tab. Rebuilt 2026-08-18 against an owner-supplied
- * mockup ("make exact same"), replacing the old NavyCanopy version whose
- * body was three inert "COMING SOON" cards.
+ * Exporter home — first tab. Redesigned 2026-08-21 against an owner-approved
+ * spec (the seller-home mockup), replacing the 2026-08-18 build.
  *
- * Same shell language as the rebuilt Buyer Home so the two portals read as
- * one product: plain white page, own sticky header (`headerShown: false` on
- * the tab), `radii.lg` on every card, one blue accent.
+ * WHAT THE REDESIGN CHANGED, and why:
  *
- * EVERY number here is server-derived, from a single `GET /products/mine`
- * plus the org and the unread count:
- * - Stat tiles ← `counts.active|draft|inactive`
- * - Allowance meter ← `caps` (rendered ONLY while unverified; a verified
- *   account has no cap UI at all, per D1/§A10/§A15)
+ * 1. 🔴 The screen is now mostly FLAT AND RULED, not a stack of bordered
+ *    cards. Every block being a rounded card is what made the old version
+ *    read as generic — real product surfaces reserve a card for a thing that
+ *    is genuinely an OBJECT. Here only products get cards (they are objects);
+ *    counts, enquiries and the storefront row are flat rows separated by
+ *    hairlines.
+ *
+ * 2. 🔴 ONE bold element, and it goes to the thing that actually blocks the
+ *    seller: verification. It is a full-bleed navy block with square corners
+ *    while everything below is quiet — that contrast is the whole hierarchy.
+ *    It renders ONLY while unverified, and when it goes the page moves up
+ *    rather than leaving a dead slot.
+ *
+ * 3. Enquiries moved from near the BOTTOM to the top of the body, with the
+ *    count set large. On a discovery marketplace answering buyers is the
+ *    seller's entire job; burying it under the catalogue had the priority
+ *    backwards.
+ *
+ * 4. The cap meter is SEGMENTED, not a percentage track. The limit is 3 —
+ *    a proportional bar turns something countable into an abstraction. Three
+ *    slots with two filled reads instantly; drafts use the same idea at ten.
+ *
+ * Because sections now own their horizontal padding (the ScrollView has
+ * none), hairlines span edge to edge and the navy block can bleed full width.
+ *
+ * EVERY number is server-derived, from one `GET /products/mine` plus the org
+ * and the unread count:
+ * - Counts ← `counts.active|draft|inactive`
+ * - Cap meter ← `caps`, rendered ONLY while unverified; a verified account
+ *   has no cap UI at all (D1/§A10/§A15) — the server sends `{verified:true}`
+ *   and no figures, so there is nothing to grey out.
  * - 🔴 `caps.active.used` and `counts.active` are DIFFERENT numbers on
  *   purpose: the cap count excludes taken-down products (§A10) while the
- *   tile counts every active row. Each is used for its own job and they are
- *   never swapped — the meter must never imply a blocked product occupies a
- *   live slot.
- * - Enquiries badge ← `/conversations/unread-count` (unread, not total: a
- *   badge means "needs attention"; a total would nag forever). It never
- *   blocks the screen — a failure just hides the badge.
+ *   count includes every active row. Never swap them — the meter must not
+ *   imply a blocked product occupies a live slot.
+ * - Enquiries ← `/conversations/unread-count` (unread, not total: a count
+ *   means "needs attention"; a total would nag forever). Never blocks the
+ *   screen — a failure just shows zero.
  *
  * 🚫 Nothing invented: no views/visitors/impressions, no revenue, orders or
- * shipments, no ratings, no promote/boost — none of that exists on this
- * platform. The mockup's generic "GLOBAL TRADE" wordmark is replaced with
- * the real `BrandWordmark`.
- *
- * ✅ 2026-08-18 (later) — fully wired: "+ Add product" → the category picker
- * (screen 6), "View all" → the Catalogue tab (screen 5), a product card →
- * the edit form (screen 7). The three coming-soon notices this screen
- * shipped with lasted one day; their ledger rows are closed.
+ * shipments, no ratings, no promote/boost. None of it exists on this
+ * platform (agreement §3.11.2 — no money moves in Phase 1), and a screen that
+ * implies otherwise is worse than one that admits the truth.
  */
 const GRID_PAGE_SIZE = 4;
 
@@ -73,7 +90,7 @@ export function ExporterHomeScreen({ navigation }) {
       const [org, mine, unread] = await Promise.all([
         organisationApi.mine(),
         sellerProductsApi.mine({ pageSize: GRID_PAGE_SIZE }),
-        // Never blocks the page — no badge is better than no home screen.
+        // Never blocks the page — no count is better than no home screen.
         conversationsApi.unreadCount().catch(() => 0),
       ]);
       setState({
@@ -99,9 +116,13 @@ export function ExporterHomeScreen({ navigation }) {
   );
 
   const { loading, error, org, products, counts, caps, unread } = state;
-  const firstName = user?.name?.split(' ')[0];
   const portalLabel = PORTAL_LABEL[role] ?? 'Exporter';
+  // This is the seller's OWN organisation read, not a public projection, so
+  // the raw status is legitimately available here — it is what the
+  // verification hub needs to distinguish pending from rejected. The public
+  // whitelist rule (never raw `kycStatus` to a buyer/guest) is unaffected.
   const verified = org?.kycStatus === 'verified';
+  const monogram = (org?.name ?? user?.name ?? '?').trim().slice(0, 2).toUpperCase();
 
   const notBuilt = (what) => () =>
     Alert.alert('Coming soon', `${what} isn't built yet — hang tight.`);
@@ -167,201 +188,228 @@ export function ExporterHomeScreen({ navigation }) {
           styles.scroll,
           // Floor keeps content clear of Android's translucent gesture-nav
           // strip even when the inset reports 0 (2026-08-18 safe-area fix).
+          // NOTE: the tab bar is a flow sibling, not an overlay — its height
+          // is NOT reserved here on purpose.
           { paddingBottom: Math.max(insets.bottom, spacing[6]) + spacing[8] },
         ]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.primary[600]} />
         }
       >
-        <Text style={styles.welcome} numberOfLines={1}>
-          Welcome, {firstName ?? 'there'}
-        </Text>
-        <View style={styles.identityRow}>
-          <Text style={styles.orgName} numberOfLines={1}>
-            {org?.name ?? 'Your company'}
-          </Text>
-          {verified ? (
-            <Ionicons name="checkmark-circle" size={16} color={colors.success} accessible={false} />
-          ) : null}
-          <Text style={styles.identityMeta}>· {portalLabel} account</Text>
+        {/* Identity — the tick sits inline with the company name, the same
+            place a buyer sees it on the public page, so the seller
+            recognises exactly what buyers are looking at. There is NO
+            "unverified" badge: the tick's absence is the only signal. */}
+        <View style={styles.identity}>
+          <View style={styles.monogram}>
+            {org?.logo ? (
+              <Image source={{ uri: org.logo }} style={styles.monogramImage} />
+            ) : (
+              <Text style={styles.monogramText}>{monogram}</Text>
+            )}
+          </View>
+          <View style={styles.identityText}>
+            <View style={styles.identityNameRow}>
+              <Text style={styles.identityName} numberOfLines={1}>
+                {org?.name ?? 'Your company'}
+              </Text>
+              {verified ? (
+                <Ionicons name="checkmark-circle" size={15} color={colors.success} accessible={false} />
+              ) : null}
+            </View>
+            <Text style={styles.identityMeta} numberOfLines={1}>
+              {portalLabel}
+              {org?.country ? ` · ${org.country}` : ''}
+            </Text>
+          </View>
         </View>
 
-        {/* Allowance — unverified only. A verified seller sees no cap UI. */}
+        {/* 🔴 The one bold element — full-bleed, square, unverified only. */}
         {caps && caps.verified === false ? (
-          <Pressable
-            onPress={() => navigation.navigate('KycHub')}
-            accessibilityRole="button"
-            accessibilityLabel="Listing allowance — get verified"
-            style={({ pressed }) => [styles.allowance, pressed && styles.allowancePressed]}
-          >
-            <View style={styles.allowanceHead}>
-              <Ionicons name="shield-outline" size={20} color={colors.primary[600]} accessible={false} />
-              <Text style={styles.allowanceTitle}>Listing allowance</Text>
-            </View>
-            <View style={styles.track}>
-              <View
-                style={[
-                  styles.fill,
-                  { width: `${Math.min(100, (caps.active.used / caps.active.limit) * 100)}%` },
-                ]}
-              />
-            </View>
-            <Text style={styles.allowanceCounts}>
-              {caps.active.used} of {caps.active.limit} live{'   '}·{'   '}
-              {caps.drafts.used} of {caps.drafts.limit} drafts
+          <View style={styles.verify}>
+            <Text style={styles.verifyKicker}>Verification</Text>
+            <Text style={styles.verifyTitle}>Get your verified tick</Text>
+            <Text style={styles.verifyBody}>
+              Send your registration and tax documents. Once approved, your listing limits are removed.
             </Text>
-            <View style={styles.allowanceDivider} />
-            <View style={styles.allowanceCta}>
-              <Text style={styles.allowanceCtaText}>Get verified to publish unlimited products</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.primary[700]} accessible={false} />
-            </View>
-          </Pressable>
+            <Pressable
+              onPress={() => navigation.navigate('KycHub')}
+              accessibilityRole="button"
+              accessibilityLabel="Start verification"
+              style={({ pressed }) => [styles.verifyCta, pressed && styles.verifyCtaPressed]}
+            >
+              <Text style={styles.verifyCtaText}>Start verification</Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.primary[800]} accessible={false} />
+            </Pressable>
+          </View>
         ) : null}
 
-        {/* Stat tiles — the seller's own catalogue, nothing derived. */}
-        <View style={styles.statRow}>
-          <StatTile
-            icon="checkmark-circle-outline"
-            tint="#E7F7EF"
-            glyph="#05603A"
-            value={counts?.active ?? 0}
-            label="Live"
-          />
-          <StatTile
-            icon="document-text-outline"
-            tint={colors.primary[50]}
-            glyph={colors.primary[600]}
-            value={counts?.draft ?? 0}
-            label="Drafts"
-          />
-          <StatTile
-            icon="eye-off-outline"
-            tint={colors.ink[100]}
-            glyph={colors.ink[600]}
-            value={counts?.inactive ?? 0}
-            label="Hidden"
-          />
-        </View>
-
-        <Pressable
-          onPress={startAdd}
-          accessibilityRole="button"
-          accessibilityLabel="Add product"
-          style={({ pressed }) => [styles.addButton, pressed && styles.addButtonPressed]}
-        >
-          <Ionicons name="add" size={20} color={colors.white} accessible={false} />
-          <Text style={styles.addButtonText}>Add product</Text>
-        </Pressable>
-
-        <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>My products</Text>
-          {products.length > 0 ? (
-            <Pressable
-              onPress={() => navigation.navigate('ExporterCatalogue')}
-              accessibilityRole="button"
-              hitSlop={8}
-            >
-              <Text style={styles.viewAll}>View all</Text>
-            </Pressable>
-          ) : null}
-        </View>
-
-        {products.length > 0 ? (
-          <View style={styles.grid}>
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                showStatus
-                // Owner-mode detail (works for drafts/hidden too, which have
-                // no public page); Edit is one tap from there.
-                onPress={(p) => navigation.navigate('ProductDetail', { ownerProductId: p.id })}
-                style={styles.gridSlot}
-              />
-            ))}
-          </View>
-        ) : (
-          /* First-run — the state that decides whether a new exporter ever
-             lists anything. Encouraging, not empty. */
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <Ionicons name="cube-outline" size={30} color={colors.primary[600]} accessible={false} />
-            </View>
-            <Text style={styles.emptyTitle}>List your first product</Text>
-            <Text style={styles.emptyBody}>Buyers can&apos;t find you until you publish something.</Text>
-          </View>
-        )}
-
+        {/* Enquiries — a row, not a card, with the count set large. */}
         <Pressable
           onPress={() => navigation.navigate('ExporterChats')}
           accessibilityRole="button"
           accessibilityLabel="Buyer enquiries"
-          style={({ pressed }) => [styles.rowCard, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.enquiry, pressed && styles.rowPressed]}
         >
-          <View style={styles.rowIcon}>
-            <Ionicons name="chatbubble-outline" size={20} color={colors.primary[600]} accessible={false} />
+          <Text style={[styles.enquiryCount, unread === 0 && styles.enquiryCountZero]}>
+            {unread > 99 ? '99+' : unread}
+          </Text>
+          <View style={styles.enquiryText}>
+            <Text style={styles.enquiryTitle}>
+              {unread === 0 ? 'No unanswered enquiries' : 'Buyers waiting for a reply'}
+            </Text>
+            <Text style={styles.enquirySubtitle}>
+              {unread === 0 ? 'New questions from buyers land here' : 'Replying quickly wins the order'}
+            </Text>
           </View>
-          <View style={styles.rowText}>
-            <Text style={styles.rowTitle}>Buyer enquiries</Text>
-            <Text style={styles.rowSubtitle}>Questions from buyers land here</Text>
-          </View>
-          {unread > 0 ? (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{unread > 99 ? '99+' : unread}</Text>
-            </View>
-          ) : null}
-          <Ionicons name="chevron-forward" size={18} color={colors.ink[400]} accessible={false} />
+          <Ionicons name="chevron-forward" size={18} color={colors.ink[300]} accessible={false} />
         </Pressable>
 
-        {/* How buyers see you — opens the REAL public supplier profile. */}
-        <View style={styles.publicCard}>
-          <View style={styles.publicLogo}>
-            {org?.logo ? (
-              <Image source={{ uri: org.logo }} style={styles.publicLogoImage} />
-            ) : (
-              <Ionicons name="storefront-outline" size={26} color={colors.primary[600]} accessible={false} />
-            )}
+        {/* Catalogue — flat numbers. No tiles, no borders. */}
+        <View style={styles.section}>
+          <Text style={styles.kicker}>Catalogue</Text>
+          <View style={styles.counts}>
+            <CountItem value={counts?.active ?? 0} label="Live" live />
+            <CountItem value={counts?.draft ?? 0} label="Draft" />
+            <CountItem value={counts?.inactive ?? 0} label="Hidden" />
           </View>
-          <View style={styles.publicNameRow}>
-            <Text style={styles.publicName} numberOfLines={1}>
-              {org?.name ?? 'Your company'}
+        </View>
+
+        {/* Cap meter — unverified only, segmented because the limit is 3. */}
+        {caps && caps.verified === false ? (
+          <Pressable
+            onPress={() => navigation.navigate('KycHub')}
+            accessibilityRole="button"
+            accessibilityLabel="Listing allowance"
+            style={({ pressed }) => [styles.caps, pressed && styles.rowPressed]}
+          >
+            <CapMeter label="Live listings" used={caps.active.used} limit={caps.active.limit} />
+            <CapMeter label="Drafts" used={caps.drafts.used} limit={caps.drafts.limit} />
+            <Text style={styles.capsNote}>Both limits are removed once you&apos;re verified.</Text>
+          </Pressable>
+        ) : null}
+
+        {/* Storefront — how buyers actually see this company. */}
+        <Pressable
+          onPress={
+            org?.slug
+              ? () => navigation.navigate('SupplierProfile', { idOrSlug: org.slug })
+              : notBuilt('Your public profile')
+          }
+          accessibilityRole="button"
+          accessibilityLabel="Preview public profile"
+          style={({ pressed }) => [styles.storefront, pressed && styles.rowPressed]}
+        >
+          <Ionicons name="storefront-outline" size={19} color={colors.primary[600]} accessible={false} />
+          <View style={styles.storefrontText}>
+            <Text style={styles.storefrontTitle}>Preview your public page</Text>
+            <Text style={styles.storefrontSubtitle}>
+              {counts?.active ?? 0} {counts?.active === 1 ? 'product' : 'products'} live · what buyers see
             </Text>
-            {verified ? (
-              <Ionicons name="checkmark-circle" size={18} color={colors.success} accessible={false} />
+          </View>
+          <Ionicons name="chevron-forward" size={17} color={colors.ink[300]} accessible={false} />
+        </Pressable>
+
+        {/* Products — the ONLY cards on the screen, because they are the only
+            objects. Uses the shared ProductCard everywhere, unchanged. */}
+        <View style={styles.section}>
+          <View style={styles.sectionHead}>
+            <Text style={styles.sectionTitle}>Your products</Text>
+            {products.length > 0 ? (
+              <Pressable
+                onPress={() => navigation.navigate('ExporterCatalogue')}
+                accessibilityRole="button"
+                hitSlop={8}
+              >
+                <Text style={styles.viewAll}>Manage</Text>
+              </Pressable>
             ) : null}
           </View>
-          {/* The seller's own Live count. A taken-down product still counts
-              here but is not visible publicly — the public page itself shows
-              the authoritative buyer-facing number when opened. */}
-          <Text style={styles.publicCount}>
-            {counts?.active ?? 0} {counts?.active === 1 ? 'product' : 'products'} live
-          </Text>
-          <Pressable
-            onPress={
-              org?.slug
-                ? () => navigation.navigate('SupplierProfile', { idOrSlug: org.slug })
-                : notBuilt('Your public profile')
-            }
-            accessibilityRole="button"
-            accessibilityLabel="Preview public profile"
-            style={({ pressed }) => [styles.ghostButton, pressed && styles.ghostButtonPressed]}
-          >
-            <Text style={styles.ghostButtonText}>Preview public profile</Text>
-          </Pressable>
+
+          {products.length > 0 ? (
+            <>
+              <View style={styles.grid}>
+                {products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    showStatus
+                    // Owner-mode detail (works for drafts/hidden too, which
+                    // have no public page); Edit is one tap from there.
+                    onPress={(p) => navigation.navigate('ProductDetail', { ownerProductId: p.id })}
+                    style={styles.gridSlot}
+                  />
+                ))}
+              </View>
+              <Pressable
+                onPress={startAdd}
+                accessibilityRole="button"
+                accessibilityLabel="Add product"
+                style={({ pressed }) => [styles.addOutline, pressed && styles.rowPressed]}
+              >
+                <Ionicons name="add" size={18} color={colors.primary[600]} accessible={false} />
+                <Text style={styles.addOutlineText}>Add product</Text>
+              </Pressable>
+            </>
+          ) : (
+            /* First-run — the state that decides whether a new exporter ever
+               lists anything. Encouraging, not empty, and the CTA is filled
+               here because there is no navy block competing with it. */
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>List your first product</Text>
+              <Text style={styles.emptyBody}>Buyers can&apos;t find you until you publish something.</Text>
+              <Pressable
+                onPress={startAdd}
+                accessibilityRole="button"
+                accessibilityLabel="Add product"
+                style={({ pressed }) => [styles.addFilled, pressed && styles.addFilledPressed]}
+              >
+                <Ionicons name="add" size={18} color={colors.white} accessible={false} />
+                <Text style={styles.addFilledText}>Add product</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
   );
 }
 
-function StatTile({ icon, tint, glyph, value, label }) {
+function CountItem({ value, label, live = false }) {
   return (
-    <View style={styles.statTile}>
-      <View style={[styles.statIcon, { backgroundColor: tint }]}>
-        <Ionicons name={icon} size={18} color={glyph} accessible={false} />
+    <View style={styles.countItem}>
+      <View style={styles.countValueRow}>
+        {live && value > 0 ? <View style={styles.liveDot} /> : null}
+        <Text style={[styles.countValue, value === 0 && styles.countValueZero]}>{value}</Text>
       </View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.countLabel}>{label}</Text>
+    </View>
+  );
+}
+
+/**
+ * Segmented allowance meter. One slot per unit of the limit — deliberately
+ * NOT a proportional bar: the limit is 3, and a percentage turns something
+ * countable into an abstraction.
+ *
+ * `used` can exceed `limit` in theory (a cap lowered later), so the fill is
+ * clamped and the printed figure stays truthful.
+ */
+function CapMeter({ label, used, limit }) {
+  const filled = Math.max(0, Math.min(used, limit));
+  return (
+    <View style={styles.cap}>
+      <View style={styles.capHead}>
+        <Text style={styles.capLabel}>{label}</Text>
+        <Text style={styles.capCount}>
+          {used}/{limit}
+        </Text>
+      </View>
+      <View style={styles.segments}>
+        {Array.from({ length: limit }, (_, i) => (
+          <View key={i} style={[styles.segment, i < filled && styles.segmentOn]} />
+        ))}
+      </View>
     </View>
   );
 }
@@ -370,6 +418,9 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface.DEFAULT },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.75 },
+  // Rows tint rather than fade — a fade on a flat, ruled surface reads as the
+  // row breaking, not responding.
+  rowPressed: { backgroundColor: colors.ink[50] },
 
   header: {
     flexDirection: 'row',
@@ -390,169 +441,182 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  scroll: { paddingHorizontal: spacing[5], paddingTop: spacing[5] },
-  welcome: { ...typography.h1, color: colors.primary[900] },
-  identityRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: spacing[1] },
-  orgName: { ...typography.bodyStrong, color: colors.primary[700], flexShrink: 1 },
-  identityMeta: { ...typography.body, color: colors.muted },
+  // 🔴 No horizontal padding: sections own it, so hairlines reach both edges
+  // and the verification block can bleed full width.
+  scroll: { paddingTop: spacing[4] },
+  section: { paddingHorizontal: spacing[5], paddingTop: spacing[5] },
 
-  allowance: {
-    marginTop: spacing[5],
-    backgroundColor: colors.primary[50],
-    borderRadius: radii.lg,
-    padding: spacing[4],
+  kicker: {
+    ...typography.tiny,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    color: colors.ink[400],
+    marginBottom: spacing[3],
   },
-  allowancePressed: { backgroundColor: colors.primary[100] },
-  allowanceHead: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
-  allowanceTitle: { ...typography.bodyStrong, color: colors.primary[800] },
-  track: {
-    height: 6,
-    borderRadius: radii.full,
-    backgroundColor: colors.primary[100],
-    marginTop: spacing[3],
-    overflow: 'hidden',
-  },
-  fill: { height: 6, borderRadius: radii.full, backgroundColor: colors.primary[600] },
-  allowanceCounts: { ...typography.caption, color: colors.primary[800], marginTop: spacing[2] },
-  allowanceDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.primary[200],
-    marginVertical: spacing[3],
-  },
-  allowanceCta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing[2] },
-  allowanceCtaText: { ...typography.caption, color: colors.primary[700], flexShrink: 1 },
 
-  statRow: { flexDirection: 'row', gap: spacing[3], marginTop: spacing[5] },
-  statTile: {
-    flex: 1,
-    alignItems: 'center',
-    borderRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.surface.border,
-    backgroundColor: colors.surface.DEFAULT,
-    paddingVertical: spacing[4],
-  },
-  statIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statValue: { ...typography.h1, color: colors.primary[900], marginTop: spacing[2] },
-  statLabel: { ...typography.tiny, color: colors.muted, marginTop: 2 },
-
-  addButton: {
+  // --- identity -------------------------------------------------------
+  identity: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing[2],
-    minHeight: 52,
-    borderRadius: radii.full,
-    backgroundColor: colors.primary[600],
-    marginTop: spacing[5],
+    gap: spacing[3],
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[5],
   },
-  addButtonPressed: { backgroundColor: colors.primary[700] },
-  addButtonText: { ...typography.bodyStrong, color: colors.white },
+  monogram: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.md,
+    backgroundColor: colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  monogramImage: { width: '100%', height: '100%' },
+  monogramText: { ...typography.label, fontWeight: '700', color: colors.primary[700] },
+  identityText: { flex: 1, minWidth: 0 },
+  identityNameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[1] },
+  identityName: { ...typography.bodyStrong, color: colors.ink[900], flexShrink: 1 },
+  identityMeta: { ...typography.caption, color: colors.muted, marginTop: 1 },
 
+  // --- verification (the one bold block) -------------------------------
+  verify: {
+    backgroundColor: colors.primary[800],
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[5],
+  },
+  verifyKicker: {
+    ...typography.tiny,
+    fontWeight: '700',
+    letterSpacing: 1.3,
+    textTransform: 'uppercase',
+    color: colors.primary[200],
+    marginBottom: spacing[2],
+  },
+  verifyTitle: { ...typography.h3, color: colors.white, marginBottom: spacing[1] },
+  verifyBody: {
+    ...typography.caption,
+    color: colors.primary[200],
+    lineHeight: 18,
+    marginBottom: spacing[4],
+    maxWidth: 300,
+  },
+  verifyCta: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    backgroundColor: colors.white,
+    borderRadius: radii.sm,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[4],
+  },
+  verifyCtaPressed: { backgroundColor: colors.primary[100] },
+  verifyCtaText: { ...typography.label, fontWeight: '700', color: colors.primary[800] },
+
+  // --- enquiries -------------------------------------------------------
+  enquiry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[4],
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[4],
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surface.border,
+  },
+  enquiryCount: {
+    ...typography.h1,
+    fontSize: 32,
+    lineHeight: 34,
+    letterSpacing: -1,
+    color: colors.ink[900],
+    minWidth: 34,
+  },
+  enquiryCountZero: { color: colors.ink[300] },
+  enquiryText: { flex: 1, minWidth: 0 },
+  enquiryTitle: { ...typography.bodyStrong, color: colors.ink[900] },
+  enquirySubtitle: { ...typography.caption, color: colors.muted, marginTop: 1 },
+
+  // --- catalogue counts ------------------------------------------------
+  counts: { flexDirection: 'row', gap: spacing[8] },
+  countItem: {},
+  countValueRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[1] },
+  countValue: { ...typography.h2, color: colors.ink[900], letterSpacing: -0.6 },
+  countValueZero: { color: colors.ink[300] },
+  countLabel: { ...typography.caption, color: colors.muted, marginTop: 1 },
+  liveDot: { width: 6, height: 6, borderRadius: radii.full, backgroundColor: colors.success },
+
+  // --- cap meter -------------------------------------------------------
+  caps: { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[5] },
+  cap: { marginBottom: spacing[3] },
+  capHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginBottom: spacing[2],
+  },
+  capLabel: { ...typography.caption, fontWeight: '600', color: colors.ink[700] },
+  capCount: { ...typography.caption, color: colors.muted },
+  segments: { flexDirection: 'row', gap: 3 },
+  segment: { flex: 1, height: 4, borderRadius: 1, backgroundColor: colors.ink[200] },
+  segmentOn: { backgroundColor: colors.primary[600] },
+  capsNote: { ...typography.tiny, color: colors.muted, marginTop: spacing[1] },
+
+  // --- storefront ------------------------------------------------------
+  storefront: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[4],
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surface.border,
+  },
+  storefrontText: { flex: 1, minWidth: 0 },
+  storefrontTitle: { ...typography.label, fontWeight: '600', color: colors.ink[900] },
+  storefrontSubtitle: { ...typography.caption, color: colors.muted, marginTop: 1 },
+
+  // --- products --------------------------------------------------------
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    marginTop: spacing[6],
     marginBottom: spacing[3],
   },
-  sectionTitle: { ...typography.h3, color: colors.primary[900] },
-  viewAll: { ...typography.label, color: colors.primary[700] },
+  sectionTitle: { ...typography.h3, color: colors.ink[900] },
+  viewAll: { ...typography.label, fontWeight: '600', color: colors.primary[600] },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] },
+  gridSlot: { width: '48%' },
 
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[4] },
-  gridSlot: { width: '47%', marginBottom: spacing[2] },
-
-  empty: {
-    alignItems: 'center',
-    borderRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.surface.border,
-    paddingVertical: spacing[8],
-    paddingHorizontal: spacing[5],
-  },
-  emptyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: radii.full,
-    backgroundColor: colors.primary[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing[3],
-  },
-  emptyTitle: { ...typography.h3, color: colors.ink[900], textAlign: 'center' },
-  emptyBody: { ...typography.caption, color: colors.muted, textAlign: 'center', marginTop: spacing[1] },
-
-  rowCard: {
+  addOutline: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing[3],
-    marginTop: spacing[5],
-    padding: spacing[4],
-    borderRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.surface.border,
-    backgroundColor: colors.surface.DEFAULT,
-  },
-  rowIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.full,
-    backgroundColor: colors.primary[50],
-    alignItems: 'center',
     justifyContent: 'center',
-  },
-  rowText: { flex: 1 },
-  rowTitle: { ...typography.bodyStrong, color: colors.ink[900] },
-  rowSubtitle: { ...typography.caption, color: colors.muted, marginTop: 1 },
-  badge: {
-    minWidth: 24,
-    height: 24,
-    borderRadius: radii.full,
-    backgroundColor: colors.primary[600],
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-  },
-  badgeText: { ...typography.caption, fontWeight: '700', color: colors.white },
-
-  publicCard: {
-    alignItems: 'center',
-    marginTop: spacing[5],
-    padding: spacing[5],
-    borderRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.surface.border,
-    backgroundColor: colors.surface.DEFAULT,
-  },
-  publicLogo: {
-    width: 64,
-    height: 64,
-    borderRadius: radii.full,
-    backgroundColor: colors.primary[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  publicLogoImage: { width: 64, height: 64 },
-  publicNameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], marginTop: spacing[3] },
-  publicName: { ...typography.h3, color: colors.primary[900], flexShrink: 1 },
-  publicCount: { ...typography.caption, color: colors.muted, marginTop: spacing[1] },
-  ghostButton: {
-    alignSelf: 'stretch',
-    minHeight: 44,
-    borderRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.surface.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: spacing[2],
     marginTop: spacing[4],
+    minHeight: 46,
+    borderRadius: radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.primary[300],
+    backgroundColor: colors.primary[50],
   },
-  ghostButtonPressed: { backgroundColor: colors.primary[50] },
-  ghostButtonText: { ...typography.bodyStrong, color: colors.primary[700] },
+  addOutlineText: { ...typography.label, fontWeight: '700', color: colors.primary[700] },
+
+  empty: { paddingVertical: spacing[6], alignItems: 'flex-start' },
+  emptyTitle: { ...typography.h3, color: colors.ink[900] },
+  emptyBody: { ...typography.body, color: colors.muted, marginTop: spacing[1], marginBottom: spacing[4] },
+  addFilled: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    minHeight: 46,
+    paddingHorizontal: spacing[5],
+    borderRadius: radii.md,
+    backgroundColor: colors.primary[600],
+  },
+  addFilledPressed: { backgroundColor: colors.primary[700] },
+  addFilledText: { ...typography.label, fontWeight: '700', color: colors.white },
 });

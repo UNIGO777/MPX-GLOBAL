@@ -175,6 +175,111 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-21 (latest) — Search tab rebuilt, `SearchPill` extracted, endless home feed, first
+  production APK.**
+  - **`components/SearchPill.jsx` — NEW shared component.** The search field was written inline in
+    Buyer Home; writing it again in the Search tab would have left two hand-maintained copies of
+    the app's most-looked-at control, and they drift. One definition, used in three places (home
+    bar, its sticky twin, search tab). **Two modes on purpose:** *button* on Home (tapping opens
+    the Search tab — Home has nothing to search, so a real input there would raise a keyboard over
+    a screen that cannot use it) and *input* on the Search tab. Identical to look at.
+  - **`SearchHomeScreen` rebuilt** to the marketplace design: blue app bar, grey ground, white
+    blocks, AI band, category grid, Goods/Services. Shows **11 + All** categories against Home's
+    **7 + All** — Home teases the catalogue, the Search tab is where you browse it.
+  - **Home app bar is now ONE row** — pill + saved + profile. The MPX wordmark was dropped from it;
+    it spent a band of blue saying what the app icon, splash and Profile tab already say.
+  - **Endless product feed on Home** (see the entry below for the FlatList conversion).
+  - **Bugs fixed on device:** promo dots sat ON the banner (a `marginTop: -8` that used to cancel a
+    page `gap` which no longer exists); banners jumped height as they auto-advanced (`minHeight`
+    with 3/2/2-line titles → fixed `height`); "Browse by type" sat flush on its cards (`blockTitle`
+    carries no margin of its own — `blockHead` normally provides it, and that heading has no link
+    so it renders bare).
+  - **First production APK — `app/.env.production` added.** Expo loads it instead of `.env` when
+    `NODE_ENV=production`, so `npm start` keeps the LAN URL and a release build gets
+    `https://api.mpx.nxtgendigitals.com` — no file-swapping around a build. **Confirmed the live
+    API is up and serving over HTTPS.**
+  - ⚠️ **Signed with the DEBUG key** (owner's call: test/demo APK). `android/app/build.gradle` still
+    has `release { signingConfig signingConfigs.debug }`. **It cannot go to Play Store**, and a
+    real keystore is still owed before store submission (§4.2). A keystore is permanent — losing
+    the file or its password means the app can never be updated on Play.
+  - 🔴 **DEPLOYMENT PREREQUISITE, easy to trip over:** today's backend makes `NODE_ENV` required and
+    `AI_GUEST_DAILY_MAX` required in production. **The production API will refuse to boot without
+    both** the next time it restarts. That is deliberate (fail loud, not silent) — but the
+    production `.env` has to gain them *before* this backend is deployed.
+- **2026-08-21 (later) — Buyer home rebuilt to the marketplace idiom.** Owner: "like amazon myntra
+  alibaba". Mockup approved first, then implemented. **App only — web untouched.**
+  - **Blue app bar** carrying the search pill (one `searchPill` definition shared with the sticky
+    bar, so they cannot drift). The ✨ **AI chip lives inside the pill** — AI search is the one
+    thing a buyer cannot do on a rival marketplace, so it sits in the control they already reach
+    for. Grey page ground, white blocks; **categories lead** as a 4-across circular grid.
+  - **One coloured band only** (the AI band), solid navy. 🔴 **A gradient was NOT used** — it needs
+    `expo-linear-gradient`, and no dependency gets added for a visual without asking.
+  - 🔴 **The mockup was built from LIVE catalogue data, and that changed the design.** Pulling
+    `/categories/top` and `/public/search` showed the real rows are ragged: `Selvedge Denim` has a
+    USD price and an MOQ; `Website development` a wide rupee range; `Web security` only a floor;
+    `Custom AI/ML Model Development` **no price at all**. The first mockup had every card reading
+    `₹220 / m · MOQ 500 m` — prettier, and it hid the four states the card must survive. It also
+    revealed the catalogue is **mostly services right now**, which is why Goods and Services get
+    equal weight rather than a goods-first layout.
+  - **Category labels wrap to three lines**, not one. Seeded names are long and uneven ("Bags,
+    Luggage & Accessories" vs "Footwear"); truncating hides which category a tile is, so the row
+    height is set by the worst case.
+  - 🔴 **Kept although the mockup had neither:** `VerificationSummaryCard` (the buyer's ONLY in-app
+    route to the KYC hub — dropping it for a visual refresh would delete real functionality; it now
+    sits *below* the discovery surface since verification gates nothing for a buyer, D3), and all
+    of the previously-requested behaviour — sticky-header reveal, first-load fade/rise, promo
+    autoplay + inter-slide gap, shared `ProductCard`.
+  - **Removed:** the in-page search row and the three QuickTiles — search moved into the app bar,
+    and Browse/Goods/Services are covered by the grid plus the split. Both would have put the same
+    destination on screen twice. Dead styles and the `QuickTile` component were deleted with them.
+  - ⚠️ **`ProductCard` NOT modified.** The mockup showed MOQ and a Goods/Service chip on the card;
+    adding either means changing the shared component, which changes every screen. Owner's standing
+    instruction is "exact same product card everywhere", so this needs a separate decision.
+  - **Three layout bugs caught ON DEVICE, all from the same root cause — RN style arrays and
+    percentage widths:**
+    1. **Category labels broke mid-word** ("Agri / cult / ure"). `catItemTouchable` had
+       `width: '25%'` *and* the inner `catItem` had `25%` too — so each tile was a quarter of a
+       quarter and the label had ~22px. The inner view must be `100%`: it fills the touchable,
+       it does not re-divide the row.
+    2. **The promo carousel showed the previous slide's edge on the left.** `PROMO_PAGE_WIDTH` is
+       `screenWidth − spacing[5] * 2`, computed back when `scrollContent` carried that padding —
+       removing the padding broke the paging math. Fixed by giving the carousel its own padded
+       wrapper rather than re-deriving the constant. ⚠️ **That constant's own comment documents
+       this exact drift happening once before**; it is load-bearing, so anything that changes the
+       page's horizontal padding has to keep the carousel's container at `screenWidth − 40`.
+    3. **"All" jumped to a row of its own.** It is the one tile not wrapped in `PressScaleButton`,
+       so it carries both styles — and `catItem`'s `width: '100%'` was listed *after* the 25%,
+       so it won and took the whole row. **Order in a RN style array is last-wins**; the 25% has
+       to come second.
+  - Bundle compiles (HTTP 200). Fixes 1 and 2 verified on device; fix 3 is a one-line style-order
+    change, still unverified — the debugging port rotated again.
+- **2026-08-21 — App home screens redesigned (seller rebuilt, buyer design-pass).** Owner approved
+  a spec mockup first, then implementation. **App only — web untouched.**
+  - **The diagnosis:** both screens were a vertical stack of rounded, bordered cards. That is what
+    made them read as generic. The rule applied instead: **a card means the thing is an OBJECT.**
+    Products get cards; counts, enquiries, identity and storefront rows do not — they are flat rows
+    separated by hairlines.
+  - **`ExporterHomeScreen` rebuilt.** The ScrollView lost its horizontal padding so **sections own
+    it** — that is what lets hairlines reach both edges and the verification block bleed full width.
+    · **One bold element**, and it goes to the thing that actually blocks the seller: a full-bleed
+    navy verification block, unverified only; when it goes the page moves up rather than leaving a
+    dead slot. · **Enquiries moved from near the bottom to the top** with the count set large —
+    on a discovery marketplace answering buyers *is* the job, and burying it had the priority
+    backwards. · **Cap meter is now SEGMENTED, not a percentage track** — the limit is 3, and a
+    proportional bar turns something countable into an abstraction.
+  - **`BuyerHomeScreen` — design pass only, structure kept** (owner's call). The sticky header at
+    2–5% scroll, the promo gap, the first-load fade/rise, edge-bleed category circles and the
+    shared `ProductCard` are all **untouched**. Changed: identity card flattened to a plain row,
+    quick tiles now read as buttons (soft fill, tighter radius) rather than three more cards, and
+    the search bar became the buyer's one strong element — taller and filled. Deliberately **not**
+    navy: the promo banner is already the colour moment and two blue blocks would fight.
+  - **Not invented, and worth recording:** the mockup showed an "oldest enquiry sent N days ago"
+    line under the count, which would create far more urgency than a bare number. It was **left
+    out** — `/conversations/unread-count` returns only an integer, and adding it means a second
+    call. Wants a decision before it is built.
+  - ⚠️ **Not yet verified on device** — the wireless-debugging port rotated mid-task. The bundle
+    compiles (HTTP 200). Seller home additionally needs an **exporter login** to view; the device
+    session is a buyer.
 - **2026-08-21 — Agreement v7 vs code: full gap sweep, and everything outstanding placed on a
   schedule.** After the guest-AI-ceiling build, v7's §3.3 is true for the first time, so the sweep
   was re-run against the current code rather than the older notes.
