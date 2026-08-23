@@ -1,127 +1,73 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { useCanonical } from '../../lib/seo.js';
-import { FeaturedStrips } from '../../components/catalogue/FeaturedStrips.jsx';
+import { countryName } from '../../lib/countries.js';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
+import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
+import { VerifiedTick } from '../../components/ui/VerifiedTick.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
-import { roleHome } from '../../auth/roleHome.js';
 
 import {
+  AlertIcon,
   BoxIcon,
   ChatIcon,
-  CheckCircleIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  DocIcon,
-  GlobeIcon,
+  ChevronRightIcon,
+  GridIcon,
   SearchIcon,
   ShieldIcon,
   SparkleIcon,
-  UserIcon,
 } from '../../components/ui/icons.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
 
 /**
- * Public landing page (mockup: royal_blue_premium_landing_page). SEO surface —
- * semantic sections, one h1, anchor nav.
+ * Public landing page (`/`) — SEO surface and the platform's front door.
  *
- * Faithful to the mockup's design; the COPY diverges where the mockup claimed
- * features that don't exist in Phase 1 (escrow, shipment tracking, analytics,
- * trade credit, formal quotations — Bucket A/B). A public page must not
- * advertise what the product can't do, so those lines are rewritten to the
- * Phase-1 truth (verification, AI search, enquiries + chat, catalogue) and the
- * mockup's "Quotations" platform tab is dropped. Flagged to the owner.
+ * 🆕 2026-08-23 — REBUILT from a marketing landing page into a MARKETPLACE
+ * landing page, against an approved mockup
+ * (`design-plans/m3/web-buyer-home-mockup.html`, prompt
+ * `web-buyer-home-parity-prompt.md`). Everything below this line supersedes the
+ * previous nine-section brochure layout.
  *
- * Non-operational elements (each in docs/UiWebNotes.md): store badges ("Coming
- * soon") and the footer directory (static text). The category section is a
- * REAL link (2026-08-11, live cards). The hero match panel shows real
- * listings, not invented suppliers.
+ * The brief was "make the web home like the app's buyer home". The FIRST
+ * attempt did that literally — circular category icons, an app bar carrying a
+ * search pill, a sticky pill, single-column stacked blocks — and the owner
+ * rejected it: "it's looking like we are opening app in web". So the app's
+ * *section order and honesty rules* were kept and its *phone idiom* was
+ * dropped for a web one:
  *
- * 🆕 2026-08-16 (2nd revision that day) — hero search is a LINK to `/search`
- * (owner: "remove the AI search box… when we click the search in home hero it
- * lifts up and url to /search"). Supersedes the same-day open-AI-modal
- * behaviour and the 2026-08-11 /categories link before it. The lift-up lives
- * on /search itself (entrance animation + autofocus). AI search remains
- * reachable from /search. "Browse 40 categories →" stays its own link.
+ * - **A three-column hero** (category rail · banner · contextual panel) instead
+ *   of a stack. This is what actually uses a desktop's width, and it solves
+ *   something the app could not: the app had to push the verification card
+ *   BELOW the catalogue (a buyer is fully active from signup — verification
+ *   gates nothing for them — so it must not sit above the marketplace). On web
+ *   it goes in the side column: present, but not in the way.
+ * - **Landscape category cards**, not circular app icons.
+ * - **Wide grids** (up to 5 products across) rather than a 2-up phone grid.
+ * - **"Load more", not the app's endless feed.** The app uses a virtualising
+ *   FlatList and has no SEO surface; on web an infinite feed hurts indexing and
+ *   keyboard users, and buries the footer for good.
+ *
+ * 🔴 KEPT DELIBERATELY, though the mockup had neither:
+ * - `PublicHeader` / `PublicFooter` — the SHARED public chrome. The mockup drew
+ *   its own masthead and a footer full of links to /help, /contact, /terms and
+ *   /privacy; none of those routes exist, and `web-ui-notes.md` bans dead
+ *   anchors. The shared footer already renders those as static text for exactly
+ *   that reason. The masthead's search arrives through the header's existing
+ *   `centerSlot` (built 2026-08-16 for /search) rather than by forking a second
+ *   header that would then drift from the other five public pages.
+ *
+ * Copy discipline carried over from the app screen, and it is not cosmetic:
+ * there is **no rating/review system**, so nothing here says "top-rated"; there
+ * are no order counts, response rates, trending rails or supplier counts,
+ * because no field or analytics pipeline computes them. The removed "NOW LIVE:
+ * onboarding verified suppliers across 20+ categories" banner claimed a
+ * milestone nobody measures.
  */
-
-/* ---------------------------------- data ---------------------------------- */
-
-const JOURNEYS = {
-  buyer: [
-    { title: 'Discover verified suppliers', body: 'Browse human-verified Indian exporters — free, no account needed.', Icon: SearchIcon },
-    { title: 'Send an enquiry', body: 'Tell a supplier exactly what you need in a couple of clicks.', Icon: DocIcon },
-    { title: 'Chat in real time', body: 'Talk directly with the supplier on the platform.', Icon: ChatIcon },
-    { title: 'Deal with confidence', body: 'The verified tick and open conversation history keep both sides honest.', Icon: ShieldIcon },
-  ],
-  seller: [
-    { title: 'Register free', body: 'Your public profile is live from day one.', Icon: UserIcon },
-    { title: 'Get verified', body: 'Send your documents once; our team reviews and adds the tick.', Icon: ShieldIcon },
-    { title: 'Publish your catalogue', body: 'Products and services, with photos, specs and pricing.', Icon: BoxIcon },
-    { title: 'Receive enquiries', body: 'International buyers come to you — reply in real-time chat.', Icon: ChatIcon },
-  ],
-};
-
-const PLATFORM_TABS = [
-  {
-    key: 'search',
-    label: 'AI Search',
-    title: 'AI-assisted search',
-    body: 'Describe what you need in plain language and let the platform find matching suppliers and products.',
-    points: ['Natural-language queries', 'Structured filters extracted automatically', 'Falls back to fast keyword search'],
-  },
-  {
-    key: 'verified',
-    label: 'Verified Sellers',
-    title: 'Human-verified sellers',
-    body: 'Every verified tick is a decision made by our team after checking real business documents — never an automated rubber stamp.',
-    points: ['Document-based KYC review', 'One tick per company, carried everywhere', 'Absence of the tick is the only "no"'],
-  },
-  {
-    key: 'chat',
-    label: 'Real-Time Chat',
-    title: 'Enquiries and real-time chat',
-    body: 'Start with a structured enquiry, then continue in a live chat thread — no email chains, no lost context.',
-    points: ['Enquiry history in one place', 'Live messaging with push notifications', 'Works on web and mobile'],
-  },
-  {
-    key: 'catalogue',
-    label: 'Catalogue',
-    title: 'A catalogue built for trade',
-    body: 'Products and services with categories, attributes, images and minimum order quantities — searchable by every one of them.',
-    points: ['Category-specific attributes', 'Price or price-on-request', 'Goods and services both supported'],
-  },
-];
-
-const TRUST_CARDS = [
-  {
-    tint: 'bg-primary-50',
-    title: 'Human-verified sellers',
-    body: 'Exporters submit real business documents; our team reviews each one before the tick appears.',
-  },
-  {
-    tint: 'bg-success-50',
-    title: 'AI-assisted search',
-    body: 'Find the exact partners you need using natural-language discovery.',
-  },
-  {
-    tint: 'bg-primary-100/60',
-    title: 'Real-time chat',
-    body: 'Talk to suppliers directly in a secure, integrated environment — every thread kept.',
-  },
-];
-
-const WHY_CARDS = [
-  { title: 'Not sure who to trust?', body: 'Every verified tick is decided by a human after checking documents.', Icon: ShieldIcon },
-  { title: "Can't find the right supplier?", body: 'AI search understands plain language.', Icon: SearchIcon },
-  { title: 'Deals stuck in email chains?', body: 'Enquiries and chat in one place.', Icon: ChatIcon },
-  { title: 'Always on the move?', body: 'A full mobile app for buyers and sellers.', Icon: GlobeIcon },
-];
 
 const FAQS = [
   {
@@ -146,695 +92,660 @@ const FAQS = [
   },
 ];
 
+const FEED_PAGE_SIZE = 10;
+const SUPPLIER_COUNT = 6;
+/** Top-level categories in the hero rail and the browse grid. */
+const RAIL_COUNT = 9;
+const GRID_COUNT = 12;
+
 /* --------------------------------- pieces --------------------------------- */
 
-function SectionHeading({ children, sub, id }) {
+/** Section heading + optional "see all" — the one definition, so headings can't drift. */
+function BlockHead({ title, sub, to, cta = 'See all' }) {
   return (
-    <div className="mb-10 text-center md:mb-14" id={id}>
-      <h2 className="text-3xl font-bold tracking-tight text-primary-800 md:text-4xl">{children}</h2>
-      {sub && <p className="mx-auto mt-3 max-w-2xl text-base text-muted md:text-lg">{sub}</p>}
+    <div className="mb-6 flex items-end justify-between gap-4">
+      <div className="min-w-0">
+        <h2 className="text-2xl font-extrabold tracking-tight text-ink-900">{title}</h2>
+        {sub && <p className="mt-1 text-sm text-ink-600">{sub}</p>}
+      </div>
+      {to && (
+        <Link
+          to={to}
+          className="hidden shrink-0 rounded-xl border border-surface-border px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 sm:inline-block"
+        >
+          {cta} ›
+        </Link>
+      )}
     </div>
   );
 }
 
-const pill =
-  'inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition-colors';
-
-/* Store brand marks — local to the landing badges; monochrome per the dark card. */
-function AppleLogo(props) {
+/** Fixed-ratio placeholder used while a grid loads — a skeleton, never a spinner. */
+function CardSkeleton({ ratio = 'aspect-square' }) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
-      <path d="M17.05 12.54c-.03-2.89 2.36-4.27 2.47-4.34-1.35-1.97-3.44-2.24-4.18-2.27-1.78-.18-3.47 1.05-4.37 1.05-.9 0-2.29-1.02-3.77-1-1.94.03-3.72 1.13-4.72 2.86-2.01 3.49-.51 8.66 1.45 11.49.96 1.39 2.1 2.94 3.6 2.89 1.45-.06 1.99-.93 3.74-.93 1.75 0 2.24.93 3.77.9 1.56-.03 2.54-1.41 3.49-2.8 1.1-1.61 1.55-3.17 1.58-3.25-.04-.02-3.03-1.16-3.06-4.6zM14.16 4.06c.8-.97 1.34-2.31 1.19-3.66-1.15.05-2.55.77-3.38 1.74-.74.85-1.39 2.22-1.22 3.53 1.29.1 2.6-.65 3.41-1.61z" />
-    </svg>
-  );
-}
-function PlayLogo(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
-      <path d="M3.6 1.8c-.36.38-.6.97-.6 1.73v16.94c0 .76.24 1.35.6 1.73l.1.09 9.49-9.49v-.22L3.7 1.71l-.1.09zM16.35 15.05 13.19 11.89v-.22l3.16-3.16.07.04 3.75 2.13c1.07.6 1.07 1.6 0 2.21l-3.75 2.12-.07.04zM6.05 22.66l10.3-5.85-2.86-2.87-7.44 8.72zM6.05 1.34l7.44 8.72 2.86-2.87-10.3-5.85z" />
-    </svg>
+    <div className="overflow-hidden rounded-2xl border border-surface-border bg-white">
+      <div className={`${ratio} w-full animate-pulse bg-ink-100`} />
+      <div className="space-y-2 p-3.5">
+        <div className="h-3 w-4/5 animate-pulse rounded bg-ink-100" />
+        <div className="h-3 w-1/2 animate-pulse rounded bg-ink-100" />
+      </div>
+    </div>
   );
 }
 
-/**
- * Roving-focus arrow keys for a `role="tablist"`. ARIA requires it: with
- * role="tab" a screen-reader user expects arrows to move between tabs, and Tab
- * to leave the set — without this the roles lie about the behaviour.
- */
-function useTabKeys(keys, active, onSelect) {
-  const refs = useRef({});
-  const onKeyDown = (e) => {
-    const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-    if (!delta) return;
-    e.preventDefault();
-    const next = keys[(keys.indexOf(active) + delta + keys.length) % keys.length];
-    onSelect(next);
-    refs.current[next]?.focus();
-  };
-  return { refs, onKeyDown };
+function SupplierCard({ supplier }) {
+  return (
+    <Link
+      to={`/supplier/${supplier.slug ?? supplier.id}`}
+      className="flex h-full flex-col rounded-2xl bg-white p-5 shadow-card transition hover:shadow-lift sm:p-6"
+    >
+      <div className="flex items-center gap-3">
+        {supplier.logo ? (
+          <img
+            src={supplier.logo}
+            alt=""
+            loading="lazy"
+            width={56}
+            height={56}
+            className="h-14 w-14 shrink-0 rounded-full object-cover ring-1 ring-surface-border"
+          />
+        ) : (
+          <NoImagePanel label={supplier.name} monogram ratio="h-14 w-14" className="shrink-0 rounded-full" />
+        )}
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="truncate font-bold text-ink-900">{supplier.name}</span>
+            {/* Tick from the server-derived `verified` boolean only. There is no
+                "unverified" badge — its absence is the only signal. */}
+            <VerifiedTick verified={supplier.verified} compact />
+          </div>
+          {supplier.country && (
+            <p className="mt-0.5 truncate text-xs text-ink-600">
+              {countryName(supplier.country) ?? supplier.country}
+            </p>
+          )}
+        </div>
+      </div>
+      {supplier.description && (
+        <p className="mt-4 line-clamp-3 text-sm text-ink-600">{supplier.description}</p>
+      )}
+      <span className="mt-auto pt-5 text-sm font-semibold text-primary-700">View profile ›</span>
+    </Link>
+  );
 }
 
 /* ---------------------------------- page ---------------------------------- */
 
 export function Landing() {
   const { user } = useAuth();
-  const [journey, setJourney] = useState('buyer');
-  const [tab, setTab] = useState('search');
-  const [openFaq, setOpenFaq] = useState(0);
-  useCanonical('/');
-  const activeTab = PLATFORM_TABS.find((t) => t.key === tab);
-
-  // Real categories, so the landing page stops advertising an invented taxonomy.
-  // Shares its cache key with /categories, so that page loads instantly from here.
-  const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
-  // Hero search is a REAL input now (owner, 2026-08-16) — typing here and
-  // submitting lands on /search?q=…; empty submit still opens /search.
   const navigate = useNavigate();
-  const [heroQuery, setHeroQuery] = useState('');
+  const [query, setQuery] = useState('');
+  useCanonical('/');
 
-  // The hero's match panel shows REAL live listings (2026-08-11) — the old
-  // hardcoded supplier names advertised companies that may not exist.
-  const heroMatches = useQuery({
-    queryKey: catalogueKeys.products({ page: 1, pageSize: 2 }),
-    queryFn: () => catalogueApi.products({ page: 1, pageSize: 2 }),
+  const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
+
+  const suppliers = useQuery({
+    queryKey: catalogueKeys.search({ type: 'supplier', verifiedOnly: 'true', pageSize: SUPPLIER_COUNT }),
+    queryFn: () =>
+      catalogueApi.search({
+        type: 'supplier',
+        sort: 'newest',
+        verifiedOnly: 'true',
+        pageSize: SUPPLIER_COUNT,
+      }),
   });
 
-  const journeyKeys = useTabKeys(['buyer', 'seller'], journey, setJourney);
-  const platformKeys = useTabKeys(
-    PLATFORM_TABS.map((t) => t.key),
-    tab,
-    setTab,
+  // "Load more" rather than infinite scroll — see the file note. `useInfiniteQuery`
+  // accumulates pages without the manual de-duplication the app screen needs.
+  const feed = useInfiniteQuery({
+    queryKey: catalogueKeys.search({ type: 'product', sort: 'newest', pageSize: FEED_PAGE_SIZE }),
+    queryFn: ({ pageParam }) =>
+      catalogueApi.search({ type: 'product', sort: 'newest', page: pageParam, pageSize: FEED_PAGE_SIZE }),
+    initialPageParam: 1,
+    getNextPageParam: (last, pages) => {
+      const loaded = pages.reduce((n, p) => n + (p.products?.length ?? 0), 0);
+      return loaded < (last?.total ?? 0) ? pages.length + 1 : undefined;
+    },
+  });
+
+  const topCategories = categories.data ?? [];
+  const products = feed.data?.pages.flatMap((p) => p.products ?? []) ?? [];
+  const productTotal = feed.data?.pages[0]?.total ?? 0;
+  const verifiedSuppliers = suppliers.data?.suppliers ?? [];
+
+  const isBuyer = user?.role === 'buyer';
+  const isExporter = user?.role === 'exporter';
+
+  const onSearch = (e) => {
+    e.preventDefault();
+    const q = query.trim();
+    navigate(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
+  };
+
+  /* The masthead search, handed to the shared header's existing centre slot.
+     It is a real input: typing and submitting lands on /search?q=… (owner,
+     2026-08-16) — the same behaviour the previous hero search shipped with. */
+  const headerSearch = (
+    <form
+      role="search"
+      onSubmit={onSearch}
+      className="flex h-11 w-full min-w-0 items-center overflow-hidden rounded-xl border-2 border-primary-800 bg-white focus-within:ring-2 focus-within:ring-primary-600/20"
+    >
+      <label className="sr-only" htmlFor="landing-q">
+        Search products, services or suppliers
+      </label>
+      <SearchIcon className="ml-3 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+      <input
+        id="landing-q"
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="cotton fabric, 120 GSM…"
+        className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-ink-400"
+      />
+      <Link
+        to="/ai-search"
+        className="mr-1 hidden shrink-0 items-center gap-1.5 rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-700 hover:bg-primary-100 xl:flex"
+      >
+        <SparkleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+        Ask AI instead
+      </Link>
+      <button
+        type="submit"
+        className="h-full shrink-0 bg-primary-800 px-5 text-sm font-bold text-white hover:bg-primary-900"
+      >
+        Search
+      </button>
+    </form>
   );
 
-  // A signed-in visitor landing here must not be sold a signup. Every marketing
-  // CTA collapses to one "continue where you left off" link instead.
-  const home = user ? roleHome(user) : null;
-
   return (
-    <div className="bg-surface-subtle text-ink-900">
-      {/* Announcement bar — the signup nudge is dropped once you have an account */}
-      <div className="flex flex-wrap items-center justify-center gap-3 bg-primary-800 px-4 py-2 text-white">
-        <span className="text-xs font-semibold tracking-wide sm:text-sm">
-          NOW LIVE: Onboarding verified suppliers across 20+ categories
-        </span>
-        {!user && (
+    <div className="bg-white text-ink-900">
+      <PublicHeader centerSlot={headerSearch} />
+
+      {/* Browse bar — the marketplace's own nav row, under the shared header.
+          Scrolls horizontally rather than wrapping on a narrow phone. */}
+      <div className="border-b border-surface-border bg-white">
+        <nav
+          aria-label="Browse"
+          className="flex w-full items-center gap-1 overflow-x-auto px-4 py-2 text-sm sm:px-6 lg:px-10 xl:px-16"
+        >
           <Link
-            to="/signup/buyer"
-            className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary-800 hover:bg-primary-50"
+            to="/categories"
+            className="flex shrink-0 items-center gap-2 rounded-xl bg-primary-800 px-4 py-2 font-bold text-white hover:bg-primary-900"
           >
-            Get Early Access
+            <GridIcon className="h-4 w-4" aria-hidden="true" />
+            All categories
           </Link>
-        )}
+          <Link to="/categories?type=goods" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
+            Goods
+          </Link>
+          <Link to="/categories?type=service" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
+            Services
+          </Link>
+          <Link to="/search?type=supplier" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
+            Suppliers
+          </Link>
+          <Link
+            to="/ai-search"
+            className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 font-bold text-primary-700 hover:bg-primary-50 md:flex"
+          >
+            <SparkleIcon className="h-4 w-4" aria-hidden="true" />
+            AI Search
+          </Link>
+        </nav>
       </div>
 
-      <PublicHeader />
-
       <main>
-        {/* Hero */}
-        <section className="relative overflow-hidden bg-primary-50 py-16 lg:py-24">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
-            <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-ink-600">
-                <span className="h-2 w-2 rounded-full bg-primary-600" />
-                B2B Import &amp; Export Marketplace
-              </span>
-              <h1 className="mt-5 text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-                Find Verified Suppliers.
-                <br />
-                <span className="text-primary-600">Close Deals Faster.</span>
-              </h1>
-              <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-600">
-                Connect with human-verified Indian exporters, send enquiries, and talk to them
-                directly — discovery to deal on one secure platform.
-              </p>
-
-              {/* Hero search — TWO separate doors (owner, 2026-08-16), the same
-                  pair `/search` carries: a real search bar with its inset
-                  gradient submit, and the animated AI Search pill beside it.
-                  Typing here goes straight to results; an empty submit opens
-                  /search (whose bar lifts up + autofocuses). */}
-              <div className="mt-6 w-full max-w-xl">
-                <div className="flex items-center gap-2">
-                  <form
-                    role="search"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const q = heroQuery.trim();
-                      navigate(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
-                    }}
-                    className="flex h-12 min-w-0 flex-1 items-center overflow-hidden rounded-full border border-surface-border bg-white shadow-card focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-600/20"
-                  >
-                    <SearchIcon className="ml-4 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
-                    <input
-                      type="search"
-                      aria-label="Search products and suppliers"
-                      placeholder="Find suppliers — fabrics, machinery, IT services…"
-                      value={heroQuery}
-                      onChange={(e) => setHeroQuery(e.target.value)}
-                      className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-ink-400"
-                    />
-                    <button
-                      type="submit"
-                      className="m-1 flex h-[calc(100%-8px)] shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-primary-600 to-primary-800 px-4 text-sm font-semibold text-white shadow-card transition-all hover:from-primary-500 hover:to-primary-700 hover:shadow-lift sm:px-5"
-                    >
-                      Search
-                    </button>
-                  </form>
-                  {/* Same animated pill as /search — one AI door, one look. */}
-                  <Link
-                    to="/ai-search"
-                    className="group flex h-12 shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-primary-800 via-primary-500 to-primary-800 bg-[length:200%_200%] px-3.5 text-sm font-semibold text-white shadow-card transition-shadow animate-ai-sheen hover:shadow-lift motion-reduce:animate-none sm:px-4"
-                  >
-                    <SparkleIcon className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:scale-110" aria-hidden="true" />
-                    <span className="hidden sm:inline">AI Search</span>
-                  </Link>
-                </div>
-                <Link to="/categories" className="mt-2 block pl-4 text-xs text-ink-500 hover:text-primary-700">
-                  Browse 40 categories →
-                </Link>
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                {home ? (
-                  <Link to={home} className={`${pill} bg-ink-900 text-white shadow-md hover:bg-primary-800`}>
-                    Go to your dashboard
-                  </Link>
-                ) : (
-                  <>
-                    <Link to="/signup/buyer" className={`${pill} bg-ink-900 text-white shadow-md hover:bg-primary-800`}>
-                      Start Buying
-                    </Link>
-                    <Link
-                      to="/signup/exporter"
-                      className={`${pill} border border-ink-900 text-ink-900 hover:bg-white`}
-                    >
-                      Sell on MPX Global
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Right visual — supplier match card */}
-            <div className="hidden lg:block" aria-hidden="true">
-              <div className="rotate-2 rounded-2xl border border-white/10 bg-primary-700 p-6 shadow-2xl transition-transform duration-500 hover:rotate-0">
-                <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-4">
-                  <span className="flex items-center gap-2 text-sm font-semibold text-white/90">
-                    <ShieldIcon className="h-4 w-4" /> Supplier Match Results
-                  </span>
-                  <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold text-emerald-300">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Live
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {(heroMatches.data?.products ?? []).slice(0, 2).map((m) => (
-                    <div key={m.id} className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="min-w-0 truncate text-sm font-semibold text-white">{m.seller?.name ?? m.name}</p>
-                        {m.seller?.verified && (
-                          <span className="flex shrink-0 items-center gap-1 rounded bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-300">
-                            <CheckCircleIcon className="h-3.5 w-3.5" /> Verified
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 truncate text-xs text-white/60">
-                        {[m.seller?.country === 'IN' ? 'India' : m.seller?.country, m.name].filter(Boolean).join(' · ')}
-                      </p>
-                      {m.category?.name && (
-                        <span className="mt-2 inline-block rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80">
-                          {m.category.name}
-                        </span>
-                      )}
-                    </div>
+        {/* ═════════ HERO — category rail · banner · contextual panel ═════════ */}
+        <section className="bg-ink-50 py-4 sm:py-6">
+          <div className="grid w-full grid-cols-1 gap-4 px-4 sm:gap-5 sm:px-6 lg:px-10 xl:px-16 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_320px]">
+            {/* Always-open rail. Hidden below lg, where the category grid below
+                and the browse bar above already serve the same purpose. */}
+            <aside className="hidden rounded-2xl bg-white p-2 shadow-card lg:block">
+              {categories.isPending ? (
+                <div className="space-y-1 p-1">
+                  {Array.from({ length: RAIL_COUNT }).map((_, i) => (
+                    <div key={i} className="h-9 animate-pulse rounded-xl bg-ink-100" />
                   ))}
-                  {heroMatches.isPending &&
-                    Array.from({ length: 2 }, (_, i) => (
-                      <div key={i} className="h-24 animate-pulse rounded-xl border border-white/10 bg-white/5" />
-                    ))}
-                                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Trust strip */}
-        <section className="border-y border-surface-border bg-white py-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <p className="mb-5 text-center text-xs font-semibold uppercase tracking-wider text-muted">
-              Built for trusted global trade
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              {[
-                { Icon: ShieldIcon, label: 'Human-Verified Sellers' },
-                { Icon: ChatIcon, label: 'Real-Time Chat' },
-                { Icon: SearchIcon, label: 'AI-Assisted Search' },
-                { Icon: GlobeIcon, label: 'Web + Mobile App' },
-              ].map(({ Icon, label }) => (
-                <span
-                  key={label}
-                  className="flex items-center gap-2 rounded-full border border-surface-border bg-surface-subtle px-4 py-2 text-sm font-semibold text-ink-800"
-                >
-                  <Icon className="h-4 w-4 text-primary-600" /> {label}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* M6 §4a — curated strips from /public/featured. The component renders
-            NOTHING until the owner curates content (empty groups hide, the
-            whole block hides when all four are empty). */}
-        <FeaturedStrips />
-
-        {/* Categories — REAL top categories from the catalogue. These were
-            invented groupings ("Raw Materials", "Home & Garden") until the
-            browse screens shipped; a public page must not advertise a taxonomy
-            that does not exist. */}
-        <section className="bg-white px-4 py-16 sm:px-6 md:py-24" id="categories">
-          <div className="mx-auto max-w-7xl">
-            <SectionHeading sub="Find specialised suppliers across 40 industries.">
-              Browse by <span className="text-primary-600">Category</span>
-            </SectionHeading>
-
-            {categories.isPending && (
-              <div className="mx-auto grid max-w-5xl grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {Array.from({ length: 8 }, (_, i) => (
-                  <div key={i} className="overflow-hidden rounded-xl border border-surface-border">
-                    <div className="aspect-video animate-pulse bg-surface-subtle" />
-                    <div className="space-y-2 p-3.5">
-                      <div className="h-4 w-3/4 animate-pulse rounded bg-surface-subtle" />
-                      <div className="h-3 w-1/2 animate-pulse rounded bg-surface-subtle" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Mirrors the /categories page cards (owner, 2026-08-11) — same
-                photo-forward look, so the landing teaser and the full page read
-                as one surface. */}
-            {categories.isSuccess && (
-              <ul className="mx-auto grid max-w-5xl grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {categories.data.slice(0, 8).map((cat) => (
-                  <li key={cat.id} className="h-full">
-                    <Link
-                      to={`/category/${cat.slug}`}
-                      className="flex h-full flex-col overflow-hidden rounded-xl border border-surface-border bg-white shadow-card transition-colors hover:border-primary-600"
-                    >
-                      {cat.image ? (
-                        <img
-                          src={cat.image}
-                          alt=""
-                          loading="lazy"
-                          width={640}
-                          height={360}
-                          className="aspect-video w-full object-cover"
-                        />
-                      ) : (
-                        <NoImagePanel label={cat.name} ratio="aspect-video" />
-                      )}
-                      <div className="flex flex-1 flex-col p-3.5">
-                        <h3 className="text-sm font-bold leading-snug text-ink-900">{cat.name}</h3>
-                        <p className="mt-auto pt-1.5 text-xs text-muted">
-                          {cat.subs?.length ?? 0}{' '}
-                          {(cat.subs?.length ?? 0) === 1 ? 'sub-category' : 'sub-categories'}
-                        </p>
-                      </div>
+                </div>
+              ) : (
+                <ul className="text-sm">
+                  {topCategories.slice(0, RAIL_COUNT).map((c) => (
+                    <li key={c.id}>
+                      <Link
+                        to={`/category/${c.slug ?? c.id}`}
+                        className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 font-medium text-ink-900 hover:bg-primary-50 hover:text-primary-800"
+                      >
+                        <span className="truncate">{c.name}</span>
+                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                      </Link>
+                    </li>
+                  ))}
+                  <li className="mt-1 border-t border-surface-border pt-1">
+                    <Link to="/categories" className="block rounded-xl px-3 py-2 font-bold text-primary-700 hover:bg-primary-50">
+                      All categories ›
                     </Link>
                   </li>
-                ))}
-              </ul>
-            )}
-
-            {/* Always offered, even if the fetch failed — the destination is a
-                real page and the button is the point of the section. */}
-            <div className="mt-8 text-center">
-              <Link
-                to="/categories"
-                className={`${pill} border border-ink-900 text-ink-900 hover:bg-surface-subtle`}
-              >
-                Browse all categories
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* How it works */}
-        <section className="bg-surface-subtle px-4 py-16 sm:px-6 md:py-24" id="how-it-works">
-          <div className="mx-auto max-w-7xl">
-            <SectionHeading>
-              One platform. <span className="text-primary-600">Two clear journeys.</span>
-            </SectionHeading>
-
-            <div className="mb-10 flex justify-center">
-              <div
-                role="tablist"
-                aria-label="Journey"
-                onKeyDown={journeyKeys.onKeyDown}
-                className="inline-flex rounded-full border border-surface-border bg-white p-1 shadow-sm"
-              >
-                {[
-                  { key: 'buyer', label: 'For Buyers' },
-                  { key: 'seller', label: 'For Sellers' },
-                ].map((j) => (
-                  <button
-                    key={j.key}
-                    ref={(el) => (journeyKeys.refs.current[j.key] = el)}
-                    role="tab"
-                    id={`journey-tab-${j.key}`}
-                    aria-controls="journey-panel"
-                    aria-selected={journey === j.key}
-                    tabIndex={journey === j.key ? 0 : -1}
-                    onClick={() => setJourney(j.key)}
-                    className={`inline-flex min-h-[44px] items-center justify-center rounded-full px-5 text-sm font-semibold transition-colors sm:px-6 ${
-                      journey === j.key ? 'bg-primary-800 text-white' : 'text-ink-600 hover:text-primary-800'
-                    }`}
-                  >
-                    {j.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div
-              id="journey-panel"
-              role="tabpanel"
-              aria-labelledby={`journey-tab-${journey}`}
-              className="grid gap-6 md:grid-cols-4"
-            >
-              {JOURNEYS[journey].map((step, i) => (
-                <div
-                  key={step.title}
-                  className="flex flex-col items-center rounded-2xl border border-surface-border bg-white p-6 text-center shadow-card"
-                >
-                  <div className="relative mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary-600 text-white">
-                    <span className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-primary-800 text-xs font-bold">
-                      {i + 1}
-                    </span>
-                    <step.Icon className="h-7 w-7" />
-                  </div>
-                  <h3 className="mb-1.5 text-lg font-semibold text-primary-800">{step.title}</h3>
-                  <p className="text-sm text-ink-600">{step.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Platform tabs */}
-        <section className="bg-white px-4 py-16 sm:px-6 md:py-24" id="platform">
-          <div className="mx-auto max-w-7xl">
-            <SectionHeading sub="Everything you need to discover, connect and deal.">
-              The MPX <span className="text-primary-600">Platform</span>
-            </SectionHeading>
-
-            <div
-              role="tablist"
-              aria-label="Platform features"
-              onKeyDown={platformKeys.onKeyDown}
-              className="mb-10 flex flex-wrap justify-center gap-2"
-            >
-              {PLATFORM_TABS.map((t) => (
-                <button
-                  key={t.key}
-                  ref={(el) => (platformKeys.refs.current[t.key] = el)}
-                  role="tab"
-                  id={`platform-tab-${t.key}`}
-                  aria-controls="platform-panel"
-                  aria-selected={tab === t.key}
-                  tabIndex={tab === t.key ? 0 : -1}
-                  onClick={() => setTab(t.key)}
-                  className={`inline-flex min-h-[44px] items-center justify-center rounded-full px-4 text-sm font-semibold transition-colors sm:px-5 ${
-                    tab === t.key ? 'bg-primary-800 text-white' : 'text-ink-600 hover:bg-surface-subtle hover:text-ink-900'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-
-            <div
-              id="platform-panel"
-              role="tabpanel"
-              aria-labelledby={`platform-tab-${tab}`}
-              className="mx-auto grid max-w-5xl overflow-hidden rounded-2xl border border-surface-border shadow-card md:grid-cols-[5fr_7fr]"
-            >
-              <div className="flex flex-col justify-center border-b border-surface-border bg-white p-6 sm:p-8 md:border-b-0 md:border-r md:p-12">
-                <h3 className="text-2xl font-semibold text-ink-900">{activeTab.title}</h3>
-                <p className="mt-3 text-base leading-relaxed text-ink-600">{activeTab.body}</p>
-                <ul className="mt-6 space-y-3">
-                  {activeTab.points.map((p) => (
-                    <li key={p} className="flex items-start gap-2.5 text-sm text-ink-800">
-                      <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-success" /> {p}
-                    </li>
-                  ))}
                 </ul>
-              </div>
-              <div className="flex items-center justify-center bg-surface-subtle p-6 sm:p-8" aria-hidden="true">
-                <div className="w-full max-w-md rounded-xl border border-surface-border bg-white p-4 shadow-card sm:p-5">
-                  <div className="flex items-center gap-2 rounded-lg border border-surface-border px-3 py-2.5 text-sm text-ink-600">
-                    <SearchIcon className="h-4 w-4 text-ink-500" />
-                    <span className="truncate">I need a cotton knitwear supplier…</span>
-                  </div>
-                  <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted">Top matches</p>
-                  <div className="mt-2 space-y-2">
-                    {['Tirupur Knitwear Exports', 'Coimbatore Cotton Mills'].map((n) => (
-                      <div
-                        key={n}
-                        className="flex items-center justify-between rounded-lg border border-surface-border px-3 py-2.5"
-                      >
-                        <span className="text-sm font-medium">{n}</span>
-                        <span className="flex items-center gap-1 text-xs font-semibold text-success">
-                          <CheckCircleIcon className="h-3.5 w-3.5" /> Verified
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+              )}
+            </aside>
 
-        {/* Trust cards */}
-        <section className="bg-surface-subtle px-4 py-16 sm:px-6 md:py-24">
-          <div className="mx-auto max-w-7xl">
-            <SectionHeading>
-              Built on <span className="text-primary-600">trust</span>, not guesswork.
-            </SectionHeading>
-            <div className="grid gap-6 md:grid-cols-3">
-              {TRUST_CARDS.map((c) => (
-                <div key={c.title} className={`rounded-[20px] border border-surface-border/50 p-6 sm:p-8 ${c.tint}`}>
-                  <h3 className="text-xl font-semibold text-primary-800">{c.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-ink-600">{c.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Why MPX */}
-        <section className="bg-white px-4 py-16 sm:px-6 md:py-24">
-          <div className="mx-auto max-w-7xl">
-            <SectionHeading>
-              Global sourcing, without the <span className="text-primary-600">friction</span>.
-            </SectionHeading>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {WHY_CARDS.map((c) => (
-                <div
-                  key={c.title}
-                  className="flex h-full flex-col rounded-[20px] border border-surface-border/60 bg-white p-6 shadow-card transition-shadow hover:shadow-lg"
-                >
-                  <div className="mb-6 flex h-[100px] items-center justify-center rounded-lg bg-primary-50">
-                    <c.Icon className="h-10 w-10 text-primary-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-primary-800">{c.title}</h3>
-                  <p className="mt-auto pt-2 text-sm text-ink-600">{c.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Mobile app */}
-        <section className="relative overflow-hidden bg-primary-800 px-4 py-16 sm:px-6 md:py-24">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-2">
-            <div>
-              <h2 className="max-w-xl text-3xl font-bold text-white md:text-4xl">
-                The whole marketplace, in your <span className="text-primary-300">pocket.</span>
-              </h2>
-              <p className="mt-4 max-w-lg text-lg text-white/80">
-                The mobile app and the web platform share one backend — products, enquiries and
-                chat stay in sync across all your devices.
-              </p>
-              <ul className="mt-6 space-y-3">
-                {['AI-assisted search', 'Real-time chat', 'Manage your catalogue from your phone', 'Push notifications'].map(
-                  (f) => (
-                    <li key={f} className="flex items-center gap-3 text-white">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10">
-                        <CheckIcon className="h-4 w-4 text-primary-300" />
-                      </span>
-                      <span className="text-sm md:text-base">{f}</span>
-                    </li>
-                  ),
-                )}
-              </ul>
-              {/* Store badges — apps not published yet; visibly coming-soon */}
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                {[
-                  { store: 'Google Play', Logo: PlayLogo },
-                  { store: 'App Store', Logo: AppleLogo },
-                ].map(({ store, Logo }) => (
-                  <span
-                    key={store}
-                    aria-disabled="true"
-                    className="flex cursor-default items-center gap-3 rounded-lg border border-white/20 bg-white/10 px-5 py-3 opacity-70"
+            {/* Banner. One h1 on the page, and it lives here. */}
+            <div className="rounded-2xl bg-primary-800 px-6 py-10 sm:px-10 sm:py-14 lg:px-12 lg:py-16">
+              <div className="max-w-xl">
+                <p className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-primary-100">
+                  <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                  Every tick checked by a person
+                </p>
+                <h1 className="text-3xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-5xl">
+                  Source from verified Indian exporters
+                </h1>
+                <p className="mt-4 max-w-md text-sm text-primary-100 sm:text-base">
+                  Goods and services, direct from the supplier. Search the catalogue, send an
+                  enquiry, and talk to them in real time — free, no account needed to browse.
+                </p>
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <Link
+                    to="/categories"
+                    className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-primary-800 shadow-card hover:shadow-lift sm:px-6"
                   >
-                    <Logo className="h-7 w-7 text-white" />
-                    <div className="flex flex-col items-start">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70">
-                        Coming soon on
-                      </span>
-                      <span className="text-sm font-semibold text-white">{store}</span>
-                    </div>
-                  </span>
-                ))}
-              </div>
-            </div>
-            {/* Decorative phone mockups — PLACEHOLDER content, no real data
-                fetched; purely illustrative (2026-08-11: filled per owner). */}
-            <div className="hidden items-center justify-center lg:flex" aria-hidden="true">
-              <div className="relative h-[480px] w-full max-w-md">
-                {/* Phone 1 — the catalogue */}
-                <div className="absolute left-[12%] top-[10%] flex aspect-[9/18] w-[42%] -rotate-6 flex-col overflow-hidden rounded-[2rem] border-4 border-white/10 bg-white p-3 shadow-2xl">
-                  <div className="h-2 w-16 self-center rounded-full bg-ink-200" />
-                  <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-primary-50 px-2 py-1.5">
-                    <SearchIcon className="h-3 w-3 shrink-0 text-primary-600" />
-                    <span className="truncate text-[9px] text-ink-500">cotton fabric…</span>
-                  </div>
-                  <div className="mt-2 flex-1 space-y-2">
-                    {[
-                      { name: 'Cotton Poplin, 120 GSM', price: '₹120 / meter', tint: 'bg-primary-100' },
-                      { name: 'Selvedge Denim, 14oz', price: '₹520 / meter', tint: 'bg-primary-200' },
-                      { name: 'Mulberry Silk', price: '₹1,450 / meter', tint: 'bg-primary-50' },
-                    ].map((r) => (
-                      <div key={r.name} className="flex items-center gap-2 rounded-lg border border-surface-border p-1.5">
-                        <span className={`h-9 w-9 shrink-0 rounded-md ${r.tint}`} />
-                        <span className="min-w-0">
-                          <span className="block truncate text-[9px] font-semibold text-ink-900">{r.name}</span>
-                          <span className="block text-[9px] font-bold text-primary-700">{r.price}</span>
-                          <span className="block text-[8px] text-ink-500">MOQ 200 · Verified ✓</span>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {/* Phone 2 — the chat */}
-                <div className="absolute right-[12%] top-[22%] flex aspect-[9/18] w-[42%] rotate-6 flex-col overflow-hidden rounded-[2rem] border-4 border-white/10 bg-white p-3 shadow-2xl">
-                  <div className="h-2 w-16 self-center rounded-full bg-ink-200" />
-                  <div className="mt-3 flex items-center gap-1.5 border-b border-surface-border pb-2">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-[8px] font-bold text-primary-700">
-                      TK
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-[9px] font-semibold text-ink-900">Tirupur Knitwear ✓</span>
-                      <span className="block text-[8px] text-success">Online</span>
-                    </span>
-                  </div>
-                  <div className="mt-2 flex-1 space-y-1.5">
-                    <p className="ml-auto w-fit max-w-[85%] rounded-xl rounded-tr-none bg-primary-600 px-2 py-1.5 text-[8px] leading-snug text-white">
-                      Need 500 m denim, 14oz. Lead time?
-                    </p>
-                    <p className="w-fit max-w-[85%] rounded-xl rounded-tl-none bg-surface-subtle px-2 py-1.5 text-[8px] leading-snug text-ink-800">
-                      2 weeks ex-factory. MOQ 200 m.
-                    </p>
-                    <p className="ml-auto w-fit max-w-[85%] rounded-xl rounded-tr-none bg-primary-600 px-2 py-1.5 text-[8px] leading-snug text-white">
-                      Works. Share samples?
-                    </p>
-                    <p className="w-fit max-w-[85%] rounded-xl rounded-tl-none bg-surface-subtle px-2 py-1.5 text-[8px] leading-snug text-ink-800">
-                      Couriering tomorrow 📦
-                    </p>
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-1 rounded-full border border-surface-border px-2 py-1">
-                    <span className="flex-1 text-[8px] text-ink-400">Message…</span>
-                    <span className="h-4 w-4 rounded-full bg-primary-600" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-24" id="faq">
-          <SectionHeading sub="Everything you need to know about trading on MPX Global.">
-            Frequently asked <span className="text-primary-600">questions</span>
-          </SectionHeading>
-          <div className="divide-y divide-surface-border border-t border-surface-border">
-            {FAQS.map((f, i) => (
-              <div key={f.q} className="py-5">
-                <button
-                  type="button"
-                  id={`faq-q-${i}`}
-                  aria-expanded={openFaq === i}
-                  aria-controls={`faq-a-${i}`}
-                  onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
-                  className="flex min-h-[44px] w-full items-center justify-between gap-4 text-left"
-                >
-                  <span className="text-lg font-semibold text-primary-800">{f.q}</span>
-                  <ChevronDownIcon
-                    className={`h-5 w-5 shrink-0 text-primary-800 transition-transform ${openFaq === i ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {openFaq === i && (
-                  <p
-                    id={`faq-a-${i}`}
-                    role="region"
-                    aria-labelledby={`faq-q-${i}`}
-                    className="mt-3 pr-8 text-base leading-relaxed text-ink-600"
+                    Browse categories
+                  </Link>
+                  <Link
+                    to="/ai-search"
+                    className="flex items-center gap-2 rounded-xl border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10 sm:px-6"
                   >
-                    {f.a}
+                    <SparkleIcon className="h-4 w-4" aria-hidden="true" />
+                    Describe what you need
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Contextual panel — the column that makes this a web layout rather
+                than a stack. Below xl it drops under the banner at full width
+                instead of being hidden: on a phone it carries the only signup
+                CTA a guest sees above the fold. */}
+            <aside className="xl:w-80">
+              {!user && (
+                <div className="rounded-2xl bg-white p-6 shadow-card">
+                  <p className="text-sm font-extrabold">Start sourcing</p>
+                  <p className="mt-1.5 text-sm text-ink-600">
+                    Create a free buyer account to save suppliers, send enquiries and chat.
                   </p>
-                )}
+                  <Link
+                    to="/signup/buyer"
+                    className="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700"
+                  >
+                    Create free account
+                  </Link>
+                  <Link
+                    to="/signin"
+                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-primary-700 hover:bg-primary-50"
+                  >
+                    Sign in
+                  </Link>
+                  <hr className="my-5 border-surface-border" />
+                  <p className="text-sm font-extrabold">Are you an exporter?</p>
+                  <p className="mt-1.5 text-sm text-ink-600">
+                    Your public profile goes live the day you register.
+                  </p>
+                  <Link to="/signup/exporter" className="mt-3 inline-block text-sm font-bold text-primary-700 hover:underline">
+                    Register as an exporter ›
+                  </Link>
+                </div>
+              )}
+
+              {isBuyer && (
+                <div className="rounded-2xl bg-white p-6 shadow-card">
+                  <p className="text-sm font-extrabold">Welcome back{user?.name ? `, ${user.name}` : ''}</p>
+                  {/* 🔴 Verification lives HERE, not above the catalogue: a buyer
+                      is fully active from signup and verification gates nothing
+                      for them (D3). Its own status detail stays on
+                      /buyer/verification — a self-scoped read, not a public one. */}
+                  <div className="mt-4 rounded-xl bg-warning-50 p-3">
+                    <p className="flex items-center gap-1.5 text-xs font-bold text-ink-900">
+                      <AlertIcon className="h-4 w-4 text-warning" aria-hidden="true" />
+                      Company verification
+                    </p>
+                    <p className="mt-1 text-xs text-ink-600">
+                      Nothing is on hold — you can browse, enquire and chat as normal.
+                    </p>
+                    <Link to="/buyer/verification" className="mt-2 inline-block text-xs font-bold text-primary-700 hover:underline">
+                      View status ›
+                    </Link>
+                  </div>
+                  <hr className="my-5 border-surface-border" />
+                  <Link to="/buyer/chat" className="block py-1.5 text-sm font-semibold hover:text-primary-700">
+                    Messages
+                  </Link>
+                  <Link to="/saved" className="block py-1.5 text-sm font-semibold hover:text-primary-700">
+                    Saved items
+                  </Link>
+                </div>
+              )}
+
+              {isExporter && (
+                <div className="rounded-2xl bg-white p-6 shadow-card">
+                  <p className="text-sm font-extrabold">Your listings</p>
+                  <p className="mt-1.5 text-sm text-ink-600">
+                    Manage your catalogue and reply to buyer enquiries.
+                  </p>
+                  <Link
+                    to="/exporter/products"
+                    className="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700"
+                  >
+                    Manage listings
+                  </Link>
+                  <Link
+                    to="/exporter/chat"
+                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-primary-700 hover:bg-primary-50"
+                  >
+                    Enquiries &amp; chat
+                  </Link>
+                </div>
+              )}
+            </aside>
+          </div>
+        </section>
+
+        {/* ═════════ VALUE STRIP — factual, no counts ═════════
+            Carries `id="platform"`: the shared header links there, and this strip
+            plus the AI band below are what replaced the old platform-tabs
+            section. An anchor with nothing to land on is a dead link
+            (`web-ui-notes.md`), so the id moves with the content. */}
+        <section id="platform" className="border-y border-surface-border bg-white">
+          <ul className="grid w-full grid-cols-1 gap-6 px-4 py-6 sm:grid-cols-3 sm:px-6 lg:px-10 xl:px-16">
+            {[
+              { Icon: ShieldIcon, title: 'Human-verified exporters', body: 'A person reads the documents. Never an automated stamp.' },
+              { Icon: SparkleIcon, title: "Describe it, don't guess keywords", body: 'Plain language in, matching suppliers out.' },
+              { Icon: ChatIcon, title: 'Talk to the supplier directly', body: 'Structured enquiry, then live chat. No email chains.' },
+            ].map(({ Icon, title, body }) => (
+              <li key={title} className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <span>
+                  <span className="block text-sm font-bold">{title}</span>
+                  <span className="block text-sm text-ink-600">{body}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* 🔴 `FeaturedStrips` was rendered here and was REMOVED on the owner's
+            instruction (2026-08-23), after the banner rotation showed test
+            curation ("sssd" / "dvsfv", with a screenshot uploaded as the banner
+            image) on the rebuilt landing page.
+            ⚠️ CONSEQUENCE, flagged to the owner: `/admin/featured` still exists
+            and still writes `FeaturedItem` rows, but nothing on the site renders
+            them any more — curating content there now has no visible effect.
+            The component and its API are untouched, so restoring this is one
+            line; the alternative fix was to clear the test rows in admin. */}
+
+        {/* ═════════ CATEGORIES ═════════ */}
+        <section id="categories" className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
+          <BlockHead
+            title="Browse by category"
+            sub="Goods and services, across every trade we list."
+            to="/categories"
+          />
+          {/* The photo sits INSET inside the card with its own radius rather than
+              running to the card's edge. Two reasons: nested rounding reads as a
+              card rather than as a cropped photo with a caption stuck under it,
+              and the white margin stops twelve unrelated photographs from
+              butting into one another across the row.
+              The sub-count is REAL (`subs` from the live tree, 6–10 per top
+              category) — the card needed a second line, and an invented one is
+              exactly what this page refuses to carry. */}
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
+            {categories.isPending
+              ? Array.from({ length: GRID_COUNT }).map((_, i) => <li key={i}><CardSkeleton ratio="aspect-[4/3]" /></li>)
+              : topCategories.slice(0, GRID_COUNT).map((c) => {
+                  const subs = c.subs?.length ?? 0;
+                  return (
+                    <li key={c.id}>
+                      <Link
+                        to={`/category/${c.slug ?? c.id}`}
+                        className="group flex h-full flex-col rounded-2xl bg-white p-2.5 shadow-card ring-1 ring-surface-border/60 transition duration-200 hover:-translate-y-0.5 hover:shadow-lift hover:ring-primary-200"
+                      >
+                        <span className="block overflow-hidden rounded-xl bg-ink-100">
+                          {c.image ? (
+                            <img
+                              src={c.image}
+                              alt=""
+                              loading="lazy"
+                              width={400}
+                              height={300}
+                              className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105"
+                            />
+                          ) : (
+                            <NoImagePanel label={c.name} monogram ratio="aspect-[4/3]" />
+                          )}
+                        </span>
+                        <span className="flex flex-1 flex-col px-1.5 pb-1 pt-3">
+                          <span className="line-clamp-2 text-sm font-bold leading-snug text-ink-900 group-hover:text-primary-800">
+                            {c.name}
+                          </span>
+                          {subs > 0 && (
+                            <span className="mt-1 text-xs text-ink-600">
+                              {subs} {subs === 1 ? 'subcategory' : 'subcategories'}
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+          </ul>
+        </section>
+
+        {/* ═════════ GOODS / SERVICES — equal weight ═════════
+            50/50 on purpose: the live catalogue is currently MOSTLY services, so
+            a goods-led layout would misrepresent the platform to its first buyers. */}
+        <section className="grid w-full grid-cols-1 gap-4 px-4 pb-10 sm:gap-5 sm:px-6 sm:pb-12 lg:px-10 xl:px-16 lg:grid-cols-2">
+          <Link
+            to="/categories?type=goods"
+            className="group flex items-center gap-6 rounded-2xl bg-primary-50 p-6 transition hover:shadow-lift sm:p-8"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-extrabold tracking-tight text-primary-800 sm:text-xl">Physical goods</span>
+              <span className="mt-1.5 block text-sm text-ink-600">
+                Fabric, denim, leather, chemicals, machinery — with MOQ and per-unit pricing.
+              </span>
+              <span className="mt-4 inline-block text-sm font-bold text-primary-700 group-hover:underline">Browse goods ›</span>
+            </span>
+            <span className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-primary-800 sm:flex">
+              <BoxIcon className="h-9 w-9" aria-hidden="true" />
+            </span>
+          </Link>
+          <Link
+            to="/categories?type=service"
+            className="group flex items-center gap-6 rounded-2xl bg-success-50 p-6 transition hover:shadow-lift sm:p-8"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-extrabold tracking-tight text-success-700 sm:text-xl">Business services</span>
+              <span className="mt-1.5 block text-sm text-ink-600">
+                Software, AI/ML, cloud, marketing, QC and inspection — scoped per engagement.
+              </span>
+              <span className="mt-4 inline-block text-sm font-bold text-success-700 group-hover:underline">Browse services ›</span>
+            </span>
+            <span className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-success-700 sm:flex">
+              <GridIcon className="h-9 w-9" aria-hidden="true" />
+            </span>
+          </Link>
+        </section>
+
+        {/* ═════════ AI BAND — the page's one coloured band ═════════ */}
+        <section className="bg-primary-800">
+          <div className="flex w-full flex-col items-start gap-6 px-4 py-10 sm:px-6 sm:py-12 lg:flex-row lg:items-center lg:px-10 xl:px-16">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl lg:text-3xl">
+                Describe what you need. We&apos;ll find it.
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm text-primary-100 sm:text-base">
+                Skip the filters — write it the way you&apos;d say it to a colleague, and the
+                platform extracts the category, quantity and budget for you.
+              </p>
+            </div>
+            <Link
+              to="/ai-search"
+              className="flex shrink-0 items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-extrabold text-primary-800 shadow-card hover:shadow-lift sm:px-7"
+            >
+              <SparkleIcon className="h-4 w-4" aria-hidden="true" />
+              Try AI Search
+            </Link>
+          </div>
+        </section>
+
+        {/* ═════════ RECENTLY LISTED ═════════ */}
+        <section className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
+          <BlockHead
+            title="Recently listed"
+            sub="The newest products and services on the platform."
+            to="/search"
+          />
+
+          {feed.isError ? (
+            <p className="rounded-2xl border border-surface-border bg-white p-8 text-center text-sm text-ink-600">
+              Listings couldn&apos;t be loaded just now.{' '}
+              <button type="button" onClick={() => feed.refetch()} className="font-bold text-primary-700 hover:underline">
+                Try again
+              </button>
+            </p>
+          ) : (
+            <>
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                {feed.isPending
+                  ? Array.from({ length: FEED_PAGE_SIZE }).map((_, i) => <li key={i}><CardSkeleton /></li>)
+                  : products.map((p) => (
+                      <li key={p.id}>
+                        <ProductCard product={p} to={`/product/${p.slug ?? p.id}`} />
+                      </li>
+                    ))}
+              </ul>
+
+              {/* Load more, not infinite scroll — see the file note. */}
+              {!feed.isPending && products.length > 0 && (
+                <div className="mt-8 flex flex-col items-center gap-2">
+                  {feed.hasNextPage && (
+                    <button
+                      type="button"
+                      onClick={() => feed.fetchNextPage()}
+                      disabled={feed.isFetchingNextPage}
+                      className="rounded-xl border border-surface-border bg-white px-8 py-3 text-sm font-bold text-primary-700 shadow-card hover:bg-primary-50 disabled:opacity-60"
+                    >
+                      {feed.isFetchingNextPage ? 'Loading…' : 'Load more'}
+                    </button>
+                  )}
+                  <p className="text-xs text-ink-400">
+                    {feed.hasNextPage
+                      ? `Showing ${products.length} of ${productTotal}`
+                      : "You've seen everything listed so far"}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+
+        {/* ═════════ VERIFIED SUPPLIERS ═════════
+            Hides entirely when none are verified yet, rather than rendering an
+            empty rail. 🔴 "Verified by our team", never "Top-rated" — there is no
+            rating system, so there is nothing to rate a supplier on. */}
+        {(suppliers.isPending || verifiedSuppliers.length > 0) && (
+          <section className="border-t border-surface-border bg-ink-50">
+            <div className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
+              <BlockHead
+                title="Verified suppliers"
+                sub="Companies whose documents our team has checked in person."
+                to="/search?type=supplier"
+              />
+              <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+                {suppliers.isPending
+                  ? Array.from({ length: 3 }).map((_, i) => (
+                      <li key={i}>
+                        <div className="h-44 animate-pulse rounded-2xl bg-white" />
+                      </li>
+                    ))
+                  : verifiedSuppliers.map((s) => (
+                      <li key={s.id}>
+                        <SupplierCard supplier={s} />
+                      </li>
+                    ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+        {/* ═════════ HOW IT WORKS ═════════
+            🔴 KEPT from the previous layout, compressed. The mockup dropped it,
+            but the shared header links to `#how-it-works` on every public page,
+            and a first-time international buyer who has never heard of MPX still
+            needs the platform to explain itself. Moved BELOW the marketplace
+            rather than deleted — the marketplace still leads. */}
+        <section id="how-it-works" className="border-t border-surface-border bg-ink-50">
+          <div className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
+            <h2 className="text-2xl font-extrabold tracking-tight">How it works</h2>
+            <ol className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ['Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
+                ['Send an enquiry', 'Tell them exactly what you need, in a couple of clicks.'],
+                ['Chat in real time', 'Talk directly with the supplier on the platform.'],
+                ['Deal with confidence', 'The verified tick and a full conversation history keep both sides honest.'],
+              ].map(([title, body], i) => (
+                <li key={title} className="rounded-2xl bg-white p-5 shadow-card">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-800 text-sm font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <p className="mt-3 text-sm font-bold">{title}</p>
+                  <p className="mt-1 text-sm text-ink-600">{body}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* ═════════ FAQ — same reason as How it works: the header links to it ═════════ */}
+        <section id="faq" className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
+          <h2 className="text-2xl font-extrabold tracking-tight">Common questions</h2>
+          {/* Two columns from lg. The page runs edge-to-edge, and a single
+              full-width answer would be a 200-character line — unreadable. The
+              column split keeps the measure sane without reintroducing a margin. */}
+          <dl className="mt-6 grid grid-cols-1 gap-x-12 border-t border-surface-border lg:grid-cols-2">
+            {FAQS.map(({ q, a }) => (
+              <div key={q} className="border-b border-surface-border py-4">
+                <dt className="text-sm font-bold text-ink-900">{q}</dt>
+                <dd className="mt-1.5 text-sm text-ink-600">{a}</dd>
               </div>
             ))}
-          </div>
+          </dl>
         </section>
 
-        {/* Final CTA */}
-        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 md:pb-24">
-          <div className="relative overflow-hidden rounded-[20px] bg-primary-700 p-8 shadow-2xl sm:p-10 md:p-16">
-            <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary-600 opacity-20 blur-[100px]" />
-            <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-primary-600 opacity-20 blur-[100px]" />
-            <div className="relative z-10 mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold leading-tight text-white md:text-5xl">
-                Start sourcing <span className="text-primary-300">smarter</span> today.
-              </h2>
-              <p className="mt-4 text-lg text-white/90">
-                Join verified Indian exporters and international buyers on one trusted marketplace.
-              </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                {home ? (
-                  <Link to={home} className={`${pill} w-full bg-white px-8 py-3.5 text-primary-700 hover:bg-primary-50 sm:w-auto`}>
-                    Go to your dashboard
-                  </Link>
-                ) : (
-                  <>
-                    <Link to="/signup/buyer" className={`${pill} w-full bg-white px-8 py-3.5 text-primary-700 hover:bg-primary-50 sm:w-auto`}>
-                      Join as Buyer
-                    </Link>
-                    <Link
-                      to="/signup/exporter"
-                      className={`${pill} w-full border-2 border-white/80 px-8 py-3.5 text-white hover:bg-white/10 sm:w-auto`}
-                    >
-                      Join as Seller
-                    </Link>
-                  </>
-                )}
+        {/* ═════════ SELL CTA — never shown to a signed-in exporter ═════════ */}
+        {!isExporter && (
+          <section className="w-full px-4 py-12 sm:px-6 sm:py-14 lg:px-10 xl:px-16">
+            <div className="flex flex-col items-start justify-between gap-6 rounded-2xl border border-surface-border bg-primary-50 p-6 sm:p-10 lg:flex-row lg:items-center">
+              <div>
+                <h2 className="text-xl font-extrabold tracking-tight text-primary-800 sm:text-2xl">
+                  Want to sell on MPX Global?
+                </h2>
+                <p className="mt-2 max-w-xl text-sm text-ink-600">
+                  Join verified exporters expanding their business worldwide. Your public profile
+                  is live from the day you register — verification adds the tick.
+                </p>
               </div>
+              <Link
+                to="/signup/exporter"
+                className="shrink-0 rounded-xl bg-primary-600 px-6 py-3.5 text-sm font-bold text-white shadow-card hover:bg-primary-700 sm:px-8"
+              >
+                Register as an exporter
+              </Link>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
 
       <PublicFooter />

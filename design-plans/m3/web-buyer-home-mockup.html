@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPX Global — Web landing page</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+/* Tokens from web/tailwind.config.js — no invented colours.
+   Radius scale: 2xl surfaces · xl controls · lg chips · full circles. */
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+      colors: {
+        primary: { 50:'#EAEEFF', 100:'#DEE1FF', 200:'#C3CBFF', 600:'#2A4DE0', 700:'#2340C4', 800:'#1A2E8F', 900:'#12206B' },
+        ink: { 50:'#F7F8FB', 100:'#F2F4F7', 200:'#E2E4EC', 400:'#98A2B3', 600:'#5A6B85', 900:'#000517' },
+        success: '#12B76A', warning: '#F79009',
+        danger: { DEFAULT:'#D92D20', 50:'#FEECEA' },
+        line: '#C5C6CF',
+      },
+      boxShadow: {
+        card: '0 1px 2px rgba(26,46,143,.06), 0 1px 3px rgba(26,46,143,.10)',
+        lift: '0 4px 12px rgba(26,46,143,.10), 0 2px 4px rgba(26,46,143,.06)',
+      },
+      maxWidth: { site: '1400px' },
+    },
+  },
+};
+</script>
+<style>
+  body { -webkit-font-smoothing: antialiased; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  .mega:hover .mega-panel, .mega:focus-within .mega-panel { display: grid; }
+</style>
+</head>
+<body class="bg-white font-sans text-ink-900">
+
+<!-- MOCKUP-ONLY: preview the three audiences on one URL. Not part of the design. -->
+<div class="fixed right-4 top-4 z-[60] rounded-full bg-ink-900/90 px-2 py-1.5 shadow-lift backdrop-blur">
+  <div class="flex items-center gap-1 text-[11px] font-semibold text-white">
+    <span class="px-1.5 text-ink-400">Preview as</span>
+    <button data-state="guest"    class="state-btn rounded-full bg-primary-600 px-2.5 py-1">Guest</button>
+    <button data-state="buyer"    class="state-btn rounded-full px-2.5 py-1">Buyer</button>
+    <button data-state="exporter" class="state-btn rounded-full px-2.5 py-1">Exporter</button>
+  </div>
+</div>
+
+<!-- ═══════════════ UTILITY BAR ═══════════════ -->
+<div class="border-b border-ink-100 bg-ink-50">
+  <div class="mx-auto flex max-w-site items-center justify-end gap-5 px-6 py-1.5 text-xs text-ink-600">
+    <span class="mr-auto hidden sm:block">Sourcing from India, for buyers worldwide</span>
+    <a href="/signup/exporter" data-auth="guest buyer" class="font-semibold hover:text-primary-700">Sell on MPX Global</a>
+    <a href="/help" class="hover:text-primary-700">Help</a>
+    <span data-auth="buyer exporter" class="text-ink-400">|</span>
+    <a href="/buyer/company" data-auth="buyer exporter" class="font-semibold hover:text-primary-700">My account</a>
+  </div>
+</div>
+
+<!-- ═══════════════ MASTHEAD — logo · search · account ═══════════════ -->
+<header class="sticky top-0 z-50 border-b border-ink-200 bg-white">
+  <div class="mx-auto flex max-w-site items-center gap-6 px-6 py-4">
+    <a href="/" class="shrink-0 text-2xl font-black tracking-tight text-primary-800">MPX<span class="text-primary-600">Global</span></a>
+
+    <!-- Search: a wide web search field, with a scope selector. Clicking goes to
+         /search (the settled 2026-08-16 behaviour) — this is styled as a real
+         field because on web that is what a masthead search looks like, but it
+         navigates rather than searching in place. -->
+    <form action="/search" class="hidden min-w-0 flex-1 items-center rounded-xl border-2 border-primary-800 bg-white lg:flex" role="search">
+      <label class="sr-only" for="q">Search products, services or suppliers</label>
+      <select class="rounded-l-xl border-r border-ink-200 bg-white py-3 pl-4 pr-2 text-sm font-semibold text-ink-600 focus:outline-none" aria-label="Search in">
+        <option>All categories</option>
+        <option>Goods</option>
+        <option>Services</option>
+        <option>Suppliers</option>
+      </select>
+      <input id="q" name="q" type="search" placeholder="cotton fabric, 120 GSM…" class="min-w-0 flex-1 px-4 py-3 text-sm placeholder:text-ink-400 focus:outline-none">
+      <a href="/ai-search" class="mr-1 hidden shrink-0 items-center gap-1.5 rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-700 hover:bg-primary-100 xl:flex">
+        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.9 5.6L19.5 9l-5.6 1.9L12 16.5l-1.9-5.6L4.5 9l5.6-1.4z"/></svg>
+        Ask AI instead
+      </a>
+      <button class="shrink-0 rounded-r-xl bg-primary-800 px-6 py-3 text-sm font-bold text-white hover:bg-primary-900">Search</button>
+    </form>
+
+    <nav class="ml-auto flex shrink-0 items-center gap-2 lg:ml-0" aria-label="Account">
+      <a href="/saved" data-auth="buyer" class="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-600 hover:bg-ink-50 sm:flex">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Saved</a>
+      <a href="/buyer/chat" data-auth="buyer exporter" class="relative hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-600 hover:bg-ink-50 sm:flex">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages
+        <span class="absolute left-6 top-1.5 h-2 w-2 rounded-full bg-warning"></span></a>
+      <a href="/signin"       data-auth="guest" class="rounded-xl px-4 py-2 text-sm font-bold text-primary-700 hover:bg-primary-50">Sign in</a>
+      <a href="/signup/buyer" data-auth="guest" class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-bold text-white shadow-card hover:bg-primary-700">Create account</a>
+    </nav>
+  </div>
+
+  <!-- ═══════════ NAV ROW — mega-menu + shortcuts ═══════════ -->
+  <div class="mx-auto max-w-site px-6">
+    <nav class="flex items-center gap-1 overflow-x-auto pb-2 text-sm" aria-label="Browse">
+      <div class="mega relative">
+        <button class="flex items-center gap-2 rounded-xl bg-primary-800 px-4 py-2 font-bold text-white" aria-expanded="false">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          All 301 categories
+        </button>
+        <!-- Simplified stand-in for the mega-menu already designed in
+             design-plans/m2/web-navbar-category-megamenu-prompt.md — do not
+             design a second one; reuse that. -->
+        <div class="mega-panel absolute left-0 top-full z-50 hidden w-[720px] grid-cols-3 gap-x-8 gap-y-1 rounded-2xl border border-ink-200 bg-white p-6 shadow-lift">
+          <a href="/category/agriculture" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">Agriculture</a>
+          <a href="/category/apparel-garments" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">Apparel &amp; Garments</a>
+          <a href="/category/textiles-fabrics-yarn" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">Textiles, Fabrics &amp; Yarn</a>
+          <a href="/category/leather" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">Leather &amp; Leather Products</a>
+          <a href="/category/footwear" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">Footwear</a>
+          <a href="/category/food-beverages" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">Food &amp; Beverages</a>
+          <a href="/category/chemicals" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">Chemicals, Dyes &amp; Solvents</a>
+          <a href="/category/pharmaceuticals" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">Pharmaceuticals &amp; Medical</a>
+          <a href="/category/electronics" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">Electronics &amp; Electrical</a>
+          <a href="/category/machinery" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">Industrial Machinery</a>
+          <a href="/category/it-services" class="rounded-lg px-2 py-1.5 hover:bg-ink-50">IT &amp; Software Services</a>
+          <a href="/categories" class="rounded-lg px-2 py-1.5 font-bold text-primary-700 hover:bg-primary-50">See all 301 ›</a>
+        </div>
+      </div>
+      <a href="/categories?type=goods"   class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-ink-50">Goods</a>
+      <a href="/categories?type=service" class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-ink-50">Services</a>
+      <a href="/search?type=supplier"    class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-ink-50">Suppliers</a>
+      <a href="/ai-search" class="ml-auto hidden items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 font-bold text-primary-700 hover:bg-primary-50 md:flex">
+        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.9 5.6L19.5 9l-5.6 1.9L12 16.5l-1.9-5.6L4.5 9l5.6-1.4z"/></svg>AI Search</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ═══════════════ HERO ZONE — the classic B2B three-column masthead ═══════════════
+       Category rail · banner · contextual panel. This is the pattern that uses a
+       desktop's width instead of stacking phone blocks down the middle. -->
+  <section class="bg-ink-50 py-6">
+    <div class="mx-auto grid max-w-site grid-cols-1 gap-5 px-6 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_300px]">
+
+      <!-- Category rail — always open on desktop, no hover required -->
+      <aside class="hidden rounded-2xl bg-white p-2 shadow-card lg:block">
+        <ul class="text-sm">
+          <li><a href="/category/textiles-fabrics-yarn" class="flex items-center justify-between rounded-xl px-3 py-2 font-medium hover:bg-primary-50 hover:text-primary-800">Textiles, Fabrics &amp; Yarn <span class="text-ink-400">›</span></a></li>
+          <li><a href="/category/apparel-garments" class="flex items-center justify-between rounded-xl px-3 py-2 font-medium hover:bg-primary-50 hover:text-primary-800">Apparel &amp; Garments <span class="text-ink-400">›</span></a></li>
+          <li><a href="/category/leather" class="flex items-center justify-between rounded-xl px-3 py-2 font-medium hover:bg-primary-50 hover:text-primary-800">Leather &amp; Products <span class="text-ink-400">›</span></a></li>
+          <li><a href="/category/it-services" class="flex items-center justify-between rounded-xl px-3 py-2 font-medium hover:bg-primary-50 hover:text-primary-800">IT &amp; Software Services <span class="text-ink-400">›</span></a></li>
+          <li><a href="/category/chemicals" class="flex items-center justify-between rounded-xl px-3 py-2 font-medium hover:bg-primary-50 hover:text-primary-800">Chemicals &amp; Dyes <span class="text-ink-400">›</span></a></li>
+          <li><a href="/category/food-beverages" class="flex items-center justify-between rounded-xl px-3 py-2 font-medium hover:bg-primary-50 hover:text-primary-800">Food &amp; Beverages <span class="text-ink-400">›</span></a></li>
+          <li><a href="/category/machinery" class="flex items-center justify-between rounded-xl px-3 py-2 font-medium hover:bg-primary-50 hover:text-primary-800">Industrial Machinery <span class="text-ink-400">›</span></a></li>
+          <li><a href="/category/electronics" class="flex items-center justify-between rounded-xl px-3 py-2 font-medium hover:bg-primary-50 hover:text-primary-800">Electronics &amp; Electrical <span class="text-ink-400">›</span></a></li>
+          <li><a href="/category/pharmaceuticals" class="flex items-center justify-between rounded-xl px-3 py-2 font-medium hover:bg-primary-50 hover:text-primary-800">Pharma &amp; Medical <span class="text-ink-400">›</span></a></li>
+          <li class="mt-1 border-t border-ink-100 pt-1"><a href="/categories" class="block rounded-xl px-3 py-2 font-bold text-primary-700 hover:bg-primary-50">All 301 categories ›</a></li>
+        </ul>
+      </aside>
+
+      <!-- Banner — one h1, real copy, no invented counts -->
+      <div class="relative overflow-hidden rounded-2xl bg-primary-800 px-8 py-12 lg:px-12 lg:py-16">
+        <div class="relative max-w-xl">
+          <p class="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-primary-100">
+            <svg class="h-3.5 w-3.5 text-success" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#1A2E8F"/></svg>
+            Every tick checked by a person
+          </p>
+          <h1 class="text-4xl font-black leading-[1.1] tracking-tight text-white lg:text-5xl">
+            Source from verified<br>Indian exporters
+          </h1>
+          <p class="mt-4 max-w-md text-base text-primary-100">
+            Goods and services, direct from the supplier. Search the catalogue, send an enquiry,
+            and talk to them in real time — free, no account needed to browse.
+          </p>
+          <div class="mt-7 flex flex-wrap gap-3">
+            <a href="/categories" class="rounded-xl bg-white px-6 py-3 text-sm font-bold text-primary-800 shadow-card hover:shadow-lift">Browse 301 categories</a>
+            <a href="/ai-search" class="flex items-center gap-2 rounded-xl border border-white/30 px-6 py-3 text-sm font-bold text-white hover:bg-white/10">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.9 5.6L19.5 9l-5.6 1.9L12 16.5l-1.9-5.6L4.5 9l5.6-1.4z"/></svg>
+              Describe what you need
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contextual panel — the column that makes this a web layout rather than
+           a stack: it changes per audience instead of pushing everyone down. -->
+      <aside class="hidden xl:block">
+        <!-- Guest -->
+        <div data-auth="guest" class="rounded-2xl bg-white p-6 shadow-card">
+          <p class="text-sm font-extrabold">Start sourcing</p>
+          <p class="mt-1.5 text-sm text-ink-600">Create a free buyer account to save suppliers, send enquiries and chat.</p>
+          <a href="/signup/buyer" class="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700">Create free account</a>
+          <a href="/signin" class="mt-2 block rounded-xl border border-line px-4 py-2.5 text-center text-sm font-bold text-primary-700 hover:bg-primary-50">Sign in</a>
+          <hr class="my-5 border-ink-100">
+          <p class="text-sm font-extrabold">Are you an exporter?</p>
+          <p class="mt-1.5 text-sm text-ink-600">Your public profile goes live the day you register.</p>
+          <a href="/signup/exporter" class="mt-3 block text-sm font-bold text-primary-700 hover:underline">Register as an exporter ›</a>
+        </div>
+
+        <!-- Signed-in buyer. 🔴 Verification sits HERE, not above the catalogue:
+             a buyer is fully active from signup and verification gates nothing
+             for them. This is also the one legitimate place a raw status shows —
+             it is the buyer's own organisation, not a public read. -->
+        <div data-auth="buyer" class="rounded-2xl bg-white p-6 shadow-card">
+          <p class="text-sm font-extrabold">Welcome back, Aisha</p>
+          <p class="mt-1 text-xs text-ink-600">Meridian Sourcing Ltd · United Kingdom</p>
+          <div class="mt-4 rounded-xl bg-warning/10 p-3">
+            <p class="flex items-center gap-1.5 text-xs font-bold text-ink-900">
+              <svg class="h-4 w-4 text-warning" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg>
+              Documents under review
+            </p>
+            <p class="mt-1 text-xs text-ink-600">Nothing is on hold — you can browse, enquire and chat as normal.</p>
+            <a href="/buyer/verification" class="mt-2 inline-block text-xs font-bold text-primary-700 hover:underline">View status ›</a>
+          </div>
+          <hr class="my-5 border-ink-100">
+          <a href="/buyer/chat" class="flex items-center justify-between rounded-xl px-1 py-1.5 text-sm font-semibold hover:text-primary-700">Messages <span class="rounded-full bg-warning px-1.5 text-xs font-bold text-white">3</span></a>
+          <a href="/saved" class="block rounded-xl px-1 py-1.5 text-sm font-semibold hover:text-primary-700">Saved items</a>
+        </div>
+
+        <!-- Signed-in exporter — never sold "register as a supplier" -->
+        <div data-auth="exporter" class="rounded-2xl bg-white p-6 shadow-card">
+          <p class="text-sm font-extrabold">Tirupur Knitwear Exports</p>
+          <p class="mt-1 flex items-center gap-1 text-xs text-success"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg>Verified exporter</p>
+          <a href="/exporter/products" class="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700">Manage listings</a>
+          <a href="/exporter/chat" class="mt-2 block rounded-xl border border-line px-4 py-2.5 text-center text-sm font-bold text-primary-700 hover:bg-primary-50">Enquiries &amp; chat</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══════════ VALUE STRIP — thin, factual, no counts ═══════════ -->
+  <section class="border-y border-ink-100 bg-white">
+    <ul class="mx-auto grid max-w-site grid-cols-1 gap-6 px-6 py-6 sm:grid-cols-3">
+      <li class="flex items-start gap-3">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 8.3-8 9-4.8-.7-8-4.5-8-9V6z"/></svg></span>
+        <span><span class="block text-sm font-bold">Human-verified exporters</span><span class="block text-sm text-ink-600">A person reads the documents. Never an automated stamp.</span></span>
+      </li>
+      <li class="flex items-start gap-3">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700"><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.9 5.6L19.5 9l-5.6 1.9L12 16.5l-1.9-5.6L4.5 9l5.6-1.4z"/></svg></span>
+        <span><span class="block text-sm font-bold">Describe it, don't guess keywords</span><span class="block text-sm text-ink-600">Plain language in, matching suppliers out.</span></span>
+      </li>
+      <li class="flex items-start gap-3">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <span><span class="block text-sm font-bold">Talk to the supplier directly</span><span class="block text-sm text-ink-600">Structured enquiry, then live chat. No email chains.</span></span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ═══════════ CATEGORIES — landscape image cards, not app icons ═══════════ -->
+  <section class="mx-auto max-w-site px-6 py-12">
+    <div class="mb-6 flex items-end justify-between">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight">Browse by category</h2>
+        <p class="mt-1 text-sm text-ink-600">301 categories across goods and services.</p>
+      </div>
+      <a href="/categories" class="hidden shrink-0 rounded-xl border border-line px-4 py-2 text-sm font-bold text-primary-700 hover:bg-primary-50 sm:block">See all ›</a>
+    </div>
+    <ul class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <li><a href="/category/textiles-fabrics-yarn" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786399146/mpx/categories/cb67091249ec0c2e.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Textiles, Fabrics &amp; Yarn</span></a></li>
+      <li><a href="/category/apparel-garments" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786354273/mpx/categories/9ec6f9c9a09d9b87.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Apparel &amp; Garments</span></a></li>
+      <li><a href="/category/leather" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786399119/mpx/categories/dad74cd8e0c3f643.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Leather &amp; Leather Products</span></a></li>
+      <li><a href="/category/footwear" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786399100/mpx/categories/d313b5127fc8da51.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Footwear</span></a></li>
+      <li><a href="/category/chemicals" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786399093/mpx/categories/f25d9b27d1b9ba4c.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Chemicals, Dyes &amp; Solvents</span></a></li>
+      <li><a href="/category/food-beverages" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786399098/mpx/categories/666763f168346839.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Food &amp; Beverages</span></a></li>
+      <li><a href="/category/pharmaceuticals" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786399135/mpx/categories/c624fa6d29a0c676.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Pharmaceuticals &amp; Medical</span></a></li>
+      <li><a href="/category/electronics" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786354282/mpx/categories/5d51d428a5d738ed.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Electronics &amp; Electrical</span></a></li>
+      <li><a href="/category/machinery" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786399116/mpx/categories/b191e46340250c27.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Industrial Machinery</span></a></li>
+      <li><a href="/category/agriculture" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786354270/mpx/categories/64639a82673eedf1.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Agriculture</span></a></li>
+      <li><a href="/category/bags-luggage" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786354279/mpx/categories/247792507c87685c.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Bags, Luggage &amp; Accessories</span></a></li>
+      <li><a href="/category/health-beauty" class="group block overflow-hidden rounded-2xl border border-ink-200 transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786399111/mpx/categories/e1c346c5bf25e27e.jpg" alt="" width="400" height="260" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        <span class="block px-3 py-2.5 text-sm font-bold">Health &amp; Beauty</span></a></li>
+    </ul>
+  </section>
+
+  <!-- ═══════════ GOODS / SERVICES — two wide panels ═══════════
+       Equal weight: the live catalogue is currently MOSTLY services. -->
+  <section class="mx-auto grid max-w-site grid-cols-1 gap-5 px-6 pb-12 lg:grid-cols-2">
+    <a href="/categories?type=goods" class="group flex items-center gap-6 overflow-hidden rounded-2xl bg-primary-50 p-8 transition hover:shadow-lift">
+      <span class="min-w-0 flex-1">
+        <span class="block text-xl font-black tracking-tight text-primary-800">Physical goods</span>
+        <span class="mt-1.5 block text-sm text-ink-600">Fabric, denim, leather, chemicals, machinery — with MOQ and per-unit pricing.</span>
+        <span class="mt-4 inline-block text-sm font-bold text-primary-700 group-hover:underline">Browse goods ›</span>
+      </span>
+      <span class="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-primary-800 sm:flex">
+        <svg class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 16V8l-9-5-9 5v8l9 5z"/><path d="M3.3 7.3 12 12l8.7-4.7M12 12v9.5"/></svg>
+      </span>
+    </a>
+    <a href="/categories?type=service" class="group flex items-center gap-6 overflow-hidden rounded-2xl bg-[#E9F7F0] p-8 transition hover:shadow-lift">
+      <span class="min-w-0 flex-1">
+        <span class="block text-xl font-black tracking-tight text-[#05603A]">Business services</span>
+        <span class="mt-1.5 block text-sm text-ink-600">Software, AI/ML, cloud, marketing, QC and inspection — scoped and quoted per engagement.</span>
+        <span class="mt-4 inline-block text-sm font-bold text-[#05603A] group-hover:underline">Browse services ›</span>
+      </span>
+      <span class="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-[#05603A] sm:flex">
+        <svg class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+      </span>
+    </a>
+  </section>
+
+  <!-- ═══════════ AI BAND — full-bleed, the page's one coloured band ═══════════ -->
+  <section class="bg-primary-800">
+    <div class="mx-auto flex max-w-site flex-col items-start gap-6 px-6 py-12 lg:flex-row lg:items-center">
+      <div class="min-w-0 flex-1">
+        <h2 class="text-2xl font-black tracking-tight text-white lg:text-3xl">Describe what you need. We'll find it.</h2>
+        <p class="mt-2 max-w-2xl text-primary-100">Skip the filters — write it the way you'd say it to a colleague, and the platform extracts the category, quantity and budget for you.</p>
+        <div class="mt-5 flex flex-wrap gap-2">
+          <a href="/ai-search?q=selvedge+denim+100m+under+%244" class="rounded-lg bg-white/10 px-3 py-1.5 text-sm italic text-primary-100 hover:bg-white/20">“selvedge denim, 100 m, under $4”</a>
+          <a href="/ai-search?q=organic+cotton+voile+supplier+Tamil+Nadu" class="hidden rounded-lg bg-white/10 px-3 py-1.5 text-sm italic text-primary-100 hover:bg-white/20 sm:block">“organic cotton voile supplier in Tamil Nadu”</a>
+          <a href="/ai-search?q=devops+retainer+team+in+India" class="hidden rounded-lg bg-white/10 px-3 py-1.5 text-sm italic text-primary-100 hover:bg-white/20 lg:block">“DevOps retainer team in India”</a>
+        </div>
+      </div>
+      <a href="/ai-search" class="flex shrink-0 items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-extrabold text-primary-800 shadow-card hover:shadow-lift">
+        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.9 5.6L19.5 9l-5.6 1.9L12 16.5l-1.9-5.6L4.5 9l5.6-1.4z"/></svg>
+        Try AI Search
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════════ RECENTLY LISTED ═══════════
+       Every card is a REAL live listing: mixed currencies (INR/USD/ALL), two
+       "Price on request", one with no image, MOQ on goods only, and listings
+       from unverified sellers ranked normally with no badge of any kind. -->
+  <section class="mx-auto max-w-site px-6 py-12">
+    <div class="mb-6 flex items-end justify-between">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight">Recently listed</h2>
+        <p class="mt-1 text-sm text-ink-600">The newest products and services on the platform.</p>
+      </div>
+      <a href="/search" class="hidden shrink-0 rounded-xl border border-line px-4 py-2 text-sm font-bold text-primary-700 hover:bg-primary-50 sm:block">See all ›</a>
+    </div>
+
+    <ul class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <li><a href="/product/combed-cotton-poplin" class="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786421020/mpx/products/6a784938287457366243e1ca/9ab9ba5970fe49cb.jpg" alt="Combed Cotton Poplin Fabric, 120 GSM" width="320" height="320" loading="lazy" class="aspect-square w-full object-cover">
+        <span class="flex flex-1 flex-col p-3.5">
+          <span class="line-clamp-2 text-sm font-semibold leading-snug">Combed Cotton Poplin Fabric, 120 GSM</span>
+          <span class="mt-2 text-base font-black text-primary-800">₹220</span>
+          <span class="text-xs text-ink-600">MOQ 500</span>
+          <span class="mt-auto flex items-center gap-1 pt-3 text-xs text-ink-600">
+            <span class="truncate">Tirupur Knitwear Exports</span>
+            <svg class="h-3.5 w-3.5 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified supplier"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg>
+          </span>
+        </span></a></li>
+
+      <li><a href="/product/cloud-migration-devops" class="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786421041/mpx/products/6a78493a287457366243e1ce/8531178b07d11ca7.jpg" alt="Cloud Migration &amp; DevOps Retainer" width="320" height="320" loading="lazy" class="aspect-square w-full object-cover">
+        <span class="flex flex-1 flex-col p-3.5">
+          <span class="mb-1.5 w-fit rounded-lg bg-[#E9F7F0] px-2 py-0.5 text-[10px] font-bold text-[#05603A]">Service</span>
+          <span class="line-clamp-2 text-sm font-semibold leading-snug">Cloud Migration &amp; DevOps Retainer</span>
+          <span class="mt-2 text-base font-black text-primary-800">$4,000 – $12,000</span>
+          <span class="mt-auto flex items-center gap-1 pt-3 text-xs text-ink-600">
+            <span class="truncate">Bengaluru AI Labs</span>
+            <svg class="h-3.5 w-3.5 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified supplier"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg>
+          </span>
+        </span></a></li>
+
+      <li><a href="/product/organic-cotton-voile" class="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786421022/mpx/products/6a784938287457366243e1ca/ad06e4e43f237586.jpg" alt="Organic Cotton Voile" width="320" height="320" loading="lazy" class="aspect-square w-full object-cover">
+        <span class="flex flex-1 flex-col p-3.5">
+          <span class="line-clamp-2 text-sm font-semibold leading-snug">Organic Cotton Voile</span>
+          <span class="mt-2 text-base font-black text-primary-800">₹180 – ₹260</span>
+          <span class="text-xs text-ink-600">MOQ 300</span>
+          <span class="mt-auto flex items-center gap-1 pt-3 text-xs text-ink-600">
+            <span class="truncate">Tirupur Knitwear Exports</span>
+            <svg class="h-3.5 w-3.5 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified supplier"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg>
+          </span>
+        </span></a></li>
+
+      <!-- Priced on request — a first-class case, not an edge case -->
+      <li><a href="/product/custom-ai-ml" class="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786421039/mpx/products/6a78493a287457366243e1ce/73c4a28eecc9ee8f.jpg" alt="Custom AI/ML Model Development" width="320" height="320" loading="lazy" class="aspect-square w-full object-cover">
+        <span class="flex flex-1 flex-col p-3.5">
+          <span class="mb-1.5 w-fit rounded-lg bg-[#E9F7F0] px-2 py-0.5 text-[10px] font-bold text-[#05603A]">Service</span>
+          <span class="line-clamp-2 text-sm font-semibold leading-snug">Custom AI/ML Model Development</span>
+          <span class="mt-2 text-base font-black text-ink-600">Price on request</span>
+          <span class="mt-auto flex items-center gap-1 pt-3 text-xs text-ink-600">
+            <span class="truncate">Bengaluru AI Labs</span>
+            <svg class="h-3.5 w-3.5 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified supplier"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg>
+          </span>
+        </span></a></li>
+
+      <li><a href="/product/selvedge-denim" class="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786421029/mpx/products/6a784938287457366243e1ca/37554535db51e1a5.jpg" alt="Selvedge Denim, 14oz" width="320" height="320" loading="lazy" class="aspect-square w-full object-cover">
+        <span class="flex flex-1 flex-col p-3.5">
+          <span class="line-clamp-2 text-sm font-semibold leading-snug">Selvedge Denim, 14oz</span>
+          <span class="mt-2 text-base font-black text-primary-800">$3.40</span>
+          <span class="text-xs text-ink-600">MOQ 100</span>
+          <span class="mt-auto flex items-center gap-1 pt-3 text-xs text-ink-600">
+            <span class="truncate">Tirupur Knitwear Exports</span>
+            <svg class="h-3.5 w-3.5 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified supplier"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg>
+          </span>
+        </span></a></li>
+
+      <li><a href="/product/website-development" class="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786421043/mpx/products/6a7a05a3aacb84dc8d3dae62/ab35cc16935a9771.jpg" alt="Website development" width="320" height="320" loading="lazy" class="aspect-square w-full object-cover">
+        <span class="flex flex-1 flex-col p-3.5">
+          <span class="mb-1.5 w-fit rounded-lg bg-[#E9F7F0] px-2 py-0.5 text-[10px] font-bold text-[#05603A]">Service</span>
+          <span class="line-clamp-2 text-sm font-semibold leading-snug">Website development</span>
+          <span class="mt-2 text-base font-black text-primary-800">₹10,000 – ₹5,00,000</span>
+          <span class="mt-auto flex items-center gap-1 pt-3 text-xs text-ink-600">
+            <span class="truncate">NxtGenDigitals</span>
+            <svg class="h-3.5 w-3.5 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified supplier"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg>
+          </span>
+        </span></a></li>
+
+      <!-- 🔴 Unverified seller — ranked normally, NO badge. The tick's absence
+           is the only signal. Also an unusual currency (real data). -->
+      <li><a href="/product/silk-fabric" class="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786619908/mpx/products/6a7da70138769ec3a619f02d/ba676e77ddd0e86b.jpg" alt="Silk fabric" width="320" height="320" loading="lazy" class="aspect-square w-full object-cover">
+        <span class="flex flex-1 flex-col p-3.5">
+          <span class="line-clamp-2 text-sm font-semibold leading-snug">Silk fabric</span>
+          <span class="mt-2 text-base font-black text-primary-800">ALL 2,000</span>
+          <span class="text-xs text-ink-600">MOQ 500</span>
+          <span class="mt-auto flex items-center gap-1 pt-3 text-xs text-ink-600"><span class="truncate">Fabrichubs</span></span>
+        </span></a></li>
+
+      <li><a href="/product/web-security" class="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786421048/mpx/products/6a7a05a3aacb84dc8d3dae62/dde84b2cc127509a.jpg" alt="Web security" width="320" height="320" loading="lazy" class="aspect-square w-full object-cover">
+        <span class="flex flex-1 flex-col p-3.5">
+          <span class="mb-1.5 w-fit rounded-lg bg-[#E9F7F0] px-2 py-0.5 text-[10px] font-bold text-[#05603A]">Service</span>
+          <span class="line-clamp-2 text-sm font-semibold leading-snug">Web security</span>
+          <span class="mt-2 text-base font-black text-primary-800">₹60,000</span>
+          <span class="mt-auto flex items-center gap-1 pt-3 text-xs text-ink-600">
+            <span class="truncate">NxtGenDigitals</span>
+            <svg class="h-3.5 w-3.5 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified supplier"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg>
+          </span>
+        </span></a></li>
+
+      <li><a href="/product/cotton-canvas-12oz" class="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:shadow-lift">
+        <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786421024/mpx/products/6a784938287457366243e1ca/305a8ea589d79a91.jpg" alt="Cotton Canvas 12oz" width="320" height="320" loading="lazy" class="aspect-square w-full object-cover">
+        <span class="flex flex-1 flex-col p-3.5">
+          <span class="line-clamp-2 text-sm font-semibold leading-snug">Cotton Canvas 12oz</span>
+          <span class="mt-2 text-base font-black text-primary-800">₹390 – ₹520</span>
+          <span class="text-xs text-ink-600">MOQ 200</span>
+          <span class="mt-auto flex items-center gap-1 pt-3 text-xs text-ink-600">
+            <span class="truncate">Tirupur Knitwear Exports</span>
+            <svg class="h-3.5 w-3.5 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified supplier"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg>
+          </span>
+        </span></a></li>
+
+      <!-- 🔴 NO IMAGE — 1 of 12 live products. Neutral panel, never tinted. -->
+      <li><a href="/product/combed-cotton-yarn-30s" class="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:shadow-lift">
+        <span class="flex aspect-square w-full items-center justify-center bg-ink-100 text-ink-400">
+          <svg class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+        </span>
+        <span class="flex flex-1 flex-col p-3.5">
+          <span class="line-clamp-2 text-sm font-semibold leading-snug">Combed Cotton Yarn 30s</span>
+          <span class="mt-2 text-base font-black text-primary-800">$2.52</span>
+          <span class="text-xs text-ink-600">MOQ 500</span>
+          <span class="mt-auto flex items-center gap-1 pt-3 text-xs text-ink-600"><span class="truncate">TextileHub Exports</span></span>
+        </span></a></li>
+    </ul>
+
+    <!-- 🔴 "Load more", NOT the app's endless feed: on web an infinite feed hurts
+         indexing and keyboard users, and buries the footer for good. -->
+    <div class="mt-8 flex flex-col items-center gap-2">
+      <button class="rounded-xl border border-line bg-white px-8 py-3 text-sm font-bold text-primary-700 shadow-card hover:bg-primary-50">Load more</button>
+      <p class="text-xs text-ink-400">Showing 10 of 12</p>
+    </div>
+  </section>
+
+  <!-- ═══════════ VERIFIED SUPPLIERS — wide cards, real depth ═══════════
+       Exactly three today, and three are shown. No filler.
+       🔴 "Verified by our team", never "Top-rated" — no rating system exists. -->
+  <section class="border-t border-ink-100 bg-ink-50">
+    <div class="mx-auto max-w-site px-6 py-12">
+      <div class="mb-6 flex items-end justify-between">
+        <div>
+          <h2 class="text-2xl font-black tracking-tight">Verified suppliers</h2>
+          <p class="mt-1 text-sm text-ink-600">Companies whose documents our team has checked in person.</p>
+        </div>
+        <a href="/search?type=supplier" class="hidden shrink-0 rounded-xl border border-line bg-white px-4 py-2 text-sm font-bold text-primary-700 hover:bg-primary-50 sm:block">See all ›</a>
+      </div>
+      <ul class="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <li><a href="/supplier/tirupur-knitwear-exports" class="flex h-full flex-col rounded-2xl bg-white p-6 shadow-card transition hover:shadow-lift">
+          <span class="flex items-center gap-3">
+            <img src="https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=200&h=200&fit=crop&auto=format" alt="" width="56" height="56" loading="lazy" class="h-14 w-14 shrink-0 rounded-full object-cover">
+            <span class="min-w-0">
+              <span class="flex items-center gap-1.5"><span class="truncate font-bold">Tirupur Knitwear Exports</span>
+                <svg class="h-4 w-4 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified by our team"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg></span>
+              <span class="block text-xs text-ink-600">India · Textiles</span></span>
+          </span>
+          <span class="mt-4 line-clamp-3 block text-sm text-ink-600">Knitted cotton fabric and garment manufacturing from Tirupur, supplying wholesale buyers across Europe and the Middle East since 2011.</span>
+          <span class="mt-auto pt-5 text-sm font-bold text-primary-700">View profile ›</span></a></li>
+
+        <li><a href="/supplier/nxtgendigitals" class="flex h-full flex-col rounded-2xl bg-white p-6 shadow-card transition hover:shadow-lift">
+          <span class="flex items-center gap-3">
+            <img src="https://res.cloudinary.com/deewydlyh/image/upload/v1786425209/mpx/logos/6a7a05a3aacb84dc8d3dae62/2ac174e443d1c134.png" alt="" width="56" height="56" loading="lazy" class="h-14 w-14 shrink-0 rounded-full bg-ink-50 object-contain">
+            <span class="min-w-0">
+              <span class="flex items-center gap-1.5"><span class="truncate font-bold">NxtGenDigitals</span>
+                <svg class="h-4 w-4 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified by our team"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg></span>
+              <span class="block text-xs text-ink-600">India · IT &amp; Software</span></span>
+          </span>
+          <span class="mt-4 line-clamp-3 block text-sm text-ink-600">We provide the best quality and customer satisfaction is our priority.</span>
+          <span class="mt-auto pt-5 text-sm font-bold text-primary-700">View profile ›</span></a></li>
+
+        <!-- Verified company with NO logo — 8 of 11 companies have none -->
+        <li><a href="/supplier/bengaluru-ai-labs" class="flex h-full flex-col rounded-2xl bg-white p-6 shadow-card transition hover:shadow-lift">
+          <span class="flex items-center gap-3">
+            <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-ink-100 text-lg font-black text-ink-600" aria-hidden="true">B</span>
+            <span class="min-w-0">
+              <span class="flex items-center gap-1.5"><span class="truncate font-bold">Bengaluru AI Labs</span>
+                <svg class="h-4 w-4 shrink-0 text-success" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Verified by our team"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.8 1.2 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.8-1.2-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M10.6 15.2 7.8 12.4l1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff"/></svg></span>
+              <span class="block text-xs text-ink-600">India · IT &amp; Software</span></span>
+          </span>
+          <span class="mt-4 line-clamp-3 block text-sm text-ink-600">Custom machine-learning and generative-AI engineering for enterprise clients.</span>
+          <span class="mt-auto pt-5 text-sm font-bold text-primary-700">View profile ›</span></a></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════ SELL CTA — split band. Hidden from a signed-in exporter. ═══════════ -->
+  <section data-auth="guest buyer" class="mx-auto max-w-site px-6 py-14">
+    <div class="flex flex-col items-start justify-between gap-6 rounded-2xl border border-ink-200 bg-primary-50 p-10 lg:flex-row lg:items-center">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight text-primary-800">Want to sell on MPX Global?</h2>
+        <p class="mt-2 max-w-xl text-sm text-ink-600">Join verified exporters expanding their business worldwide. Your public profile is live from the day you register — verification adds the tick.</p>
+      </div>
+      <a href="/signup/exporter" class="shrink-0 rounded-xl bg-primary-600 px-8 py-3.5 text-sm font-bold text-white shadow-card hover:bg-primary-700">Register as an exporter</a>
+    </div>
+  </section>
+</main>
+
+<!-- ═══════════════ FOOTER — multi-column, web-native ═══════════════ -->
+<footer class="border-t border-ink-200 bg-white">
+  <div class="mx-auto max-w-site px-6 py-12">
+    <div class="grid grid-cols-2 gap-8 md:grid-cols-5">
+      <div class="col-span-2 md:col-span-1">
+        <span class="text-xl font-black tracking-tight text-primary-800">MPX<span class="text-primary-600">Global</span></span>
+        <p class="mt-3 max-w-xs text-sm text-ink-600">A B2B marketplace connecting international buyers with verified Indian exporters.</p>
+      </div>
+      <div>
+        <p class="text-sm font-bold">Buy</p>
+        <ul class="mt-3 space-y-2 text-sm text-ink-600">
+          <li><a href="/categories" class="hover:text-primary-700">All categories</a></li>
+          <li><a href="/categories?type=goods" class="hover:text-primary-700">Goods</a></li>
+          <li><a href="/categories?type=service" class="hover:text-primary-700">Services</a></li>
+          <li><a href="/search?type=supplier" class="hover:text-primary-700">Suppliers</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-sm font-bold">Sell</p>
+        <ul class="mt-3 space-y-2 text-sm text-ink-600">
+          <li><a href="/signup/exporter" class="hover:text-primary-700">Register as exporter</a></li>
+          <li><a href="/signin" class="hover:text-primary-700">Exporter sign in</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-sm font-bold">Discover</p>
+        <ul class="mt-3 space-y-2 text-sm text-ink-600">
+          <li><a href="/search" class="hover:text-primary-700">Search</a></li>
+          <li><a href="/ai-search" class="hover:text-primary-700">AI search</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-sm font-bold">Company</p>
+        <ul class="mt-3 space-y-2 text-sm text-ink-600">
+          <li><a href="/help" class="hover:text-primary-700">Help</a></li>
+          <li><a href="/contact" class="hover:text-primary-700">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-10 flex flex-col items-center justify-between gap-3 border-t border-ink-100 pt-6 text-xs text-ink-600 sm:flex-row">
+      <span>© 2026 MPX Global. All rights reserved.</span>
+      <span class="flex gap-5"><a href="/terms" class="hover:text-primary-700">Terms</a><a href="/privacy" class="hover:text-primary-700">Privacy</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* MOCKUP-ONLY: audience preview. Elements carry data-auth listing their states. */
+const stateButtons = document.querySelectorAll('.state-btn');
+function applyState(state) {
+  document.querySelectorAll('[data-auth]').forEach((el) => {
+    el.classList.toggle('hidden', !el.dataset.auth.split(' ').includes(state));
+  });
+  stateButtons.forEach((b) => b.classList.toggle('bg-primary-600', b.dataset.state === state));
+}
+stateButtons.forEach((b) => b.addEventListener('click', () => applyState(b.dataset.state)));
+applyState('guest');
+</script>
+</body>
+</html>

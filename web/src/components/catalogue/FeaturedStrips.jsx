@@ -134,7 +134,7 @@ export function FeaturedStrips() {
 
   return (
     <section className="bg-surface-subtle px-4 py-12 sm:px-6 md:py-16" aria-label="Featured">
-      <div className="mx-auto grid max-w-7xl gap-12">
+      <div className="grid w-full gap-12">
         {banners.length > 0 && <BannerStrip banners={banners} />}
 
         {products.length > 0 && (

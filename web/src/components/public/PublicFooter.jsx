@@ -16,7 +16,7 @@ export function PublicFooter() {
 
   return (
     <footer className="bg-ink-900 px-4 py-14 text-white sm:px-6">
-      <div className="mx-auto flex max-w-7xl flex-col justify-between gap-12 md:flex-row">
+      <div className="flex w-full flex-col justify-between gap-12 md:flex-row">
         <div className="max-w-xs">
           <Logo size="md" variant="white" />
           <p className="mt-3 text-sm text-white/60">
