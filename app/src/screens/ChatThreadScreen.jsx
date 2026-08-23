@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import {
   ActivityIndicator,
+  AppState,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -119,6 +120,22 @@ export function ChatThreadScreen({ navigation, route }) {
       // Joins the room when this thread was created after the socket connected.
       socket.emit('conversation:open', { conversationId: id });
 
+      /**
+       * 🔴 Tell the server this thread is ON SCREEN, so it suppresses a push
+       * that would fire for a message the user is already watching arrive.
+       *
+       * It must be CLEARED on leaving and on backgrounding — a phone left on a
+       * thread in the background is exactly when the push is wanted. Before
+       * this existed the server inferred "watching" from socket connection
+       * alone, which silenced notifications for anyone with the app open.
+       */
+      const setViewing = (on) =>
+        socket.emit('conversation:viewing', { conversationId: on ? id : null });
+      setViewing(true);
+
+      const onAppState = (next) => setViewing(next === 'active');
+      const appStateSub = AppState.addEventListener('change', onAppState);
+
       const onMessage = (payload) => {
         if (String(payload?.conversationId) !== String(id) || !payload?.message) return;
         mergeIncoming([payload.message]);
@@ -131,6 +148,9 @@ export function ChatThreadScreen({ navigation, route }) {
       };
       const onReconnect = async () => {
         socket.emit('conversation:open', { conversationId: id });
+        // A reconnect is a NEW socket server-side, so the viewing flag is gone
+        // with the old one and has to be re-declared.
+        setViewing(AppState.currentState === 'active');
         try {
           const page = await conversationsApi.messages(id, { limit: PAGE_LIMIT });
           mergeIncoming(page.messages ?? []);
@@ -145,6 +165,10 @@ export function ChatThreadScreen({ navigation, route }) {
       socket.on('connect', onReconnect);
       return () => {
         focusedRef.current = false;
+        // Leaving the screen: the user is no longer watching, so pushes for
+        // this thread must resume immediately.
+        setViewing(false);
+        appStateSub.remove();
         socket.off('message:new', onMessage);
         socket.off('conversation:frozen', onFrozen);
         socket.off('conversation:unfrozen', onFrozen);

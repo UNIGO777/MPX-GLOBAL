@@ -126,7 +126,11 @@ describe('M5-D · list', () => {
     const row = res.body.organisations.find((o) => o.id === String(sellerOrg._id));
 
     expect(Object.keys(row).sort()).toEqual(
-      ['blocked', 'country', 'id', 'name', 'products', 'sides', 'slug', 'takedowns', 'verification'].sort(),
+      // `logo` rides in the company cell beside the name (added with the M5
+      // close-out admin polish). It is public data the seller page already
+      // shows — the point of pinning this list is that nothing PRIVATE leaks
+      // in, so a public field is an allowed addition, a new private one is not.
+      ['blocked', 'country', 'id', 'logo', 'name', 'products', 'sides', 'slug', 'takedowns', 'verification'].sort(),
     );
     expect(row.country).toBe('IN');
     expect(row.verification).toBe('submitted');

@@ -21,6 +21,23 @@ import { messageView } from '../views/conversation.view.js';
 
 const ROOM = (conversationId) => `conversation:${conversationId}`;
 
+/**
+ * 🔴 A SECOND, separate room meaning "this person is looking at this thread
+ * right now" — not merely "this person is connected".
+ *
+ * Why it has to be separate (bug found 2026-08-23): on connect a party joins
+ * `ROOM()` for EVERY conversation they belong to, so `ROOM()` membership only
+ * ever meant "app is open". Push suppression (D-N3 — don't notify someone who
+ * is already reading the thread) keyed off that, which silently meant **anyone
+ * with the app open received no push for any conversation.**
+ *
+ * It stayed invisible until the app's socket was fixed on 2026-08-22: before
+ * that the mobile socket never connected, so nobody was ever "in a room" and
+ * every push went out. Fixing the transport exposed it, and it hit sellers
+ * hardest — a seller keeps the app open waiting for enquiries.
+ */
+const VIEW_ROOM = (conversationId) => `viewing:${conversationId}`;
+
 // G9 — a reconnecting client asks for what it missed. Bounded: a user offline
 // for a week must not be handed thousands of messages down a socket. Past the
 // cap we tell the client to refetch that thread over REST, which is what the
@@ -187,6 +204,26 @@ export function attachSocket(httpServer) {
       }
     });
 
+    /**
+     * "I am looking at this thread" / "I have left it" (`conversationId: null`).
+     *
+     * Open to any authenticated party — no ownership check is needed because the
+     * only thing this can do is suppress the CALLER's own push. Claiming to view
+     * a stranger's conversation silences nothing but your own notifications, so
+     * there is nothing to gain by lying.
+     *
+     * The client must clear it on leaving the screen AND on backgrounding the
+     * app — a phone sitting on a thread in the background is precisely when the
+     * push is wanted.
+     */
+    socket.on('conversation:viewing', ({ conversationId } = {}) => {
+      const previous = socket.data.viewing;
+      if (previous) socket.leave(VIEW_ROOM(previous));
+      const next = conversationId ? String(conversationId) : null;
+      socket.data.viewing = next;
+      if (next) socket.join(VIEW_ROOM(next));
+    });
+
     socket.on('conversation:read', async ({ conversationId } = {}, ack) => {
       try {
         const fresh = await currentUser(socket);
@@ -299,7 +336,10 @@ export async function attachRedisAdapter() {
 export async function usersInConversationRoom(conversationId) {
   if (!io) return new Set();
   try {
-    const sockets = await io.in(ROOM(conversationId)).fetchSockets();
+    // 🔴 VIEW_ROOM, not ROOM. See VIEW_ROOM's own note: `ROOM` membership means
+    // "connected", and suppressing push on that basis stopped notifications for
+    // every user who simply had the app open.
+    const sockets = await io.in(VIEW_ROOM(conversationId)).fetchSockets();
     return new Set(sockets.map((s) => s.data?.user?.userId).filter(Boolean));
   } catch {
     return new Set();

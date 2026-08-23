@@ -42,6 +42,34 @@ Notifications.setNotificationHandler({
 });
 
 /**
+ * 🔴 Fetch the FCM token, with retries.
+ *
+ * On a FRESH INSTALL the first call very often fails — Play Services has not
+ * finished provisioning a token yet and throws (`SERVICE_NOT_AVAILABLE`, or a
+ * timeout). Without a retry the device registered nothing on its first run and
+ * only appeared after the app was opened a SECOND time, which is exactly the
+ * symptom the owner reported on 2026-08-23: "token is registering in the 2nd
+ * open in the app".
+ *
+ * Short backoff — this races nothing and blocks nothing, since the whole
+ * registration path is already fire-and-forget.
+ */
+async function fetchTokenWithRetry(attempts = 3) {
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const { data } = await Notifications.getDevicePushTokenAsync();
+      if (data && typeof data === 'string') return data;
+    } catch (error) {
+      logger.warn('push token fetch attempt failed', { attempt: i + 1, message: error?.message });
+    }
+    if (i < attempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1500 * (i + 1)));
+    }
+  }
+  return null;
+}
+
+/**
  * Ask for permission and register this device against the signed-in account.
  * Safe to call repeatedly — registration is an upsert.
  *
@@ -71,8 +99,8 @@ export async function registerForPush() {
       });
     }
 
-    const { data: token } = await Notifications.getDevicePushTokenAsync();
-    if (!token || typeof token !== 'string') return null;
+    const token = await fetchTokenWithRetry();
+    if (!token) return null;
 
     await devicesApi.register({ token, platform: Platform.OS });
     registeredToken = token;

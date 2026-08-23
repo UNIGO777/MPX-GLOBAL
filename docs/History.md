@@ -175,6 +175,78 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-23 — 🔴 Seller push was dead, and the socket fix is what exposed it. Two bugs.**
+  Owner: "Sellers side notification is not working, Buyers side is working, but the token registers
+  on the 2nd open."
+  - **Bug 1 — push suppression counted CONNECTED as WATCHING.** D-N3 says don't notify someone
+    already reading the thread, and `targetTokens` excluded anyone in `ROOM(conversationId)`. But a
+    party joins `ROOM()` for **every** conversation they belong to the instant they connect
+    (`socket.js` line ~153), so that room only ever meant "app is open". **Anyone with the app open
+    got no push for any conversation.**
+    - 🔴 **It was invisible until 2026-08-22.** The mobile socket could never connect through the
+      production nginx, so nobody was ever in a room and every push went out. Fixing the transport
+      the day before is what turned this on. It hit **sellers hardest** — a seller keeps the app
+      open waiting for enquiries, so they were permanently excluded, while a buyer with the app
+      closed still received theirs. That asymmetry is exactly what the owner reported.
+    - **Fix:** a second, separate `VIEW_ROOM(id)` meaning "on screen right now", joined via a new
+      `conversation:viewing` event. `usersInConversationRoom` reads that instead. The event needs
+      no ownership check — the only thing it can do is suppress the **caller's own** push.
+    - Client: `ChatThreadScreen` declares viewing on focus, **clears it on unmount AND on app
+      background** (a phone sitting on a thread in the background is precisely when the push is
+      wanted), and re-declares on reconnect since a reconnect is a new socket server-side.
+    - ⚠️ Note `conversation:open` was **staff-only** — a party had no way at all to say "I'm
+      looking at this", which is why the connect-time room was being used as a proxy for it.
+  - **Bug 2 — token registered only on the second app open.** On a fresh install
+    `getDevicePushTokenAsync()` commonly fails (Play Services has not provisioned a token yet:
+    `SERVICE_NOT_AVAILABLE`/timeout). The catch swallowed it and nothing registered until the next
+    launch. **Fix:** retry 3× with backoff. Costs nothing — the whole path is fire-and-forget.
+  - **3 regression tests added** to `m4-socket.test.js` pinning *connected ≠ watching*: a connected
+    party is not counted, a viewing party is and stops being counted on leave, and viewing one
+    thread does not suppress another. 26 tests in that file pass.
+- **2026-08-22/23 — 🔴 LIVE CHAT WAS DEAD IN PRODUCTION on the app. Root cause found, fixed, and
+  `docs/Deployment.md` written.** Owner reported messages not arriving in real time.
+  - **Two faults, one symptom.**
+    1. **Server:** nginx was not performing the WebSocket upgrade. Proven directly — an upgrade
+       request returned `400 Bad Request` with `Connection: keep-alive` instead of `101 Switching
+       Protocols`. The Socket.io server itself was healthy the entire time: connecting *with
+       polling allowed* returned `unauthorised` for a fake token, i.e. it answered and
+       authenticated correctly.
+    2. **App:** `socket.js` pinned `transports: ['websocket']`, removing Socket.io's own polling
+       fallback. So the moment the upgrade failed there was nothing left to fall back to and the
+       socket never connected at all.
+  - **Why it went unnoticed for two days: the WEB client works.** It never set `transports`, so it
+    used the default (polling first, silent upgrade) and connected over polling throughout. Only
+    the app forced websocket-only. A bug that reproduces on one client and not the other is
+    exactly the kind that survives a demo.
+  - **Fix:** dropped the `transports` pin — back to Socket.io's default. Verified against
+    production: a client with default transports now connects and gets `unauthorised` for a fake
+    token, which is the correct rejection. 🔴 The code carries a DO-NOT-REVERT note: websocket-only
+    also breaks on corporate proxies and captive Wi-Fi, so the fallback is wanted regardless of
+    nginx.
+  - **`docs/Deployment.md` NEW** — consolidates everything that lives on the server and nowhere in
+    the repo: the two boot-blocking env vars, the four that fail *quietly* (`TRUST_PROXY`,
+    `PUBLIC_WEB_URL`, `CORS_ORIGINS`, `FIREBASE_SERVICE_ACCOUNT_JSON`), the exact nginx patch with
+    a one-line verification command, the §11.2.5 Mongo checks that have **never been verified on
+    the VPS**, the Firebase key rotation, and the pre-handover credential list.
+  - New release APK built with the fix (79 MB, production URL confirmed in the bundle).
+  - ⚠️ nginx should still be fixed. The app no longer depends on it, but polling costs
+    meaningfully more battery and bandwidth on a phone than a websocket does.
+- **2026-08-22 — `docs/Testing-App.md` added: end-to-end human test guide for the mobile app.**
+  Companion to `docs/Testing.md` (which covers WEB, M1+M2) — same format so a tester can use both.
+  17 sections, buyer and exporter, signup → KYC → catalogue → discovery → AI search → enquiry →
+  chat → push → sign out.
+  - Written for a **non-developer tester**: exact wording quoted where it matters, PASS/FAIL
+    columns, a bug log that forbids writing real passwords/OTPs/mobile numbers into it.
+  - §0.2 states the things that are **deliberate** so they don't get filed as bugs — separate
+    buyer/exporter accounts, no buyer gate, the 3-live/10-draft limits, **no "unverified" badge**,
+    whole-word search, text-only chat, no payments anywhere.
+  - §17 lists what is **not built yet** so the tester doesn't hunt for it: quotations, orders and
+    payments, ratings, notifications beyond the two M4 events, marketing pushes, exporter signup
+    from inside a buyer session, recent searches, type-ahead.
+  - ⚠️ Flags that **push cannot be tested on one device** — §11 needs two phones with two accounts,
+    and covers cold-start tap, warm tap and the signed-out case (no notification after logout).
+  - Two steps are deliberately written as security checks with a "report immediately" instruction:
+    **no contact details on a supplier page** (§9.5) and **nothing that takes money** (§0.2).
 - **2026-08-22 — FCM push wired APP-SIDE. The backend half has existed since M4; this is what was
   missing end to end.** Owner supplied `google-services.json` (Firebase project `mpx-global`,
   package `com.mpxglobal.app`). Scope: the **D5 carve-out** approved 2026-07-31 — no alert needed,

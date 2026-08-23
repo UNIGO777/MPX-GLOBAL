@@ -21,7 +21,7 @@ import { Message } from '../src/models/Message.js';
 import { signAccessToken } from '../src/services/token.service.js';
 import { hashPassword } from '../src/services/password.service.js';
 import { invalidateLeafCache } from '../src/services/category.service.js';
-import { attachSocket } from '../src/realtime/socket.js';
+import { attachSocket, usersInConversationRoom } from '../src/realtime/socket.js';
 
 const app = createApp();
 const bearer = (t) => ({ Authorization: `Bearer ${t}` });
@@ -438,5 +438,54 @@ describe('M4-G · the socket is never the only path (§7.1)', () => {
 
     const list = await request(app).get('/conversations').set(bearer(seller.token));
     expect(list.body.conversations[0].unread).toBe(false);
+  });
+});
+
+/**
+ * 🔴 REGRESSION — the bug that silently killed push notifications (2026-08-23).
+ *
+ * Push suppression (D-N3: don't notify someone already reading the thread) used
+ * to key off `ROOM()` membership. But a party joins `ROOM()` for EVERY one of
+ * their conversations the moment they connect — so "in the room" only ever
+ * meant "app is open", and anyone with the app open received no push for any
+ * conversation at all.
+ *
+ * It hid for two days because the mobile socket could not connect through the
+ * production nginx, so nobody was ever in a room. Fixing the transport exposed
+ * it, and it hit sellers hardest — a seller keeps the app open waiting for
+ * enquiries, and was therefore permanently excluded.
+ *
+ * The distinction these tests pin: CONNECTED is not WATCHING.
+ */
+describe('M4-H · push suppression counts only who is actually watching', () => {
+  it('a connected party who has not opened the thread is NOT counted', async () => {
+    const sellerSocket = await connected(connect(seller.token));
+    // Give the connect-time bulk room join time to finish — that join is
+    // exactly what used to make this assertion fail.
+    await new Promise((r) => setTimeout(r, 200));
+
+    const watching = await usersInConversationRoom(conversationId);
+    expect(watching.has(String(seller.user._id))).toBe(false);
+  });
+
+  it('a party who declares viewing IS counted, and stops being counted when they leave', async () => {
+    const sellerSocket = await connected(connect(seller.token));
+
+    sellerSocket.emit('conversation:viewing', { conversationId });
+    await new Promise((r) => setTimeout(r, 200));
+    expect((await usersInConversationRoom(conversationId)).has(String(seller.user._id))).toBe(true);
+
+    // Leaving the screen (or backgrounding the app) clears it, so pushes resume.
+    sellerSocket.emit('conversation:viewing', { conversationId: null });
+    await new Promise((r) => setTimeout(r, 200));
+    expect((await usersInConversationRoom(conversationId)).has(String(seller.user._id))).toBe(false);
+  });
+
+  it('viewing one thread does not suppress pushes for a different one', async () => {
+    const sellerSocket = await connected(connect(seller.token));
+    sellerSocket.emit('conversation:viewing', { conversationId: new mongoose.Types.ObjectId() });
+    await new Promise((r) => setTimeout(r, 200));
+
+    expect((await usersInConversationRoom(conversationId)).has(String(seller.user._id))).toBe(false);
   });
 });
