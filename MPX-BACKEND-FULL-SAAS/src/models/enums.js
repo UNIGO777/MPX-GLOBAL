@@ -36,6 +36,14 @@ export const ENTITY_TYPE = ['business', 'individual'];
 // passport). 'other' is a catch-all the reviewer can still inspect.
 export const KYC_DOC_TYPE = ['registration', 'gst', 'certificate', 'pan', 'aadhaar', 'passport', 'other'];
 
+// Verification-redesign (owner, 2026-08-19): a VERIFIED org's locked-field edit
+// becomes a pending change that must earn its way in through review.
+//   awaiting_documents — set created, no supporting doc in its round yet (not queue-visible)
+//   awaiting_review    — round has documents; visible in the verification queue
+//   rejected           — HOLDS with the reviewer's reason; amend (→ awaiting_review) or cancel
+// Approve and cancel clear the subdocument entirely — history lives in the AuditLog.
+export const PENDING_CHANGE_STATE = ['awaiting_documents', 'awaiting_review', 'rejected'];
+
 // Which document types are valid for each entity type (enforced at upload).
 export const KYC_DOCS_BY_ENTITY = Object.freeze({
   business: ['registration', 'gst', 'certificate', 'other'],

@@ -640,6 +640,44 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   - Babel-checked ×11. ⚠️ Backend on :3000 was down again (nothing listening) — restarted with
     `npm start` (log: /tmp/mpx-backend.log); contracts (facets shape, AI response) verified
     against the LIVE server before building.
+- **2026-08-19 — VERIFICATION LIFECYCLE REDESIGN SHIPPED (owner): pending changes, document
+  rounds, staff document requests, revoke. Retires demote-on-edit.** Backend 1058/1058 + 4 new
+  suites; web lint clean, build green.
+  **Model:** a VERIFIED org's locked-field edit (name/country/address/entityType) lands in
+  `Organisation.pendingChanges` (awaiting_documents → awaiting_review → approved/rejected/cancelled);
+  live profile + tick NEVER move until approval. Approve applies values, re-stamps verifiedAt/By,
+  supersedes all prior-round docs (`supersededAt` — kept forever, hidden, excluded from the 20-cap),
+  syncs sellerVerified + the previously-missing **sellerCountry resync** (latent gap fixed on the
+  live path too). Reject HOLDS with reason (amend → back to review; DELETE
+  /me/organisation/pending-changes cancels, 409 when none). Unverified orgs edit live as before.
+  **entityType unlocked for both sides** (exporter "immutable" rule retired — service throw removed,
+  UI Combobox both portals); round uploads validate against the PENDING entity type.
+  **Document requests:** POST /employee/{side}/:id/kyc/request-documents (docTypes + note 3-500,
+  note SHOWN to the company); auto-fulfil when covered by post-request uploads; tick untouched.
+  **Revoke:** POST /employee/{side}/:id/revoke (reason mandatory, shown to company, never public) →
+  kycStatus `submitted` re-dated (re-enters queue normally), kycRevocation notice until next verify;
+  an open pending set APPLIES live on revoke. Both actions behind the same side review perms
+  (owner: one review authority, not superadmin-gated).
+  **Queue/admin:** /admin/orgs `verification=change_pending`; rows carry changePending/
+  changeSubmittedAt; VerificationQueue = one list per side with kind chips ("Change re-verification")
+  + old→new diff + kind-aware decisions; KycViewer = review cockpit (pending diff inline, superseded
+  toggle, Request-documents + Revoke modals); dashboard Pending-review hint "N new · M changes".
+  **Party web:** CompanyProfile pending banner (diff, state chip, rejection reason, upload/cancel),
+  submit-for-review confirm replaces the demotion dialog, reverts transmit by re-sending pending
+  fields equal to live; KycUpload both portals (requested-slot filtering for verified orgs, round
+  banners, pending-entity slots); VerificationStatus both portals (revocation notice, pending card,
+  request cards, superseded hidden).
+  **Docs:** CLAUDE.md + remind.md A22 paragraphs rewritten in the same pass (decision-change
+  protocol); D7 gains the profile-FILLED product gate decision. Tests: a22 rewritten (pending, both-
+  sides entityType), a22b lifecycle, kyc-rounds-requests, verification-changes-review,
+  verification-revoke; m5 org key-set + kyc caps updated. NOT built: claim (D7), notifications (D5),
+  app parity (follow-up).
+- **2026-08-19 — D7 claim: owner spotted the asymmetric-profile hole; resolution direction recorded
+  in `docs/Note.md` D7.** Buyer and exporter org profiles differ (`entityType`+address are
+  exporter-side, KYC-locked), so "verification carries over" cannot mean an exporter inherits a tick
+  over never-captured registered details. Direction: claim collects the missing exporter delta and
+  rides A22's existing lock-demotion (`submitted` until re-approval); instant carry-over only when
+  nothing is missing. To be finalised when D7 is built — still deferred.
 - **2026-08-19 (later 3) — M2 app: the three remaining brief gaps closed.**
   - **Draft-cap explained BEFORE the form** (brief §5's "the Add action explains rather than
     silently failing"): new `utils/productCaps.js` → `draftCapBlock(caps)` returns the message

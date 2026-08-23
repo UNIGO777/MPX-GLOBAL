@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 import { baseSchemaOptions } from './baseSchema.js';
 import { declareScope, SCOPE } from './scoping.js';
-import { ORG_TYPE, KYC_STATUS, ENTITY_TYPE, KYC_DOC_TYPE } from './enums.js';
+import { ORG_TYPE, KYC_STATUS, ENTITY_TYPE, KYC_DOC_TYPE, PENDING_CHANGE_STATE } from './enums.js';
 import { slugify } from '../utils/slug.js';
 
 const { Schema } = mongoose;
@@ -90,6 +90,14 @@ const organisationSchema = new Schema(
           uploadedAt: { type: Date, default: Date.now },
           verifiedAt: { type: Date },
           verifiedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+          // Verification-redesign (2026-08-19). All three absent on legacy rows,
+          // which therefore read as "current, initial round" — no migration.
+          roundId: { type: Schema.Types.ObjectId },   // pending-change round this doc supports
+          requestId: { type: Schema.Types.ObjectId }, // documentRequest this doc fulfils
+          // Set when a later round is approved (or this doc's round cancelled).
+          // Superseded docs are KEPT forever — hidden by default, excluded from
+          // the 20-doc cap. There is deliberately still no delete path.
+          supersededAt: { type: Date },
         },
       ],
       select: false,
@@ -98,6 +106,72 @@ const organisationSchema = new Schema(
 
     verifiedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     verifiedAt: { type: Date },
+
+    /**
+     * Verification-redesign (owner, 2026-08-19) — the PENDING CHANGE SET.
+     *
+     * A VERIFIED org's locked-field edits (name/country/entityType/address) land
+     * here instead of on the live fields: the live profile and the tick stay
+     * untouched and public while the change earns re-approval with fresh
+     * documents. One set at a time — further edits amend it. Absent (undefined)
+     * = no pending change; approve/cancel $unset the whole subdocument (the
+     * history is the AuditLog's job). NEVER in PUBLIC_FIELDS.
+     */
+    pendingChanges: {
+      type: {
+        values: {
+          name: { type: String, trim: true },
+          country: { type: String, uppercase: true, trim: true, minlength: 2, maxlength: 2 },
+          entityType: { type: String, enum: ENTITY_TYPE },
+          address: {
+            line1: { type: String, trim: true },
+            line2: { type: String, trim: true },
+            city: { type: String, trim: true },
+            state: { type: String, trim: true },
+            postalCode: { type: String, trim: true },
+            country: { type: String, uppercase: true, trim: true, minlength: 2, maxlength: 2 },
+          },
+        },
+        changedFields: { type: [String], default: undefined },
+        state: { type: String, enum: PENDING_CHANGE_STATE },
+        // Joins kycDocuments rows to this change (doc.roundId === roundId).
+        roundId: { type: Schema.Types.ObjectId },
+        submittedAt: { type: Date }, // re-dated on every amend
+        rejectionReason: { type: String, trim: true }, // owner-visible, never public
+        rejectedAt: { type: Date },
+        rejectedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+      },
+      default: undefined,
+    },
+
+    /**
+     * Staff-initiated document requests (2026-08-19): "upload X and Y, because…".
+     * The note is SHOWN TO THE COMPANY. `fulfilledAt` is set automatically when
+     * every requested docType has a non-superseded upload dated after the
+     * request. The tick is untouched while a request is open. Never public.
+     */
+    documentRequests: {
+      type: [
+        {
+          docTypes: { type: [{ type: String, enum: KYC_DOC_TYPE }], required: true },
+          note: { type: String, trim: true, required: true },
+          requestedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+          requestedAt: { type: Date, default: Date.now },
+          fulfilledAt: { type: Date },
+        },
+      ],
+      default: [],
+    },
+
+    /**
+     * Set when staff revoke a granted verification (mandatory reason, shown to
+     * the company — never public). Cleared on the next successful verify.
+     */
+    kycRevocation: {
+      reason: { type: String, trim: true },
+      revokedAt: { type: Date },
+      revokedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    },
     // Set when an employee rejects verification (kycStatus 'rejected'). Internal —
     // not exposed on public listings.
     kycRejectionReason: { type: String, trim: true },

@@ -24,7 +24,7 @@ export const updateMine = {
     .object({
       name: zString({ min: 1, max: 200 }).optional(),
       country: zString({ min: 2, max: 2 }).optional(),
-      // Buyer-only in practice (the service rejects it for exporters); the enum
+      // Editable by both sides (2026-08-19) — an ordinary locked field; the enum
       // is validated here so a typo can never reach the model.
       entityType: z.enum(['business', 'individual']).optional(),
       // Storefront copy — cap mirrored in the app's counter (500).

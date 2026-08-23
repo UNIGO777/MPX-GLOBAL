@@ -130,7 +130,10 @@ describe('M5-D · list', () => {
       // close-out admin polish). It is public data the seller page already
       // shows — the point of pinning this list is that nothing PRIVATE leaks
       // in, so a public field is an allowed addition, a new private one is not.
-      ['blocked', 'country', 'id', 'logo', 'name', 'products', 'sides', 'slug', 'takedowns', 'verification'].sort(),
+      [
+        'blocked', 'country', 'id', 'logo', 'name', 'products', 'sides', 'slug', 'takedowns', 'verification',
+        'changePending', 'changeSubmittedAt', // change re-verification chips (2026-08-19)
+      ].sort(),
     );
     expect(row.country).toBe('IN');
     expect(row.verification).toBe('submitted');

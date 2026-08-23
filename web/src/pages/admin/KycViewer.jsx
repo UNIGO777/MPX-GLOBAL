@@ -7,7 +7,7 @@ import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
 import { apiError, formatDate } from '../../lib/format.js';
 import { countryName } from '../../lib/countries.js';
-import { DOC_TYPE_LABELS, ENTITY_LABELS } from '../../lib/kycDocTypes.js';
+import { DOC_TYPES_BY_ENTITY, DOC_TYPE_LABELS, ENTITY_LABELS } from '../../lib/kycDocTypes.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -70,6 +70,9 @@ export function KycViewer() {
   const [decidedNote, setDecidedNote] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [showSuperseded, setShowSuperseded] = useState(false);
+  const [revokeOpen, setRevokeOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
   const [reason, setReason] = useState('');
   // Applicant name / country / submitted date live on the org record, not on
   // the KYC payload. Needs `organisation:read`, so it degrades to blank cells.
@@ -123,32 +126,57 @@ export function KycViewer() {
     return () => clearTimeout(t);
   }, [data]);
 
-  const docs = data?.documents ?? [];
+  // Superseded documents are history — hidden behind a toggle (2026-08-19).
+  const allDocs = data?.documents ?? [];
+  const supersededDocs = allDocs.filter((d) => d.superseded);
+  const docs = showSuperseded ? allDocs : allDocs.filter((d) => !d.superseded);
   const doc = docs[selected] ?? null;
 
   const decidableSide = data?.exporterSide ? 'exporter' : data?.buyerSide ? 'buyer' : null;
-  const canDecide =
-    data?.kycStatus === 'submitted' &&
-    decidableSide &&
-    can(me, decidableSide === 'exporter' ? 'exporter:verify' : 'buyer:approve');
+  const sidePath = decidableSide === 'exporter' ? 'exporters' : 'buyers';
+  const hasReviewPerm =
+    decidableSide && can(me, decidableSide === 'exporter' ? 'exporter:verify' : 'buyer:approve');
+  // What this screen is deciding: a first-time submission, or a verified
+  // company's pending profile change (2026-08-19). Never both — the states
+  // are mutually exclusive by construction.
+  const reviewMode =
+    data?.kycStatus === 'submitted'
+      ? 'first'
+      : data?.pendingChanges?.state === 'awaiting_review'
+        ? 'change'
+        : null;
+  const canDecide = Boolean(reviewMode) && hasReviewPerm;
+  const canRevoke = data?.kycStatus === 'verified' && hasReviewPerm;
+  const openRequests = (data?.documentRequests ?? []).filter((r) => !r.fulfilledAt);
 
   const decide = async (action, reasonText) => {
     setActionError(null);
     setProcessing(true);
     try {
-      if (decidableSide === 'exporter') {
-        if (action === 'approve') await adminApi.verifyExporter(orgId);
-        else await adminApi.rejectExporter(orgId, reasonText);
-      } else if (action === 'approve') await adminApi.approveBuyer(orgId);
-      else await adminApi.rejectBuyer(orgId, reasonText);
-      setDecidedNote(action === 'approve' ? 'Approved — the verified tick is now live.' : 'Rejected — the applicant sees your reason and can resubmit.');
-      // Reflect the decision in the query cache — the single source of truth
-      // for this screen now — instead of a parallel copy that a refetch would
-      // silently overwrite.
-      qc.setQueryData(['admin', 'kyc', orgId], (prev) =>
-        (prev?.data
-          ? { ...prev, data: { ...prev.data, kycStatus: action === 'approve' ? 'verified' : 'rejected' } }
-          : prev));
+      if (reviewMode === 'change') {
+        if (action === 'approve') await adminApi.approveChange(sidePath, orgId);
+        else await adminApi.rejectChange(sidePath, orgId, reasonText);
+        setDecidedNote(
+          action === 'approve'
+            ? 'Changes approved — the new details are live and the tick continues.'
+            : 'Changes rejected — the company sees your reason; its live profile is unchanged.',
+        );
+        await query.refetch(); // the diff, documents and rounds all moved
+      } else {
+        if (decidableSide === 'exporter') {
+          if (action === 'approve') await adminApi.verifyExporter(orgId);
+          else await adminApi.rejectExporter(orgId, reasonText);
+        } else if (action === 'approve') await adminApi.approveBuyer(orgId);
+        else await adminApi.rejectBuyer(orgId, reasonText);
+        setDecidedNote(action === 'approve' ? 'Approved — the verified tick is now live.' : 'Rejected — the applicant sees your reason and can resubmit.');
+        // Reflect the decision in the query cache — the single source of truth
+        // for this screen now — instead of a parallel copy that a refetch would
+        // silently overwrite.
+        qc.setQueryData(['admin', 'kyc', orgId], (prev) =>
+          (prev?.data
+            ? { ...prev, data: { ...prev.data, kycStatus: action === 'approve' ? 'verified' : 'rejected' } }
+            : prev));
+      }
       setRejectOpen(false);
       setReason('');
     } catch (err) {
@@ -163,6 +191,45 @@ export function KycViewer() {
   };
 
   const reasonValid = reason.trim().length >= 3 && reason.trim().length <= 500;
+
+  const [requestTypes, setRequestTypes] = useState([]);
+  const effectiveEntity = data?.pendingChanges?.requested?.entityType ?? data?.entityType ?? null;
+  const requestableTypes = effectiveEntity
+    ? DOC_TYPES_BY_ENTITY[effectiveEntity]
+    : [...new Set(Object.values(DOC_TYPES_BY_ENTITY).flat())];
+
+  const submitRequest = async () => {
+    setActionError(null);
+    setProcessing(true);
+    try {
+      await adminApi.requestKycDocuments(sidePath, orgId, { docTypes: requestTypes, note: reason.trim() });
+      setDecidedNote('Documents requested — the company sees your note on its verification page.');
+      setRequestOpen(false);
+      setRequestTypes([]);
+      setReason('');
+      await query.refetch();
+    } catch (err) {
+      setActionError(apiError(err, 'Could not request documents.'));
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const submitRevoke = async () => {
+    setActionError(null);
+    setProcessing(true);
+    try {
+      await adminApi.revokeVerification(sidePath, orgId, reason.trim());
+      setDecidedNote('Verification revoked — the tick is withdrawn and the company is back in the review queue.');
+      setRevokeOpen(false);
+      setReason('');
+      await query.refetch();
+    } catch (err) {
+      setActionError(apiError(err, 'Could not revoke the verification.'));
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -214,16 +281,70 @@ export function KycViewer() {
                   setRejectOpen(true);
                 }}
               >
-                <XIcon className="h-4 w-4" /> Reject
+                <XIcon className="h-4 w-4" /> {reviewMode === 'change' ? 'Reject changes' : 'Reject'}
               </Button>
               <Button size="sm" variant="success" loading={processing} onClick={() => decide('approve')}>
                 <CheckCircleIcon className="h-4 w-4" />
-                {decidableSide === 'exporter' ? 'Verify' : 'Approve'}
+                {reviewMode === 'change' ? 'Approve changes' : decidableSide === 'exporter' ? 'Verify' : 'Approve'}
               </Button>
+            </div>
+          )}
+          {!canDecide && hasReviewPerm && data && (
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="secondary" onClick={() => { setReason(''); setRequestOpen(true); }}>
+                Request documents
+              </Button>
+              {canRevoke && (
+                <Button size="sm" variant="dangerOutline" onClick={() => { setReason(''); setRevokeOpen(true); }}>
+                  Revoke verification
+                </Button>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* The old → new diff the change decision is about — beside the docs. */}
+      {data?.pendingChanges && (
+        <div className="mb-4 rounded-xl border border-primary-100 bg-primary-50/50 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-800">
+            Requested profile change · {data.pendingChanges.state === 'awaiting_review' ? 'awaiting review' : data.pendingChanges.state.replace('_', ' ')}
+          </p>
+          <dl className="mt-2 space-y-1">
+            {data.pendingChanges.changedFields.map((f) => {
+              const fmt = (v) =>
+                f === 'address'
+                  ? Object.values(v ?? {}).filter((x) => typeof x === 'string' && x).join(', ') || '—'
+                  : String(v ?? '—');
+              return (
+                <div key={f} className="flex flex-wrap items-baseline gap-2 text-[13px]">
+                  <dt className="font-semibold capitalize text-ink-800">{f === 'entityType' ? 'Entity type' : f}:</dt>
+                  <dd className="text-ink-700">
+                    <span className="line-through decoration-ink-300">{fmt(data.pendingChanges.current?.[f])}</span>
+                    <span aria-hidden="true" className="mx-1 text-ink-400">→</span>
+                    <span className="font-medium text-ink-900">{fmt(data.pendingChanges.requested?.[f])}</span>
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </div>
+      )}
+
+      {/* Open document requests — what was asked and whether it arrived. */}
+      {openRequests.length > 0 && (
+        <div className="mb-4 rounded-xl border border-warning-200 bg-warning-50 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-warning-800">Open document requests</p>
+          <ul className="mt-1.5 space-y-1">
+            {openRequests.map((r) => (
+              <li key={r.id} className="text-[13px] text-ink-700">
+                <span className="font-semibold">{r.docTypes.join(', ')}</span> — {r.note}
+                <span className="ml-2 text-xs text-muted">({formatDate(r.requestedAt)})</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {decidedNote && (
         <div className="mb-4">
@@ -267,7 +388,18 @@ export function KycViewer() {
           <div className="grid items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
             {/* Document list */}
             <div>
-              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted">Documents ({docs.length})</h2>
+              <h2 className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-muted">
+                Documents ({docs.length})
+                {supersededDocs.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowSuperseded((v) => !v); setSelected(0); }}
+                    className="font-semibold normal-case tracking-normal text-primary-700 hover:underline"
+                  >
+                    {showSuperseded ? 'Hide previous' : `Show previous (${supersededDocs.length})`}
+                  </button>
+                )}
+              </h2>
               <ul className="mt-3 space-y-3">
                 {docs.map((d, i) => {
                   const on = selected === i;
@@ -414,6 +546,96 @@ export function KycViewer() {
         />
         <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
           <span>This is shown to the applicant — explain what they should fix.</span>
+          <span>{reason.trim().length} / 500</span>
+        </div>
+      </Modal>
+
+      {/* Request documents — the note is SHOWN TO THE COMPANY. */}
+      <Modal
+        open={requestOpen}
+        onClose={() => setRequestOpen(false)}
+        title={`Request documents from ${org?.header?.name ?? 'this company'}`}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setRequestOpen(false)}>Cancel</Button>
+            <Button
+              disabled={requestTypes.length === 0 || !reasonValid}
+              loading={processing}
+              onClick={submitRequest}
+            >
+              Send request
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm font-semibold text-ink-900">Which documents?</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {requestableTypes.map((t) => (
+            <label key={t} className="flex items-center gap-2 rounded-lg border border-surface-border px-3 py-2 text-sm text-ink-800">
+              <input
+                type="checkbox"
+                checked={requestTypes.includes(t)}
+                onChange={(e) =>
+                  setRequestTypes((cur) => (e.target.checked ? [...cur, t] : cur.filter((x) => x !== t)))
+                }
+                className="h-4 w-4 rounded border-surface-border text-primary-600 focus:ring-primary-300"
+              />
+              {DOC_TYPE_LABELS[t] ?? t}
+            </label>
+          ))}
+        </div>
+        <label htmlFor="kyc-request-note" className="mt-4 block text-sm font-semibold text-ink-900">
+          Why you need them
+        </label>
+        <textarea
+          id="kyc-request-note"
+          rows={3}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          maxLength={500}
+          placeholder="e.g. The GST certificate on file is blurry — please upload a readable copy."
+          className={inputClasses(false, 'mt-2 h-auto py-2')}
+        />
+        <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
+          <span>This note is shown to the company on its verification page.</span>
+          <span>{reason.trim().length} / 500</span>
+        </div>
+      </Modal>
+
+      {/* Revoke — the counterpart of approve; mandatory reason, tick withdrawn. */}
+      <Modal
+        open={revokeOpen}
+        onClose={() => setRevokeOpen(false)}
+        title={`Revoke verification for ${org?.header?.name ?? 'this company'}?`}
+        danger
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setRevokeOpen(false)}>Cancel</Button>
+            <Button variant="danger" disabled={!reasonValid} loading={processing} onClick={submitRevoke}>
+              Revoke verification
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm leading-relaxed text-ink-700">
+          The verified tick is withdrawn immediately and the company returns to the review queue
+          with its documents. Its profile and products stay live — this removes trust marking, not
+          the company.
+        </p>
+        <label htmlFor="kyc-revoke-reason" className="mt-4 block text-sm font-semibold text-ink-900">
+          Reason
+        </label>
+        <textarea
+          id="kyc-revoke-reason"
+          rows={3}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          maxLength={500}
+          placeholder="Say what changed — the company reads this."
+          className={inputClasses(false, 'mt-2 h-auto py-2')}
+        />
+        <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
+          <span>Shown to the company, never public. Recorded in the audit log.</span>
           <span>{reason.trim().length} / 500</span>
         </div>
       </Modal>

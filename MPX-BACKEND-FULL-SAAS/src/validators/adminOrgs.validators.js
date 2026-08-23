@@ -8,7 +8,9 @@ import { KYC_STATUS } from '../models/enums.js';
 export const listOrganisations = {
   query: z.object({
     side: z.enum(['buyer', 'exporter', 'both']).optional(),
-    verification: z.enum(KYC_STATUS).optional(),
+    // 'change_pending' (2026-08-19): verified orgs whose profile change awaits
+    // review — not a kycStatus, so it rides the same param as a virtual value.
+    verification: z.enum([...KYC_STATUS, 'change_pending']).optional(),
     blocked: z
       .enum(['true', 'false'])
       .transform((v) => v === 'true')

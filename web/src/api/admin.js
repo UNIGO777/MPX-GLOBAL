@@ -50,6 +50,17 @@ export const adminApi = {
   rejectExporter: (orgId, reason) =>
     apiClient.post(`/employee/exporters/${orgId}/reject`, { reason }).then((r) => r.data.organisation),
 
+  // --- change re-verification + revoke + document requests (2026-08-19) -----
+  // Side-shaped like the four decisions above; `side` is 'buyers' | 'exporters'.
+  approveChange: (side, orgId) =>
+    apiClient.post(`/employee/${side}/${orgId}/changes/approve`).then((r) => r.data.organisation),
+  rejectChange: (side, orgId, reason) =>
+    apiClient.post(`/employee/${side}/${orgId}/changes/reject`, { reason }).then((r) => r.data.organisation),
+  revokeVerification: (side, orgId, reason) =>
+    apiClient.post(`/employee/${side}/${orgId}/revoke`, { reason }).then((r) => r.data.organisation),
+  requestKycDocuments: (side, orgId, { docTypes, note }) =>
+    apiClient.post(`/employee/${side}/${orgId}/kyc/request-documents`, { docTypes, note }).then((r) => r.data.request),
+
   // --- KYC document viewer (kyc:view; signed URLs live ~120s) ---------------
   orgKycDocuments: (orgId) => apiClient.get(`/employee/orgs/${orgId}/kyc/documents`).then((r) => r.data),
 

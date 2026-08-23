@@ -389,8 +389,11 @@ export function Dashboard() {
   const pressing = ACTIONS.filter((a) => a.tile.count > 0);
   const clear = ACTIONS.filter((a) => !a.tile.count);
   const waiting = pressing.reduce((n, a) => n + a.tile.count, 0);
+  const pendingChangeReviews = tiles.pendingChangeReviews?.count ?? 0;
   const pendingReview =
-    (tiles.pendingBuyerVerifications?.count ?? 0) + (tiles.pendingExporterVerifications?.count ?? 0);
+    (tiles.pendingBuyerVerifications?.count ?? 0) +
+    (tiles.pendingExporterVerifications?.count ?? 0) +
+    pendingChangeReviews;
   const hasVerifyTiles = Boolean(tiles.pendingBuyerVerifications || tiles.pendingExporterVerifications);
   const nothingAtAll = ACTIONS.length === 0 && !turnaround && Object.keys(totals).length === 0;
 
@@ -433,7 +436,14 @@ export function Dashboard() {
       label: 'Pending review',
       value: pendingReview,
       warn: pendingReview > 0,
-      hint: turnaround?.averageDaysToVerify != null ? `avg ${turnaround.averageDaysToVerify} days to clear` : 'submitted & waiting',
+      // The two kinds are different work: a first look vs a diff check
+      // (owner, 2026-08-19 — "one number + hint").
+      hint:
+        pendingChangeReviews > 0
+          ? `${nf(pendingReview - pendingChangeReviews)} new · ${nf(pendingChangeReviews)} changes`
+          : turnaround?.averageDaysToVerify != null
+            ? `avg ${turnaround.averageDaysToVerify} days to clear`
+            : 'submitted & waiting',
       accent: { icon: 'text-warning-500', label: 'text-warning-700' },
       href: canVerify ? '/admin/verification' : undefined,
     },

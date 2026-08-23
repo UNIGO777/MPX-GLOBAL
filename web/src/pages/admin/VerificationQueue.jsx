@@ -55,11 +55,22 @@ export function VerificationQueue() {
   const queue = useQuery({
     queryKey: ['admin', 'verification', 'queue'],
     queryFn: async () => {
-      const [exporter, buyer] = await Promise.all([
+      // One list per side, TWO kinds in it (owner, 2026-08-19): first-time
+      // submissions and change re-verifications, chipped apart on the card.
+      const [exFirst, buyFirst, exChange, buyChange] = await Promise.all([
         adminApi.listOrgs({ side: 'exporter', verification: 'submitted', pageSize: 50 }),
         adminApi.listOrgs({ side: 'buyer', verification: 'submitted', pageSize: 50 }),
+        adminApi.listOrgs({ side: 'exporter', verification: 'change_pending', pageSize: 50 }),
+        adminApi.listOrgs({ side: 'buyer', verification: 'change_pending', pageSize: 50 }),
       ]);
-      return { exporter, buyer };
+      const merge = (first, change) => ({
+        organisations: [
+          ...(first?.organisations ?? []).map((o) => ({ ...o, kind: 'first' })),
+          ...(change?.organisations ?? []).map((o) => ({ ...o, kind: 'change' })),
+        ],
+        total: (first?.total ?? 0) + (change?.total ?? 0),
+      });
+      return { exporter: merge(exFirst, exChange), buyer: merge(buyFirst, buyChange) };
     },
   });
 
@@ -79,7 +90,7 @@ export function VerificationQueue() {
   // is opened. A row whose detail fails still renders — dashes, never an error.
   useEffect(() => {
     const pending = (lists[tab]?.organisations ?? [])
-      .filter((o) => o.verification === 'submitted' && !detail[o.id]);
+      .filter((o) => (o.verification === 'submitted' || o.kind === 'change') && !detail[o.id]);
     if (pending.length === 0) return;
     pending.forEach(async (org) => {
       setDetail((d) => ({ ...d, [org.id]: { loading: true } }));
@@ -98,7 +109,11 @@ export function VerificationQueue() {
     setActionError(null);
     setProcessing(org.id);
     try {
-      if (tab === 'exporter') {
+      const sidePath = tab === 'exporter' ? 'exporters' : 'buyers';
+      if (org.kind === 'change') {
+        if (action === 'approve') await adminApi.approveChange(sidePath, org.id);
+        else await adminApi.rejectChange(sidePath, org.id, reasonText);
+      } else if (tab === 'exporter') {
         if (action === 'approve') await adminApi.verifyExporter(org.id);
         else await adminApi.rejectExporter(org.id, reasonText);
       } else if (action === 'approve') await adminApi.approveBuyer(org.id);
@@ -295,11 +310,42 @@ export function VerificationQueue() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2.5">
                       <h2 className="truncate text-base font-bold text-ink-900">{org.name}</h2>
-                      <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-warning-50 px-2.5 py-0.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-warning" />
-                        <span className="text-[11px] font-semibold text-warning-800">Awaiting review</span>
-                      </span>
+                      {org.kind === 'change' ? (
+                        <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
+                          <span className="text-[11px] font-semibold text-primary-800">Change re-verification</span>
+                        </span>
+                      ) : (
+                        <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-warning-50 px-2.5 py-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-warning" />
+                          <span className="text-[11px] font-semibold text-warning-800">Awaiting review</span>
+                        </span>
+                      )}
                     </div>
+                    {/* The old → new diff a change decision is ABOUT. Verified
+                        company keeps trading either way; only these move. */}
+                    {org.kind === 'change' && d?.data?.pendingChanges && (
+                      <dl className="mt-2 space-y-0.5 rounded-lg bg-primary-50/50 px-3 py-2">
+                        {d.data.pendingChanges.changedFields.map((f) => {
+                          const fmt = (v) =>
+                            f === 'address'
+                              ? Object.values(v ?? {}).filter((x) => typeof x === 'string' && x).join(', ') || '—'
+                              : String(v ?? '—');
+                          return (
+                            <div key={f} className="flex flex-wrap items-baseline gap-1.5 text-[12.5px]">
+                              <dt className="font-semibold capitalize text-ink-800">
+                                {f === 'entityType' ? 'Entity type' : f}:
+                              </dt>
+                              <dd className="text-ink-600">
+                                <span className="line-through decoration-ink-300">{fmt(d.data.pendingChanges.current[f])}</span>
+                                <span aria-hidden="true" className="mx-1 text-ink-400">→</span>
+                                <span className="font-medium text-ink-900">{fmt(d.data.pendingChanges.requested[f])}</span>
+                              </dd>
+                            </div>
+                          );
+                        })}
+                      </dl>
+                    )}
                     <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">
                       {meta.map(({ k, v }, i) => (
                         <span key={k} className="flex items-center gap-2">
@@ -346,7 +392,7 @@ export function VerificationQueue() {
                           setRejectTarget(org);
                         }}
                       >
-                        Reject
+                        {org.kind === 'change' ? 'Reject changes' : 'Reject'}
                       </Button>
                       <Button
                         size="sm"
@@ -356,7 +402,7 @@ export function VerificationQueue() {
                         onClick={() => decide(org, 'approve')}
                       >
                         <CheckIcon className="h-4 w-4" />
-                        {tab === 'exporter' ? 'Verify' : 'Approve'}
+                        {org.kind === 'change' ? 'Approve changes' : tab === 'exporter' ? 'Verify' : 'Approve'}
                       </Button>
                     </>
                   )}
@@ -371,7 +417,11 @@ export function VerificationQueue() {
       <Modal
         open={Boolean(rejectTarget)}
         onClose={() => setRejectTarget(null)}
-        title={`Reject verification for ${rejectTarget?.name ?? ''}?`}
+        title={
+          rejectTarget?.kind === 'change'
+            ? `Reject the profile changes for ${rejectTarget?.name ?? ''}?`
+            : `Reject verification for ${rejectTarget?.name ?? ''}?`
+        }
         danger
         footer={
           <>

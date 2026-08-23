@@ -192,6 +192,19 @@ Do not start the screens without surfacing this alert.
   2. A branch in `completeSignup` that attaches to that `orgId` and sets the missing side flag
      (`buyerSide` / `exporterSide`) instead of creating.
   3. Carry `kycStatus` over — no second KYC.
+- **Owner decision (2026-08-19): a claiming exporter's product-add unlocks at profile-FILLED** —
+  once `entityType`/address are captured (pending review), not once they are verified. The
+  existing unverified caps (D1: 3 active / 10 drafts) bound the risk meanwhile.
+- **⚠️ Owner-raised design point (2026-08-19) — the two sides' profiles DIFFER, so carry-over is
+  not symmetric.** A buyer-created org holds only name+country; the exporter side needs
+  `entityType` + address (both KYC-LOCKED fields) plus logo/description (not locked). So an
+  exporter claiming a buyer-verified org must NOT inherit the tick over uncaptured, unreviewed
+  registered details. Direction of the fix (aligned with A22's existing machinery, owner-discussed):
+  the claim path collects the missing exporter delta (`entityType`, address) at claim time; adding
+  those locked fields drops `kycStatus` → `submitted` (existing demotion path), so the tick is
+  withheld until an employee approves the exporter-side details. Instant carry-over applies only
+  when nothing is missing — e.g. a buyer claiming a verified exporter org (superset, clean).
+  Logo/description stay non-blocking. `reviewedSides` keeps recording which side was examined.
 - **✅ Security question ANSWERED — do not re-open it as a blocker.** `docs/UiWebNotes.md` recorded
   claim as blocked partly on account enumeration ("it confirms to an anonymous caller that a company
   is registered to a given email"). That is overstated: **§A21 line 248** — *"Because step 2 is

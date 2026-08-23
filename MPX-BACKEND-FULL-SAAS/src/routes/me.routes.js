@@ -42,6 +42,8 @@ meRouter.delete('/me/devices/:token', authenticate, generalLimiter, validate(DV.
 // kycStatus back to `submitted`, audited) inside the service.
 meRouter.get('/me/organisation', authenticate, generalLimiter, orgCtrl.getMine);
 meRouter.patch('/me/organisation', authenticate, generalLimiter, validate(OV.updateMine), orgCtrl.updateMine);
+// Cancel a pending profile change (2026-08-19) — 409 when none exists.
+meRouter.delete('/me/organisation/pending-changes', authenticate, generalLimiter, orgCtrl.cancelPending);
 
 // Exporter logo — storefront content, never touches kycStatus. Dedicated tight
 // upload limiter (storage-abuse surface), multipart field `logo`, images only.

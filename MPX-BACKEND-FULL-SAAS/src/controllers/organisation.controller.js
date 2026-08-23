@@ -46,3 +46,12 @@ export async function removeLogo(req, res) {
   const { organisation } = await svc.removeMyLogo({ user: req.user });
   res.json({ organisation });
 }
+
+// Verification-redesign (2026-08-19): back out of a pending profile change.
+export async function cancelPending(req, res) {
+  const { organisation } = await svc.cancelMyPendingChanges({
+    user: req.user,
+    meta: { ip: req.ip, userAgent: req.headers['user-agent'], requestId: req.id },
+  });
+  res.json({ organisation });
+}

@@ -82,7 +82,17 @@ export function KycUpload() {
       if (v.status === 'rejected') throw v.reason;
       setVerification(v.value);
       setProfile(p.status === 'fulfilled' ? p.value : null);
-      setRows(rowsFor(v.value.entityType ?? 'business'));
+      // Documents support the entity type they'll be REVIEWED against — the
+      // pending one when a profile change is switching identity (2026-08-19).
+      let slots = rowsFor(v.value.pendingChanges?.values?.entityType ?? v.value.entityType ?? 'business');
+      // A verified org with ONLY an open request may upload exactly what was
+      // asked — the server refuses anything else, so nothing else is offered.
+      const open = (v.value.documentRequests ?? []).filter((r) => !r.fulfilledAt);
+      if (v.value.kycStatus === 'verified' && !v.value.pendingChanges && open.length > 0) {
+        const asked = new Set(open.flatMap((r) => r.docTypes));
+        slots = slots.filter((r) => asked.has(r.docType));
+      }
+      setRows(slots);
     } catch (err) {
       setLoadError(apiError(err));
     } finally {
@@ -109,10 +119,12 @@ export function KycUpload() {
   }, [load]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Exporters set this at signup — always present; guard anyway so a bad record
-  // degrades to the business list instead of a blank page.
-  const entityType = verification?.entityType ?? 'business';
+  // The entity type documents are reviewed against (pending wins — 2026-08-19).
+  const entityType =
+    verification?.pendingChanges?.values?.entityType ?? verification?.entityType ?? 'business';
   const rejected = verification?.kycStatus === 'rejected';
+  const pendingChange = verification?.pendingChanges ?? null;
+  const openRequests = (verification?.documentRequests ?? []).filter((r) => !r.fulfilledAt);
 
   const patchRow = (id, patch) =>
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -205,7 +217,7 @@ export function KycUpload() {
     );
   }
 
-  if (verification?.kycStatus === 'verified') {
+  if (verification?.kycStatus === 'verified' && !pendingChange && openRequests.length === 0) {
     return shell(
       <div className="max-w-[860px] rounded-xl border border-surface-border bg-white p-8 text-center shadow-sm">
         <CheckCircleIcon className="mx-auto h-10 w-10 text-success" />
@@ -253,6 +265,7 @@ export function KycUpload() {
     (verification?.documents ?? []).some((d) => d.verifiedAt);
 
   // In review — nothing more to send; the form never renders (mockup).
+  // (Verified orgs never reach this branch — their status is 'verified'.)
   if (verification?.kycStatus === 'submitted' && !demoted) {
     return shell(
       <div className="max-w-[860px] rounded-xl border border-surface-border bg-white p-8 text-center shadow-sm">
@@ -287,7 +300,15 @@ export function KycUpload() {
             </button>
             <div className="mt-0.5 flex flex-wrap items-center gap-2">
               <h1 className="text-lg font-bold leading-tight text-ink-900">
-                {rejected ? 'Send new documents' : demoted ? 'Send updated documents' : 'Get verified'}
+                {pendingChange
+                  ? 'Documents for your profile change'
+                  : openRequests.length > 0 && verification?.kycStatus === 'verified'
+                    ? 'Requested documents'
+                    : rejected
+                      ? 'Send new documents'
+                      : demoted
+                        ? 'Send updated documents'
+                        : 'Get verified'}
               </h1>
               <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
                 {addedCount}/{rows.length} added
@@ -305,6 +326,27 @@ export function KycUpload() {
           </div>
         </div>
       </div>
+
+      {pendingChange && (
+        <Alert tone="warning" className="mb-5">
+          <p className="font-semibold">These documents support your profile change</p>
+          <p className="mt-1">
+            Your live profile and verified badge stay unchanged. Our team reviews the new details
+            against what you upload here{pendingChange.state === 'rejected'
+              ? ' — your previous submission was not approved, so send corrected documents'
+              : ''}.
+          </p>
+        </Alert>
+      )}
+
+      {openRequests.map((r) => (
+        <Alert key={r.id} tone="warning" className="mb-5">
+          <p className="font-semibold">
+            Our team asked for: {r.docTypes.map((t) => DOC_TYPE_LABELS[t] ?? t).join(', ')}
+          </p>
+          <p className="mt-1">{r.note}</p>
+        </Alert>
+      ))}
 
       {demoted && (
         <Alert tone="info" className="mb-5">

@@ -54,9 +54,9 @@ import { statesFor } from '../../lib/states.js';
  * tick is withheld until re-approval. The screen must make that cost explicit
  * BEFORE the save, and say clearly when it has happened.
  *
- * 🔴 An exporter's entityType is read-only in EVERY state — it decided which
- * KYC documents were requested at signup. The server refuses the field; the
- * screen never offers it.
+ * entityType is an ordinary locked field for BOTH sides (owner, 2026-08-19 —
+ * the exporter "read-only in every state" rule is retired). Changing it changes
+ * which KYC documents apply.
  *
  * This screen is also the fix for the PROFILE_INCOMPLETE dead end: KYC uploads
  * are refused until name + country + address(line1/city/postalCode) exist, and
@@ -98,6 +98,23 @@ function RailCard({ label, children }) {
   );
 }
 
+/** "old → new" for one pending field — address collapses to its one-line form. */
+function PendingDiff({ field, live, values }) {
+  const fmt = (v) =>
+    field === 'address'
+      ? Object.values(v ?? {}).filter(Boolean).join(', ') || '—'
+      : field === 'entityType'
+        ? (v === 'individual' ? 'Individual' : v === 'business' ? 'Business' : '—')
+        : (v ?? '—');
+  return (
+    <>
+      <span className="line-through decoration-ink-300">{fmt(field === 'address' ? live.address : live[field])}</span>
+      <span aria-hidden="true" className="mx-1 text-ink-400">→</span>
+      <span className="font-medium text-ink-900">{fmt(field === 'address' ? values.address : values[field])}</span>
+    </>
+  );
+}
+
 export function CompanyProfile() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -106,7 +123,8 @@ export function CompanyProfile() {
   const coverRef = useRef(null);
 
   const [form, setForm] = useState(null); // null until the org loads
-  const [confirmDemote, setConfirmDemote] = useState(false);
+  const [confirmSubmit, setConfirmSubmit] = useState(false); // verified + locked change → review
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const [draggingLogo, setDraggingLogo] = useState(false);
   const [draggingCover, setDraggingCover] = useState(false);
   const [notice, setNotice] = useState(null);
@@ -124,16 +142,21 @@ export function CompanyProfile() {
 
   // Load-once into local form state.
   if (org.data && form === null) {
+    // Seed from live values with any PENDING values overlaid — the form edits
+    // the version under review, and setting a field back to its live value is
+    // how a user backs it out (the server drops it from the pending set).
+    const pv = org.data.pendingChanges?.values ?? {};
     setForm({
-      name: org.data.name ?? '',
-      country: org.data.country ?? '',
-      entityType: org.data.entityType ?? '',
+      name: pv.name ?? org.data.name ?? '',
+      country: pv.country ?? org.data.country ?? '',
+      entityType: pv.entityType ?? org.data.entityType ?? '',
       description: org.data.description ?? '',
-      address: { ...EMPTY_ADDRESS, ...org.data.address },
+      address: { ...EMPTY_ADDRESS, ...org.data.address, ...(pv.address ?? {}) },
     });
   }
 
   const verified = org.data?.kycStatus === 'verified';
+  const pending = org.data?.pendingChanges ?? null;
   // Self-scoped read of the OWN org — the one place raw kycStatus is
   // legitimate (web-design.md). Only two states get a chip; rejection
   // messaging belongs to the verification screen, not a passing badge.
@@ -150,29 +173,50 @@ export function CompanyProfile() {
     const same = (a, b) => (String(a ?? '').trim() === String(b ?? '').trim());
     if (!same(form.name, org.data.name)) out.push('name');
     if (!same(form.country, org.data.country)) out.push('country');
-    if (!isExporter && !same(form.entityType, org.data.entityType)) out.push('entity type');
+    if (!same(form.entityType, org.data.entityType)) out.push('entity type');
     if (Object.keys(EMPTY_ADDRESS).some((k) => !same(form.address[k], org.data.address?.[k]))) {
       out.push('address');
     }
     return out;
-  }, [org.data, form, isExporter]);
+  }, [org.data, form]);
 
   const descriptionChanged =
     isExporter && form && (form.description ?? '') !== (org.data?.description ?? '');
-  const dirty = lockedChanges.length > 0 || descriptionChanged;
 
-  const buildPatch = () => ({
-    ...(lockedChanges.includes('name') ? { name: form.name } : {}),
-    ...(lockedChanges.includes('country') ? { country: form.country } : {}),
-    ...(lockedChanges.includes('entity type') ? { entityType: form.entityType } : {}),
-    ...(lockedChanges.includes('address') ? { address: form.address } : {}),
-    ...(descriptionChanged ? { description: form.description } : {}),
-  });
+  /** Pending fields the form now sets BACK to the live value — reverts. */
+  const revertedFields = useMemo(() => {
+    if (!pending || !form || !org.data) return [];
+    const same = (a, b) => String(a ?? '').trim() === String(b ?? '').trim();
+    return pending.changedFields.filter((f) => {
+      if (f === 'address') {
+        return Object.keys(EMPTY_ADDRESS).every((k) => same(form.address[k], org.data.address?.[k]));
+      }
+      const key = f === 'entityType' ? 'entityType' : f;
+      return same(form[key], org.data[key]);
+    });
+  }, [pending, form, org.data]);
+
+  const dirty = lockedChanges.length > 0 || descriptionChanged || revertedFields.length > 0;
+
+  const buildPatch = () => {
+    const has = (f) => lockedChanges.includes(f) || revertedFields.includes(f.replace(' ', ''));
+    return {
+      // Reverted fields are sent ON PURPOSE, equal to live — that is the
+      // server's signal to drop them from the pending set.
+      ...(has('name') || revertedFields.includes('name') ? { name: form.name } : {}),
+      ...(has('country') || revertedFields.includes('country') ? { country: form.country } : {}),
+      ...(lockedChanges.includes('entity type') || revertedFields.includes('entityType')
+        ? { entityType: form.entityType }
+        : {}),
+      ...(has('address') || revertedFields.includes('address') ? { address: form.address } : {}),
+      ...(descriptionChanged ? { description: form.description } : {}),
+    };
+  };
 
   const save = useMutation({
     mutationFn: () => organisationApi.update(buildPatch()),
     onMutate: () => { setError(null); setNotice(null); },
-    onSuccess: ({ organisation, demoted }) => {
+    onSuccess: ({ organisation }) => {
       qc.setQueryData(organisationKeys.mine, organisation);
       // 🔴 The preview is keyed on the SLUG, and a rename never changes the slug
       // (A6) — so without an explicit invalidation the "How buyers see you"
@@ -183,23 +227,43 @@ export function CompanyProfile() {
       qc.invalidateQueries({ queryKey: ['catalogue', 'products'] });
       qc.invalidateQueries({ queryKey: ['catalogue', 'product'] });
       setForm(null); // re-seed from the fresh copy
-      setConfirmDemote(false);
-      // 🔴 A silent demotion reads as a lost tick with no explanation.
+      setConfirmSubmit(false);
+      const pc = organisation.pendingChanges;
       setNotice(
-        demoted
-          ? 'Saved. Because verified details changed, your company has returned to review — we re-check the documents you already sent against the new details. If a document changed too, upload the updated file from the Verification page. The tick comes back once our team re-approves.'
+        pc
+          ? pc.state === 'awaiting_documents'
+            ? 'Saved for review. Your live profile and verified badge stay unchanged — upload the supporting documents from the Verification page so our team can approve the new details.'
+            : 'Your change under review was updated. The live profile and verified badge stay unchanged until our team approves it.'
           : 'Saved.',
       );
     },
     onError: (err) => {
-      setConfirmDemote(false);
+      setConfirmSubmit(false);
       setError(err?.response?.data?.error?.message ?? 'Could not save.');
     },
   });
 
+  const cancelChange = useMutation({
+    mutationFn: organisationApi.cancelPendingChanges,
+    onMutate: () => { setError(null); setNotice(null); },
+    onSuccess: (organisation) => {
+      qc.setQueryData(organisationKeys.mine, organisation);
+      qc.invalidateQueries({ queryKey: ['kyc'] });
+      setForm(null);
+      setConfirmCancel(false);
+      setNotice('Change cancelled. Your profile stays exactly as it was verified.');
+    },
+    onError: (err) => {
+      setConfirmCancel(false);
+      setError(err?.response?.data?.error?.message ?? 'Could not cancel the change.');
+    },
+  });
+
   const trySave = () => {
-    if (verified && lockedChanges.length > 0) {
-      setConfirmDemote(true); // the cost is explicit BEFORE the save
+    // A verified org creating/extending a pending set gets the review explainer
+    // first; pure reverts and description edits save without ceremony.
+    if (verified && lockedChanges.length > 0 && !pending) {
+      setConfirmSubmit(true);
       return;
     }
     save.mutate();
@@ -318,34 +382,27 @@ export function CompanyProfile() {
           value={form.country}
           onChange={(v) => setForm((f) => ({ ...f, country: v }))}
         />
-        {isExporter ? (
-          <Field label="Entity type" helper="Set at signup — it decided which documents we asked for.">
-            {(id) => (
-              <input
-                id={id}
-                className={inputClasses(false)}
-                value={form.entityType === 'individual' ? 'Individual' : 'Business'}
-                readOnly
-                disabled
-              />
-            )}
-          </Field>
-        ) : (
-          <Field label="Entity type" helper="Determines which KYC documents you'd provide.">
-            {(id) => (
-              <Combobox
-                id={id}
-                value={form.entityType || null}
-                placeholder="Select"
-                options={[
-                  { value: 'business', label: 'Business' },
-                  { value: 'individual', label: 'Individual' },
-                ]}
-                onChange={(v) => setForm((f) => ({ ...f, entityType: v }))}
-              />
-            )}
-          </Field>
-        )}
+        <Field
+          label="Entity type"
+          helper={
+            isExporter
+              ? 'Decides which KYC documents we ask for — changing it means providing the other set.'
+              : "Determines which KYC documents you'd provide."
+          }
+        >
+          {(id) => (
+            <Combobox
+              id={id}
+              value={form.entityType || null}
+              placeholder="Select"
+              options={[
+                { value: 'business', label: 'Business' },
+                { value: 'individual', label: 'Individual' },
+              ]}
+              onChange={(v) => setForm((f) => ({ ...f, entityType: v }))}
+            />
+          )}
+        </Field>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -648,10 +705,60 @@ export function CompanyProfile() {
           {error && <Alert tone="danger">{error}</Alert>}
 
           {/* The lock rule, stated up front — not discovered at save. */}
-          {verified && (
+          {verified && !pending && (
             <Alert tone="info" title="You're verified">
               {LOCKED_HELP}
             </Alert>
+          )}
+
+          {/* The change under review — live profile and tick untouched. */}
+          {pending && (
+            <div className="rounded-xl border border-warning-200 bg-warning-50 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-bold text-warning-800">
+                  {pending.state === 'awaiting_documents'
+                    ? 'Profile change — documents needed'
+                    : pending.state === 'rejected'
+                      ? 'Profile change — not approved'
+                      : 'Profile change — under review'}
+                </p>
+                <span className="text-xs text-warning-800/80">
+                  Your live profile and verified badge stay unchanged until it is approved.
+                </span>
+              </div>
+              <dl className="mt-2.5 space-y-1">
+                {pending.changedFields.map((f) => (
+                  <div key={f} className="flex flex-wrap items-baseline gap-2 text-[13px]">
+                    <dt className="font-semibold capitalize text-ink-800">
+                      {f === 'entityType' ? 'Entity type' : f}:
+                    </dt>
+                    <dd className="text-ink-700">
+                      <PendingDiff field={f} live={org.data} values={pending.values} />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {pending.state === 'rejected' && pending.rejectionReason && (
+                <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-[13px] text-danger-700">
+                  <span className="font-semibold">Reviewer&apos;s reason:</span>{' '}
+                  {pending.rejectionReason} — edit the details below and save to resubmit, or
+                  cancel the change.
+                </p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {pending.state === 'awaiting_documents' && (
+                  <Button
+                    size="sm"
+                    onClick={() => { window.location.href = isExporter ? '/exporter/kyc' : '/buyer/kyc'; }}
+                  >
+                    Upload supporting documents
+                  </Button>
+                )}
+                <Button variant="secondary" size="sm" onClick={() => setConfirmCancel(true)}>
+                  Cancel this change
+                </Button>
+              </div>
+            </div>
           )}
 
           {isExporter ? (
@@ -741,22 +848,46 @@ export function CompanyProfile() {
       )}
 
       <Modal
-        open={confirmDemote}
-        onClose={() => setConfirmDemote(false)}
+        open={confirmSubmit}
+        onClose={() => setConfirmSubmit(false)}
         centered
         icon={ShieldIcon}
-        title="This sends you back to review"
+        title="This change goes for review"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setConfirmDemote(false)}>Cancel</Button>
-            <Button loading={save.isPending} onClick={() => save.mutate()}>Save and re-verify</Button>
+            <Button variant="ghost" onClick={() => setConfirmSubmit(false)}>Cancel</Button>
+            <Button loading={save.isPending} onClick={() => save.mutate()}>Submit for review</Button>
           </>
         }
       >
         You&apos;re changing {lockedChanges.join(', ')} — details our team verified against your
-        documents. The change is allowed, but your verified tick is withheld until we re-approve
-        your company. We re-check the documents you already sent; if one of them changed too, you
-        can upload the updated file from the Verification page afterwards.
+        documents. Your live profile and verified badge stay exactly as they are; the new details
+        take effect once our team approves them. You&apos;ll upload supporting documents from the
+        Verification page next.
+      </Modal>
+
+      <Modal
+        open={confirmCancel}
+        onClose={() => setConfirmCancel(false)}
+        centered
+        danger
+        icon={ShieldIcon}
+        title="Cancel this profile change?"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmCancel(false)}>Keep it</Button>
+            <Button
+              variant="danger"
+              loading={cancelChange.isPending}
+              onClick={() => cancelChange.mutate()}
+            >
+              Cancel the change
+            </Button>
+          </>
+        }
+      >
+        The new details and any documents you uploaded for them are withdrawn. Your profile stays
+        exactly as it was verified — nothing else is affected.
       </Modal>
     </PortalLayout>
   );

@@ -39,7 +39,13 @@ function buildListFilter({ side, verification, blocked, q }) {
   else if (side === 'exporter') filter.exporterSide = true;
   else if (side === 'both') Object.assign(filter, { buyerSide: true, exporterSide: true });
 
-  if (verification) filter.kycStatus = verification;
+  if (verification === 'change_pending') {
+    // Verified companies with a reviewable profile change (2026-08-19).
+    filter.kycStatus = 'verified';
+    filter['pendingChanges.state'] = 'awaiting_review';
+  } else if (verification) {
+    filter.kycStatus = verification;
+  }
   if (blocked === true) filter.isActive = false;
   else if (blocked === false) filter.isActive = { $ne: false };
 

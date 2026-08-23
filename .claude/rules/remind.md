@@ -78,9 +78,11 @@ while any close-time security commitment remains unraised.
   and edit their own `Organisation`; Organisation data is **not write-once at signup** (A21 creates,
   A22 edits — keep the field sets identical). Exporter screen also carries **logo + description**
   (M3's public seller page has no other capture path for them) plus a public-page preview through
-  the shared `toPublic()` projection. **Lock after verification:** name, country, address,
-  `entityType` become read-only; changing one is allowed but drops `kycStatus` → `submitted`
-  (existing resubmit path) so the tick is withheld until re-approval, and writes an AuditLog entry.
+  the shared `toPublic()` projection. **Pending-change model (2026-08-19 — supersedes the old
+  lock-and-demote):** name, country, address, `entityType` stay editable, but on a VERIFIED org the
+  change goes to `pendingChanges` for re-approval with fresh documents — the live profile and tick
+  never move until a reviewer approves. `entityType` is editable for BOTH sides now. Every
+  transition writes an AuditLog entry.
   ✅ **No new model fields needed** — every A22 field already exists on `Organisation`; the work is
   the edit endpoint, the lock and the demotion, not schema. 🚫 **"Business type" + working categories
   are CANCELLED** (2026-07-30) — removed, not deferred. 🔒 **`website` is internal, never public.**

@@ -44,6 +44,70 @@ employeeRouter.post(
   ctrl.rejectExporter,
 );
 
+// Verification-redesign (2026-08-19): change re-verification — approve applies
+// the pending values (tick continuous), reject holds them with a reason. Revoke
+// removes a granted tick (mandatory reason; org returns to the review queue).
+// Same side permissions as first-time review: one review authority.
+employeeRouter.post(
+  '/employee/buyers/:id/changes/approve',
+  authenticate,
+  requirePermissions(PERMISSIONS.BUYER_APPROVE),
+  validate(V.reviewParams),
+  ctrl.approveBuyerChange,
+);
+employeeRouter.post(
+  '/employee/buyers/:id/changes/reject',
+  authenticate,
+  requirePermissions(PERMISSIONS.BUYER_APPROVE),
+  validate(V.rejectSchema),
+  ctrl.rejectBuyerChange,
+);
+employeeRouter.post(
+  '/employee/buyers/:id/revoke',
+  authenticate,
+  requirePermissions(PERMISSIONS.BUYER_APPROVE),
+  validate(V.rejectSchema),
+  ctrl.revokeBuyer,
+);
+employeeRouter.post(
+  '/employee/exporters/:id/changes/approve',
+  authenticate,
+  requirePermissions(PERMISSIONS.EXPORTER_VERIFY),
+  validate(V.reviewParams),
+  ctrl.approveExporterChange,
+);
+employeeRouter.post(
+  '/employee/exporters/:id/changes/reject',
+  authenticate,
+  requirePermissions(PERMISSIONS.EXPORTER_VERIFY),
+  validate(V.rejectSchema),
+  ctrl.rejectExporterChange,
+);
+employeeRouter.post(
+  '/employee/exporters/:id/revoke',
+  authenticate,
+  requirePermissions(PERMISSIONS.EXPORTER_VERIFY),
+  validate(V.rejectSchema),
+  ctrl.revokeExporter,
+);
+
+// Verification-redesign (2026-08-19): staff asks a company for documents. Same
+// side permissions as the review actions; the tick is untouched by a request.
+employeeRouter.post(
+  '/employee/buyers/:id/kyc/request-documents',
+  authenticate,
+  requirePermissions(PERMISSIONS.BUYER_APPROVE),
+  validate(V.requestDocumentsSchema),
+  ctrl.requestBuyerDocuments,
+);
+employeeRouter.post(
+  '/employee/exporters/:id/kyc/request-documents',
+  authenticate,
+  requirePermissions(PERMISSIONS.EXPORTER_VERIFY),
+  validate(V.requestDocumentsSchema),
+  ctrl.requestExporterDocuments,
+);
+
 // KYC document viewer (M1-D): mints short-lived signed URLs for a reviewer. Needs
 // the kyc:view permission; records a kyc.view access audit.
 employeeRouter.get(

@@ -75,8 +75,17 @@ export function KycUpload() {
     try {
       const v = await kycApi.myVerification();
       setVerification(v);
-      setEntityType(v.entityType ?? null);
-      setRows(rowsFor(v.entityType ?? null));
+      // Pending entity type wins — documents support the identity under review
+      // (2026-08-19).
+      const effective = v.pendingChanges?.values?.entityType ?? v.entityType ?? null;
+      setEntityType(effective);
+      let slots = rowsFor(effective);
+      const open = (v.documentRequests ?? []).filter((r) => !r.fulfilledAt);
+      if (v.kycStatus === 'verified' && !v.pendingChanges && open.length > 0) {
+        const asked = new Set(open.flatMap((r) => r.docTypes));
+        slots = slots.filter((r) => asked.has(r.docType));
+      }
+      setRows(slots);
     } catch (err) {
       setLoadError(apiError(err));
     } finally {
@@ -227,8 +236,13 @@ export function KycUpload() {
     );
   }
 
-  // Already verified — the server would 409 any upload; say so instead of a form.
-  if (verification?.kycStatus === 'verified') {
+  const pendingChange = verification?.pendingChanges ?? null;
+  const openRequests = (verification?.documentRequests ?? []).filter((r) => !r.fulfilledAt);
+
+  // Already verified with nothing to send — the server would 409 any upload;
+  // say so instead of a form. A pending change or an open document request
+  // re-opens the form (2026-08-19).
+  if (verification?.kycStatus === 'verified' && !pendingChange && openRequests.length === 0) {
     return shell(
       <div className="max-w-[860px] rounded-xl border border-surface-border bg-white p-8 text-center shadow-sm">
         <CheckCircleIcon className="mx-auto h-10 w-10 text-success" />
@@ -307,6 +321,25 @@ export function KycUpload() {
           <Alert tone="danger">{verification.kycRejectionReason}</Alert>
         </div>
       )}
+
+      {pendingChange && (
+        <Alert tone="warning" className="mb-5">
+          <p className="font-semibold">These documents support your profile change</p>
+          <p className="mt-1">
+            Your account keeps its current status while our team reviews the new details against
+            what you upload here.
+          </p>
+        </Alert>
+      )}
+
+      {openRequests.map((r) => (
+        <Alert key={r.id} tone="warning" className="mb-5">
+          <p className="font-semibold">
+            Our team asked for: {r.docTypes.map((t) => DOC_TYPE_LABELS[t] ?? t).join(', ')}
+          </p>
+          <p className="mt-1">{r.note}</p>
+        </Alert>
+      ))}
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* ============ main: account kind, then the document slots ============ */}

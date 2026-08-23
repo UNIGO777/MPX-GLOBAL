@@ -37,6 +37,11 @@ export function orgListView(org, liveProducts) {
     // it is not a column: it rides in the company cell beside the name.
     logo: org.logo ?? null,
     verification: org.kycStatus,
+    // Change re-verification flags (2026-08-19) — lets the queue chip a row
+    // without a detail fetch.
+    changePending: org.pendingChanges?.state === 'awaiting_review',
+    changeSubmittedAt:
+      org.pendingChanges?.state === 'awaiting_review' ? (org.pendingChanges.submittedAt ?? null) : null,
     products: liveProducts ?? 0,
     takedowns: org.takedownCount ?? 0,
     blocked: org.isActive === false,
@@ -85,8 +90,40 @@ export function orgDetailView({ org, users, derived, chats, products, buyerActiv
       reviewedAt: derived.reviewedAt,
       resubmitCount: derived.resubmitCount,
       // W5 — a COUNT, never the documents. Fetching them needs `kyc:view`.
-      kycDocumentCount: (org.kycDocuments ?? []).length,
+      // Superseded docs excluded — the count means "current document set".
+      kycDocumentCount: (org.kycDocuments ?? []).filter((d) => !d.supersededAt).length,
     },
+
+    /**
+     * Verification-redesign (2026-08-19). The pending diff (current live vs
+     * requested values), open document requests, and any standing revocation —
+     * staff-facing; reasons are fine here and never public.
+     */
+    pendingChanges: org.pendingChanges?.state
+      ? {
+          changedFields: org.pendingChanges.changedFields ?? [],
+          state: org.pendingChanges.state,
+          submittedAt: org.pendingChanges.submittedAt ?? null,
+          rejectionReason: org.pendingChanges.rejectionReason ?? null,
+          current: Object.fromEntries(
+            (org.pendingChanges.changedFields ?? []).map((f) => [
+              f,
+              f === 'address' ? (org.address ?? null) : (org[f] ?? null),
+            ]),
+          ),
+          requested: org.pendingChanges.values ?? {},
+        }
+      : null,
+    documentRequests: (org.documentRequests ?? []).map((r) => ({
+      id: String(r._id),
+      docTypes: r.docTypes,
+      note: r.note,
+      requestedAt: r.requestedAt ?? null,
+      fulfilledAt: r.fulfilledAt ?? null,
+    })),
+    kycRevocation: org.kycRevocation?.revokedAt
+      ? { reason: org.kycRevocation.reason, revokedAt: org.kycRevocation.revokedAt }
+      : null,
 
     sides: {
       ...sidesOf(org),

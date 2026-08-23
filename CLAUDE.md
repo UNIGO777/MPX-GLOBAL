@@ -74,8 +74,15 @@ signup or login.
   exporter-side, or both, so `Organisation.type` is **not** the buyer/exporter discriminator.
 - **Both buyer and exporter can edit their own company profile (§A22).** Organisation data is
   not write-once at signup. Fields verified against the KYC documents — name, country, address,
-  `entityType` — **lock once verified**; changing one is allowed but drops `kycStatus` back to
-  `submitted`, so the tick is withheld until re-approval.
+  `entityType` — are the LOCKED set, and since 2026-08-19 they follow the **pending-change
+  model** (this supersedes the old demote-on-edit): on a VERIFIED org, editing one does NOT
+  touch the live profile or the tick — the change lands in `Organisation.pendingChanges`, the
+  company uploads fresh supporting documents, and the values apply only when a reviewer
+  approves them (reject holds the change with a reason; cancel withdraws it). Unverified orgs
+  edit live. `entityType` is an ordinary locked field for BOTH sides — the old
+  "immutable for exporter" rule is retired. Staff can also **request documents** (note shown to
+  the company) and **revoke** a verification (mandatory reason; org returns to the queue as
+  `submitted`), both behind the same side review permissions.
 
 ## Non-negotiable rules
 

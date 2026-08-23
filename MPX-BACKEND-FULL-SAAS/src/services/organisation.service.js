@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+
 import { Organisation } from '../models/Organisation.js';
 import { Product } from '../models/Product.js';
 import { AppError } from '../utils/AppError.js';
@@ -9,12 +11,13 @@ import { uploadPublicImage, deletePublicImage } from './image.storage.service.js
  * §A22 · Self-service company profile — the owner reads and edits their OWN
  * Organisation.
  *
- * The heart of it is the LOCK + DEMOTION rule: `name`, `country`, `address` and
- * `entityType` are what an Employee verifies against the KYC documents, so on a
- * VERIFIED org a change to any of them is allowed but drops `kycStatus` back to
- * `submitted` (the existing resubmit path) — the tick is withheld until
- * re-approval, the change is auditable, and the exporter's denormalised
- * `sellerVerified` search field is synced down.
+ * The heart of it is the PENDING-CHANGE rule (owner redesign, 2026-08-19 —
+ * this RETIRES the old demote-on-edit): `name`, `country`, `address` and
+ * `entityType` are what an Employee verifies against the KYC documents. On a
+ * VERIFIED org a change to any of them does NOT touch the live profile or the
+ * tick — it lands in `pendingChanges`, the company uploads fresh supporting
+ * documents, and the values apply only when a reviewer approves them
+ * (verification.service.approveChange). Unverified orgs keep editing live.
  *
  * `logo` and `description` are storefront content, not identity: they are never
  * checked against documents and NEVER touch `kycStatus`.
@@ -63,6 +66,18 @@ export function ownerView(org) {
     establishedYear: org.businessProfile?.establishedYear ?? null,
     kycStatus: org.kycStatus,
     verifiedAt: org.verifiedAt ?? null,
+    pendingChanges: org.pendingChanges?.state
+      ? {
+          changedFields: org.pendingChanges.changedFields ?? [],
+          values: org.pendingChanges.values ?? {},
+          state: org.pendingChanges.state,
+          submittedAt: org.pendingChanges.submittedAt ?? null,
+          rejectionReason:
+            org.pendingChanges.state === 'rejected'
+              ? (org.pendingChanges.rejectionReason ?? null)
+              : null,
+        }
+      : null,
   };
 }
 
@@ -91,14 +106,9 @@ const same = (a, b) => (trimmed(a) || '') === (trimmed(b) || '');
 export async function updateMyOrganisation({ user, patch, meta }) {
   const org = await loadOwnOrg(user);
 
-  // --- entityType has per-side rules -----------------------------------------
-  if (patch.entityType !== undefined) {
-    if (org.exporterSide) {
-      // A22.1: an exporter's entity type is set at signup and read-only in every
-      // state — it drove which documents were requested.
-      throw AppError.badRequest('entityType immutable for exporter', 'Entity type is set at signup and cannot be changed.');
-    }
-  }
+  // entityType is an ORDINARY locked field for both sides (owner, 2026-08-19 —
+  // the "immutable for exporter" rule is retired). Changing it re-targets which
+  // KYC documents apply; the verification lifecycle handles the consequences.
 
   // --- storefront fields are exporter-only -----------------------------------
   if (patch.description !== undefined && !org.exporterSide) {
@@ -123,63 +133,187 @@ export async function updateMyOrganisation({ user, patch, meta }) {
   const descriptionChanged =
     patch.description !== undefined && !same(patch.description, org.description);
 
-  if (changedLocked.length === 0 && !descriptionChanged) {
-    // Nothing actually changed — a no-op save must not demote anything.
+  const wasVerified = org.kycStatus === 'verified';
+  const pc = org.pendingChanges?.state ? org.pendingChanges : null;
+
+  // A patched field that EQUALS the live value is a REVERT when it sits in the
+  // pending set — the client re-sends pending fields precisely so a user can
+  // back out of one without cancelling the rest.
+  const reverted = pc
+    ? (pc.changedFields ?? []).filter((f) => {
+        if (f === 'address') {
+          return patch.address !== undefined && !ADDRESS_KEYS.some((k) => !same(patch.address[k], org.address?.[k]));
+        }
+        if (patch[f] === undefined) return false;
+        if (f === 'country') return same(String(patch.country).toUpperCase(), org.country);
+        return same(patch[f], org[f]);
+      })
+    : [];
+
+  if (changedLocked.length === 0 && !descriptionChanged && reverted.length === 0) {
+    // Nothing actually changed — a no-op save must not move anything.
     return { organisation: ownerView(org), demoted: false };
   }
 
-  const wasVerified = org.kycStatus === 'verified';
-  const demoted = wasVerified && changedLocked.length > 0;
-
-  // --- apply -------------------------------------------------------------------
-  if (changedLocked.includes('name')) org.name = trimmed(patch.name);
-  if (changedLocked.includes('country')) org.country = String(patch.country).toUpperCase();
-  if (changedLocked.includes('entityType')) org.entityType = patch.entityType;
-  if (changedLocked.includes('address')) {
-    for (const k of ADDRESS_KEYS) {
-      const v = trimmed(patch.address[k]);
-      org.address = org.address ?? {};
-      org.address[k] = v || undefined;
+  // ── UNVERIFIED: nothing is vouched for yet — edits apply live (as always) ──
+  if (!wasVerified) {
+    if (changedLocked.includes('name')) org.name = trimmed(patch.name);
+    if (changedLocked.includes('country')) org.country = String(patch.country).toUpperCase();
+    if (changedLocked.includes('entityType')) org.entityType = patch.entityType;
+    if (changedLocked.includes('address')) {
+      for (const k of ADDRESS_KEYS) {
+        const v = trimmed(patch.address[k]);
+        org.address = org.address ?? {};
+        org.address[k] = v || undefined;
+      }
+      org.markModified('address');
     }
-    org.markModified('address');
+    if (descriptionChanged) org.description = trimmed(patch.description) || undefined;
+    await org.save();
+
+    // §A23: a country change must follow into the denormalised search copy —
+    // this sync was missing even on the old live path (latent gap, 2026-08-19).
+    if (changedLocked.includes('country') && org.exporterSide) {
+      await Product.updateMany({ exporterOrgId: org._id }, { $set: { sellerCountry: org.country } });
+    }
+
+    await recordAudit({
+      actor: { userId: user.userId, role: user.role },
+      action: 'organisation.self_update',
+      entityType: 'Organisation',
+      entityId: org._id,
+      orgId: org._id,
+      before: undefined,
+      after: { changedFields: [...changedLocked, ...(descriptionChanged ? ['description'] : [])] },
+      meta,
+    });
+    return { organisation: ownerView(org), demoted: false };
   }
+
+  // ── VERIFIED: locked changes land in the PENDING SET; live stays untouched ──
+  // Description is storefront content, never identity — it applies live even
+  // while a change pends.
   if (descriptionChanged) org.description = trimmed(patch.description) || undefined;
 
-  if (demoted) {
-    // Same posture as a reject in verification.service: the verification
-    // evidence is cleared so nothing downstream can derive a tick from a stale
-    // `verifiedAt`. WHO verified and WHEN survives in the append-only audit.
-    org.kycStatus = 'submitted';
-    org.kycSubmittedAt = new Date();
-    org.verifiedAt = undefined;
-    org.verifiedBy = undefined;
+  let pendingAction = null; // 'created' | 'amended' | 'cancelled'
+  if (changedLocked.length > 0 || reverted.length > 0) {
+    // Merge: existing pending values + this patch, minus reverts.
+    const merged = {};
+    for (const f of pc?.changedFields ?? []) {
+      merged[f] = f === 'address' ? pc.values?.address : pc.values?.[f];
+    }
+    for (const f of changedLocked) {
+      if (f === 'name') merged.name = trimmed(patch.name);
+      else if (f === 'country') merged.country = String(patch.country).toUpperCase();
+      else if (f === 'entityType') merged.entityType = patch.entityType;
+      else if (f === 'address') {
+        merged.address = Object.fromEntries(
+          ADDRESS_KEYS.map((k) => [k, trimmed(patch.address[k]) || undefined]),
+        );
+      }
+    }
+    for (const f of reverted) delete merged[f];
+
+    if (Object.keys(merged).length === 0) {
+      // Every pending field reverted — the change dissolves. Same bookkeeping
+      // as an explicit cancel: the round's documents are superseded.
+      pendingAction = 'cancelled';
+      if (pc?.roundId) {
+        await Organisation.updateOne(
+          { _id: org._id },
+          { $set: { 'kycDocuments.$[d].supersededAt': new Date() } },
+          { arrayFilters: [{ 'd.roundId': pc.roundId, 'd.supersededAt': null }] },
+        );
+      }
+      org.pendingChanges = undefined;
+    } else {
+      pendingAction = pc ? 'amended' : 'created';
+      // A rejected set that is amended goes back to review (its round already
+      // has documents); a fresh set waits for its first document.
+      const nextState = pc
+        ? (pc.state === 'rejected' ? 'awaiting_review' : pc.state)
+        : 'awaiting_documents';
+      org.pendingChanges = {
+        values: merged,
+        changedFields: Object.keys(merged),
+        state: nextState,
+        roundId: pc?.roundId ?? new mongoose.Types.ObjectId(),
+        submittedAt: new Date(),
+      };
+    }
+    org.markModified('pendingChanges');
   }
 
   await org.save();
 
-  if (demoted && org.exporterSide) {
-    // §A23: search reads the denormalised copy — a demoted seller must stop
-    // ranking as verified immediately, not at next review.
-    await Product.updateMany({ exporterOrgId: org._id }, { $set: { sellerVerified: false } });
-  }
-
   // Field NAMES only — an audit row is not the place for address values
-  // (m5 rules §4); the demotion transition is the meaningful evidence.
+  // (m5 rules §4); the transition is the meaningful evidence.
+  const action =
+    pendingAction === 'cancelled'
+      ? 'organisation.change_cancel'
+      : pendingAction
+        ? 'organisation.change_request'
+        : 'organisation.self_update';
   await recordAudit({
     actor: { userId: user.userId, role: user.role },
-    action: 'organisation.self_update',
+    action,
     entityType: 'Organisation',
     entityId: org._id,
     orgId: org._id,
-    before: demoted ? { kycStatus: 'verified' } : undefined,
+    before: undefined,
     after: {
       changedFields: [...changedLocked, ...(descriptionChanged ? ['description'] : [])],
-      ...(demoted ? { kycStatus: 'submitted', demoted: true } : {}),
+      ...(pendingAction && pendingAction !== 'cancelled'
+        ? {
+            pendingFields: org.pendingChanges?.changedFields,
+            roundId: String(org.pendingChanges?.roundId),
+            amended: pendingAction === 'amended',
+          }
+        : {}),
     },
     meta,
   });
 
-  return { organisation: ownerView(org), demoted };
+  // `demoted` stays in the response contract as a constant `false` until the
+  // web's new confirm flow is deployed — the old bundle keys its dialog on it.
+  return { organisation: ownerView(org), demoted: false };
+}
+
+/**
+ * Cancel my pending profile change (2026-08-19). The live profile was never
+ * touched, so cancelling is pure bookkeeping: the round's documents are
+ * superseded and the set is cleared. 409 when there is nothing to cancel — a
+ * cancel of nothing is a client bug, and 404 would read as "org missing".
+ */
+export async function cancelMyPendingChanges({ user, meta }) {
+  const org = await loadOwnOrg(user);
+  const pc = org.pendingChanges?.state ? org.pendingChanges : null;
+  if (!pc) throw AppError.conflict('no pending change', 'There is no profile change to cancel.');
+
+  if (pc.roundId) {
+    await Organisation.updateOne(
+      { _id: org._id },
+      { $set: { 'kycDocuments.$[d].supersededAt': new Date() } },
+      { arrayFilters: [{ 'd.roundId': pc.roundId, 'd.supersededAt': null }] },
+    );
+  }
+  const cancelledFields = pc.changedFields ?? [];
+  org.pendingChanges = undefined;
+  org.markModified('pendingChanges');
+  await org.save();
+
+  await recordAudit({
+    actor: { userId: user.userId, role: user.role },
+    action: 'organisation.change_cancel',
+    entityType: 'Organisation',
+    entityId: org._id,
+    orgId: org._id,
+    before: undefined,
+    after: { changedFields: cancelledFields },
+    meta,
+  });
+
+  return { organisation: ownerView(org) };
 }
 
 // --- logo (exporter storefront) -----------------------------------------------

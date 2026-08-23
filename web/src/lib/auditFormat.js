@@ -9,7 +9,7 @@
 
 /** Chip tint per action family. */
 export function actionTone(action) {
-  if (/takedown|reject|delete|deactivate|purge|block(?!.*un)/.test(action)) {
+  if (/takedown|reject|delete|deactivate|purge|revoke|block(?!.*un)/.test(action)) {
     return 'bg-danger-50 text-danger-700';
   }
   if (/restore|verify|approve|activate|publish|unblock/.test(action)) {
@@ -20,7 +20,7 @@ export function actionTone(action) {
 
 /** The same families as a timeline dot. */
 export function actionDot(action) {
-  if (/takedown|reject|delete|deactivate|purge|block(?!.*un)/.test(action)) return 'bg-danger-500';
+  if (/takedown|reject|delete|deactivate|purge|revoke|block(?!.*un)/.test(action)) return 'bg-danger-500';
   if (/restore|verify|approve|activate|publish|unblock/.test(action)) return 'bg-success-500';
   return 'bg-ink-300';
 }
@@ -36,9 +36,21 @@ const AUTH_LABELS = {
   'auth.refresh.reuse': 'Refresh token reused',
 };
 
+// Verification-redesign families (2026-08-19) — the generic splitter would
+// render these as robot-speak ("Organisation change request").
+const CHANGE_LABELS = {
+  'organisation.change_request': 'Profile change submitted',
+  'organisation.change_cancel': 'Profile change cancelled',
+  'organisation.change_approve': 'Profile change approved',
+  'organisation.change_reject': 'Profile change rejected',
+  'verification.revoke': 'Verification revoked',
+  'kyc.request_documents': 'Documents requested',
+};
+
 /** Turn `product.takedown` into "Product takedown". */
 export function actionLabel(action) {
   if (AUTH_LABELS[action]) return AUTH_LABELS[action];
+  if (CHANGE_LABELS[action]) return CHANGE_LABELS[action];
   const [entity, ...rest] = action.split('.');
   const verb = rest.join(' ').replace(/[._]/g, ' ');
   const noun = entity.charAt(0).toUpperCase() + entity.slice(1);

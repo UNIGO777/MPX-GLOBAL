@@ -144,6 +144,20 @@ export async function buildDashboard({ user, now = new Date(), seriesDays = SERI
    * company. Reported explicitly so the screen can say so — otherwise the two
    * numbers read as two separate reviews and sum to more work than exists.
    */
+  // Change re-verifications (2026-08-19): verified companies whose profile
+  // change awaits review. Its own tile so the dashboard can say "N new · M
+  // changes" — the two are different work (a first look vs a diff check).
+  if (canBuyer || canExporter) {
+    tiles.pendingChangeReviews = {
+      count: await Organisation.countDocuments({
+        kycStatus: 'verified',
+        'pendingChanges.state': 'awaiting_review',
+        type: { $ne: 'platform' },
+      }),
+      link: { path: '/admin/orgs', query: { verification: 'change_pending' } },
+    };
+  }
+
   if (canBuyer || canExporter) {
     tiles.bothSidesPending = {
       count: await Organisation.countDocuments({

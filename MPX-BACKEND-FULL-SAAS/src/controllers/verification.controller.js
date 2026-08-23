@@ -38,3 +38,45 @@ export async function rejectExporter(req, res) {
   const org = await svc.rejectExporter({ orgId: req.params.id, reason: req.body.reason, actor: req.user, meta: meta(req) });
   res.json({ organisation: view(org) });
 }
+
+// Verification-redesign (2026-08-19) — request documents, side-shaped.
+export async function requestBuyerDocuments(req, res) {
+  const result = await svc.requestDocuments({
+    orgId: req.params.id,
+    sideFlag: 'buyerSide',
+    ...req.validated.body,
+    actor: req.user,
+    meta: meta(req),
+  });
+  res.status(201).json({ request: result });
+}
+
+export async function requestExporterDocuments(req, res) {
+  const result = await svc.requestDocuments({
+    orgId: req.params.id,
+    sideFlag: 'exporterSide',
+    ...req.validated.body,
+    actor: req.user,
+    meta: meta(req),
+  });
+  res.status(201).json({ request: result });
+}
+
+// Change re-verification + revoke (2026-08-19) — side-shaped like the four above.
+const changeHandler = (fn, sideFlag) => async (req, res) => {
+  const org = await fn({
+    orgId: req.params.id,
+    sideFlag,
+    ...(req.validated?.body?.reason ? { reason: req.validated.body.reason } : {}),
+    actor: req.user,
+    meta: meta(req),
+  });
+  res.json({ organisation: view(org) });
+};
+
+export const approveBuyerChange = changeHandler(svc.approveChange, 'buyerSide');
+export const approveExporterChange = changeHandler(svc.approveChange, 'exporterSide');
+export const rejectBuyerChange = changeHandler(svc.rejectChange, 'buyerSide');
+export const rejectExporterChange = changeHandler(svc.rejectChange, 'exporterSide');
+export const revokeBuyer = changeHandler(svc.revokeVerification, 'buyerSide');
+export const revokeExporter = changeHandler(svc.revokeVerification, 'exporterSide');

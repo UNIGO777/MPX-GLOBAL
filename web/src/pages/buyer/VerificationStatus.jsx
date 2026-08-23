@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { kycApi } from '../../api/kyc.js';
+import { Alert } from '../../components/ui/Alert.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { apiError, formatDate } from '../../lib/format.js';
 import { DOC_TYPE_LABELS } from '../../lib/kycDocTypes.js';
@@ -135,6 +136,10 @@ export function VerificationStatus() {
 
   const v = verification;
   const status = v?.kycStatus;
+  // Verification-redesign (2026-08-19): superseded docs are history, not the
+  // current set — hidden here; open requests and pending changes get cards.
+  const currentDocs = (v?.documents ?? []).filter((d) => !d.superseded);
+  const openRequests = (v?.documentRequests ?? []).filter((r) => !r.fulfilledAt);
   const state = v ? (STATES[status] ?? UNKNOWN_STATE) : null;
   const firstName = user?.name?.split(/\s+/)[0] ?? '';
 
@@ -174,6 +179,42 @@ export function VerificationStatus() {
       {!loading && error && (
         <div className="max-w-[860px] rounded-2xl border border-surface-border bg-white shadow-card">
           <ErrorState message={error.message} requestId={error.requestId} onRetry={load} />
+        </div>
+      )}
+
+      {!loading && !error && v && (v.revocation || v.pendingChanges || openRequests.length > 0) && (
+        <div className="mb-5 max-w-[860px] space-y-3">
+          {v.revocation && (
+            <Alert tone="danger" title="Your verification was withdrawn">
+              {v.revocation.reason} — our team is re-reviewing your documents. Your account keeps
+              working in the meantime.
+            </Alert>
+          )}
+          {v.pendingChanges && (
+            <Alert tone="warning" title={
+              v.pendingChanges.state === 'awaiting_documents'
+                ? 'Profile change — documents needed'
+                : v.pendingChanges.state === 'rejected'
+                  ? 'Profile change — not approved'
+                  : 'Profile change — under review'
+            }>
+              {v.pendingChanges.state === 'rejected' && v.pendingChanges.rejectionReason
+                ? `${v.pendingChanges.rejectionReason} — update the details from your company profile, or cancel the change there.`
+                : 'Your live profile and verified badge stay unchanged until our team approves the new details.'}{' '}
+              {v.pendingChanges.state === 'awaiting_documents' && (
+                <Link to="/buyer/kyc" className="font-semibold underline">Upload the supporting documents</Link>
+              )}
+              {v.pendingChanges.state === 'rejected' && (
+                <Link to="/buyer/company" className="font-semibold underline">Open company profile</Link>
+              )}
+            </Alert>
+          )}
+          {openRequests.map((r) => (
+            <Alert key={r.id} tone="warning" title="Our team asked for documents">
+              {r.note}{' '}
+              <Link to="/buyer/kyc" className="font-semibold underline">Upload them here</Link>
+            </Alert>
+          ))}
         </div>
       )}
 
@@ -236,7 +277,7 @@ export function VerificationStatus() {
                 title="Send documents"
                 meta={
                   docsSent
-                    ? `${v.documents?.length ?? 0} document${(v.documents?.length ?? 0) === 1 ? '' : 's'} sent`
+                    ? `${currentDocs.length} document${currentDocs.length === 1 ? '' : 's'} sent`
                     : 'Any one accepted document is enough to start the review.'
                 }
               />
@@ -268,10 +309,10 @@ export function VerificationStatus() {
 
           {/* ============ context rail ============ */}
           <aside className="space-y-4 lg:sticky lg:top-6">
-            {v.documents?.length > 0 && (
+            {currentDocs.length > 0 && (
               <RailCard label="What you sent">
                 <ul className="space-y-2.5">
-                  {v.documents.map((d, i) => (
+                  {currentDocs.map((d, i) => (
                     <li key={`${d.docType}-${d.uploadedAt}-${i}`} className="flex items-center gap-3">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
                         <DocIcon className="h-4 w-4" />

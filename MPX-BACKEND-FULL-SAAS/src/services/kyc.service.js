@@ -54,15 +54,18 @@ export async function submitKycDocument({ user, entityType, docType, buffer, met
   }
 
   // Checked BEFORE the Cloudinary upload so a capped org costs no storage call.
-  if ((org.kycDocuments?.length ?? 0) >= KYC_MAX_DOCS_PER_ORG) {
+  // SUPERSEDED docs (kept forever, hidden) do not count — a profile change must
+  // never lock a company out of uploading its new set (2026-08-19).
+  const currentDocs = (org.kycDocuments ?? []).filter((d) => !d.supersededAt);
+  if (currentDocs.length >= KYC_MAX_DOCS_PER_ORG) {
     throw AppError.conflict(
       'kyc document limit reached',
       'Document limit reached for this account. Please contact support.',
     );
   }
 
-  // Resolve the entity type. Exporters set it at signup (immutable here); a buyer
-  // has none until the first upload, so it must be supplied then.
+  // Resolve the entity type. Set at signup for exporters, on the first upload
+  // for buyers; changeable later via the company profile (2026-08-19).
   let resolved = org.entityType;
   if (!resolved) {
     if (!entityType) {
@@ -73,13 +76,31 @@ export async function submitKycDocument({ user, entityType, docType, buffer, met
     throw AppError.badRequest('entityType mismatch', 'Entity type does not match your account.');
   }
 
-  // The document type must be valid for the (resolved) entity type.
-  if (!KYC_DOCS_BY_ENTITY[resolved]?.includes(docType)) {
-    throw AppError.badRequest('invalid docType for entity', 'This document type is not valid for your entity type.');
+  /**
+   * Verified orgs (2026-08-19): an upload is allowed ONLY as part of
+   *  (a) a pending profile change — the doc joins that change's round, or
+   *  (b) an open staff document request naming this docType.
+   * Neither ⇒ the historic refusal stands. Either way the org's kycStatus is
+   * NEVER touched — the tick stays while the change/request is processed.
+   */
+  const pending = org.kycStatus === 'verified' ? org.pendingChanges : null;
+  const requestMatch =
+    org.kycStatus === 'verified'
+      ? (org.documentRequests ?? []).find((r) => !r.fulfilledAt && r.docTypes.includes(docType))
+      : null;
+  if (org.kycStatus === 'verified' && !pending && !requestMatch) {
+    throw AppError.conflict(
+      'already verified',
+      'Your account is already verified. Uploads are only needed for a profile change or a document we asked for.',
+    );
   }
 
-  if (org.kycStatus === 'verified') {
-    throw AppError.conflict('already verified', 'Your account is already verified.');
+  // The document type must be valid for the entity type it will be reviewed
+  // against — the PENDING one when a change is switching entity type (the new
+  // documents support the NEW identity), the live one otherwise.
+  const targetEntity = pending?.values?.entityType ?? resolved;
+  if (!KYC_DOCS_BY_ENTITY[targetEntity]?.includes(docType)) {
+    throw AppError.badRequest('invalid docType for entity', 'This document type is not valid for your entity type.');
   }
 
   // Verify (magic bytes) + upload as a private asset. Returns only the private
@@ -87,21 +108,48 @@ export async function submitKycDocument({ user, entityType, docType, buffer, met
   const { storageKey, format } = await uploadKycDocument({ buffer, orgId: String(org._id), docType });
 
   const before = { kycStatus: org.kycStatus };
+  const docRow = { docType, storageKey, format, uploadedAt: new Date() };
+  if (pending) docRow.roundId = pending.roundId;
+  if (requestMatch) docRow.requestId = requestMatch._id;
+
+  const set = {};
+  if (org.kycStatus !== 'verified') {
+    // The unverified flow is unchanged: an upload (re)submits for review.
+    Object.assign(set, {
+      kycStatus: 'submitted',
+      kycSubmittedAt: new Date(),
+      entityType: resolved,
+      kycRejectionReason: null,
+    });
+  } else if (pending && pending.state === 'awaiting_documents') {
+    // First supporting document → the change becomes reviewable.
+    set['pendingChanges.state'] = 'awaiting_review';
+    set['pendingChanges.submittedAt'] = new Date();
+  }
+  // A request auto-fulfils when every docType it names has a non-superseded
+  // upload dated after the request — including this one.
+  if (requestMatch) {
+    const covered = requestMatch.docTypes.every(
+      (t) =>
+        t === docType ||
+        currentDocs.some((d) => d.docType === t && d.uploadedAt > requestMatch.requestedAt),
+    );
+    if (covered) set[`documentRequests.$[req].fulfilledAt`] = new Date();
+  }
+
   await Organisation.updateOne(
     { _id: org._id },
-    {
-      $push: { kycDocuments: { docType, storageKey, format, uploadedAt: new Date() } },
-      $set: {
-        kycStatus: 'submitted',
-        kycSubmittedAt: new Date(),
-        entityType: resolved,
-        kycRejectionReason: null,
-      },
-    },
+    { $push: { kycDocuments: docRow }, ...(Object.keys(set).length ? { $set: set } : {}) },
+    requestMatch && set['documentRequests.$[req].fulfilledAt']
+      ? { arrayFilters: [{ 'req._id': requestMatch._id }] }
+      : undefined,
   );
 
   // Audit snapshot carries only the docType + the status transition — NEVER the
   // storageKey or file contents (security-baseline rule 4 / fix #10).
+  const after = { kycStatus: org.kycStatus === 'verified' ? 'verified' : 'submitted', docType };
+  if (pending) after.roundId = String(pending.roundId);
+  if (requestMatch) after.requestId = String(requestMatch._id);
   await recordAudit({
     actor: user,
     action: 'kyc.submit',
@@ -109,11 +157,36 @@ export async function submitKycDocument({ user, entityType, docType, buffer, met
     entityId: org._id,
     orgId: org._id,
     before,
-    after: { kycStatus: 'submitted', docType },
+    after,
     meta,
   });
 
-  return { kycStatus: 'submitted', entityType: resolved, docType };
+  return { kycStatus: after.kycStatus, entityType: resolved, docType };
+}
+
+/** Owner/staff-safe projections of the redesign's state (2026-08-19). */
+export function pendingChangesView(org) {
+  const pc = org.pendingChanges;
+  if (!pc?.state) return null;
+  return {
+    changedFields: pc.changedFields ?? [],
+    values: pc.values ?? {},
+    state: pc.state,
+    submittedAt: pc.submittedAt ?? null,
+    rejectionReason: pc.state === 'rejected' ? (pc.rejectionReason ?? null) : null,
+  };
+}
+
+export function documentRequestsView(org) {
+  return (org.documentRequests ?? [])
+    .map((r) => ({
+      id: String(r._id),
+      docTypes: r.docTypes,
+      note: r.note,
+      requestedAt: r.requestedAt ?? null,
+      fulfilledAt: r.fulfilledAt ?? null,
+    }))
+    .sort((a, b) => Number(Boolean(a.fulfilledAt)) - Number(Boolean(b.fulfilledAt)));
 }
 
 // The caller's OWN verification status (self). Loads kycDocuments (select:false)
@@ -141,10 +214,26 @@ export async function getOrgKycDocuments({ orgId, actor, meta }) {
       docType: d.docType,
       uploadedAt: d.uploadedAt,
       verifiedAt: d.verifiedAt ?? null,
+      superseded: Boolean(d.supersededAt),
+      roundId: d.roundId ? String(d.roundId) : null,
+      requestId: d.requestId ? String(d.requestId) : null,
       signedUrl: url,
       expiresAt,
     };
   });
+
+  // The reviewer judges documents against the CLAIMED new values, so the diff
+  // (current live vs requested) rides with the documents (2026-08-19).
+  const pc = pendingChangesView(org);
+  const pendingDiff = pc
+    ? {
+        ...pc,
+        current: Object.fromEntries(
+          pc.changedFields.map((f) => [f, f === 'address' ? (org.address ?? null) : (org[f] ?? null)]),
+        ),
+        requested: pc.values,
+      }
+    : null;
 
   await recordAudit({
     actor,
@@ -165,5 +254,14 @@ export async function getOrgKycDocuments({ orgId, actor, meta }) {
     kycStatus: org.kycStatus,
     entityType: org.entityType ?? null,
     documents,
+    pendingChanges: pendingDiff,
+    documentRequests: documentRequestsView(org),
+    kycRevocation: org.kycRevocation?.revokedAt
+      ? {
+          reason: org.kycRevocation.reason,
+          revokedAt: org.kycRevocation.revokedAt,
+          revokedBy: org.kycRevocation.revokedBy ? String(org.kycRevocation.revokedBy) : null,
+        }
+      : null,
   };
 }

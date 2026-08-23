@@ -135,10 +135,11 @@ describe('PATCH /me/organisation — unverified life', () => {
   });
 });
 
-describe('🔴 the lock — verified + locked-field change demotes', () => {
-  it('name change on a VERIFIED exporter → submitted, audit row, sellerVerified synced', async () => {
+describe('🔴 the lock — verified + locked-field change goes PENDING (2026-08-19)', () => {
+  it('name change on a VERIFIED exporter → pending set; live profile, tick and products untouched', async () => {
     const { token, user } = await makeParty('exporter');
     await verifyOrg(user.orgId);
+    const liveName = (await Organisation.findOne({ _id: user.orgId })).name;
     // A live product carrying the denormalised verified flag (§A23).
     await Product.create({
       exporterOrgId: user.orgId,
@@ -155,20 +156,26 @@ describe('🔴 the lock — verified + locked-field change demotes', () => {
       .send({ name: 'Renamed Exports Pvt Ltd' });
 
     expect(res.status).toBe(200);
-    expect(res.body.demoted).toBe(true);
-    expect(res.body.organisation.kycStatus).toBe('submitted');
-    expect(res.body.organisation.verifiedAt).toBeNull();
+    // The tick never blinks: live values stay, status stays verified.
+    expect(res.body.organisation.kycStatus).toBe('verified');
+    expect(res.body.organisation.name).toBe(liveName);
+    expect(res.body.organisation.verifiedAt).not.toBeNull();
+    expect(res.body.organisation.pendingChanges).toMatchObject({
+      state: 'awaiting_documents',
+      changedFields: ['name'],
+    });
+    expect(res.body.organisation.pendingChanges.values.name).toBe('Renamed Exports Pvt Ltd');
 
     const audit = await AuditLog.findOne({
-      action: 'organisation.self_update',
+      action: 'organisation.change_request',
       orgId: user.orgId,
     }).sort({ createdAt: -1 });
     expect(audit).toBeTruthy();
     expect(audit.after.changedFields).toContain('name');
-    expect(audit.after.demoted).toBe(true);
 
+    // §A23: the seller keeps ranking as verified — nothing was demoted.
     const product = await Product.findOne({ exporterOrgId: user.orgId });
-    expect(product.sellerVerified).toBe(false);
+    expect(product.sellerVerified).toBe(true);
   });
 
   it('🔴 the slug does NOT follow a rename — indexed public URLs must not break', async () => {
@@ -215,7 +222,7 @@ describe('🔴 the lock — verified + locked-field change demotes', () => {
     expect(res.body.organisation.description).toContain('textiles');
   });
 
-  it('a verified BUYER changing entityType demotes like any locked field', async () => {
+  it('a verified BUYER changing entityType goes pending like any locked field', async () => {
     const { token, user } = await makeParty('buyer');
     await request(app)
       .patch('/me/organisation')
@@ -230,20 +237,22 @@ describe('🔴 the lock — verified + locked-field change demotes', () => {
       .send({ entityType: 'individual' });
 
     expect(res.status).toBe(200);
-    expect(res.body.demoted).toBe(true);
-    expect(res.body.organisation.kycStatus).toBe('submitted');
+    expect(res.body.organisation.kycStatus).toBe('verified');
+    expect(res.body.organisation.entityType).toBe('business'); // live value holds
+    expect(res.body.organisation.pendingChanges.values.entityType).toBe('individual');
   });
 });
 
 describe('entityType and storefront boundaries', () => {
-  it('an EXPORTER can never change entityType — any status', async () => {
+  it('entityType is an ordinary locked field for BOTH sides (2026-08-19): an unverified exporter changes it live', async () => {
     const { token } = await makeParty('exporter');
     const res = await request(app)
       .patch('/me/organisation')
       .set(bearer(token))
       .send({ entityType: 'individual' });
-    expect(res.status).toBe(400);
-    expect(res.body.error.message).toMatch(/set at signup/i);
+    expect(res.status).toBe(200);
+    expect(res.body.organisation.entityType).toBe('individual');
+    expect(res.body.demoted).toBe(false);
   });
 
   it('a BUYER has no description', async () => {

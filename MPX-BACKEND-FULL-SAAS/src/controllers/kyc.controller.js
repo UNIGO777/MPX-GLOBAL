@@ -33,6 +33,9 @@ export async function getMyVerification(req, res) {
     docType: d.docType,
     uploadedAt: d.uploadedAt,
     verifiedAt: d.verifiedAt ?? null,
+    superseded: Boolean(d.supersededAt),
+    roundId: d.roundId ? String(d.roundId) : null,
+    requestId: d.requestId ? String(d.requestId) : null,
   }));
   res.json({
     verification: {
@@ -45,6 +48,13 @@ export async function getMyVerification(req, res) {
       kycRejectionReason: org.kycStatus === 'rejected' ? (org.kycRejectionReason ?? null) : null,
       kycSubmittedAt: org.kycSubmittedAt ?? null,
       documents,
+      // Verification-redesign surfaces (2026-08-19). Owner-scoped, so the
+      // pending values, request notes and revocation reason are all fine here.
+      pendingChanges: svc.pendingChangesView(org),
+      documentRequests: svc.documentRequestsView(org),
+      revocation: org.kycRevocation?.revokedAt
+        ? { reason: org.kycRevocation.reason, revokedAt: org.kycRevocation.revokedAt }
+        : null,
     },
   });
 }
