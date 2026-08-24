@@ -89,11 +89,14 @@ while any close-time security commitment remains unraised.
   Detail: build-prompt **§A22** + `m1.md` §5b.
 
 ⏸ **On hold (build later):**
-- **D4** — Super Admin TOTP 2FA. Staff use OTP now. **Restore before close** (A4).
-  ⚠️ **Raised 2026-08-01 during FINALIZE planning; owner said NOT NOW.** Still ON HOLD, still a
-  deferral rather than a cancellation — **raise it again at close**. Do not read the earlier ask
-  as standing approval. Detail (what is already built, and the two decisions it still needs):
-  `docs/Note.md` D4.
+- **D4** — Super Admin TOTP 2FA. Staff use OTP now (still two-factor). **Restore before close** (A4).
+  ✅ **2026-08-23 — owner SCHEDULED IT FOR MONTH 2** ("ye chodna h isse after 1 month me dalo").
+  It is now a **scheduled Bucket-A item**, not an open question: **do NOT alert or re-raise it
+  during month 1**, including when touching auth.
+  🔴 Unchanged: it is a **deferral, not a cancellation**, and it stays the committed control in
+  `auth-sessions` **A4**. If month 2 ends without it, **raise it at project close** — the
+  close-checklist guard below still applies. Detail (what is already built, and the two decisions
+  it still needs): `docs/Note.md` D4.
 - **D7** — **Organisation claim at signup (A21 step 2).** Owner said **build it later** (2026-08-18).
   Until then `completeSignup` always CREATES an Organisation, so one company signing up as buyer and
   as exporter gets **two orgs → two KYCs, two public profiles, and a "Block company" that hits only

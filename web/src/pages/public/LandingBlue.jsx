@@ -27,23 +27,6 @@ import { PublicHeader } from '../../components/public/PublicHeader.jsx';
 /**
  * Public landing page (`/`) — SEO surface and the platform's front door.
  *
- * 🔴 CRIMSON TRIAL, 2026-08-23 (owner: "where we have implemented the blue color
- * there implement red, web only for now"). Every `primary-*` token on this page
- * was swapped for the parallel `crimson-*` shade — a mechanical swap, so
- * reverting is a find-and-replace back.
- *
- * ⚠️ THE REST OF THE PRODUCT IS STILL BLUE — the logo, the app, the admin
- * console and every other web page. On this page that means a royal-blue
- * wordmark sitting above a crimson hero. Flagged to the owner; this is a trial,
- * not an adopted brand.
- *
- * 🔵 `LandingBlue.jsx` is an EXACT copy of the blue version, kept so the two can
- * be compared side by side and so reverting never depends on git history. It is
- * mounted at `/landing-blue`. **The two files do not share code**: any content
- * fix made here must be repeated there, or the comparison stops being like for
- * like. Delete `LandingBlue.jsx` and its route once the colour is decided —
- * leaving a second landing page around is how one of them quietly rots.
- *
  * 🆕 2026-08-23 — REBUILT from a marketing landing page into a MARKETPLACE
  * landing page, against an approved mockup
  * (`design-plans/m3/web-buyer-home-mockup.html`, prompt
@@ -128,7 +111,7 @@ function BlockHead({ title, sub, to, cta = 'See all' }) {
       {to && (
         <Link
           to={to}
-          className="hidden shrink-0 rounded-xl border border-surface-border px-4 py-2 text-sm font-semibold text-crimson-700 hover:bg-crimson-50 sm:inline-block"
+          className="hidden shrink-0 rounded-xl border border-surface-border px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 sm:inline-block"
         >
           {cta} ›
         </Link>
@@ -186,14 +169,14 @@ function SupplierCard({ supplier }) {
       {supplier.description && (
         <p className="mt-4 line-clamp-3 text-sm text-ink-600">{supplier.description}</p>
       )}
-      <span className="mt-auto pt-5 text-sm font-semibold text-crimson-700">View profile ›</span>
+      <span className="mt-auto pt-5 text-sm font-semibold text-primary-700">View profile ›</span>
     </Link>
   );
 }
 
 /* ---------------------------------- page ---------------------------------- */
 
-export function Landing() {
+export function LandingBlue() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -246,7 +229,7 @@ export function Landing() {
     <form
       role="search"
       onSubmit={onSearch}
-      className="flex h-11 w-full min-w-0 items-center overflow-hidden rounded-xl border-2 border-crimson-600 bg-white focus-within:ring-2 focus-within:ring-crimson-600/20"
+      className="flex h-11 w-full min-w-0 items-center overflow-hidden rounded-xl border-2 border-primary-800 bg-white focus-within:ring-2 focus-within:ring-primary-600/20"
     >
       <label className="sr-only" htmlFor="landing-q">
         Search products, services or suppliers
@@ -262,14 +245,14 @@ export function Landing() {
       />
       <Link
         to="/ai-search"
-        className="mr-1 hidden shrink-0 items-center gap-1.5 rounded-lg bg-crimson-50 px-3 py-1.5 text-xs font-bold text-crimson-700 hover:bg-crimson-100 xl:flex"
+        className="mr-1 hidden shrink-0 items-center gap-1.5 rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-700 hover:bg-primary-100 xl:flex"
       >
         <SparkleIcon className="h-3.5 w-3.5" aria-hidden="true" />
         Ask AI instead
       </Link>
       <button
         type="submit"
-        className="h-full shrink-0 bg-crimson-600 px-5 text-sm font-bold text-white hover:bg-crimson-700"
+        className="h-full shrink-0 bg-primary-800 px-5 text-sm font-bold text-white hover:bg-primary-900"
       >
         Search
       </button>
@@ -289,7 +272,7 @@ export function Landing() {
         >
           <Link
             to="/categories"
-            className="flex shrink-0 items-center gap-2 rounded-xl bg-crimson-600 px-4 py-2 font-bold text-white hover:bg-crimson-700"
+            className="flex shrink-0 items-center gap-2 rounded-xl bg-primary-800 px-4 py-2 font-bold text-white hover:bg-primary-900"
           >
             <GridIcon className="h-4 w-4" aria-hidden="true" />
             All categories
@@ -305,7 +288,7 @@ export function Landing() {
           </Link>
           <Link
             to="/ai-search"
-            className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 font-bold text-crimson-700 hover:bg-crimson-50 md:flex"
+            className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 font-bold text-primary-700 hover:bg-primary-50 md:flex"
           >
             <SparkleIcon className="h-4 w-4" aria-hidden="true" />
             AI Search
@@ -332,7 +315,7 @@ export function Landing() {
                     <li key={c.id}>
                       <Link
                         to={`/category/${c.slug ?? c.id}`}
-                        className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 font-medium text-ink-900 hover:bg-crimson-50 hover:text-crimson-700"
+                        className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 font-medium text-ink-900 hover:bg-primary-50 hover:text-primary-800"
                       >
                         <span className="truncate">{c.name}</span>
                         <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
@@ -340,7 +323,7 @@ export function Landing() {
                     </li>
                   ))}
                   <li className="mt-1 border-t border-surface-border pt-1">
-                    <Link to="/categories" className="block rounded-xl px-3 py-2 font-bold text-crimson-700 hover:bg-crimson-50">
+                    <Link to="/categories" className="block rounded-xl px-3 py-2 font-bold text-primary-700 hover:bg-primary-50">
                       All categories ›
                     </Link>
                   </li>
@@ -349,29 +332,23 @@ export function Landing() {
             </aside>
 
             {/* Banner. One h1 on the page, and it lives here. */}
-            {/* Black hero (owner, 2026-08-23). `ink-900` (#000517), not `#000000`
-                — pure black is banned by the design tokens, and the ink scale's
-                slight blue cast is what the rest of the product's darkest
-                surfaces already use (the footer is the same fill).
-                Red stays as the ACCENT against it: the badge, the "Browse
-                categories" label and the AI band below. */}
-            <div className="rounded-2xl bg-ink-900 px-6 py-10 sm:px-10 sm:py-14 lg:px-12 lg:py-16">
+            <div className="rounded-2xl bg-primary-800 px-6 py-10 sm:px-10 sm:py-14 lg:px-12 lg:py-16">
               <div className="max-w-xl">
-                <p className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-crimson-300">
+                <p className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-primary-100">
                   <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
                   Every tick checked by a person
                 </p>
                 <h1 className="text-3xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-5xl">
                   Source from verified Indian exporters
                 </h1>
-                <p className="mt-4 max-w-md text-sm text-ink-200 sm:text-base">
+                <p className="mt-4 max-w-md text-sm text-primary-100 sm:text-base">
                   Goods and services, direct from the supplier. Search the catalogue, send an
                   enquiry, and talk to them in real time — free, no account needed to browse.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3">
                   <Link
                     to="/categories"
-                    className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-crimson-700 shadow-card hover:shadow-lift sm:px-6"
+                    className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-primary-800 shadow-card hover:shadow-lift sm:px-6"
                   >
                     Browse categories
                   </Link>
@@ -399,13 +376,13 @@ export function Landing() {
                   </p>
                   <Link
                     to="/signup/buyer"
-                    className="mt-4 block rounded-xl bg-crimson-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-crimson-700"
+                    className="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700"
                   >
                     Create free account
                   </Link>
                   <Link
                     to="/signin"
-                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-crimson-700 hover:bg-crimson-50"
+                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-primary-700 hover:bg-primary-50"
                   >
                     Sign in
                   </Link>
@@ -414,7 +391,7 @@ export function Landing() {
                   <p className="mt-1.5 text-sm text-ink-600">
                     Your public profile goes live the day you register.
                   </p>
-                  <Link to="/signup/exporter" className="mt-3 inline-block text-sm font-bold text-crimson-700 hover:underline">
+                  <Link to="/signup/exporter" className="mt-3 inline-block text-sm font-bold text-primary-700 hover:underline">
                     Register as an exporter ›
                   </Link>
                 </div>
@@ -435,15 +412,15 @@ export function Landing() {
                     <p className="mt-1 text-xs text-ink-600">
                       Nothing is on hold — you can browse, enquire and chat as normal.
                     </p>
-                    <Link to="/buyer/verification" className="mt-2 inline-block text-xs font-bold text-crimson-700 hover:underline">
+                    <Link to="/buyer/verification" className="mt-2 inline-block text-xs font-bold text-primary-700 hover:underline">
                       View status ›
                     </Link>
                   </div>
                   <hr className="my-5 border-surface-border" />
-                  <Link to="/buyer/chat" className="block py-1.5 text-sm font-semibold hover:text-crimson-700">
+                  <Link to="/buyer/chat" className="block py-1.5 text-sm font-semibold hover:text-primary-700">
                     Messages
                   </Link>
-                  <Link to="/saved" className="block py-1.5 text-sm font-semibold hover:text-crimson-700">
+                  <Link to="/saved" className="block py-1.5 text-sm font-semibold hover:text-primary-700">
                     Saved items
                   </Link>
                 </div>
@@ -457,13 +434,13 @@ export function Landing() {
                   </p>
                   <Link
                     to="/exporter/products"
-                    className="mt-4 block rounded-xl bg-crimson-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-crimson-700"
+                    className="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700"
                   >
                     Manage listings
                   </Link>
                   <Link
                     to="/exporter/chat"
-                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-crimson-700 hover:bg-crimson-50"
+                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-primary-700 hover:bg-primary-50"
                   >
                     Enquiries &amp; chat
                   </Link>
@@ -486,7 +463,7 @@ export function Landing() {
               { Icon: ChatIcon, title: 'Talk to the supplier directly', body: 'Structured enquiry, then live chat. No email chains.' },
             ].map(({ Icon, title, body }) => (
               <li key={title} className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-crimson-50 text-crimson-700">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700">
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span>
@@ -532,7 +509,7 @@ export function Landing() {
                     <li key={c.id}>
                       <Link
                         to={`/category/${c.slug ?? c.id}`}
-                        className="group flex h-full flex-col rounded-2xl bg-white p-2.5 shadow-card ring-1 ring-surface-border/60 transition duration-200 hover:-translate-y-0.5 hover:shadow-lift hover:ring-crimson-200"
+                        className="group flex h-full flex-col rounded-2xl bg-white p-2.5 shadow-card ring-1 ring-surface-border/60 transition duration-200 hover:-translate-y-0.5 hover:shadow-lift hover:ring-primary-200"
                       >
                         <span className="block overflow-hidden rounded-xl bg-ink-100">
                           {c.image ? (
@@ -549,7 +526,7 @@ export function Landing() {
                           )}
                         </span>
                         <span className="flex flex-1 flex-col px-1.5 pb-1 pt-3">
-                          <span className="line-clamp-2 text-sm font-bold leading-snug text-ink-900 group-hover:text-crimson-700">
+                          <span className="line-clamp-2 text-sm font-bold leading-snug text-ink-900 group-hover:text-primary-800">
                             {c.name}
                           </span>
                           {subs > 0 && (
@@ -571,16 +548,16 @@ export function Landing() {
         <section className="grid w-full grid-cols-1 gap-4 px-4 pb-10 sm:gap-5 sm:px-6 sm:pb-12 lg:px-10 xl:px-16 lg:grid-cols-2">
           <Link
             to="/categories?type=goods"
-            className="group flex items-center gap-6 rounded-2xl bg-crimson-50 p-6 transition hover:shadow-lift sm:p-8"
+            className="group flex items-center gap-6 rounded-2xl bg-primary-50 p-6 transition hover:shadow-lift sm:p-8"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-lg font-extrabold tracking-tight text-crimson-700 sm:text-xl">Physical goods</span>
+              <span className="block text-lg font-extrabold tracking-tight text-primary-800 sm:text-xl">Physical goods</span>
               <span className="mt-1.5 block text-sm text-ink-600">
                 Fabric, denim, leather, chemicals, machinery — with MOQ and per-unit pricing.
               </span>
-              <span className="mt-4 inline-block text-sm font-bold text-crimson-700 group-hover:underline">Browse goods ›</span>
+              <span className="mt-4 inline-block text-sm font-bold text-primary-700 group-hover:underline">Browse goods ›</span>
             </span>
-            <span className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-crimson-700 sm:flex">
+            <span className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-primary-800 sm:flex">
               <BoxIcon className="h-9 w-9" aria-hidden="true" />
             </span>
           </Link>
@@ -602,20 +579,20 @@ export function Landing() {
         </section>
 
         {/* ═════════ AI BAND — the page's one coloured band ═════════ */}
-        <section className="bg-crimson-600">
+        <section className="bg-primary-800">
           <div className="flex w-full flex-col items-start gap-6 px-4 py-10 sm:px-6 sm:py-12 lg:flex-row lg:items-center lg:px-10 xl:px-16">
             <div className="min-w-0 flex-1">
               <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl lg:text-3xl">
                 Describe what you need. We&apos;ll find it.
               </h2>
-              <p className="mt-2 max-w-2xl text-sm text-crimson-100 sm:text-base">
+              <p className="mt-2 max-w-2xl text-sm text-primary-100 sm:text-base">
                 Skip the filters — write it the way you&apos;d say it to a colleague, and the
                 platform extracts the category, quantity and budget for you.
               </p>
             </div>
             <Link
               to="/ai-search"
-              className="flex shrink-0 items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-extrabold text-crimson-700 shadow-card hover:shadow-lift sm:px-7"
+              className="flex shrink-0 items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-extrabold text-primary-800 shadow-card hover:shadow-lift sm:px-7"
             >
               <SparkleIcon className="h-4 w-4" aria-hidden="true" />
               Try AI Search
@@ -634,7 +611,7 @@ export function Landing() {
           {feed.isError ? (
             <p className="rounded-2xl border border-surface-border bg-white p-8 text-center text-sm text-ink-600">
               Listings couldn&apos;t be loaded just now.{' '}
-              <button type="button" onClick={() => feed.refetch()} className="font-bold text-crimson-700 hover:underline">
+              <button type="button" onClick={() => feed.refetch()} className="font-bold text-primary-700 hover:underline">
                 Try again
               </button>
             </p>
@@ -658,7 +635,7 @@ export function Landing() {
                       type="button"
                       onClick={() => feed.fetchNextPage()}
                       disabled={feed.isFetchingNextPage}
-                      className="rounded-xl border border-surface-border bg-white px-8 py-3 text-sm font-bold text-crimson-700 shadow-card hover:bg-crimson-50 disabled:opacity-60"
+                      className="rounded-xl border border-surface-border bg-white px-8 py-3 text-sm font-bold text-primary-700 shadow-card hover:bg-primary-50 disabled:opacity-60"
                     >
                       {feed.isFetchingNextPage ? 'Loading…' : 'Load more'}
                     </button>
@@ -720,7 +697,7 @@ export function Landing() {
                 ['Deal with confidence', 'The verified tick and a full conversation history keep both sides honest.'],
               ].map(([title, body], i) => (
                 <li key={title} className="rounded-2xl bg-white p-5 shadow-card">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-crimson-600 text-sm font-bold text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-800 text-sm font-bold text-white">
                     {i + 1}
                   </span>
                   <p className="mt-3 text-sm font-bold">{title}</p>
@@ -748,12 +725,9 @@ export function Landing() {
         </section>
 
         {/* 🔴 The "Want to sell on MPX Global?" band was REMOVED on the owner's
-            instruction (2026-08-23).
-            Exporter signup is still reachable from this page — the hero's
-            contextual panel carries "Register as an exporter →" for a guest —
-            and from the footer's "For Sellers", so `/signup/exporter` is not
-            orphaned by this. Kept as a note because a landing page with no
-            seller-acquisition route at all would be a different decision. */}
+            instruction (2026-08-23). Mirrored here from `Landing.jsx` so the two
+            versions stay a like-for-like colour comparison and differ only in
+            palette — which is the entire reason this file exists. */}
       </main>
 
       <PublicFooter />

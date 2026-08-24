@@ -574,7 +574,11 @@ export function BuyerHomeScreen({ navigation }) {
             renders every status (pending / submitted / verified / rejected)
             and shows nothing shout-y once verified. */}
         <View style={styles.block}>
-          <VerificationSummaryCard status={status} onPress={() => navigation.navigate('KycHub')} />
+          <VerificationSummaryCard
+            status={status}
+            verification={state.verification}
+            onPress={() => navigation.navigate('KycHub')}
+          />
         </View>
 
         {/* Goods vs Services — equal weight, because the live catalogue is

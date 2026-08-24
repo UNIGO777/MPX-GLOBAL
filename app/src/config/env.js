@@ -112,8 +112,30 @@ function resolveApiBaseUrl() {
   );
 }
 
+/**
+ * The public WEBSITE origin — not the API. Used only to open pages the app does
+ * not render itself (Terms, Privacy).
+ *
+ * 🔴 Deliberately not a copy of the legal text inside the app. Two copies of a
+ * legal document drift the moment one is edited, and the app stores require a
+ * publicly reachable privacy-policy URL anyway — so the website is the single
+ * source and the app links out to it.
+ *
+ * Falls back to the production site: a build that forgets the variable should
+ * still open a real policy rather than a dead link. It is a public URL, so
+ * hard-coding the fallback leaks nothing.
+ */
+const WEB_BASE_URL_FALLBACK = 'https://mpx.nxtgendigitals.com';
+
+function resolveWebBaseUrl() {
+  const raw = (process.env.EXPO_PUBLIC_WEB_BASE_URL ?? extra.webBaseUrl ?? '').trim();
+  if (!raw) return WEB_BASE_URL_FALLBACK;
+  return raw.replace(/\/+$/, '');
+}
+
 export const env = {
   apiBaseUrl: resolveApiBaseUrl(),
+  webBaseUrl: resolveWebBaseUrl(),
   appVersion: Constants.expoConfig?.version ?? '0.0.0',
   isDev: __DEV__,
 };

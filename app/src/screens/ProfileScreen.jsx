@@ -3,7 +3,15 @@ import Constants from 'expo-constants';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useRef, useState } from 'react';
-import { Alert, Animated, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Animated,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { organisationApi } from '../api/organisation.js';
@@ -15,6 +23,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { colors, radii, spacing, typography } from '../theme/index.js';
 import { toAppError } from '../utils/errors.js';
 import { KYC_STATUS_CHIP } from '../utils/kycStatus.js';
+import { openLegal } from '../utils/legal.js';
 import { PORTAL_LABEL } from './auth/portals.js';
 
 /**
@@ -39,9 +48,7 @@ import { PORTAL_LABEL } from './auth/portals.js';
  * corners rises over it, same visual seam `NavyCanopy` uses elsewhere.
  * Icon-in-circle treatment on every row; rows grouped into 3 cards; "Change
  * password" relabelled "Security" (same destination); About condensed to one
- * info row + a merged "Terms & Privacy" row (shown "DISABLED", matching the
- * mockup's own row-specific label — `Notifications` keeps "Coming soon",
- * intentionally not unified); richer full-width pill Sign-out with an icon.
+ * info row + legal rows (`Notifications` keeps "Coming soon"); richer full-width pill Sign-out with an icon.
  * The bottom tab bar's raised-circle active-tab treatment is shared app-wide
  * (`navigation/tabIcon.jsx`), not special-cased here.
  *
@@ -307,14 +314,22 @@ export function ProfileScreen({ navigation }) {
                   right={<Text style={styles.rowValue}>App version {appVersion}</Text>}
                 />
                 <Divider />
-                {/* Neither Terms nor Privacy exist yet anywhere (app or web)
-                    — merged into one honestly-inert row rather than two dead
-                    links. */}
+                {/* ✅ 2026-08-23 — these were ONE disabled "Terms & Privacy" row
+                    because neither document existed anywhere. They now do, on
+                    the website, and the app opens them there rather than
+                    shipping a second copy that would drift. */}
                 <Row
                   icon="document-text-outline"
-                  label="Terms &amp; Privacy"
-                  disabled
-                  right={<Text style={styles.disabledTag}>DISABLED</Text>}
+                  label="Terms of Service"
+                  onPress={() => openLegal('/terms')}
+                  right={<Ionicons name="open-outline" size={16} color={colors.ink[400]} />}
+                />
+                <Divider />
+                <Row
+                  icon="lock-closed-outline"
+                  label="Privacy Policy"
+                  onPress={() => openLegal('/privacy')}
+                  right={<Ionicons name="open-outline" size={16} color={colors.ink[400]} />}
                 />
               </View>
 

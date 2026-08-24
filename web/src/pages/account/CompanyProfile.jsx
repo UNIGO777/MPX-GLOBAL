@@ -47,12 +47,17 @@ import { statesFor } from '../../lib/states.js';
  * only — the editor-plus-context-rail structure, so the public consequences of
  * an edit sit beside the fields being edited.
  *
- * 🔴 THE LOCK + DEMOTION RULE IS THE HEART OF IT (A22.1/A22.2). Name, country,
- * address and entityType are what an Employee verified against the documents.
- * On a VERIFIED org they stay editable — companies genuinely rename and move —
- * but saving a change to any of them drops `kycStatus` back to `submitted`: the
- * tick is withheld until re-approval. The screen must make that cost explicit
- * BEFORE the save, and say clearly when it has happened.
+ * 🔴 THE LOCK + PENDING-CHANGE RULE IS THE HEART OF IT (A22.1/A22.2). Name,
+ * country, address and entityType are what an Employee verified against the
+ * documents. On a VERIFIED org they stay editable — companies genuinely rename
+ * and move — but the change does NOT touch the live profile or the tick: it is
+ * parked in `pendingChanges`, supported by fresh documents, and applied only on
+ * a reviewer's approval.
+ *
+ * ⚠️ This comment used to describe the old demote-on-edit rule ("drops
+ * `kycStatus` back to `submitted`"), which was retired 2026-08-19. `LOCKED_HELP`
+ * below still carried that wording until 2026-08-23 — worth knowing that this
+ * file's prose lagged its own behaviour once already.
  *
  * entityType is an ordinary locked field for BOTH sides (owner, 2026-08-19 —
  * the exporter "read-only in every state" rule is retired). Changing it changes
@@ -62,9 +67,20 @@ import { statesFor } from '../../lib/states.js';
  * are refused until name + country + address(line1/city/postalCode) exist, and
  * until now the web had nowhere to complete them.
  */
+/**
+ * 🔴 CORRECTED 2026-08-23. This said "your company will return to review and the
+ * verified tick is withheld until re-approval" — the OLD demote-on-edit model,
+ * retired on 2026-08-19 when the pending-change model shipped. It contradicted
+ * the pending banner rendered a few lines below it, which correctly says the
+ * live profile and badge stay unchanged.
+ *
+ * It was not just stale, it was a deterrent: it told a verified company that
+ * correcting its own registered address would cost it the tick.
+ */
 const LOCKED_HELP =
-  'These details were checked against your documents. You can still change them, but your ' +
-  'company will return to review and the verified tick is withheld until re-approval.';
+  'These details were checked against your documents. You can still change them — a reviewer ' +
+  'approves the change first, and your live profile and verified tick stay exactly as they are ' +
+  'until they do.';
 
 const EMPTY_ADDRESS = { line1: '', line2: '', city: '', state: '', postalCode: '' };
 

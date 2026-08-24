@@ -205,12 +205,23 @@ export function BuyerSignup() {
           </Link>
         </p>
 
-        {/* Design's closing fine print. Terms of Service and Privacy Policy are
-            NOT links — those pages don't exist yet, and a dead link here is
-            worse than plain text. Logged in docs/UiWebNotes.md. */}
+        {/* ✅ 2026-08-23 — these are REAL links now. They were plain text from
+            2026-08-03 because the pages did not exist, which meant asking people
+            to agree to a document we did not publish. `/terms` and `/privacy`
+            now exist (`pages/public/Legal.jsx`).
+            The old copy's "enterprise-grade security" claim is gone with them:
+            it was marketing on a consent line, and it is not a thing we can
+            point at and evidence. */}
         <p className="text-center text-xs leading-relaxed text-ink-400">
-          By creating an account, you agree to our Terms of Service and Privacy Policy. MPX Global
-          ensures your data is protected with enterprise-grade security.
+          By creating an account, you agree to our{' '}
+          <Link to="/terms" className="font-semibold text-ink-600 underline hover:text-primary-700">
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link to="/privacy" className="font-semibold text-ink-600 underline hover:text-primary-700">
+            Privacy Policy
+          </Link>
+          .
         </p>
       </form>
     </AuthLayout>

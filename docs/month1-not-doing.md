@@ -89,7 +89,13 @@
   `docs/Note.md` ki **project-close checklist** me hai. Ise is item ke saath mat taalna.
 
 ### A4 · Cross-cutting (close se pehle)
-- **TOTP 2FA (D4)** — bana hua par on-hold; close se pehle restore
+- **TOTP 2FA (D4)** — 🆕 **2026-08-23: owner ne isse MONTH 2 me daala** ("ye chodna h isse after
+  1 month me dalo"). Yaani ab ye ek **scheduled Bucket-A item** hai, khula sawaal nahi — **month 1
+  me iska alert nahi chahiye**, auth chhune pe baar-baar mat uthao.
+  🔴 Jo **nahi** badla: ye **deferral hai, cancellation nahi**, aur `auth-sessions` **A4** ka
+  committed control hai. Month 2 bhi bina iske nikal gaya to **close pe phir uthana hoga**
+  (`docs/Note.md` project-close checklist wahi guard rakhti hai). Tab tak staff **OTP** pe hain —
+  yaani control kamzor hai, gayab nahi. Detail: `docs/Note.md` **D4**.
 - App store submission, demo accounts, privacy policy / data-safety (M3)
 - Tuning, corrections, edge-case fixes, device testing
 

@@ -35,39 +35,87 @@ import { KYC_STATUS_CHIP } from '../../utils/kycStatus.js';
  * UNVERIFIED (the majority case): a completely ordinary editable form. No
  * locks, no warnings, nothing to explain.
  *
- * VERIFIED: the legal-identity fields (name · country · address · buyer's
- * entityType) become locked rows, and editing one is the three-beat consent
- * flow: locked → consequence sheet → unlocked-with-warning → "Save and
- * re-submit for review". Unlocking is FREE — only saving a changed locked
- * field demotes, and leaving the screen silently re-locks.
+ * VERIFIED: the legal-identity fields (name · country · address · entityType)
+ * become locked rows, and editing one is the three-beat consent flow: locked →
+ * consequence sheet → unlocked-with-warning → save. Unlocking is FREE, and
+ * leaving the screen silently re-locks.
+ *
+ * 🔴 BROUGHT UP TO THE PENDING-CHANGE MODEL 2026-08-23. The web client was
+ * rebuilt for this on 2026-08-19 and the app was left behind, so until now it
+ * told verified companies that editing a locked field "removes your verified
+ * tick until our team reviews it again". That is no longer true, and the app
+ * was the only place still saying it.
+ *
+ * What actually happens on a VERIFIED org: the live profile and the tick do NOT
+ * move. The new values are parked in `Organisation.pendingChanges`, the company
+ * uploads fresh supporting documents, and a reviewer approves (values apply),
+ * rejects (held with a reason) or the company cancels (withdrawn). On an
+ * UNVERIFIED org edits still apply live — nothing has been vouched for yet.
+ * `entityType` is an ordinary locked field for BOTH sides now; the old
+ * "immutable for exporter" rule is retired.
  *
  * Exporter extras: the storefront section (logo + description — always
- * editable, saved WITHOUT consequence) and the public-page preview, which
- * mirrors the live public projection and never shows a status.
+ * editable, applied live even while a change pends, because it is storefront
+ * content and not identity) and the public-page preview, which mirrors the live
+ * public projection and never shows a status.
  *
- * 🔴 The server is the enforcement: it decides demotion and audits it. This
- * screen's job is consent and feedback, never the rule itself.
+ * 🔴 The server is the enforcement: it decides what pends and audits every
+ * transition. This screen's job is consent and feedback, never the rule itself.
  */
 
 const ADDRESS_KEYS = ['line1', 'line2', 'city', 'state', 'postalCode'];
 
+/**
+ * 🔴 REWRITTEN 2026-08-23. Every one of these used to say the change "removes
+ * your verified tick until our team reviews it again". That was the OLD
+ * demote-on-edit model, retired on 2026-08-19 — and it is the opposite of what
+ * the server now does. The tick and the live profile do not move at all; the
+ * new values wait in `pendingChanges` until a reviewer approves them.
+ *
+ * The old wording was not merely out of date, it was a deterrent: it told a
+ * company that fixing its own registered address would cost it the tick, which
+ * is exactly the correction we want them to make.
+ */
 const LOCK_COPY = {
   name: {
     label: 'company name',
-    body: 'Changing your company name removes your verified tick until our team reviews it again. Your account keeps working normally.',
+    body: 'We checked this against your documents, so a reviewer approves the change before it goes live. Your current profile and verified tick stay exactly as they are in the meantime.',
   },
   country: {
     label: 'country of registration',
-    body: 'Changing your country of registration removes your verified tick until our team reviews it again. Your account keeps working normally.',
+    body: 'We checked this against your documents, so a reviewer approves the change before it goes live. Your current profile and verified tick stay exactly as they are in the meantime.',
   },
   address: {
     label: 'registered address',
-    body: 'Changing your registered address removes your verified tick until our team reviews it again. Your account keeps working normally.',
+    body: 'We checked this against your documents, so a reviewer approves the change before it goes live. Your current profile and verified tick stay exactly as they are in the meantime.',
   },
   entityType: {
     label: 'entity type',
-    body: 'Changing your entity type removes your verified tick until our team reviews it again, and changes which documents we ask for. Your account keeps working normally.',
+    body: 'We checked this against your documents, so a reviewer approves the change before it goes live — and it changes which documents we ask for. Your current profile and verified tick stay exactly as they are in the meantime.',
   },
+};
+
+/** Headline for each `pendingChanges.state` the server can report. */
+const PENDING_COPY = {
+  awaiting_documents: {
+    title: 'Change saved — documents needed',
+    body: 'Upload a document that supports the new details and a reviewer will take it from there.',
+  },
+  awaiting_review: {
+    title: 'Change under review',
+    body: 'A reviewer is checking the new details against your documents.',
+  },
+  rejected: {
+    title: 'Change not approved',
+    body: 'Edit the details and save again to resubmit, or cancel the change.',
+  },
+};
+
+const FIELD_LABEL = {
+  name: 'Company name',
+  country: 'Country',
+  address: 'Registered address',
+  entityType: 'Entity type',
 };
 
 const emptyAddress = () => ({ line1: '', line2: '', city: '', state: '', postalCode: '' });
@@ -85,6 +133,30 @@ const addressText = (a) =>
     .filter(Boolean)
     .join('\n');
 
+/** One pending field rendered flat, for the old → new line. Address collapses
+ *  to a single comma-joined line — the multi-line form would break the row. */
+function pendingValueText(field, source) {
+  if (!source) return '—';
+  if (field === 'address') {
+    return (
+      ADDRESS_KEYS.map((k) => source.address?.[k])
+        .filter(Boolean)
+        .join(', ') || '—'
+    );
+  }
+  if (field === 'entityType') {
+    return source.entityType === 'individual'
+      ? 'Individual'
+      : source.entityType === 'business'
+        ? 'Business'
+        : '—';
+  }
+  if (field === 'country') {
+    return findCountry(source.country)?.name ?? source.country ?? '—';
+  }
+  return source[field] || '—';
+}
+
 export function CompanyProfileScreen({ navigation }) {
   const { role } = useAuth();
   const isExporter = role === 'exporter';
@@ -97,6 +169,7 @@ export function CompanyProfileScreen({ navigation }) {
   const [unlocked, setUnlocked] = useState(() => new Set());
   const [sheetFor, setSheetFor] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [formError, setFormError] = useState(null);
   const [logoBusy, setLogoBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -122,6 +195,38 @@ export function CompanyProfileScreen({ navigation }) {
   }, [load]);
 
   const verified = org?.kycStatus === 'verified';
+  const pending = org?.pendingChanges ?? null;
+
+  /** Withdraw a parked change. Nothing live was ever altered, so this drops the
+   *  request rather than rolling anything back — the confirm says so. */
+  const confirmCancelPending = () => {
+    Alert.alert(
+      'Cancel this change?',
+      'Your profile stays exactly as it is now. You can request the change again at any time.',
+      [
+        { text: 'Keep it', style: 'cancel' },
+        {
+          text: 'Cancel change',
+          style: 'destructive',
+          onPress: async () => {
+            setCancelling(true);
+            setFormError(null);
+            try {
+              const organisation = await organisationApi.cancelPendingChanges();
+              setOrg(organisation);
+              setForm(formFromOrg(organisation));
+              setUnlocked(new Set());
+              toast.show('Change cancelled.', { tone: 'neutral' });
+            } catch (err) {
+              setFormError(toAppError(err));
+            } finally {
+              setCancelling(false);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   // --- dirty tracking ---------------------------------------------------------
   const changedLocked = useMemo(() => {
@@ -193,15 +298,21 @@ export function CompanyProfileScreen({ navigation }) {
 
     setSaving(true);
     try {
-      const { organisation, demoted } = await organisationApi.update(patch);
+      // 🔴 The response's `demoted` flag is hard-coded `false` since the
+      // verification redesign — branching on it now means "never". The real
+      // outcome is on the returned organisation.
+      const { organisation } = await organisationApi.update(patch);
       setOrg(organisation);
       setForm(formFromOrg(organisation));
       setUnlocked(new Set());
+      const pc = organisation.pendingChanges;
       toast.show(
-        demoted
-          ? 'Saved. Your verified tick returns after our team re-reviews your details.'
-          : 'Saved.',
-        { tone: demoted ? 'neutral' : 'success' },
+        pc?.state === 'awaiting_documents'
+          ? 'Saved. Add a supporting document and a reviewer will check it.'
+          : pc
+            ? 'Saved and sent for review. Your profile and tick are unchanged until it is approved.'
+            : 'Saved.',
+        { tone: pc ? 'neutral' : 'success' },
       );
     } catch (err) {
       setFormError(toAppError(err));
@@ -295,12 +406,70 @@ export function CompanyProfileScreen({ navigation }) {
 
         <FormError error={formError} />
 
+        {/* The change already parked with the server. Shown above the form
+            because it explains why the fields below may not match what buyers
+            currently see. */}
+        {pending ? (
+          <View style={styles.pendingCard} accessibilityLiveRegion="polite">
+            <View style={styles.pendingHead}>
+              <Ionicons
+                name={pending.state === 'rejected' ? 'alert-circle' : 'time-outline'}
+                size={18}
+                color={pending.state === 'rejected' ? colors.danger.DEFAULT : '#93370D'}
+                accessible={false}
+              />
+              <Text style={styles.pendingTitle}>
+                {(PENDING_COPY[pending.state] ?? PENDING_COPY.awaiting_review).title}
+              </Text>
+            </View>
+            <Text style={styles.pendingBody}>
+              {(PENDING_COPY[pending.state] ?? PENDING_COPY.awaiting_review).body}
+            </Text>
+
+            {/* old → new, so the company can check what it actually asked for. */}
+            {pending.changedFields.map((f) => (
+              <View key={f} style={styles.diffRow}>
+                <Text style={styles.diffLabel}>{FIELD_LABEL[f] ?? f}</Text>
+                <Text style={styles.diffValue}>
+                  <Text style={styles.diffOld}>{pendingValueText(f, org)}</Text>
+                  {'  →  '}
+                  <Text style={styles.diffNew}>{pendingValueText(f, { ...org, ...pending.values })}</Text>
+                </Text>
+              </View>
+            ))}
+
+            {pending.state === 'rejected' && pending.rejectionReason ? (
+              <Text style={styles.pendingReason}>
+                <Text style={styles.pendingReasonLabel}>Reviewer&apos;s reason: </Text>
+                {pending.rejectionReason}
+              </Text>
+            ) : null}
+
+            <View style={styles.pendingActions}>
+              {pending.state === 'awaiting_documents' ? (
+                <Button
+                  label="Upload documents"
+                  size="sm"
+                  onPress={() => navigation.navigate('KycHub')}
+                />
+              ) : null}
+              <Button
+                label="Cancel this change"
+                variant="secondary"
+                size="sm"
+                onPress={confirmCancelPending}
+                disabled={cancelling}
+              />
+            </View>
+          </View>
+        ) : null}
+
         {showUnlockWarning ? (
           <View style={styles.warnBanner} accessibilityLiveRegion="polite">
-            <Ionicons name="alert-circle" size={18} color={'#93370D'} accessible={false} />
+            <Ionicons name="information-circle" size={18} color={'#93370D'} accessible={false} />
             <Text style={styles.warnText}>
-              You&apos;re editing verified details. Saving removes your verified tick until
-              re-review.
+              These details were checked against your documents. Saving sends the change for
+              review — your profile and verified tick stay as they are until it is approved.
             </Text>
           </View>
         ) : null}
@@ -622,6 +791,33 @@ const styles = StyleSheet.create({
     padding: spacing[3],
   },
   warnText: { ...typography.caption, color: '#93370D', flex: 1 },
+
+  // pending change (verification redesign, 2026-08-23)
+  pendingCard: {
+    backgroundColor: '#FEF0DC',
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    padding: spacing[3],
+    gap: spacing[2],
+  },
+  pendingHead: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
+  pendingTitle: { ...typography.label, fontWeight: '800', color: '#93370D', flex: 1 },
+  pendingBody: { ...typography.caption, color: '#93370D' },
+  diffRow: { gap: 2 },
+  diffLabel: { ...typography.tiny, fontWeight: '700', color: '#93370D' },
+  diffValue: { ...typography.caption, color: colors.ink[900] },
+  diffOld: { textDecorationLine: 'line-through', color: colors.ink[600] },
+  diffNew: { fontWeight: '700' },
+  pendingReason: {
+    ...typography.caption,
+    color: colors.danger.DEFAULT,
+    backgroundColor: colors.white,
+    borderRadius: radii.sm,
+    padding: spacing[2],
+  },
+  pendingReasonLabel: { fontWeight: '700' },
+  pendingActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
 
   // storefront
   logoRow: { flexDirection: 'row', gap: spacing[4], alignItems: 'flex-start' },

@@ -175,6 +175,115 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-08-23 — Terms of Service + Privacy Policy shipped; dead footer columns removed (web + app).**
+  Owner: fix these, but **leave the App Store / Play Store badges alone for now**.
+  - **`/terms` and `/privacy`** (`web/src/pages/public/Legal.jsx`, one component, two documents).
+    The signup fine print had said "you agree to our Terms of Service and Privacy Policy" since
+    2026-08-03 with nothing behind it — asking people to agree to a document we did not publish.
+  - 🔴 **The content is descriptive, not aspirational.** Every claim was checked against the code:
+    the named processors are the ones actually called (Cloudinary · OpenAI · Firebase · SMTP);
+    **self-service account deletion does not exist**, so it says to ask us rather than granting a
+    right the product cannot honour; **no TTL index exists on any collection**, so no retention
+    period is promised; and it claims no GDPR/DPDP/CCPA compliance — that is the owner's counsel's
+    call. A visible "pending legal review" notice sits on both pages until sign-off.
+  - **App links OUT to the website** rather than shipping its own copy (`utils/legal.js`,
+    `env.webBaseUrl`, new `EXPO_PUBLIC_WEB_BASE_URL`). Two copies of a legal document drift the
+    moment one is edited, and the app stores need a publicly reachable privacy URL regardless.
+    Profile's single disabled "Terms & Privacy" row became two working rows; the signup screen now
+    states the consent and links to both.
+  - 🔴 **Still no consent CHECKBOX in the app, deliberately** — the server has no field to record a
+    tick against, so one would imply we store an agreement we do not. Whether consent must be
+    captured per account before launch is an **open owner decision** (logged).
+  - **Footer:** Company (About/Careers/Contact) and Resources (Blog/Help Center/Trade Guides) were
+    six greyed non-links — furniture pretending to be navigation. **Removed** rather than kept as
+    scenery, replaced with a "Discover" column that points at surfaces that exist. Legal is real now.
+  - **Testimonials row CLOSED:** the landing rebuild has no testimonials section at all, so there
+    is nothing pending. Real quotes later would be new work, not an outstanding gap.
+  - 🔴 **The one thing the owner MUST supply:** both documents tell people to contact us to ask
+    about the policy, request their data or ask for deletion — and **there is no contact address
+    anywhere on the site**. A privacy policy whose contact route is circular is the defect in it
+    that matters. Not invented here. Logged in `docs/UiWebNotes.md`.
+  - **🆕 Same day, owner decision: the CLIENT supplies the final legal documents**, rather than
+    reviewing ours. So what we published is now explicitly an **interim placeholder** — the page
+    notice and the file header say so, and it will be replaced wholesale. `docs/Client-Requests.md`
+    §1.2 asks for their documents instead of a review.
+    🔴 **Carried into the code as a standing check:** when the client's text arrives it must be
+    verified against the software before publishing. A template privacy policy routinely promises
+    self-service account deletion (none exists), a fixed retention period (no TTL on any
+    collection) and GDPR/DPDP compliance (never asserted) — publishing those would be a false
+    statement, not boilerplate. Either the document describes the behaviour or the software
+    changes to match it.
+  - **`docs/Client-Requests.md` (new)** — the full English list of what only the client can decide
+    or provide, written to be sent as-is.
+- **2026-08-23 — App brought up to the verification-redesign contract; a copy bug found on web too.**
+  The redesign shipped server-side + web on 2026-08-19 (`e760d39`) and the **app was never
+  updated**, so `pendingChanges` / `documentRequests` / `revocation` had no surface there at all.
+  - 🔴 **The app was actively telling users something false.** `CompanyProfileScreen`'s `LOCK_COPY`
+    still said editing a locked field "removes your verified tick until our team reviews it again".
+    Under the pending-change model the tick and the live profile **do not move**. That wording is a
+    deterrent against exactly the correction we want (a company fixing its own registered address).
+    All four entries rewritten.
+  - 🔴 **`demoted` in the PATCH response is now hard-coded `false`** (contract stub). The app was
+    branching on it, so its "sent for review" feedback could never fire. Now reads
+    `organisation.pendingChanges` instead. Noted in `app/src/api/organisation.js` so nobody
+    re-adds the branch.
+  - **Added:** `cancelPendingChanges()` (DELETE `/me/organisation/pending-changes`); the pending
+    banner on the company profile with an old → new diff, rejection reason, "Upload documents" and
+    "Cancel this change"; revocation + open-document-request + pending-change cards on the
+    verification hub; `verificationAttention()` in `verificationCopy.js` driving Home's summary card.
+  - 🔴 **Gotcha the port surfaced:** the hub's footer button hides when
+    `status === 'submitted' && !canAddMore`, and `FOOTER_LABEL` has no `verified` entry. So a
+    reviewer could request a document from a **verified** company and the app would show the ask
+    with **no way to answer it** — or render a button with no label. Fixed with a `needsUpload`
+    override that beats both.
+  - ✅ **`verificationAttention` is a shared function on purpose:** a verified company can have an
+    outstanding request while `kycStatus` still reads `verified`, so any surface keying off status
+    alone says "nothing to do" while that company is the one being waited on.
+  - 🔴 **Web bug found while reading it for the port:** `CompanyProfile.jsx`'s `LOCKED_HELP` also
+    still carried the old demote wording, contradicting the pending banner a few lines below it in
+    the same view. Corrected, along with the file's header comment.
+  - ⚠️ **Not covered:** no automated test for any of this (app has no test runner configured — only
+    a parse check was run), and none of it has been exercised on a device. Needs a verified
+    exporter account plus a staff request/revoke to test end to end.
+- **2026-08-23 — D4 (Super Admin TOTP 2FA) moved out of month 1 into month 2 (owner decision).**
+  Raised while reporting what is still pending in month 1; owner: *"ye chodna h isse after 1 month
+  me dalo."* D4 changes from an **open on-hold question** into a **scheduled Bucket-A item**, so it
+  no longer needs an alert during month 1 — including when auth is touched. **Not a cancellation:**
+  it stays the committed control in `auth-sessions` **A4**, and if month 2 ends without it the
+  project-close checklist is what catches it. Staff stay on **OTP** meanwhile, which is still
+  two-factor — a weaker control, not an absent one.
+  Updated in one pass (`history-log.md`'s rule, because a stale rule file outranks a corrected
+  plan doc): `docs/Note.md` **D4** + its §"Confirmed behaviour" line + the S1 screens note + the
+  project-close checklist · `docs/month1-not-doing.md` **A4** · `.claude/rules/remind.md` (the
+  always-loaded mirror — this is the one that would otherwise keep re-alerting). `CLAUDE.md`
+  checked: it never mentioned TOTP, so nothing there went stale.
+- **2026-08-23 — Landing page (`/`) rebuilt from a brochure into a marketplace landing page.**
+  Owner asked for the web home to match the app's buyer home; the first attempt ported the phone
+  idiom literally (circular category icons, app bar + search pill, stacked blocks) and was rejected
+  — *"it's looking like we are opening app in web"*. Rebuilt in a web idiom: three-column hero
+  (category rail · banner · contextual panel that switches on auth state), landscape category cards
+  with the **real** sub-count from the live tree, wide grids (up to 8 categories / 6 products across
+  at 2xl), full-bleed width matching `PublicHeader` (which was already `w-full` — `Search`/
+  `Categories` were too, so only Landing was inset), **"Load more" instead of the app's endless
+  feed** (infinite scroll hurts indexing and buries the footer).
+  - 🔴 **Gotcha caught during the rebuild:** deleting the old marketing sections orphaned
+    `PublicHeader`'s `#how-it-works` / `#platform` / `#faq` links. They are hidden on desktop when
+    `centerSlot` is passed, but **the mobile burger menu renders `NAV` regardless** — so they would
+    have been three dead anchors on phones only. Fixed by keeping How-it-works + FAQ (compressed,
+    below the marketplace) and moving `id="platform"` onto the value strip.
+  - `PublicFooter` and `FeaturedStrips` widened to match; the footer had been narrower than the
+    header on **every** public page, not just this one.
+  - **`FeaturedStrips` REMOVED from the landing on the owner's instruction** after its banner
+    rotation showed test curation (`"sssd"` / `"dvsfv"`, a screenshot uploaded as the banner image).
+    ⚠️ **Consequence flagged to the owner:** `/admin/featured` still writes `FeaturedItem` rows that
+    nothing now renders — curating there has no visible effect. Component + API untouched, so
+    restoring is one line.
+  - Design record: `design-plans/m3/web-buyer-home-parity-prompt.md` (+ the superseded direction-A
+    and direction-B prompts) and `design-plans/m3/web-buyer-home-mockup.html`.
+  - **Correction worth keeping:** the file's own header comment claimed the hero search is a *link*
+    to `/search`; the shipped code was a real *input* submitting to `/search?q=…` (owner,
+    2026-08-16). The body comment was right, the header comment was stale — the rebuild follows the
+    shipped behaviour.
 - **2026-08-23 — 🔴 Seller push was dead, and the socket fix is what exposed it. Two bugs.**
   Owner: "Sellers side notification is not working, Buyers side is working, but the token registers
   on the 2nd open."

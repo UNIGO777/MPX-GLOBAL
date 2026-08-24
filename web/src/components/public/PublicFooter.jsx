@@ -5,10 +5,18 @@ import { Logo } from '../ui/Logo.jsx';
 /**
  * The public chrome's footer. Shared by every guest-visible page.
  *
- * 🔴 Company / Resources / Legal render as STATIC TEXT, not links — those pages
- * do not exist yet and `web-ui-notes.md` bans dead anchors. They become links in
- * the same change that ships the pages (ledger rows in docs/UiWebNotes.md).
- * Privacy Policy and Terms of Service are needed before launch.
+ * ✅ 2026-08-23 — the dead columns are GONE and Legal is real.
+ *
+ * Company (About / Careers / Contact) and Resources (Blog / Help Center / Trade
+ * Guides) rendered as greyed STATIC TEXT because those pages do not exist. Six
+ * pieces of furniture pretending to be navigation is worse than a smaller
+ * footer, so they were removed rather than kept as scenery — they come back in
+ * the same change that ships the pages. Replaced with "Discover", which points
+ * at surfaces that actually exist.
+ *
+ * Privacy Policy and Terms of Service are now REAL links (`/privacy`, `/terms`
+ * → `pages/public/Legal.jsx`), which also gives the signup fine print somewhere
+ * to point.
  */
 export function PublicFooter() {
   const { pathname } = useLocation();
@@ -34,26 +42,18 @@ export function PublicFooter() {
             </ul>
           </div>
           <div>
-            <h4 className="mb-3 text-sm font-semibold">Company</h4>
-            <ul className="space-y-2 text-sm text-white/40">
-              <li>About Us</li>
-              <li>Careers</li>
-              <li>Contact</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="mb-3 text-sm font-semibold">Resources</h4>
-            <ul className="space-y-2 text-sm text-white/40">
-              <li>Blog</li>
-              <li>Help Center</li>
-              <li>Trade Guides</li>
+            <h4 className="mb-3 text-sm font-semibold">Discover</h4>
+            <ul className="space-y-1 text-sm text-white/60">
+              <li><Link to="/search" className="inline-block py-1.5 hover:text-white">Search</Link></li>
+              <li><Link to="/ai-search" className="inline-block py-1.5 hover:text-white">AI search</Link></li>
+              <li><Link to="/search?type=supplier" className="inline-block py-1.5 hover:text-white">Suppliers</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="mb-3 text-sm font-semibold">Legal</h4>
-            <ul className="space-y-2 text-sm text-white/40">
-              <li>Privacy Policy</li>
-              <li>Terms of Service</li>
+            <ul className="space-y-1 text-sm text-white/60">
+              <li><Link to="/privacy" className="inline-block py-1.5 hover:text-white">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="inline-block py-1.5 hover:text-white">Terms of Service</Link></li>
             </ul>
           </div>
         </div>

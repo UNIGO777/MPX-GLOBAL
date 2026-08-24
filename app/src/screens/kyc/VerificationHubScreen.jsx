@@ -79,6 +79,16 @@ export function VerificationHubScreen({ navigation }) {
   const atDocCap = documents.length >= KYC_MAX_DOCS;
   const canAddMore = !allDocsIn && !atDocCap;
 
+  // Staff requests that are still outstanding. A fulfilled one is history, and
+  // the server already sorts unfulfilled first — this is the "what is actually
+  // being waited on" list, so a fulfilled request must not sit here looking live.
+  const openRequests = (v?.documentRequests ?? []).filter((r) => !r.fulfilledAt);
+
+  // Something is actively waiting on an upload — a reviewer's request, or a
+  // parked profile change that has no supporting document yet.
+  const needsUpload =
+    openRequests.length > 0 || v?.pendingChanges?.state === 'awaiting_documents';
+
   // A22 gate (owner, 2026-08-05): documents are checked against the profile, so
   // name/country/address must be complete before an upload is offered. The
   // server refuses regardless (PROFILE_INCOMPLETE) — this routing is the UX.
@@ -107,12 +117,29 @@ export function VerificationHubScreen({ navigation }) {
         // in (or at the 20 cap) → also nothing to do, so no button at all rather
         // than one that leads to an empty list or a 409.
         // Rejected always keeps its button: the whole point is to send a fix.
-        status === 'verified' || (status === 'submitted' && !canAddMore) ? null : (
+        //
+        // 🔴 `needsUpload` overrides both of those (2026-08-23). A reviewer can
+        // now REQUEST a document, and a pending profile change can sit in
+        // `awaiting_documents` — in either case an upload is exactly what is
+        // being waited on. Without this the app showed the ask and then offered
+        // no way to answer it, and a verified company with a pending change had
+        // no route at all.
+        (status === 'verified' || (status === 'submitted' && !canAddMore)) && !needsUpload ? null : (
           <Button
             // "Start verification" is only true BEFORE anything is sent. Once a
             // document is in, review has already started — saying "start" there
             // reads as though the upload did not register.
-            label={profileIncomplete ? 'Complete company profile' : FOOTER_LABEL[status]}
+            // `FOOTER_LABEL` has no `verified` entry on purpose (a verified org
+            // had nothing to do), so a verified company with a pending change
+            // would otherwise render a button with NO label. `needsUpload`
+            // answers first and covers that case.
+            label={
+              profileIncomplete
+                ? 'Complete company profile'
+                : needsUpload
+                  ? 'Upload document'
+                  : FOOTER_LABEL[status]
+            }
             // Submitted: adding more is allowed and sometimes helps, but nothing
             // is required, so it must not look like an outstanding task.
             variant={status === 'submitted' ? 'secondary' : 'primary'}
@@ -154,6 +181,77 @@ export function VerificationHubScreen({ navigation }) {
                 <Text style={styles.reasonTitle}>What we need changed</Text>
               </View>
               <Text style={styles.reasonBody}>{v.kycRejectionReason}</Text>
+            </View>
+          ) : null}
+
+          {/* 🔴 Verification-redesign surfaces (server-side 2026-08-19, app
+              2026-08-23 — the web had these from day one and the app did not,
+              so an exporter using only the app could be asked for a document
+              and never find out).
+
+              Order matters: a revocation is the most consequential thing on
+              this screen, then an outstanding request for documents (the one
+              thing that is actually blocking a decision), then a parked profile
+              change. All three come from `/me/verification`, which is
+              owner-scoped — so the reviewer's note and the revocation reason
+              are legitimate here, unlike anything public. */}
+          {v.revocation ? (
+            <View style={styles.reasonCard}>
+              <View style={styles.reasonHead}>
+                <Ionicons name="shield-outline" size={20} color={colors.danger.DEFAULT} />
+                <Text style={styles.reasonTitle}>Verification withdrawn</Text>
+              </View>
+              <Text style={styles.reasonBody}>{v.revocation.reason}</Text>
+              <Text style={styles.reasonMeta}>
+                {fmtDate(v.revocation.revokedAt)} · your company is back in the review queue and
+                everything else keeps working.
+              </Text>
+            </View>
+          ) : null}
+
+          {openRequests.map((r) => (
+            <View key={r.id} style={styles.requestCard}>
+              <View style={styles.reasonHead}>
+                <Ionicons name="document-text-outline" size={20} color={'#93370D'} />
+                <Text style={styles.requestTitle}>We need another document</Text>
+              </View>
+              <Text style={styles.requestBody}>{r.note}</Text>
+              {r.docTypes?.length ? (
+                <Text style={styles.requestTypes}>
+                  Asked for: {r.docTypes.map((t) => DOC_TYPE_LABEL[t] ?? t).join(' · ')}
+                </Text>
+              ) : null}
+              <Text style={styles.reasonMeta}>Requested {fmtDate(r.requestedAt)}</Text>
+            </View>
+          ))}
+
+          {v.pendingChanges ? (
+            <View style={styles.requestCard}>
+              <View style={styles.reasonHead}>
+                <Ionicons
+                  name={v.pendingChanges.state === 'rejected' ? 'alert-circle' : 'time-outline'}
+                  size={20}
+                  color={v.pendingChanges.state === 'rejected' ? colors.danger.DEFAULT : '#93370D'}
+                />
+                <Text style={styles.requestTitle}>
+                  {v.pendingChanges.state === 'awaiting_documents'
+                    ? 'Profile change — documents needed'
+                    : v.pendingChanges.state === 'rejected'
+                      ? 'Profile change — not approved'
+                      : 'Profile change — under review'}
+                </Text>
+              </View>
+              <Text style={styles.requestBody}>
+                {v.pendingChanges.state === 'rejected' && v.pendingChanges.rejectionReason
+                  ? v.pendingChanges.rejectionReason
+                  : 'Your live profile and verified tick stay unchanged until it is approved.'}
+              </Text>
+              <Button
+                label="View the change"
+                variant="secondary"
+                size="sm"
+                onPress={() => navigation.navigate('CompanyProfile')}
+              />
             </View>
           ) : null}
 
@@ -278,6 +376,22 @@ const styles = StyleSheet.create({
   reasonHead: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
   reasonTitle: { ...typography.label, color: colors.danger.DEFAULT },
   reasonBody: { ...typography.body, color: colors.ink[900] },
+  reasonMeta: { ...typography.caption, color: colors.ink[600] },
+
+  // Reviewer's document request / parked profile change (2026-08-23). Warning
+  // tone, not danger: neither is a failure — both are "one more step".
+  requestCard: {
+    backgroundColor: '#FEF0DC',
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    padding: spacing[4],
+    gap: spacing[2],
+    alignItems: 'flex-start',
+  },
+  requestTitle: { ...typography.label, color: '#93370D', flex: 1 },
+  requestBody: { ...typography.body, color: colors.ink[900] },
+  requestTypes: { ...typography.caption, fontWeight: '700', color: '#93370D' },
 
   reviewCard: {
     flexDirection: 'row',

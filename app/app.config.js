@@ -100,5 +100,8 @@ export default ({ config }) => ({
     // Public config only. Read through `src/config/env.js`, which refuses a
     // non-HTTPS URL outside a local dev build.
     apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? '',
+    // The public website origin — used to open Terms and Privacy, which the
+    // app links out to rather than duplicating.
+    webBaseUrl: process.env.EXPO_PUBLIC_WEB_BASE_URL ?? '',
   },
 });

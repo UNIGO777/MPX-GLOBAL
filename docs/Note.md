@@ -36,7 +36,7 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
   permission. Employee permissions are individually assignable. Governance actions
   (user activate/deactivate, employee create, permission assign) are **hard superadmin role
   gates**, never grantable permissions.
-- **Auth 2FA** — the superadmin currently logs in via **OTP** (TOTP on hold — see **D4**).
+- **Auth 2FA** — the superadmin currently logs in via **OTP** (TOTP scheduled for month 2 — see **D4**).
 
 ---
 
@@ -68,7 +68,7 @@ alert the owner first, then align the forms to the **backend contract**
   `reset-password` (identifier + code + newPassword); **`change-password`** (must-change staff
   flow: currentPassword + newPassword, returns fresh tokens).
 - Verified = a **tick** when `kycStatus === 'verified'` (no "not verified" badge).
-- **Admin TOTP is on hold (D4)** — screens show login/OTP only for now.
+- **Admin TOTP is scheduled for month 2 (D4)** — screens show login/OTP only for now.
 - **⚠️ New — build-prompt §A22 adds TWO M1 screens that were never in the plan:** the **company
   profile** (Organisation view/edit) for **exporter** (name/country/address/`entityType` + logo,
   description + public-page preview) and for **buyer**
@@ -90,16 +90,25 @@ Do not start the screens without surfacing this alert.
   buyer is fully active from signup. Do **not** add this gate without an explicit override
   (red-alert first).
 
-## D4 · Super Admin TOTP 2FA  ⏸ ON HOLD (restore before close)
+## D4 · Super Admin TOTP 2FA  ⏸ SCHEDULED FOR MONTH 2 (still a close-time commitment)
 - **Committed control (auth-sessions A4):** TOTP required for the Super Admin at login.
 - **On hold (heavy):** TOTP enrollment endpoint, superadmin seeding, backup-code login,
   and re-enabling TOTP-for-staff at login.
 - **Interim (built + tested):** the superadmin logs in via **OTP** (still two-factor). The
   `totp` branch + `twofactor.service` are ready, so restoring is wiring, not new logic.
 - **⚠️ MUST be restored before project close / final handover.**
-- **2026-08-01 — RAISED at the FINALIZE build plan, owner said NOT NOW.** D4 stays ON HOLD;
-  staff continue on OTP. This is a deferral, **not** a cancellation — it must be raised again
-  at close, and `auth.service.js`'s `// ON HOLD (docs/Note.md D4)` comment stays accurate.
+- **🆕 2026-08-23 — owner MOVED IT OUT OF MONTH 1 into month 2** ("ye chodna h isse after 1 month
+  me dalo"), raised while reviewing what is still pending in month 1. So D4 is now a **scheduled
+  Bucket-A item** (`docs/month1-not-doing.md` **A4 · Cross-cutting**) rather than an open on-hold
+  question, and it
+  needs **no further alert during month 1** — do not re-raise it every time auth is touched.
+  🔴 **What did NOT change:** it is still a **deferral, not a cancellation**, and still the
+  committed control in `auth-sessions` **A4**. If month 2 ends without it, it must be raised
+  again at project close — `remind.md`'s close checklist keeps that guard. Staff remain on OTP
+  (still two-factor) in the meantime, so this is a weaker control, not an absent one.
+- **2026-08-01 — RAISED at the FINALIZE build plan, owner said NOT NOW.** D4 stayed ON HOLD;
+  staff continue on OTP. This was a deferral, **not** a cancellation, and
+  `auth.service.js`'s `// ON HOLD (docs/Note.md D4)` comment stays accurate.
   Confirmed while planning: what is missing is only **enrolment + the login switch + backup-code
   redemption + disable**. `twofactor.service.js` (secret, key URI, verify, hashed single-use
   backup codes) and `completeLogin`'s `method === 'totp'` branch already exist and are tested.
@@ -246,7 +255,7 @@ undefined there, so anything elaborate is scope creep rather than delivery.
 ---
 
 ## 🔒 Project-close checklist (raise these BEFORE final handover)
-- **D4** — restore Super Admin TOTP 2FA (currently OTP-only).
+- **D4** — restore Super Admin TOTP 2FA (currently OTP-only). Owner scheduled it for **month 2** on 2026-08-23; if month 2 ends without it, this checklist is what catches it.
 - 🔴 **ROTATE THE FIREBASE SERVICE ACCOUNT before production (2026-08-01).** The key currently in
   `.env` (`mpx-global`, `firebase-adminsdk-fbsvc@mpx-global.iam.gserviceaccount.com`) was
   downloaded into the repo directory and its contents passed through a chat transcript, so by

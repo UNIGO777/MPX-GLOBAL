@@ -12,6 +12,48 @@ export default {
   theme: {
     extend: {
       colors: {
+        // 🔴 CRIMSON — landing-page trial only (owner, 2026-08-23: "where we
+        // have implemented the blue color there implement red, web only for
+        // now"). Shade-for-shade parallel to `primary` below, so the landing
+        // swap is mechanical and reversing it is a find-and-replace.
+        //
+        // ⚠️ NOT the brand colour. The logo, the app, the admin console and
+        // every other web page remain royal blue, so a page using this sits
+        // beside a blue wordmark. Flagged to the owner; if crimson is adopted as
+        // the brand, `primary` itself changes and this scale is deleted rather
+        // than kept as a second brand.
+        //
+        // Named `crimson`, NOT `red`: Tailwind's default `red-50`/`red-700` are
+        // already used elsewhere in this codebase, and extending `red` would
+        // silently repaint them. Distinct from `danger` (#D92D20) on purpose —
+        // an error colour must never double as a brand colour, or a destructive
+        // warning stops reading as one.
+        // 🔴 Anchored on the owner's colour: **#CE061A is `crimson-600`**
+        // (2026-08-23). Everything else is derived around it.
+        //
+        // Why 600 and not a darker slot: white text on #CE061A measures
+        // **5.73:1**, which clears WCAG AA, so it can carry the hero and the AI
+        // band directly — the requested colour is what the page actually reads
+        // as, rather than a dark maroon derived from it. The landing's big fills
+        // were moved from `-800` to `-600` for exactly that reason.
+        //
+        // Why nothing brighter is used for buttons: the next step up
+        // (#E8202F) measures **4.49:1** — it fails AA by a hair, and a button
+        // label that fails contrast is a real defect, not a style preference.
+        // So #CE061A is the lightest red that carries white text here.
+        crimson: {
+          50: '#FFF0F1',
+          100: '#FFDBDE',
+          200: '#FFB3BA',
+          300: '#FA808D',
+          400: '#EE4657',
+          500: '#E01329',
+          600: '#CE061A', // ← the owner's colour. Actions AND the hero/band fill.
+          700: '#AE0416', // hover, and links on white (7.42:1)
+          800: '#8A0311', // pressed / deepest surfaces (9.99:1)
+          900: '#66020C',
+        },
+
         // Brand / primary — the ROYAL BLUE family every m1-webscreens mockup uses
         // (History 1.13: client moved the landing blue to royal; DESIGN.md
         // "MPX Global Precision"). primary-600 = accent (#2A4DE0) for actions,

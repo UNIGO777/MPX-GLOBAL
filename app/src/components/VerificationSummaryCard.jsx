@@ -2,7 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radii, spacing, typography } from '../theme/index.js';
-import { KYC_STATE_TITLE, KYC_STATE_SUBTITLE } from '../utils/verificationCopy.js';
+import {
+  KYC_STATE_TITLE,
+  KYC_STATE_SUBTITLE,
+  verificationAttention,
+} from '../utils/verificationCopy.js';
 
 /**
  * Condensed verification status card — Home's entry point into the full
@@ -16,23 +20,33 @@ import { KYC_STATE_TITLE, KYC_STATE_SUBTITLE } from '../utils/verificationCopy.j
  * Not gated on `verified` — like the hub itself, a verified company can still
  * open this and see its tick and documents.
  */
-export function VerificationSummaryCard({ status, onPress }) {
-  const icon = ICON[status] ?? ICON.pending;
+export function VerificationSummaryCard({ status, verification, onPress }) {
+  // 🔴 An outstanding document request or a parked profile change outranks the
+  // plain status (2026-08-23). A VERIFIED company can be the one being waited
+  // on, and keying off `kycStatus` alone would show "Verified — nothing to do"
+  // while a reviewer waits for a document. See `verificationAttention`.
+  const attention = verificationAttention(verification);
+  const icon = attention
+    ? ICON[attention.tone === 'danger' ? 'rejected' : 'submitted']
+    : (ICON[status] ?? ICON.pending);
+
+  const title = attention?.title ?? KYC_STATE_TITLE[status] ?? 'Verification';
+  const body = attention?.body ?? KYC_STATE_SUBTITLE[status] ?? '';
 
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Verification: ${KYC_STATE_TITLE[status] ?? 'Verification status'}`}
+      accessibilityLabel={`Verification: ${title}`}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <View style={[styles.iconWrap, { backgroundColor: icon.bg }]}>
         <Ionicons name={icon.name} size={22} color={icon.fg} accessible={false} />
       </View>
       <View style={styles.body}>
-        <Text style={styles.title}>{KYC_STATE_TITLE[status] ?? 'Verification'}</Text>
+        <Text style={styles.title}>{title}</Text>
         <Text style={styles.subtitle} numberOfLines={2}>
-          {KYC_STATE_SUBTITLE[status] ?? ''}
+          {body}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.ink[400]} accessible={false} />

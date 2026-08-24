@@ -11,6 +11,7 @@ import { PasswordStrength } from '../../components/PasswordStrength.jsx';
 import { DEFAULT_COUNTRY } from '../../constants/countries.js';
 import { colors, spacing, typography } from '../../theme/index.js';
 import { toAppError } from '../../utils/errors.js';
+import { openLegal } from '../../utils/legal.js';
 import {
   collectErrors,
   validateConfirmPassword,
@@ -195,6 +196,25 @@ export function SignupAccountScreen({ navigation, route }) {
         You&apos;re creating {portal === 'buyer' ? 'a' : 'an'} {PORTAL_LABEL[portal].toLowerCase()}{' '}
         account. You can open the other type later with the same email.
       </Text>
+
+      {/* ✅ 2026-08-23. The mockup had an "I agree to the Terms of Service and
+          Privacy Policy" checkbox that was never built, because neither document
+          existed — a consent control pointing at nothing is worse than none.
+          Both now exist on the website, so this states the consent and links to
+          them. Kept as a statement rather than a checkbox: the server has no
+          field to record a tick against, so a checkbox would imply we store an
+          agreement we do not. */}
+      <Text style={styles.legalNote}>
+        By continuing you agree to our{' '}
+        <Text style={styles.legalLink} onPress={() => openLegal('/terms')}>
+          Terms of Service
+        </Text>{' '}
+        and{' '}
+        <Text style={styles.legalLink} onPress={() => openLegal('/privacy')}>
+          Privacy Policy
+        </Text>
+        .
+      </Text>
     </NavyCanopy>
   );
 }
@@ -218,4 +238,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing[3],
   },
+  legalNote: {
+    ...typography.tiny,
+    color: colors.muted,
+    textAlign: 'center',
+    marginTop: spacing[2],
+  },
+  legalLink: { color: colors.primary[600], textDecorationLine: 'underline' },
 });

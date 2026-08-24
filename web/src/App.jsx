@@ -6,6 +6,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './auth/AuthContext.jsx';
 import { queryClient } from './lib/queryClient.js';
 import { Landing } from './pages/public/Landing.jsx';
+import { Legal } from './pages/public/Legal.jsx';
+import { LandingBlue } from './pages/public/LandingBlue.jsx';
 import { Categories } from './pages/public/Categories.jsx';
 import { CategoryListing } from './pages/public/CategoryListing.jsx';
 import { ProductDetail } from './pages/public/ProductDetail.jsx';
@@ -180,6 +182,14 @@ export function App() {
             <Route path="/supplier/:slug" element={<SupplierProfile />} />
             <Route path="/search" element={<Search />} />
             <Route path="/ai-search" element={<AiSearch />} />
+            {/* Real destinations for the signup fine print and the footer — the
+                "you agree to our Terms" line had nothing behind it until 2026-08-23. */}
+            <Route path="/terms" element={<Legal />} />
+            <Route path="/privacy" element={<Legal />} />
+            {/* 🔵 The pre-crimson landing, kept verbatim for side-by-side
+                comparison (owner, 2026-08-23). Temporary — delete this route and
+                `LandingBlue.jsx` once the colour is decided. */}
+            <Route path="/landing-blue" element={<LandingBlue />} />
 
             {/* --- Party auth (buyer + exporter share screens; portal = the field change) ---
                    All of these are for signed-OUT visitors: RedirectIfAuthed sends a live
