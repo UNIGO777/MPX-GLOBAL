@@ -280,12 +280,9 @@ export function LandingBlue() {
           <Link to="/categories?type=goods" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
             Goods
           </Link>
-          <Link to="/categories?type=service" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
-            Services
-          </Link>
-          <Link to="/search?type=supplier" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
-            Suppliers
-          </Link>
+          {/* "Services" and "Suppliers" removed from this bar (owner, 2026-08-23).
+              Mirrored from `Landing.jsx` so the two versions differ only in
+              palette — the whole reason this file exists. */}
           <Link
             to="/ai-search"
             className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 font-bold text-primary-700 hover:bg-primary-50 md:flex"

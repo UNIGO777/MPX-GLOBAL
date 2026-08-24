@@ -109,6 +109,25 @@ const FAQS = [
   },
 ];
 
+/**
+ * The hero cluster's price line.
+ *
+ * 🔴 `PriceLine` is the shared renderer everywhere else, but it hard-codes
+ * light-theme colours (`text-ink-900`, `text-primary-600`) and would vanish on
+ * the black hero. This follows its RULES exactly rather than its markup:
+ * **the ISO code is printed as the seller set it — never a ₹, never converted,
+ * never guessed** (§A27.1, no currency conversion exists in Phase 1), and
+ * "Price on request" is ordinary information, not an absence.
+ */
+const fmtAmount = (n) => (typeof n === 'number' ? n.toLocaleString('en-IN') : n);
+
+function heroPrice(price) {
+  const { mode, min, max, currency } = price ?? {};
+  if (mode === 'on_request' || (min == null && max == null)) return 'Price on request';
+  if (mode === 'range') return `${currency} ${fmtAmount(min)} – ${fmtAmount(max)}`;
+  return `${currency} ${fmtAmount(min)}`;
+}
+
 const FEED_PAGE_SIZE = 10;
 const SUPPLIER_COUNT = 6;
 /** Top-level categories in the hero rail and the browse grid. */
@@ -227,6 +246,9 @@ export function Landing() {
 
   const topCategories = categories.data ?? [];
   const products = feed.data?.pages.flatMap((p) => p.products ?? []) ?? [];
+  // The hero cluster. Exactly three, all photographed — all-or-nothing rather
+  // than a stagger with a hole in it. See the hero's own note.
+  const heroPicks = products.filter((p) => p.images?.[0]).slice(0, 3);
   const productTotal = feed.data?.pages[0]?.total ?? 0;
   const verifiedSuppliers = suppliers.data?.suppliers ?? [];
 
@@ -297,12 +319,11 @@ export function Landing() {
           <Link to="/categories?type=goods" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
             Goods
           </Link>
-          <Link to="/categories?type=service" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
-            Services
-          </Link>
-          <Link to="/search?type=supplier" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
-            Suppliers
-          </Link>
+          {/* "Services" and "Suppliers" removed from this bar on the owner's
+              instruction (2026-08-23). Both destinations still exist and are
+              still reachable: the Goods/Services split section below links to
+              `?type=service`, and "Verified suppliers" links to
+              `/search?type=supplier`. Nothing was orphaned. */}
           <Link
             to="/ai-search"
             className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 font-bold text-crimson-700 hover:bg-crimson-50 md:flex"
@@ -355,7 +376,19 @@ export function Landing() {
                 surfaces already use (the footer is the same fill).
                 Red stays as the ACCENT against it: the badge, the "Browse
                 categories" label and the AI band below. */}
+            {/* 🔴 Two columns INSIDE the hero (2026-08-23). It was one column
+                capped at `max-w-xl`, which left roughly half the panel as empty
+                black on any wide screen — the owner's "not looking good".
+                The filler is REAL: four recent listings that the feed query has
+                already fetched, so this costs no extra request and is not
+                decoration. It also does the one job the copy cannot — proving
+                there is a live catalogue behind the promise.
+                Self-sizing like every other block here: fewer than four
+                photographed listings and the collage does not render at all,
+                leaving the original single-column hero rather than a grid with
+                holes in it. */}
             <div className="rounded-2xl bg-ink-900 px-6 py-10 sm:px-10 sm:py-14 lg:px-12 lg:py-16">
+              <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_auto]">
               <div className="max-w-xl">
                 <p className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-crimson-300">
                   <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -383,6 +416,73 @@ export function Landing() {
                     Describe what you need
                   </Link>
                 </div>
+              </div>
+
+              {/* Real listings, not stock imagery — and staggered rather than a
+                  flat 2×2, so it reads as a catalogue rather than as wallpaper:
+                  one tall card carrying its real name, price and tick, with two
+                  squares beside it.
+                  Only listings that HAVE a photo — a "no image" placeholder
+                  belongs in a product grid, not in the hero. */}
+              {heroPicks.length === 3 && (
+                <div className="hidden shrink-0 lg:block">
+                  <div className="grid w-[320px] grid-cols-2 grid-rows-2 gap-3 xl:w-[380px]">
+                    <Link
+                      to={`/product/${heroPicks[0].slug ?? heroPicks[0].id}`}
+                      className="group relative row-span-2 overflow-hidden rounded-2xl ring-1 ring-white/15"
+                    >
+                      <img
+                        src={heroPicks[0].images[0]}
+                        alt={heroPicks[0].name}
+                        loading="eager"
+                        width={190}
+                        height={253}
+                        className="aspect-[3/4] w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      {/* Solid scrim, not a gradient — gradients are off the
+                          table on brand surfaces, and a flat bar reads cleaner
+                          over a photograph anyway. */}
+                      <span className="absolute inset-x-0 bottom-0 block bg-ink-900/85 px-3 py-2.5">
+                        <span className="flex items-center gap-1">
+                          <span className="truncate text-[11px] font-semibold text-white">
+                            {heroPicks[0].seller?.name}
+                          </span>
+                          {heroPicks[0].seller?.verified && (
+                            <VerifiedTick verified compact />
+                          )}
+                        </span>
+                        <span className="mt-0.5 block truncate text-xs font-bold text-crimson-300">
+                          {heroPrice(heroPicks[0].price)}
+                        </span>
+                      </span>
+                    </Link>
+
+                    {heroPicks.slice(1).map((p) => (
+                      <Link
+                        key={p.id}
+                        to={`/product/${p.slug ?? p.id}`}
+                        className="group overflow-hidden rounded-2xl ring-1 ring-white/15"
+                      >
+                        <img
+                          src={p.images[0]}
+                          alt={p.name}
+                          loading="eager"
+                          width={182}
+                          height={182}
+                          className="aspect-square w-full object-cover transition duration-500 group-hover:scale-105"
+                        />
+                      </Link>
+                    ))}
+                  </div>
+
+                  <Link
+                    to="/search"
+                    className="mt-3 inline-block text-xs font-semibold text-ink-400 hover:text-white"
+                  >
+                    Recently listed on MPX Global →
+                  </Link>
+                </div>
+              )}
               </div>
             </div>
 
