@@ -459,7 +459,9 @@ describe('M4-G · the socket is never the only path (§7.1)', () => {
  */
 describe('M4-H · push suppression counts only who is actually watching', () => {
   it('a connected party who has not opened the thread is NOT counted', async () => {
-    const sellerSocket = await connected(connect(seller.token));
+    // The connection itself is the subject of this test — it must be open and
+    // joined, but nothing is ever sent over it, so the handle is not kept.
+    await connected(connect(seller.token));
     // Give the connect-time bulk room join time to finish — that join is
     // exactly what used to make this assertion fail.
     await new Promise((r) => setTimeout(r, 200));

@@ -53,6 +53,24 @@ async function targetTokens({ orgId, conversationId, excludeUserId }) {
 }
 
 async function dispatch({ tokens, title, body, data }) {
+  // 🔴 SAY SO when there is nobody to send to (2026-08-26). `sendToTokens`
+  // returns `{ sent: 0 }` for an empty list without a word, so "delivered" and
+  // "the recipient has no device registered" were indistinguishable from the
+  // outside — which is exactly why "seller notifications don't work" took three
+  // rounds to pin down. It was never a targeting bug: that seller had no
+  // DeviceToken row at all, because the account had never been signed into on a
+  // device that completed registration.
+  //
+  // 🔒 The token values are NEVER logged — a push token addresses a specific
+  // device. Only the count and the event type.
+  if (tokens.length === 0) {
+    logger.info(
+      { pushType: data?.type, conversationId: data?.conversationId },
+      'push skipped — recipient has no registered device',
+    );
+    return;
+  }
+
   const { deadTokens } = await sendToTokens({ tokens, title, body, data });
   // Dead tokens are deleted, or the rows accumulate forever and every future
   // send wastes a call on a device that no longer exists.
