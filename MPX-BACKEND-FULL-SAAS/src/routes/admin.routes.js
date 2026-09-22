@@ -16,6 +16,8 @@ import * as errorCtrl from '../controllers/errorLog.controller.js';
 import * as FV from '../validators/featured.validators.js';
 import * as featuredCtrl from '../controllers/featured.controller.js';
 import { uploadBannerImage } from '../middleware/uploadImages.js';
+import * as SV from '../validators/settings.validators.js';
+import * as settingsCtrl from '../controllers/settings.controller.js';
 import { uploadLimiter } from '../middleware/rateLimit.js';
 
 export const adminRouter = Router();
@@ -216,4 +218,18 @@ adminRouter.get(
   requireRole('employee', 'superadmin'),
   validate(V.dashboard),
   dashboardCtrl.get,
+);
+
+// D8 · Platform settings (§3.5) — HARD superadmin gate, never a grantable
+// permission. Same governance reasoning as activate/deactivate and org block:
+// this page sets the AI spend ceiling the Client is contractually entitled to
+// change (§3.3) and the support contact the public pages point at. An employee
+// able to move either is a privilege-escalation path.
+adminRouter.get('/admin/settings', authenticate, requireRole('superadmin'), settingsCtrl.getSettings);
+adminRouter.patch(
+  '/admin/settings',
+  authenticate,
+  requireRole('superadmin'),
+  validate(SV.updateSettings),
+  settingsCtrl.updateSettings,
 );

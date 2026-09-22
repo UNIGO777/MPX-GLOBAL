@@ -7,13 +7,16 @@ import {
 } from '../../components/ui/icons.jsx';
 
 /**
- * Exporter sidebar, matching the design file: Verification is the only built
- * screen; the rest are later milestones. Settings carries no badge (design) and
- * renders dimmed + non-interactive. Every non-operational row is logged in
- * docs/UiWebNotes.md (strict rule).
+ * Exporter sidebar. Every row here is now a REAL route — the "Dashboard" row
+ * carried a dimmed `soon: true` chip from 2026-08-01 until the dashboard
+ * shipped on 2026-09-22, and it was the last non-operational row in this nav
+ * (docs/UiWebNotes.md row 30, now Done).
+ *
+ * Dashboard is the exporter's home (`/exporter` redirects to it); Verification
+ * keeps the KYC detail the dashboard links into.
  */
 export const EXPORTER_NAV = [
-  { label: 'Dashboard', Icon: HomeIcon, soon: true },
+  { to: '/exporter/dashboard', label: 'Dashboard', Icon: HomeIcon },
   { to: '/exporter/verification', label: 'Verification', Icon: ShieldIcon },
   { to: '/exporter/products', label: 'Products', Icon: BoxIcon },
   // M4 (2026-08-17): one chat item, replacing the "Enquiries" + "Chat" pair.

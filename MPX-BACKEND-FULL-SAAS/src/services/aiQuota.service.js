@@ -1,7 +1,7 @@
-import { env } from '../config/env.js';
 import { getRedisClient } from '../config/redis.js';
 import { logger } from '../utils/logger.js';
 import { AppError } from '../utils/AppError.js';
+import { effectiveAiGuestDailyMax } from './settings.service.js';
 
 // api-endpoints rule: "AI endpoints also need a per-organisation quota — an
 // unbounded GPT endpoint is a billing incident waiting to happen." The rate
@@ -85,7 +85,12 @@ export async function consumeAiQuota(orgId) {
  * unavailable". Signed-in users are unaffected either way.
  */
 export async function guestAiAllowed() {
-  const limit = env.AI_GUEST_DAILY_MAX;
+  // D8 (2026-09-22): the ceiling is now settable at runtime, because §3.3 says
+  // the Client may change it "at any time" and an env var cannot deliver that.
+  // `effectiveAiGuestDailyMax` returns the override when one is saved and the
+  // env floor otherwise — and NEVER throws, so an unreadable settings document
+  // degrades to the ceiling this process booted with rather than to "unlimited".
+  const limit = await effectiveAiGuestDailyMax();
   // Unset is only reachable outside production — `env.js` refuses to boot a
   // production process without it. There, no ceiling is configured, so no
   // ceiling applies.

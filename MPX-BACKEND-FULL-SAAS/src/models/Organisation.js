@@ -15,9 +15,26 @@ const organisationSchema = new Schema(
     name: { type: String, required: true, trim: true }, // A5: intentionally NOT unique
 
     // Public, readable slug for SEO URLs (/supplier/:slug). Generated from `name`
-    // on first save, then IMMUTABLE — a rename must never change it and break an
-    // indexed public URL (A6 / SEO §1). See the pre-validate hook below.
+    // on first save, and REGENERATED on a rename since 2026-09-22 (owner). See
+    // `previousSlugs` immediately below — the old value is never discarded.
     slug: { type: String, lowercase: true, trim: true },
+
+    // 🔴 Retired slugs, kept FOREVER. A rename used to be forbidden from touching
+    // `slug` at all ("immutable — a rename must not rewrite an indexed public
+    // URL"). The owner asked on 2026-09-22 for the slug to follow the company
+    // name, which `m3-seo.md` allows on exactly one condition: *"If it must
+    // change, keep the old one and 301-redirect old→new. Never hard-break an
+    // indexed URL."* This array is that condition.
+    //
+    // Every value here still RESOLVES on the public seller read, which returns
+    // the canonical `slug` so the client can redirect. Consequences if you ever
+    // prune this list: every indexed Google URL, every link a buyer saved, and
+    // every link the seller pasted into an email 404s. There is deliberately no
+    // removal path — the only value ever taken OUT is one being promoted back to
+    // canonical (rename A→B→A), which `retireAndRegenerateSlug` handles.
+    //
+    // NEVER put these in the sitemap: it lists canonical slugs only.
+    previousSlugs: { type: [String], default: [] },
 
     // A21: `type` only separates a company org (`business`) from the single
     // platform/system org (`platform`). It is NO LONGER the buyer/exporter
@@ -246,10 +263,30 @@ organisationSchema.index(
 // so it never degrades to a collection scan.
 organisationSchema.index({ exporterSide: 1, isActive: 1 });
 
-// Generate the slug once, from the company name, then leave it alone (immutable:
-// a rename must not rewrite an indexed public URL — A6). On a base-slug clash,
-// append a short suffix from the id (SEO §1). Async throw-style hook (Mongoose 9);
-// runs before validation so the unique index sees the final value.
+// A retired slug is as routable as a live one, so it needs the same uniqueness —
+// otherwise a NEW company could take a name whose slug is still redirecting to
+// someone else's page, and the public read would resolve two companies.
+//
+// 🔴 The partial filter is load-bearing, not tidiness: MongoDB indexes an EMPTY
+// array as the single value `undefined` in a multikey index, so a plain
+// `unique: true` here would let the first org save and then reject every other
+// org that has never been renamed. `$type: 'string'` matches an array only when
+// it holds at least one string, so untouched orgs index nothing at all.
+organisationSchema.index(
+  { previousSlugs: 1 },
+  { unique: true, partialFilterExpression: { previousSlugs: { $type: 'string' } } },
+);
+
+// Generate the slug once, from the company name. On a base-slug clash, append a
+// short suffix from the id (SEO §1). Async throw-style hook (Mongoose 9); runs
+// before validation so the unique index sees the final value.
+//
+// A RENAME no longer stops here — it goes through `retireAndRegenerateSlug`
+// below, which is called explicitly by the two paths that may change a name
+// (the live edit, and a reviewer approving a pending change). It is deliberately
+// NOT a hook: on a verified org the name lands in `pendingChanges` first and the
+// public URL must not move until that is approved, which a save hook could not
+// know about.
 organisationSchema.pre('validate', async function generateSlug() {
   if (this.slug || !this.name) return;
   const base = slugify(this.name) || String(this._id).slice(-6);
@@ -259,6 +296,41 @@ organisationSchema.pre('validate', async function generateSlug() {
     .lean();
   this.slug = clash ? `${base}-${String(this._id).slice(-4)}` : base;
 });
+
+/**
+ * Point the public URL at the current company name, retiring the old slug so it
+ * keeps resolving (m3-seo: keep the old one, redirect old→new).
+ *
+ * Returns true when the slug actually moved. Does NOT save — the caller is
+ * mid-mutation and owns the write.
+ *
+ * Only meaningful for an exporter: a buyer has no public page and therefore no
+ * slug worth spending a redirect on.
+ */
+organisationSchema.methods.retireAndRegenerateSlug = async function retireAndRegenerateSlug() {
+  if (!this.exporterSide || !this.name) return false;
+
+  const base = slugify(this.name) || String(this._id).slice(-6);
+  if (base === this.slug) return false;
+
+  // Check BOTH live and retired slugs across every other org — a retired slug
+  // still routes, so taking it would hijack another company's old links.
+  const taken = await this.constructor
+    .findOne({ _id: { $ne: this._id }, $or: [{ slug: base }, { previousSlugs: base }] })
+    .select('_id')
+    .lean();
+  const next = taken ? `${base}-${String(this._id).slice(-4)}` : base;
+  if (next === this.slug) return false;
+
+  const previous = this.previousSlugs ?? [];
+  if (this.slug && !previous.includes(this.slug)) previous.push(this.slug);
+  // Rename A→B→A: the returning slug must LEAVE the retired list, or the same
+  // string would be both the canonical URL and a redirect source pointing at it.
+  this.previousSlugs = previous.filter((s) => s !== next);
+  this.slug = next;
+  this.markModified('previousSlugs');
+  return true;
+};
 
 declareScope(organisationSchema, SCOPE.SELF);
 

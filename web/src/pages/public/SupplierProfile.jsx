@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
@@ -157,11 +157,35 @@ export function SupplierProfile() {
   });
 
   // m3-seo §2 — canonical to the clean slug URL; paged views collapse to it.
+  // This already pointed at the SERVER's slug rather than the typed one, so a
+  // retired slug emitted the right canonical even before redirects existed.
   useCanonical(seller.data?.slug ? `/supplier/${seller.data.slug}` : null);
 
+  /**
+   * 🔴 Renaming a company moves its public URL (2026-09-22), and the old URL
+   * keeps resolving server-side. This is the other half of that promise: land
+   * the visitor on the canonical address instead of leaving them on a URL that
+   * works but no longer matches the company.
+   *
+   * `replace`, never push — the retired slug must not sit in history, or Back
+   * bounces the visitor straight into another redirect.
+   *
+   * The query string rides along so a shared `?page=3` link survives the move.
+   */
+  const canonicalSlug = seller.data?.slug ?? slug;
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!seller.data?.slug || seller.data.slug === slug) return;
+    const search = params.toString();
+    navigate(`/supplier/${seller.data.slug}${search ? `?${search}` : ''}`, { replace: true });
+  }, [seller.data?.slug, slug, params, navigate]);
+
   const products = useQuery({
-    queryKey: catalogueKeys.products({ seller: slug, page, pageSize: PAGE_SIZE }),
-    queryFn: () => catalogueApi.products({ seller: slug, page, pageSize: PAGE_SIZE }),
+    // Keyed on the CANONICAL slug, not the typed one: a retired slug would
+    // otherwise fetch a catalogue the API cannot resolve, flash an error, and
+    // then refetch after the redirect. This way the list loads once, correctly.
+    queryKey: catalogueKeys.products({ seller: canonicalSlug, page, pageSize: PAGE_SIZE }),
+    queryFn: () => catalogueApi.products({ seller: canonicalSlug, page, pageSize: PAGE_SIZE }),
     enabled: seller.isSuccess,
     placeholderData: (prev) => prev,
   });

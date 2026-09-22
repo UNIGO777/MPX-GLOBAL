@@ -178,7 +178,18 @@ describe('🔴 the lock — verified + locked-field change goes PENDING (2026-08
     expect(product.sellerVerified).toBe(true);
   });
 
-  it('🔴 the slug does NOT follow a rename — indexed public URLs must not break', async () => {
+  it('🔴 the slug FOLLOWS a rename, and the old URL keeps resolving', async () => {
+    // ⚠️ REVERSED 2026-09-22. This test used to assert the opposite — "the slug
+    // does NOT follow a rename — indexed public URLs must not break" — which was
+    // the decision until the owner asked for the public URL to track the company
+    // name. `m3-seo.md` permits that on one condition, and the condition is what
+    // is now under test: *"keep the old one and 301-redirect old→new. Never
+    // hard-break an indexed URL."* Moving the slug WITHOUT retiring the old one
+    // would still be the bug the original test was guarding against.
+    //
+    // `makeParty` signs up fresh, so this org is UNVERIFIED and its edits apply
+    // live. The verified path — where the URL must not move until a reviewer
+    // approves — is covered in `a22c-slug-rename.test.js`.
     const { token, user } = await makeParty('exporter');
     const before = (await Organisation.findOne({ _id: user.orgId })).slug;
 
@@ -188,8 +199,15 @@ describe('🔴 the lock — verified + locked-field change goes PENDING (2026-08
       .send({ name: 'Completely Different Name Ltd' })
       .expect(200);
 
-    const after = (await Organisation.findOne({ _id: user.orgId })).slug;
-    expect(after).toBe(before);
+    const org = await Organisation.findOne({ _id: user.orgId });
+    expect(org.slug).not.toBe(before);
+    expect(org.slug).toContain('completely-different-name-ltd');
+    expect(org.previousSlugs).toContain(before);
+
+    // The half that matters: someone holding the old link still lands on the
+    // company, and is told where the page now lives.
+    const res = await request(app).get(`/exporters/${before}`).expect(200);
+    expect(res.body.exporter.slug).toBe(org.slug);
   });
 
   it('a SAME-VALUE save on a verified org does not demote', async () => {

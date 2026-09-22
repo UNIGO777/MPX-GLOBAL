@@ -29,6 +29,7 @@ import { SavedItems } from './pages/buyer/SavedItems.jsx';
 import { ChatInbox } from './pages/chat/ChatInbox.jsx';
 import { ChatDock } from './chat/ChatDock.jsx';
 import { ChatDockProvider } from './chat/ChatDockContext.jsx';
+import { Dashboard as ExporterDashboard } from './pages/exporter/Dashboard.jsx';
 import { VerificationStatus as ExporterVerificationStatus } from './pages/exporter/VerificationStatus.jsx';
 import { KycUpload as ExporterKycUpload } from './pages/exporter/KycUpload.jsx';
 import { Products as ExporterProducts } from './pages/exporter/Products.jsx';
@@ -96,8 +97,8 @@ const ErrorLog = lazy(() =>
 const Featured = lazy(() =>
   import('./pages/admin/Featured.jsx').then((m) => ({ default: m.Featured })),
 );
-const ComingSoon = lazy(() =>
-  import('./pages/admin/ComingSoon.jsx').then((m) => ({ default: m.ComingSoon })),
+const AdminSettings = lazy(() =>
+  import('./pages/admin/Settings.jsx').then((m) => ({ default: m.Settings })),
 );
 const NoAccess = lazy(() =>
   import('./pages/admin/ComingSoon.jsx').then((m) => ({ default: m.NoAccess })),
@@ -114,8 +115,12 @@ function ChunkFallback() {
 }
 
 /**
- * Route map (build plan §2) — all M1 screens shipped. Admin areas outside the
- * M1 set render the designed ComingSoon page (logged in docs/UiWebNotes.md).
+ * Route map (build plan §2) — all M1 screens shipped.
+ *
+ * ✅ 2026-09-22: `/admin/settings` (D8) replaced the last `ComingSoon` route, so
+ * EVERY admin route now renders a real screen. `ComingSoon` itself is kept (its
+ * file also exports `NoAccess`, which is still used) but nothing routes to it —
+ * if you add a placeholder route again, log it in docs/UiWebNotes.md.
  */
 /**
  * Scroll restoration (owner-reported, 2026-08-11): the router keeps scroll
@@ -243,9 +248,13 @@ export function App() {
             {/* --- Exporter panel --- */}
             <Route element={<RequireAuth />}>
               <Route element={<RequireRole roles={['exporter']} />}>
+                <Route path="/exporter/dashboard" element={<ExporterDashboard />} />
                 <Route path="/exporter/verification" element={<ExporterVerificationStatus />} />
-                {/* Old bookmark-friendly alias — the hub moved (owner, 2026-08-11). */}
-                <Route path="/exporter" element={<Navigate to="/exporter/verification" replace />} />
+                {/* The exporter's home. It pointed at /exporter/verification from
+                    2026-08-11 until the dashboard shipped (2026-09-22); verification
+                    keeps the KYC DETAIL, the dashboard is the overview over it. Old
+                    bookmarks to /exporter/verification still resolve. */}
+                <Route path="/exporter" element={<Navigate to="/exporter/dashboard" replace />} />
                 <Route path="/exporter/kyc" element={<ExporterKycUpload />} />
                 <Route path="/exporter/company" element={<CompanyProfile />} />
                 <Route path="/exporter/products" element={<ExporterProducts />} />
@@ -294,7 +303,7 @@ export function App() {
                   <Route path="/admin/audit" element={<AuditLog />} />
                   <Route path="/admin/errors" element={<ErrorLog />} />
                   <Route path="/admin/featured" element={<Featured />} />
-                  <Route path="/admin/settings" element={<ComingSoon title="Settings" />} />
+                  <Route path="/admin/settings" element={<AdminSettings />} />
                   <Route path="/admin/no-access" element={<NoAccess />} />
                 </Route>
               </Route>

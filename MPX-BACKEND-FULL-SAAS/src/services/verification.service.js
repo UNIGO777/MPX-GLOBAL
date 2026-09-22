@@ -188,7 +188,13 @@ export async function approveChange({ orgId, sideFlag, actor, meta }) {
       org[f] = pc.values[f];
     }
   }
-  // Slug is immutable by design — a rename never rewrites indexed public URLs.
+  // 🔴 The public URL moves HERE, not when the company typed the new name.
+  // On a verified org a rename sits in `pendingChanges` until a reviewer
+  // approves it, and the live profile must not move before that — so the slug
+  // cannot follow the name in the edit endpoint the way it does for an
+  // unverified org. The old slug is retired, never dropped, so links already in
+  // the wild keep resolving (m3-seo: keep the old one, redirect old→new).
+  if (changed.includes('name')) await org.retireAndRegenerateSlug();
 
   const roundId = pc.roundId;
   org.pendingChanges = undefined;

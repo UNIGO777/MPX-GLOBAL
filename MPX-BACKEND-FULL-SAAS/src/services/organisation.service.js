@@ -46,8 +46,13 @@ function assertPartyRole(user) {
 export function ownerView(org) {
   return {
     name: org.name,
-    // The public URL's slug — immutable after creation, shown so the preview
-    // can render `/supplier/<slug>`. Only meaningful for an exporter side.
+    // The public URL's slug, shown so the preview can render `/supplier/<slug>`.
+    // Only meaningful for an exporter side.
+    //
+    // ⚠️ It FOLLOWS the company name since 2026-09-22 — this comment used to say
+    // "immutable after creation". Retired slugs live on `previousSlugs` and keep
+    // resolving, so a link that was ever public never dies; see the field's own
+    // note on the model.
     slug: org.exporterSide ? (org.slug ?? null) : null,
     country: org.country ?? null,
     address: {
@@ -169,6 +174,9 @@ export async function updateMyOrganisation({ user, patch, meta }) {
       org.markModified('address');
     }
     if (descriptionChanged) org.description = trimmed(patch.description) || undefined;
+    // The public URL follows the company name (owner, 2026-09-22). The OLD slug
+    // is retired, not dropped, so every link already out there keeps resolving.
+    if (changedLocked.includes('name')) await org.retireAndRegenerateSlug();
     await org.save();
 
     // §A23: a country change must follow into the denormalised search copy —

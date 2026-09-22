@@ -50,7 +50,10 @@ const NAV = [
   { to: '/admin/audit', label: 'Audit log', Icon: ListIcon, perms: ['audit:read'], dividerBefore: true },
   { to: '/admin/errors', label: 'Errors', Icon: AlertIcon, perms: ['errorlog:read'] },
   { to: '/admin/featured', label: 'Featured', Icon: ImageIcon, perms: ['featured:manage'] },
-  { to: '/admin/settings', label: 'Settings', Icon: SettingsIcon },
+  // Superadmin-only, matching the HARD role gate on the route — platform
+  // governance is never a grantable employee permission. Without this flag an
+  // employee saw a row that 403s.
+  { to: '/admin/settings', label: 'Settings', Icon: SettingsIcon, superadminOnly: true },
 ];
 
 const ROLE_LABELS = { superadmin: 'Super Admin', employee: 'Employee' };

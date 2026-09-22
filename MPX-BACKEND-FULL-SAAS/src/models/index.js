@@ -46,6 +46,7 @@ export { Subscription } from './Subscription.js';
 // place rather than deleted — removing it is the owner's call.
 export { Banner } from './Banner.js';
 export { CmsPage } from './CmsPage.js';
+export { Settings, SETTINGS_ID } from './Settings.js';
 export { FeaturedItem } from './FeaturedItem.js';
 
 export { SCOPE, ownershipFilter, scopedFilter } from './scoping.js';
