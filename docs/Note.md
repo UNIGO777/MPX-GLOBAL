@@ -280,6 +280,14 @@ undefined there, so anything elaborate is scope creep rather than delivery.
   Atlas is a **test-only** environment (owner-confirmed), so the dev superadmin password is not
   a production risk. The real/production superadmin must use a new secret, with
   `SEED_SUPERADMIN_PASSWORD` removed from `.env` after seeding.
+- 🔴 **`OTP_DEV_FIXED_CODE` must NEVER be set in a production `.env` (added 2026-09-22).** It
+  makes every OTP a known constant, so anyone who knows an account's email can sign in as that
+  person — it is an authentication bypass, not a logging convenience. It is double-gated
+  (`NODE_ENV === 'development'` **and** the literal string `'true'`), so a production process
+  ignores it even if the variable is present — but that gate is one missing `NODE_ENV` away from
+  mattering, which is exactly how the OTP print nearly leaked in 2026-08-07. **Before launch:
+  confirm it is absent from the production `.env`, and that `NODE_ENV=production` is set.** The
+  demo accounts that rely on it (`docs/Demo-Accounts.md`) are dev/staging only.
 - **Remove the dev-only OTP terminal print** (`otp.sender.js`). ✅ **Real OTP delivery is
   WIRED AND TESTED IN PRODUCTION (owner, 2026-08-17)** — only the dev print remains to strip;
   do not describe OTP delivery as unbuilt (it was wrongly listed as a pre-launch task in a
