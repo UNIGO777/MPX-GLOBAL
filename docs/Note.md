@@ -223,7 +223,18 @@ Do not start the screens without surfacing this alert.
   **never** on a company name the user types. The remaining blocker is the missing endpoint, nothing
   more.
 
-## D8 · Platform settings page (§3.5)  ⏸ ON HOLD — build next month (owner, 2026-08-21)
+## D8 · Platform settings page (§3.5)  ✅ BUILT 2026-09-22 (owner confirmed the override)
+
+> ✅ **DONE — do NOT red-alert on this any more.** The hold below was real until
+> 2026-09-22, when the owner was shown the alert and explicitly confirmed. Shipped:
+> `web/src/pages/admin/Settings.jsx` at `/admin/settings`, superadmin-only, with the
+> exact decided contents — AI guest daily ceiling + support contact, nothing else.
+> Backend: `Settings` single-document model, `GET/PATCH /admin/settings`, an AuditLog
+> entry on every change (§11.1), and `aiQuota.service.js` reading the override with
+> `AI_GUEST_DAILY_MAX` as the boot-time floor. Tests: `d8-platform-settings.test.js`.
+> **The exclusions below still stand** — they are why the page is two fields and not ten.
+>
+> _Original entry kept below, because the reasoning is still the reason the page looks like this._
 
 **Why it is on this list at all:** every other outstanding Clause-3 item is scheduled by agreement
 **§4.2** (quotation, employee-panel query handling, the notification layer, app-store submission).

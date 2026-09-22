@@ -32,8 +32,16 @@ IDs, takedown reason, draft/archived data) may appear in HTML, meta, JSON-LD, or
 - Generate: lowercase, trim, spaces→hyphens, strip non-alphanumeric (keep hyphens), collapse
   repeats. On collision, append a short suffix (`-a1b2`, 4 chars from the id). Store the final
   slug on the document.
-- **Immutable:** never change a slug on rename. If it must change, keep the old one and
-  **301-redirect** old→new. Never hard-break an indexed URL.
+- **Product & Category slugs are immutable:** never change one on rename.
+- **`Organisation.slug` FOLLOWS the company name** (owner, 2026-09-22 — this used to be
+  immutable too). The condition below is what makes that allowed, and it is not optional:
+  the old slug is kept on `Organisation.previousSlugs` **forever**, the public exporter read
+  resolves retired slugs and returns the **canonical** one, and the client redirects to it.
+  Retired slugs never enter the sitemap. Timing: an unverified org's slug moves with the live
+  edit; a **verified** org's moves only when a reviewer **approves** the pending name change.
+- **Whenever a slug changes, keep the old one and redirect old→new. Never hard-break an
+  indexed URL.** (SPA caveat: the redirect is a client-side `replace` plus a canonical tag,
+  not a true 301, until SSR lands — §8.)
 - **Archive exception (Part A §A6):** on archive, append an archive marker to the product slug
   (e.g. `cotton-fabric-roll` → `cotton-fabric-roll--archived-a1b2`) to free the clean slug for
   re-listing. Safe because archived products have no public page (they 404/410 and drop from the
@@ -96,8 +104,10 @@ ready so a later SSR/prerender migration breaks no URLs.
 
 ## Hard do / don't
 
-- **DO** put a unique, immutable, indexed `slug` on Product, Category, Organisation;
-  301-redirect old slugs; emit title/meta/canonical/OG/JSON-LD on every public page; noindex
-  search + filtered URLs (canonical to base); keep the sitemap to active/public entities only.
+- **DO** put a unique, indexed `slug` on Product, Category, Organisation (immutable on Product
+  and Category; on Organisation it follows the company name — see §1); retire and redirect old
+  slugs rather than dropping them; emit title/meta/canonical/OG/JSON-LD on every public page;
+  noindex search + filtered URLs (canonical to base); keep the sitemap to active/public
+  entities only — **never a retired slug**.
 - **DON'T** put raw ObjectIds in public URLs; expose any private field in HTML/meta/JSON-LD;
   index draft/inactive/archived/taken-down pages; change a slug silently on rename.

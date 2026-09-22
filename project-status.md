@@ -3,6 +3,21 @@
 **As of 2026-08-17.** Scope: **the web platform only** — the mobile app is covered in its own
 separate document.
 
+> ⚠️ **POINT-IN-TIME SNAPSHOT — parts of this report are now out of date (checked 2026-09-22).**
+> It was accurate when written; do not read it as the current state, and do not quote section 6
+> or 9 to the client without re-checking. Shipped since:
+> - **Enquiry & Chat (M4) is built** — so "Send Enquiry", the supplier-profile "Start Conversation"
+>   and the sidebar Chat entries in §6 are all **live**, not inactive. The category/search card
+>   "Inquiry" button was **removed** (one entry point by design), not left disabled.
+> - **Terms of Service and Privacy Policy pages are published** at `/terms` and `/privacy`
+>   (interim text — the client supplies the final documents).
+> - **The admin Dashboard is built.** Only `/admin/settings` is still a placeholder (D8, §3.5).
+> - **Landing testimonials and the placeholder footer columns were removed**, not filled — the
+>   footer now carries only real links. Whether more footer pages are wanted is an open question
+>   in `docs/Client-Requests.md` §2.1.
+>
+> The live pending list is **`docs/Pending-Work.md`**.
+
 Everything marked ✅ is built, connected to the live API, and checked in a real browser at
 phone, tablet, laptop and desktop sizes. Section 6 lists, without softening, the few things
 that appear on the site but are not yet switched on.

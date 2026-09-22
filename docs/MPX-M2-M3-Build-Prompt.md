@@ -335,7 +335,11 @@ A21's signup step 2 already creates the Organisation with the company fields. **
 
 Precisely: **A22's set is a superset of A21's.** Signup stays lean (name, country; exporter also `entityType` + address); the profile screen adds **logo and description**, which are optional and have no place in a signup form. For every field the two **share**, the name, validation and format must be identical — one `country` format, one address shape, one length limit. A change to a shared field on either side changes both.
 
-Slug consequence: `Organisation.slug` is generated from the company name once and is **immutable** (A6). A rename therefore does **not** change `/supplier/:slug` — the public URL keeps the old name. That is deliberate (indexed links must not break), but it must be visible on the rename screen so it is not later read as a bug.
+Slug consequence — ⚠️ **REVERSED 2026-09-22 (owner). This paragraph used to say the opposite.** `Organisation.slug` is generated from the company name and now **follows a rename**: the public URL tracks the company's current name rather than freezing its first one. Collisions still take a short suffix.
+
+The old URL is **never broken** — that is the condition `m3-seo.md` attaches to any slug move ("keep the old one and 301-redirect old→new"). Retired slugs are kept forever on `Organisation.previousSlugs`, the public exporter read resolves them, and it returns the **canonical** slug so the client redirects to it. Retired slugs never enter the sitemap.
+
+**Timing differs by verification state, and this is the part to get right:** an unverified org edits live, so its slug moves with the edit. On a **verified** org a rename lands in `pendingChanges` and the live profile must not move until a reviewer approves — so the slug moves at **approval**, not when the company typed the new name. Tests: `a22c-slug-rename.test.js`.
 
 ### A22.5 Cancelled, and what is still open
 

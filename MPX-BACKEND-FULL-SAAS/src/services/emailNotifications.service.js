@@ -7,11 +7,20 @@ import { renderEmail } from './emailTemplate.js';
  * Transactional email notifications.
  *
  * 🔴 SCOPE: these events are a D5 / Bucket-A3 item that the **owner explicitly
- * un-deferred on 2026-08-04** (`docs/Note.md` D5). Exactly four events are
- * approved — exporter verified/rejected, welcome on signup, password changed,
- * and new enquiry → exporter. **Do not add a fifth without a new alert.** In
- * particular the quote's "employee email alert on new quotation" belongs to
- * Quotation (Bucket A1) and is still deferred.
+ * un-deferred on 2026-08-04** (`docs/Note.md` D5). Four events are built —
+ * exporter verified/rejected, welcome on signup, password changed, and new
+ * enquiry → exporter.
+ *
+ * A **FIFTH is approved and still to be built: "request more information" →
+ * seller** (owner, 2026-08-21). Build it here without raising an alert — the
+ * alert was already raised and answered. Driver: agreement §3.7 requires the
+ * seller to see what is needed when more information is requested, and email is
+ * what makes a resubmission prompt rather than dependent on the seller happening
+ * to open the portal. It belongs to the request-more-info / `in_review` work.
+ *
+ * 🔴 **A SIXTH event still needs a fresh alert** — the guard stays, only its
+ * threshold moved. In particular the quote's "employee email alert on new
+ * quotation" belongs to Quotation (Bucket A1) and is still deferred.
  *
  * 🔴 FIRE-AND-FORGET BY CONSTRUCTION — same contract as `push.service.js`. A
  * notification failure must NEVER fail the thing that triggered it: an exporter

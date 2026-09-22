@@ -175,6 +175,280 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-22 — D8 · Platform settings BUILT at `/admin/settings`. Red-alerted first; owner
+  confirmed the override. The admin console now has NO placeholder routes left.**
+  D8 was on the "build next month" hold (owner, 2026-08-21), so `remind.md` required the alert
+  before touching it. Worth recording why saying yes was reasonable: it is a **month-one
+  commitment** — §4.1 puts the super admin dashboard in month one and §3.5 lists Platform settings
+  inside it, and it is the **one** Clause-3 item §4.2 never rescheduled. Building it was catching
+  up, not pulling work forward.
+  - **Contents are exactly the two decided things, and that is the point.** AI guest daily ceiling
+    + support contact. The AI ceiling is the reason the page exists at all: §3.3 says the Client
+    may change it "at any time", and it lived in `AI_GUEST_DAILY_MAX` — a `.env` edit and a
+    restart, i.e. something only we could do. 🔴 Still excluded, and the exclusions are written
+    into the model, the validator, the screen and `remind.md` so they survive: **the D1 caps**
+    (now in agreement §3.2 — an editable cap invites someone to set 5 and put the platform
+    silently out of step with the contract), OTP knobs, **any secret**, banners/featured.
+  - **Backend:** single-document `Settings` model (fixed `_id: 'platform'` — a convention-based
+    `findOne()` would happily return a second row someone inserted, and two settings documents is
+    a bug that is invisible from the UI), `GET`/`PATCH /admin/settings`, and
+    `aiQuota.service.js` now resolving the ceiling through `effectiveAiGuestDailyMax()`.
+  - 🔴 **The fallback DIRECTION is the safety property.** `guestAiAllowed()` is a spend control
+    that fails closed, so an unreadable settings document must degrade to the **env floor**, never
+    to "no ceiling configured" (which reads as unlimited). `effectiveAiGuestDailyMax()` therefore
+    never throws and falls back to `env.AI_GUEST_DAILY_MAX`. The env var is not retired by this
+    feature — it stays the boot-time floor `env.js` refuses to start production without.
+  - **§11.1 — every change is audited** (`settings.update`), with a before/after of only the fields
+    that moved; a no-op save writes nothing. 🔴 **Gotcha:** the entry carries **no `entityId`** —
+    `AuditLog.entityId` is an ObjectId and `SETTINGS_ID` is the string `'platform'`, so passing it
+    would fail to cast *inside the audit write* and turn a successful save into a 500 after the
+    fact. A platform-level action has no entity id, exactly as it has no orgId.
+  - **Governance:** `requireRole('superadmin')`, a hard gate and never a grantable permission —
+    an employee who can move the Client's AI spend ceiling or repoint the published support
+    address is a privilege-escalation path. The **sidebar row was NOT superadmin-flagged** and is
+    now, so an employee no longer sees a row that 403s.
+  - **Two lint guards did real work here, and neither was worked around:** the A6 rule bans
+    `findById*` in services, so the singleton reads via an explicit `findOne({ _id: SETTINGS_ID })`
+    like everything else in the codebase; and `react-hooks/set-state-in-effect` pushed the form
+    seeding out of an effect into the render-time "adjust state when the source changes" pattern.
+  - **Tests:** `d8-platform-settings.test.js`, 16 cases — the role gate (an employee with *every*
+    permission granted is still refused), read-does-not-write, the response carrying **only** the
+    allowlisted keys, the override taking effect, clearing it falling back to the env floor,
+    refusing 0/negative/unknown-key/empty-body, the audit entry, a no-op writing none, and the
+    document staying singular. Re-ran the AI-ceiling and audit suites: 61 passed.
+  - ✅ **`/admin/settings` was the LAST `ComingSoon` route** — every admin route now renders a real
+    screen, and the unused `ComingSoon` lazy binding came out of `App.jsx` (the component file
+    stays; it also exports `NoAccess`). `UiWebNotes` row 38 closed.
+  - **UI detail:** the action bar was first built as `sticky bottom-0` and floated over the last
+    field until you scrolled to the very end. Moved to `sticky top-0`, matching `ProductForm` and
+    `CompanyProfile` — the house pattern is a sticky **top** bar ("Save is never a scroll away").
+    Caught by rendering the page standalone against the compiled CSS, which needs no login.
+  - ⚠️ **NOT verified signed-in.** Needs a superadmin session; nobody has seen the real page yet.
+  - Ledgers moved in the same pass: `docs/Note.md` D8 and **`.claude/rules/remind.md`** both mark
+    it built, so a fresh session does not red-alert on a page that now exists.
+- **2026-09-22 — 🔴 DECISION REVERSED: `Organisation.slug` now FOLLOWS a company rename. Old
+  slugs are retired, not broken. Exporter dashboard banner rebuilt alongside it.**
+  Owner: *"changing name should change the slug also… keep old slug and redirect it to new slug"*.
+  Until today the slug was frozen at creation — the model said so in as many words
+  (*"immutable: a rename must not rewrite an indexed public URL — A6"*). `m3-seo.md` permits the
+  move on **one** condition, and that condition is the whole design: *"keep the old one and
+  301-redirect old→new. Never hard-break an indexed URL."*
+  - **`Organisation.previousSlugs`** — retired slugs, kept **forever**, with a unique multikey
+    index. 🔴 **Gotcha worth keeping:** that index needs
+    `partialFilterExpression: { previousSlugs: { $type: 'string' } }`, because MongoDB indexes an
+    **empty array as the single value `undefined`** — a plain `unique: true` would have let the
+    first org save and then rejected every other org that had never been renamed.
+  - **`retireAndRegenerateSlug()`** (schema method): regenerates from the current name, takes a
+    short id suffix on collision, pushes the old slug onto `previousSlugs`, and — the edge case —
+    on a rename **A→B→A** pulls the returning slug back OUT of the retired list, so one string is
+    never both the canonical URL and a redirect source pointing at itself. Collision checks scan
+    **both** live and retired slugs across all orgs: a retired slug still routes, so letting a new
+    company take one would silently hijack another company's old links.
+  - 🔴 **Timing differs by verification state, and this is the subtle part.** An unverified org
+    edits live, so its slug moves in `updateMyOrganisation`. A **verified** org's rename sits in
+    `pendingChanges` and the live profile must not move until approved — so its slug moves in
+    `approveChange`, not in the edit endpoint. Wiring it to the edit would have moved a verified
+    company's public URL on its own say-so, which is exactly what A22 exists to prevent.
+  - **Public read resolves retired slugs** (`getPublicExporter`) and returns the canonical one;
+    `SupplierProfile.jsx` redirects to it with `replace` (never push — Back would bounce into
+    another redirect) and keys its product query on the canonical slug so a retired URL loads the
+    catalogue once, correctly, instead of flashing an error. The canonical `<link>` already
+    pointed at the server's slug, so that half was right before any of this.
+    ⚠️ **SPA caveat, stated plainly:** this is a client-side replace plus a canonical tag, **not a
+    true 301**. A real redirect needs SSR (m3-seo §8, deferred).
+  - **Tests:** new `a22c-slug-rename.test.js` (9 cases — live rename, old-URL resolution, suffix
+    on collision, refusing a slug merely RETIRED by another org, A→B→A, verified-org timing before
+    and after approval, buyer-only orgs untouched, sitemap stays canonical-only). Full suite
+    **1078 passed / 1 failed**, and the one failure was `a22-company-profile.test.js`'s
+    *"the slug does NOT follow a rename"* — a test encoding the decision that was just reversed.
+    Rewritten to assert the new bargain, with the reversal noted in it. Suite green after.
+  - **Dev-data backfill (dev Atlas only, no script committed):** two orgs had slugs from renames
+    that predated this — `trader-alliance` → `nxtgendigitals` (NxtGenDigitals) and
+    `nxtgendigitals-f02d` → `fabrichubs` (Fabrichubs). Both old URLs retired and still resolve.
+  - 🔴 **Latent wart found, NOT fixed — flagged instead.** The clean `nxtgendigitals` slug was
+    held by a **buyer-only** org, forcing the real exporter onto `nxtgendigitals-ae62`. A buyer
+    org has **no public page** — `ownerView` returns `slug: null` for it, the sitemap filters
+    `exporterSide`, nothing routes it — yet the pre-validate hook mints a slug for **every** org,
+    so buyers silently squat public URLs they can never use. Freed that one by hand so the
+    exporter could take its own name. **The root cause stands:** stop generating slugs for
+    buyer-only orgs (and decide what happens when one later gains an exporter side via D7 claim).
+  - Docs moved in the same pass (CLAUDE.md's decision-change rule): `.claude/rules/m3-seo.md`
+    §1 + the DO list, `docs/MPX-M2-M3-Build-Prompt.md` §A22, and the `ownerView` comment in
+    `organisation.service.js` — all four asserted immutability and were actively wrong the moment
+    this shipped.
+  - **Dashboard banner** (same day, owner: *"enhance the top bar more"*, *"the verification tick
+    not looking that good here"*): added the company mark, a dark-surface status pill, engraved
+    rings + light streak matching the admin banner, and the public link with a copy button.
+    🔴 **Why the tick looked wrong:** `VerifiedTick` is the PUBLIC convention — a bare 16px
+    `text-success` check designed to sit beside a seller name **on white**. On a deep-red banner
+    it read as a stray green mark rather than a credential. It is untouched and still correct on
+    the light rail; the banner got `BannerStatus` instead, which covers all five states and
+    carries a WORD in every one, so colour is never the only signal. Verified by rendering the
+    three states standalone against the compiled CSS (no login needed).
+- **2026-09-22 — Exporter dashboard built (`/exporter/dashboard`). Red-alerted as out-of-quote
+  first; owner confirmed on app parity.**
+  🔴 **Scope, because this one needs a paper trail.** `docs/scope-of-work.md` names only a
+  **Super admin dashboard** (Module 5) and an **Employee panel** (Module 6) — there is **no seller
+  dashboard in the quote**, and it is **not** in `month1-not-doing.md` Bucket A/B nor a `Note.md`
+  D-item. So it was never *deferred*; it was never *in*. The owner confirmed building it on the
+  **parity** argument: the app already ships `ExporterHomeScreen` (built month 1), the quote covers
+  *"web application, mobile application"* as one scope, and the page needs **zero backend work**.
+  That reasoning is duplicated in the file's own header so it survives without this log.
+  - 🔴 **GOTCHA — where the "Month 2" belief came from, and it was wrong.** A dimmed
+    `{ label: 'Dashboard', soon: true }` row was added to `exporterNav.js` on 2026-08-01 and logged
+    as "later milestone". Seven weeks later that placeholder had been copied into
+    `docs/Pending-Work.md` as **"scheduled month 2"** — a schedule no document ever set. **A dead
+    nav row manufactured a feature expectation.** Corrected in both files. Watch for this shape:
+    `soon: true` is a promise, and an unowned promise grows a due date.
+  - **Four reads, all pre-existing and self-scoped:** `organisationApi.mine()` (the cache key
+    `PortalLayout` already warms), `kycApi.myVerification()`, `productsApi.mine()` — which returns
+    `products` + `counts` + `caps` in ONE call so tiles, mix bar and cap meters cannot disagree —
+    and `conversationsApi.unreadCount()`.
+  - **What it shows:** hero banner (company, tick, Add product, public-page link, live "Updated X
+    ago" + refresh) · stat bar Live/Drafts/Hidden/Unread, each linking to its own filtered list ·
+    a **needs-attention worklist** ordered by who is waiting — open document requests, rejection,
+    revocation, a pending profile change, unread enquiries, unpublished drafts · the catalogue mix
+    as one proportional bar · the 5 newest listings · a rail with verification state, the D1/§A15
+    cap meters (only while `caps.verified === false`) and the company-profile link.
+  - **Not a second verification screen.** `/exporter/verification` keeps the four-step journey,
+    the document list and the round history; the dashboard links into it. Old bookmarks still work.
+  - **Two bugs caught before they shipped, by checking the server's projection rather than
+    assuming it:** the seller row has **no `updatedAt`** (`listMine` sorts and exposes `createdAt`),
+    so "Updated …" would have rendered an em-dash on every row — now "Added …"; and a **taken-down**
+    listing keeps its own `status` (m5-rules §2), so without the second chip a moderated product
+    would have looked healthy on the seller's own home page.
+  - Admin-dashboard design language reused deliberately (banner, `AnimatedNumber`, `StatCell`,
+    `ActionRow`, `Panel`), written **locally in the file** rather than extracted from
+    `pages/admin/Dashboard.jsx` — CLAUDE.md says don't refactor adjacent code unasked. If a third
+    dashboard ever appears, that is the moment to extract them, not now.
+  - **No trend chart on purpose:** no exporter-scoped time series exists server-side, and the
+    admin dashboard's "no invented numbers" rule applies here too.
+  - Verified: `eslint` clean, `npm run build` clean, and `/exporter/dashboard` correctly redirects
+    an unauthenticated visitor to `/signin` (route registered and guarded).
+    ⚠️ **NOT verified in a browser while signed in** — that needs an exporter login, which
+    `docs/Testing.md` says comes from the owner. Nobody has looked at the rendered page yet.
+- **2026-09-22 — 🔴 BRAND COLOUR IS NOW RED across the whole web. New logo wired. Landing page and
+  the mobile app deliberately untouched.**
+  Owner decision: *"we will follow the theme and pallet of landing page"*, then *"do not make any
+  change to landing page and app"*. So `primary` was set to the **landing's approved crimson ramp
+  verbatim** (600 `#CE061A`, 700 `#AE0416`, 800 `#8A0311`) rather than a newly-invented red — the
+  rest of the web now matches a surface the owner had already signed off. The `crimson` scale is
+  **kept**, because `Landing.jsx` still references it and must not be edited. Token *names* did not
+  change, so **728 `primary-*` usages across 86 files followed with no file edits**, public pages
+  (AI search, Search, Categories, Category listing, Product detail, Supplier profile, Legal, 404)
+  included — all of them are pure token consumers with zero hardcoded hex.
+  - 🔴 **`danger` HAD to move, and this is the entry to read before anyone "restores" it.** Old
+    danger `#D92D20` sits at **1.19:1 against the new `primary-600`** — identical luminance to the
+    eye, so Save and Delete would have rendered as the same button on a platform with block,
+    revoke, reject and takedown actions. New ramp is a deep maroon anchored at `#6B2416`
+    (white text 11.12:1, 1.94:1 from the brand). **Measured ceiling: two reds cannot separate by
+    more than ~1.9:1 while still carrying white text**, so colour is no longer the only signal —
+    the confirm dialogs and the `dangerOutline` form carry the rest. Do not lighten it back toward
+    the brand.
+  - **`surface.subtle` `#EAEEFF` → `#FDF4F4`** (62 usages: the canvas behind every card in all four
+    consoles). Left blue, it would have sat the entire red product on a blue wash — the single
+    token that would have made the swap read as a mistake. `surface.unread` moved with it.
+  - **Chat follows the brand** (owner chose this over pinning it): own bubbles and the `welcome`
+    notice go red; blocked/reopened/takedown/restored keep their semantic maroon-green-amber. The
+    `.chat-canvas` gradient, its dot texture and the composer strip were **hardcoded pale blues in
+    `index.css`** and were retinted; two own-bubble/header shadows were hardcoded
+    `rgba(26,46,143,…)` navy and are now `rgba(102,2,12,…)`.
+  - 🔴 **GOTCHA — a chart broke, not just a style.** `Dashboard.jsx`'s two series were
+    `primary-600` × `warning-500`, chosen when the brand was blue: blue × amber sit **166°** of hue
+    apart. Red × amber collapses to **40°** — two warm colours nobody can separate. Second series
+    moved to a new **`navy` token (`#1A2E8F`, the logo's own blue, the old `primary-800`)**: 124°
+    apart, 2.0:1 in lightness, and colour-blind-safe where red × green would not be. **Re-measure
+    this pairing if the brand colour ever moves again.** `navy` is for DATA and the logo only —
+    never a brand surface, or the app grows a second brand colour by accident.
+  - **`Button.jsx`** reached for Tailwind's default `bg-red-700`/`bg-red-50` on the danger hovers —
+    a pre-existing `web-design.md` violation that only became visible when the brand went red
+    (a destructive hover would have drifted toward the primary colour). Now danger tokens.
+  - **New logo** (owner-supplied navy-and-red lockup). It was **already in the repo**, byte-identical
+    to `web/public/favicon.png` — added 2026-09-14 and wired only as the favicon, at 8000×4500 and
+    186 KB, i.e. an illegible speck in the tab and a 186 KB download. Sampled: the artwork has
+    exactly **two colours, `#1A2E8F` and `#E50000`** (the navy is *literally* the old
+    `primary-800`, so the earlier palette had been built from this logo all along). Generated by
+    trimming to the content bbox and converting the white ground to alpha: `brand-logo.png`
+    (1200×597, 59 KB), `brand-logo-white.png` (all-white, **required** now — the logo's navy on the
+    new deep-red sidebar is near-unreadable), and a real `favicon.png` (256×256, 9 KB) cropped to
+    the **red X mark alone**, because the full wordmark cannot read at 32px. `brand-logo-blue.png`
+    deleted; `Logo.jsx`'s `SRC` repointed and `ASPECT` corrected 800/407 → 1200/597 (every logo is
+    ~2% wider at the same height). The variant KEY is still called `blue` so the six call sites did
+    not have to change.
+  - **13 stale comment sites corrected** (`index.css`, `ChatDock`, `Button`, `Pagination`,
+    `MessageBubble`, `ThreadView`, `AuthLayout`, `ConsoleShell`, `Otp`, `Search`) — all described
+    the brand as "navy"/"blue". Per CLAUDE.md's "When a decision changes", prose that outlives its
+    behaviour is what has already cost this project twice.
+  - **Verified:** `npm run build` clean; compiled CSS audited **by rgb triplet, not hex** (Tailwind 3
+    emits `rgb(r g b / …)`, so an initial hex grep was a false pass) — every old blue and old danger
+    value is 0 occurrences, the new ramp is present, and `crimson` still compiles for the landing.
+    Screenshotted `/ai-search`, `/signin`, `/search` and `/` at 1262px.
+  - **Same day, follow-up — buttons and interactive states realigned to the landing's own steps.**
+    Owner: *"the button colour used in landing page is a bit bright and you used somewhat darker"*,
+    then *"for sidebar its ok but for buttons and other live hover and button click and other
+    things please fix"*. The ramp was already the landing's; the mismatch was **which steps
+    non-landing surfaces reached for**. Measured `Landing.jsx`'s actual vocabulary: fills
+    `crimson-600`, fill-hover `crimson-700`, **all** text and borders `crimson-700`, tints
+    `crimson-50/100` — it **never uses 800 or 900**. The consoles were using `primary-800` for
+    secondary buttons, link text, hovers and selected pills, i.e. darker than anything on the page
+    the owner approved. Fixed across **28 files / 67 lines**: every `hover:bg-primary-800` →
+    `-700`; every plain `text-primary-800` and `border-primary-800` → `-700`; `hover:text-primary-800`
+    resolved **against its own base** so no hover became a no-op (a 700 base brightens to 600,
+    everything else darkens to 700); and seven interactive fills moved 800 → **600** (the two OTP
+    submit buttons, the buyer/exporter `PortalToggle` pill, the `Pagination` current-page control,
+    the Legal Terms/Privacy tabs, a Dashboard count badge). **`bg-primary-800` now survives on
+    SURFACES only** — `ConsoleShell` sidebar and top bar, `AuthLayout`'s narrative panel,
+    `ChatDock`'s header — which is exactly what the owner signed off. Final step distribution:
+    700 (233) · 600 (198) · 50 (98) · 800 (17, all surfaces) · 900 (2, gradients).
+    `LandingBlue.jsx` was deliberately skipped — it is the dead blue trial page and is slated for
+    deletion, so its 800/900 usages are the only ones left off-surface.
+  - ⚠️ **NOT covered:** the four signed-in consoles (buyer, exporter, admin, chat) were **not seen
+    in a browser** — they need a login and the backend was not running. The token audit says they
+    changed correctly, but nobody has looked at them. Also open: `ConversationRow`'s frozen dot
+    toggles `danger-500` vs `primary-600` at 1.54:1, which needs a shape or icon difference rather
+    than colour; `ink` (333 usages) is still very slightly blue-black and was deliberately left
+    alone; and two stray `primary-*` usages inside `Landing.jsx` flipped blue→red without the file
+    being edited (arguably a fix — they were leftover blue on a red page — but it IS a visible
+    change to a page the owner said not to touch).
+- **2026-09-22 — Verified a pending-work list against the tree; created `docs/Pending-Work.md`
+  as the single live pending list; corrected stale status docs.**
+  No product code changed. Seven claims in the reviewed list were **false** and are recorded in
+  `docs/Pending-Work.md` §7 so they cannot come back: the app was never turned red
+  (`app/src/theme/colors.js` is `#2A4DE0`; `git log -S "CE061A"` shows it never entered `app/`);
+  `OTP_DEV_FIXED_CODE` **does not exist** (the real `OTP_DEV_PRINT` is a terminal echo, double-gated,
+  not an auth bypass); the suite is **not** flaky and does **not** need Docker (70 files / 1070 tests
+  passed in one sequential run); the tree was clean; four email events exist, not five.
+  - 🔴 **Gotcha worth keeping — a stale status doc propagates as a "new" finding.** The reviewed
+    list asserted production OTP delivery was unverified. That is the exact claim `docs/Note.md`'s
+    close checklist warns against ("wired and tested in production, owner 2026-08-17 — do not
+    describe OTP delivery as unbuilt"), and the likely source was the **undated** row in
+    `BUILD-STATUS.md` §6 still saying codes print to the terminal. **Corrected**, with the reason
+    written into the row. Lesson: an undated status line outlives the truth and comes back as a
+    finding — date snapshots or fix them.
+  - **`project-status.md`** now carries a POINT-IN-TIME banner listing what shipped since
+    2026-08-17 (M4 chat, `/terms` + `/privacy`, the admin dashboard; testimonials and the
+    placeholder footer columns were **removed**, not filled). Its §6/§9 must not be quoted to the
+    client unchecked. Sections 2–9 left as written — it is a dated client report, not a living doc.
+  - **`emailNotifications.service.js`** header said "exactly four events are approved — do not add
+    a fifth without a new alert". The owner **approved a fifth on 2026-08-21**
+    ("request more information" → seller, agreement §3.7). The guard was therefore blocking
+    approved work; its threshold moved to a **sixth** and the fifth is now marked build-without-alert.
+  - 🔴 **UNFIXED — needs the owner.** `.claude/rules/scope-guard.md` and `.claude/rules/remind.md`
+    still list **email notifications** as deferred and needing a red alert, though the owner
+    un-deferred email on **2026-08-04** and four events shipped. Rules load first and outrank plan
+    docs, so **a fresh session will red-alert and stop on approved work** — the failure mode
+    CLAUDE.md's "When a decision changes" section says has already cost us twice. The edit was
+    blocked by the harness's auto-mode classifier (self-editing agent-instruction files); it needs
+    explicit permission. Also note the **channel asymmetry** the rules must capture: push is two M4
+    events only, email deliberately covers non-M4 events (signup, verify/reject, password).
+  - **New finding, not previously tracked:** `docs/security-tracker.xlsx` records **0 of 58
+    controls done (0%)** with an empty Evidence column, while ~25 Phase-1 controls are built and
+    test-pinned (argon2, `tokenVersion`, helmet, Redis rate limiting, `rejectMongoOperators`, zod,
+    RBAC over 112 routes, ownership scoping, Cloudinary private+signed, `.env`-only secrets). That
+    sheet is the client's security deliverable at handover. Logged as `Pending-Work.md` B6.
+  - Minor stale docstrings found (no behaviour impact): `buyerNav.js` describes three SOON rows and
+    a dimmed Settings row that do not exist in the array; `SupplierProfile.jsx:52` calls
+    "Start Conversation" a disabled placeholder although `:262` made it real on 2026-08-17.
 - **2026-09-22 — The mobile app repainted RED + BLACK to match the web landing page.**
   Owner: *"in the full app apply red and black like the web landing page."* Done from
   `app/src/theme/colors.js` alone — every screen reads those tokens, so one file turned over

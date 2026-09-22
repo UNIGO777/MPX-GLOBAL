@@ -119,7 +119,7 @@ exists and is tested.
 
 | | |
 |---|---|
-| **Real OTP delivery** (SMS + email) | Codes currently print to the developer's terminal. **Nothing can go live without this.** |
+| ~~**Real OTP delivery** (SMS + email)~~ | ✅ **DONE — wired and tested in production (owner, 2026-08-17).** Fast2SMS for SMS, SMTP for email; Fast2SMS is India-only so any non-`+91` number falls back to email. **Do not re-list this as unbuilt** — it was wrongly carried as a pre-launch blocker in a client status report. All that remains is stripping the dev-only terminal print from `otp.sender.js`, which is on the `docs/Note.md` close checklist. |
 | **40 top-category synonyms** | Keyword→category search only half works without them |
 | **40 category images** | Category cards cannot render without them |
 | **Production VPS + MongoDB** | Needs auth enabled, backups, and the append-only audit grant |
