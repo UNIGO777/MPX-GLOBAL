@@ -170,7 +170,7 @@ function SaveGateModal({ signedIn, onClose, onLogin }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+              className="flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700"
             >
               OK
             </button>
@@ -186,7 +186,7 @@ function SaveGateModal({ signedIn, onClose, onLogin }) {
               <button
                 type="button"
                 onClick={onLogin}
-                className="flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+                className="flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700"
               >
                 Login
               </button>

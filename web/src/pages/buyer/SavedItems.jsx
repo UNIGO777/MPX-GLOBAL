@@ -199,7 +199,7 @@ export function SavedItems() {
         </div>
         <Link
           to="/search"
-          className="flex min-h-[44px] items-center text-sm font-semibold text-primary-700 hover:text-primary-800"
+          className="flex min-h-[44px] items-center text-sm font-semibold text-primary-700 hover:text-primary-600"
         >
           Find more products →
         </Link>
@@ -230,7 +230,7 @@ export function SavedItems() {
             <div className="mt-4">
               <Link
                 to="/search"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700"
               >
                 Browse products
               </Link>

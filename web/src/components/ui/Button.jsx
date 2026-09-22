@@ -1,7 +1,7 @@
 import { Spinner } from './Spinner.jsx';
 
 /**
- * Pill buttons per the Precision spec: primary = accent fill, secondary = navy
+ * Pill buttons per the Precision spec: primary = accent fill, secondary = primary-800
  * outline, ghost = text-only, danger = destructive. Every variant carries
  * loading + disabled states; loading keeps the label visible next to the
  * spinner so the button width doesn't jump.
@@ -14,16 +14,16 @@ const VARIANTS = {
   primary:
     'bg-primary-600 text-white shadow-lg shadow-primary-600/20 hover:bg-primary-700 disabled:bg-ink-300 disabled:text-ink-500 disabled:shadow-none',
   secondary:
-    'border border-primary-800 text-primary-800 bg-transparent hover:bg-primary-50 disabled:border-ink-300 disabled:text-ink-400',
+    'border border-primary-700 text-primary-700 bg-transparent hover:bg-primary-50 disabled:border-ink-300 disabled:text-ink-400',
   ghost: 'text-ink-600 hover:bg-ink-100 hover:text-ink-900 disabled:text-ink-400',
   // Approve/Verify — the design paints the affirmative decision green, so it
   // can never be mistaken for the neutral primary action next to Reject.
   success:
     'bg-success-600 text-white shadow-lg shadow-success-600/20 hover:bg-success-700 disabled:bg-ink-300 disabled:text-ink-500 disabled:shadow-none',
   danger:
-    'bg-danger text-white shadow-lg shadow-danger/20 hover:bg-red-700 disabled:bg-ink-300 disabled:text-ink-500 disabled:shadow-none',
+    'bg-danger text-white shadow-lg shadow-danger/20 hover:bg-danger-700 disabled:bg-ink-300 disabled:text-ink-500 disabled:shadow-none',
   dangerOutline:
-    'border border-danger text-danger bg-transparent hover:bg-red-50 disabled:border-ink-300 disabled:text-ink-400',
+    'border border-danger text-danger bg-transparent hover:bg-danger-50 disabled:border-ink-300 disabled:text-ink-400',
 };
 
 // md = the mockups' standard form CTA: 48px pill, 16px semibold label.

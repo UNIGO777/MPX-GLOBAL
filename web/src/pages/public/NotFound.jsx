@@ -33,7 +33,7 @@ export function NotFound() {
         <div className="mt-2 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             to="/"
-            className="inline-flex min-h-[44px] w-full items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800 sm:w-auto"
+            className="inline-flex min-h-[44px] w-full items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700 sm:w-auto"
           >
             Go to the homepage
           </Link>

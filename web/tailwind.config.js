@@ -54,23 +54,41 @@ export default {
           900: '#66020C',
         },
 
-        // Brand / primary — the ROYAL BLUE family every m1-webscreens mockup uses
-        // (History 1.13: client moved the landing blue to royal; DESIGN.md
-        // "MPX Global Precision"). primary-600 = accent (#2A4DE0) for actions,
-        // primary-700 = hover (#2340C4), primary-800 = brand navy (#1A2E8F)
-        // for the sidebar / hero panels.
+        // Brand / primary — RED, adopted platform-wide (owner, 2026-09-22:
+        // "we will follow the theme and pallet of landing page"). The values are
+        // the `crimson` ramp above, verbatim: the landing page had already been
+        // built and approved in this palette, so promoting it to `primary` makes
+        // the rest of the web match a surface the owner has actually seen,
+        // rather than a new red nobody has looked at.
+        //
+        // ⚠️ WAS ROYAL BLUE (#2A4DE0 / navy #1A2E8F) until 2026-09-22. Every
+        // m1-webscreens and m2-webscreens mockup is still blue — the mockups are
+        // NOT the colour authority any more, this file is. Do not "restore" blue
+        // to match a mockup.
+        //
+        // primary-600 = actions · primary-700 = hover and links on white
+        // (7.42:1) · primary-800 = deepest surfaces, the sidebar and hero panels
+        // that used to be brand navy.
+        //
+        // 🔴 The logo keeps its navy (#1A2E8F — it was this file's old
+        // primary-800) alongside its red. That is why no `Logo` variant changed:
+        // `variant="white"` already covers dark surfaces, which the sidebar and
+        // auth panels still are, and the navy-and-red mark on white still reads
+        // correctly in the public header. If a navy is ever needed as a UI
+        // colour again, add it as its own token — do NOT reach back into
+        // `primary`.
         primary: {
-          50: '#EAEEFF',
-          100: '#DEE1FF',
-          200: '#C3CBFF',
-          300: '#9DAAF7',
-          400: '#6478EC',
-          500: '#3D5AE6',
-          600: '#2A4DE0',
-          700: '#2340C4',
-          800: '#1A2E8F',
-          900: '#131F66',
-          DEFAULT: '#2A4DE0',
+          50: '#FFF0F1',
+          100: '#FFDBDE',
+          200: '#FFB3BA',
+          300: '#FA808D',
+          400: '#EE4657',
+          500: '#E01329',
+          600: '#CE061A', // the owner's colour — actions
+          700: '#AE0416', // hover, links on white (7.42:1)
+          800: '#8A0311', // pressed / sidebar / hero panels (9.99:1)
+          900: '#66020C',
+          DEFAULT: '#CE061A',
         },
         // Neutral ink — text (ink-900 = #000517, the mockups' "mpx-text")
         ink: {
@@ -86,18 +104,25 @@ export default {
           900: '#000517',
           DEFAULT: '#000517',
         },
-        // Surfaces — canvas behind cards is the pale blue tint, cards are white,
-        // hairlines are the mockups' #C5C6CF
+        // Surfaces — canvas behind cards is a warm near-white tint, cards are
+        // white, hairlines are the mockups' #C5C6CF.
+        //
+        // 🔴 `subtle` and `unread` were PALE BLUES (#EAEEFF / #E1E3FF) derived
+        // from the old blue brand. They moved with the red theme on 2026-09-22
+        // and this was not cosmetic: `subtle` is the canvas behind EVERY card in
+        // all four consoles (62 usages), so leaving it blue would have sat the
+        // entire red product on a blue wash — the one token that would have made
+        // the swap look like a mistake rather than a decision.
         surface: {
           DEFAULT: '#ffffff',
-          subtle: '#EAEEFF',
-          border: '#C5C6CF',
+          subtle: '#FDF4F4',
+          border: '#C5C6CF', // neutral blue-grey hairline — reads neutral, kept
           // The chat sidebar's unread row (owner-specified, 2026-08-18). A TOKEN
           // rather than an inline hex — `web-design.md` bans magic values in
           // components — and its own name rather than an alias of `primary-100`
-          // (#DEE1FF): the two are three points apart, so a later tweak to the
-          // brand scale must not silently move a colour the owner chose.
-          unread: '#E1E3FF',
+          // (#FFDBDE): keeping it separate means a later tweak to the brand
+          // scale cannot silently move a colour the owner chose.
+          unread: '#FFE9EB',
         },
         // Semantic — status & feedback.
         //
@@ -140,19 +165,49 @@ export default {
           900: '#7A2E0E',
           DEFAULT: '#F79009', // in review / pending (locked token — owner, 2026-08-01)
         },
+        // 🔴 DANGER — moved to a DEEP MAROON on 2026-09-22, and this was forced,
+        // not a preference. The brand became red the same day, and the old
+        // danger (#D92D20) measures **1.19:1 against primary-600 (#CE061A)** —
+        // the same luminance to a human eye. "Save" and "Delete" would have
+        // rendered as the same button. On a platform with block, revoke, reject
+        // and takedown actions that is a defect, not a style question.
+        //
+        // ⚠️ Two reds can never separate well by luminance alone: the best
+        // achievable against #CE061A while still carrying white text is ~1.9:1
+        // (measured across the whole hue range). So this ramp goes as dark and
+        // as brown as it can, and **colour is no longer the only signal** —
+        // destructive actions also rely on their confirm dialog and, for
+        // buttons, on the `dangerOutline` variant's different FORM. Do not
+        // lighten this ramp back toward the brand to "look more like an error".
+        //
+        // Anchors: DEFAULT/600 = #6B2416 (white text 11.12:1, 1.94:1 from the
+        // brand) · 700 = body error text (13.22:1) · 50 = error-field tint.
         danger: {
-          50: '#FEECEA', // error-field background tint (mockup convention)
-          100: '#FEE4E2',
-          200: '#FECDCA',
-          300: '#FDA29B',
-          400: '#F97066',
-          500: '#F04438',
-          600: '#D92D20',
-          700: '#B42318',
-          800: '#912018',
-          900: '#7A271A',
-          DEFAULT: '#D92D20', // rejections, destructive actions
+          50: '#FDF3F2', // error-field background tint
+          100: '#F9E2DE',
+          200: '#EFC0B7',
+          300: '#DB9384',
+          400: '#AE4E35',
+          500: '#852C1C', // status dots / audit-row bars
+          600: '#6B2416',
+          700: '#571D11',
+          800: '#43160C',
+          900: '#2F0F07',
+          DEFAULT: '#6B2416', // rejections, destructive actions
         },
+        // 🔴 The LOGO's navy — the second colour of the supplied artwork, and
+        // the old `primary-800`. It exists as its own token since 2026-09-22
+        // for one reason: **the dashboard chart needs a second series colour
+        // that is tellable apart from red.** The pairing used to be blue ×
+        // amber (166° of hue apart); with a red brand that became red × amber
+        // at 40°, which is not a distinction anyone can read. Red × this navy
+        // is 124° apart and 2.0:1 in lightness, and unlike red × green it is
+        // safe for colour-blind readers.
+        //
+        // Use it for DATA and for the logo's own colour. It is deliberately NOT
+        // a brand surface any more — do not paint sidebars, buttons or headers
+        // with it, or the app grows a second brand colour by accident.
+        navy: '#1A2E8F',
         // Flat by design — only ever used at these exact keys, no shade is
         // referenced anywhere (verified by sweep). Scale them if that changes.
         muted: '#5A6B85', // secondary/help text

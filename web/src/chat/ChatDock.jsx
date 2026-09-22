@@ -168,7 +168,7 @@ export function ChatDock() {
     >
       {dock.activeId ? (
         <>
-          {/* 🔴 ONE header for the dock (owner, 2026-08-18). It used to be a navy
+          {/* 🔴 ONE header for the dock (owner, 2026-08-18). It used to be a brand-filled
               title bar with a white block under it repeating the product and the
               platform line; the white block is gone and its two facts moved up
               here. M4-1 is why the disclosure came WITH the product rather than

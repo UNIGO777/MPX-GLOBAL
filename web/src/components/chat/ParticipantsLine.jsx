@@ -32,7 +32,7 @@ export function ParticipantsLine({ participants, className = '' }) {
     <p className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] text-ink-500 ${className}`}>
       <ShieldIcon className="h-3.5 w-3.5 shrink-0 text-primary-600" aria-hidden="true" />
       <span>
-        <span className="font-semibold text-primary-800">{platform.name}</span> is in this
+        <span className="font-semibold text-primary-700">{platform.name}</span> is in this
         conversation
       </span>
     </p>

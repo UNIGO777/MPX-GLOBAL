@@ -291,7 +291,7 @@ export function AiSearch() {
       <button
         type="button"
         onClick={() => navigate('/search')}
-        className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+        className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700"
       >
         Back to search
       </button>
@@ -532,7 +532,7 @@ export function AiSearch() {
                   </div>
                   <Link
                     to="/categories"
-                    className="mt-3 inline-flex min-h-[40px] items-center gap-1.5 px-1 text-sm font-semibold text-primary-700 hover:text-primary-800"
+                    className="mt-3 inline-flex min-h-[40px] items-center gap-1.5 px-1 text-sm font-semibold text-primary-700 hover:text-primary-600"
                   >
                     Browse all categories
                     <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
@@ -566,7 +566,7 @@ export function AiSearch() {
                   <button
                     type="button"
                     onClick={results.refetch}
-                    className="mt-3 inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+                    className="mt-3 inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700"
                   >
                     Try again
                   </button>

@@ -52,7 +52,7 @@ export function PortalToggle({ value, onChange, disabled }) {
           onClick={() => onChange(p.value)}
           className={`h-8 rounded-full text-[13px] font-semibold transition-colors ${
             value === p.value
-              ? 'bg-primary-800 text-white shadow-sm'
+              ? 'bg-primary-600 text-white shadow-sm'
               : 'text-ink-600 hover:text-ink-900'
           } disabled:cursor-not-allowed disabled:opacity-60`}
         >

@@ -256,7 +256,7 @@ export function ProductMonitoring() {
             platform's, which is exactly how this bug read. */}
         {seller && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-800 ring-1 ring-inset ring-primary-100">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-700 ring-1 ring-inset ring-primary-100">
               {/* Every row in a seller-scoped list belongs to the same company,
                   so the NAME is already in the data. The id only shows when the
                   filter matched nothing — there is no row to read a name from,
@@ -275,7 +275,7 @@ export function ProductMonitoring() {
                 type="button"
                 onClick={() => setFilter({ seller: '' })}
                 aria-label="Show every exporter's products"
-                className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-800"
+                className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-700"
               >
                 <XIcon className="h-3.5 w-3.5" />
               </button>

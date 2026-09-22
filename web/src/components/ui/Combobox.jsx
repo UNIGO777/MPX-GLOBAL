@@ -201,7 +201,7 @@ export function Combobox({
                 onPointerEnter={() => setHi(i)}
                 className={`flex w-full items-baseline justify-between gap-4 whitespace-normal px-3 py-2 text-left text-sm ${
                   i === hi ? 'bg-primary-50' : ''
-                } ${o.value === value ? 'font-medium text-primary-800' : 'text-ink-800'}`}
+                } ${o.value === value ? 'font-medium text-primary-700' : 'text-ink-800'}`}
               >
                 <span className="min-w-0 flex-1">{o.label}</span>
                 {o.hint && <span className="shrink-0 whitespace-nowrap text-xs text-muted">{o.hint}</span>}

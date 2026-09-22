@@ -160,7 +160,7 @@ export function CategoryMegaMenu({ current, linkClasses }) {
                           <CategoryThumb image={top.image} label={top.name} size="h-9 w-9" />
                           <span
                             className={`truncate text-sm ${
-                              isActive ? 'font-semibold text-primary-800' : 'font-medium text-ink-800'
+                              isActive ? 'font-semibold text-primary-700' : 'font-medium text-ink-800'
                             }`}
                           >
                             {top.name}

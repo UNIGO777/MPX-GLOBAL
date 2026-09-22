@@ -96,7 +96,7 @@ function CategoryCard({ category }) {
               <li key={s.id}>
                 <Link
                   to={`/category/${s.slug}`}
-                  className="flex items-center gap-1.5 rounded-md px-1.5 py-1.5 text-sm text-primary-700 hover:bg-surface-subtle hover:text-primary-800"
+                  className="flex items-center gap-1.5 rounded-md px-1.5 py-1.5 text-sm text-primary-700 hover:bg-surface-subtle hover:text-primary-600"
                 >
                   <ChevronRightIcon className="h-3.5 w-3.5 shrink-0 text-ink-400" />
                   <span className="truncate">{s.name}</span>
@@ -112,7 +112,7 @@ function CategoryCard({ category }) {
 
         <Link
           to={`/category/${category.slug}`}
-          className="mt-auto flex items-center gap-1 border-t border-surface-border px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary-700 hover:bg-surface-subtle hover:text-primary-800 sm:px-5"
+          className="mt-auto flex items-center gap-1 border-t border-surface-border px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary-700 hover:bg-surface-subtle hover:text-primary-600 sm:px-5"
         >
           Explore category
           {hiddenCount > 0 && <span className="font-medium normal-case tracking-normal">· +{hiddenCount} more</span>}

@@ -145,10 +145,10 @@ export function ThreadView({
   return (
     <section className="flex h-full min-h-0 flex-col bg-white">
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      {/* 🔴 The dock renders NO header here (owner, 2026-08-18). Its navy title
+      {/* 🔴 The dock renders NO header here (owner, 2026-08-18). Its brand-filled title
           bar already carries the company, the product link and the M4-1
           disclosure, so a second white block underneath repeated the same facts
-          and cost ~66px of a 512px window. One header, and it is the blue one. */}
+          and cost ~66px of a 512px window. One header, and it is the dock's own. */}
       {variant === 'dock' ? null : (
         /**
          * 🔴 Restructured 2026-08-17. It used to stack three lines — the composed
@@ -161,7 +161,7 @@ export function ThreadView({
          * presence sits underneath as one quiet line — still always visible,
          * because M4-1 requires it.
          */
-        <header className="z-10 shrink-0 border-b border-surface-border bg-gradient-to-b from-white to-primary-50/90 px-3 py-2.5 shadow-[0_1px_3px_rgba(26,46,143,0.07)] backdrop-blur-md sm:px-4">
+        <header className="z-10 shrink-0 border-b border-surface-border bg-gradient-to-b from-white to-primary-50/90 px-3 py-2.5 shadow-[0_1px_3px_rgba(102,2,12,0.07)] backdrop-blur-md sm:px-4">
           <div className="flex items-center gap-3">
             {onBack && (
               <button
@@ -257,7 +257,7 @@ export function ThreadView({
               (productLive ? (
                 <Link
                   to={`/product/${product.slug}`}
-                  className="hidden max-w-[14rem] shrink-0 items-center gap-1.5 rounded-full border border-surface-border bg-ink-50 px-2.5 py-1 text-[12px] font-semibold text-ink-700 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 sm:inline-flex"
+                  className="hidden max-w-[14rem] shrink-0 items-center gap-1.5 rounded-full border border-surface-border bg-ink-50 px-2.5 py-1 text-[12px] font-semibold text-ink-700 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 sm:inline-flex"
                 >
                   <BoxIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate">{product.name}</span>

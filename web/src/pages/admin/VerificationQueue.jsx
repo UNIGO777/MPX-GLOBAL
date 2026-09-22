@@ -313,7 +313,7 @@ export function VerificationQueue() {
                       {org.kind === 'change' ? (
                         <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
-                          <span className="text-[11px] font-semibold text-primary-800">Change re-verification</span>
+                          <span className="text-[11px] font-semibold text-primary-700">Change re-verification</span>
                         </span>
                       ) : (
                         <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-warning-50 px-2.5 py-0.5">

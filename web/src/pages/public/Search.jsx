@@ -196,7 +196,7 @@ function SortMenu({ value, onChange }) {
                   onPointerEnter={() => setHi(i)}
                   className={`flex w-full items-center justify-between gap-3 px-3.5 py-2 text-left text-sm ${
                     i === hi ? 'bg-primary-50' : ''
-                  } ${selected ? 'font-semibold text-primary-800' : 'text-ink-800'}`}
+                  } ${selected ? 'font-semibold text-primary-700' : 'text-ink-800'}`}
                 >
                   {opt.label}
                   {selected && <CheckIcon className="h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />}
@@ -337,7 +337,7 @@ function FiltersOverlay({ open, onClose, total, isPending, filterSidebarProps })
           <button
             type="button"
             onClick={onClose}
-            className="flex min-h-[44px] w-full items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+            className="flex min-h-[44px] w-full items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700"
           >
             {isPending ? 'Show results' : `Show ${total} result${total === 1 ? '' : 's'}`}
           </button>
@@ -693,7 +693,7 @@ export function Search() {
           dedicated /ai-search page (owner, 2026-08-16). Guests can use AI
           search too; no sign-in gate. */}
       {/* The AI door gets the page's one animated moment: a slow gradient
-          sheen sweeping the navy pill (motion-reduce: static), sparkle lifts
+          sheen sweeping the brand pill (motion-reduce: static), sparkle lifts
           on hover. */}
       <Link
         to="/ai-search"
@@ -845,7 +845,7 @@ export function Search() {
                     <div className="border-t border-surface-border px-4 py-2.5">
                       <Link
                         to="/categories"
-                        className="inline-flex min-h-[36px] items-center gap-1 text-xs font-semibold text-primary-700 hover:text-primary-800"
+                        className="inline-flex min-h-[36px] items-center gap-1 text-xs font-semibold text-primary-700 hover:text-primary-600"
                       >
                         Browse all categories
                         <ChevronRightIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -897,7 +897,7 @@ export function Search() {
                   <button
                     type="button"
                     onClick={() => submitQuery(didYouMean.term)}
-                    className="text-primary-700 underline underline-offset-4 hover:text-primary-800"
+                    className="text-primary-700 underline underline-offset-4 hover:text-primary-600"
                   >
                     {didYouMean.term}
                   </button>
@@ -1009,7 +1009,7 @@ export function Search() {
 
           {/* --- AI answer panel (screen 3 result treatment) --- */}
           {aiInfo && (
-            <div className="mb-5 flex w-full max-w-2xl items-start gap-2.5 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800">
+            <div className="mb-5 flex w-full max-w-2xl items-start gap-2.5 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-700">
               <SparkleIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               {/* Fallback: the AI step itself failed server-side — render as a
                   plain result, no apology, no error styling (m3 brief §3). */}
@@ -1018,7 +1018,7 @@ export function Search() {
                 type="button"
                 onClick={() => setAiInfo(null)}
                 aria-label="Dismiss"
-                className="shrink-0 text-primary-500 hover:text-primary-800"
+                className="shrink-0 text-primary-500 hover:text-primary-700"
               >
                 <XIcon className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -1106,7 +1106,7 @@ export function Search() {
                     You can also browse{' '}
                     <Link
                       to={`/category/${didYouMean.categorySlug}`}
-                      className="font-semibold text-primary-700 underline underline-offset-2 hover:text-primary-800"
+                      className="font-semibold text-primary-700 underline underline-offset-2 hover:text-primary-600"
                     >
                       the matching category
                     </Link>
@@ -1118,7 +1118,7 @@ export function Search() {
                     <button
                       type="button"
                       onClick={onClearAllFilters}
-                      className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+                      className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700"
                     >
                       Clear filters
                     </button>

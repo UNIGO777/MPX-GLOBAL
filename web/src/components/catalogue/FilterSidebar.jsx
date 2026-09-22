@@ -149,7 +149,7 @@ export function FilterSidebar({
       {!panel && appliedChips.length > 0 && (
         <div className={panel ? 'border-b border-surface-border px-4 py-3.5' : 'mb-5'}>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className={panel ? 'text-[13px] font-bold uppercase tracking-wide text-ink-400' : 'text-lg font-bold text-primary-800'}>
+            <h2 className={panel ? 'text-[13px] font-bold uppercase tracking-wide text-ink-400' : 'text-lg font-bold text-primary-700'}>
               Applied
             </h2>
             {/* The panel's own header owns "Clear all" — a second one here
@@ -178,7 +178,7 @@ export function FilterSidebar({
 
       <div className={`flex items-center justify-between gap-3 ${panel ? 'border-b border-surface-border px-4 py-3.5' : 'mb-5'}`}>
         <div>
-          <h2 className={panel || compact ? 'text-[15px] font-bold text-ink-900' : 'text-lg font-bold text-primary-800'}>
+          <h2 className={panel || compact ? 'text-[15px] font-bold text-ink-900' : 'text-lg font-bold text-primary-700'}>
             Verified sellers
           </h2>
           <span className={`mt-1 inline-flex items-center gap-1 rounded bg-success-50 px-2 py-0.5 font-medium text-success-700 ${panel || compact ? 'text-[11px]' : 'text-xs'}`}>
@@ -431,7 +431,7 @@ function RangeFields({ min, max, minPlaceholder, maxPlaceholder, onCommit, label
 function FilterSection({ title, children, flat = false, collapsible = true }) {
   const [open, setOpen] = useState(true);
   const shown = collapsible ? open : true;
-  const headingCls = flat ? 'text-[15px] font-bold text-ink-900' : 'text-lg font-bold text-primary-800';
+  const headingCls = flat ? 'text-[15px] font-bold text-ink-900' : 'text-lg font-bold text-primary-700';
   return (
     <div
       className={

@@ -688,7 +688,7 @@ function TopSettingsBody({ top, onClose, canManage, saving, onSave }) {
           >
             Search keywords
             {synonyms.length > 0 && (
-              <span className="rounded-full bg-primary-100 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-800">
+              <span className="rounded-full bg-primary-100 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-700">
                 {synonyms.length}
               </span>
             )}
@@ -700,7 +700,7 @@ function TopSettingsBody({ top, onClose, canManage, saving, onSave }) {
             {synonyms.map((syn) => (
               <span
                 key={syn}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary-50 px-2 py-1 text-xs font-medium text-primary-800"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700"
               >
                 {syn}
                 {canManage && (

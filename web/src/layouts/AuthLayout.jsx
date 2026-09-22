@@ -5,7 +5,7 @@ import { Logo } from '../components/ui/Logo.jsx';
 
 /**
  * The approved auth composition (sign-in / OTP / recovery mockups, verified
- * against the design images 2026-08-01): a 45% navy narrative panel on the
+ * against the design images 2026-08-01): a 45% primary-800 narrative panel on the
  * left, and the form sitting DIRECTLY on a white right pane at max-w-[400px]
  * — desktop shows no card border/shadow/radius. On mobile the panel hides and
  * the form becomes a white shadowed card on the canvas tint. A 4px accent bar

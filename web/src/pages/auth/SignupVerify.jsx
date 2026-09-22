@@ -160,14 +160,14 @@ export function SignupVerify() {
             // `success` is a FLAT token in tailwind.config, not a scale —
             // bg-success-100/text-success-800 compiled to nothing, so the
             // completed step rendered with no fill at all.
-            isEmail ? 'bg-primary-100 text-primary-800' : 'bg-emerald-50 text-success'
+            isEmail ? 'bg-primary-100 text-primary-700' : 'bg-emerald-50 text-success'
           }`}
         >
           {isEmail ? '1. Email' : '1. Email ✓'}
         </li>
         <li
           className={`flex-1 rounded-full px-3 py-1.5 text-center ${
-            isEmail ? 'bg-ink-100 text-ink-500' : 'bg-primary-100 text-primary-800'
+            isEmail ? 'bg-ink-100 text-ink-500' : 'bg-primary-100 text-primary-700'
           }`}
         >
           2. Phone
@@ -227,7 +227,7 @@ export function SignupVerify() {
                 className={`h-12 w-full rounded-full text-sm font-medium transition-all ${
                   resendIn > 0 || locked
                     ? 'cursor-not-allowed bg-ink-100 text-ink-500'
-                    : 'bg-primary-800 text-white hover:bg-primary-700 active:scale-[0.98]'
+                    : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98]'
                 }`}
               >
                 {resendIn > 0

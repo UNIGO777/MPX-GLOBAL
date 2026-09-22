@@ -215,9 +215,9 @@ function PartyMessage({ message, align, tone, senderName, senderType, pending, f
             // canvas a white card separates by ELEVATION, and a border made the
             // thread look like a stack of form fields. The own-side bubble gets
             // a soft vertical gradient so a long block of accent has depth
-            // instead of reading as one flat slab of navy.
+            // instead of reading as one flat slab of brand red.
             own
-              ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white shadow-[0_1px_2px_rgba(26,46,143,0.28)]'
+              ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white shadow-[0_1px_2px_rgba(102,2,12,0.28)]'
               : 'bg-white text-ink-900 shadow-[0_1px_2px_rgba(0,5,23,0.10)]',
             // The outer corner is squared on the FIRST bubble of a run, where
             // the tail attaches.

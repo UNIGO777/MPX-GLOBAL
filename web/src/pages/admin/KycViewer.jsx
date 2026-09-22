@@ -307,7 +307,7 @@ export function KycViewer() {
       {/* The old → new diff the change decision is about — beside the docs. */}
       {data?.pendingChanges && (
         <div className="mb-4 rounded-xl border border-primary-100 bg-primary-50/50 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-800">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-700">
             Requested profile change · {data.pendingChanges.state === 'awaiting_review' ? 'awaiting review' : data.pendingChanges.state.replace('_', ' ')}
           </p>
           <dl className="mt-2 space-y-1">
@@ -498,7 +498,7 @@ export function KycViewer() {
                       href={doc.signedUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-4 inline-flex h-9 items-center gap-2 rounded-full border border-primary-800 px-4 text-sm font-semibold text-primary-800 hover:bg-primary-50"
+                      className="mt-4 inline-flex h-9 items-center gap-2 rounded-full border border-primary-700 px-4 text-sm font-semibold text-primary-700 hover:bg-primary-50"
                     >
                       <ExternalIcon className="h-4 w-4" /> Open in a new tab
                     </a>

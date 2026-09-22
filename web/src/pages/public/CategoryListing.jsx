@@ -197,7 +197,7 @@ function SortMenu({ value, onChange }) {
                   onPointerEnter={() => setHi(i)}
                   className={`flex w-full items-center justify-between gap-3 px-3.5 py-2 text-left text-sm ${
                     i === hi ? 'bg-primary-50' : ''
-                  } ${selected ? 'font-semibold text-primary-800' : 'text-ink-800'}`}
+                  } ${selected ? 'font-semibold text-primary-700' : 'text-ink-800'}`}
                 >
                   {opt.label}
                   {selected && <CheckIcon className="h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />}
@@ -300,7 +300,7 @@ function SpecialisationSheetBody({ top, currentId, onClose, onPick }) {
                   <CategoryThumb image={item.image} label={item.name} size="h-9 w-9" />
                   <span
                     className={`min-w-0 flex-1 text-sm ${
-                      on ? 'font-semibold text-primary-800' : item.isAll ? 'font-semibold text-ink-900' : 'font-medium text-ink-800'
+                      on ? 'font-semibold text-primary-700' : item.isAll ? 'font-semibold text-ink-900' : 'font-medium text-ink-800'
                     }`}
                   >
                     {item.name}
@@ -440,7 +440,7 @@ function SubRail({ top, currentId, onSubPage }) {
                     className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-primary-600"
                   />
                   <CategoryThumb image={sub.image} label={sub.name} size="h-9 w-9" />
-                  <span className={`${NAME} font-semibold text-primary-800`}>{sub.name}</span>
+                  <span className={`${NAME} font-semibold text-primary-700`}>{sub.name}</span>
                   <CheckIcon className="h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
                 </span>
               ) : (
@@ -625,7 +625,7 @@ function MobileFiltersSheet({ open, onClose, total, isPending, top, cat, onSubPa
           <button
             type="button"
             onClick={onClose}
-            className="flex min-h-[44px] w-full items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+            className="flex min-h-[44px] w-full items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700"
           >
             {isPending ? 'Show results' : `Show ${total} result${total === 1 ? '' : 's'}`}
           </button>
@@ -904,12 +904,12 @@ export function CategoryListing() {
                     </p>
                     <div className="mt-4 flex flex-wrap items-center gap-2">
                       {!onSubPage && (top?.subs?.length ?? 0) > 0 && (
-                        <span className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-primary-800 ring-1 ring-primary-200">
+                        <span className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-primary-700 ring-1 ring-primary-200">
                           {top.subs.length} specialisations
                         </span>
                       )}
                       {onSubPage && top && (
-                        <span className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-primary-800 ring-1 ring-primary-200">
+                        <span className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-primary-700 ring-1 ring-primary-200">
                           Part of {top.name}
                         </span>
                       )}
@@ -1065,7 +1065,7 @@ export function CategoryListing() {
                         <button
                           type="button"
                           onClick={onClearAllFilters}
-                          className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+                          className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700"
                         >
                           Clear filters
                         </button>
@@ -1078,7 +1078,7 @@ export function CategoryListing() {
                       action={
                         <Link
                           to="/categories"
-                          className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-800"
+                          className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-white hover:bg-primary-700"
                         >
                           Browse all categories
                         </Link>

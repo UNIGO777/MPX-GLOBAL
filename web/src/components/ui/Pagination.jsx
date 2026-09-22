@@ -62,7 +62,7 @@ export function Pagination({ page, pageSize, total, onPage, onPageSize, compact 
           </select>
         </label>
         )}
-        {/* Design: ‹ 1 2 3 … 63 › — current page is a filled navy square */}
+        {/* Design: ‹ 1 2 3 … 63 › — current page is a filled primary-800 square */}
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -86,7 +86,7 @@ export function Pagination({ page, pageSize, total, onPage, onPageSize, compact 
                 aria-current={n === page ? 'page' : undefined}
                 aria-label={`Page ${n}`}
                 className={`h-8 min-w-8 rounded-md px-2 text-sm font-medium ${
-                  n === page ? 'bg-primary-800 text-white' : 'text-ink-800 hover:bg-ink-100'
+                  n === page ? 'bg-primary-600 text-white' : 'text-ink-800 hover:bg-ink-100'
                 }`}
               >
                 {n}

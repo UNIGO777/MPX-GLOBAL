@@ -120,7 +120,7 @@ export function Otp() {
       headline="One quick check, and you're in."
       sub="We send a code every time you sign in, so your account stays yours even if your password gets out."
     >
-      {/* Mockup eyebrow: 13px, ACCENT blue, uppercase, widest tracking — it is
+      {/* Mockup eyebrow: 13px, ACCENT brand, uppercase, widest tracking — it is
           a progress marker, not muted secondary text. */}
       <p className="text-[13px] font-semibold uppercase tracking-widest text-primary-600">
         Step {flow.step ?? '2 of 2'}
@@ -170,7 +170,7 @@ export function Otp() {
               </Button>
 
               {/* Resend is a full-width pill under the CTA — grey while cooling
-                  down, navy when live. */}
+                  down, brand red when live. */}
               <button
                 type="button"
                 onClick={resend}
@@ -178,7 +178,7 @@ export function Otp() {
                 className={`h-12 w-full rounded-full text-sm font-medium transition-all ${
                   resendIn > 0 || locked
                     ? 'cursor-not-allowed bg-ink-100 text-ink-500'
-                    : 'bg-primary-800 text-white hover:bg-primary-700 active:scale-[0.98]'
+                    : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98]'
                 }`}
               >
                 {resendIn > 0 ? `Didn't get it? Resend in ${resendIn}s` : "Didn't get it? Resend code"}

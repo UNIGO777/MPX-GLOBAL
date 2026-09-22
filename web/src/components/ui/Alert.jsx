@@ -2,7 +2,7 @@ import { AlertIcon, CheckCircleIcon, InfoIcon } from './icons.jsx';
 
 /** Inline alert — info / warning / danger / success, with optional title. */
 const STYLES = {
-  info: { box: 'border-primary-200 bg-primary-50 text-primary-800', Icon: InfoIcon },
+  info: { box: 'border-primary-200 bg-primary-50 text-primary-700', Icon: InfoIcon },
   warning: { box: 'border-amber-200 bg-amber-50 text-amber-800', Icon: AlertIcon },
   // Mockups' error slot: #FEECEA fill, #D92D20 border AND text (sign-in html).
   danger: { box: 'border-danger bg-danger-50 text-danger', Icon: AlertIcon },

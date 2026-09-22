@@ -243,14 +243,14 @@ export function Conversations() {
 
       {productId && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-800 ring-1 ring-inset ring-primary-100">
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-700 ring-1 ring-inset ring-primary-100">
             One product&apos;s threads
             <code className="font-mono text-[11px] text-primary-700">{productId}</code>
             <button
               type="button"
               onClick={clearParam('productId')}
               aria-label="Show threads about every product"
-              className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-800"
+              className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-700"
             >
               <XIcon className="h-3.5 w-3.5" />
             </button>
@@ -260,7 +260,7 @@ export function Conversations() {
 
       {orgId && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-800 ring-1 ring-inset ring-primary-100">
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-700 ring-1 ring-inset ring-primary-100">
             One organisation&apos;s threads{side ? ` · as ${side}` : ''}
             <code className="font-mono text-[11px] text-primary-700">{orgId}</code>
             {side && (
@@ -268,7 +268,7 @@ export function Conversations() {
                 type="button"
                 onClick={clearParam('side')}
                 aria-label="Show both sides for this organisation"
-                className="font-semibold text-primary-700 underline decoration-primary-300 underline-offset-2 hover:text-primary-800"
+                className="font-semibold text-primary-700 underline decoration-primary-300 underline-offset-2 hover:text-primary-600"
               >
                 both sides
               </button>
@@ -277,7 +277,7 @@ export function Conversations() {
               type="button"
               onClick={clearParam('orgId')}
               aria-label="Show all organisations"
-              className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-800"
+              className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-700"
             >
               <XIcon className="h-3.5 w-3.5" />
             </button>

@@ -114,7 +114,7 @@ export function ConversationRow({ conversation, active = false, onSelect, compac
           {/* The product anchor, as an object rather than a caption. */}
           {product?.name && (
             <span className="mt-1 flex">
-              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md bg-primary-50 px-1.5 text-[11.5px] font-medium leading-[18px] text-primary-800 ring-1 ring-inset ring-primary-100">
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md bg-primary-50 px-1.5 text-[11.5px] font-medium leading-[18px] text-primary-700 ring-1 ring-inset ring-primary-100">
                 <BoxIcon className="h-3 w-3 shrink-0 text-primary-500" aria-hidden="true" />
                 <span className="truncate">{product.name}</span>
               </span>

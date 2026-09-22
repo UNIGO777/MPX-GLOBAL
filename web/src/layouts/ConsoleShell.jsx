@@ -13,12 +13,12 @@ import { Logo } from '../components/ui/Logo.jsx';
  * consoles (owner: "the dashboard design is standard everywhere"). Confirmed
  * identical in all three design files:
  *
- *   aside  w-[260px] · navy · h-screen · 88px logo block · nav px-2 mt-4 space-y-1
- *   header h-[88px]  · navy · justify-end (identity block only)
- *   main   flex-1 · canvas #EAEEFF · rounded-tl-[32px] · inset shadow · scrolls
+ *   aside  w-[260px] · primary-800 · h-screen · 88px logo block · nav px-2 mt-4 space-y-1
+ *   header h-[88px]  · primary-800 · justify-end (identity block only)
+ *   main   flex-1 · canvas surface-subtle · rounded-tl-[32px] · inset shadow · scrolls
  *   wrap   max-w-[860px] · p-10
  *
- * The navy sidebar and the navy top bar are siblings, so they read as one bar
+ * The sidebar and the top bar are siblings (both primary-800), so they read as one bar
  * across the top with the wordmark at its left — that continuity is what makes
  * the curved canvas edge work. Do not put the logo in the header.
  *
@@ -256,7 +256,7 @@ export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', child
                 wordmark and the identity, so it would only crowd them. */}
             <Link
               to="/categories"
-              className="group hidden items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary-800 shadow-sm transition-colors hover:bg-primary-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-primary-800 lg:inline-flex"
+              className="group hidden items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow-sm transition-colors hover:bg-primary-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-primary-800 lg:inline-flex"
             >
               <GridIcon className="h-4 w-4" aria-hidden="true" />
               Explore categories

@@ -52,7 +52,7 @@ export function CompanyAvatar({ name, logo, size = 'md', className = '' }) {
   return (
     <span
       aria-hidden="true"
-      className={`${box} flex items-center justify-center bg-primary-50 font-bold text-primary-800 ring-1 ring-inset ring-primary-200`}
+      className={`${box} flex items-center justify-center bg-primary-50 font-bold text-primary-700 ring-1 ring-inset ring-primary-200`}
     >
       {initialsOf(name)}
     </span>

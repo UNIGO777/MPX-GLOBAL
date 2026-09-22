@@ -365,7 +365,7 @@ export function Legal() {
               to="/terms"
               aria-current={!isPrivacy ? 'page' : undefined}
               className={`rounded-xl px-4 py-2 font-semibold ${
-                !isPrivacy ? 'bg-primary-800 text-white' : 'text-ink-600 hover:bg-surface-subtle'
+                !isPrivacy ? 'bg-primary-600 text-white' : 'text-ink-600 hover:bg-surface-subtle'
               }`}
             >
               Terms of Service
@@ -374,7 +374,7 @@ export function Legal() {
               to="/privacy"
               aria-current={isPrivacy ? 'page' : undefined}
               className={`rounded-xl px-4 py-2 font-semibold ${
-                isPrivacy ? 'bg-primary-800 text-white' : 'text-ink-600 hover:bg-surface-subtle'
+                isPrivacy ? 'bg-primary-600 text-white' : 'text-ink-600 hover:bg-surface-subtle'
               }`}
             >
               Privacy Policy

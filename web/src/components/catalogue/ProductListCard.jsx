@@ -70,7 +70,7 @@ export function ProductListCard({ product, to }) {
             lg (Inquiry button rendered half-clipped). */}
         <div className="flex min-w-0 flex-1 flex-col p-4">
           <div>
-            <Link to={to} className="text-xl font-bold text-primary-800 hover:underline">
+            <Link to={to} className="text-xl font-bold text-primary-700 hover:underline">
               {product.name}
             </Link>
             {/* flex-wrap: in the narrow lg column the VERIFIED tick used to

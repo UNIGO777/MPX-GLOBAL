@@ -416,15 +416,21 @@ export function Dashboard() {
           colorClass: 'text-primary-600',
           dotClass: 'bg-primary-600',
         },
-        // Brand navy × amber — maximally distinct in hue AND lightness (the
-        // two-shades-of-blue pairing was not tellable apart), and both are core
-        // tokens of this console rather than a stock palette.
+        // 🔴 Brand red × the LOGO's navy — 124° of hue apart and 2.0:1 in
+        // lightness, so the two lines are tellable apart at a glance and for a
+        // colour-blind reader (which red × green would not be).
+        //
+        // ⚠️ This was `warning-500` (amber) until 2026-09-22, chosen when the
+        // brand was BLUE: blue × amber sit 166° apart. The red theme collapsed
+        // that to 40° — two warm colours — and a chart whose series cannot be
+        // separated is a broken chart, not a restyled one. If the brand colour
+        // ever moves again, re-measure this pairing; do not assume it survived.
         series.enquiries && {
           key: 'enq',
           label: 'New enquiries',
           values: series.enquiries,
-          colorClass: 'text-warning-500',
-          dotClass: 'bg-warning-500',
+          colorClass: 'text-navy',
+          dotClass: 'bg-navy',
         },
       ].filter(Boolean)
     : [];
@@ -473,7 +479,7 @@ export function Dashboard() {
       value: totals.conversations,
       delta: enqDelta > 0 ? `+${nf(enqDelta)}` : undefined,
       hint: enqDelta > 0 ? `enquiries in ${rangeDays} days` : `no new enquiries in ${rangeDays} days`,
-      accent: { icon: 'text-primary-800', label: 'text-primary-800' },
+      accent: { icon: 'text-primary-700', label: 'text-primary-700' },
       href: '/admin/conversations',
     },
     totals.users != null && {
@@ -560,11 +566,11 @@ export function Dashboard() {
             {canVerify && (
               <Link
                 to="/admin/verification"
-                className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-primary-800 shadow-sm transition-colors hover:bg-primary-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-primary-700 shadow-sm transition-colors hover:bg-primary-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
               >
                 Review verifications
                 {pendingReview > 0 && (
-                  <span className="rounded-full bg-primary-800 px-2 py-0.5 text-[11px] font-bold text-white">
+                  <span className="rounded-full bg-primary-600 px-2 py-0.5 text-[11px] font-bold text-white">
                     {nf(pendingReview)}
                   </span>
                 )}

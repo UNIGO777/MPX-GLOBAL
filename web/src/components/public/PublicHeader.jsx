@@ -102,7 +102,7 @@ export function PublicHeader({ centerSlot = null, current }) {
           {/* Logo + two actions + burger overflows a 320–375px bar, so below sm
               the label shortens and "Sign In" moves into the menu panel. */}
           {home ? (
-            <Link to={home} className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-800 sm:px-5`}>
+            <Link to={home} className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-700 sm:px-5`}>
               <span className="sm:hidden">Dashboard</span>
               <span className="hidden sm:inline">Go to your dashboard</span>
             </Link>
@@ -114,7 +114,7 @@ export function PublicHeader({ centerSlot = null, current }) {
               >
                 Sign In
               </Link>
-              <Link to="/signup/buyer" className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-800 sm:px-5`}>
+              <Link to="/signup/buyer" className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-700 sm:px-5`}>
                 Get Started
               </Link>
             </>

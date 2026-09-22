@@ -37,7 +37,7 @@
   /**
    * The chat surfaces.
    *
-   * The transcript is a LIGHT FIELD framed by the console's navy — a record
+   * The transcript is a LIGHT FIELD framed by the console's brand red — a record
    * being kept inside an institution, which is what this module actually is
    * (m4.md §1: "administered", not casual). Three layers make it read as a
    * material rather than a blank div:
@@ -50,17 +50,17 @@
    * topmost layer.
    */
   .chat-canvas {
-    background-color: #EDF1FC;
+    background-color: #FAEFEF;
     background-image:
-      radial-gradient(rgba(26, 46, 143, 0.035) 1px, transparent 1px),
-      linear-gradient(180deg, #F9FAFF 0%, #EDF1FC 60%, #E9EEFB 100%);
+      radial-gradient(rgba(102, 2, 12, 0.035) 1px, transparent 1px),
+      linear-gradient(180deg, #FFFAFA 0%, #FAEFEF 60%, #F7EAEB 100%);
     background-size: 22px 22px, 100% 100%;
   }
 
   /* The strip the composer floats on — the canvas gradient's own end colour, so
      the two read as one continuous field rather than a panel with a seam. */
   .chat-foot {
-    background-color: #E9EEFB;
+    background-color: #F7EAEB;
   }
 
   /* The conversation column. Tinted, so the rows can be WHITE CARDS on it —
@@ -70,7 +70,7 @@
    * place, because a full-height screen (the chat) has to subtract it and doing
    * that with literals meant three magic numbers that drifted apart.
    *
-   *   88px  the navy header (`ConsoleShell` header is h-[88px] at every width)
+   *   88px  the primary-800 header (`ConsoleShell` header is h-[88px] at every width)
    *   44px  the mobile nav strip — px-3 py-2 rows on a 20px line, plus the
    *         nav's own pb-2. It is `lg:hidden`, NOT `sm:hidden`: the sidebar
    *         only takes over at lg, so a tablet still carries the strip. That is
@@ -87,7 +87,7 @@
     }
   }
 
-  /* The dashboard banner's fine dot grid, on navy. */
+  /* The dashboard banner's fine dot grid, on the primary-800 fill. */
   .banner-texture {
     background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
     background-size: 20px 20px;
@@ -108,7 +108,7 @@
   }
 
   .chat-rail {
-    background-color: #F5F7FD;
+    background-color: #FCF5F5;
   }
 }
 
