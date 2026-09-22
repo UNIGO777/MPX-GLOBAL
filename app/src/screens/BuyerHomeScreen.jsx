@@ -962,7 +962,9 @@ const styles = StyleSheet.create({
   splitServices: { backgroundColor: '#E6F7EF' },
   splitText: { flex: 1, minWidth: 0 },
   splitGoodsTitle: { ...typography.caption, fontWeight: '800', color: colors.primary[800] },
-  splitGoodsSub: { ...typography.tiny, color: '#43539F', marginTop: 1 },
+  // Was a raw '#43539F' — a muted BLUE that survived the 2026-09-22 red
+  // repaint untouched, because it never came from the theme. Tokenised.
+  splitGoodsSub: { ...typography.tiny, color: colors.primary[700], marginTop: 1 },
   splitServicesTitle: { ...typography.caption, fontWeight: '800', color: '#05603A' },
   splitServicesSub: { ...typography.tiny, color: '#357056', marginTop: 1 },
 

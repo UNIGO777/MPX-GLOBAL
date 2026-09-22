@@ -3,25 +3,52 @@
  *
  * The two surfaces must feel like one product, so the *values* are copied and
  * the *names* match the Tailwind scale the web uses (`primary-600`, `ink-900`,
- * `surface.border`, …). When the owner confirms the final brand palette, both
- * files change together — this is the only place a hex belongs in the app.
+ * `surface.border`, …). This is the only place a hex belongs in the app.
  *
  * Never write a raw hex in a component.
+ *
+ * 🔴 RED + BLACK, 2026-09-22 (owner: "in the full app apply red and black like
+ * the web landing page"). `primary` moved from royal blue to the crimson scale
+ * the web landing uses, anchored on the owner's **#CE061A** at 600. Because
+ * every screen reads these tokens, the whole app turned over from this one file.
+ *
+ * ⚠️ THE WEB IS ONLY PART-WAY THERE. On web, crimson is a TRIAL applied to the
+ * landing page alone (`/landing-blue` still holds the blue original); the other
+ * public pages, the admin console and the logo are all still royal blue. The app
+ * is now fully red while the web is mostly blue — that is the owner's call and a
+ * known interim state, not a mistake to "fix" by reverting this file.
+ *
+ * 🔴 `success`, `warning` and `danger` are DELIBERATELY UNCHANGED. They are
+ * semantic, not brand: green means verified, amber means in review (an
+ * owner-locked token, 2026-08-01), red means destructive or failed. A brand
+ * repaint must not quietly restate what a status means.
+ *   ⚠️ Known consequence, raised with the owner: brand #CE061A and danger
+ *   #D92D20 now sit at a contrast ratio of **1.19** — indistinguishable by eye.
+ *   Error states stay readable only because this app already pairs them with an
+ *   icon and wording (`FormError`, alert glyphs, explicit labels), never colour
+ *   alone. If destructive actions should look different from ordinary ones, that
+ *   is a brand decision and needs the owner, not a silent token edit here.
  */
 export const colors = {
-  // Brand — royal blue. 600 = action, 700 = pressed, 800 = brand navy.
+  // Brand — crimson. 600 = action AND the large fills, 700 = pressed, 800 = deep.
+  //
+  // 600 carries the big surfaces (not 800, as the blue scale did) because white
+  // on #CE061A measures 5.73:1 and clears WCAG AA, so the owner's colour is what
+  // the app actually reads as rather than a dark maroon derived from it. Nothing
+  // lighter may carry white text: the next step up (#E8202F) measures 4.49:1 and
+  // fails AA by a hair.
   primary: {
-    50: '#EAEEFF',
-    100: '#DEE1FF',
-    200: '#C3CBFF',
-    300: '#9DAAF7',
-    400: '#6478EC',
-    500: '#3D5AE6',
-    600: '#2A4DE0',
-    700: '#2340C4',
-    800: '#1A2E8F',
-    900: '#131F66',
-    DEFAULT: '#2A4DE0',
+    50: '#FFF0F1',
+    100: '#FFDBDE',
+    200: '#FFB3BA',
+    300: '#FA808D',
+    400: '#EE4657',
+    500: '#E01329',
+    600: '#CE061A',
+    700: '#AE0416',
+    800: '#8A0311',
+    900: '#66020C',
+    DEFAULT: '#CE061A',
   },
 
   // Neutral ink — text.
@@ -39,10 +66,16 @@ export const colors = {
     DEFAULT: '#000517',
   },
 
-  // Surfaces — canvas is the pale blue tint, cards are white, hairlines #C5C6CF.
+  // Surfaces — canvas is a NEUTRAL grey, cards are white, hairlines #C5C6CF.
+  //
+  // 🔴 `subtle` was '#EAEEFF', which was simply primary-50 of the blue scale. Left
+  // alone it would have kept every screen's canvas tinted BLUE under a red brand —
+  // the one change that would have made the repaint look broken rather than bold.
+  // Neutral grey, matching the web landing's own page ground, so the red reads as
+  // deliberate against it instead of fighting a leftover tint.
   surface: {
     DEFAULT: '#FFFFFF',
-    subtle: '#EAEEFF',
+    subtle: '#F7F8FB',
     border: '#C5C6CF',
   },
 

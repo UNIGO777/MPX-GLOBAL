@@ -38,6 +38,13 @@ process.env.CLOUDINARY_CLOUD_NAME = 'demo';
 // depending on whose machine ran them. Pinned OFF; the cases that need it ON set
 // it explicitly.
 process.env.OTP_DEV_PRINT = 'false';
+
+// 🔴 Same trap, same fix, for the fixed-code flag (2026-09-21). A developer with
+// OTP_DEV_FIXED_CODE=true in .env would otherwise have every suite generate
+// "000000", and the cases asserting a code is RANDOM would pass or fail
+// depending on whose machine ran them. Pinned OFF; the cases that need it on
+// mock `config/env.js` directly rather than touching this.
+process.env.OTP_DEV_FIXED_CODE = 'false';
 process.env.JWT_ACCESS_SECRET =
   process.env.JWT_ACCESS_SECRET || 'test_access_secret_at_least_32_chars_long_000';
 process.env.JWT_REFRESH_SECRET =

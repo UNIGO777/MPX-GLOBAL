@@ -91,6 +91,29 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((v) => v === 'true'),
+  // 🔴 Make the OTP a PREDICTABLE run of zeros ("000000") so handed-out test
+  // accounts can be signed into without a real inbox or an Indian SIM. Added
+  // 2026-09-21 for the client demo accounts (`src/seed/test-accounts.js`).
+  //
+  // 🔴 WHAT THIS IS NOT: it is not a verification bypass. The code is still
+  // generated, argon2-hashed, expired, attempt-counted and locked exactly as a
+  // random one is — `verifyOtp` is untouched and still compares properly. Only
+  // the code's VALUE becomes predictable. A `if (code === '000000') return true`
+  // shortcut would be the bypass flag `security-baseline.md` forbids, and it is
+  // the version that survives into production unnoticed.
+  //
+  // Two independent locks, same as OTP_DEV_PRINT above and for the same reason
+  // (the live API was found running without NODE_ENV=production on 2026-08-07):
+  //   1. NODE_ENV === 'development' — 'test' excluded, so suites keep real codes
+  //   2. this flag, default-deny, only the exact string 'true'
+  //
+  // 🚫 Never set this on a server reachable by real users: anyone who knows an
+  // account's email could then sign in as them. It belongs on a throwaway
+  // dev/staging box only.
+  OTP_DEV_FIXED_CODE: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
   // KYC document size cap, in megabytes. ONE source of truth: both the multer
   // limit and the storage service read it, and the web client mirrors it for
   // copy only (VITE_KYC_MAX_MB) — the server is what actually enforces it.
@@ -191,6 +214,13 @@ const envSchema = z.object({
   SEED_SUPERADMIN_MOBILE_CC: z.string().optional(),
   SEED_SUPERADMIN_MOBILE_NUMBER: z.string().optional(),
   SEED_SUPERADMIN_PASSWORD: z.string().optional(),
+  // Shared password for the seeded DEMO accounts (`src/seed/test-accounts.js`).
+  // In `.env` only, never in source (CLAUDE.md #3) and never logged. One shared
+  // value rather than four: these are throwaway dev accounts handed to the
+  // client as a set, and four variables would be clutter for no real gain.
+  // 🚫 The seeder refuses to run outside NODE_ENV=development, so this never
+  // creates anything on a production database.
+  SEED_TEST_PASSWORD: z.string().optional(),
 })
   // Cross-field rules. Kept here rather than as per-field defaults so the
   // failure is a loud boot-time error naming the variable, not a quiet

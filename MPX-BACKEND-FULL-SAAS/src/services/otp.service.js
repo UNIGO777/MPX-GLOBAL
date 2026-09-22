@@ -15,6 +15,32 @@ function randomNumericCode(length) {
 }
 
 /**
+ * The code a new challenge will carry.
+ *
+ * 🔴 In development, with `OTP_DEV_FIXED_CODE=true`, this returns a run of zeros
+ * ("000000" at the default length) so handed-out test accounts can be signed
+ * into without a real inbox or an Indian SIM. Two independent locks — see the
+ * flag's own note in `config/env.js`.
+ *
+ * 🔴 THIS IS THE ONLY THING THE FLAG CHANGES. `verifyOtp` below is untouched:
+ * the code is still argon2-hashed into the challenge, still expires, still
+ * counts attempts and still locks. The value becomes predictable; verification
+ * does not become skippable. That distinction is the whole design — a
+ * `code === '000000'` shortcut inside `verifyOtp` would be the bypass branch
+ * `security-baseline.md` forbids, and bypasses are what survive into production.
+ *
+ * Zeros rather than a configurable literal on purpose: a code in `.env` is a
+ * value someone eventually copies to a real server, and there is nothing to
+ * tune here.
+ */
+function nextCode() {
+  if (env.NODE_ENV === 'development' && env.OTP_DEV_FIXED_CODE) {
+    return '0'.repeat(env.OTP_LENGTH);
+  }
+  return randomNumericCode(env.OTP_LENGTH);
+}
+
+/**
  * Resolve who a challenge belongs to — an account, or an A21 pending signup that
  * has no account yet.
  *
@@ -65,7 +91,7 @@ export async function requestOtp({ user, pendingSignup, purpose, channel = 'mobi
   // note on OTP_PURPOSE in models/enums.js before changing either.
   await OtpChallenge.deleteMany({ ...owner, purpose, consumedAt: null });
 
-  const code = randomNumericCode(env.OTP_LENGTH);
+  const code = nextCode();
   await OtpChallenge.create({
     ...owner,
     identifier,

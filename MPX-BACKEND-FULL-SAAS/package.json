@@ -14,6 +14,7 @@
     "lint": "eslint src tests",
     "seed": "node src/seed/superadmin.js",
     "seed:catalogue": "node src/seed/catalogue.js",
+    "seed:test-accounts": "node src/seed/test-accounts.js",
     "backfill:search": "node scripts/backfill-m3-search-fields.mjs",
     "indexes:check": "node scripts/sync-indexes.mjs --dry-run",
     "indexes:sync": "node scripts/sync-indexes.mjs"

@@ -175,6 +175,83 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-22 — The mobile app repainted RED + BLACK to match the web landing page.**
+  Owner: *"in the full app apply red and black like the web landing page."* Done from
+  `app/src/theme/colors.js` alone — every screen reads those tokens, so one file turned over
+  all 34.
+  - `primary` → the same crimson scale the web landing uses, anchored on the owner's **#CE061A**
+    at 600. 600 carries the large fills (not 800 as the blue scale did): white on #CE061A is
+    5.73:1 and clears AA, so the owner's colour is what the app reads as rather than a maroon
+    derived from it. Nothing lighter may carry white text — the next step up is 4.49:1.
+  - 🔴 **`surface.subtle` had to move too, and this was the one that would have looked broken.**
+    It was `#EAEEFF` — simply primary-50 of the BLUE scale. Left alone, every screen's canvas
+    would have stayed blue-tinted under a red brand. Now neutral grey `#F7F8FB`, the web
+    landing's own page ground.
+  - Two raw `'#43539F'` blues (the Goods split subtitle, Buyer home + Search home) were never
+    theme tokens, so the repaint would have skipped them entirely and left blue text on a red
+    card. Tokenised to `primary[700]`.
+  - ✅ **`success` / `warning` / `danger` deliberately untouched** — semantic, not brand, and
+    `warning` is an owner-locked token (2026-08-01).
+  - 🔴 **RAISED WITH THE OWNER, not silently patched:** brand `#CE061A` and danger `#D92D20` now
+    sit at a contrast ratio of **1.19** — indistinguishable by eye — and `danger` appears in 21
+    files (the destructive Sign-out button, form errors, rejection badges). Errors stay legible
+    only because this app never uses colour alone: `FormError`, alert glyphs and explicit wording
+    carry the meaning. Whether destructive actions should look different from ordinary ones is a
+    brand decision, so the token was left for the owner rather than changed here.
+  - ⚠️ **Not verified on a device.** Parse-checked only; the app has no test runner configured and
+    no APK was rebuilt for this.
+- **2026-09-21 — `docs/Project-Map.md` added: the "where does everything live" document.**
+  Owner asked for a full-project summary of what was built and which file holds what. Written
+  from a survey of the actual tree, not from memory — 111 endpoints, 1,026 tests in 71 files,
+  46 web pages / 55 routes, 34 app screens, and the backend's layer-by-layer layout.
+  Complements the docs that already existed rather than repeating them: `History.md` stays the
+  dated *why*, `scope-of-work.md` the contracted *what*, and this is the *where*. It also carries
+  a "which document answers which question" table, because the honest problem with this repo is
+  that 20 documents in `docs/` is hard to navigate cold, and §9 lists everything deliberately NOT
+  built with the D-item or bucket that records the decision — so a reader cannot mistake a
+  deferral for an omission.
+- **2026-09-21 — Demo accounts for the client, and a fixed dev OTP to sign into them.**
+  Owner asked for test logins for every panel, with OTP `000000` under
+  `NODE_ENV=development`. Owner also chose: a **separate dev/staging deployment** (not
+  production), and buyer + exporter created with **no KYC done at all**, so the client can walk
+  the real submit → review → tick journey instead of seeing a pre-verified screenshot.
+  - **Why it was needed at all:** every login is OTP-gated (`auth.service.js:191`), so handing
+    over credentials without a reachable code would have handed over nothing.
+  - 🔴 **The design decision that matters: the code's VALUE became predictable, verification did
+    NOT become skippable.** `nextCode()` returns `'0'.repeat(OTP_LENGTH)` under the locks; the
+    challenge is still argon2-hashed, still expires, still counts attempts, still locks, and
+    `verifyOtp` is untouched. A `code === '000000'` branch inside `verifyOtp` would have been the
+    bypass `security-baseline.md` forbids — and bypasses are what survive into production.
+  - **Two independent locks**, mirroring `OTP_DEV_PRINT`: `NODE_ENV === 'development'` **and**
+    `OTP_DEV_FIXED_CODE=true` (default-deny, exact string only). The second lock exists for the
+    2026-08-07 reason — the live API was once found running without `NODE_ENV=production`.
+  - 🔴 **Gotcha found while building it:** with the flag on, a dev box with Fast2SMS configured
+    would have **sent a real SMS to whoever owns the invented test number** — `canDeliverTo` only
+    checks the `+91`+10-digits *shape*. And if the provider rejected it instead, `sendSms` throws,
+    and that throw propagates out of `requestOtp` and **fails the login these accounts exist for**.
+    Fixed by skipping delivery entirely in fixed-code mode: the code is known, there is nothing to
+    send. Numbers also moved to Ofcom's reserved drama range (+44 7700 900xxx), which reaches
+    nobody by definition.
+  - **`src/seed/test-accounts.js`** (new, `npm run seed:test-accounts`): idempotent, **refuses to
+    run unless `NODE_ENV === 'development'`** (CLAUDE.md forbids seed scripts touching
+    production-shaped data), password from `SEED_TEST_PASSWORD` in `.env` and never logged.
+    Employee gets `mustChangePassword: false` — the normal `true` would have had
+    `middleware/authorize.js` block the client from **every** authorised route on first login.
+    Employee holds a **reviewer's** permission subset, not a blanket grant
+    (`security-baseline.md`); superadmin remains the all-access account.
+  - **`tests/otp-dev-fixed-code.test.js`** (8 tests, no DB needed) pins every lock combination —
+    including production-with-the-flag-on and test-with-the-flag-on — plus the no-bypass property
+    and the no-delivery property. `tests/setup.js` now pins `OTP_DEV_FIXED_CODE=false` for the
+    same reason it already pinned `OTP_DEV_PRINT`: otherwise a developer with it in `.env` would
+    flip the suite's "code is random" assertions.
+  - **`docs/Demo-Accounts.md`** (new) is the client-facing sheet — emails, roles, the journey to
+    demo, and explicitly **no password** (shared out of band).
+  - ⚠️ **Verified by running the seeder against a scratch database** (created, re-ran to confirm
+    idempotency, inspected the documents, dropped it). The DB-backed suites were **not** run —
+    Docker is down on this machine, so local Mongo is unavailable. Lint is clean and the new
+    tests pass.
+  - 🚫 **Never set `OTP_DEV_FIXED_CODE` on a server real users can reach** — anyone who knows an
+    account's email could then sign in as them.
 - **2026-08-23 — Terms of Service + Privacy Policy shipped; dead footer columns removed (web + app).**
   Owner: fix these, but **leave the App Store / Play Store badges alone for now**.
   - **`/terms` and `/privacy`** (`web/src/pages/public/Legal.jsx`, one component, two documents).

@@ -93,6 +93,22 @@ export async function sendOtp({ channel, identifier, code, purpose }) {
   // which is precisely when they need one.
   devPrintOtp({ identifier, code, purpose });
 
+  // 🔴 Fixed-code mode: send NOTHING. Added 2026-09-21 with `OTP_DEV_FIXED_CODE`.
+  //
+  // Two reasons, both real rather than tidiness:
+  //   1. A seeded test account carries a made-up mobile number. `canDeliverTo`
+  //      accepts anything shaped `+91` + 10 digits, so a dev box with Fast2SMS
+  //      configured would post a REAL SMS to whoever actually owns it.
+  //   2. If the provider rejects it instead, `sendSms` throws — and that throw
+  //      propagates out of `requestOtp` and fails the login outright, which is
+  //      exactly the demo these accounts exist for.
+  //
+  // The code is a known run of zeros; there is nothing to deliver.
+  if (env.NODE_ENV === 'development' && env.OTP_DEV_FIXED_CODE) {
+    logger.info({ channel, purpose }, 'otp delivery skipped — fixed dev code');
+    return;
+  }
+
   const smsDeliverable = channel === 'mobile' && isSmsConfigured() && canDeliverTo(identifier);
 
   if (smsDeliverable) {
