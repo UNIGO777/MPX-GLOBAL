@@ -41,6 +41,28 @@ export const conversationsApi = {
     apiClient.get(`/conversations/${id}/messages`, { params }).then((r) => r.data),
   send: (id, body) =>
     apiClient.post(`/conversations/${id}/messages`, { body }).then((r) => r.data.message),
+
+  /**
+   * D9 · the same send, with an image (scope override 2026-09-23).
+   *
+   * 🔴 A SEPARATE endpoint, not a flag on `send`. The server keeps the JSON
+   * route exactly as it was so shipped clients are untouched, and gives the
+   * multipart one its own (tighter) upload rate limit — an 8 MB file does not
+   * belong on the 60-a-minute text budget.
+   *
+   * `body` still travels and is still required: an image always goes with a
+   * line of text. A bare photograph in a commercial thread says nothing, and
+   * the push notification (which never carries message text) would have had
+   * nothing to describe.
+   */
+  sendImage: (id, { body, file }) => {
+    const form = new FormData();
+    form.append('image', file);
+    form.append('body', body);
+    return apiClient
+      .post(`/conversations/${id}/messages/image`, form)
+      .then((r) => r.data.message);
+  },
   markRead: (id) => apiClient.post(`/conversations/${id}/read`).then((r) => r.data),
 
   /**

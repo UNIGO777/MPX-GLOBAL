@@ -122,8 +122,18 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
   });
 
   const send = useMutation({
-    mutationFn: (body) => conversationsApi.send(conversationId, body),
-    onSuccess: (message, body) => {
+    /**
+     * D9 · one mutation, two transports (2026-09-23). A message with a file goes
+     * to the multipart route; without one it takes the JSON route exactly as
+     * before. The variable is an OBJECT now rather than a bare string, but every
+     * optimistic-bubble lookup below still keys off `body` — the text is what
+     * identifies a pending bubble on screen, and an image never travels alone.
+     */
+    mutationFn: ({ body, file }) =>
+      file
+        ? conversationsApi.sendImage(conversationId, { body, file })
+        : conversationsApi.send(conversationId, body),
+    onSuccess: (message, { body }) => {
       // Drop the optimistic copy and put the SERVER's message in the cache.
       setPending((prev) => prev.filter((p) => p.body !== body));
       queryClient.setQueryData(keys.messages(conversationId), (old) => {
@@ -146,7 +156,7 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
       // until it reconnects; the MESSAGE itself is never at risk, because the
       // REST response above is what wrote it.
     },
-    onError: (_err, body) => {
+    onError: (_err, { body }) => {
       // Keep the text on screen, marked failed, with a retry ON the bubble —
       // never a toast that floats away from the words the sender lost.
       setPending((prev) => prev.map((p) => (p.body === body ? { ...p, failed: true } : p)));
@@ -154,7 +164,7 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
   });
 
   const sendMessage = useCallback(
-    (body) => {
+    (body, file = null) => {
       setPending((prev) => [
         // A previous FAILED attempt at the same text is replaced rather than
         // stacked — otherwise retrying leaves two copies on screen.
@@ -168,17 +178,34 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
           body,
           createdAt: new Date().toISOString(),
           pending: true,
+          /**
+           * 🔴 The File is kept ON the pending bubble, not just handed to the
+           * mutation. Retry re-reads it from here — without that, retrying a
+           * failed image send would quietly deliver the text on its own and the
+           * sender would believe the photograph had gone.
+           * `previewUrl` is a local object URL so the bubble shows the image
+           * while it uploads, instead of a blank space that fills in later.
+           */
+          file,
+          previewUrl: file ? URL.createObjectURL(file) : null,
         },
       ]);
-      send.mutate(body);
+      send.mutate({ body, file });
     },
     [send, viewerSide],
   );
 
   const retry = useCallback(
     (body) => {
-      setPending((prev) => prev.map((p) => (p.body === body ? { ...p, failed: false, pending: true } : p)));
-      send.mutate(body);
+      let file = null;
+      setPending((prev) =>
+        prev.map((p) => {
+          if (p.body !== body) return p;
+          file = p.file ?? null;
+          return { ...p, failed: false, pending: true };
+        }),
+      );
+      send.mutate({ body, file });
     },
     [send],
   );

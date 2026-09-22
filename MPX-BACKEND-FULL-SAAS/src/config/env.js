@@ -114,6 +114,11 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((v) => v === 'true'),
+  // Chat image attachment cap, in megabytes (D9, 2026-09-23). Separate from the
+  // KYC cap on purpose: a passport scan and a photo of a fabric swatch are not
+  // the same kind of upload, and tying them together means one cannot be tuned
+  // without moving the other.
+  CHAT_ATTACHMENT_MAX_MB: z.coerce.number().int().min(1).max(25).default(8),
   // KYC document size cap, in megabytes. ONE source of truth: both the multer
   // limit and the storage service read it, and the web client mirrors it for
   // copy only (VITE_KYC_MAX_MB) — the server is what actually enforces it.

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { ErrorState } from '../ui/ErrorState.jsx';
@@ -55,6 +55,29 @@ export function ThreadView({
   headerAction = null,
 }) {
   const { conversation, messages, pending, isLoading, error } = thread;
+
+  /**
+   * D9 · the image queued in the composer (2026-09-23).
+   *
+   * 🔴 The object URL is REVOKED whenever it is replaced or cleared. Without
+   * that, every picked-then-changed image leaks a blob for the life of the tab —
+   * and a chat is a screen people leave open all day.
+   */
+  const [image, setImage] = useState(null);
+
+  const clearImage = useCallback(() => {
+    setImage((prev) => {
+      if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+      return null;
+    });
+  }, []);
+
+  const setImageFromFile = useCallback((file) => {
+    setImage((prev) => {
+      if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+      return { file, previewUrl: URL.createObjectURL(file) };
+    });
+  }, []);
   const scrollRef = useRef(null);
   const bottomRef = useRef(null);
   // Set from a scroll EVENT, never in an effect — the brief's "new messages"
@@ -391,9 +414,13 @@ export function ThreadView({
                  bubble now holds the text, and a failed send keeps it on that
                  bubble with a Retry. Leaving it in the composer meant the
                  sender saw their line twice and could send it again. */
+              image={image}
+              onPickImage={setImageFromFile}
+              onClearImage={clearImage}
               onSend={(body) => {
-                thread.sendMessage(body);
+                thread.sendMessage(body, image?.file ?? null);
                 onDraftChange('');
+                clearImage();
               }}
               sending={thread.sending}
               autoFocus={variant === 'dock'}

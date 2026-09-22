@@ -1,4 +1,7 @@
+import { useState } from 'react';
+
 import { formatTime } from '../../lib/format.js';
+import { Lightbox } from '../ui/Lightbox.jsx';
 import { AlertIcon, CheckIcon, ShieldIcon, SlashIcon } from '../ui/icons.jsx';
 
 /**
@@ -194,6 +197,7 @@ function SystemNotice({ message, compact }) {
 }
 
 function PartyMessage({ message, align, tone, senderName, senderType, pending, failed, onRetry, startsGroup, compact }) {
+  const [zoomed, setZoomed] = useState(false);
   const timeText = pending ? 'Sending' : formatTime(message.createdAt);
   /* ONE source for the clock's size. The invisible spacer that reserves room for
      it on the last line must measure the same text, or a short message runs into
@@ -259,6 +263,52 @@ function PartyMessage({ message, align, tone, senderName, senderType, pending, f
               reserve exactly its width on the last line, and the real one is
               positioned over that gap. A one-line message therefore grows
               sideways and stays one line tall. */}
+          {/* D9 · the image, above its line of text (2026-09-23).
+              `previewUrl` is the local blob shown while an optimistic bubble
+              uploads; `attachment.url` is the server's SHORT-LIVED SIGNED url,
+              minted per read. Width/height come from the server so the bubble
+              reserves the right box and the thread does not jump as each image
+              loads. */}
+          {(message.previewUrl || message.attachment?.url) && (
+            <>
+              {/* 🔴 A modal, not `target="_blank"` (owner, 2026-09-23). A new tab
+                  was also the wrong place for THIS image specifically: the
+                  server's url is a short-lived signed one, so a tab left open
+                  would show a dead link minutes later, and the url itself would
+                  sit in the browser's history. The lightbox keeps it on the page
+                  and inside its lifetime.
+                  The component is the one the product gallery uses — shared on
+                  the same day rather than copied, so the focus trap, Escape,
+                  scroll lock and the portal fix apply here too. */}
+              <button
+                type="button"
+                onClick={() => setZoomed(true)}
+                aria-label="View image full size"
+                className="mb-1.5 block overflow-hidden rounded-xl"
+              >
+                <img
+                  src={message.previewUrl ?? message.attachment.url}
+                  alt=""
+                  width={message.attachment?.width ?? undefined}
+                  height={message.attachment?.height ?? undefined}
+                  loading="lazy"
+                  className={`max-h-72 w-auto max-w-full rounded-xl object-cover ${
+                    message.pending ? 'opacity-60' : ''
+                  }`}
+                />
+              </button>
+              {zoomed && (
+                <Lightbox
+                  images={[message.attachment?.url ?? message.previewUrl]}
+                  active={0}
+                  name="Shared image"
+                  onNavigate={() => {}}
+                  onClose={() => setZoomed(false)}
+                />
+              )}
+            </>
+          )}
+
           <p className="whitespace-pre-wrap break-words">
             {message.body}
             {/* 🔴 `tabular-nums` MUST match the real timestamp below. Without it

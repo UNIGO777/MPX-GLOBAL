@@ -40,6 +40,27 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
 
 ---
 
+## D9 · Chat attachments (images)  ✅ OVERRIDE GRANTED 2026-09-23 — BUILDING
+- **What it was:** explicitly OUT of scope. `modules-in-detailed/m4/m4.md` line 15 lists
+  "attachments" among the module's out-of-scope items, and **M4-14** says *"No attachments in
+  month 1. Document exchange waits for the Quotation module"* — and Quotation is Bucket A1.
+- **🔴 RED ALERT was raised** (2026-09-23) naming both lines and stating it is a scope change /
+  change-request. **The owner confirmed: "ha karo karna h".** That is the override; do not
+  re-alert on chat image attachments.
+- **Scope of the override — IMAGES ONLY.** The owner's words were "attachments like images".
+  PDFs and other documents are NOT covered: document exchange is still what M4-14 parks with
+  the Quotation module, and widening to arbitrary files is a separate decision.
+- 🔴 **Stored PRIVATE, like KYC — not public, like product photos.** A chat image is one
+  company's private commercial correspondence with another. It follows
+  `kyc.storage.service.js`: a Cloudinary *private* asset with an unguessable id, no publicly
+  reachable URL ever stored or returned, and a short-lived signed URL minted per request.
+  Product images are public assets and that pattern must NOT be reused here.
+- ⚠️ **Consequences accepted with the override, all recorded so nobody is surprised later:**
+  - It is the **first time a user can send a file to another user** on this platform.
+  - `m4.md` **M4-15** puts content detection in Phase 2, so nothing scans what is sent.
+  - Staff with `conversation:read` will see attachments when they read a thread; that read is
+    already audited, and the admin viewer needs the same signed-URL treatment.
+
 ## D1 · Unverified seller = max 3 ACTIVE products (+10 drafts)  🧭 BUILD-TIME REMINDER (confirmed scope)
 - **Rule (owner-confirmed, refined by Part A §A10/§A15):** an unverified seller may hold at most
   **3 ACTIVE (published) products** — **taken-down products do NOT count** toward the cap

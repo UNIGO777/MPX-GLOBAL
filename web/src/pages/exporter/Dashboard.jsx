@@ -403,7 +403,18 @@ function MixBar({ counts }) {
   if (total === 0) return null;
 
   return (
-    <div className="px-5 pb-4 pt-1">
+    /* 🔴 `py-4`, not `pb-4 pt-1` (fixed 2026-09-23). The 4px top pinned the bar
+       against the header's own bottom border while 16px sat under the legend —
+       the block read as if it had slipped upward out of its own space. Equal
+       padding top and bottom is the whole fix; the 10px between bar and legend
+       is the internal gap and stays.
+
+       The divider moved here as `border-b` and came OFF the list below, which
+       fixes a second defect: this component returns null when the seller has no
+       products at all, and the list's own `border-t` then landed directly under
+       the header's `border-b` — two 1px rules stacked into one 2px line. One
+       divider now belongs to one element. */
+    <div className="border-b border-surface-border px-5 py-4">
       <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-ink-100">
         {segments
           .filter((s) => s.value > 0)
@@ -808,7 +819,7 @@ export function Dashboard() {
                 ) : null
               }
             >
-              <ul className="divide-y divide-surface-border border-t border-surface-border">
+              <ul className="divide-y divide-surface-border">
                 {rows.slice(0, RECENT).map((p) => (
                   <li key={p.id ?? p._id}>
                     <Link

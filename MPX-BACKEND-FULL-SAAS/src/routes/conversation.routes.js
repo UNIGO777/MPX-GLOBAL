@@ -3,7 +3,8 @@ import { Router } from 'express';
 import { validate } from '../middleware/validate.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requirePermissions } from '../middleware/authorize.js';
-import { generalLimiter, messageLimiter } from '../middleware/rateLimit.js';
+import { generalLimiter, messageLimiter, uploadLimiter } from '../middleware/rateLimit.js';
+import { uploadChatImage } from '../middleware/upload.js';
 import { PERMISSIONS } from '../config/permissions.js';
 import * as ctrl from '../controllers/conversations.controller.js';
 import * as adminCtrl from '../controllers/adminConversations.controller.js';
@@ -73,6 +74,31 @@ conversationRouter.post(
   '/conversations/:id/messages',
   authenticate,
   messageLimiter,
+  validate(V.sendMessage),
+  ctrl.send,
+);
+
+/**
+ * D9 · the same send, with an image (scope override 2026-09-23).
+ *
+ * 🔴 A SEPARATE route rather than making the existing one multipart. Three
+ * reasons, each real:
+ *   1. Every existing client posts JSON here, and `validate()` reads a parsed
+ *      JSON body. Turning this into multipart would have changed the contract
+ *      under the shipped web and app builds at once.
+ *   2. `messageLimiter` is the right budget for a line of text and the wrong one
+ *      for an 8 MB upload, which deserves the tighter `uploadLimiter`.
+ *   3. multer must run BEFORE zod (it is what populates the text fields of a
+ *      multipart body), so the middleware order genuinely differs.
+ *
+ * The guards do not differ: both land in the same `sendMessage`, which checks
+ * membership and the frozen state before a byte is stored.
+ */
+conversationRouter.post(
+  '/conversations/:id/messages/image',
+  authenticate,
+  uploadLimiter,
+  uploadChatImage,
   validate(V.sendMessage),
   ctrl.send,
 );

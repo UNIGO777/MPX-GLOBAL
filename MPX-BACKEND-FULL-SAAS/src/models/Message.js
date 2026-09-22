@@ -39,6 +39,28 @@ const messageSchema = new Schema(
 
     body: { type: String, required: true, trim: true, maxlength: BODY_CEILING },
 
+    /**
+     * M4 · image attachment (D9 — scope override 2026-09-23).
+     *
+     * 🔴 `storageKey` is a Cloudinary PRIVATE public_id, never a URL. There is no
+     * publicly reachable address for this asset; `messageView` mints a
+     * short-lived signed URL per read, and the key itself must never reach a
+     * client — it is the one field here that would outlive the TTL.
+     *
+     * Optional: `body` stays required, so an image always travels with a line of
+     * text. That is deliberate — a bare image in a commercial thread says
+     * nothing, and the notification copy (which never includes message text,
+     * D-N1) would have had nothing to describe either.
+     */
+    attachment: {
+      storageKey: { type: String, trim: true },
+      format: { type: String, trim: true },
+      mime: { type: String, trim: true },
+      bytes: { type: Number, min: 0 },
+      width: { type: Number, min: 0 },
+      height: { type: Number, min: 0 },
+    },
+
     // Only ever present on a `system` message, and only on ones written after
     // 2026-08-18 — older notices predate the field and cannot be backfilled
     // (M4-13: append-only). Absent means "render it neutrally", not "invalid".

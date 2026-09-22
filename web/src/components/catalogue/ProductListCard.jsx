@@ -52,7 +52,20 @@ export function ProductListCard({ product, to }) {
           width, lg loses 280px to the rail, xl+ earns it back
           (responsive audit, 2026-08-14). */}
       <article className="flex flex-col overflow-hidden rounded-xl border border-surface-border bg-white shadow-card transition-shadow hover:shadow-lift md:flex-row">
-        <div className="relative w-full shrink-0 md:h-auto md:w-[320px] lg:w-[300px] xl:w-[360px] 2xl:w-[400px]">
+        {/* 🔴 `md:aspect-[4/3]`, NOT `md:h-auto` (fixed 2026-09-23 — owner: "why
+            is this card too much bigger than the others").
+            With `h-auto` on this column the `md:h-full` below was a percentage
+            height against an auto-height parent, which CSS resolves to the
+            image's OWN natural height. A portrait photograph therefore set the
+            card's height, and one tall saree shot made its row roughly twice
+            the height of every other card, with a large empty gap beside the
+            text. An aspect ratio gives the column a definite height derived
+            from its width, so every card in the list matches regardless of what
+            shape the seller uploaded.
+            It still STRETCHES when the text column is the taller of the two —
+            flex `align-items: stretch` wins over the ratio there — so a long
+            description never leaves a gap under the image. */}
+        <div className="relative w-full shrink-0 md:aspect-[4/3] md:w-[320px] lg:w-[300px] xl:w-[360px] 2xl:w-[400px]">
           {cover ? (
             <img src={cover} alt="" loading="lazy" className="h-64 w-full object-cover md:h-full" />
           ) : (

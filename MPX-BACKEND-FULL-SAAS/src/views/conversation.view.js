@@ -12,6 +12,8 @@
  * party. Widening this file is how they would leak.
  */
 
+import { signedChatImageUrl } from '../services/chatAttachment.storage.service.js';
+
 const PLATFORM_NAME = 'MPX Global';
 
 /**
@@ -177,6 +179,28 @@ export function messageView(message) {
     // messages are append-only (M4-13), so those can never be backfilled.
     systemKind: message.senderType === 'system' ? (message.systemKind ?? null) : null,
     body: message.body,
+    /**
+     * D9 · the image, as a SHORT-LIVED SIGNED URL minted per read.
+     *
+     * 🔴 `storageKey` never leaves the server. It is the permanent handle; a
+     * signed URL is a temporary one. Returning the key — even "just to the two
+     * parties" — would hand out something that outlives the TTL and survives
+     * being forwarded, which is the whole reason these assets are private.
+     *
+     * Width and height ride along so a client can reserve the right box before
+     * the image loads; without them every attachment shifts the thread as it
+     * arrives.
+     */
+    attachment: message.attachment?.storageKey
+      ? {
+          url: signedChatImageUrl({
+            storageKey: message.attachment.storageKey,
+            format: message.attachment.format,
+          }),
+          width: message.attachment.width ?? null,
+          height: message.attachment.height ?? null,
+        }
+      : null,
     createdAt: message.createdAt,
   };
 }

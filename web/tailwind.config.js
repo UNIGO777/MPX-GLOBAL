@@ -115,6 +115,11 @@ export default {
         // the swap look like a mistake rather than a decision.
         surface: {
           DEFAULT: '#ffffff',
+          // 🔴 The landing hero's page ground (owner's mockup, 2026-09-23). A WARM
+          // off-white, deliberately NOT `ink-50` (#F7F8FB): the ink scale carries a
+          // blue cast, which fights a red brand — together they read cold and slightly
+          // dirty. One token, one reason (web-design.md).
+          canvas: '#F5F2EF',
           subtle: '#FDF4F4',
           border: '#C5C6CF', // neutral blue-grey hairline — reads neutral, kept
           // The chat sidebar's unread row (owner-specified, 2026-08-18). A TOKEN

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { SendIcon } from '../ui/icons.jsx';
+import { ImageIcon, SendIcon, XIcon } from '../ui/icons.jsx';
 import { Spinner } from '../ui/Spinner.jsx';
 
 /**
@@ -31,7 +31,21 @@ const MAX_HEIGHT = 120;
 // 2πr for r=20 — the ring's circumference, which drives the dash offset.
 const RING_LENGTH = 125.66;
 
-export function Composer({ value, onChange, onSend, sending, autoFocus = false, placeholder, compact = false }) {
+export function Composer({
+  value,
+  onChange,
+  onSend,
+  sending,
+  autoFocus = false,
+  placeholder,
+  compact = false,
+  // D9 · image attachments (2026-09-23). Optional: the composer is also used
+  // where attaching makes no sense, and an attach button with nowhere to send
+  // is exactly the dead control `web-ui-notes.md` forbids.
+  image = null,
+  onPickImage,
+  onClearImage,
+}) {
   const textareaRef = useRef(null);
   const [focused, setFocused] = useState(false);
 
@@ -84,6 +98,34 @@ export function Composer({ value, onChange, onSend, sending, autoFocus = false, 
          the ring on focus is what says it is one control. */
       className="rounded-2xl bg-white p-1.5 shadow-[0_1px_2px_rgba(0,5,23,0.06),0_10px_24px_rgba(0,5,23,0.07)] ring-1 ring-surface-border/70 transition-shadow focus-within:ring-2 focus-within:ring-primary-600"
     >
+      {/* The chosen image, before it is sent. Shown so nobody fires an 8 MB
+          file at a supplier without seeing which one they picked. */}
+      {image && (
+        <div className="mb-1.5 flex items-center gap-2.5 rounded-xl bg-ink-50 p-2">
+          <img
+            src={image.previewUrl}
+            alt=""
+            className="h-12 w-12 shrink-0 rounded-lg object-cover"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[12.5px] font-semibold text-ink-900">
+              {image.file.name}
+            </span>
+            <span className="block text-[11px] text-muted">
+              {(image.file.size / (1024 * 1024)).toFixed(1)} MB
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={onClearImage}
+            className="shrink-0 rounded-full p-1.5 text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900"
+            aria-label="Remove image"
+          >
+            <XIcon className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-end gap-2">
         <label htmlFor="chat-composer" className="sr-only">
           Write a message
@@ -109,6 +151,52 @@ export function Composer({ value, onChange, onSend, sending, autoFocus = false, 
         <span aria-live="polite" className="sr-only">
           {showRing ? `${remaining} characters remaining` : ''}
         </span>
+
+        {/* Attach. Rendered only when the parent actually handles a file. */}
+        {onPickImage && (
+          <>
+            <input
+              id="chat-image"
+              type="file"
+              /* Narrowed to the four types the server's magic-byte allowlist
+                 accepts. This only filters the picker — the server re-verifies
+                 by real bytes regardless, because an `accept` attribute is a
+                 convenience, never a control. */
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                // Reset first: picking the SAME file twice fires no change
+                // event otherwise, so a retry after a failed send does nothing.
+                e.target.value = '';
+                if (file) onPickImage(file);
+              }}
+            />
+            {/* 🔴 Wrapped in the SAME `h-11 w-11` box the send button sits in,
+                and given the same inner size and icon size. Without the wrapper
+                this label was a bare `h-9` flex child against a send button
+                centred inside an `h-11` span — the row is `items-end`, so the
+                two ended up on different baselines and read as different sizes
+                even though both inner boxes were 36px. Any change to one of
+                these two controls has to be made to the other. */}
+            <span
+              className={`flex shrink-0 items-center justify-center ${
+                compact ? 'h-9 w-9' : 'h-11 w-11'
+              }`}
+            >
+              <label
+                htmlFor="chat-image"
+                title="Attach an image"
+                className={`flex cursor-pointer items-center justify-center rounded-full text-ink-500 transition-colors hover:bg-ink-50 hover:text-ink-900 ${
+                  compact ? 'h-8 w-8' : 'h-9 w-9'
+                }`}
+              >
+                <ImageIcon className="h-[17px] w-[17px]" aria-hidden="true" />
+                <span className="sr-only">Attach an image</span>
+              </label>
+            </span>
+          </>
+        )}
 
         <span
           className={`relative flex shrink-0 items-center justify-center ${

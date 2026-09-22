@@ -26,7 +26,18 @@ import { EnquiryModal } from './EnquiryModal.jsx';
  * the server will refuse. The self-enquiry guard (M4-39) is real and lives in
  * the service; this is not enforcement, only honesty about what will work.
  */
-export function EnquiryButton({ product }) {
+/**
+ * 🆕 `framed` (2026-09-23 product-page mockup) wraps the CTA in the dark
+ * "Request a quote" panel the mockup draws.
+ *
+ * 🔴 It is a PROP here rather than a card built in `ProductDetail`, and that is
+ * deliberate: every reason this component renders nothing — an exporter
+ * account, staff, the seller's own listing — lives below. A card built around
+ * it on the page would have to repeat those guards to avoid drawing an empty
+ * navy box, and a duplicated guard is a guard that drifts. Framing from inside
+ * means one condition, one place.
+ */
+export function EnquiryButton({ product, framed = false }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -95,7 +106,7 @@ export function EnquiryButton({ product }) {
     setOpenedByClick(true);
   };
 
-  return (
+  const body = (
     <>
       {conversationId ? (
         <div className="mt-5">
@@ -138,5 +149,31 @@ export function EnquiryButton({ product }) {
         />
       )}
     </>
+  );
+
+  if (!framed) return body;
+
+  return (
+    <div className="mt-5 rounded-2xl bg-ink-900 p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-sm font-bold text-white">Request a quote</p>
+        <p className="text-xs text-ink-400">Free · no commitment</p>
+      </div>
+      {/* 🔴 The mockup put quantity and destination country inline here. They
+          are NOT duplicated: both already live in `EnquiryModal`, alongside the
+          `note` the API requires (1–200 chars, `inquiry.validators.js`). An
+          inline pair would have collected two of the three fields and still had
+          to open the modal for the third — two places to keep in step, and a
+          form that looks submittable but is not. The panel frames the one
+          button; the modal asks for everything in one go. */}
+      <p className="mt-1.5 text-xs leading-relaxed text-ink-300">
+        Tell the supplier what you need — quantity, destination and a short note.
+        They reply with a quote and you carry on in live chat.
+      </p>
+      <div className="[&_button]:mt-4">{body}</div>
+      <p className="mt-3 text-[11px] leading-relaxed text-ink-400">
+        Your contact details are shared through the enquiry, never shown publicly.
+      </p>
+    </div>
   );
 }

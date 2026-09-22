@@ -82,9 +82,32 @@ export const colors = {
   // Semantic — status & feedback.
   success: '#12B76A', // verified tick, approvals
   warning: '#F79009', // in review / pending (locked token — owner, 2026-08-01)
+  /**
+   * 🔴 DEEP MAROON, mirroring `web/tailwind.config.js` (app 2026-09-23; web
+   * 2026-09-22). It was `#D92D20` — a bright red that sat at a contrast ratio of
+   * **1.19** against the new crimson brand, which is indistinguishable by eye.
+   * The consequence was concrete: the destructive "Sign out" button and an
+   * ordinary brand button looked identical, and a form's error state read as
+   * ordinary emphasis.
+   *
+   * Web fixed this on 2026-09-22 and the app did not, so for a day the two were
+   * out of step — exactly what this file's "1:1 mirror" promise exists to
+   * prevent. The full ramp is copied even though only `DEFAULT` and `50` are
+   * used today (verified by sweep: 38 and 14 uses), so the next shade someone
+   * reaches for already matches web instead of being invented here.
+   */
   danger: {
-    50: '#FEECEA', // error-field background tint
-    DEFAULT: '#D92D20', // rejections, destructive actions
+    50: '#FDF3F2', // error-field background tint
+    100: '#F9E2DE',
+    200: '#EFC0B7',
+    300: '#DB9384',
+    400: '#AE4E35',
+    500: '#852C1C',
+    600: '#6B2416',
+    700: '#571D11',
+    800: '#43160C',
+    900: '#2F0F07',
+    DEFAULT: '#6B2416', // rejections, destructive actions
   },
   muted: '#5A6B85', // secondary / help text
 

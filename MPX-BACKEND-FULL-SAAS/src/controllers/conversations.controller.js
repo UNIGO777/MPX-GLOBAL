@@ -59,6 +59,9 @@ export async function send(req, res) {
     user: req.user,
     conversationId: req.params.id,
     body: req.validated.body.body,
+    // D9 · present only on the multipart route; JSON sends carry no file, so
+    // this is `null` there and the send path behaves exactly as before.
+    imageBuffer: req.file?.buffer ?? null,
   });
   res.status(201).json({ message: messageView(message) });
 }

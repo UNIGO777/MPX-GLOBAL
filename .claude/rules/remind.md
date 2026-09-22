@@ -88,6 +88,13 @@ while any close-time security commitment remains unraised.
   are CANCELLED** (2026-07-30) — removed, not deferred. 🔒 **`website` is internal, never public.**
   Detail: build-prompt **§A22** + `m1.md` §5b.
 
+✅ **Override granted — do NOT alert again:**
+- **D9 — Chat attachments (IMAGES only).** Was explicitly out of scope (`m4.md` line 15 and
+  **M4-14**, which parks document exchange with the Quotation module). The red alert was raised
+  2026-09-23 and the owner confirmed. **Images only** — PDFs/documents are still deferred and
+  still need their own alert. Stored PRIVATE (the KYC pattern), never the public product-image
+  pattern. Detail: `docs/Note.md` **D9**.
+
 ⏸ **On hold (build later):**
 - **D4** — Super Admin TOTP 2FA. Staff use OTP now (still two-factor). **Restore before close** (A4).
   ✅ **2026-08-23 — owner SCHEDULED IT FOR MONTH 2** ("ye chodna h isse after 1 month me dalo").

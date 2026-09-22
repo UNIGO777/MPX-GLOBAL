@@ -1,5 +1,6 @@
 import { Conversation } from '../models/Conversation.js';
 import { Message } from '../models/Message.js';
+import { uploadChatImage } from './chatAttachment.storage.service.js';
 import { AppError } from '../utils/AppError.js';
 import { loadPartyConversation, viewerSideFor } from './conversation.service.js';
 import { notifyNewMessage } from './push.service.js';
@@ -29,7 +30,7 @@ const PREVIEW_LENGTH = 200;
  * never read from the body — otherwise a buyer could post as `system` and
  * impersonate the platform.
  */
-export async function sendMessage({ user, conversationId, body }) {
+export async function sendMessage({ user, conversationId, body, imageBuffer = null }) {
   const side = viewerSideFor(user);
   if (side === 'staff') {
     // §7.3 / screen 5: admin can read, admin cannot speak. A staff account is
@@ -48,6 +49,19 @@ export async function sendMessage({ user, conversationId, body }) {
     throw AppError.conflict('conversation frozen', 'This conversation is closed for new messages.');
   }
 
+  /**
+   * D9 · the image, uploaded only AFTER both guards have passed.
+   *
+   * 🔴 Order matters. Uploading first and then checking membership would let a
+   * non-party push files into our storage by firing at conversation ids — the
+   * request would 404, but the bytes would already be paid for and stored. So
+   * this sits below `loadPartyConversation` (membership) and below the frozen
+   * check: a closed thread accepts no new content of any kind.
+   */
+  const attachment = imageBuffer
+    ? await uploadChatImage({ buffer: imageBuffer, conversationId: conversation._id })
+    : undefined;
+
   const sentAt = new Date();
   const message = await Message.create({
     conversationId: conversation._id,
@@ -55,6 +69,7 @@ export async function sendMessage({ user, conversationId, body }) {
     senderOrgId: user.orgId,
     senderUserId: user.userId,
     body,
+    attachment,
   });
 
   // The sender has obviously read what they just wrote — stamp their own

@@ -83,3 +83,28 @@ export function uploadLogo(req, res, next) {
     return next(AppError.badRequest('upload failed', 'Could not read the uploaded image.'));
   });
 }
+
+// Single-image upload for a CHAT attachment (D9, 2026-09-23). Same in-memory,
+// magic-byte-verified-downstream posture as every other upload here. The cap
+// comes from `CHAT_ATTACHMENT_MAX_MB` rather than a literal, because the storage
+// service enforces the same number and two copies would drift.
+const parseChatImage = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: env.CHAT_ATTACHMENT_MAX_MB * 1024 * 1024, files: 1 },
+}).single('image');
+
+export function uploadChatImage(req, res, next) {
+  parseChatImage(req, res, (err) => {
+    if (!err) return next();
+    if (err instanceof multer.MulterError) {
+      const message =
+        err.code === 'LIMIT_FILE_SIZE'
+          ? `Image exceeds the ${env.CHAT_ATTACHMENT_MAX_MB} MB limit.`
+          : err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE'
+            ? 'Upload one image in the "image" field.'
+            : 'Could not read the uploaded image.';
+      return next(AppError.badRequest(`upload: ${err.code}`, message));
+    }
+    return next(AppError.badRequest('upload failed', 'Could not read the uploaded image.'));
+  });
+}

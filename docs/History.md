@@ -175,6 +175,20 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-23 — App `danger` mirrored to web's maroon; a stale claim in `Pending-Work.md` struck.**
+  Web moved `danger` to a deep maroon on 2026-09-22 because the old `#D92D20` measured **1.19:1**
+  against the new crimson brand — indistinguishable by eye, so the destructive "Sign out" button
+  and an ordinary brand button looked identical, and a form error read as ordinary emphasis. The
+  app kept the old value for a day, which is exactly what `colors.js`'s own "1:1 mirror of
+  `web/tailwind.config.js`" promise exists to prevent. Full ramp copied (only `DEFAULT` and `50`
+  are used today — 38 and 14 uses by sweep — but copying the ramp means the next shade someone
+  reaches for already matches). Now 1.94:1 against the brand, 11.12:1 for white on it.
+  - ❌ **`docs/Pending-Work.md` §5's "the app is now the ONLY blue surface" was false when
+    written** — the app was repainted crimson on 2026-09-22, the same day. Struck, with the real
+    defect it was pointing at recorded in its place.
+  - ⚠️ **Left divergent on purpose:** `surface.subtle` is `#F7F8FB` (app) vs `#FDF4F4` (web). That
+    token is the app's entire screen canvas, so matching it is a visible app-wide change rather
+    than a token tidy-up — the owner should see it, not inherit it silently.
 - **2026-09-22 — D8 · Platform settings BUILT at `/admin/settings`. Red-alerted first; owner
   confirmed the override. The admin console now has NO placeholder routes left.**
   D8 was on the "build next month" hold (owner, 2026-08-21), so `remind.md` required the alert

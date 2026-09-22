@@ -102,11 +102,18 @@ Full text drafted in **`docs/Client-Requests.md`**.
 Tracked elsewhere on purpose — **do not read their absence here as "done"**:
 
 - **Mobile app work** — app screens, the in-app exporter-registration path, device testing.
-  🔴 **New since 2026-09-22: the app is now the ONLY blue surface in the product.** The web went
-  red and `app/src/theme/colors.js` was left on royal blue by instruction, so a client moving from
-  the site to the app sees two different brands. The fix is a one-file token swap mirroring
-  `web/tailwind.config.js` (the app file is a 1:1 mirror of it by design) plus the app's own logo
-  assets — but it is app work, so it is listed here, not above.
+  ~~🔴 New since 2026-09-22: the app is now the ONLY blue surface in the product.~~
+  ❌ **THIS WAS ALREADY FALSE WHEN WRITTEN — struck 2026-09-23.** `app/src/theme/colors.js` was
+  repainted crimson on 2026-09-22 (`primary.600 = #CE061A`), in the same session and on the same
+  day as this row. The app has not been blue since.
+  🔴 **But the row pointed at a real defect from the other direction.** Web moved `danger` to a
+  deep maroon on 2026-09-22 because the old `#D92D20` measured **1.19:1** against the new crimson
+  brand — indistinguishable by eye, so a destructive "Sign out" and an ordinary brand button
+  looked the same. The app kept the old value for a day. **Fixed 2026-09-23** by mirroring web's
+  full ramp (`DEFAULT: #6B2416`); the pair now measures 1.94:1 and white on it is 11.12:1.
+  ⚠️ **Still divergent:** `surface.subtle` is `#F7F8FB` in the app and `#FDF4F4` on web. Left
+  alone deliberately — it is the app's whole screen canvas, so changing it is a visible app-wide
+  change, not a token tidy-up. Needs the owner's eye, not a silent edit.
 - **Testing** — backend suite is green (70 files / 1070 tests, 2026-09-22). Web has **no test
   script and no tests at all**.
 - **Deploy / environment** — `NODE_ENV` (no default; the backend will not boot without it),

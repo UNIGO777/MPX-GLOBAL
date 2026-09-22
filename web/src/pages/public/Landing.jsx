@@ -5,17 +5,14 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { useCanonical } from '../../lib/seo.js';
-import { countryName } from '../../lib/countries.js';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
-import { VerifiedTick } from '../../components/ui/VerifiedTick.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 
 import {
   AlertIcon,
   BoxIcon,
   ChatIcon,
-  ChevronRightIcon,
   GridIcon,
   SearchIcon,
   ShieldIcon,
@@ -109,29 +106,13 @@ const FAQS = [
   },
 ];
 
-/**
- * The hero cluster's price line.
- *
- * 🔴 `PriceLine` is the shared renderer everywhere else, but it hard-codes
- * light-theme colours (`text-ink-900`, `text-primary-600`) and would vanish on
- * the black hero. This follows its RULES exactly rather than its markup:
- * **the ISO code is printed as the seller set it — never a ₹, never converted,
- * never guessed** (§A27.1, no currency conversion exists in Phase 1), and
- * "Price on request" is ordinary information, not an absence.
- */
-const fmtAmount = (n) => (typeof n === 'number' ? n.toLocaleString('en-IN') : n);
-
-function heroPrice(price) {
-  const { mode, min, max, currency } = price ?? {};
-  if (mode === 'on_request' || (min == null && max == null)) return 'Price on request';
-  if (mode === 'range') return `${currency} ${fmtAmount(min)} – ${fmtAmount(max)}`;
-  return `${currency} ${fmtAmount(min)}`;
-}
-
 const FEED_PAGE_SIZE = 10;
-const SUPPLIER_COUNT = 6;
-/** Top-level categories in the hero rail and the browse grid. */
-const RAIL_COUNT = 9;
+/** Placeholder rows drawn while the rail loads — the rail itself shows ALL
+ *  top-level categories (owner, 2026-09-23) and scrolls inside the hero's
+ *  height, so this number only has to fill the visible area, not match 40. */
+const RAIL_SKELETON_ROWS = 9;
+/** Category tiles inside the hero panel — the mockup's 3×2 grid. */
+const HERO_TILES = 6;
 const GRID_COUNT = 12;
 
 /* --------------------------------- pieces --------------------------------- */
@@ -169,47 +150,6 @@ function CardSkeleton({ ratio = 'aspect-square' }) {
   );
 }
 
-function SupplierCard({ supplier }) {
-  return (
-    <Link
-      to={`/supplier/${supplier.slug ?? supplier.id}`}
-      className="flex h-full flex-col rounded-2xl bg-white p-5 shadow-card transition hover:shadow-lift sm:p-6"
-    >
-      <div className="flex items-center gap-3">
-        {supplier.logo ? (
-          <img
-            src={supplier.logo}
-            alt=""
-            loading="lazy"
-            width={56}
-            height={56}
-            className="h-14 w-14 shrink-0 rounded-full object-cover ring-1 ring-surface-border"
-          />
-        ) : (
-          <NoImagePanel label={supplier.name} monogram ratio="h-14 w-14" className="shrink-0 rounded-full" />
-        )}
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="truncate font-bold text-ink-900">{supplier.name}</span>
-            {/* Tick from the server-derived `verified` boolean only. There is no
-                "unverified" badge — its absence is the only signal. */}
-            <VerifiedTick verified={supplier.verified} compact />
-          </div>
-          {supplier.country && (
-            <p className="mt-0.5 truncate text-xs text-ink-600">
-              {countryName(supplier.country) ?? supplier.country}
-            </p>
-          )}
-        </div>
-      </div>
-      {supplier.description && (
-        <p className="mt-4 line-clamp-3 text-sm text-ink-600">{supplier.description}</p>
-      )}
-      <span className="mt-auto pt-5 text-sm font-semibold text-crimson-700">View profile ›</span>
-    </Link>
-  );
-}
-
 /* ---------------------------------- page ---------------------------------- */
 
 export function Landing() {
@@ -219,17 +159,6 @@ export function Landing() {
   useCanonical('/');
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
-
-  const suppliers = useQuery({
-    queryKey: catalogueKeys.search({ type: 'supplier', verifiedOnly: 'true', pageSize: SUPPLIER_COUNT }),
-    queryFn: () =>
-      catalogueApi.search({
-        type: 'supplier',
-        sort: 'newest',
-        verifiedOnly: 'true',
-        pageSize: SUPPLIER_COUNT,
-      }),
-  });
 
   // "Load more" rather than infinite scroll — see the file note. `useInfiniteQuery`
   // accumulates pages without the manual de-duplication the app screen needs.
@@ -246,11 +175,7 @@ export function Landing() {
 
   const topCategories = categories.data ?? [];
   const products = feed.data?.pages.flatMap((p) => p.products ?? []) ?? [];
-  // The hero cluster. Exactly three, all photographed — all-or-nothing rather
-  // than a stagger with a hole in it. See the hero's own note.
-  const heroPicks = products.filter((p) => p.images?.[0]).slice(0, 3);
   const productTotal = feed.data?.pages[0]?.total ?? 0;
-  const verifiedSuppliers = suppliers.data?.suppliers ?? [];
 
   const isBuyer = user?.role === 'buyer';
   const isExporter = user?.role === 'exporter';
@@ -303,15 +228,18 @@ export function Landing() {
       <PublicHeader centerSlot={headerSearch} />
 
       {/* Browse bar — the marketplace's own nav row, under the shared header.
-          Scrolls horizontally rather than wrapping on a narrow phone. */}
+          Scrolls horizontally rather than wrapping on a narrow phone.
+          🆕 2026-09-23 — rebuilt to the owner's hero mockup. "Services" and
+          "Verified exporters" are back (they were pulled on 2026-08-23), and
+          "How it works" joins them; every one is a real destination. */}
       <div className="border-b border-surface-border bg-white">
         <nav
           aria-label="Browse"
-          className="flex w-full items-center gap-1 overflow-x-auto px-4 py-2 text-sm sm:px-6 lg:px-10 xl:px-16"
+          className="flex w-full items-center gap-1 overflow-x-auto px-4 py-2.5 text-sm sm:px-6 lg:px-10 xl:px-16"
         >
           <Link
             to="/categories"
-            className="flex shrink-0 items-center gap-2 rounded-xl bg-crimson-600 px-4 py-2 font-bold text-white hover:bg-crimson-700"
+            className="flex shrink-0 items-center gap-2 rounded-xl bg-ink-900 px-4 py-2 font-bold text-white hover:bg-ink-800"
           >
             <GridIcon className="h-4 w-4" aria-hidden="true" />
             All categories
@@ -319,11 +247,15 @@ export function Landing() {
           <Link to="/categories?type=goods" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
             Goods
           </Link>
-          {/* "Services" and "Suppliers" removed from this bar on the owner's
-              instruction (2026-08-23). Both destinations still exist and are
-              still reachable: the Goods/Services split section below links to
-              `?type=service`, and "Verified suppliers" links to
-              `/search?type=supplier`. Nothing was orphaned. */}
+          <Link to="/categories?type=service" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
+            Services
+          </Link>
+          <Link to="/search?type=supplier" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
+            Verified exporters
+          </Link>
+          <a href="#how-it-works" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
+            How it works
+          </a>
           <Link
             to="/ai-search"
             className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 font-bold text-crimson-700 hover:bg-crimson-50 md:flex"
@@ -335,189 +267,219 @@ export function Landing() {
       </div>
 
       <main>
-        {/* ═════════ HERO — category rail · banner · contextual panel ═════════ */}
-        <section className="bg-ink-50 py-4 sm:py-6">
+        {/* ═════════ HERO — category rail · banner · contextual panel ═════════
+            🆕 2026-09-23 — rebuilt against the owner's mockup: a question as the
+            headline, a serif face for it, six category tiles inside the panel,
+            and the exporter pitch split into its own card.
+
+            🔴 TWO THINGS IN THE MOCKUP WERE NOT BUILT AS DRAWN, both because
+            they would have been false:
+
+            1. Each tile read "[000] suppliers". That count does not exist on
+               any public route, and the real numbers are worse than missing:
+               of the 40 top categories, exactly THREE contain a supplier
+               (Textiles 4, IT 2, Agriculture 1). Four of the six tiles drawn
+               would have read "0 suppliers" on the front page. The line now
+               carries the sub-category count, which is real, already in the
+               tree, and needs no API change.
+            2. The subhead read "Every supplier you contact is a real business,
+               reviewed by our team." Only 3 of 11 companies are verified, and
+               an UNVERIFIED seller is public and contactable by design (B7).
+               Rewritten so the claim attaches to the tick, which is true.
+
+            Tiles use the categories' REAL photographs rather than the mockup's
+            line icons: the icon set here has no category-specific glyphs, so
+            matching the drawing would have meant inventing forty of them. */}
+        <section className="bg-surface-canvas py-4 sm:py-6">
           <div className="grid w-full grid-cols-1 gap-4 px-4 sm:gap-5 sm:px-6 lg:px-10 xl:px-16 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_320px]">
             {/* Always-open rail. Hidden below lg, where the category grid below
                 and the browse bar above already serve the same purpose. */}
-            <aside className="hidden rounded-2xl bg-white p-2 shadow-card lg:block">
+            {/* 🔴 The rail is ABSOLUTELY POSITIONED inside its grid cell, and that
+                is the whole trick (owner, 2026-09-23: "only that much height we
+                need, other categories come in scroll").
+                A grid row is as tall as its TALLEST item, so while the rail was
+                in normal flow its forty entries set the row height and the hero
+                stretched to match — the opposite of what was wanted, and no
+                amount of `overflow-y-auto` fixes it, because nothing was
+                overflowing. Taking the panel out of flow means the rail
+                contributes ZERO height: the row is sized by the hero alone, the
+                stretched `aside` inherits exactly that height, and the list
+                finally has something to overflow against.
+                Only from `lg`, where the rail is visible at all. */}
+            <aside className="relative hidden lg:block">
+              <div className="absolute inset-0 flex flex-col rounded-2xl bg-white p-2 shadow-card">
               {categories.isPending ? (
                 <div className="space-y-1 p-1">
-                  {Array.from({ length: RAIL_COUNT }).map((_, i) => (
-                    <div key={i} className="h-9 animate-pulse rounded-xl bg-ink-100" />
+                  {Array.from({ length: RAIL_SKELETON_ROWS }).map((_, i) => (
+                    <div key={i} className="h-10 animate-pulse rounded-xl bg-ink-100" />
                   ))}
                 </div>
               ) : (
-                <ul className="text-sm">
-                  {topCategories.slice(0, RAIL_COUNT).map((c) => (
-                    <li key={c.id}>
-                      <Link
-                        to={`/category/${c.slug ?? c.id}`}
-                        className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 font-medium text-ink-900 hover:bg-crimson-50 hover:text-crimson-700"
-                      >
-                        <span className="truncate">{c.name}</span>
-                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
-                      </Link>
-                    </li>
-                  ))}
-                  <li className="mt-1 border-t border-surface-border pt-1">
-                    <Link to="/categories" className="block rounded-xl px-3 py-2 font-bold text-crimson-700 hover:bg-crimson-50">
-                      All categories ›
+                <>
+                  {/* 🔴 EVERY top-level category, scrolling inside the hero's
+                      own height (owner, 2026-09-23 — it used to show nine).
+                      `min-h-0` is load-bearing: a flex child defaults to
+                      min-height:auto, so without it the list refuses to shrink,
+                      overflow never fires, and the rail just grows taller than
+                      the hero instead of scrolling.
+                      The "All N categories" link stays OUTSIDE this list so it
+                      is reachable without scrolling to the bottom. */}
+                  <ul className="min-h-0 flex-1 overflow-y-auto text-sm">
+                    {topCategories.map((c) => (
+                      <li key={c.id}>
+                        <Link
+                          to={`/category/${c.slug ?? c.id}`}
+                          className="group flex items-center gap-2.5 rounded-xl px-2.5 py-2 font-medium text-ink-900 hover:bg-crimson-50 hover:text-crimson-700"
+                        >
+                          {c.image ? (
+                            <img
+                              src={c.image}
+                              alt=""
+                              loading="lazy"
+                              width={24}
+                              height={24}
+                              className="h-6 w-6 shrink-0 rounded-md object-cover"
+                            />
+                          ) : (
+                            <span className="h-6 w-6 shrink-0 rounded-md bg-ink-100" />
+                          )}
+                          <span className="truncate">{c.name}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-2 border-t border-surface-border pt-2">
+                    <Link
+                      to="/categories"
+                      className="block rounded-xl px-2.5 py-2 text-sm font-bold text-crimson-700 hover:bg-crimson-50"
+                    >
+                      All {topCategories.length} categories →
                     </Link>
-                  </li>
-                </ul>
+                  </div>
+                </>
               )}
+              </div>
             </aside>
 
-            {/* Banner. One h1 on the page, and it lives here. */}
-            {/* Black hero (owner, 2026-08-23). `ink-900` (#000517), not `#000000`
-                — pure black is banned by the design tokens, and the ink scale's
-                slight blue cast is what the rest of the product's darkest
-                surfaces already use (the footer is the same fill).
-                Red stays as the ACCENT against it: the badge, the "Browse
-                categories" label and the AI band below. */}
-            {/* 🔴 Two columns INSIDE the hero (2026-08-23). It was one column
-                capped at `max-w-xl`, which left roughly half the panel as empty
-                black on any wide screen — the owner's "not looking good".
-                The filler is REAL: four recent listings that the feed query has
-                already fetched, so this costs no extra request and is not
-                decoration. It also does the one job the copy cannot — proving
-                there is a live catalogue behind the promise.
-                Self-sizing like every other block here: fewer than four
-                photographed listings and the collage does not render at all,
-                leaving the original single-column hero rather than a grid with
-                holes in it. */}
-            <div className="rounded-2xl bg-ink-900 px-6 py-10 sm:px-10 sm:py-14 lg:px-12 lg:py-16">
-              <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_auto]">
-              <div className="max-w-xl">
-                <p className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-crimson-300">
-                  <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  Every tick checked by a person
-                </p>
-                <h1 className="text-3xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-5xl">
-                  Source from verified Indian exporters
-                </h1>
-                <p className="mt-4 max-w-md text-sm text-ink-200 sm:text-base">
-                  Goods and services, direct from the supplier. Search the catalogue, send an
-                  enquiry, and talk to them in real time — free, no account needed to browse.
-                </p>
-                <div className="mt-7 flex flex-wrap gap-3">
-                  <Link
-                    to="/categories"
-                    className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-crimson-700 shadow-card hover:shadow-lift sm:px-6"
-                  >
-                    Browse categories
-                  </Link>
-                  <Link
-                    to="/ai-search"
-                    className="flex items-center gap-2 rounded-xl border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10 sm:px-6"
-                  >
-                    <SparkleIcon className="h-4 w-4" aria-hidden="true" />
-                    Describe what you need
-                  </Link>
-                </div>
+            {/* The banner. One h1 on the page, and it lives here.
+                `ink-900` (#000517), never #000000 — pure black is off the token
+                scale, and this is the same fill the footer uses. */}
+            <div className="rounded-2xl bg-ink-900 px-6 py-8 sm:px-10 sm:py-10 lg:px-12">
+              <p className="mb-4 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-crimson-300">
+                <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                Every tick checked by a person
+              </p>
+              <h1 className="max-w-2xl font-serif text-3xl leading-[1.15] text-white sm:text-4xl lg:text-[2.75rem]">
+                What are you sourcing from India today?
+              </h1>
+              {/* 🔴 NOT the mockup's "every supplier … reviewed by our team" —
+                  see this section's note. The claim belongs to the tick. */}
+              <p className="mt-4 max-w-xl text-sm text-ink-200 sm:text-base">
+                Pick a category or describe what you need. Where you see the tick, a person on
+                our team has checked that company&apos;s documents.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  to="/categories"
+                  className="rounded-xl bg-crimson-600 px-5 py-3 text-sm font-bold text-white hover:bg-crimson-700 sm:px-6"
+                >
+                  Browse all categories
+                </Link>
+                <Link
+                  to="/ai-search"
+                  className="flex items-center gap-2 rounded-xl border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10 sm:px-6"
+                >
+                  <SparkleIcon className="h-4 w-4" aria-hidden="true" />
+                  Describe what you need
+                </Link>
               </div>
 
-              {/* Real listings, not stock imagery — and staggered rather than a
-                  flat 2×2, so it reads as a catalogue rather than as wallpaper:
-                  one tall card carrying its real name, price and tick, with two
-                  squares beside it.
-                  Only listings that HAVE a photo — a "no image" placeholder
-                  belongs in a product grid, not in the hero. */}
-              {heroPicks.length === 3 && (
-                <div className="hidden shrink-0 lg:block">
-                  <div className="grid w-[320px] grid-cols-2 grid-rows-2 gap-3 xl:w-[380px]">
-                    <Link
-                      to={`/product/${heroPicks[0].slug ?? heroPicks[0].id}`}
-                      className="group relative row-span-2 overflow-hidden rounded-2xl ring-1 ring-white/15"
-                    >
-                      <img
-                        src={heroPicks[0].images[0]}
-                        alt={heroPicks[0].name}
-                        loading="eager"
-                        width={190}
-                        height={253}
-                        className="aspect-[3/4] w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                      {/* Solid scrim, not a gradient — gradients are off the
-                          table on brand surfaces, and a flat bar reads cleaner
-                          over a photograph anyway. */}
-                      <span className="absolute inset-x-0 bottom-0 block bg-ink-900/85 px-3 py-2.5">
-                        <span className="flex items-center gap-1">
-                          <span className="truncate text-[11px] font-semibold text-white">
-                            {heroPicks[0].seller?.name}
-                          </span>
-                          {heroPicks[0].seller?.verified && (
-                            <VerifiedTick verified compact />
+              {/* Six real categories, straight into the catalogue. Hidden until
+                  there are six to show, rather than rendering a grid with gaps. */}
+              {topCategories.length >= HERO_TILES && (
+                <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {topCategories.slice(0, HERO_TILES).map((c) => {
+                    const subs = c.subs?.length ?? 0;
+                    return (
+                      <li key={c.id}>
+                        <Link
+                          to={`/category/${c.slug ?? c.id}`}
+                          className="flex h-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3.5 transition hover:border-crimson-300/40 hover:bg-white/[0.08]"
+                        >
+                          {c.image ? (
+                            <img
+                              src={c.image}
+                              alt=""
+                              loading="lazy"
+                              width={40}
+                              height={40}
+                              className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <span className="h-10 w-10 shrink-0 rounded-lg bg-white/10" />
                           )}
-                        </span>
-                        <span className="mt-0.5 block truncate text-xs font-bold text-crimson-300">
-                          {heroPrice(heroPicks[0].price)}
-                        </span>
-                      </span>
-                    </Link>
-
-                    {heroPicks.slice(1).map((p) => (
-                      <Link
-                        key={p.id}
-                        to={`/product/${p.slug ?? p.id}`}
-                        className="group overflow-hidden rounded-2xl ring-1 ring-white/15"
-                      >
-                        <img
-                          src={p.images[0]}
-                          alt={p.name}
-                          loading="eager"
-                          width={182}
-                          height={182}
-                          className="aspect-square w-full object-cover transition duration-500 group-hover:scale-105"
-                        />
-                      </Link>
-                    ))}
-                  </div>
-
-                  <Link
-                    to="/search"
-                    className="mt-3 inline-block text-xs font-semibold text-ink-400 hover:text-white"
-                  >
-                    Recently listed on MPX Global →
-                  </Link>
-                </div>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-bold text-white">{c.name}</span>
+                            {subs > 0 && (
+                              <span className="block text-xs text-ink-400">
+                                {subs} {subs === 1 ? 'subcategory' : 'subcategories'}
+                              </span>
+                            )}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
-              </div>
             </div>
 
             {/* Contextual panel — the column that makes this a web layout rather
                 than a stack. Below xl it drops under the banner at full width
                 instead of being hidden: on a phone it carries the only signup
                 CTA a guest sees above the fold. */}
-            <aside className="xl:w-80">
+            <aside className="space-y-4 xl:w-80">
               {!user && (
-                <div className="rounded-2xl bg-white p-6 shadow-card">
-                  <p className="text-sm font-extrabold">Start sourcing</p>
-                  <p className="mt-1.5 text-sm text-ink-600">
-                    Create a free buyer account to save suppliers, send enquiries and chat.
-                  </p>
-                  <Link
-                    to="/signup/buyer"
-                    className="mt-4 block rounded-xl bg-crimson-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-crimson-700"
-                  >
-                    Create free account
-                  </Link>
-                  <Link
-                    to="/signin"
-                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-crimson-700 hover:bg-crimson-50"
-                  >
-                    Sign in
-                  </Link>
-                  <hr className="my-5 border-surface-border" />
-                  <p className="text-sm font-extrabold">Are you an exporter?</p>
-                  <p className="mt-1.5 text-sm text-ink-600">
-                    Your public profile goes live the day you register.
-                  </p>
-                  <Link to="/signup/exporter" className="mt-3 inline-block text-sm font-bold text-crimson-700 hover:underline">
-                    Register as an exporter ›
-                  </Link>
-                </div>
+                <>
+                  <div className="rounded-2xl bg-white p-6 shadow-card">
+                    <p className="text-base font-extrabold">Start sourcing</p>
+                    <p className="mt-1.5 text-sm text-ink-600">
+                      Free buyer account to save suppliers, send enquiries and chat.
+                    </p>
+                    <Link
+                      to="/signup/buyer"
+                      className="mt-4 block rounded-xl bg-crimson-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-crimson-700"
+                    >
+                      Create free account
+                    </Link>
+                    <Link
+                      to="/signin"
+                      className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-ink-900 hover:bg-surface-subtle"
+                    >
+                      Sign in
+                    </Link>
+                  </div>
+
+                  {/* Its own card now, as the mockup draws it — the exporter
+                      pitch was buried under a rule inside the buyer card. */}
+                  <div className="rounded-2xl bg-white p-6 shadow-card">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-ink-400">
+                      For exporters
+                    </p>
+                    <p className="mt-1 text-base font-extrabold">Sell to global buyers</p>
+                    <p className="mt-1.5 text-sm text-ink-600">
+                      Your public profile goes live the day you register. Get verified to lift
+                      the listing limit.
+                    </p>
+                    <Link
+                      to="/signup/exporter"
+                      className="mt-4 inline-block text-sm font-bold text-crimson-700 hover:underline"
+                    >
+                      Register as an exporter →
+                    </Link>
+                  </div>
+                </>
               )}
 
               {isBuyer && (
@@ -774,35 +736,13 @@ export function Landing() {
           )}
         </section>
 
-        {/* ═════════ VERIFIED SUPPLIERS ═════════
-            Hides entirely when none are verified yet, rather than rendering an
-            empty rail. 🔴 "Verified by our team", never "Top-rated" — there is no
-            rating system, so there is nothing to rate a supplier on. */}
-        {(suppliers.isPending || verifiedSuppliers.length > 0) && (
-          <section className="border-t border-surface-border bg-ink-50">
-            <div className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
-              <BlockHead
-                title="Verified suppliers"
-                sub="Companies whose documents our team has checked in person."
-                to="/search?type=supplier"
-              />
-              <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-                {suppliers.isPending
-                  ? Array.from({ length: 3 }).map((_, i) => (
-                      <li key={i}>
-                        <div className="h-44 animate-pulse rounded-2xl bg-white" />
-                      </li>
-                    ))
-                  : verifiedSuppliers.map((s) => (
-                      <li key={s.id}>
-                        <SupplierCard supplier={s} />
-                      </li>
-                    ))}
-              </ul>
-            </div>
-          </section>
-        )}
-
+        {/* 🔴 The "Verified suppliers" section was REMOVED from this page on the
+            owner's instruction (2026-09-23).
+            Nothing was orphaned: the browse bar's "Verified exporters" link and
+            the supplier cards' own destination both still point at
+            `/search?type=supplier`, which is where the full, filterable list
+            lives. Its query, card component and page-size constant went with it
+            rather than being left behind as dead code. */}
         {/* ═════════ HOW IT WORKS ═════════
             🔴 KEPT from the previous layout, compressed. The mockup dropped it,
             but the shared header links to `#how-it-works` on every public page,
