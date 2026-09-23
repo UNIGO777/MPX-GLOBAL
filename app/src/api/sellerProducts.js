@@ -21,6 +21,9 @@ import { apiClient } from './client.js';
  */
 export const sellerProductsApi = {
   mine: (params = {}) => apiClient.get('/products/mine', { params }).then((r) => r.data),
+  /** HS code picker search (2026-09-24) — HS 2022 reference list, server-side. */
+  hsCodes: (q, limit = 20) =>
+    apiClient.get('/products/hs-codes', { params: { q, limit } }).then((r) => r.data.results),
 
   /** Owner read for the edit screen — full `ownView` incl. image REFS
    *  ({url, publicId}: PATCH replaces the whole images array, so the editor

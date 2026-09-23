@@ -1,4 +1,11 @@
 import * as svc from '../services/product.service.js';
+import { searchHsCodes } from '../utils/hsCodes.js';
+
+/** The HS code picker (2026-09-24) — static reference data, no DB. */
+export function hsCodes(req, res) {
+  const { q, limit } = req.validated.query;
+  res.json({ results: searchHsCodes(q, limit) });
+}
 
 function meta(req) {
   return { ip: req.ip, userAgent: req.headers['user-agent'], requestId: req.id };

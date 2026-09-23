@@ -23,12 +23,14 @@ import { sellerProductsApi } from '../api/sellerProducts.js';
 import { Button } from '../components/Button.jsx';
 import { CountryPicker } from '../components/CountryPicker.jsx';
 import { ErrorState, Spinner } from '../components/Feedback.jsx';
+import { HsCodePicker } from '../components/HsCodePicker.jsx';
 import { Input } from '../components/Input.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { findCountry } from '../constants/countries.js';
 import { CURRENCIES } from '../constants/currencies.js';
 import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/index.js';
 import { toAppError } from '../utils/errors.js';
+import { UnitPicker } from '../components/UnitPicker.jsx';
 
 /**
  * M2 app screen 7 — product form, add + edit (built 2026-08-18). The app's
@@ -761,15 +763,14 @@ export function ProductFormScreen({ navigation, route }) {
                 />
               </View>
               <View style={styles.priceField}>
-                <Input
+                {/* A dropdown of standard trade units (2026-09-24, as on the web). */}
+                <UnitPicker
                   label="Unit"
                   value={fields.unit ?? ''}
-                  onChangeText={(v) => {
+                  onChange={(v) => {
                     setFields((f) => ({ ...f, unit: v }));
                     markDirty();
                   }}
-                  placeholder="meter / kg / piece"
-                  maxLength={40}
                   helperText="Required to publish"
                 />
               </View>
@@ -792,18 +793,32 @@ export function ProductFormScreen({ navigation, route }) {
               }}
             />
           ) : null}
-          {fixedFieldDefs.map(([label, key, props]) => (
-            <Input
-              key={key}
-              label={label}
-              value={fields[key] ?? ''}
-              onChangeText={(v) => {
-                setFields((f) => ({ ...f, [key]: v }));
-                markDirty();
-              }}
-              {...props}
-            />
-          ))}
+          {fixedFieldDefs.map(([label, key, props]) =>
+            // The HS code is a searchable picker over the HS 2022 list (owner,
+            // 2026-09-24), as on the web — every other field stays text.
+            key === 'hsCode' ? (
+              <HsCodePicker
+                key={key}
+                label={label}
+                value={fields.hsCode ?? ''}
+                onChange={(code) => {
+                  setFields((f) => ({ ...f, hsCode: code }));
+                  markDirty();
+                }}
+              />
+            ) : (
+              <Input
+                key={key}
+                label={label}
+                value={fields[key] ?? ''}
+                onChangeText={(v) => {
+                  setFields((f) => ({ ...f, [key]: v }));
+                  markDirty();
+                }}
+                {...props}
+              />
+            ),
+          )}
 
           {/* 6 · Specifications — the category's dynamic fields. */}
           {defs.length > 0 ? (

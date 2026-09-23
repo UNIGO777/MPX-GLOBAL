@@ -31,6 +31,7 @@ import { useCanonical } from '../../lib/seo.js';
 import { formatDate } from '../../lib/format.js';
 import { NotFound } from './NotFound.jsx';
 import { Lightbox } from '../../components/ui/Lightbox.jsx';
+import { formatHsCode } from '../../components/catalogue/HsCodePicker.jsx';
 
 /**
  * M2 web screen 3 — public product detail (`/product/:slug`).
@@ -244,6 +245,7 @@ function Facts({ product, layout = 'list' }) {
   const rows = (isService ? SERVICE_FACTS : GOODS_FACTS)
     .map(([key, label, Icon]) => {
       let value = product[key];
+      if (key === 'hsCode' && value) value = formatHsCode(value); // "520811" → "5208.11"
       if (value === null || value === undefined || value === '') return null;
       if (key === 'countryOfOrigin') value = countryName(value) ?? value;
       return [key, label, value, Icon];
@@ -562,7 +564,7 @@ export function ProductDetail() {
                     {p.hsCode && (
                       <span className="inline-flex items-center gap-1.5">
                         <TagIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                        HS {p.hsCode}
+                        HS {formatHsCode(p.hsCode)}
                       </span>
                     )}
                   </p>

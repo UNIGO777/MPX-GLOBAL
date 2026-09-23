@@ -4,6 +4,7 @@ import { zString, zObjectId } from './helpers.js';
 import { PRICE_MODE, CURRENCIES } from '../models/enums.js';
 import { MAX_PRODUCT_IMAGES } from '../models/Product.js';
 import { containsContactDetails } from '../utils/contactDetails.js';
+import { normaliseHsCode } from '../utils/hsCodes.js';
 
 // §A25.3 image refs come from POST /products/images — ownership of the publicId
 // prefix is re-checked in the service.
@@ -100,7 +101,14 @@ const productFields = {
   // goods listing without one is refused in `product.service.js`.
   moq: z.coerce.number().int().min(1).optional(),
   unit: zString({ min: 1, max: 40 }).optional(),
-  hsCode: zString({ min: 1, max: 20 }).optional(),
+  // HS code (2026-09-24): picked from the HS 2022 list, or typed by the seller
+  // when theirs isn't listed. Separators are stripped ("5208.11" → "520811")
+  // and it must then be 6–8 digits — the 6-digit international code, or a
+  // national 8-digit extension such as India's ITC-HS.
+  hsCode: z
+    .preprocess((v) => (typeof v === 'string' ? normaliseHsCode(v.trim()) : v), z.string())
+    .refine((v) => /^\d{6,8}$/.test(v), { message: 'HS code must be 6–8 digits.' })
+    .optional(),
   countryOfOrigin: countryCode.optional(),
   supplyAbility: zString({ min: 1, max: 200 }).optional(),
   leadTime: zString({ min: 1, max: 200 }).optional(),
@@ -133,6 +141,14 @@ export const updateProduct = {
 export const setStatus = {
   params: z.object({ id: zObjectId() }),
   body: z.object({ status: z.enum(['active', 'inactive']) }),
+};
+
+// The HS code picker's search (2026-09-24).
+export const hsCodeSearch = {
+  query: z.object({
+    q: zString({ min: 1, max: 60 }),
+    limit: z.coerce.number().int().min(1).max(25).default(20),
+  }),
 };
 
 export const productIdParam = {

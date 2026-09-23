@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { validate } from '../middleware/validate.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole, requirePermissions } from '../middleware/authorize.js';
-import { uploadLimiter } from '../middleware/rateLimit.js';
+import { generalLimiter, uploadLimiter } from '../middleware/rateLimit.js';
 import { uploadProductImages } from '../middleware/uploadImages.js';
 import { PERMISSIONS } from '../config/permissions.js';
 import * as ctrl from '../controllers/products.controller.js';
@@ -31,6 +31,17 @@ productRouter.post(
 productRouter.post('/products', authenticate, requireRole('exporter'), validate(V.createProduct), ctrl.create);
 
 productRouter.get('/products/mine', authenticate, requireRole('exporter'), validate(V.listMine), ctrl.mine);
+
+// HS code picker search (2026-09-24). Exporter-only: it feeds the product form.
+// 🔴 Like '/products/mine', it MUST stay above '/products/:id'.
+productRouter.get(
+  '/products/hs-codes',
+  authenticate,
+  requireRole('exporter'),
+  generalLimiter,
+  validate(V.hsCodeSearch),
+  ctrl.hsCodes,
+);
 
 // 🔴 MUST stay below '/products/mine' — Express matches in registration order,
 // and a ':id' registered first would swallow the literal "mine".

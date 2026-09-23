@@ -38,6 +38,9 @@ import {
 import { PortalLayout } from '../../layouts/PortalLayout.jsx';
 import { EXPORTER_NAV } from './exporterNav.js';
 import { PRODUCT_STATUS_META } from '../../lib/productStatus.js';
+import { HsCodePicker } from '../../components/catalogue/HsCodePicker.jsx';
+import { CreatableCombobox } from '../../components/ui/CreatableCombobox.jsx';
+import { TRADE_UNITS } from '../../lib/units.js';
 
 /**
  * M2 web screens 6 + 7 — add and edit are ONE component (`id` absent = create).
@@ -67,7 +70,7 @@ import { PRODUCT_STATUS_META } from '../../lib/productStatus.js';
  * 🔴 archived never opens the form.
  */
 const GOODS_FIELDS = [
-  ['hsCode', 'HS code', 'Harmonised System code, if you know it'],
+  ['hsCode', 'HS code', 'Pick from the HS 2022 list, or type your 6–8 digit code'],
   ['supplyAbility', 'Supply ability', 'e.g. 10,000 units per month'],
   ['leadTime', 'Lead time', 'e.g. 2–3 weeks'],
   ['packaging', 'Packaging', ''],
@@ -863,16 +866,17 @@ export function ProductForm() {
                       />
                     )}
                   </Field>
-                  <Field label="Unit" error={fieldErrors.unit} helper="e.g. pieces, kg, meters">
+                  {/* A dropdown of standard trade units (owner, 2026-09-24) —
+                      pick one, or type your own if it isn't listed. */}
+                  <Field label="Unit" error={fieldErrors.unit} helper="Pick a unit, or type your own">
                     {(fid) => (
-                      <input
+                      <CreatableCombobox
                         id={fid}
-                        required
-                        aria-invalid={Boolean(fieldErrors.unit)}
-                        className={inputClasses(Boolean(fieldErrors.unit))}
-                        placeholder="e.g. meters"
                         value={form.unit}
-                        onChange={(e) => set({ unit: e.target.value })}
+                        options={TRADE_UNITS}
+                        onChange={(unit) => set({ unit })}
+                        hasError={Boolean(fieldErrors.unit)}
+                        placeholder="e.g. meter, kg, piece"
                       />
                     )}
                   </Field>
@@ -885,14 +889,20 @@ export function ProductForm() {
               )}
               {infoFields.map(([key, label, helper]) => (
                 <Field key={key} label={label} optional helper={helper || undefined}>
-                  {(fid) => (
-                    <input
-                      id={fid}
-                      className={inputClasses(false)}
-                      value={form[key]}
-                      onChange={(e) => set({ [key]: e.target.value })}
-                    />
-                  )}
+                  {(fid) =>
+                    // The HS code is a searchable picker over the HS 2022
+                    // list (owner, 2026-09-24) — every other field stays text.
+                    key === 'hsCode' ? (
+                      <HsCodePicker id={fid} value={form.hsCode} onChange={(code) => set({ hsCode: code })} />
+                    ) : (
+                      <input
+                        id={fid}
+                        className={inputClasses(false)}
+                        value={form[key]}
+                        onChange={(e) => set({ [key]: e.target.value })}
+                      />
+                    )
+                  }
                 </Field>
               ))}
             </div>
@@ -1050,6 +1060,7 @@ export function ProductForm() {
                     seller: org.data
                       ? {
                           name: org.data.name,
+                          logo: org.data.logo ?? undefined,
                           verified: org.data.kycStatus === 'verified',
                           country: org.data.country,
                         }

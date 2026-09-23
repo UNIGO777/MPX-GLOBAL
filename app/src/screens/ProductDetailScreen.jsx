@@ -23,6 +23,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useSavedProducts } from '../hooks/useSavedProducts.js';
 import { colors, radii, spacing, typography } from '../theme/index.js';
 import { toAppError } from '../utils/errors.js';
+import { formatHsCode } from '../components/HsCodePicker.jsx';
 
 /**
  * M2 app screen 3 — product detail ("the screen buyers judge the platform
@@ -236,7 +237,8 @@ export function ProductDetailScreen({ navigation, route }) {
     originName: product.countryOfOrigin ? findCountry(product.countryOfOrigin)?.name ?? product.countryOfOrigin : null,
   };
   const facts = (isService ? SERVICE_FACTS : GOODS_FACTS)
-    .map(([label, key]) => [label, factSource[key]])
+    // HS codes read as "5208.11" (2026-09-24), as on the web.
+    .map(([label, key]) => [label, key === 'hsCode' && factSource[key] ? formatHsCode(factSource[key]) : factSource[key]])
     .filter(([, value]) => value != null && value !== '');
 
   const defByKey = new Map(defs.map((d) => [d.key, d]));

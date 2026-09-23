@@ -15,6 +15,9 @@ export const productsApi = {
    * meter together and they can never disagree with each other.
    */
   mine: (params) => apiClient.get('/products/mine', { params }).then((r) => r.data),
+  /** HS code picker search (2026-09-24) — HS 2022 reference list, server-side. */
+  hsCodes: (q, limit = 20) =>
+    apiClient.get('/products/hs-codes', { params: { q, limit } }).then((r) => r.data.results),
 
   /** ONE own product — the edit form's load. Another seller's is a 404 (A6). */
   one: (id) => apiClient.get(`/products/${id}`).then((r) => r.data.product),

@@ -186,6 +186,27 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   mirrors the server's slug rule), and the new category is selected on create. 6 tests; the 22
   existing category tests still pass. Verified in a browser: create, duplicate refused, switch-on
   refused while empty. ⚠️ Deleting a top category is still not possible (not requested).
+  - 2026-09-24: **HS code picker + Unit dropdown on the product form** (owner: "make hs code dropdown in new
+    product add page", "make unit also text dropdown"). Decided: international 6-digit HS 2022 list; a
+    typed 6–8 digit code allowed when not listed; web + app; I fetch the data. DATA: UN Comtrade public
+    `H6.json` (HS 2022, https://comtradeapi.un.org/files/v1/app/reference/H6.json, downloaded 2026-09-24)
+    → `src/data/hs2022.json` (5,613 codes + 1,229 headings, ~0.8 MB, static, no DB). SEARCH:
+    `src/utils/hsCodes.js` (code-prefix or all-words, heading text included); `GET /products/hs-codes`
+    (exporter-only, limiter, validated). VALIDATOR: `hsCode` strips spaces/dots/dashes and must be 6–8
+    digits (was free text ≤20); old free-text values stay stored until re-saved. WEB: `HsCodePicker`
+    (server-search combobox, "Use this code" row, wide popover), code shown as "5208.11" on the product
+    page. UNIT: `CreatableCombobox` (new UI primitive — pick a standard value or use what you typed) +
+    `lib/units.js` (27 trade units, stored singular lower-case: "meter", "kg"…); the dev data had one unit
+    spelled five ways. Both new dropdowns match the shared Combobox (rose highlight, red selected, pick on
+    click so touch-scroll never selects). APP: `HsCodePicker` (CountryPicker-style modal), form + product
+    page formatting; app `UnitPicker` (same 27 units, `constants/units.js`, pick or type) — added the
+    same day; app product cards show the seller logo / tinted initials too. Not device-tested. Tests: `hs-codes.test.js` (9); M2 product suites 115/115.
+    ⚠️ Not done: blanking a trade field in the form never clears it server-side (form sends only non-empty
+    fields — existing limitation), so the pickers have no "clear" button.
+  - 2026-09-24: **Product cards show the company LOGO** (owner: "in new product card preview logo not
+    visible"). `ProductCard`'s seller row always drew initials; it now shows `seller.logo` when present
+    (already on the public organisation whitelist — no projection change) and tinted initials otherwise.
+    The form's buyer preview passes the own org's logo.
   - 2026-09-24: **App thread aligned to the web**: the per-run "You" / company label is gone (a run is
     marked by extra space, as on the web), and the app gets DAY MARKERS ("Today" / "Yesterday" / date,
     sentence-case pill) — it had none, so days ran together. Welcome notice back to its warm tint (web +

@@ -5,6 +5,7 @@ import { VerifiedTick } from '../ui/VerifiedTick.jsx';
 import { SaveButton } from '../saved/SaveButton.jsx';
 import { NoImagePanel } from './NoImagePanel.jsx';
 import { PriceLine } from './PriceLine.jsx';
+import { monogramTone } from '../chat/CompanyAvatar.jsx';
 
 /**
  * The public product card — screens 2, 3 (related) and 4 all render this one.
@@ -114,12 +115,24 @@ export function ProductCard({ product, showSeller = true, to }) {
 
         {showSeller && seller ? (
           <div className="mt-2.5 flex items-center gap-2 border-t border-surface-border pt-2.5">
-            <span
-              aria-hidden="true"
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-50 text-[9px] font-bold text-primary-700"
-            >
-              {initials(seller.name)}
-            </span>
+            {/* The company's LOGO when it has one (owner, 2026-09-24: "logo not
+                visible") — `logo` is already on the public organisation
+                whitelist; initials, in the company's own tint, otherwise. */}
+            {seller.logo ? (
+              <img
+                src={seller.logo}
+                alt=""
+                loading="lazy"
+                className="h-6 w-6 shrink-0 rounded-full bg-white object-contain p-0.5 ring-1 ring-inset ring-ink-200"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ring-1 ring-inset ${monogramTone(seller.name)}`}
+              >
+                {initials(seller.name)}
+              </span>
+            )}
             <span className="min-w-0 truncate text-xs font-medium text-ink-800">{seller.name}</span>
             <VerifiedTick verified={seller.verified} compact />
             {seller.country && (

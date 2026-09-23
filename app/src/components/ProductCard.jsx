@@ -3,6 +3,7 @@ import { Animated, Image, Pressable, StyleSheet, Text, View } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 
 import { colors, radii, spacing, typography } from '../theme/index.js';
+import { monogramTone } from '../utils/monogramTone.js';
 
 /**
  * THE product card (owner, 2026-08-17: "for all my app use exact same product
@@ -100,6 +101,17 @@ export function ProductCard({ product, onPress, savedId, onToggleSave, showStatu
         </Text>
         {product.seller?.name ? (
           <View style={styles.sellerRow}>
+            {/* The company's LOGO when it has one (2026-09-24, as on the web);
+                tinted initials otherwise. `logo` is public organisation data. */}
+            {product.seller.logo ? (
+              <Image source={{ uri: product.seller.logo }} style={styles.sellerLogo} accessible={false} />
+            ) : (
+              <View style={[styles.sellerLogo, { backgroundColor: monogramTone(product.seller.name).bg }]}>
+                <Text style={[styles.sellerInitials, { color: monogramTone(product.seller.name).fg }]}>
+                  {initialsOf(product.seller.name)}
+                </Text>
+              </View>
+            )}
             <Text style={styles.sellerName} numberOfLines={1}>
               {product.seller.name}
             </Text>
@@ -192,7 +204,30 @@ const styles = StyleSheet.create({
   // reference): the text stack sits tight, and a two-line name simply makes
   // its own card taller, exactly like the reference design.
   name: { ...typography.bodyStrong, color: colors.ink[900], marginTop: spacing[2] },
-  sellerRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  sellerRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 },
+  sellerLogo: {
+    width: 16,
+    height: 16,
+    borderRadius: radii.full,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink[200],
+  },
+  sellerInitials: { fontSize: 7, fontWeight: '700' },
   sellerName: { ...typography.caption, color: colors.muted, flexShrink: 1 },
   price: { ...typography.h3, fontWeight: '700', color: colors.ink[900], marginTop: 2 },
 });
+
+function initialsOf(name = '') {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0].toUpperCase())
+      .join('') || '?'
+  );
+}
