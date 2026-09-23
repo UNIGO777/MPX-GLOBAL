@@ -455,6 +455,255 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   - ⚠️ **Not verified:** the DB-backed KYC suites (`kyc.test.js`, `kyc-rounds-requests.test.js`) could
     not run — Docker/Mongo is down, the same connect timeout as all of 2026-09-23. Web `npm run build`
     and web lint pass; the app files parse under `babel-preset-expo`.
+- **2026-09-23 — Console mobile nav strip: the "brown line" was its scrollbar.** Below lg the
+  nav (admin, buyer and exporter share `ConsoleShell`) scrolls sideways, and the browser drew the
+  scrollbar on the brand red. Now `scrollbar-none` (new utility in `index.css`) hides it — still
+  swipeable — a right-edge fade is the "more tabs" cue, and the current page's tab scrolls into view
+  on every route change (deep pages like Staff used to sit off-screen). ⚠️ Process gotcha: an edit
+  script truncated `ConsoleShell.jsx` to 0 bytes (`open(p,'w')` before reading); restored from
+  HEAD — the file had no uncommitted changes — and reapplied.
+- **2026-09-23 — Staff screen made fully responsive (owner).** The header no longer wraps the
+  "Add employee" button under the text (one row at every width; "Add" on phones). Cards now show
+  until **xl** instead of md: the admin sidebar takes 260px from lg up, so the 720px table used to
+  scroll sideways on tablets and small laptops. One person per row (owner changed this from two-up the same day): stacked on phones, a horizontal row from md (identity left; access, status and Edit right).
+  Checked at 375 / 768 / 1024 / 1280 — no horizontal scroll at any width. The add / edit drawers got
+  an icon header (`Drawer` gained an optional `icon`; other drawers unchanged).
+- **2026-09-23 — Add-employee drawer layout (owner).** Two clear sections with matching headings:
+  **Account details** (name, work email, mobile, temporary password — "Generate strong password" is
+  now a link on the label row instead of a misaligned pill) and **Permissions** (divider above, an
+  "n of 14 granted" badge). A first attempt to restyle each permission GROUP heading (accent bar,
+  tinted band) was reverted at the owner's request — the group cards keep the earlier style.
+- **2026-09-23 — Staff permissions: "Select all" per area + restyled tick boxes (owner request).**
+  Each permission area in the Add-employee / Edit-permissions drawer is now a card with a header
+  (area name, "n of m granted") and a **Select all** that ticks or clears the whole area;
+  part-granted shows an indeterminate dash, and the card header turns brand-tinted when the whole
+  area is granted. Least-privilege is unchanged: it only saves clicks on an explicit per-area choice.
+  The shared `Checkbox` primitive now renders a custom box (`CheckboxBox`, rounded red square with
+  a white tick / dash) over a real `appearance-none` input — the browser default was a blue square,
+  and a long help line shrank the box. Applies everywhere `Checkbox` is used (Employees, Styleguide).
+- **2026-09-23 — Staff "Copy details" fixed (`web/src/pages/admin/Employees.jsx`).** Three faults:
+  (1) `navigator.clipboard` exists only on a SECURE origin, so on an http address the copy threw and
+  an empty `catch {}` hid it — the admin pasted whatever was on the clipboard before; (2) the text
+  carried a bare `/signin/staff`, not a link anyone could open once pasted; (3) the email line was
+  unlabelled. Now: clipboard API with a hidden-textarea fallback, labelled lines with the full
+  sign-in URL and the employee's name, and a visible "your browser blocked copying" warning when
+  both routes fail. Verified in a browser for all three paths. Also: the company-email code step
+  now clears wrong digits, like the sign-in code screen.
+- **2026-09-23 — Claim + email-code walkthrough: 57 API scenarios against an isolated local
+  backend, then the flows in a browser. Four defects found and fixed; the company step redesigned.**
+  - 🔴 **Concurrent offer reads 500'd and silently hid the offer.** React's dev double-render sent
+    `/auth/signup/organisation` twice; both `pending.save()` calls raced, one hit a Mongoose
+    `VersionError`, and the web `.catch` swapped the page to "create a company" — a person entitled
+    to join would have made a duplicate org. Fixed on both ends: `choice` is now a hash of a
+    per-signup `claimSalt` + orgId (stable across reads, still opaque), the candidate list is written
+    with an unversioned `updateOne`, and rule-6 proofs moved to an append-only `claimProofs` array so
+    a re-read can never erase one. Web fires the request once (ref + effect). Two regression tests.
+  - **Join button froze** after a client-side validation stop (`joining` never reset) — fixed.
+  - **Post-join hint was wrong for a colleague join** ("your buyer account keeps its password" when
+    the buyer account is the colleague's) — now keyed on `matchedOn`.
+  - **Buyer verification page** still said "if you send your documents…" under rule 7 — hidden.
+  - **Company step redesigned (owner):** three views — *checking*, *join* (picker + code + only the
+    seller details that company is missing, marked required, one full-width Join) and *create*
+    (company name, country, entity type, optional address) reached by "Neither", with a way back.
+  - **Seller home is the dashboard (owner):** `roleHome` → `/exporter/dashboard`; only the signup
+    success screen sends a new seller to Verification (`firstRunHome`). Buyers have no dashboard.
+  - Verified in the browser: picker, withheld name, member-inbox code, wrong code, join with seller
+    details, success screen, create view + back link, sign-in "email instead" (old phone code
+    refused), rule-7 read-only profile / verification / KYC, reset by email, staff has no email link.
+  - ⚠️ Not done: the mobile app was not run (no `node_modules` in `app/`); minor — wrong OTP digits
+    are not cleared on the company-code step.
+- **2026-09-23 — "Don't have your phone?" — sign-in and reset codes can go to EMAIL (buyers and
+  sellers only). Reverses the same-day decision to drop the option (owner: "still make it so if
+  someone does not have access to phone at that time can login").**
+  - Backend: `POST /auth/resend-otp` and `POST /auth/forgot-password` take an optional
+    `channel: 'mobile' | 'email'` that picks one of the account's OWN stored addresses — never an
+    address from the request (A3). Resend returns the masked destination; forgot-password stays
+    generic. Staff are refused (`resend-otp`) or unaffected (the staff forgot route has no channel):
+    the superadmin's second factor is already weaker than planned (D4), owner chose not to widen it.
+    Switching replaces the live challenge; the A3 lock is checked first, so a switch never resets it.
+    The `auth.login` audit now records `otpChannel`.
+  - Web (`Otp.jsx`, `Reset.jsx`) and app (`OtpScreen.jsx`, `ResetPasswordScreen.jsx`): "Don't have
+    your phone? Send the code to my email instead" (and back). The switch skips the resend cooldown.
+  - 🔴 **Accepted trade-off (owner):** control of the email inbox alone can now reset a password and
+    sign in. Before this it also needed the phone.
+  - Tests: `otp-email-channel.test.js` (8) — own-address only, request address ignored, lock
+    survives a switch, staff refused, generic forgot response. Gotcha: first cut changed
+    `verifyOtp`'s return value and broke `otp-lock`'s single-use test, which asserts `true`; the
+    audit now reads the consumed challenge instead.
+  - ⚠️ The app screens were parse-checked only (no `node_modules` in `app/`); not run on a device.
+- **2026-09-23 — D7 claim REBUILT to the owner's seven-rule model; rule 7 (exporter controls the
+  company profile) and the 8e self guards built. Authoritative spec now lives in build-prompt §A21
+  "Organisation claim". Session resumed from an interrupted one — see gotcha at the end.**
+  - **Why:** probing the first cut found the recycled-SIM hijack (F1: Indian carriers reissue a
+    number ~90 days after lapse, so "the phone matched" let a stranger be offered — and join — a real
+    company, pulling its tick down on the way, F2), a silent multi-org pick, a seat race (F5), silent
+    joins (F6) and blocked orgs being offered (F7). The owner set rules 1–7 in response.
+  - **Claim now:** the offer is a **list** (`{ organisations: [...] }`) — email and mobile can reach
+    different companies (rule 3), each row labelled by `matchedOn`. `complete` takes an opaque
+    **`claimChoice`** (random, stored on `PendingSignup.claimCandidates`) — the old
+    `claimOrganisation: true` boolean is gone. **Rule 6:** a claim proves the EXISTING member's email
+    — a new `claim_org_email` OTP to that member's stored address (`requestOtp` accepts a `recipient`
+    only for this purpose), worded as an alarm; skipped only when the member's email is the
+    claimant's own. **The company's name is withheld until then.** New endpoints
+    `POST /auth/signup/organisation/code` (per-signup-token limiter, audited as
+    `organisation.claim_attempt` — 9c) and `/verify`. **8a:** the verifier is the oldest active party
+    member; none → no offer. **8b:** `complete` re-runs eligibility; failure → 409
+    **`CLAIM_SEAT_TAKEN`** with the pending signup KEPT so the screen creates instead. **F5:** the user
+    is inserted before the org is touched, and the `(orgId, role)` duplicate maps to
+    `CLAIM_SEAT_TAKEN`. **8d:** a rejected org receiving locked fields also returns to `submitted`,
+    reason cleared. **9b:** the claim audit records `matchedOn` + `verifiedVia`. **F6:**
+    `notifyOrganisationJoined` emails the existing member on every join (D5 email event #6,
+    owner-approved; the guard now sits at a seventh).
+  - **Rule 7:** new `profileControl.service.js`. With an active exporter in the org, the buyer's
+    company-profile writes (PATCH, pending-change cancel, logo/cover) and KYC uploads are refused
+    with 403 **`PROFILE_MANAGED_BY_EXPORTER`**; `GET /me/organisation` gains `canEdit`,
+    `/me/verification` gains `canManage`. No active exporter → buyer edits as before; an exporter
+    deactivated by support hands control back.
+  - **8e:** a buyer cannot save its own company's product or the company itself; signed-in buyers'
+    `/public/search` + `/public/facets` exclude their own organisation (both routes now use
+    `optionalAuthenticate`; exporters and guests unaffected).
+  - **Web:** `ClaimOffer.jsx` (picker, code step, masked inbox, "Neither — set up a separate
+    company"); `SignupCompany.jsx` sends `claimChoice`, requires the address when joining as a
+    seller, swaps to create on `CLAIM_SEAT_TAKEN`. Company profile, buyer verification and buyer
+    KYC upload render read-only / status-only under rule 7.
+  - **Bug found while testing, fixed:** one member matching on BOTH identifiers was labelled
+    `email`, not `both`.
+  - **Tests:** `d7-organisation-claim.test.js` rewritten (33) + new `d7-profile-control.test.js` (9).
+    Mutation-checked: switching rule 6 off turns 7 of them red. Full suite: 1149 tests / 75 files —
+    the only failures were two fixtures (`m4-push`, `f1a-org-block`) that put 2–3 ACTIVE exporters in
+    one org, a state rule 1's index now forbids; fixtures changed to a two-sided (exporter + buyer)
+    company, both files green after. ⚠️ Knock-on worth an owner look: push goes to EVERY active user
+    of the seller org, so a two-sided company's BUYER account receives its seller's enquiry pushes.
+  - **Docs moved in the same pass:** CLAUDE.md (the "claim is not built" line and the "both sides
+    edit" line were both wrong), `mobile-app.md` + `auth-sessions.md` (pointers to §A21 so an app
+    build inherits every rule), `remind.md`, `Note.md` (D7 revised, F3/F4 support-resolved, D5 sixth
+    event), `UiWebNotes` rows 17/57 (row 57 had been wrongly marked Done — the APP screen is still a
+    stub), and a new `docs/Support-Runbook.md` (seat change = deactivate, then re-claim).
+  - ⚠️ **Not done:** the app claim screen; a browser walkthrough of the claim card, picker and code
+    step (none of D7 has been seen signed-in); declining is still not audited and there is no
+    join-later path; `npm run indexes:sync` must run on the server for the new unique index.
+  - **Gotcha:** the interrupted session left the service half-refactored — `completeSignup` still
+    called a `findClaimableOrg` that no longer existed, so a claim threw. The plan lived only in
+    `~/.claude/plans/`, outside the repo; §A21 now holds it so the next session cannot miss it.
+- **2026-09-23 — 🔴 Three auth-delivery/disclosure bugs FIXED (approved plan §5, plus two found
+  while verifying it). Full suite green: 1120 tests / 74 files.**
+  - **OTP email fallback was dead code (`otp.sender.js`).** The line read
+    `channel === 'email' ? identifier : null`, implementing only the first half of its own
+    comment ("or SMS cannot reach this number"). Any mobile-channel send that SMS could not
+    deliver fell through to "no transport" and, in production, **threw** — login and
+    forgot-password both hard-code `channel: 'mobile'`, so neither had a way out. `sendOtp` now
+    takes a `fallbackEmail`, resolved by `requestOtp` from the subject's OWN record (never the
+    request — A3). **Gotcha worth keeping:** `smsDeliverable` includes `isSmsConfigured()` inside
+    its `&&`, so the blast radius was never just international buyers — a missing or wrong SMS
+    key, or a half-finished provider swap, **locked out every single user**.
+  - **The test that should have caught it was asserting the wrong thing** (`otp-delivery.test.js`,
+    titled "falls back to EMAIL for an international number") — it asserted only
+    `sms.send` **not** called, never that email *was*. It stayed green while the buyer received
+    nothing. Now asserts `email.send` and the address; two cases added (SMS unconfigured falls
+    back; no fallback address delivers nothing). Both new cases were **run red against the
+    unfixed sender** before the fix landed — a green test is not evidence until it has failed.
+  - **🔴 NEW · forgot-password leaked account existence despite the generic message.**
+    `forgotWithRole` awaited `requestOtp`, which throws when the subject holds a locked challenge
+    (A3) or when delivery fails; an unknown identifier never reaches it and so can never throw.
+    That gave **401 OTP_LOCKED for a real account vs 200 for a fake** — an enumeration oracle any
+    unauthenticated caller can read, and one they can *cause* themselves with five wrong codes on
+    the reset form. The dispatch now sits in a `try`; the response is byte-identical in every
+    state. **Swallowed for the response only** — logged at error level (channel + purpose, no
+    identifier) so a dead SMTP config still surfaces to operators. Test added to
+    `security-controls.test.js`, confirmed red first (401 ≠ 200).
+  - **🔴 NEW · the `Settings` model (D8) never declared an ownership scope** — caught by
+    `security-controls.test.js`'s "every registered model declares a scope" guard, which had been
+    failing since the platform-settings work. It is genuinely not org-scoped, so it now declares
+    `SCOPE.PLATFORM` explicitly; the registry deliberately has no "exempt" option, because an
+    undeclared model must throw rather than query unscoped.
+  - **Still open (own task, owner's decision):** the Fast2SMS → international provider swap
+    (`docs/Pending-Work.md`). The fallback above is the safety net for that window, which is
+    exactly why it had to be real before the swap starts.
+- **2026-09-23 — D7 · Organisation CLAIM at signup BUILT. "One company = one Organisation" is now
+  enforced instead of merely intended. Red-alerted first; owner reaffirmed.**
+  D7 was on the "build it later" hold (owner, 2026-08-18), so `remind.md` required the alert. The
+  design was already fully specified in the D-item, so this implements a spec rather than inventing
+  one — including the asymmetry, which is the part that is easy to get wrong.
+  - **What it fixes:** `completeSignup` always created. One firm signing up as buyer and then as
+    exporter (which `assertIdentityAvailable` explicitly allows on one email) ended up with **two
+    Organisations — two KYCs, two ticks to earn, two public profiles, and an admin "Block company"
+    that hit only one while the twin kept trading.** That no longer accrues.
+  - 🔴 **The security model, and the line to defend:** the claimable org is derived from the identity
+    **both OTPs already proved**. `POST /auth/signup/organisation` takes only the signup token, and
+    `/auth/signup/complete` takes **`claimOrganisation: true` — a boolean, never an org id**. The
+    client is deliberately given no way to NAME a target, which is strictly stronger than validating
+    a supplied id. Adding an id or a typed company name to either endpoint turns this into a
+    company-membership oracle and then a way to join an arbitrary company; §A21 line 248 permits
+    showing the found company's name *only* because of that derivation. The offer response also
+    carries **no raw `kycStatus`** (a derived `verified` boolean instead) and no id — pinned by an
+    exact-key test.
+  - 🔴 **The asymmetry (owner, 2026-08-19) — carry-over is not symmetric.** A buyer-made org holds
+    only name + country; the exporter side needs `entityType` + address, both KYC-LOCKED fields an
+    employee is supposed to have checked against documents. So an exporter claiming a **verified**
+    buyer org supplies that delta and the org drops to `submitted`, withholding the tick until the
+    exporter side is approved. A buyer claiming a verified exporter org is the clean direction (the
+    exporter profile is a superset) and carries the tick over untouched. The screen states which
+    case applies **before** the user commits (`needs` / `carriesTickOver`).
+  - **Product-add after a claim needs no new code:** create is bounded only by the D1 caps, never by
+    a verify-before-sell gate, so a claiming exporter at `submitted` can list immediately up to
+    3 active / 10 drafts — exactly the "unlocks at profile-FILLED" decision.
+  - `createUserInOrg` in `auth.service.js` mirrors `createUserWithOrg` minus the org insert, keeping
+    `assertIdentityAvailable` — which is what still refuses a **second account of the same role**, so
+    claiming cannot be used to get around the identity guard (tested).
+  - A claim ends in a **session**, like a create. The first cut returned
+    `{ user, organisation, claimed }` and would have handed the client an account it could not use,
+    because the controller reads `accessToken`/`refreshToken`. Also writes `organisation.claim`
+    (with the supplied locked fields, so the log explains why the tick moved) **and** `auth.signup`,
+    keeping the latter the complete list of account creations.
+  - **Tests:** `d7-organisation-claim.test.js`, 12 cases — nothing-to-claim, the offer appearing for
+    the other side, the exact response shape, refusal before both channels are verified, **not**
+    offering a different identity's company, claiming with nothing to claim (409, no org created),
+    one-org attachment with both side flags, the claimed exporter getting a slug, the audit entry,
+    both carry-over directions, and the same-role guard still holding. A21/A22 suites re-run green.
+  - Ledgers moved in the same pass: `docs/Note.md` D7 and **`.claude/rules/remind.md`** mark it
+    built, and `UiWebNotes` rows 17 and 57 (the web and app claim stubs) are closed.
+  - **Post-claim hints on the success screen** (owner-requested, same day). Claim shares the
+    COMPANY, not the credentials — each side stays its own account with its own password, which is
+    the standing rule in CLAUDE.md ("credentials and OTP locks are independent; do not 'fix' that
+    by merging them"). Nothing told the user that, so one person now juggling two passwords for one
+    company had no way to know which was which. The success screen now says so, plus what happened
+    to the tick: amber "verification is being re-checked" when locked details were supplied, green
+    "keeps its tick" when it carried over.
+    🔴 **Why this copy is safe HERE and nowhere else:** the person is authenticated and has just
+    explicitly joined a company they proved they own, so naming their other account leaks nothing.
+    The portal LOGIN pages still must not hint at it — that is exactly what the generic "Invalid
+    credentials" exists to protect, and it is unchanged.
+    Verified by rendering all three success variants (tick paused / tick carried / no claim) against
+    the compiled CSS.
+  - 🔴 **BUG FOUND AND FIXED while tracing what DECLINING does — one I had introduced.** Someone
+    who declines the offer creates a second company, usually under the same name. The slug
+    **creation** hook only checked LIVE slugs (`{ slug: base }`), while the rename method checked
+    live **and** retired. Since a retired slug still routes (that is the whole point of
+    `previousSlugs`), the new company could take one — and would then serve its own page to
+    everyone holding the first company's old link. A silent mis-route to a **different business**,
+    which is worse than a 404. Reproduced, fixed so creation checks both, and pinned by a
+    regression test in `a22c-slug-rename.test.js`. Lesson: when a lookup gains a second source of
+    truth, every writer has to learn about it, not just the one being edited.
+  - 🔴 **SECOND bug found the same way, also mine: the claim offer could pick the WRONG company.**
+    A verified identity can reach more than one org — the email may belong to one company's buyer
+    and the mobile to a different company's. `findClaimableOrg` took `party[0]`, so **Mongo's
+    natural document order decided whose company someone joined.** Proved by reverting the guard
+    (it resolved to the first of two candidates), not just asserted. Now it fails safe: more than
+    one distinct org ⇒ **no offer**, a warning is logged, and the ordinary create path still works.
+    Joining the wrong company is materially worse than joining none — it puts a stranger inside
+    another business's organisation, sharing its KYC, its tick and its public profile.
+    ⚠️ **Process note worth keeping:** the first run of that test "failed" for an unrelated reason
+    (a fixture missing `expiresAt`) and I briefly took that as confirmation of the bug. A red test
+    is not evidence until you have read WHY it is red.
+  - ⚠️ **Declining is not recorded anywhere, and there is no join-later path.** Both are honest
+    gaps, not bugs: a genuinely separate company may share a person's email, so the offer has to be
+    declinable. But nothing audits the decline, nothing flags the duplicate to staff, and claim
+    exists only during signup step 2 — so someone who declines by mistake has no way back without
+    support. Listed for the owner rather than silently designed around.
+  - ⚠️ **NOT verified signed-in:** the claim card has not been seen in a browser. The app's own
+    claim stub (`SignupCompanyScreen.jsx`) is **still a stub** — the backend now supports it, but
+    the React Native screen was not touched.
+
 - **2026-09-23 — App `danger` mirrored to web's maroon; a stale claim in `Pending-Work.md` struck.**
   Web moved `danger` to a deep maroon on 2026-09-22 because the old `#D92D20` measured **1.19:1**
   against the new crimson brand — indistinguishable by eye, so the destructive "Sign out" button

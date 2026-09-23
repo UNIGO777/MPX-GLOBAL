@@ -134,6 +134,29 @@ describe('renaming an UNVERIFIED exporter (edits apply live)', () => {
     expect(String(res.body.exporter.id ?? res.body.exporter._id)).toBe(String(first._id));
   });
 
+  it('🔴 a NEWLY CREATED org cannot take a slug another company has RETIRED', async () => {
+    // Found 2026-09-23 while tracing what happens when someone DECLINES the D7
+    // claim offer: they create a second company under the same name, and the
+    // creation hook only checked LIVE slugs. A retired slug still routes, so the
+    // new company would have served its own page to everyone holding the first
+    // company's old link — a silent mis-route to a different business, which is
+    // worse than a 404. The rename path always checked both; creation did not.
+    const name = `Decline Twin ${RUN}`;
+    const { org: first, token } = await makeExporter({ name });
+    const retired = (await reload(first._id)).slug;
+    await rename(token, `Decline Twin Renamed ${RUN}`);
+    expect((await reload(first._id)).previousSlugs).toContain(retired);
+
+    // The declining signup: same company name, brand new organisation.
+    const { org: second } = await makeExporter({ name });
+
+    expect((await reload(second._id)).slug).not.toBe(retired);
+    // And the first company's old URL still goes to the FIRST company.
+    const res = await request(app).get(`/exporters/${retired}`);
+    expect(res.status).toBe(200);
+    expect(String(res.body.exporter.id ?? res.body.exporter._id)).toBe(String(first._id));
+  });
+
   it('renaming back (A→B→A) restores the slug and drops it from the retired list', async () => {
     const { org, token } = await makeExporter({ name: `Boomerang Co ${RUN}` });
     const original = (await reload(org._id)).slug;

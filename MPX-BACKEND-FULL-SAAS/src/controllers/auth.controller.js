@@ -86,8 +86,8 @@ export async function verifyOtp(req, res) {
 }
 
 export async function resendOtp(req, res) {
-  await authService.resendLoginOtp(req.body);
-  res.json({ message: 'A new OTP has been sent.' });
+  const { sentTo } = await authService.resendLoginOtp(req.body);
+  res.json({ message: 'A new OTP has been sent.', sentTo });
 }
 
 export async function refresh(req, res) {

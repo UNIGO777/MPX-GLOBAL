@@ -42,6 +42,25 @@ export function Reset() {
   const [codeInvalid, setCodeInvalid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  // "No phone to hand" — buyer/seller only (owner, 2026-09-23); staff stay on
+  // the phone. The answer is as generic as Forgot's: it must not reveal whether
+  // an account exists.
+  const [emailNotice, setEmailNotice] = useState(null);
+  const [emailSending, setEmailSending] = useState(false);
+
+  const sendToEmail = async () => {
+    setError(null);
+    setEmailSending(true);
+    try {
+      await authApi.forgotPassword({ identifier: identifier.trim(), portal, channel: 'email' });
+      setCode('');
+      setEmailNotice('If an account exists, a new reset code has been sent to its email. The earlier code no longer works.');
+    } catch (err) {
+      setError(apiError(err, 'Could not send the code. Please try again.').message);
+    } finally {
+      setEmailSending(false);
+    }
+  };
 
   const backTo = staff ? '/signin/staff' : '/signin';
 
@@ -142,6 +161,7 @@ export function Reset() {
               </p>
             )}
             {error && <Alert tone="danger">{error}</Alert>}
+            {emailNotice && !error && <Alert tone="success">{emailNotice}</Alert>}
 
             <Input
               label="Email or mobile"
@@ -179,6 +199,19 @@ export function Reset() {
                   Send a new code
                 </Link>
               </p>
+              {!staff && (
+                <p className="text-[13px] text-muted">
+                  Don&apos;t have your phone?{' '}
+                  <button
+                    type="button"
+                    onClick={sendToEmail}
+                    disabled={emailSending || loading || !identifier.trim()}
+                    className="font-semibold text-primary-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Send the code to my email instead
+                  </button>
+                </p>
+              )}
             </div>
 
             <PasswordInput

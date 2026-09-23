@@ -53,6 +53,22 @@ hashed. Rate limit per mobile, per email and per IP. Never return an OTP in a re
 never log one, never send one to an address supplied in the request rather than the one on
 the account.
 
+**"Don't have your phone?" — the email channel (owner, 2026-09-23).** Buyers and sellers may
+move a sign-in code (`POST /auth/resend-otp`) or a reset code (`POST /auth/forgot-password`) to
+email with `channel: 'email'`. It selects the account's OWN stored email — the request never
+carries an address. **Staff stay phone-only** (resend refuses; the staff forgot route has no
+channel). The A3 lock is checked before the switch, so switching never resets it. Forgot-password
+stays generic. `auth.login` audit records `otpChannel`. Tests: `otp-email-channel.test.js`.
+Accepted trade-off: control of the email inbox alone can reset a password.
+
+**The one third-party recipient — `claim_org_email` (D7 rule 6, 2026-09-23).** Joining an
+existing organisation proves the inbox of the member ALREADY in it, so this code goes to that
+member's stored address — resolved from the database, never from the request. `requestOtp`
+accepts a `recipient` only for this purpose, only on the email channel, only for a pending
+signup; keep that pin. Its own purpose for the same reason as the signup split (one live
+challenge per subject+purpose), budgeted per signup token (`claimCodeLimiter`), and every send is
+audited (`organisation.claim_attempt`).
+
 **Signup verifies BOTH channels (2026-08-03).** `POST /auth/signup/start` sends one code to the
 email and another to the mobile, and no account exists until both pass. Two rules make that work
 and must not be "simplified":
@@ -94,6 +110,15 @@ exclusive and may not also be a buyer or exporter. Login is per-portal: `POST /a
 `portal` (buyer/exporter); staff use `POST /auth/staff/login` (no portal). A wrong portal returns
 the **same generic "Invalid credentials"** as a wrong password — never reveal that the account
 exists under another portal.
+
+## Organisation claim (D7)
+
+Signup's organisation step can JOIN an existing company. The full rule set is build-prompt
+**§A21 "Organisation claim"** — implement all of it, on every client, rather than re-deriving
+it. The load-bearing parts: the client never names a target (opaque `claimChoice`, never an org
+id); the stored offer restricts and never grants (`complete` re-checks); the company name is
+withheld until rule 6 is satisfied; one ACTIVE account per role per org, enforced by a unique
+partial index; seat changes are support-mediated.
 
 ## Never
 

@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+
 import { Product } from '../models/Product.js';
 import { Organisation } from '../models/Organisation.js';
 import { buildPublicProductFilter, buildSortStages } from './search.query.js';
@@ -45,8 +47,10 @@ export async function searchProducts({ q, page, pageSize, sort, ...params }) {
 // verified-only, because a cancelled "working categories" (§A22.5) means an
 // Organisation has no category, price or MOQ of its own.
 
-export async function searchSuppliers({ q, page, pageSize, sort, country, verifiedOnly }) {
+export async function searchSuppliers({ q, page, pageSize, sort, country, verifiedOnly, excludeOrgId }) {
   const filter = { exporterSide: true, isActive: true };
+  // D7 8e · a signed-in buyer's own company is not a supplier to them.
+  if (excludeOrgId) filter._id = { $ne: new mongoose.Types.ObjectId(String(excludeOrgId)) };
   if (country) filter.country = country.toUpperCase();
   // B7: verification is a query condition ONLY on the buyer's explicit opt-in.
   if (verifiedOnly) filter.kycStatus = 'verified';

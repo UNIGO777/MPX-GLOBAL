@@ -6,6 +6,7 @@ import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 import { recordAudit } from './audit.service.js';
 import { uploadPublicImage, deletePublicImage } from './image.storage.service.js';
+import { assertControlsCompanyProfile, controlsCompanyProfile } from './profileControl.service.js';
 
 /**
  * §A22 · Self-service company profile — the owner reads and edits their OWN
@@ -93,8 +94,18 @@ async function loadOwnOrg(user) {
   return org;
 }
 
+/** Every WRITE below goes through this — D7 rule 7 (profileControl.service.js). */
+async function loadOwnOrgForEdit(user) {
+  const org = await loadOwnOrg(user);
+  await assertControlsCompanyProfile({ user, org });
+  return org;
+}
+
 export async function getMyOrganisation({ user }) {
-  return ownerView(await loadOwnOrg(user));
+  const org = await loadOwnOrg(user);
+  // `canEdit` lets the screen render read-only for a buyer whose company has a
+  // seller account (rule 7). Presentation only — every write re-checks.
+  return { ...ownerView(org), canEdit: await controlsCompanyProfile({ user, org }) };
 }
 
 const trimmed = (v) => (typeof v === 'string' ? v.trim() : v);
@@ -109,7 +120,7 @@ const same = (a, b) => (trimmed(a) || '') === (trimmed(b) || '');
  *   description, address (full object; subfields optional).
  */
 export async function updateMyOrganisation({ user, patch, meta }) {
-  const org = await loadOwnOrg(user);
+  const org = await loadOwnOrgForEdit(user);
 
   // entityType is an ORDINARY locked field for both sides (owner, 2026-08-19 —
   // the "immutable for exporter" rule is retired). Changing it re-targets which
@@ -294,7 +305,7 @@ export async function updateMyOrganisation({ user, patch, meta }) {
  * cancel of nothing is a client bug, and 404 would read as "org missing".
  */
 export async function cancelMyPendingChanges({ user, meta }) {
-  const org = await loadOwnOrg(user);
+  const org = await loadOwnOrgForEdit(user);
   const pc = org.pendingChanges?.state ? org.pendingChanges : null;
   if (!pc) throw AppError.conflict('no pending change', 'There is no profile change to cancel.');
 
@@ -373,7 +384,7 @@ async function deleteOldCover(org) {
  * what the public API exposes changes here.
  */
 export async function setMyCover({ user, buffer }) {
-  const org = await loadOwnOrg(user);
+  const org = await loadOwnOrgForEdit(user);
   if (!org.exporterSide) {
     throw AppError.forbidden('buyer has no cover', 'Only exporter profiles have a cover image.');
   }
@@ -389,7 +400,7 @@ export async function setMyCover({ user, buffer }) {
 }
 
 export async function removeMyCover({ user }) {
-  const org = await loadOwnOrg(user);
+  const org = await loadOwnOrgForEdit(user);
   if (!org.exporterSide) {
     throw AppError.forbidden('buyer has no cover', 'Only exporter profiles have a cover image.');
   }
@@ -418,7 +429,7 @@ export async function removeMyCover({ user }) {
  * An EXPORTER's logo is unchanged: still public, still the seller page's image.
  */
 export async function setMyLogo({ user, buffer }) {
-  const org = await loadOwnOrg(user);
+  const org = await loadOwnOrgForEdit(user);
 
   // Magic-byte verified, images only (no PDF), 5 MB cap — all inside
   // uploadPublicImage. For an exporter the asset is public by design; for a
@@ -434,7 +445,7 @@ export async function setMyLogo({ user, buffer }) {
 }
 
 export async function removeMyLogo({ user }) {
-  const org = await loadOwnOrg(user);
+  const org = await loadOwnOrgForEdit(user);
 
   await deleteOldLogo(org);
   org.logo = undefined;

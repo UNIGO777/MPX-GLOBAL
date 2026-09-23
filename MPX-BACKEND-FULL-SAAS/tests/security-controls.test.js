@@ -292,6 +292,45 @@ describe('auth surface gives the SAME answer for every failure shape', () => {
     expect(known.body).toEqual(unknown.body);
   });
 
+  /**
+   * 🔴 The generic message above is not enough on its own. `forgotWithRole` AWAITS
+   * `requestOtp`, and `requestOtp` THROWS when the subject already holds a locked
+   * challenge (A3's 5-attempt / 15-minute lock). A non-existent account never
+   * reaches `requestOtp` at all, so it cannot throw — which makes the pair
+   * distinguishable to anyone who first locks the target themselves:
+   *
+   *   real account, locked  → 401 OTP_LOCKED
+   *   no such account       → 200 "If an account exists..."
+   *
+   * That is an account-enumeration oracle reachable by an unauthenticated caller,
+   * and the lock is self-inflicted (five wrong codes on the reset form). The
+   * endpoint must stay indistinguishable in EVERY state, not just the happy one.
+   */
+  it('forgot-password stays generic even when the real account is OTP-LOCKED', async () => {
+    const { user } = await makeBuyer();
+
+    // The lock an attacker can cause themselves with five wrong reset codes.
+    await OtpChallenge.create({
+      userId: user._id,
+      identifier: user.mobile.e164,
+      channel: 'mobile',
+      purpose: 'forgot_password',
+      codeHash: 'x',
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      lockedUntil: new Date(Date.now() + 15 * 60 * 1000),
+      attempts: 5,
+      maxAttempts: 5,
+    });
+
+    const locked = await request(app).post('/auth/forgot-password')
+      .send({ identifier: user.email, portal: 'buyer' });
+    const unknown = await request(app).post('/auth/forgot-password')
+      .send({ identifier: 'nobody-locked@example.com', portal: 'buyer' });
+
+    expect(locked.status).toBe(unknown.status);
+    expect(locked.body).toEqual(unknown.body);
+  });
+
   it('staff cannot sign in through the party portal, nor a buyer through the staff one', async () => {
     seq += 1;
     const platform = await Organisation.create({ name: `Platform ${seq}`, type: 'platform' });

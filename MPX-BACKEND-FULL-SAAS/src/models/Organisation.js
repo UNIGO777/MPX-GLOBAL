@@ -290,8 +290,16 @@ organisationSchema.index(
 organisationSchema.pre('validate', async function generateSlug() {
   if (this.slug || !this.name) return;
   const base = slugify(this.name) || String(this._id).slice(-6);
+  // 🔴 Checks RETIRED slugs as well as live ones, and that is not belt-and-braces.
+  // A retired slug still routes (the public seller read resolves `previousSlugs`
+  // so renames never break an indexed URL), so a NEW company allowed to take one
+  // would silently serve its own page to everyone holding the other company's old
+  // link — a mis-route to a different business, which is worse than a 404.
+  //
+  // The likeliest way to hit it: someone declines the D7 claim offer and creates
+  // a second company under the same name. Found exactly that way, 2026-09-23.
   const clash = await this.constructor
-    .findOne({ slug: base, _id: { $ne: this._id } })
+    .findOne({ _id: { $ne: this._id }, $or: [{ slug: base }, { previousSlugs: base }] })
     .select('_id')
     .lean();
   this.slug = clash ? `${base}-${String(this._id).slice(-4)}` : base;

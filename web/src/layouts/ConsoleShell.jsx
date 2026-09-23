@@ -1,4 +1,5 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -189,6 +190,15 @@ function Avatar({ initials, logo, compact = false }) {
 }
 
 export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', children }) {
+  // Keep the current page's tab visible in the mobile strip — deep pages
+  // (Staff, Settings) sat off-screen to the right with no hint they were there.
+  const stripRef = useRef(null);
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const active = stripRef.current?.querySelector('[aria-current="page"]');
+    active?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [pathname]);
+
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
@@ -281,8 +291,12 @@ export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', child
           </div>
         </header>
 
-        {/* Mobile nav strip */}
-        <nav aria-label="Main" className="shrink-0 overflow-x-auto px-2 pb-2 lg:hidden">
+        {/* Mobile nav strip. Swipeable, with no visible scrollbar (it read as a
+            brown line on the brand red); a fade on the right edge is the "more
+            this way" cue instead, and the current page's tab is scrolled into
+            view so it is never off-screen. */}
+        <div className="relative shrink-0 lg:hidden">
+          <nav ref={stripRef} aria-label="Main" className="scrollbar-none overflow-x-auto px-2 pb-2">
           <ul className="flex gap-1">
             {nav.map(({ to, label, soon, disabled }) => (
               <li key={label} className="shrink-0">
@@ -314,7 +328,12 @@ export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', child
               </li>
             ))}
           </ul>
-        </nav>
+          </nav>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-primary-800 to-transparent"
+          />
+        </div>
 
         {/* Canvas — the curved top-left edge is the shell's signature */}
         <main className="flex-1 overflow-y-auto rounded-tl-[32px] bg-surface-subtle shadow-[inset_10px_10px_30px_rgba(0,5,23,0.05)]">

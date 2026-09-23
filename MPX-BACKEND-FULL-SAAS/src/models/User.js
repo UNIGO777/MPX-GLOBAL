@@ -77,7 +77,28 @@ const userSchema = new Schema(
 // party identity may not be given to staff) is an additional service-layer check.
 userSchema.index({ email: 1, role: 1 }, { unique: true });
 userSchema.index({ 'mobile.e164': 1, role: 1 }, { unique: true });
-userSchema.index({ orgId: 1, role: 1 });
+// 🔴 RULE 1 AT THE DATABASE (D7 claim, 2026-09-23): one organisation holds at
+// most ONE buyer and ONE exporter account. The service layer checks this before
+// a claim, but an application check cannot win a race — two simultaneous claims
+// both read "no exporter yet" and both insert. Only a unique index refuses the
+// second.
+//
+// 🔴 SCOPED TO ACTIVE USERS, deliberately. This is what lets support move a seat
+// when a company's seller leaves: superadmin deactivates the holder
+// (`userManagement.service.js` — sets `isActive: false`, bumps `tokenVersion`,
+// audits), which frees the seat so the replacement can claim normally. A
+// non-partial unique index would make that impossible and leave the only remedy
+// a manual database edit. The support runbook depends on this line.
+//
+// Restricted to the two party roles: staff sit on the platform org, where several
+// employees legitimately share `(orgId, 'employee')`.
+userSchema.index(
+  { orgId: 1, role: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { role: { $in: ['buyer', 'exporter'] }, isActive: true },
+  },
+);
 
 declareScope(userSchema, SCOPE.ORG);
 

@@ -49,6 +49,69 @@ const pendingSignupSchema = new Schema(
     mobileVerifiedAt: { type: Date },
 
     expiresAt: { type: Date, required: true },
+
+    /**
+     * 🔴 The server-derived set of organisations this signup may claim (rule 3,
+     * 2026-09-23). A verified identity can reach TWO companies — the email one
+     * firm's buyer, the mobile another's — so the screen has to offer a choice,
+     * and a choice means the client sends something back.
+     *
+     * This list is what makes that safe. It is written when the offer is served,
+     * from identity both OTPs proved, and `complete` accepts a choice ONLY if it
+     * appears here. The client still cannot NAME an organisation: it echoes an
+     * opaque `choice` token, and the orgId never leaves the server.
+     *
+     * 🔴 The list RESTRICTS, it never GRANTS. Rule 6 adds an OTP round trip, so
+     * minutes pass — the seat can be filled, the company blocked or renamed
+     * meanwhile. `complete` therefore re-runs the FULL eligibility check rather
+     * than trusting membership of this list. Treating it as a grant would turn a
+     * stale offer into a way into an organisation that no longer qualifies.
+     */
+    claimCandidates: [
+      {
+        _id: false,
+        orgId: { type: Schema.Types.ObjectId, ref: 'Organisation', required: true },
+        // Which identifier reached this company — 'email' | 'mobile' | 'both'.
+        // Shown to the user (rule 3 wants the rows labelled) and recorded in the
+        // claim audit: "how did this stranger get into Acme?" is answered by it.
+        matchedOn: { type: String, enum: ['email', 'mobile', 'both'], required: true },
+        // Opaque handle the client echoes back — a hash of `claimSalt` + orgId,
+        // so nothing about the org is inferable and repeated reads agree.
+        choice: { type: String, required: true },
+      },
+    ],
+
+    /**
+     * Secret per-signup salt the `choice` tokens are derived from. Fixed when the
+     * signup starts, so two concurrent offer reads compute the SAME choices
+     * instead of racing to write different random ones (found in a browser
+     * walkthrough 2026-09-23: React's double effect fired two reads, one save hit
+     * a VersionError and the screen fell back to "nothing to claim").
+     */
+    claimSalt: { type: String },
+
+    /**
+     * Rule 6 proofs: a claim always proves the EXISTING member's email. One row
+     * per company whose member-inbox code was passed, recording WHICH member's
+     * inbox it was — `complete` accepts the proof only while that same user is
+     * still the company's verifier. Kept apart from `claimCandidates` and only
+     * ever `$push`ed, so re-reading the offer can never erase a proof.
+     */
+    claimProofs: [
+      {
+        _id: false,
+        orgId: { type: Schema.Types.ObjectId, ref: 'Organisation', required: true },
+        userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        at: { type: Date, required: true },
+      },
+    ],
+
+    /**
+     * The `choice` the live `claim_org_email` code was issued for. There is one
+     * live challenge per (signup, purpose), so without this a code sent for
+     * company A could be redeemed against company B.
+     */
+    claimCodeFor: { type: String },
   },
   baseSchemaOptions,
 );

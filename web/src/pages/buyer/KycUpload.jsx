@@ -219,6 +219,26 @@ export function KycUpload() {
     );
   }
 
+  // D7 rule 7 — the company has a seller account, which holds its one KYC file.
+  // The upload route refuses a buyer here (PROFILE_MANAGED_BY_EXPORTER); say so
+  // instead of offering a form that cannot submit.
+  if (verification && verification.canManage === false) {
+    return shell(
+      <div className="max-w-[860px] rounded-xl border border-surface-border bg-white p-8 text-center shadow-sm">
+        <BuildingIcon className="mx-auto h-10 w-10 text-primary-600" />
+        <h1 className="mt-3 text-xl font-bold text-ink-900">Your seller account handles verification</h1>
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+          Your company also has a seller account on MPX Global. It holds the company&apos;s
+          verification documents and answers any request from our team, so there is nothing for
+          you to upload here. Your buyer account keeps working as normal.
+        </p>
+        <Button className="mt-6" onClick={() => navigate('/buyer/verification')}>
+          Back to verification status
+        </Button>
+      </div>,
+    );
+  }
+
   // A22 gate — same rule as the exporter side; the buyer variant of the company
   // screen carries exactly the fields the server checks.
   if (verification && verification.profileComplete === false) {

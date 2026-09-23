@@ -51,13 +51,24 @@ export async function saveItem({ user, targetType, targetId }) {
   await loadBuyerOrg(user.orgId);
 
   // A buyer may only save something that is publicly visible at save time.
+  let ownerOrgId;
   if (targetType === 'product') {
     const product = await Product.findOne({ _id: targetId });
     const { available } = await productAvailability(product, await getActiveLeafIds());
     if (!available) throw AppError.notFound('product not saveable', 'Not found.');
+    ownerOrgId = product.exporterOrgId;
   } else {
     const org = await Organisation.findOne({ _id: targetId }).select('exporterSide isActive');
     if (!supplierAvailability(org).available) throw AppError.notFound('supplier not saveable', 'Not found.');
+    ownerOrgId = org._id;
+  }
+
+  // 🔴 Self guard (D7 8e). One Organisation can hold both a buyer and an
+  // exporter side, and claim makes that the normal case. The model cannot
+  // express "not your own company" — like `inquiry.service`'s self-enquiry
+  // check, it is only ever caught here.
+  if (String(ownerOrgId) === String(user.orgId)) {
+    throw AppError.badRequest('self save', 'This belongs to your own company, so it cannot be saved.');
   }
 
   try {

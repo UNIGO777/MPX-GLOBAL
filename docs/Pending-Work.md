@@ -17,7 +17,7 @@ note was wrong, the correction is recorded in §7 so the same wrong claim does n
 | B2 | **"Request more information" email → seller** | `MPX-BACKEND-FULL-SAAS/src/services/emailNotifications.service.js` | Not built; **owner-approved 2026-08-21 — build it without alerting.** Four events exist. Driver: agreement §3.7. Staff UI and company-side UI are both already built, so this is the last piece of an otherwise complete KYC loop. |
 | ~~B3~~ | ~~**Exporter dashboard**~~ | `web/src/pages/exporter/Dashboard.jsx` | ✅ **BUILT 2026-09-22** at `/exporter/dashboard`; `/exporter` redirects to it and the nav row is real. 🔴 **The "scheduled month 2" claim in this row was wrong** — no document ever scheduled it, and no seller dashboard appears in `docs/scope-of-work.md`. It was red-alerted as out-of-quote and the owner confirmed on app parity. Detail: `docs/History.md` 2026-09-22. **Still unverified in a browser** — needs an exporter login. |
 | ~~B4~~ | ~~**Portal settings screens** (buyer / exporter)~~ | — | ❌ **THIS ROW WAS WRONG — struck 2026-09-22.** There is nothing to build: `docs/UiWebNotes.md` rows 29 and 34 record that the design's "Settings" row **became** Company profile on 2026-08-10 and shipped (`/buyer/company`, `/exporter/company`, each carrying the change-password entry). I read an empty nav slot as a missing feature instead of checking the ledger — the same mistake as the exporter-dashboard "month 2" claim. Building one would duplicate Company profile. |
-| B5 | **Organisation claim at signup** (D7) | `web/src/pages/auth/SignupCompany.jsx`; no endpoint in `auth.routes.js` | Deferred by the owner 2026-08-18. `/auth/signup/complete` always CREATES. One company signing up as buyer **and** exporter gets two orgs → two KYCs, two public profiles, and a "Block company" that hits only one. Cost grows with every signup. |
+| ~~B5~~ | ~~**Organisation claim at signup** (D7)~~ | `signup.service.js` · `POST /auth/signup/organisation` | ✅ **BUILT 2026-09-23** — red-alerted as a D7 hold, owner reaffirmed. One company is now one Organisation: a claim attaches the new account to the org already holding its verified identity. The tick does not travel over unreviewed details (an exporter claiming a buyer-verified org returns it to `submitted`). Rebuilt the same day to the owner's seven-rule model (build-prompt §A21): picker, company-email code, `claimChoice`, seat re-check, exporter controls the profile. 42 tests. Detail: `docs/History.md` 2026-09-23. **Unverified signed-in** — the claim card has not been seen in a browser. 🔴 **The APP claim screen is still a stub** (UiWebNotes row 57) — every app signup still creates a duplicate org. |
 | B6 | **Security tracker evidence pass** | `docs/security-tracker.xlsx` | 0 of 58 controls recorded as done; ~25 Phase-1 controls are built and test-pinned. See §3. |
 
 ### KYC / verification — what is already complete
@@ -98,6 +98,30 @@ Full text drafted in **`docs/Client-Requests.md`**.
 
 ---
 
+## 4b · 🔴 OTP delivery — SMS provider swap (decided, not started)
+
+✅ **Interim relief built 2026-09-23:** buyers and sellers can already move a sign-in or reset code to their own email ("Don't have your phone?") — see `docs/History.md`. The swap below is still the real fix for the phone as a second factor.
+
+**Owner's decision (2026-09-23): move off Fast2SMS to an international SMS provider.** Fast2SMS
+delivers to Indian numbers only, and our **buyers are international with an OTP-gated login** — so
+today every non-Indian buyer's code goes out over email, and the phone is not really a second
+factor for them. The swap removes that root cause.
+
+✅ **The email fallback it depends on is now real** (fixed 2026-09-23) — it had been dead code, so
+a half-finished swap would have locked out **every** user, not just international ones.
+
+**What the swap touches, in one pass:**
+- `canDeliverTo` accepts only `+91` + 10 digits, and its tests **assert** the current UK/US
+  rejections — those tests encode the limitation and must change with it.
+- `sms.provider.js`, the `FAST2SMS_*` env vars, `.env.example`.
+- 🔴 **Several docs reason *from* "Fast2SMS is India-only"** — `docs/Note.md` concludes "SMTP is
+  load-bearing" *because* of it. Revise the rationales, not just the provider name, or the next
+  session inherits a conclusion whose premise is gone.
+- 💰 **Price it first:** international SMS is far dearer than Fast2SMS and a code goes out on
+  **every login**, not just signup. This is a running-cost decision, not only a technical one.
+
+---
+
 ## 5 · Not covered in this file
 
 Tracked elsewhere on purpose — **do not read their absence here as "done"**:
@@ -115,7 +139,13 @@ Tracked elsewhere on purpose — **do not read their absence here as "done"**:
   ⚠️ **Still divergent:** `surface.subtle` is `#F7F8FB` in the app and `#FDF4F4` on web. Left
   alone deliberately — it is the app's whole screen canvas, so changing it is a visible app-wide
   change, not a token tidy-up. Needs the owner's eye, not a silent edit.
-- **Testing** — backend suite is green (70 files / 1070 tests, 2026-09-22). Web has **no test
+  🔴 **Still outstanding: the app's LOGO and ICON assets are the old blue artwork.** All five
+  (`ColoredLogo.jpg`, `LogoWhite.png`, `icon.png`, `favicon.png`, `splash-icon.png`) date from
+  2026-08-03 and were not in that commit — so the app is red but ships a blue wordmark, a blue
+  home-screen icon and a blue splash. The trimmed navy-and-red artwork already exists at
+  `web/public/brand-logo.png` / `brand-logo-white.png`; these need generating from it at the
+  Expo icon sizes. Visible to anyone who installs the APK.
+- **Testing** — backend suite is green (76 files / 1159 tests, 2026-09-23). Web has **no test
   script and no tests at all**.
 - **Deploy / environment** — `NODE_ENV` (no default; the backend will not boot without it),
   `AI_GUEST_DAILY_MAX` (required in production), `npm run indexes:sync` (production comes up with
@@ -145,7 +175,7 @@ A pending-work list reviewed on 2026-09-22 carried these. Each was checked and i
 |---|---|
 | ~~"The app is fully red (all 34 screens)"~~ | ⚠️ **This correction has EXPIRED — the claim was ahead of the tree, not wrong.** It was false of the working tree on 2026-09-22 (`colors.js` was royal blue, and `git log -S "CE061A"` showed it had never entered `app/`), but commit `e0cce6e` landed the app repaint from another session the same day. **The app is now red.** Original note stands as a lesson: a report can describe work that exists on a branch you cannot see. |
 | ~~"`OTP_DEV_FIXED_CODE` in production lets anyone into any account"~~ | ⚠️ **EXPIRED — and the original warning was RIGHT.** The variable did not exist in my tree on 2026-09-22; commit `e0cce6e` then added it (demo accounts with a fixed dev OTP). It is double-gated exactly like `OTP_DEV_PRINT` — `NODE_ENV === 'development'` plus the literal string `'true'` — and carries its own "never set this on a server reachable by real users" warning. 🔴 **The launch risk is real and is now on the `docs/Note.md` close checklist.** What follows described the situation before that commit: **the variable did not exist.** The real one is `OTP_DEV_PRINT`, which *echoes the code to the terminal* — not an auth bypass. Double-gated: `env.NODE_ENV !== 'development' \|\| !env.OTP_DEV_PRINT` (`otp.sender.js:79`), and the transform accepts only the literal string `'true'`. A log-leak to strip before launch, already on the close checklist. |
-| "Production OTP delivery is unverified" | `docs/Note.md` close checklist: **wired and tested in production (owner, 2026-08-17)**, with an explicit warning against re-listing it as unbuilt. The India-only → email fallback is covered by `tests/otp-delivery.test.js`, and transports are logged at boot (`server.js:74`). The stale line in `BUILD-STATUS.md` §6 was the likely source; corrected 2026-09-22. |
+| "Production OTP delivery is unverified" | `docs/Note.md` close checklist: **wired and tested in production (owner, 2026-08-17)**, with an explicit warning against re-listing it as unbuilt. ⚠️ **CORRECTED 2026-09-23 — the sentence that stood here was WRONG and is worth keeping as a lesson.** It read "the India-only → email fallback is covered by `tests/otp-delivery.test.js`". The fallback was **not implemented** (`otp.sender.js` passed `null` for the address) and the test **did not cover it** (it asserted only that SMS was *not* called, never that email *was*), so a broken safety net read as a tested one — in a doc whose job is to say what is done. Both fixed 2026-09-23; see `docs/History.md`. Transports are logged at boot (`server.js:74`). The stale line in `BUILD-STATUS.md` §6 was the likely source; corrected 2026-09-22. |
 | "Test suite is flaky; Docker is down so DB suites cannot run" | Full run 2026-09-22: **70 files, 1070 tests, all passed, 257s.** Docker *is* down but is not needed — Redis connected natively and the DB suites ran against `MONGODB_URI`. `fileParallelism: false` is set in `vitest.config.js`. |
 | "14 files uncommitted" | Working tree clean at `c46f472`. |
 | "Five email events are built" | **Four.** The fifth is approved (2026-08-21) and unbuilt — item B2. |

@@ -49,6 +49,11 @@ export function OtpScreen({ navigation, route }) {
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
   const [expiresIn, setExpiresIn] = useState(EXPIRY_SECONDS);
+  // Where the live code went. Someone without their phone to hand can move it
+  // to their email (owner, 2026-09-23). The app serves buyers and sellers only,
+  // so the staff-stay-on-the-phone rule never applies here.
+  const [channel, setChannel] = useState('mobile');
+  const [emailSentTo, setEmailSentTo] = useState(null);
 
   // One interval drives both counters; a second timer would drift against it.
   useEffect(() => {
@@ -95,15 +100,22 @@ export function OtpScreen({ navigation, route }) {
     [code, loginToken, verifyOtp],
   );
 
-  const resend = async () => {
+  // `to` switches channel. A switch skips the cooldown on purpose — someone
+  // without their phone should not wait out a timer for a code they cannot read;
+  // the server's rate limit and lockout still apply.
+  const resend = async (to = channel) => {
     setResending(true);
     setError(null);
     try {
-      await authApi.resendOtp({ loginToken });
+      const res = await authApi.resendOtp({ loginToken, channel: to });
+      setChannel(to);
+      if (to === 'email') setEmailSentTo(res?.sentTo ?? null);
       setCooldown(RESEND_COOLDOWN_SECONDS);
       setExpiresIn(EXPIRY_SECONDS);
       setCode('');
-      toast.show('A new code has been sent.', { tone: 'success' });
+      toast.show(to === 'email' ? 'We sent a new code to your email.' : 'A new code has been sent.', {
+        tone: 'success',
+      });
     } catch (err) {
       setError(toAppError(err));
     } finally {
@@ -114,17 +126,19 @@ export function OtpScreen({ navigation, route }) {
   const expired = expiresIn === 0;
   const canResend = cooldown === 0 && !resending && !submitting;
 
-  // 🔴 The backend ALWAYS delivers the OTP to the account's mobile
-  // (`auth.service.js` passes `channel: 'mobile'` on every path), even when the
-  // user signed in with an email. Echoing the typed email here would send them
-  // to their inbox to wait for something that will never arrive.
+  // 🔴 The backend delivers the OTP to the account's mobile first, even when the
+  // user signed in with an email — it moves to the email only when they tap
+  // "Use email instead". Echoing the typed email here would send them to their
+  // inbox to wait for something that has not been sent there.
   //
   // Prefer `sentTo` — the SERVER's mask of the real destination (last 3 digits,
   // e.g. `*********634`). It is authoritative, so no inference is needed.
   // Falling back: a locally-masked mobile if that is what we hold, and finally
   // a channel-only phrase — we must never guess a number we were not given.
   const destinationLabel =
-    sentTo ??
+    channel === 'email'
+      ? (emailSentTo ?? 'the email address registered on your account')
+      : sentTo ??
     (destination && !String(destination).includes('@')
       ? maskDestination(destination)
       : 'the mobile number registered on your account');
@@ -169,7 +183,7 @@ export function OtpScreen({ navigation, route }) {
         <View style={styles.resendRow}>
           <Text style={styles.resendLabel}>Didn&apos;t get it?</Text>
           <Pressable
-            onPress={resend}
+            onPress={() => resend()}
             disabled={!canResend}
             hitSlop={10}
             accessibilityRole="button"
@@ -177,6 +191,23 @@ export function OtpScreen({ navigation, route }) {
           >
             <Text style={[styles.link, !canResend && styles.linkDisabled]}>
               {cooldown > 0 ? `Resend in ${cooldown}s` : resending ? 'Sending…' : 'Resend code'}
+            </Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.resendRow}>
+          <Text style={styles.resendLabel}>
+            {channel === 'mobile' ? "Don't have your phone?" : 'Have your phone now?'}
+          </Text>
+          <Pressable
+            onPress={() => resend(channel === 'mobile' ? 'email' : 'mobile')}
+            disabled={resending || submitting}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: resending || submitting }}
+          >
+            <Text style={[styles.link, (resending || submitting) && styles.linkDisabled]}>
+              {channel === 'mobile' ? 'Use email instead' : 'Use phone instead'}
             </Text>
           </Pressable>
         </View>

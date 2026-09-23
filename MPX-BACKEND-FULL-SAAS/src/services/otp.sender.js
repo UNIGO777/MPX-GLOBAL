@@ -39,7 +39,45 @@ function expiryMinutes() {
   return Math.max(1, Math.round(env.OTP_TTL_SECONDS / 60));
 }
 
-function emailBody({ code, purpose }) {
+/**
+ * D7 rule 6 · the code that lets someone JOIN a company, sent to the member
+ * already in it.
+ *
+ * 🔴 Worded as an alarm, not a verification: it reaches the real owner BEFORE
+ * anything has happened, and for a recycled-SIM attempt it is the only warning
+ * they get (the owner dropped the SMS alert). It must say plainly that ignoring
+ * it is safe, and it must say that the seller account will manage the company's
+ * details — the buyer is handing that over by passing the code on (rule 7).
+ *
+ * Carries NO detail about the person asking — no name, no email, no number.
+ * The recipient learns which of the company's identifiers was used, nothing
+ * about who used it.
+ */
+function claimEmailBody({ code, context }) {
+  const org = context?.orgName ?? 'your company';
+  const via = context?.matchedOn === 'email' ? 'email address' : 'phone number';
+  const handover =
+    context?.joiningRole === 'exporter'
+      ? 'If you pass this code on, the new seller account will manage the company\'s name, logo and verification documents from then on. Your own account and password are not affected.'
+      : 'If you pass this code on, they will join as the company\'s buyer account. Your own account and password are not affected.';
+  return renderEmail({
+    heading: `Someone is trying to join ${org}`,
+    preheader: `A request to join ${org} on MPX Global`,
+    status: { tone: 'warning', label: 'Join request' },
+    code,
+    expiryMinutes: expiryMinutes(),
+    paragraphs: [
+      `Someone is trying to join **${org}** on MPX Global using your company's registered ${via}.`,
+      'They need this code to continue. Only give it to a colleague you trust.',
+      handover,
+    ],
+    footerNote:
+      "If that wasn't you or someone you know, ignore this email — without the code nobody can join, and nothing changes.",
+  });
+}
+
+function emailBody({ code, purpose, context }) {
+  if (purpose === 'claim_org_email') return claimEmailBody({ code, context });
   return renderEmail({
     heading: 'Verify your email',
     preheader: 'Your MPX Global verification code',
@@ -85,7 +123,7 @@ function devPrintOtp({ identifier, code, purpose }) {
  *   `identifier` is the SUBJECT's own address, resolved by otp.service from the
  *   account record — never a request-supplied one.
  */
-export async function sendOtp({ channel, identifier, code, purpose }) {
+export async function sendOtp({ channel, identifier, code, purpose, fallbackEmail, context }) {
   // Printed BEFORE any transport is attempted, and regardless of whether one
   // succeeds. Previously this was a last resort that only fired when nothing
   // could deliver, so configuring SMTP silently took the code away from the
@@ -120,13 +158,28 @@ export async function sendOtp({ channel, identifier, code, purpose }) {
   }
 
   // Email — either the caller asked for it, or SMS cannot reach this number.
-  const emailAddress = channel === 'email' ? identifier : null;
+  //
+  // 🔴 FIXED 2026-09-23. This read `channel === 'email' ? identifier : null`,
+  // which implemented only the first half of the sentence above: a mobile-channel
+  // send that SMS could not deliver fell straight through to "no transport" and,
+  // in production, THREW. Because `smsDeliverable` includes `isSmsConfigured()`,
+  // that covered three real cases — a non-`+91` number (Fast2SMS is India-only),
+  // a missing or wrong SMS key, and a half-finished provider swap — and in the
+  // last two it locked out EVERY user, not just international ones. Login and
+  // forgot-password both hard-code `channel: 'mobile'`, so neither had a way out.
+  //
+  // `fallbackEmail` is the SUBJECT's own address, resolved by `requestOtp` from
+  // the user/pendingSignup record — never from anything the caller typed (A3).
+  const emailAddress = channel === 'email' ? identifier : (fallbackEmail ?? null);
 
   if (emailAddress && isEmailConfigured()) {
-    const { text, html } = emailBody({ code, purpose });
+    const { text, html } = emailBody({ code, purpose, context });
     const { messageId } = await sendEmail({
       to: emailAddress,
-      subject: 'Your MPX Global verification code',
+      subject:
+        purpose === 'claim_org_email'
+          ? 'Someone is trying to join your company on MPX Global'
+          : 'Your MPX Global verification code',
       text,
       html,
     });

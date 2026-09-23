@@ -141,6 +141,8 @@ export function VerificationStatus() {
   const currentDocs = (v?.documents ?? []).filter((d) => !d.superseded);
   const openRequests = (v?.documentRequests ?? []).filter((r) => !r.fulfilledAt);
   const state = v ? (STATES[status] ?? UNKNOWN_STATE) : null;
+  // D7 rule 7: the company's seller account holds the KYC file — status only here.
+  const managedElsewhere = v?.canManage === false;
   const firstName = user?.name?.split(/\s+/)[0] ?? '';
 
   // Journey step states, all derived — no invented data.
@@ -201,10 +203,10 @@ export function VerificationStatus() {
               {v.pendingChanges.state === 'rejected' && v.pendingChanges.rejectionReason
                 ? `${v.pendingChanges.rejectionReason} — update the details from your company profile, or cancel the change there.`
                 : 'Your live profile and verified badge stay unchanged until our team approves the new details.'}{' '}
-              {v.pendingChanges.state === 'awaiting_documents' && (
+              {!managedElsewhere && v.pendingChanges.state === 'awaiting_documents' && (
                 <Link to="/buyer/kyc" className="font-semibold underline">Upload the supporting documents</Link>
               )}
-              {v.pendingChanges.state === 'rejected' && (
+              {!managedElsewhere && v.pendingChanges.state === 'rejected' && (
                 <Link to="/buyer/company" className="font-semibold underline">Open company profile</Link>
               )}
             </Alert>
@@ -212,7 +214,11 @@ export function VerificationStatus() {
           {openRequests.map((r) => (
             <Alert key={r.id} tone="warning" title="Our team asked for documents">
               {r.note}{' '}
-              <Link to="/buyer/kyc" className="font-semibold underline">Upload them here</Link>
+              {managedElsewhere ? (
+                'Your company\u2019s seller account will send them.'
+              ) : (
+                <Link to="/buyer/kyc" className="font-semibold underline">Upload them here</Link>
+              )}
             </Alert>
           ))}
         </div>
@@ -238,13 +244,19 @@ export function VerificationStatus() {
                   <p className="mt-3 text-xs text-muted">Sent {formatDate(v.kycSubmittedAt)}</p>
                 )}
               </>
-            ) : (
+            ) : managedElsewhere ? null : (
               <p className="mt-3 max-w-[680px] text-[15px] leading-relaxed text-muted">
                 {typeof state.body === 'function' ? state.body(v) : state.body}
               </p>
             )}
 
-            {state.cta && (
+            {managedElsewhere && (
+              <p className="mt-4 rounded-xl bg-ink-50 px-4 py-3 text-[13px] leading-relaxed text-ink-700">
+                Your company&apos;s seller account manages its verification documents, so there is
+                nothing for you to upload. This page shows the company&apos;s status.
+              </p>
+            )}
+            {!managedElsewhere && state.cta && (
               <Button className="mt-5" onClick={() => navigate('/buyer/kyc')}>
                 {state.cta}
               </Button>

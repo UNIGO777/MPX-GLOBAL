@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { declareScope, SCOPE } from './scoping.js';
+
 const { Schema } = mongoose;
 
 /**
@@ -70,5 +72,11 @@ const settingsSchema = new Schema(
   },
   { timestamps: true, minimize: false },
 );
+
+// PLATFORM: this is the one singleton that belongs to nobody's org — it carries
+// no `orgId` and is reachable only through superadmin-gated routes. The scope
+// registry has no "exempt" option on purpose (an undeclared model throws rather
+// than querying unscoped), so the exemption has to be stated, not omitted.
+declareScope(settingsSchema, SCOPE.PLATFORM);
 
 export const Settings = mongoose.model('Settings', settingsSchema);

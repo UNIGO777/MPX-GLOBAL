@@ -11,8 +11,10 @@ export function roleHome(user) {
   switch (user.role) {
     case 'buyer':
       return '/buyer/verification';
+    // The dashboard is a seller's everyday home. Verification is the FIRST stop
+    // only, straight after signup — see `firstRunHome` (owner, 2026-09-23).
     case 'exporter':
-      return '/exporter/verification';
+      return '/exporter/dashboard';
     case 'superadmin':
       return '/admin/users';
     case 'employee': {
@@ -24,6 +26,15 @@ export function roleHome(user) {
     default:
       return '/signin';
   }
+}
+
+/**
+ * Where a brand-new account lands from the signup success screen. A new seller
+ * goes to Verification first, to start the tick; every later sign-in uses
+ * `roleHome`.
+ */
+export function firstRunHome(user) {
+  return user?.role === 'exporter' ? '/exporter/verification' : roleHome(user);
 }
 
 export const isStaff = (user) => user?.role === 'employee' || user?.role === 'superadmin';

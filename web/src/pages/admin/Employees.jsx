@@ -8,7 +8,7 @@ import { PERMISSION_GROUPS, PERMISSION_LIST, PERMISSION_LABELS } from '../../lib
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
-import { Checkbox } from '../../components/ui/Checkbox.jsx';
+import { Checkbox, CheckboxBox } from '../../components/ui/Checkbox.jsx';
 import { Drawer } from '../../components/ui/Drawer.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
@@ -17,7 +17,7 @@ import { MobileInput } from '../../components/ui/MobileInput.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
-import { CheckCircleIcon, CopyIcon, InfoIcon, UsersIcon } from '../../components/ui/icons.jsx';
+import { CheckCircleIcon, CopyIcon, InfoIcon, KeyIcon, UserIcon, UsersIcon } from '../../components/ui/icons.jsx';
 
 /**
  * Employees (superadmin-only; mockup: admin_employees_edit_permissions_drawer).
@@ -61,33 +61,98 @@ function generatePassword() {
   return Array.from(bytes, (b) => chars[b % chars.length]).join('');
 }
 
+/**
+ * "Select all" for one permission area — ticks or clears every permission in
+ * it. Partly ticked shows as indeterminate, so the header never claims the
+ * whole area when only some of it is granted.
+ *
+ * Still least-privilege by construction: it only saves clicks on a choice the
+ * admin makes explicitly, per area; nothing is granted they did not tick.
+ */
+function SelectAll({ group, keys, held, value, onToggle, disabled }) {
+  const all = held === keys.length;
+  return (
+    <label
+      className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+        all
+          ? 'border-primary-600 bg-white text-primary-700'
+          : 'border-surface-border bg-white text-ink-700 hover:border-ink-400'
+      } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+    >
+      <CheckboxBox
+        checked={all}
+        indeterminate={held > 0 && !all}
+        disabled={disabled}
+        aria-label={`Select all ${group} permissions`}
+        onChange={(checked) =>
+          onToggle(
+            checked
+              ? [...value, ...keys.filter((k) => !value.includes(k))]
+              : value.filter((v) => !keys.includes(v)),
+          )
+        }
+      />
+      Select all
+    </label>
+  );
+}
+
 function PermissionChecklist({ value, onToggle, disabled }) {
   // §10 — grouped by area, matching the server catalogue: 14 flat checkboxes
-  // stopped being scannable when the set grew from 3.
+  // stopped being scannable when the set grew from 3. Each area is a card with
+  // its own "Select all".
   return (
-    <div className="space-y-4">
-      {PERMISSION_GROUPS.map((g) => (
-        <fieldset key={g.group}>
-          <legend className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-500">
-            {g.group}
-          </legend>
-          <div className="space-y-1">
-            {g.items.map((p) => (
-              <Checkbox
-                key={p.value}
-                plain
-                label={p.label}
-                help={p.help}
-                checked={value.includes(p.value)}
+    <div className="space-y-3">
+      {PERMISSION_GROUPS.map((g) => {
+        const keys = g.items.map((p) => p.value);
+        const held = keys.filter((k) => value.includes(k)).length;
+        const all = held === keys.length;
+        return (
+          <fieldset
+            key={g.group}
+            className={`overflow-hidden rounded-xl border transition-colors ${
+              all ? 'border-primary-200' : 'border-surface-border'
+            }`}
+          >
+            <legend className="sr-only">{g.group}</legend>
+            <div
+              className={`flex items-center justify-between gap-3 border-b px-4 py-2.5 ${
+                all ? 'border-primary-200 bg-primary-50' : 'border-surface-border bg-ink-50'
+              }`}
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink-900">{g.group}</p>
+                <p className="text-xs text-muted">
+                  {held === 0 ? 'None granted' : `${held} of ${keys.length} granted`}
+                </p>
+              </div>
+              <SelectAll
+                group={g.group}
+                keys={keys}
+                held={held}
+                value={value}
+                onToggle={onToggle}
                 disabled={disabled}
-                onChange={(checked) =>
-                  onToggle(checked ? [...value, p.value] : value.filter((v) => v !== p.value))
-                }
               />
-            ))}
-          </div>
-        </fieldset>
-      ))}
+            </div>
+            <div className="divide-y divide-surface-border px-4">
+              {g.items.map((p) => (
+                <Checkbox
+                  key={p.value}
+                  plain
+                  label={p.label}
+                  help={p.help}
+                  checked={value.includes(p.value)}
+                  disabled={disabled}
+                  onChange={(checked) =>
+                    onToggle(checked ? [...value, p.value] : value.filter((v) => v !== p.value))
+                  }
+                />
+              ))}
+            </div>
+          </fieldset>
+        );
+      })}
     </div>
   );
 }
@@ -99,6 +164,36 @@ const EMPTY_FORM = {
   password: '',
   permissions: [],
 };
+
+/**
+ * Copy text, working on plain-http origins too. `navigator.clipboard` exists
+ * only in a SECURE context (https or localhost); on an http staging address it
+ * is undefined, and the copy used to fail silently. The hidden-textarea route
+ * is the fallback. Returns whether anything was copied.
+ */
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Refused (permission, focus, policy) — handled, not swallowed: the
+      // legacy route below is the retry, and its result is what we report.
+    }
+  }
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.setAttribute('readonly', '');
+  area.style.position = 'fixed';
+  area.style.opacity = '0';
+  document.body.appendChild(area);
+  area.select();
+  try {
+    return document.execCommand('copy');
+  } finally {
+    document.body.removeChild(area);
+  }
+}
 
 export function Employees() {
   const [page, setPage] = useState(1);
@@ -120,7 +215,9 @@ export function Employees() {
   const [drawerError, setDrawerError] = useState(null);
 
   const [createdCreds, setCreatedCreds] = useState(null); // {name, email, password}
-  const [copied, setCopied] = useState(false);
+  // 'idle' | 'done' | 'failed' — a failed copy must SAY so; a silent failure
+  // leaves the admin pasting whatever was on the clipboard before.
+  const [copied, setCopied] = useState('idle');
   const [toast, setToast] = useState(null);
   const [permsView, setPermsView] = useState(null); // {row, perms} for the (i) popup
 
@@ -202,22 +299,28 @@ export function Employees() {
   };
 
   const copyCreds = async () => {
-    try {
-      await navigator.clipboard.writeText(
-        `MPX Global admin console — ${createdCreds.email}\nTemporary password: ${createdCreds.password}\nSign in at /signin/staff — you'll be asked to set your own password.`,
-      );
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
+    // Labelled lines and a FULL sign-in URL: this is pasted into WhatsApp or an
+    // email, where a bare "/signin/staff" is not a link anyone can open.
+    const text = [
+      `MPX Global — staff account for ${createdCreds.name}`,
+      '',
+      `Sign in: ${window.location.origin}/signin/staff`,
+      `Email: ${createdCreds.email}`,
+      `Temporary password: ${createdCreds.password}`,
+      '',
+      "You'll be asked to set your own password the first time you sign in.",
+    ].join('\n');
+    setCopied((await copyText(text)) ? 'done' : 'failed');
   };
 
   const rows = data?.rows ?? [];
 
   return (
     <AdminLayout>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
+      {/* One row at every width: the text shrinks and wraps beside the button;
+          the button never drops underneath it. */}
+      <div className="mb-5 flex items-start justify-between gap-3 sm:items-end">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-2xl font-bold leading-tight text-ink-900">Staff</h1>
             {data && (
@@ -226,13 +329,15 @@ export function Employees() {
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 max-w-2xl text-sm text-muted">
             Everyone who can reach this console. Employees hold granted permissions; super
             admins have full access by role.
           </p>
         </div>
-        <Button onClick={openAdd}>
-          <span aria-hidden="true" className="text-lg leading-none">+</span> Add employee
+        <Button onClick={openAdd} className="shrink-0 whitespace-nowrap" aria-label="Add employee">
+          <span aria-hidden="true" className="text-lg leading-none">+</span>
+          <span className="hidden sm:inline">Add employee</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </div>
 
@@ -265,13 +370,20 @@ export function Employees() {
 
         {!loading && !error && rows.length > 0 && (
           <>
-            {/* Phones get CARDS, not a sideways-scrolling table. */}
-            <ul className="divide-y divide-surface-border md:hidden">
+            {/* ROWS until there is room for the table. The admin sidebar takes
+                260px from lg up, so a 720px table only fits at xl — below that
+                it used to scroll sideways on tablets and small laptops. One
+                person per row (owner, 2026-09-23): stacked on phones, laid out
+                horizontally from md where there is width for it. */}
+            <ul className="divide-y divide-surface-border xl:hidden">
               {rows.map((row) => {
                 const perms = permsFor(row);
                 return (
-                  <li key={row.id} className="p-4">
-                    <div className="flex items-start gap-3">
+                  <li
+                    key={row.id}
+                    className="flex min-w-0 flex-col gap-2.5 p-4 md:flex-row md:items-center md:justify-between md:gap-6 md:px-5"
+                  >
+                    <div className="flex min-w-0 items-start gap-3 md:items-center">
                       <span
                         aria-hidden="true"
                         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
@@ -286,7 +398,7 @@ export function Employees() {
                         {row.mobile && <p className="truncate text-xs text-muted">{row.mobile}</p>}
                       </div>
                     </div>
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 md:shrink-0 md:flex-nowrap md:gap-4">
                       {row.role === 'superadmin' ? (
                         <span className="whitespace-nowrap rounded-md bg-primary-600 px-2 py-1 text-xs font-semibold text-white">
                           Full access
@@ -323,9 +435,9 @@ export function Employees() {
                           {row.isActive ? 'Active' : 'Deactivated'}
                         </span>
                       </span>
-                      <span className="ml-auto">
+                      <span className="ml-auto md:ml-0">
                         {row.role === 'superadmin' ? (
-                          <span className="text-xs text-muted">Role-based — nothing to grant</span>
+                          <span className="whitespace-nowrap text-xs text-muted">Role-based — nothing to grant</span>
                         ) : (
                           <Button variant="secondary" size="sm" onClick={() => openEdit(row)}>
                             Edit permissions
@@ -338,7 +450,7 @@ export function Employees() {
               })}
             </ul>
 
-            <div className="hidden overflow-x-auto md:block">
+            <div className="hidden overflow-x-auto xl:block">
               {/* M2 redesign (2026-08-11): email stacks under the name beside a
                   monogram avatar — one identity cell, less horizontal scroll. */}
               <table className="w-full min-w-[720px] text-left text-sm">
@@ -500,7 +612,8 @@ export function Employees() {
         open={drawer?.mode === 'add'}
         onClose={() => !saving && setDrawer(null)}
         title="Add employee"
-        subtitle="They sign in at the staff portal and must set their own password first."
+        subtitle="Create their staff sign-in and choose what they can access."
+        icon={UserIcon}
         footer={
           <>
             <Button variant="secondary" disabled={saving} onClick={() => setDrawer(null)}>
@@ -521,47 +634,78 @@ export function Employees() {
               )}
             </Alert>
           )}
-          <Input label="Full name" placeholder="e.g. John Doe" value={form.name} onChange={setField('name')} disabled={saving} />
-          <Input
-            label="Email"
-            type="email"
-            placeholder="e.g. john@mpxglobal.com"
-            value={form.email}
-            onChange={setField('email')}
-            disabled={saving}
-            helper="Staff emails are exclusive — they can't also hold a buyer or exporter account."
-          />
-          <MobileInput value={form.mobile} onChange={setField('mobile')} disabled={saving} />
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-          <Input
-            label="Temporary password"
-            value={form.password}
-            onChange={setField('password')}
-            disabled={saving}
-            helper="At least 8 characters. They'll be asked to change it at first sign-in."
-          />
+          {/* "Who they are" — mirrors the Permissions section's heading below, so
+              the panel reads as two clear sections instead of one long form. */}
+          <section>
+            <div className="mb-4">
+              <h3 className="text-base font-bold text-ink-900">Account details</h3>
+              <p className="mt-0.5 text-xs text-muted">
+                Their staff sign-in. The email can&apos;t also hold a buyer or exporter account.
+              </p>
             </div>
-            <Button
-              variant="secondary"
-              className="mt-[26px] shrink-0"
-              disabled={saving}
-              onClick={() => setField('password')(generatePassword())}
-            >
-              Generate
-            </Button>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-ink-800">
-              Permissions ({form.permissions.length}/{PERMISSION_COUNT})
-            </p>
-            <p className="mb-3 mt-0.5 text-xs text-muted">Grant now or later.</p>
+            <div className="space-y-4">
+              <Input
+                label="Full name"
+                placeholder="e.g. John Doe"
+                value={form.name}
+                onChange={setField('name')}
+                disabled={saving}
+              />
+              <Input
+                label="Work email"
+                type="email"
+                placeholder="e.g. john@mpxglobal.com"
+                value={form.email}
+                onChange={setField('email')}
+                disabled={saving}
+              />
+              <MobileInput value={form.mobile} onChange={setField('mobile')} disabled={saving} />
+              {/* The generate action sits on the label row, not as a tall pill
+                  beside the field that never lined up with the input. */}
+              <div className="relative">
+                <Input
+                  label="Temporary password"
+                  value={form.password}
+                  onChange={setField('password')}
+                  disabled={saving}
+                  helper="At least 8 characters. They'll set their own at first sign-in."
+                />
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => setField('password')(generatePassword())}
+                  className="absolute right-0 top-0 text-xs font-semibold text-primary-700 hover:underline disabled:opacity-50"
+                >
+                  Generate strong password
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Its own section: a divider and a real heading split "who they are"
+              (the fields above) from "what they can do". */}
+          <section className="border-t border-surface-border pt-5">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-ink-900">Permissions</h3>
+                <p className="mt-0.5 text-xs text-muted">
+                  Grant only what this person needs — you can change it later.
+                </p>
+              </div>
+              <span
+                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  form.permissions.length > 0 ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-600'
+                }`}
+              >
+                {form.permissions.length} of {PERMISSION_COUNT} granted
+              </span>
+            </div>
             <PermissionChecklist
               value={form.permissions}
               onToggle={(v) => setForm((f) => ({ ...f, permissions: v }))}
               disabled={saving}
             />
-          </div>
+          </section>
         </div>
       </Drawer>
 
@@ -571,6 +715,7 @@ export function Employees() {
         onClose={() => !saving && setDrawer(null)}
         title={`Permissions — ${drawer?.row?.name ?? ''}`}
         subtitle="Effective immediately after saving; no re-sign-in needed."
+        icon={KeyIcon}
         footer={
           <>
             <Button variant="secondary" disabled={saving} onClick={() => setDrawer(null)}>
@@ -606,14 +751,14 @@ export function Employees() {
         open={Boolean(createdCreds)}
         onClose={() => {
           setCreatedCreds(null);
-          setCopied(false);
+          setCopied('idle');
         }}
         title="Employee created"
         footer={
           <Button
             onClick={() => {
               setCreatedCreds(null);
-              setCopied(false);
+              setCopied('idle');
             }}
           >
             Done
@@ -636,8 +781,13 @@ export function Employees() {
           </div>
         </dl>
         <Button variant="secondary" size="sm" className="mt-3" onClick={copyCreds}>
-          <CopyIcon className="h-4 w-4" /> {copied ? 'Copied' : 'Copy details'}
+          <CopyIcon className="h-4 w-4" /> {copied === 'done' ? 'Copied' : 'Copy details'}
         </Button>
+        {copied === 'failed' && (
+          <Alert tone="warning" className="mt-3">
+            Your browser blocked copying. Select the email and password above and copy them by hand.
+          </Alert>
+        )}
       </Modal>
     </AdminLayout>
   );

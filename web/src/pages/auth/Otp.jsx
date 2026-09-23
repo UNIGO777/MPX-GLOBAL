@@ -45,6 +45,10 @@ export function Otp() {
   const [notice, setNotice] = useState(flow.notice ?? null);
   const [loading, setLoading] = useState(false);
   const [sessionDead, setSessionDead] = useState(false);
+  // Where the live code went. A buyer/seller without their phone to hand can
+  // move it to their email (owner, 2026-09-23); staff stay on the phone.
+  const [channel, setChannel] = useState('mobile');
+  const [sentTo, setSentTo] = useState(flow.sentTo ?? null);
 
   // Deadlines, not tick-counters: a backgrounded tab has its timers throttled,
   // so decrementing once per tick drifts and the screen would claim minutes
@@ -93,13 +97,18 @@ export function Otp() {
     }
   };
 
-  const resend = async () => {
-    if (resendIn > 0) return;
+  // `to` switches channel; a switch skips the cooldown on purpose — someone
+  // without their phone should not wait out a timer for a code they cannot read.
+  // The server's own rate limit and A3 lock still apply.
+  const resend = async (to = channel) => {
+    if (to === channel && resendIn > 0) return;
     setError(null);
     setNotice(null);
     try {
-      await authApi.resendOtp({ loginToken });
-      setNotice('A new code has been sent.');
+      const res = await authApi.resendOtp({ loginToken, channel: to });
+      setChannel(to);
+      if (res?.sentTo) setSentTo(res.sentTo);
+      setNotice(to === 'email' ? 'We sent a new code to your email.' : 'A new code has been sent.');
       setCode('');
       setExpiresAt(Date.now() + OTP_TTL_SECONDS * 1000);
       setResendAt(Date.now() + RESEND_COOLDOWN_SECONDS * 1000);
@@ -126,14 +135,15 @@ export function Otp() {
         Step {flow.step ?? '2 of 2'}
       </p>
       <h2 className="mt-1 text-[28px] font-bold text-ink-900">Enter your code</h2>
-      {/* 🔴 The code goes to the MOBILE on every path (`channel: 'mobile'` in
-          auth.service.js), whatever the user typed to sign in. This used to
-          render `maskIdentifier(flow.identifier)` — so anyone signing in with an
-          email was told to check their inbox for a code sent to their phone.
-          `sentTo` is the server's mask of the real destination. */}
+      {/* 🔴 The code goes to the MOBILE first, whatever the user typed to sign
+          in, and moves to the email only when they ask ("no phone to hand").
+          This used to render `maskIdentifier(flow.identifier)` — so anyone
+          signing in with an email was told to check their inbox for a code sent
+          to their phone. `sentTo` is always the server's mask of the real
+          destination. */}
       <p className="mt-2 text-sm text-muted">
-        We sent a 6-digit code to your registered mobile{' '}
-        <span className="font-medium text-ink-800">{flow.sentTo ?? 'number'}</span>
+        We sent a 6-digit code to your registered {channel === 'email' ? 'email' : 'mobile'}{' '}
+        <span className="font-medium text-ink-800">{sentTo ?? (channel === 'email' ? 'address' : 'number')}</span>
       </p>
 
       {/* Same rhythm as the other auth screens (owner, 2026-08-02). */}
@@ -173,7 +183,7 @@ export function Otp() {
                   down, brand red when live. */}
               <button
                 type="button"
-                onClick={resend}
+                onClick={() => resend()}
                 disabled={resendIn > 0 || locked}
                 className={`h-12 w-full rounded-full text-sm font-medium transition-all ${
                   resendIn > 0 || locked
@@ -183,6 +193,20 @@ export function Otp() {
               >
                 {resendIn > 0 ? `Didn't get it? Resend in ${resendIn}s` : "Didn't get it? Resend code"}
               </button>
+
+              {!flow.staff && (
+                <p className="text-center text-sm text-muted">
+                  {channel === 'mobile' ? "Don't have your phone? " : 'Have your phone now? '}
+                  <button
+                    type="button"
+                    onClick={() => resend(channel === 'mobile' ? 'email' : 'mobile')}
+                    disabled={locked}
+                    className="font-semibold text-primary-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {channel === 'mobile' ? 'Send the code to my email instead' : 'Send it to my phone instead'}
+                  </button>
+                </p>
+              )}
             </div>
 
             <p className="text-center">

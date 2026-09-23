@@ -245,13 +245,40 @@ This **reverses** the earlier "one shared login page for all four roles" decisio
 - **OTP verification** sits between the two steps.
 - **Step 2** shows whether an Organisation already exists for that email or phone, and offers **claim** or **create-new**. No match goes straight to create-new.
 - Company fields (name, country; exporter also `entityType` + address) move to **step 2** and appear only on the create-new path.
-- Because step 2 is behind OTP, the existing company's **name may be shown** on the claim screen. That is safe here and better UX.
+- Because step 2 is behind OTP, the existing company's **name may be shown** on the claim screen — **except** while rule 6's company-email code is outstanding (see below): a phone match may be a recycled SIM, so the name is withheld until the existing member's inbox is proved. *(Refined 2026-09-23.)*
 
 **Organisation**
 - One company, one Organisation. A **claimed** Organisation carries its verification over — no second KYC, one tick, one public profile.
 - **Declining** creates a fresh Organisation that verifies separately.
 - An Organisation can have a buyer side, an exporter side, or both. Note explicitly that **`Organisation.type` can no longer express this** — a later session must not treat `type` as the single buyer/exporter discriminator.
 - An admin block acts on the **Organisation** and takes **both sides** down.
+
+**Organisation claim — the rule set (owner, 2026-09-23). AUTHORITATIVE; built on the web and the backend.**
+Any client that builds claim (the app included) implements **all** of this — do not re-derive it or ship a subset.
+
+*The rules*
+1. **One organisation = at most one ACTIVE buyer account + one ACTIVE exporter account.** Enforced by a unique partial index on `User (orgId, role)` scoped to party roles and `isActive: true` — the database, not just the application, settles a race for the last seat.
+2. The verified email **or** mobile reaching a member of a company → offer to join it.
+3. Email reaches company A and mobile reaches company B → **show both**, each labelled with which identifier matched, and the person picks one (or neither).
+4. The identity already holds both roles → "account already exists" + sign-in (enforced at `signup/start`).
+5. The company already has an active holder of the signing-up role → **no offer**; the signup creates instead.
+6. **A claim always proves the EXISTING member's email.** If that email is the claimant's own, signup already proved it — no second code. Otherwise a `claim_org_email` code goes to the existing member's inbox, and the claim cannot complete without it. This closes the recycled-SIM hijack (Indian carriers reissue numbers ~90 days after lapse): a stranger holding the number cannot read the member's inbox. The email is worded as an alarm ("someone is trying to join… ignore this if it wasn't you") and says the seller account will manage the company's details.
+7. **An organisation with an active exporter: the exporter controls the company profile** — name, country, address, `entityType`, logo, cover, description, pending changes and KYC uploads. The buyer account keeps its buyer functions and its own password only. **No active exporter: the buyer controls it**, as §A22 always worked. A pending change the buyer left in flight becomes the exporter's to amend or cancel. Server-enforced (`PROFILE_MANAGED_BY_EXPORTER`); the client renders read-only from `canEdit` / `canManage`.
+
+*Implementation contract*
+- **The client never names a target.** `POST /auth/signup/organisation` returns `{ organisations: [...] }`; each row carries an opaque `choice` (random, never an org id), `matchedOn` (`email`/`mobile`/`both`), `needsOrgEmailOtp`, a masked `verifierEmail` when a code is needed, and — only once no code is outstanding — `name`, `country`, a derived `verified` boolean (never raw `kycStatus`), `needs[]` and `carriesTickOver`. `complete` takes `claimChoice`.
+- **The stored offer restricts, it never grants (8b).** The offered set is written to `PendingSignup.claimCandidates`; `complete` accepts only a choice from it **and re-runs the full eligibility check** (seat free, company active, still reachable from this identity). Failure → **409 `CLAIM_SEAT_TAKEN`**, and the pending signup is **kept**, so the screen swaps to create and finishes in one click. (Rejected alternatives: reserving the seat at offer time — new state, an abandoned offer blocks a colleague, invites squatting; and erroring out — discards a completed signup.)
+- **Who receives the rule-6 code (8a):** the oldest active party member of the company. Only deactivated members left → **no offer**; the person creates a new company, and recovering the original is support's job.
+- Rule-6 endpoints: `POST /auth/signup/organisation/code` (per-signup-token rate limit, audited as `organisation.claim_attempt`) and `POST /auth/signup/organisation/verify` (returns the re-served offer, now named). The code is bound to the choice it was sent for; a proof stands only while that same member is the company's verifier.
+- **Tick asymmetry (owner, 2026-08-19):** a buyer-made org lacks the exporter side's `entityType` + address. An exporter claiming it supplies them and a `verified` **or `rejected`** org returns to `submitted` (reason cleared) — the tick never travels over unreviewed details. A buyer claiming an exporter org carries the tick over.
+- Blocked companies (`isActive: false`) are never offered or named (F7). The claimant cannot rename the company from the signup form.
+- Audit: `organisation.claim` records `matchedOn`, `verifiedVia` (`own_email` / `org_email_otp`) and the supplied locked fields; `auth.signup` still records every account creation.
+- **F6:** the existing member is emailed on every join (D5 event #6, owner-approved) — the joiner's name only, never their contact details.
+- A company's own listings are hidden from its buyer side: saving them is refused, and signed-in buyer searches exclude the buyer's own organisation (8e).
+
+*Seat changes are support-mediated (F3/F4).* One account per role per company; no self-service invite, add or remove. When a company's seller leaves, a superadmin deactivates that account (`POST /admin/users/:id/deactivate` — kills sessions, audited), which frees the seat, and the replacement claims normally. Accepted consequence: two sales people share one seller login, so audit rows attribute to the company's account, not the individual. Runbook: `docs/Support-Runbook.md`.
+
+*OTP channel (owner, 2026-09-23 — REVISED the same day):* the "use email instead" option was first dropped in favour of the SMS provider swap, then **reinstated so someone without their phone to hand can still get in**. Buyers and sellers (not staff) can move the sign-in code (`POST /auth/resend-otp` `channel: 'email'`) or the reset code (`POST /auth/forgot-password` `channel: 'email'`) to the account's OWN stored email — never a request-supplied address; the A3 lock survives a switch; forgot-password stays generic. Accepted trade-off: control of the email inbox alone can now reset a password. Still dropped: an SMS alert when email is used. The international SMS swap remains its own task (`docs/Pending-Work.md` §4b).
 
 **Docs A21 supersedes** (correct them wherever they still appear): m1.md §7 + the M1 screens brief (one shared login for all four roles); m1.md's single per-role signup that creates the User and Organisation together (now two steps with OTP between); the "one email = one account" assumption anywhere signup or login is described.
 

@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+
 import { Product } from '../models/Product.js';
 import { Category } from '../models/Category.js';
 import { Organisation } from '../models/Organisation.js';
@@ -211,6 +213,9 @@ async function supplierFacets(params) {
   // §A27.3: an Organisation has no category, price or MOQ of its own, so the
   // supplier panel is deliberately just these two.
   const base = { exporterSide: true, isActive: true };
+  // D7 8e — must agree with `searchSuppliers`, or the counts include a row the
+  // list will never show.
+  if (params.excludeOrgId) base._id = { $ne: new mongoose.Types.ObjectId(String(params.excludeOrgId)) };
   const withQ = (extra = {}) => ({
     ...base,
     ...extra,

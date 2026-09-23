@@ -18,7 +18,11 @@ import { renderEmail } from './emailTemplate.js';
  * what makes a resubmission prompt rather than dependent on the seller happening
  * to open the portal. It belongs to the request-more-info / `in_review` work.
  *
- * 🔴 **A SIXTH event still needs a fresh alert** — the guard stays, only its
+ * A **SIXTH is approved and BUILT: "someone joined your company" → the member
+ * already in it** (D7 claim, F6 — owner, 2026-09-23). See
+ * `notifyOrganisationJoined` below.
+ *
+ * 🔴 **A SEVENTH event still needs a fresh alert** — the guard stays, only its
  * threshold moved. In particular the quote's "employee email alert on new
  * quotation" belongs to Quotation (Bucket A1) and is still deferred.
  *
@@ -212,5 +216,55 @@ export function notifyNewEnquiryEmail({ conversation, buyerOrgName }) {
       await sendEmail({ to: owner.email, subject: 'New enquiry on MPX Global', text, html });
     })(),
     'new-enquiry',
+  );
+}
+
+/**
+ * D7 · F6 — "someone joined your company", to the member ALREADY in it.
+ *
+ * Why it exists: before this a join was completely silent, so a stranger could
+ * appear inside a company and nobody would learn of it. Rule 6 means the member
+ * usually handed over a code moments earlier, but not always — when the
+ * claimant's own email was the one on the company, no code was sent at all.
+ *
+ * 🔴 Recipient is the EXISTING member, resolved by the caller from the same
+ * verifier rule the claim used. Do not reach for `ownerOf(orgId, role)` here: it
+ * resolves the JOINING role's owner, which is the joiner themselves.
+ *
+ * 🔴 Never includes the joiner's email, phone or any KYC detail. Their name is
+ * shown because the recipient must be able to recognise (or not recognise) a
+ * colleague — it is the one field that makes the notice actionable.
+ */
+export function notifyOrganisationJoined({ org, recipient, joiner }) {
+  if (!isEmailConfigured() || !recipient?.email) return Promise.resolve();
+
+  return safely(
+    (async () => {
+      const asSeller = joiner?.role === 'exporter';
+      const { text, html } = renderEmail({
+        heading: 'Someone joined your company',
+        preheader: `A ${asSeller ? 'seller' : 'buyer'} account joined ${org.name}`,
+        status: { tone: 'info', label: 'New member' },
+        paragraphs: [
+          `Hello ${recipient.name},`,
+          `**${joiner?.name ?? 'A new member'}** has joined **${org.name}** on MPX Global as its ${
+            asSeller ? 'seller' : 'buyer'
+          } account.`,
+          asSeller
+            ? "From now on the seller account manages the company's name, logo and verification documents. Your own account, password and enquiries are unchanged."
+            : 'Your own account, password and enquiries are unchanged.',
+        ],
+        footerNote:
+          "If you don't recognise this person, contact MPX Global support straight away so we can remove them.",
+      });
+
+      await sendEmail({
+        to: recipient.email,
+        subject: `Someone joined ${org.name} on MPX Global`,
+        text,
+        html,
+      });
+    })(),
+    'organisation-joined',
   );
 }

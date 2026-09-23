@@ -48,9 +48,37 @@ export const resendSignup = {
  * record (server-side) rather than in this body — a client must not be able to
  * pick which role it is completing.
  */
+/**
+ * A21 step 2 · the claim offer for a verified signup token.
+ *
+ * 🔴 The token is the ONLY input, deliberately. There is no company-name or id
+ * parameter to add here: the org is derived from the identity both OTPs proved,
+ * which is what keeps the endpoint from becoming a company-membership oracle.
+ */
+export const claimOffer = {
+  body: z.object({ signupToken }),
+};
+
+// The opaque handle the offer issued for one company — 16 random bytes, hex.
+// Never an org id: see `claimCandidates` on the PendingSignup model.
+const claimChoice = z.string().regex(/^[a-f0-9]{32}$/);
+
+/** Rule 6 · send the join code to the member already in the chosen company. */
+export const claimCodeSend = {
+  body: z.object({ signupToken, choice: claimChoice }),
+};
+
+export const claimCodeVerify = {
+  body: z.object({ signupToken, choice: claimChoice, code: otpCode }),
+};
+
 export const completeSignup = {
   body: z.object({
     signupToken,
+    // A21 step 2 / D7 — join the company the offer issued this choice for,
+    // instead of creating one. An opaque token, never an org id: the server
+    // resolves it against the stored offer AND re-checks eligibility.
+    claimChoice: claimChoice.optional(),
     company: zString({ min: 1, max: 200 }),
     country,
     // Exporter only — drives the KYC path. Ignored for a buyer.

@@ -67,11 +67,42 @@ function identifierFor({ user, pendingSignup, channel }) {
   return channel === 'email' ? subject.email : subject.mobile.e164;
 }
 
+/**
+ * D7 rule 6 · the ONE case where a code goes to an address that is not the
+ * subject's own: a claim proves the inbox of the member ALREADY in the company.
+ *
+ * Still never a request-supplied address (A3): `recipient` is a `User` document
+ * the signup service resolved from the database. Pinned to the one purpose and
+ * the one subject shape that need it, so no other caller can start sending
+ * codes to third parties by passing an extra argument.
+ */
+function claimRecipientAddress({ pendingSignup, purpose, channel, recipient }) {
+  if (purpose !== 'claim_org_email' || channel !== 'email' || !pendingSignup) {
+    throw new Error('otp recipient: only a claim_org_email code for a pending signup may name one');
+  }
+  if (!recipient?._id || !recipient.email) {
+    throw new Error('otp recipient: a stored user with an email is required');
+  }
+  return recipient.email;
+}
+
 // Issue an OTP to the subject's OWN address (never a request-supplied one). The
 // code is hashed before storage and only handed to the delivery adapter.
-export async function requestOtp({ user, pendingSignup, purpose, channel = 'mobile' }) {
+export async function requestOtp({
+  user,
+  pendingSignup,
+  purpose,
+  channel = 'mobile',
+  recipient,
+  context,
+}) {
   const owner = subjectFilter({ user, pendingSignup });
-  const identifier = identifierFor({ user, pendingSignup, channel });
+  if (purpose === 'claim_org_email' && !recipient) {
+    throw new Error('otp recipient: claim_org_email must name the existing member');
+  }
+  const identifier = recipient
+    ? claimRecipientAddress({ pendingSignup, purpose, channel, recipient })
+    : identifierFor({ user, pendingSignup, channel });
 
   // Durable lock: if a live challenge is currently locked, do NOT replace it —
   // otherwise the 5-attempt/15-min lock (A3) could be reset just by requesting a
@@ -102,7 +133,23 @@ export async function requestOtp({ user, pendingSignup, purpose, channel = 'mobi
     maxAttempts: env.OTP_MAX_ATTEMPTS,
   });
 
-  await sendOtp({ channel, purpose, identifier, code });
+  // `fallbackEmail` lets a mobile send that SMS cannot reach fall through to the
+  // subject's OWN email instead of failing (see the note in otp.sender.js). Read
+  // off the subject record like `identifier` itself — never from the request.
+  //
+  // ⚠️ The challenge above stores `channel` as REQUESTED, not as delivered. It is
+  // informational: `verifyOtp` matches on the code alone, so a fallback delivery
+  // verifies normally. The sender's own log line records where it actually went.
+  const subject = user ?? pendingSignup;
+  await sendOtp({
+    channel,
+    purpose,
+    identifier,
+    code,
+    // A claim code has no fallback: it is only ever an email, to one inbox.
+    fallbackEmail: recipient ? undefined : subject.email,
+    context,
+  });
   // Code is never returned.
 }
 
