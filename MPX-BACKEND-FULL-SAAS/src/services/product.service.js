@@ -101,6 +101,30 @@ function assertGoodsRequiredFields(leaf, doc) {
   );
 }
 
+/**
+ * Seller-written specs (2026-09-23) must not repeat one of the category's own
+ * fields — a second "GSM" beside the real one would read as a contradiction on
+ * the product page. Compared on the display name and the key, case-blind.
+ *
+ * Checked only when the seller SETS their custom specs (create, or an edit that
+ * sends them): an admin adding a same-named field later must never lock a
+ * seller out of editing an unrelated part of their own listing.
+ */
+async function assertCustomSpecsDistinct(leaf, customSpecs) {
+  if (!customSpecs?.length) return;
+  const defs = await CategoryAttribute.find({ categoryId: leaf._id }).select('name key').lean();
+  const taken = new Set(
+    defs.flatMap((d) => [d.name, d.key?.replace(/_/g, ' ')]).filter(Boolean).map((v) => v.trim().toLowerCase()),
+  );
+  const clash = customSpecs.find((c) => taken.has(c.label.trim().toLowerCase()));
+  if (clash) {
+    throw AppError.badRequest(
+      'custom spec repeats a category field',
+      `"${clash.label}" is already a specification for this category — fill it in above instead.`,
+    );
+  }
+}
+
 // Validate submitted attributes against the leaf's CategoryAttribute defs.
 // Draft = shape-valid only; PUBLISH additionally requires every `required` def
 // to be present (a seller may save an incomplete draft — plan M2-E).
@@ -258,6 +282,7 @@ export async function createProduct({ user, body, meta }) {
 
   assertTypeFields(leaf, body);
   const attributes = await validateAttributes(leaf, body.attributes);
+  await assertCustomSpecsDistinct(leaf, body.customSpecs);
   assertImageRefsOwned(body.images, user.orgId);
   await assertDraftCap(org, user.orgId);
 
@@ -327,6 +352,7 @@ export async function updateProduct({ user, id, patch, meta }) {
         })
       : undefined;
   if (patch.images !== undefined) assertImageRefsOwned(patch.images, user.orgId);
+  if (patch.customSpecs !== undefined) await assertCustomSpecsDistinct(leaf, patch.customSpecs);
 
   const changed = [];
   for (const [field, value] of Object.entries(patch)) {

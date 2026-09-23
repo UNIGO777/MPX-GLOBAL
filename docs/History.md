@@ -175,6 +175,116 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-23 — Admins can create TOP categories (owner-approved after a red alert; create only).**
+  Reverses the build-prompt rule "top categories: activate/deactivate only". `POST /admin/categories/top`
+  (`category:manage`): name unique among tops, case-blind; URL exactly `/category/<slug>` — a clash
+  with ANY category's slug is a 409 naming the address, never a silent suffix (owner: "category should
+  be unique and when created create its url also"); no `type` (A16); created OFF, appended last,
+  audited. `toggleCategory` now refuses to switch ON a top with no sub-categories — an empty top would
+  show buyers an empty page. Web: "+ Add new category" in the empty space under the category rail
+  (and on phones), an `AddTopCategoryDrawer` with a live `/category/…` preview (`web/src/lib/slug.js`
+  mirrors the server's slug rule), and the new category is selected on create. 6 tests; the 22
+  existing category tests still pass. Verified in a browser: create, duplicate refused, switch-on
+  refused while empty. ⚠️ Deleting a top category is still not possible (not requested).
+  - 2026-09-24: **D10 · chat DOCUMENTS (PDF, .docx, .xlsx)** — red-alerted (M4-14 + D9's own
+    exclusion), owner confirmed "make it"; types chosen as the safe default since none were picked.
+    Backend: `POST /conversations/:id/messages/document`; `uploadChatDocument` / `verifyChatDocument` /
+    `signedChatDocumentUrl` in `chatAttachment.storage.service.js` (real-bytes type, 8 MB, PDF-script and
+    Office-macro screen, PRIVATE raw asset, forced-download URL); `Message.attachment` gains `kind` + `name`
+    (old images have no kind — read as image, never backfilled, M4-13). 15 tests in `chat-documents.test.js`
+    (the D9 image path had NONE — still true for images). Web: paperclip in the composer, file card in the
+    bubble, client pre-check for type/size. **Gotchas found:** multer decodes file names as latin1 —
+    `defParamCharset: 'utf8'` added on the document parser or "Qualité.pdf" arrives as mojibake; Cloudinary
+    names every raw private download "file.pdf" and its filename options either do nothing or flip the
+    disposition to INLINE, so the web fetches the bytes and saves them under the cleaned name (CORS allows
+    it; falls back to the plain link). 🔴 The app shows no attachments (Pending-Work B7).
+  - 2026-09-24: chat composer REDESIGNED twice (owner: "looking cheap", then "still not good" + remove the
+    Shift+Enter line). Final: ONE row — a "+" menu (Photo / Document, `AttachMenu.jsx`) and emoji on the
+    left, the message in the middle, send on the right; controls stay on the last line as the text grows.
+    Send stays brand-red and DIMS when empty (the grey disc read as broken). The keyboard hint line is
+    gone entirely (Enter still sends, Shift+Enter still breaks a line). Soft focus halo instead of a 2px
+    red ring. `PaperclipIcon` removed (unused). The 200-char ring around Send is unchanged.
+    Follow-up (phone): the emoji picker was rendered without `compact`, so its old 44px wrapper sat round a
+    32px button — dead space either side. Now + → emoji → text run 0 / 6 px apart.
+  - 2026-09-24: chat composer gains an EMOJI button (owner request; web). `web/src/components/chat/EmojiPicker.jsx`
+    — a curated 40-glyph panel, no library (no new dependency). Inserts at the caret; stays open for several
+    picks; Esc/outside click closes. 🔴 Emoji are 2+ UTF-16 units and the server's 200 cap (M4-12) counts
+    `.length`, so the panel greys out glyphs that would not fit. Phone/envelope/link glyphs deliberately left
+    out (contact details are hidden by design). App not changed — phone keyboards already have emoji.
+  - 2026-09-24: category page below xl — the stacked "+ Add sub-category in …" (full width) and
+    loose "+ Add new category" under the picker are gone. The first duplicated the SubList header
+    button (it existed only because the inline settings card once pushed that button off-screen —
+    settings is a drawer now); "+ New category" moved into the title row. Also fixed a crash my
+    notice change introduced (null `noticeState` read while the tree loads).
+  - Same day: the category page's confirmation message ("… created at /category/…") no longer sticks —
+    it had no dismiss and only cleared on the next save. Now it has a ✕, hides after 8 s, and only shows
+    on the category it is about. (Owner also had the test top "toys" removed from the dev DB directly —
+    empty, off, no products; its `category.create` audit row stays, append-only.)
+  - Same day: the "Category settings" and "Add/Edit sub-category" side panels restyled to match the
+    Add-category panel (owner request). Shared pieces now live in `web/src/pages/admin/categoryFormParts.jsx`
+    (address line, image tile, keyword chips, display order) and all three panels use them. Fixed on the
+    way: the sub panel rendered the order field TWICE ("Display order" + "Order", same state); the
+    settings drawer passed `open={open}` with no `open` in scope (it worked only because it resolved to
+    `window.open`); a save error now shows inside the open panel (it used to sit behind it on the page)
+    and is cleared when a panel opens. No backend change.
+  - Same day: the Add-category drawer redesigned (owner: "side window UI is not good") — address as
+    an inline line under the name, an image upload tile, keyword chips, and the red "starts switched
+    off" box replaced by a neutral 3-step "How it goes live" guide. A goods/services choice on the TOP
+    category was built briefly and fully REVERTED at the owner's word — goods/services stays chosen
+    per SUB-category (A16 unchanged).
+- **2026-09-23 — Seller-written "Additional specifications" (client change request; reverses §A17's
+  "no free-form specs"). Red-alerted first — it was a recorded cancellation, not in the quote, and
+  widens the public product projection; owner approved "build it".**
+  - Backend: `Product.customSpecs [{ label, value }]`, SEPARATE from `attributes` so free-form labels
+    never reach the indexed filter/facet path. Public projection gains `customSpecs` ({label, value}
+    only); owner view returns it. Guards: max 10, label ≤40, value ≤200, unique labels, no repeat of
+    the category's own field names (checked only when the seller sets them, so an admin adding a
+    same-named field later cannot lock anyone out), and **no contact details** — new
+    `utils/contactDetails.js` (email / link / "+"-phone / 10+ digit runs; "ISO 9001" and
+    "Capacity 5000000" pass). 6 tests; mutation-checked (contact guard off → its test fails).
+  - Web: `CustomSpecsEditor` as the product form's last step ("Additional specifications" — renamed
+    from "Your own fields" at the owner's request), shown even when a category has no fields; a
+    half-filled row stops the save with a message; a server refusal is shown on the section naming
+    the row. `SpecTable` renders them after the category's specs on the public product page.
+  - Docs moved in the same pass: build-prompt §A17, `m2/Category.md`, `m3-public-projection.md`.
+  - ⚠️ Not done: the mobile app's product form and product page do not show or edit them yet.
+  - ⚠️ Incident: my restart of the isolated test backend used `pkill -f "node src/server.js"`, which
+    also stopped the owner's own nodemon backend on :3000. Restored by touching `src/server.js`
+    (timestamp only) so nodemon restarted it; verified healthy. Test servers are now stopped by port.
+- **2026-09-23 — Phone dial code is a searchable dropdown, not the OS `<select>` (owner).** The
+  native popup for ~200 codes rendered as a huge unstyled macOS list (orange highlight) that could
+  only be scrolled. `MobileInput` now uses the shared `Combobox`: brand-styled, country names shown,
+  type "India", "IN" or "44" to filter. Several countries share a code (+1 US/Canada/Caribbean), so
+  the picker tracks the exact row picked while `value.countryCode` stays the bare dial code (no
+  backend change); a code set from outside falls back to its likeliest country (+1 → US).
+  `Combobox` also now OPENS on the current choice, highlighted and in view, instead of the first
+  row — applies to every dropdown. Used by buyer + exporter signup and the Add-employee drawer.
+  - **Shared codes (owner: "many countries show same code").** 15 countries showed a bare "+1".
+    The 12 Caribbean members of the North American plan now carry their single area code as part
+    of the prefix (Bahamas "+1 242", Jamaica "+1 876"; stored compact, `+1242`, within the backend's
+    5-char limit — `normalizeMobile` gives the same E.164). US, Canada and the Dominican Republic
+    (809/829/849) genuinely share plain +1, and Russia/Kazakhstan +7 — left shared, told apart by
+    the country name on each row.
+- **2026-09-23 — Fields flashed a black border before the red focus style.** Measured, not guessed:
+  on focus a 3px `rgb(0,5,23)` outline appeared and faded over ~150ms while the red border faded in.
+  Cause: `inputClasses()` (and ~20 other controls) use `transition-all`, which also animates
+  `outline-color` — from the resting text colour to the transparent that `outline-none` sets. Fix is
+  one base rule in `index.css`: the outline's resting colour is transparent, so there is nothing to
+  fade from. Verified frame-by-frame: text inputs, passwords, native `<select>` (phone country code),
+  combobox dropdowns, sign-in and signup fields — zero dark frames. Explicit `outline-white` avatar
+  rings still win (utility over base).
+- **2026-09-23 — Sellers land on the dashboard after sign-in; the chat projection guards follow D9.**
+  - Sign-in honoured any remembered `from` path, so a tab left on `/exporter/verification` sent
+    every later sign-in there. `Otp.jsx` now honours a remembered PUBLIC page (a guest who pressed
+    Save on a product comes back to it) and sends a remembered PORTAL page (`/buyer`, `/exporter`,
+    `/admin`) to the account's home instead. Verified in a browser.
+  - The three exact-key message-projection guards (`m4-conversations`, `m4-messages`, `m4-socket`)
+    failed after commit `bae60ee` added `attachment` to the message view — the D9 change had not
+    moved them. `attachment` is added to all three (null on text; otherwise only a signed URL +
+    width/height, never the storage key or a person). ⚠️ D9 image attachments still have no tests
+    of their own.
+  - Gotcha: a stale browser tab kept serving the pre-fix `roleHome` after the rebase dropped Vite's
+    HMR link — "Empty Cache and Hard Reload" cleared it; the server was already correct.
 - **2026-09-23 — Quote rail: inline enquiry fields added, and the "already enquired" state fixed.**
   Two owner reports against the new product page, both real.
   - **"enquiry box bhi dalo"** — the mockup's inline **Quantity + Ship to** are now built. They were
@@ -505,8 +615,10 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   - **Company step redesigned (owner):** three views — *checking*, *join* (picker + code + only the
     seller details that company is missing, marked required, one full-width Join) and *create*
     (company name, country, entity type, optional address) reached by "Neither", with a way back.
-  - **Seller home is the dashboard (owner):** `roleHome` → `/exporter/dashboard`; only the signup
-    success screen sends a new seller to Verification (`firstRunHome`). Buyers have no dashboard.
+  - **Seller home is the dashboard (owner):** `roleHome` → `/exporter/dashboard`, everywhere —
+    including the signup success screen's "Go to your dashboard" button (a `firstRunHome` detour to
+    Verification was tried the same day and removed: the button said dashboard). Buyers have no
+    dashboard.
   - Verified in the browser: picker, withheld name, member-inbox code, wrong code, join with seller
     details, success screen, create view + back link, sign-in "email instead" (old phone code
     refused), rule-7 read-only profile / verification / KYC, reset by email, staff has no email link.

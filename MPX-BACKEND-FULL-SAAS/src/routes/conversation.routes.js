@@ -4,7 +4,7 @@ import { validate } from '../middleware/validate.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requirePermissions } from '../middleware/authorize.js';
 import { generalLimiter, messageLimiter, uploadLimiter } from '../middleware/rateLimit.js';
-import { uploadChatImage } from '../middleware/upload.js';
+import { uploadChatDocument, uploadChatImage } from '../middleware/upload.js';
 import { PERMISSIONS } from '../config/permissions.js';
 import * as ctrl from '../controllers/conversations.controller.js';
 import * as adminCtrl from '../controllers/adminConversations.controller.js';
@@ -99,6 +99,17 @@ conversationRouter.post(
   authenticate,
   uploadLimiter,
   uploadChatImage,
+  validate(V.sendMessage),
+  ctrl.send,
+);
+
+// D10 · a document (PDF / .docx / .xlsx) — the image route's twin: same
+// limiter, same validation, same single send path and guards.
+conversationRouter.post(
+  '/conversations/:id/messages/document',
+  authenticate,
+  uploadLimiter,
+  uploadChatDocument,
   validate(V.sendMessage),
   ctrl.send,
 );

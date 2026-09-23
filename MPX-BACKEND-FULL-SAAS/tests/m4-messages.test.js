@@ -94,9 +94,12 @@ describe('M4-D · sending', () => {
     // purpose: it is the guard that fails the moment a field is added to the
     // message projection, so widening it is always a deliberate edit here.
     // `systemKind` joined it on 2026-08-18 — null on every party message.
+    // `attachment` joined it on 2026-09-23 (D9 chat images) — null on a text
+    // message like this one.
     expect(Object.keys(fromSeller.body.message).sort()).toEqual(
-      ['body', 'createdAt', 'id', 'senderType', 'systemKind'].sort(),
+      ['attachment', 'body', 'createdAt', 'id', 'senderType', 'systemKind'].sort(),
     );
+    expect(fromSeller.body.message.attachment).toBeNull();
     expect(fromSeller.body.message.systemKind).toBeNull();
   });
 

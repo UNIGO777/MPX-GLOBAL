@@ -114,6 +114,11 @@ export async function toggle(req, res) {
   res.json({ category: adminCategoryView(cat) });
 }
 
+export async function createTop(req, res) {
+  const cat = await svc.createTopCategory({ ...req.body, actor: req.user, meta: meta(req) });
+  res.status(201).json({ category: adminCategoryView(cat) });
+}
+
 export async function createSub(req, res) {
   const cat = await svc.createSubCategory({ ...req.body, actor: req.user, meta: meta(req) });
   res.status(201).json({ category: adminCategoryView(cat) });

@@ -28,6 +28,17 @@
   *:focus-visible {
     @apply outline-none;
   }
+  /* The outline's RESTING colour is transparent. Fields fade their focus
+     style in with `transition-all`, which also animated `outline-color` — from
+     the text colour (near-black) to transparent — so every field flashed a
+     3px black border for ~150ms before settling on the red one (measured
+     2026-09-23). With nothing to fade FROM, there is nothing to flash. Explicit
+     outline utilities (the white avatar rings) still win over this base rule. */
+  *,
+  ::before,
+  ::after {
+    outline-color: transparent;
+  }
   :where(a, button, [role='button'], input[type='checkbox'], input[type='radio'], input[type='file'], summary):focus-visible {
     @apply ring-2 ring-primary-600 ring-offset-2 ring-offset-surface-subtle;
   }

@@ -194,7 +194,11 @@ A known loophole is accepted for MVP: a seller can delete drafts to free slots, 
 
 "Other goods" and "Other services" are ordinary categories. They get a small, fixed set of `CategoryAttribute` fields, defined the same way as every other category.
 
-There is **no free-form, seller-defined spec mechanism anywhere in the system.** Earlier drafts described one for "Other"; it is cancelled. Do not build it and do not leave it as a future note.
+~~There is **no free-form, seller-defined spec mechanism anywhere in the system.**~~ 🔁 **REVERSED 2026-09-23 (client change request, owner-approved after a red alert).** "Other" still has fixed fields exactly as above. SEPARATELY, every product may now carry **seller-written "Additional specifications"** — `Product.customSpecs`, a list of `{ label, value }`:
+- **Display-only.** Kept apart from `attributes` (admin-defined, indexed, drive M3 filters and facets). Never searched, never a filter or facet, never in the AI-search attribute list.
+- **Public** — added explicitly to the product's public projection as `{ label, value }` (the whitelist widening this required was part of the approval).
+- **Guards (route boundary + service):** max 10 rows; label 1–40, value 1–200 chars; labels unique (case-blind); a label may not repeat one of the category's own fields; **no contact details** (email, link or phone number — `utils/contactDetails.js`), because the field is public and would route buyers around the platform.
+- Tests: `tests/custom-specs.test.js`.
 
 ## A18. Purge window
 
@@ -544,6 +548,7 @@ These are already in the plan docs and are **not** modified by Part A. Implement
 - **B7** — all sellers and products appear in public results regardless of KYC; verification is **never** used as a filter. The public projection carries a server-derived **`verified` boolean + `verifiedAt`** — raw `kycStatus` / `rejected` is **never** exposed on any public response (corrected 2026-07-30; the old "return `kycStatus` for the tick" wording was the exact leak B7's fix pass removed everywhere else). *(One exception to "never a filter": the buyer's explicit opt-in **verified-only facet toggle** — see Search.md §3.1 and the carve-out in `.claude/rules/m3-public-projection.md`.)*
 - **D1** — unverified exporters capped at 3 active products; verification lifts the cap.
 - **Admin category rights** — top categories: activate/deactivate only, no create/edit/delete. Sub-categories: full CRUD, plus CRUD on their `CategoryAttribute` fields.
+  - 🔁 **REVISED 2026-09-23 (owner-approved after a red alert — CREATE only):** admins with `category:manage` may now **create** a top category (`POST /admin/categories/top`). Its name is unique among tops (case-blind) and its public URL is exactly `/category/<slugified name>` — a clash with any category's slug is refused, never suffixed. It is created **OFF** and cannot be switched on until it has at least one sub-category (enforced in `toggleCategory`). Deleting a top category is still not possible. Tests: `tests/category-top-create.test.js`.
 - **Sub-category delete is blocked** when products or child categories exist.
 - **Query-level exclusion** — draft, inactive, archived, taken-down, and deactivated-category products are excluded **in the query**, not filtered out of the response after fetching.
 - **Attributes** — `Product.attributes` is an array of `{ attributeId, key, value }` with `value` as a Mixed type, indexed on `attributes.key` and `attributes.value` so numeric range filters work.

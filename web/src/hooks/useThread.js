@@ -6,6 +6,7 @@ import {
   adminConversationsApi,
   conversationKeys,
 } from '../api/conversations.js';
+import { isImageFile } from '../lib/chatFiles.js';
 
 /**
  * One thread's data, for every surface that shows one: the inbox page, the
@@ -129,10 +130,13 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
      * optimistic-bubble lookup below still keys off `body` — the text is what
      * identifies a pending bubble on screen, and an image never travels alone.
      */
-    mutationFn: ({ body, file }) =>
-      file
+    // D10 · a non-image file is a document and takes its own route.
+    mutationFn: ({ body, file }) => {
+      if (!file) return conversationsApi.send(conversationId, body);
+      return isImageFile(file)
         ? conversationsApi.sendImage(conversationId, { body, file })
-        : conversationsApi.send(conversationId, body),
+        : conversationsApi.sendDocument(conversationId, { body, file });
+    },
     onSuccess: (message, { body }) => {
       // Drop the optimistic copy and put the SERVER's message in the cache.
       setPending((prev) => prev.filter((p) => p.body !== body));
@@ -187,7 +191,8 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
            * while it uploads, instead of a blank space that fills in later.
            */
           file,
-          previewUrl: file ? URL.createObjectURL(file) : null,
+          // Images only — a document bubble shows its name and size instead.
+          previewUrl: file && isImageFile(file) ? URL.createObjectURL(file) : null,
         },
       ]);
       send.mutate({ body, file });

@@ -30,6 +30,21 @@ const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
  * Mockup: mpx_global_otp_verification_states. No attempts-remaining counter
  * exists anywhere — the server is deliberately generic per failure (design §3).
  */
+/**
+ * Where sign-in lands.
+ *
+ * A remembered PUBLIC page is honoured — a guest who pressed "Save" on a
+ * product comes back to that product. A remembered PORTAL page is not: a tab
+ * left on /exporter/verification used to send every later sign-in there
+ * instead of the dashboard (owner, 2026-09-23). Signing in lands on the
+ * account's home; the portal's own nav is one click from anywhere.
+ */
+const PORTAL_PATH = /^\/(buyer|exporter|admin)(\/|$)/;
+
+function afterSignIn(from, user) {
+  return from && from.startsWith('/') && !PORTAL_PATH.test(from) ? from : roleHome(user);
+}
+
 export function Otp() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -79,7 +94,7 @@ export function Otp() {
       if (user.mustChangePassword) {
         navigate('/change-password', { replace: true });
       } else {
-        navigate(flow.from ?? roleHome(user), { replace: true });
+        navigate(afterSignIn(flow.from, user), { replace: true });
       }
     } catch (err) {
       const { message, code } = apiError(err, 'Invalid or expired code.');

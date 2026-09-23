@@ -8,6 +8,7 @@ import { logger } from '../utils/logger.js';
 import { recordAudit } from './audit.service.js';
 import { uploadPublicImage, deletePublicImage } from './image.storage.service.js';
 import { rebuildForCategory } from './searchSync.service.js';
+import { slugify } from '../utils/slug.js';
 
 // ---------------------------------------------------------------------------
 // Lookups. Public reads hide inactive rows IN THE QUERY; admin reads see all.
@@ -187,6 +188,15 @@ export async function toggleCategory({ id, actor, meta }) {
         { $set: { prevActive: false } },
       );
     } else {
+      // A top with nothing inside would show buyers an empty page and an empty
+      // browse card — a new admin-created top starts OFF for exactly this
+      // reason, and may only go live once it has a sub-category (2026-09-23).
+      if ((await Category.countDocuments({ parentId: cat._id })) === 0) {
+        throw AppError.badRequest(
+          'top category has no sub-categories',
+          'Add at least one sub-category before switching this category on.',
+        );
+      }
       cat.active = true;
       await saveCategory(cat);
       // Restore each sub from its snapshot, then clear the markers.
@@ -267,6 +277,62 @@ export async function createSubCategory({ parentId, name, type, synonyms = [], o
     meta,
   });
   return sub;
+}
+
+/**
+ * Create a TOP category (owner-approved 2026-09-23 — reverses the build-prompt
+ * rule "top categories: activate/deactivate only"; CREATE only — tops still
+ * cannot be renamed or deleted).
+ *
+ * - The NAME is unique among top categories, case-blind, and its public URL is
+ *   exactly `/category/<slugified name>`: a clash with ANY category's slug is
+ *   refused rather than given the random suffix sub-categories get, so the
+ *   address always reads as the name.
+ * - No `type` — a top's goods/services grouping derives from its children (A16).
+ * - Created OFF, appended last. It goes live via the ordinary switch, which
+ *   refuses until it has a sub-category (see `toggleCategory`).
+ */
+export async function createTopCategory({ name, synonyms = [], actor, meta }) {
+  const clean = name.trim();
+  const slug = slugify(clean);
+  if (!slug) {
+    throw AppError.badRequest('unsluggable name', 'Use a name with letters or numbers.');
+  }
+  const escaped = clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const clash = await Category.findOne({
+    $or: [{ parentId: null, name: new RegExp(`^${escaped}$`, 'i') }, { slug }],
+  })
+    .select('_id parentId')
+    .lean();
+  if (clash) {
+    throw AppError.conflict(
+      'category name taken',
+      clash.parentId
+        ? `A sub-category already uses the address /category/${slug}. Choose a different name.`
+        : 'A category with this name already exists.',
+    );
+  }
+
+  const order = (await Category.countDocuments({ parentId: null })) + 1;
+  let top;
+  try {
+    top = await Category.create({ name: clean, slug, parentId: null, synonyms, active: false, order });
+  } catch (err) {
+    if (err?.code === 11000) {
+      throw AppError.conflict('category slug race', 'A category with this name already exists.');
+    }
+    throw err;
+  }
+  invalidateLeafCache();
+  await recordAudit({
+    actor,
+    action: 'category.create',
+    entityType: 'Category',
+    entityId: top._id,
+    after: { name: clean, slug, parentId: null, top: true, active: false },
+    meta,
+  });
+  return top;
 }
 
 /**

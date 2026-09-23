@@ -74,7 +74,9 @@ widening the whitelist without deciding to will fail a test.
 **Product** — name · **`slug`** (`/product/:slug` link — §A6) · description · images ·
 category (+ type goods/service) · price (mode +
 min/max + currency) · MOQ · unit · trade info (goods) / service info (services) · attributes
-(specs) · seller public projection · createdAt / listed-since.
+(specs) · **`customSpecs`** (seller-written "Additional specifications", `{ label, value }` only —
+added 2026-09-23 on owner approval; capped and contact-free at the route boundary, never a
+search/filter field — build-prompt §A17) · seller public projection · createdAt / listed-since.
 
 **Featured landing content** (FINALIZE F5b, `GET /public/featured`) — the product / category /
 supplier cards are **exactly the projections above**, composed by the same `toPublic()` calls.

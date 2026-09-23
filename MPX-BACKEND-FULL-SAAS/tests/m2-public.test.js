@@ -126,6 +126,9 @@ describe('public product projection (M2-F / Part D whitelist)', () => {
       [
         'attributes',
         'category',
+        // Seller-written "Additional specifications" — owner-approved widening
+        // of the public projection, 2026-09-23 ({label, value} only).
+        'customSpecs',
         'countryOfOrigin',
         'deliveryModel',
         'description',

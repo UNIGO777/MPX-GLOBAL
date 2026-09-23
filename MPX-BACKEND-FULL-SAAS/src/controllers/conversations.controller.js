@@ -61,7 +61,13 @@ export async function send(req, res) {
     body: req.validated.body.body,
     // D9 · present only on the multipart route; JSON sends carry no file, so
     // this is `null` there and the send path behaves exactly as before.
-    imageBuffer: req.file?.buffer ?? null,
+    imageBuffer: req.file?.fieldname === 'image' ? req.file.buffer : null,
+    // D10 · the document route's field. The original name is only a display
+    // hint — the service strips it and supplies the extension itself.
+    document:
+      req.file?.fieldname === 'document'
+        ? { buffer: req.file.buffer, originalName: req.file.originalname }
+        : null,
   });
   res.status(201).json({ message: messageView(message) });
 }

@@ -1,6 +1,6 @@
 import { Conversation } from '../models/Conversation.js';
 import { Message } from '../models/Message.js';
-import { uploadChatImage } from './chatAttachment.storage.service.js';
+import { uploadChatDocument, uploadChatImage } from './chatAttachment.storage.service.js';
 import { AppError } from '../utils/AppError.js';
 import { loadPartyConversation, viewerSideFor } from './conversation.service.js';
 import { notifyNewMessage } from './push.service.js';
@@ -30,7 +30,7 @@ const PREVIEW_LENGTH = 200;
  * never read from the body — otherwise a buyer could post as `system` and
  * impersonate the platform.
  */
-export async function sendMessage({ user, conversationId, body, imageBuffer = null }) {
+export async function sendMessage({ user, conversationId, body, imageBuffer = null, document = null }) {
   const side = viewerSideFor(user);
   if (side === 'staff') {
     // §7.3 / screen 5: admin can read, admin cannot speak. A staff account is
@@ -58,9 +58,17 @@ export async function sendMessage({ user, conversationId, body, imageBuffer = nu
    * this sits below `loadPartyConversation` (membership) and below the frozen
    * check: a closed thread accepts no new content of any kind.
    */
-  const attachment = imageBuffer
-    ? await uploadChatImage({ buffer: imageBuffer, conversationId: conversation._id })
-    : undefined;
+  // D10 · documents follow the same order: guards first, bytes second.
+  let attachment;
+  if (imageBuffer) {
+    attachment = { kind: 'image', ...(await uploadChatImage({ buffer: imageBuffer, conversationId: conversation._id })) };
+  } else if (document) {
+    attachment = await uploadChatDocument({
+      buffer: document.buffer,
+      originalName: document.originalName,
+      conversationId: conversation._id,
+    });
+  }
 
   const sentAt = new Date();
   const message = await Message.create({

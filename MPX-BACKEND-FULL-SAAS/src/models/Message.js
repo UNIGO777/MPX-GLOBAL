@@ -53,12 +53,19 @@ const messageSchema = new Schema(
      * D-N1) would have had nothing to describe either.
      */
     attachment: {
+      // D10 (2026-09-24): documents join images. ABSENT on every image written
+      // before this date — messages are append-only (M4-13), so they cannot be
+      // backfilled; readers treat a missing kind as 'image'.
+      kind: { type: String, enum: ['image', 'document'] },
       storageKey: { type: String, trim: true },
       format: { type: String, trim: true },
       mime: { type: String, trim: true },
       bytes: { type: Number, min: 0 },
       width: { type: Number, min: 0 },
       height: { type: Number, min: 0 },
+      // Documents only: the display name, cleaned server-side with an
+      // extension taken from the sniffed type (never the client's).
+      name: { type: String, trim: true, maxlength: 120 },
     },
 
     // Only ever present on a `system` message, and only on ones written after

@@ -56,6 +56,14 @@ categoryRouter.patch(
   validate(V.categoryIdParam),
   ctrl.toggle,
 );
+// Top category create (owner-approved 2026-09-23; create only). Created OFF.
+categoryRouter.post(
+  '/admin/categories/top',
+  authenticate,
+  requirePermissions(PERMISSIONS.CATEGORY_MANAGE),
+  validate(V.createTop),
+  ctrl.createTop,
+);
 categoryRouter.post(
   '/admin/categories',
   authenticate,

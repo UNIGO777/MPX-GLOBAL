@@ -25,9 +25,13 @@ function present(value, def) {
   return value;
 }
 
-export function SpecTable({ attributes = [], defs = [], columns = 2 }) {
+export function SpecTable({ attributes = [], defs = [], columns = 2, custom = [] }) {
   const rows = attributes.filter((a) => a.value !== null && a.value !== undefined && a.value !== '');
-  if (rows.length === 0) return null;
+  // Seller-written specs (2026-09-23) follow the category's own, in the same
+  // table — to a buyer they are all just "specifications". Plain text, so
+  // React's escaping is all the rendering needs.
+  const extra = custom.filter((c) => c?.label && c?.value);
+  if (rows.length === 0 && extra.length === 0) return null;
 
   const defByKey = new Map(defs.map((d) => [d.key, d]));
 
@@ -51,6 +55,15 @@ export function SpecTable({ attributes = [], defs = [], columns = 2 }) {
           </div>
         );
       })}
+      {extra.map((c, i) => (
+        <div
+          key={`custom-${i}`}
+          className="flex items-baseline justify-between gap-6 border-b border-surface-border py-3"
+        >
+          <dt className="text-sm text-muted">{c.label}</dt>
+          <dd className="text-right text-sm font-medium text-ink-900">{c.value}</dd>
+        </div>
+      ))}
     </dl>
   );
 }

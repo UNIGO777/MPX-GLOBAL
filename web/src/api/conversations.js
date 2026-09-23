@@ -63,6 +63,19 @@ export const conversationsApi = {
       .post(`/conversations/${id}/messages/image`, form)
       .then((r) => r.data.message);
   },
+  /**
+   * D10 · a document — PDF, .docx or .xlsx (2026-09-24). The image route's
+   * twin, same rules: its own endpoint, `body` still required. The server
+   * sniffs the real bytes; nothing here is trusted.
+   */
+  sendDocument: (id, { body, file }) => {
+    const form = new FormData();
+    form.append('document', file);
+    form.append('body', body);
+    return apiClient
+      .post(`/conversations/${id}/messages/document`, form)
+      .then((r) => r.data.message);
+  },
   markRead: (id) => apiClient.post(`/conversations/${id}/read`).then((r) => r.data),
 
   /**

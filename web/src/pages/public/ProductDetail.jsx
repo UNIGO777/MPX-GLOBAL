@@ -688,8 +688,13 @@ export function ProductDetail() {
                 </div>
 
                 <div id="panel-attributes" role="tabpanel" aria-labelledby="tab-attributes" hidden={tab !== 'Attributes'}>
-                  {p.attributes?.length > 0 ? (
-                    <SpecTable attributes={p.attributes} defs={attrs.data?.attributes ?? []} columns={2} />
+                  {p.attributes?.length > 0 || p.customSpecs?.length > 0 ? (
+                    <SpecTable
+                      attributes={p.attributes ?? []}
+                      custom={p.customSpecs ?? []}
+                      defs={attrs.data?.attributes ?? []}
+                      columns={2}
+                    />
                   ) : (
                     <p className="text-sm text-muted">The supplier has not listed specifications yet.</p>
                   )}

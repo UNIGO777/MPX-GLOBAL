@@ -30,6 +30,7 @@ export function Combobox({
   disabled = false,
   hasError = false,
   notFound = 'No matches.',
+  ariaLabel,
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(null); // null = not editing → show selected label
@@ -51,6 +52,15 @@ export function Combobox({
         (o.hint && o.hint.toLowerCase().includes(q)),
     );
   }, [options, query]);
+
+  // Opening lands on the CURRENT choice, highlighted and scrolled into view —
+  // not on the first row. With ~200 dial codes, opening at "Afghanistan" when
+  // "+91 (IN)" is selected left people scrolling to find where they were.
+  const openList = () => {
+    const at = options.findIndex((o) => o.value === value);
+    setHi(at >= 0 ? at : 0);
+    setOpen(true);
+  };
 
   const close = () => {
     setOpen(false);
@@ -104,7 +114,7 @@ export function Combobox({
   const onKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      if (!open) setOpen(true);
+      if (!open) openList();
       else setHi((h) => Math.min(h + 1, filtered.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -133,6 +143,7 @@ export function Combobox({
         id={id}
         type="text"
         role="combobox"
+        aria-label={ariaLabel}
         aria-expanded={open}
         aria-controls={listId}
         aria-autocomplete="list"
@@ -142,7 +153,7 @@ export function Combobox({
         placeholder={placeholder}
         className={inputClasses(hasError, 'pr-9')}
         value={query ?? selected?.label ?? ''}
-        onFocus={() => setOpen(true)}
+        onFocus={openList}
         onChange={(e) => {
           setQuery(e.target.value);
           setHi(0);
@@ -162,7 +173,7 @@ export function Combobox({
           if (open) close();
           else {
             inputRef.current?.focus();
-            setOpen(true);
+            openList();
           }
         }}
         className="absolute right-1 top-1/2 flex h-9 w-8 -translate-y-1/2 items-center justify-center rounded text-ink-500 hover:text-ink-700 disabled:opacity-50"

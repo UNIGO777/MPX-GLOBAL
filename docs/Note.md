@@ -61,6 +61,28 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
   - Staff with `conversation:read` will see attachments when they read a thread; that read is
     already audited, and the admin viewer needs the same signed-URL treatment.
 
+## D10 · Chat attachments (DOCUMENTS)  ✅ OVERRIDE GRANTED 2026-09-24 — BUILT
+- **What it was:** deferred twice over — `m4.md` **M4-14** ("Document exchange waits for the
+  Quotation module", Bucket A1) and D9's own scope line ("PDFs and other documents are NOT covered").
+- **🔴 RED ALERT was raised** (2026-09-24) naming M4-14, D9's exclusion, the scope-change nature and
+  the document-specific risk (scripts, macros, no scanning). **The owner confirmed: "make it".**
+  Do not re-alert on chat documents **of the three types below**.
+- **Scope of the override — PDF, .docx, .xlsx ONLY.** The owner asked for "pdf docs or other
+  files" and did not pick types when asked; these three were chosen as the safe default and said so.
+  **"Other files" (zip, exe, legacy .doc/.xls, macro-enabled .docm/.xlsm, anything else) are NOT
+  covered** — each is a new decision and needs its own alert.
+- **Controls (all server-side, `chatAttachment.storage.service.js`):** real-bytes type check;
+  8 MB cap (`CHAT_ATTACHMENT_MAX_MB`); PDFs with JavaScript / launch / embedded files refused;
+  Office files with a VBA project or ActiveX refused; stored as a Cloudinary PRIVATE raw asset
+  (the D9/KYC pattern); signed URL with a FORCED DOWNLOAD disposition — never rendered inline; the
+  display name is cleaned (no path, no bidi override) and its extension is the server's.
+  Route: `POST /conversations/:id/messages/document` (field `document`), same guards and order as
+  the image route. Tests: `tests/chat-documents.test.js` (15).
+- ⚠️ **Accepted with the override:** nothing SCANS the content (M4-15 — Phase 2); the active-content
+  screen is conservative, not complete (a PDF can hide script in a compressed stream). The forced
+  download + private store are the other two layers. 🔴 **The mobile app does not show attachments
+  at all yet** — images or documents; an app user sees only the message text.
+
 ## D1 · Unverified seller = max 3 ACTIVE products (+10 drafts)  🧭 BUILD-TIME REMINDER (confirmed scope)
 - **Rule (owner-confirmed, refined by Part A §A10/§A15):** an unverified seller may hold at most
   **3 ACTIVE (published) products** — **taken-down products do NOT count** toward the cap

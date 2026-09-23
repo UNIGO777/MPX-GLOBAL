@@ -194,8 +194,9 @@ describe('M4-G · rooms (§7.2)', () => {
     // The wire carries the same projection as REST — no person, ever. Keep this
     // list in step with the two REST guards (m4-messages, m4-conversations):
     // three exact-key assertions is what makes a projection change deliberate.
+    // `attachment` added 2026-09-23 with D9 chat images.
     expect(Object.keys(payload.message).sort()).toEqual(
-      ['body', 'createdAt', 'id', 'senderType', 'systemKind'].sort(),
+      ['attachment', 'body', 'createdAt', 'id', 'senderType', 'systemKind'].sort(),
     );
   });
 

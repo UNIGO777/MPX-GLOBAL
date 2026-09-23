@@ -1,4 +1,4 @@
-import { Calendar, CreditCard, Expand, KeyRound, LayoutGrid, Mail, MapPin, MessageSquarePlus, MessagesSquare, Send, Shield, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Calendar, CreditCard, Download, Expand, KeyRound, LayoutGrid, Mail, MapPin, MessageSquarePlus, MessagesSquare, Send, Shield, SlidersHorizontal, Smile, Sparkles } from 'lucide-react';
 
 /**
  * Minimal inline SVG icon set (1.8 stroke, currentColor) — no icon-font network
@@ -194,6 +194,15 @@ export const CreditCardIcon = ({ className = 'h-5 w-5', ...rest }) => (
 /** Category grid — the shape of the categories page itself. */
 export const GridIcon = ({ className = 'h-5 w-5', ...rest }) => (
   <LayoutGrid className={className} strokeWidth={1.8} aria-hidden="true" {...rest} />
+);
+
+export const DownloadIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Download className={className} strokeWidth={1.8} aria-hidden="true" {...rest} />
+);
+
+/** Chat composer's emoji button. */
+export const SmileIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Smile className={className} strokeWidth={1.8} aria-hidden="true" {...rest} />
 );
 
 export const SendIcon = ({ className = 'h-5 w-5', ...rest }) => (

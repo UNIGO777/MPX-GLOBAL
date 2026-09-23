@@ -28,7 +28,12 @@ export const adminCatalogueApi = {
   /** Top-category on/off. Cascades to subs, remembering each one's `prevActive`. */
   toggle: (id) => apiClient.patch(`/admin/categories/${id}/toggle`).then((r) => r.data.category),
 
-  /** Sub-categories only — the 40 tops are seeded and cannot be created. */
+  /**
+   * A new TOP category (owner-approved 2026-09-23 — create only). Created OFF;
+   * it goes live once it has a sub-category and is switched on. Name unique
+   * among tops; its page is exactly `/category/<slug>`.
+   */
+  createTop: (body) => apiClient.post('/admin/categories/top', body).then((r) => r.data.category),
   createSub: (body) => apiClient.post('/admin/categories', body).then((r) => r.data.category),
   update: (id, patch) => apiClient.patch(`/admin/categories/${id}`, patch).then((r) => r.data.category),
   remove: (id) => apiClient.delete(`/admin/categories/${id}`).then((r) => r.data),

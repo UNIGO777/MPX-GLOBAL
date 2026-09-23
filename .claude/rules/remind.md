@@ -93,9 +93,13 @@ while any close-time security commitment remains unraised.
 ✅ **Override granted — do NOT alert again:**
 - **D9 — Chat attachments (IMAGES only).** Was explicitly out of scope (`m4.md` line 15 and
   **M4-14**, which parks document exchange with the Quotation module). The red alert was raised
-  2026-09-23 and the owner confirmed. **Images only** — PDFs/documents are still deferred and
-  still need their own alert. Stored PRIVATE (the KYC pattern), never the public product-image
-  pattern. Detail: `docs/Note.md` **D9**.
+  2026-09-23 and the owner confirmed. Stored PRIVATE (the KYC pattern), never the public
+  product-image pattern. Detail: `docs/Note.md` **D9**.
+- **D10 — Chat attachments (DOCUMENTS: PDF, .docx, .xlsx ONLY).** Red alert raised 2026-09-24,
+  owner confirmed ("make it"). Same private store, plus a forced-download URL and an
+  active-content screen (PDF scripts, Office macros). 🔴 **Any other file type — zip, exe,
+  legacy .doc/.xls, macro-enabled .docm/.xlsm, "any file" — is NOT covered and still needs its
+  own alert.** 🔴 The mobile app renders no attachments yet. Detail: `docs/Note.md` **D10**.
 
 ⏸ **On hold (build later):**
 - **D4** — Super Admin TOTP 2FA. Staff use OTP now (still two-factor). **Restore before close** (A4).

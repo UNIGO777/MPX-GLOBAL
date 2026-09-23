@@ -2,7 +2,81 @@ import { useState } from 'react';
 
 import { formatTime } from '../../lib/format.js';
 import { Lightbox } from '../ui/Lightbox.jsx';
-import { AlertIcon, CheckIcon, ShieldIcon, SlashIcon } from '../ui/icons.jsx';
+import { AlertIcon, CheckIcon, DownloadIcon, ShieldIcon, SlashIcon } from '../ui/icons.jsx';
+import { fileBadge, formatFileSize } from '../../lib/chatFiles.js';
+
+/**
+ * D10 · a document in a bubble: badge, name, size — and, once sent, a DOWNLOAD
+ * link. The url is the server's short-lived signed one with a forced
+ * `attachment` disposition, so it saves to disk rather than opening inside our
+ * tab. While the bubble is still uploading there is no link yet.
+ */
+function DocumentCard({ doc, own, compact }) {
+  const tone = own
+    ? 'bg-white/15 text-white hover:bg-white/25'
+    : 'bg-ink-50 text-ink-900 hover:bg-ink-100';
+  const inner = (
+    <>
+      <span
+        aria-hidden="true"
+        className={`flex shrink-0 items-center justify-center rounded-lg font-bold tracking-wide ${
+          compact ? 'h-9 w-9 text-[9.5px]' : 'h-10 w-10 text-[10.5px]'
+        } ${own ? 'bg-white text-primary-700' : 'bg-white text-primary-700 ring-1 ring-primary-100'}`}
+      >
+        {fileBadge(doc.format ?? doc.name)}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-semibold">{doc.name}</span>
+        <span className={`block text-[11px] ${own ? 'text-white/75' : 'text-muted'}`}>
+          {formatFileSize(doc.bytes)}
+        </span>
+      </span>
+      {doc.url && <DownloadIcon className="h-4 w-4 shrink-0 opacity-80" />}
+    </>
+  );
+  /**
+   * Save under the REAL name. The signed url is on Cloudinary's origin, where a
+   * browser ignores the `download` attribute and Cloudinary names every raw
+   * download "file.pdf" (verified 2026-09-24; its filename options either do
+   * nothing or flip the disposition to inline). So fetch the bytes and save them
+   * from a blob with our cleaned name. The blob is only ever SAVED, never shown
+   * in the page. If the fetch fails, the plain link still downloads.
+   */
+  const save = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(doc.url);
+      if (!res.ok) throw new Error(`download ${res.status}`);
+      const blobUrl = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = doc.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch {
+      // Not silent: the fallback IS the handling — the browser's own download
+      // of the same signed url, just under Cloudinary's generic name.
+      window.location.assign(doc.url);
+    }
+  };
+  const cls = `mb-1.5 flex min-w-[200px] max-w-full items-center gap-2.5 rounded-xl p-2 transition-colors ${tone}`;
+  return doc.url ? (
+    <a
+      href={doc.url}
+      download={doc.name}
+      onClick={save}
+      rel="noopener noreferrer"
+      className={cls}
+      aria-label={`Download ${doc.name}`}
+    >
+      {inner}
+    </a>
+  ) : (
+    <div className={cls}>{inner}</div>
+  );
+}
 
 /**
  * One line in a thread.
@@ -198,6 +272,14 @@ function SystemNotice({ message, compact }) {
 
 function PartyMessage({ message, align, tone, senderName, senderType, pending, failed, onRetry, startsGroup, compact }) {
   const [zoomed, setZoomed] = useState(false);
+  // D10 · a sent document, or one still uploading (the File rides on the
+  // pending bubble; an image has a previewUrl, a document does not).
+  const doc =
+    message.attachment?.kind === 'document'
+      ? message.attachment
+      : message.file && !message.previewUrl
+        ? { name: message.file.name, bytes: message.file.size, format: null, url: null }
+        : null;
   const timeText = pending ? 'Sending' : formatTime(message.createdAt);
   /* ONE source for the clock's size. The invisible spacer that reserves room for
      it on the last line must measure the same text, or a short message runs into
@@ -269,7 +351,9 @@ function PartyMessage({ message, align, tone, senderName, senderType, pending, f
               minted per read. Width/height come from the server so the bubble
               reserves the right box and the thread does not jump as each image
               loads. */}
-          {(message.previewUrl || message.attachment?.url) && (
+          {doc && <DocumentCard doc={doc} own={own} compact={compact} />}
+
+          {!doc && (message.previewUrl || message.attachment?.url) && (
             <>
               {/* 🔴 A modal, not `target="_blank"` (owner, 2026-09-23). A new tab
                   was also the wrong place for THIS image specifically: the

@@ -26,6 +26,9 @@ import {
   XIcon,
 } from '../../components/ui/icons.jsx';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
+import { AddTopCategoryDrawer } from './AddTopCategoryDrawer.jsx';
+import { AddressLine, ImageTile, KeywordInput, OrderInput, PartLabel } from './categoryFormParts.jsx';
+import { slugify } from '../../lib/slug.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
 
@@ -216,10 +219,15 @@ export function CategoryManager() {
   const [panel, setPanel] = useState(null); // { mode: 'create'|'edit', sub? }
   const [pickerOpen, setPickerOpen] = useState(false); // phone category sheet
   const [settingsOpen, setSettingsOpen] = useState(false); // top-category settings drawer
+  const [addTopOpen, setAddTopOpen] = useState(false); // new top category (2026-09-23)
+  const [addTopError, setAddTopError] = useState(null);
   const [cascade, setCascade] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [error, setError] = useState(null);
-  const [notice, setNotice] = useState(null);
+  // A notice belongs to the category it was about: it hides when the admin
+  // picks another one, on its ✕, or by itself after a few seconds — it used to
+  // stay until the next save, long after it stopped being true.
+  const [noticeState, setNoticeState] = useState(null); // { text, topId }
 
   const tree = useQuery({ queryKey: adminCatalogueKeys.tree, queryFn: adminCatalogueApi.tree });
 
@@ -228,6 +236,16 @@ export function CategoryManager() {
   const tops = useMemo(() => tree.data ?? [], [tree.data]);
   const selectedId = params.get('top') ?? tops[0]?.id;
   const top = useMemo(() => tops.find((t) => t.id === selectedId), [tops, selectedId]);
+
+  const setNotice = (text, topId = selectedId) => setNoticeState(text ? { text, topId } : null);
+  // Guard on noticeState itself: while the tree loads selectedId is undefined,
+  // and `undefined === undefined` would read .text off null.
+  const notice = noticeState && noticeState.topId === selectedId ? noticeState.text : null;
+  useEffect(() => {
+    if (!noticeState) return undefined;
+    const t = setTimeout(() => setNoticeState(null), 8000);
+    return () => clearTimeout(t);
+  }, [noticeState]);
 
   const refresh = () => qc.invalidateQueries({ queryKey: adminCatalogueKeys.tree });
   const onError = (err) => setError(err?.response?.data?.error?.message ?? 'Something went wrong.');
@@ -282,6 +300,29 @@ export function CategoryManager() {
     onSuccess: () => { setPanel(null); refresh(); },
     onError,
   });
+  // New TOP category (owner-approved 2026-09-23). Create, then upload the
+  // image if one was picked (a new category has no id until create returns),
+  // then select it so the admin lands where the next step — a sub-category — is.
+  const createTop = useMutation({
+    mutationFn: async ({ body, imageFile }) => {
+      const created = await adminCatalogueApi.createTop(body);
+      if (imageFile) await adminCatalogueApi.uploadImage(created.id, imageFile);
+      return created;
+    },
+    onMutate: () => { setAddTopError(null); setNotice(null); },
+    onSuccess: (created, vars) => {
+      vars.reset();
+      setAddTopOpen(false);
+      refresh();
+      setParams({ top: created.id });
+      setNotice(
+        `${created.name} created at /category/${created.slug}. It's switched off — add a sub-category, then switch it on.`,
+        created.id,
+      );
+    },
+    onError: (err) => setAddTopError(err?.response?.data?.error?.message ?? 'Could not create the category.'),
+  });
+
   const removeSub = useMutation({
     mutationFn: (id) => adminCatalogueApi.remove(id),
     onMutate: () => setError(null),
@@ -306,10 +347,28 @@ export function CategoryManager() {
             </span>
           )}
         </div>
+        {/* Below xl there is no rail to sit under — the title row is its home. */}
+        {canManage && tree.isSuccess && (
+          <Button size="sm" variant="secondary" className="xl:hidden" onClick={() => setAddTopOpen(true)}>
+            + New category
+          </Button>
+        )}
       </div>
 
       {error && <Alert tone="danger" className="mb-5">{error}</Alert>}
-      {notice && <Alert tone="info" className="mb-5">{notice}</Alert>}
+      {notice && (
+        <div className="relative mb-5">
+          <Alert tone="info" className="pr-11">{notice}</Alert>
+          <button
+            type="button"
+            onClick={() => setNoticeState(null)}
+            aria-label="Dismiss message"
+            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900"
+          >
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {tree.isPending && <SkeletonRows rows={8} />}
       {tree.isError && <ErrorState onRetry={tree.refetch} />}
@@ -335,19 +394,11 @@ export function CategoryManager() {
                 </span>
               </button>
             )}
-            {/* Phone-reachable create: the SubList header's own button sits
-                ~one viewport below the fold behind TopHeader + TopSettings, so
-                testers reported "create category not shown" (QA, 2026-08-14). */}
-            {top && canManage && (
-              <Button
-                size="sm"
-                variant="secondary"
-                className="mt-3 w-full"
-                onClick={() => setPanel({ mode: 'create' })}
-              >
-                + Add sub-category in “{top.name}”
-              </Button>
-            )}
+            {/* No separate "add sub-category" here any more (owner, 2026-09-24):
+                it was added when the inline settings card pushed the SubList
+                button a viewport down (QA, 2026-08-14). Settings is a drawer
+                now, so that button sits right under the header — two was noise.
+                "New category" lives in the title row on these widths. */}
             <CategorySheet
               open={pickerOpen}
               tops={tops}
@@ -380,6 +431,16 @@ export function CategoryManager() {
                 );
               })}
             </ul>
+            {/* The empty space under the rail (owner, 2026-09-23). */}
+            {canManage && (
+              <button
+                type="button"
+                onClick={() => setAddTopOpen(true)}
+                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-primary-300 bg-white px-3 py-3 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-50"
+              >
+                <span aria-hidden="true" className="text-lg leading-none">+</span> Add new category
+              </button>
+            )}
           </aside>
 
           {/* --- Right: the selected category as a DETAIL VIEW --- */}
@@ -394,7 +455,7 @@ export function CategoryManager() {
                   busy={busyId === top.id}
                   onUpload={(file) => uploadImage.mutate({ id: top.id, file })}
                   onToggle={() => (top.active ? setCascade(top) : toggle.mutate({ id: top.id }))}
-                  onSettings={() => setSettingsOpen(true)}
+                  onSettings={() => { setError(null); setSettingsOpen(true); }}
                 />
 
                 {/* 2026-08-14 restructure: the settings form is no longer page
@@ -405,8 +466,8 @@ export function CategoryManager() {
                   top={top}
                   canManage={canManage}
                   busyId={busyId}
-                  onAdd={() => setPanel({ mode: 'create' })}
-                  onEdit={(sub) => setPanel({ mode: 'edit', sub })}
+                  onAdd={() => { setError(null); setPanel({ mode: 'create' }); }}
+                  onEdit={(sub) => { setError(null); setPanel({ mode: 'edit', sub }); }}
                   onToggle={toggleSub}
                   onDelete={(sub) => setConfirmDelete(sub)}
                 />
@@ -420,6 +481,7 @@ export function CategoryManager() {
                   onClose={() => setSettingsOpen(false)}
                   canManage={canManage}
                   saving={saveTop.isPending}
+                  error={error}
                   onSave={(body) =>
                     saveTop.mutate(
                       { id: top.id, body },
@@ -437,6 +499,7 @@ export function CategoryManager() {
         panel={panel}
         top={top}
         saving={saveSub.isPending}
+        error={error}
         onClose={() => setPanel(null)}
         onSave={(body, imageFile) => saveSub.mutate({ mode: panel.mode, id: panel.sub?.id, body, imageFile })}
       />
@@ -483,6 +546,13 @@ export function CategoryManager() {
             specific message — surfaced verbatim in the alert above. */}
         This can only be deleted while no products use it. If any do, deactivate it instead.
       </Modal>
+      <AddTopCategoryDrawer
+        open={addTopOpen}
+        onClose={() => { setAddTopOpen(false); setAddTopError(null); }}
+        saving={createTop.isPending}
+        error={addTopError}
+        onSave={(body, imageFile, reset) => createTop.mutate({ body, imageFile, reset })}
+      />
     </AdminLayout>
   );
 }
@@ -592,40 +662,35 @@ function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle, onSett
  * copy: no cascading render, and no window in which the drawer shows last
  * time's values before the effect corrects them.
  */
-function TopSettingsBody({ top, onClose, canManage, saving, onSave }) {
+function TopSettingsBody({ top, onClose, canManage, saving, error, onSave }) {
   const [name, setName] = useState(top.name);
   const [order, setOrder] = useState(top.order ?? '');
   const [synonyms, setSynonyms] = useState(top.synonyms ?? []);
-  const [draft, setDraft] = useState('');
-
-  const addSynonym = (raw) => {
-    const v = raw.trim().toLowerCase();
-    if (!v) return;
-    setSynonyms((l) => (l.includes(v) ? l : [...l, v]));
-    setDraft('');
-  };
 
   const dirty =
-    name !== top.name ||
+    name.trim() !== top.name ||
     String(order) !== String(top.order ?? '') ||
     JSON.stringify(synonyms) !== JSON.stringify(top.synonyms ?? []);
 
   return (
     <Drawer
-      open={open}
+      open
       onClose={onClose}
+      icon={SettingsIcon}
       title="Category settings"
-      subtitle={`${top.name} — the editable pieces of a seeded category.`}
+      subtitle={top.name}
       footer={
         canManage ? (
           <>
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="secondary" onClick={onClose} disabled={saving}>
               Cancel
             </Button>
             <Button
-              disabled={!dirty}
+              disabled={!dirty || !name.trim()}
               loading={saving}
-              onClick={() => onSave({ name, synonyms, ...(order !== '' ? { order: Number(order) } : {}) })}
+              onClick={() =>
+                onSave({ name: name.trim(), synonyms, ...(order !== '' ? { order: Number(order) } : {}) })
+              }
             >
               Save changes
             </Button>
@@ -633,9 +698,11 @@ function TopSettingsBody({ top, onClose, canManage, saving, onSave }) {
         ) : null
       }
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
+        {error && <Alert tone="danger">{error}</Alert>}
+
         <div>
-          <Field label="Name">
+          <Field label="Category name">
             {(id) => (
               <input
                 id={id}
@@ -647,100 +714,27 @@ function TopSettingsBody({ top, onClose, canManage, saving, onSave }) {
               />
             )}
           </Field>
-          {/* A6: the slug is immutable — a rename never breaks the URL. Always
-              visible, so the lock explains itself before anyone wonders. */}
-          <p className="mt-1.5 truncate text-xs text-muted">
-            /category/{top.slug} — never changes
-          </p>
+          {/* A6: the slug is immutable — a rename never breaks the URL. Said up
+              front, so the lock explains itself before anyone wonders. */}
+          <AddressLine path={`/category/${top.slug}`} note="Stays the same when you rename, so existing links keep working." />
         </div>
 
-        {/* A rank, not a paragraph: label left, tiny input right. The input
-            sits in a fixed-width WRAPPER — inputClasses bakes in `w-full`, so
-            a `w-20` on the input itself loses and the field swallowed the row
-            (owner screenshot, 2026-08-14). */}
-        <div className="flex items-center justify-between gap-4">
-          <label htmlFor="top-order" className="min-w-0 flex-1 text-sm font-medium text-ink-900">
-            Display order
-            <span className="block text-xs font-normal text-muted">
-              Lower shows first — the others shift around it.
-            </span>
-          </label>
-          <div className="w-20 shrink-0">
-            <input
-              id="top-order"
-              type="number"
-              inputMode="numeric"
-              className={inputClasses(false, 'text-center')}
-              value={order}
-              disabled={!canManage}
-              onChange={(e) => setOrder(e.target.value)}
-            />
-          </div>
-        </div>
+        <OrderInput id="top-order" value={order} onChange={setOrder} disabled={!canManage} />
 
-        {/* 🔴 §A12: this tag input is the ONLY entry path for the top-40
-            keyword list. Never shown publicly; search-matching only. Not built
-            on inputClasses — its h-11 fights the growing tag box. */}
-        <div>
-          <label
-            htmlFor="top-synonyms"
-            className="flex items-center gap-2 text-sm font-medium text-ink-900"
-          >
-            Search keywords
-            {synonyms.length > 0 && (
-              <span className="rounded-full bg-primary-100 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-700">
-                {synonyms.length}
-              </span>
-            )}
-          </label>
-          <div
-            className="mt-1.5 flex min-h-[44px] w-full flex-wrap items-center gap-1.5 rounded-lg border border-surface-border bg-white px-3 py-2 transition-all focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-600/20"
-            onClick={() => document.getElementById('top-synonyms')?.focus()}
-          >
-            {synonyms.map((syn) => (
-              <span
-                key={syn}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700"
-              >
-                {syn}
-                {canManage && (
-                  <button
-                    type="button"
-                    aria-label={`Remove ${syn}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSynonyms((l) => l.filter((x) => x !== syn));
-                    }}
-                    className="text-primary-400 hover:text-danger"
-                  >
-                    <XIcon className="h-3 w-3" />
-                  </button>
-                )}
-              </span>
-            ))}
-            {canManage && (
-              <input
-                id="top-synonyms"
-                className="min-w-[120px] flex-1 border-0 bg-transparent p-0 text-sm outline-none placeholder:text-ink-500"
-                placeholder={synonyms.length ? 'Add keyword…' : 'e.g. medicine, pharma, dawai'}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSynonym(draft); }
-                  if (e.key === 'Backspace' && !draft) setSynonyms((l) => l.slice(0, -1));
-                }}
-                onBlur={() => addSynonym(draft)}
-              />
-            )}
-            {!canManage && synonyms.length === 0 && (
-              <span className="text-sm text-muted">No keywords yet.</span>
-            )}
-          </div>
-          <p className="mt-1.5 text-xs leading-relaxed text-muted">
-            What buyers might type so search finds “{top.name}”. Enter adds one. Never shown
-            publicly.
-          </p>
-        </div>
+        <KeywordInput
+          id="top-synonyms"
+          value={synonyms}
+          onChange={setSynonyms}
+          disabled={!canManage}
+          subject={top.name}
+          placeholder="e.g. medicine, pharma, dawai"
+        />
+
+        {/* The image lives on the page header (§A20 — click or drop there);
+            pointing at it beats a second upload path that could disagree. */}
+        <p className="rounded-xl bg-ink-50 px-4 py-3 text-xs leading-relaxed text-muted">
+          To change the category image, click the image at the top of the page.
+        </p>
       </div>
     </Drawer>
   );
@@ -876,17 +870,21 @@ function SubList({ top, canManage, busyId, onAdd, onEdit, onToggle, onDelete }) 
   );
 }
 
+const SUB_TYPES = [
+  { value: 'goods', label: 'Goods', desc: 'Physical products' },
+  { value: 'service', label: 'Service', desc: 'Work and expertise' },
+];
+
 /** Create / edit a sub-category. Slug and type lock once they matter. */
-function SubPanel({ panel, top, saving, onClose, onSave }) {
+function SubPanel({ panel, top, saving, error, onClose, onSave }) {
   const editing = panel?.mode === 'edit';
   const sub = panel?.sub;
   const [name, setName] = useState('');
   const [type, setType] = useState('goods');
   const [order, setOrder] = useState('');
-  const [synonyms, setSynonyms] = useState('');
+  const [synonyms, setSynonyms] = useState([]);
   const [imageFile, setImageFile] = useState(null); // uploads with Save
   const [ready, setReady] = useState(null);
-  const imageRef = useRef(null);
 
   // Reset the fields whenever a different row opens the panel.
   if (panel && ready !== (sub?.id ?? 'new')) {
@@ -894,123 +892,88 @@ function SubPanel({ panel, top, saving, onClose, onSave }) {
     setName(sub?.name ?? '');
     setType(sub?.type ?? 'goods');
     setOrder(sub?.order ?? '');
-    setSynonyms((sub?.synonyms ?? []).join(', '));
+    setSynonyms(sub?.synonyms ?? []);
     setImageFile(null);
   }
+  const close = () => {
+    setReady(null);
+    onClose();
+  };
 
   const submit = () => {
     const body = {
-      name,
+      name: name.trim(),
       ...(order !== '' ? { order: Number(order) } : {}),
-      synonyms: synonyms.split(',').map((s) => s.trim()).filter(Boolean),
+      synonyms,
       ...(editing ? {} : { parentId: top.id, type }),
     };
     onSave(body, imageFile);
   };
 
+  const slug = editing ? sub.slug : slugify(name);
+
   return (
     <Drawer
       open={Boolean(panel)}
-      onClose={onClose}
+      onClose={close}
+      icon={ListIcon}
       title={editing ? 'Edit sub-category' : 'Add sub-category'}
-      subtitle={top?.name}
+      subtitle={editing ? `${sub?.name} · in ${top?.name}` : `Inside ${top?.name ?? ''}`}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button loading={saving} onClick={submit} disabled={!name.trim()}>Save</Button>
+          <Button variant="secondary" onClick={close} disabled={saving}>
+            Cancel
+          </Button>
+          <Button loading={saving} onClick={submit} disabled={!name.trim()}>
+            {editing ? 'Save changes' : 'Add sub-category'}
+          </Button>
         </>
       }
     >
-      <div className="space-y-5">
-        <Field label="Parent category">
-          {(id) => <input id={id} className={inputClasses(false)} value={top?.name ?? ''} readOnly disabled />}
-        </Field>
+      <div className="space-y-6">
+        {error && <Alert tone="danger">{error}</Alert>}
 
-        <Field label="Name">
-          {(id, hasError) => (
-            <input
-              id={id}
-              className={inputClasses(hasError)}
-              maxLength={120}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          )}
-        </Field>
-
-        {/* §A11: the card image, managed HERE (owner, 2026-08-11) — the list
-            rows are display-only. A picked file uploads together with Save. */}
-        <Field label="Image" optional helper="Shown on the category card · 5 MB · JPG, PNG or WEBP.">
-          {() => (
-            <div className="flex items-center gap-3">
-              {imageFile ? (
-                <img
-                  src={URL.createObjectURL(imageFile)}
-                  alt=""
-                  className="h-14 w-14 shrink-0 rounded-xl object-cover"
-                />
-              ) : sub?.image ? (
-                <img src={sub.image} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
-              ) : (
-                <NoImagePanel label={name || 'New'} monogram ratio="h-14 w-14" className="shrink-0 rounded-xl" />
-              )}
-              <div className="min-w-0">
-                <Button size="sm" variant="secondary" onClick={() => imageRef.current?.click()}>
-                  <UploadIcon className="mr-1.5 h-4 w-4" />
-                  {imageFile || sub?.image ? 'Replace image' : 'Add image'}
-                </Button>
-                {imageFile && (
-                  <p className="mt-1 truncate text-xs text-muted">
-                    {imageFile.name} — uploads when you save
-                  </p>
-                )}
-              </div>
+        <div>
+          <Field label="Sub-category name">
+            {(id, hasError) => (
               <input
-                ref={imageRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="sr-only"
-                aria-label="Choose category image"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) setImageFile(f);
-                  e.target.value = '';
-                }}
+                id={id}
+                className={inputClasses(hasError)}
+                maxLength={120}
+                placeholder="e.g. Board games"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus={!editing}
               />
-            </div>
-          )}
-        </Field>
-
-        {editing && (
-          <Field label="Web address" helper="Fixed once created, so existing links keep working.">
-            {(id) => (
-              <input id={id} className={inputClasses(false, 'font-mono text-xs')} value={sub.slug} readOnly disabled />
             )}
           </Field>
-        )}
+          {/* The server assigns the slug once and never changes it; a clash gets
+              a short suffix (SEO §1), so a new one is a preview, not a promise. */}
+          <AddressLine
+            path={`/category/${slug || 'your-sub-category'}`}
+            note={
+              editing
+                ? 'Stays the same when you rename, so existing links keep working.'
+                : 'Set when you save. If the address is taken, a short code is added to the end.'
+            }
+          />
+        </div>
 
         {/* 🔴 Type is set at create. The server locks it once products exist, so
             editing shows it read-only rather than offering a change that 409s. */}
-        {editing ? (
-          <Field label="Type" helper="Can't change once products use this category.">
-            {(id) => (
-              <input
-                id={id}
-                className={inputClasses(false)}
-                value={sub.type === 'service' ? 'Service' : 'Goods'}
-                readOnly
-                disabled
-              />
-            )}
-          </Field>
-        ) : (
-          <Field label="Type" helper="Decides which fields sellers are asked for.">
-            {() => (
+        <div>
+          <PartLabel>Type</PartLabel>
+          {editing ? (
+            <div className="rounded-xl border border-surface-border bg-ink-50 px-4 py-3">
+              <span className="block text-sm font-semibold text-ink-900">
+                {sub.type === 'service' ? 'Service' : 'Goods'}
+              </span>
+              <span className="block text-xs text-muted">Can&apos;t change once products use this category.</span>
+            </div>
+          ) : (
+            <>
               <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Category type">
-                {[
-                  { value: 'goods', label: 'Goods', desc: 'Physical products' },
-                  { value: 'service', label: 'Service', desc: 'Work and expertise' },
-                ].map((opt) => {
+                {SUB_TYPES.map((opt) => {
                   const on = type === opt.value;
                   return (
                     <button
@@ -1019,69 +982,50 @@ function SubPanel({ panel, top, saving, onClose, onSave }) {
                       role="radio"
                       aria-checked={on}
                       onClick={() => setType(opt.value)}
-                      className={`rounded-xl border p-3 text-left transition-all ${
+                      className={`flex items-start gap-2.5 rounded-xl border p-3 text-left transition-colors ${
                         on
                           ? 'border-primary-600 bg-primary-50 ring-1 ring-primary-600'
                           : 'border-surface-border bg-white hover:border-primary-400'
                       }`}
                     >
-                      <span className="block text-sm font-semibold text-ink-900">{opt.label}</span>
-                      <span className="block text-xs text-muted">{opt.desc}</span>
+                      <span
+                        aria-hidden="true"
+                        className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                          on ? 'border-primary-600' : 'border-ink-300'
+                        }`}
+                      >
+                        {on && <span className="h-2 w-2 rounded-full bg-primary-600" />}
+                      </span>
+                      <span>
+                        <span className="block text-sm font-semibold text-ink-900">{opt.label}</span>
+                        <span className="block text-xs text-muted">{opt.desc}</span>
+                      </span>
                     </button>
                   );
                 })}
               </div>
-            )}
-          </Field>
-        )}
+              <p className="mt-1.5 text-xs text-muted">
+                Decides which fields sellers are asked for. Can&apos;t be changed once products use it.
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* §A11: the card image, managed HERE (owner, 2026-08-11) — the list
+            rows are display-only. A picked file uploads together with Save. */}
+        <ImageTile file={imageFile} current={sub?.image} onPick={setImageFile} />
 
         {/* Position among this top's subs — the server shifts the siblings
             (positional order semantics, 2026-08-14). */}
-        <div className="flex items-center justify-between gap-4">
-          <label htmlFor="sub-order" className="min-w-0 flex-1 text-sm font-medium text-ink-900">
-            Display order
-            <span className="block text-xs font-normal text-muted">
-              Lower shows first — the others shift around it.
-            </span>
-          </label>
-          <div className="w-20 shrink-0">
-            <input
-              id="sub-order"
-              type="number"
-              inputMode="numeric"
-              className={inputClasses(false, 'text-center')}
-              value={order}
-              onChange={(e) => setOrder(e.target.value)}
-            />
-          </div>
-        </div>
+        <OrderInput id="sub-order" value={order} onChange={setOrder} />
 
-        <Field
-          label="Synonyms"
-          optional
-          helper="Keywords buyers might type — e.g. medicine, pharma, dawai. Comma separated. Never shown publicly."
-        >
-          {(id) => (
-            <input
-              id={id}
-              className={inputClasses(false)}
-              value={synonyms}
-              onChange={(e) => setSynonyms(e.target.value)}
-            />
-          )}
-        </Field>
-
-        <Field label="Order" optional>
-          {(id) => (
-            <input
-              id={id}
-              type="number"
-              className={inputClasses(false)}
-              value={order}
-              onChange={(e) => setOrder(e.target.value)}
-            />
-          )}
-        </Field>
+        <KeywordInput
+          id="sub-synonyms"
+          value={synonyms}
+          onChange={setSynonyms}
+          subject={name.trim() || undefined}
+          placeholder="e.g. chess, carrom, ludo"
+        />
       </div>
     </Drawer>
   );

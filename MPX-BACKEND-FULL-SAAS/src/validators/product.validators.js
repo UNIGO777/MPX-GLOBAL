@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { zString, zObjectId } from './helpers.js';
 import { PRICE_MODE, CURRENCIES } from '../models/enums.js';
 import { MAX_PRODUCT_IMAGES } from '../models/Product.js';
+import { containsContactDetails } from '../utils/contactDetails.js';
 
 // §A25.3 image refs come from POST /products/images — ownership of the publicId
 // prefix is re-checked in the service.
@@ -18,6 +19,35 @@ const attributeInput = z.object({
   key: zString({ min: 1, max: 60 }).regex(/^[a-z0-9_]+$/, 'invalid key'),
   value: z.union([z.string().trim().max(500), z.number(), z.boolean()]),
 });
+
+// Seller-written specs (2026-09-23). Plain text only, capped, unique labels,
+// and no contact details — these render on the PUBLIC product page, where an
+// email, link or phone number would route a buyer around the platform.
+export const MAX_CUSTOM_SPECS = 10;
+const customSpec = z.object({
+  label: zString({ min: 1, max: 40 }),
+  value: zString({ min: 1, max: 200 }),
+});
+const customSpecs = z
+  .array(customSpec)
+  .max(MAX_CUSTOM_SPECS)
+  .superRefine((rows, ctx) => {
+    const seen = new Set();
+    rows.forEach((r, i) => {
+      const key = r.label.trim().toLowerCase();
+      if (seen.has(key)) {
+        ctx.addIssue({ code: 'custom', path: [i, 'label'], message: `"${r.label}" is listed twice` });
+      }
+      seen.add(key);
+      if (containsContactDetails(r.label) || containsContactDetails(r.value)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [i, 'value'],
+          message: 'Contact details (email, phone or links) cannot go in specifications',
+        });
+      }
+    });
+  });
 
 // Price mode rules (plan M2-E): fixed → single value in `min`, no `max`;
 // range → min < max; on_request → no numbers; currency required unless
@@ -61,6 +91,7 @@ const productFields = {
   price,
   images: z.array(imageRef).max(MAX_PRODUCT_IMAGES).optional(),
   attributes: z.array(attributeInput).max(50).optional(),
+  customSpecs: customSpecs.optional(),
 
   // goods-only:
   // 🔴 min 1, integer (owner, 2026-08-17): "cannot be 0". A zero minimum-order

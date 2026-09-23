@@ -84,6 +84,35 @@ export function uploadLogo(req, res, next) {
   });
 }
 
+// Single-DOCUMENT upload for a chat attachment (D10, 2026-09-24): PDF, .docx,
+// .xlsx. Same posture and cap as the chat image; the field is `document` so the
+// controller can tell the two routes' files apart. Type is NOT checked here —
+// multer only sees the client's claim; the storage service sniffs real bytes.
+const parseChatDocument = multer({
+  storage: multer.memoryStorage(),
+  // The file NAME is shown to the other party here (nowhere else keeps it), and
+  // multer's latin1 default turns "Qualité.pdf" or a Devanagari name into
+  // mojibake. Browsers send UTF-8.
+  defParamCharset: 'utf8',
+  limits: { fileSize: env.CHAT_ATTACHMENT_MAX_MB * 1024 * 1024, files: 1 },
+}).single('document');
+
+export function uploadChatDocument(req, res, next) {
+  parseChatDocument(req, res, (err) => {
+    if (!err) return next();
+    if (err instanceof multer.MulterError) {
+      const message =
+        err.code === 'LIMIT_FILE_SIZE'
+          ? `File exceeds the ${env.CHAT_ATTACHMENT_MAX_MB} MB limit.`
+          : err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE'
+            ? 'Upload one file in the "document" field.'
+            : 'Could not read the uploaded file.';
+      return next(AppError.badRequest(`upload: ${err.code}`, message));
+    }
+    return next(AppError.badRequest('upload failed', 'Could not read the uploaded file.'));
+  });
+}
+
 // Single-image upload for a CHAT attachment (D9, 2026-09-23). Same in-memory,
 // magic-byte-verified-downstream posture as every other upload here. The cap
 // comes from `CHAT_ATTACHMENT_MAX_MB` rather than a literal, because the storage

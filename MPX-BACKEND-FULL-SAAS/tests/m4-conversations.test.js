@@ -161,9 +161,12 @@ describe('M4-C · projections leak nothing (G1 / G2)', () => {
     for (const m of res.body.messages) {
       // EXACT key list — this is the guard that fails the moment anything is
       // added to a message payload, which is how a person field would be
-      // caught. `systemKind` was added deliberately on 2026-08-18.
+      // caught. `systemKind` was added deliberately on 2026-08-18, and
+      // `attachment` on 2026-09-23 (D9 chat images): null on text messages,
+      // otherwise only a short-lived signed URL + width/height — never the
+      // storage key, never a person.
       expect(Object.keys(m).sort()).toEqual(
-        ['body', 'createdAt', 'id', 'senderType', 'systemKind'].sort(),
+        ['attachment', 'body', 'createdAt', 'id', 'senderType', 'systemKind'].sort(),
       );
       // It describes the PLATFORM's own notices and nothing else: a party
       // message must never carry one.

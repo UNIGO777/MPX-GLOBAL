@@ -15,6 +15,7 @@ import { CategoryPicker } from '../../components/catalogue/CategoryPicker.jsx';
 import { PriceInput } from '../../components/catalogue/PriceInput.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { ProductImageManager } from '../../components/catalogue/ProductImageManager.jsx';
+import { CustomSpecsEditor } from '../../components/catalogue/CustomSpecsEditor.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { CountrySelect } from '../../components/ui/CountrySelect.jsx';
@@ -98,6 +99,8 @@ const EMPTY = {
   teamSize: '',
   pricingModel: '',
   timeline: '',
+  // Seller-written specs (2026-09-23) — [{ label, value }].
+  customSpecs: [],
 };
 
 function initials(label = '') {
@@ -314,6 +317,11 @@ export function ProductForm() {
       // Always sent: PATCH replaces the array, so an emptied list must reach
       // the server as [] — omitting it would silently keep deleted images.
       images: form.images,
+      // Same replace-on-PATCH rule. Fully blank rows are dropped; a HALF-filled
+      // row never gets here — the save check below stops on it first.
+      customSpecs: (form.customSpecs ?? [])
+        .map((r) => ({ label: r.label.trim(), value: r.value.trim() }))
+        .filter((r) => r.label || r.value),
     };
     // Only the applicable group is ever sent — the server rejects a goods field
     // on a service leaf and vice versa.
@@ -334,7 +342,22 @@ export function ProductForm() {
       qc.invalidateQueries({ queryKey: productKeys.mine });
       navigate('/exporter/products');
     },
-    onError: (err) => setError(err?.response?.data?.error?.message ?? 'Could not save.'),
+    onError: (err) => {
+      // An additional specification the server refused (e.g. a phone number)
+      // comes back as a field error — show it on that section, naming the row,
+      // instead of the bare "Invalid request." banner.
+      const fields = err?.response?.data?.error?.fields ?? [];
+      const spec = fields.find((f) => String(f.field).startsWith('body.customSpecs'));
+      if (spec) {
+        const row = Number(String(spec.field).split('.')[2]);
+        setFieldErrors((fe) => ({
+          ...fe,
+          customSpecs: Number.isInteger(row) ? `Specification ${row + 1}: ${spec.message}.` : spec.message,
+        }));
+        return;
+      }
+      setError(err?.response?.data?.error?.message ?? 'Could not save.');
+    },
   });
 
   const setStatus = useMutation({
@@ -376,6 +399,8 @@ export function ProductForm() {
       else if (!Number.isInteger(Number(moq)) || Number(moq) < 1) errs.moq = 'Must be a whole number of 1 or more.';
       if (!String(form.unit ?? '').trim()) errs.unit = 'A unit is required.';
     }
+    const half = (form.customSpecs ?? []).some((r) => Boolean(r.label.trim()) !== Boolean(r.value.trim()));
+    if (half) errs.customSpecs = 'Each additional specification needs both a name and a value — finish it or remove it.';
     setFieldErrors(errs);
     if (Object.keys(errs).length === 0) save.mutate();
   }
@@ -877,7 +902,6 @@ export function ProductForm() {
             <FormSection
               step={4}
               done={specsDone}
-              last
               title="Specifications"
               desc={`What buyers filter and compare on for ${leaf?.name ?? 'this category'}.`}
               aside={
@@ -893,6 +917,32 @@ export function ProductForm() {
               </p>
             </FormSection>
           )}
+
+          {/* Seller-written specs (client change request, 2026-09-23): details
+              the category's own fields do not cover. Shown to buyers on the
+              product page; never searched or filtered. */}
+          <FormSection
+            step={defs.length > 0 ? 5 : 4}
+            done={(form.customSpecs ?? []).some((r) => r.label.trim() && r.value.trim())}
+            last
+            title="Additional specifications"
+            desc="Anything else buyers should know that the fields above don't cover — shown on your product page."
+            aside={
+              <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+                Optional
+              </span>
+            }
+          >
+            <CustomSpecsEditor
+              rows={form.customSpecs ?? []}
+              onChange={(rows) => {
+                set({ customSpecs: rows });
+                setFieldErrors(({ customSpecs: _customSpecs, ...rest }) => rest);
+              }}
+              disabled={save.isPending}
+            />
+            {fieldErrors.customSpecs && <p className="text-sm text-danger">{fieldErrors.customSpecs}</p>}
+          </FormSection>
         </div>
 
         {/* ================= sticky context rail ================= */}

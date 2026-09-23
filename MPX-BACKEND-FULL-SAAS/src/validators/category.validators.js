@@ -44,6 +44,15 @@ export const createSub = {
   }),
 };
 
+// Admin: create a TOP category (2026-09-23). No `type` (A16) and no parentId —
+// the route itself says "top".
+export const createTop = {
+  body: z.object({
+    name: zString({ min: 1, max: 120 }),
+    synonyms: synonyms.optional(),
+  }),
+};
+
 // Admin: category patch. Slug and parentId are IMMUTABLE — deliberately not
 // accepted here. `type` is accepted for subs only and the service blocks the
 // change once products exist.

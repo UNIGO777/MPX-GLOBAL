@@ -12,7 +12,7 @@
  * party. Widening this file is how they would leak.
  */
 
-import { signedChatImageUrl } from '../services/chatAttachment.storage.service.js';
+import { signedChatDocumentUrl, signedChatImageUrl } from '../services/chatAttachment.storage.service.js';
 
 const PLATFORM_NAME = 'MPX Global';
 
@@ -165,6 +165,31 @@ export function conversationStaffView(conversation, { product, logos }) {
 }
 
 /**
+ * D9/D10 · the attachment as a client sees it. `kind` is always present on the
+ * way out (an image stored before D10 has none — M4-13 forbids backfilling it).
+ * A document carries its cleaned name, type and size so the bubble can say what
+ * it is before anyone downloads it; its URL is a forced download.
+ */
+function attachmentView(att) {
+  if (!att?.storageKey) return null;
+  if (att.kind === 'document') {
+    return {
+      kind: 'document',
+      url: signedChatDocumentUrl({ storageKey: att.storageKey }),
+      name: att.name ?? `document.${att.format}`,
+      format: att.format,
+      bytes: att.bytes ?? null,
+    };
+  }
+  return {
+    kind: 'image',
+    url: signedChatImageUrl({ storageKey: att.storageKey, format: att.format }),
+    width: att.width ?? null,
+    height: att.height ?? null,
+  };
+}
+
+/**
  * One line, for EVERY viewer — party and staff alike.
  * `senderUserId` and `senderOrgId` are deliberately absent: `senderType` is all
  * anyone needs to render the thread, and a person's identity is not ours to show.
@@ -191,16 +216,7 @@ export function messageView(message) {
      * the image loads; without them every attachment shifts the thread as it
      * arrives.
      */
-    attachment: message.attachment?.storageKey
-      ? {
-          url: signedChatImageUrl({
-            storageKey: message.attachment.storageKey,
-            format: message.attachment.format,
-          }),
-          width: message.attachment.width ?? null,
-          height: message.attachment.height ?? null,
-        }
-      : null,
+    attachment: attachmentView(message.attachment),
     createdAt: message.createdAt,
   };
 }

@@ -41,6 +41,7 @@ function ownView(p) {
     pricingModel: p.pricingModel ?? null,
     timeline: p.timeline ?? null,
     attributes: (p.attributes ?? []).map((a) => ({ key: a.key, value: a.value })),
+    customSpecs: (p.customSpecs ?? []).map((c) => ({ label: c.label, value: c.value })),
     takedown: p.takedown?.isDown ? { reason: p.takedown.reason ?? null, at: p.takedown.at ?? null } : null,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,

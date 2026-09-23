@@ -3,7 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { authApi } from '../../api/auth.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
-import { firstRunHome } from '../../auth/roleHome.js';
+import { roleHome } from '../../auth/roleHome.js';
 import { ERROR_CODES, apiError, fieldErrorMap, isErrorCode } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
@@ -269,7 +269,7 @@ export function SignupCompany() {
           )}
           <Button
             className="mt-8"
-            onClick={() => navigate(firstRunHome(created), { replace: true })}
+            onClick={() => navigate(roleHome(created), { replace: true })}
           >
             Go to your dashboard →
           </Button>

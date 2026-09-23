@@ -89,6 +89,27 @@ const productSchema = new Schema(
       default: [],
     },
 
+    /**
+     * Seller-written specifications (client change request, owner-approved
+     * 2026-09-23 — reverses §A17's "no free-form specs anywhere").
+     *
+     * Deliberately SEPARATE from `attributes`: those are admin-defined per
+     * category, indexed, and drive M3 filters and facets. Free-form labels
+     * would pollute all three, so these are display-only — shown on the product
+     * page, never searched, never filtered. Capped (10) and contact-free at the
+     * route boundary; labels must not repeat one of the category's own fields.
+     */
+    customSpecs: {
+      type: [
+        {
+          _id: false,
+          label: { type: String, required: true, trim: true },
+          value: { type: String, required: true, trim: true },
+        },
+      ],
+      default: [],
+    },
+
     // §A1: draft (default, one-way) → active ↔ inactive; archived = terminal
     // (delete path only). Transition rules live in the service.
     status: { type: String, enum: PRODUCT_STATUS, default: 'draft', index: true },
@@ -204,6 +225,9 @@ export const PUBLIC_DERIVED = {
   images: (p) => (p.images ?? []).map((i) => i.url),
   // Specs as {key, value} only — `attributeId` is internal.
   attributes: (p) => (p.attributes ?? []).map((a) => ({ key: a.key, value: a.value })),
+  // Seller-written specs (2026-09-23, owner-approved widening of the public
+  // surface — see the model field). {label, value} only.
+  customSpecs: (p) => (p.customSpecs ?? []).map((c) => ({ label: c.label, value: c.value })),
   // Trust signal (5c.1 "listed-since").
   listedSince: (p) => p.createdAt ?? null,
 };

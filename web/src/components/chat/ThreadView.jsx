@@ -12,6 +12,7 @@ import { MessageBubble } from './MessageBubble.jsx';
 import { ParticipantsLine } from './ParticipantsLine.jsx';
 import { productPageLive } from './productPage.js';
 import { ThreadSkeleton } from './ThreadSkeleton.jsx';
+import { chatFileProblem } from '../../lib/chatFiles.js';
 
 /**
  * THE thread. One component, three surfaces: the inbox page, the docked window
@@ -64,20 +65,31 @@ export function ThreadView({
    * and a chat is a screen people leave open all day.
    */
   const [image, setImage] = useState(null);
+  // D10 · why a picked file was refused before upload (size / type). Cleared by
+  // the next pick or send; the server still has the final word on every file.
+  const [attachError, setAttachError] = useState(null);
 
   const clearImage = useCallback(() => {
+    setAttachError(null);
     setImage((prev) => {
       if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
       return null;
     });
   }, []);
 
-  const setImageFromFile = useCallback((file) => {
+  // One queued attachment at a time — an image OR a document (D10). Only an
+  // image gets an object URL; a document is shown by name and size.
+  const queueFile = useCallback((file, kind) => {
+    const problem = chatFileProblem(file, kind);
+    setAttachError(problem);
+    if (problem) return;
     setImage((prev) => {
       if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
-      return { file, previewUrl: URL.createObjectURL(file) };
+      return { file, kind, previewUrl: kind === 'image' ? URL.createObjectURL(file) : null };
     });
   }, []);
+  const setImageFromFile = useCallback((file) => queueFile(file, 'image'), [queueFile]);
+  const setDocumentFromFile = useCallback((file) => queueFile(file, 'document'), [queueFile]);
   const scrollRef = useRef(null);
   const bottomRef = useRef(null);
   // Set from a scroll EVENT, never in an effect — the brief's "new messages"
@@ -416,7 +428,9 @@ export function ThreadView({
                  sender saw their line twice and could send it again. */
               image={image}
               onPickImage={setImageFromFile}
+              onPickDocument={setDocumentFromFile}
               onClearImage={clearImage}
+              attachError={attachError}
               onSend={(body) => {
                 thread.sendMessage(body, image?.file ?? null);
                 onDraftChange('');
