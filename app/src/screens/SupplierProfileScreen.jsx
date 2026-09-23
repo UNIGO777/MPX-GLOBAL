@@ -122,6 +122,25 @@ export function SupplierProfileScreen({ navigation, route }) {
     }
   }, [hasMore, loading, page, idOrSlug]);
 
+  /**
+   * Straight to the enquiry form — the card already carries everything it
+   * needs, so routing via the product screen would be an extra tap for no
+   * information. Buyers only; `onEnquire` omitted otherwise renders nothing
+   * (ProductCard's own rule: never a dead control).
+   */
+  const openEnquiry = useCallback(
+    (product) =>
+      navigation.navigate('EnquiryForm', {
+        productId: product.id,
+        productName: product.name,
+        productImage:
+          (typeof product.images?.[0] === 'string' ? product.images[0] : product.images?.[0]?.url) ?? null,
+        sellerName: product.seller?.name ?? null,
+        categoryType: product.category?.type === 'service' ? 'service' : 'goods',
+      }),
+    [navigation],
+  );
+
   const openProduct = useCallback(
     (product) => {
       navigation.navigate('ProductDetail', { idOrSlug: product.slug ?? product.id });
@@ -135,6 +154,7 @@ export function SupplierProfileScreen({ navigation, route }) {
         product={item}
         onPress={openProduct}
         savedId={isBuyer ? savedIndex[item.id] : undefined}
+        onEnquire={isBuyer ? openEnquiry : undefined}
         onToggleSave={isBuyer ? toggleSave : undefined}
         style={styles.gridSlot}
       />

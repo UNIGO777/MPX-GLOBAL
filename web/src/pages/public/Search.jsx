@@ -72,7 +72,12 @@ import { countryName } from '../../lib/countries.js';
  */
 const PAGE_SIZE = 12;
 const LIST_MOBILE = 'grid grid-cols-2 gap-3 md:hidden';
-const LIST = 'hidden md:flex md:flex-col md:gap-5';
+// 🔴 TWO-UP from xl (owner, 2026-09-24: "in one row we need to show two cards").
+// Not earlier: both pages carry a FilterSidebar, so at lg the results column is
+// roughly 950px and a horizontal card pair would leave each one ~460px — which
+// is exactly the card's own minimum (image + actions + a readable middle). xl is
+// the first width where two fit without the middle column collapsing.
+const LIST = 'hidden md:grid md:grid-cols-1 md:gap-5 xl:grid-cols-2';
 
 const SORT_OPTIONS = [
   { value: 'relevance', label: 'Most relevant' },
@@ -260,7 +265,7 @@ function SupplierRowCard({ supplier }) {
 function CardSkeleton() {
   return (
     <li className="flex flex-col overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card md:flex-row">
-      <Skeleton className="aspect-[4/3] w-full rounded-none md:aspect-auto md:h-56 md:w-[320px] lg:w-[300px] xl:w-[360px] 2xl:w-[400px]" />
+      <Skeleton className="aspect-[4/3] w-full rounded-none md:aspect-auto md:h-56 md:w-[220px] lg:w-[200px] xl:w-[150px] 2xl:w-[190px]" />
       <div className="flex-1 space-y-3 p-4">
         <Skeleton className="h-6 w-2/3" />
         <Skeleton className="h-3.5 w-1/3" />
@@ -706,7 +711,7 @@ export function Search() {
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-ink-900">
+    <div className="flex min-h-screen flex-col bg-surface-subtle text-ink-900">
       <PublicHeader
         current="Categories"
         centerSlot={searchMode ? <div className="w-full lg:max-w-xl">{searchPill('h-10', { withRef: false })}</div> : null}
@@ -983,7 +988,7 @@ export function Search() {
                 type="button"
                 onClick={() => onCountryChange(null)}
                 className={`inline-flex min-h-[38px] shrink-0 items-center rounded-full border px-4 text-sm font-medium transition-colors ${
-                  !country ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-transparent bg-surface-subtle/70 text-ink-700 hover:bg-surface-subtle'
+                  !country ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-surface-border bg-white text-ink-700 hover:border-ink-400'
                 }`}
               >
                 All countries
@@ -996,7 +1001,7 @@ export function Search() {
                     type="button"
                     onClick={() => onCountryChange(on ? null : c.value)}
                     className={`inline-flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors ${
-                      on ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-transparent bg-surface-subtle/70 text-ink-700 hover:bg-surface-subtle'
+                      on ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-surface-border bg-white text-ink-700 hover:border-ink-400'
                     }`}
                   >
                     {countryName(c.value) ?? c.value}

@@ -16,6 +16,14 @@
  */
 const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('en-IN') : n);
 
+/**
+ * ⚠️ A `tone="dark"` variant existed briefly on 2026-09-24, for a dark "deal
+ * rail" on the search list-card. The owner had the black removed the same day,
+ * leaving it unused, so it went with it. If a dark surface ever needs this
+ * again: the defaults are unreadable there — `text-ink-900` on near-black is
+ * invisible and `primary-600` measures ~2.3:1 — so it needs white amounts,
+ * `ink-300` units and `primary-300` for the on-request line.
+ */
 export function PriceLine({ price, unit, size = 'md', className = '' }) {
   const { mode, min, max, currency } = price ?? {};
 

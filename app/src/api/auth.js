@@ -30,9 +30,44 @@ export const authApi = {
   signupResend: ({ signupToken, channel }) =>
     apiClient.post('/auth/signup/resend', { signupToken, channel }).then((r) => r.data),
   // The only call that creates anything — and the only one that returns a session.
-  signupComplete: ({ signupToken, company, country, entityType, address }) =>
+  /**
+   * D7 · A21 step 2 — the claim offer. Asked once after both OTPs pass; `[]`
+   * when there is nothing to join.
+   *
+   * 🔴 Each row carries an OPAQUE `choice`. The client never holds an org id and
+   * never names a target — the server resolves the choice against the offer it
+   * stored and re-checks eligibility on every call.
+   */
+  signupClaimOffer: ({ signupToken }) =>
+    apiClient.post('/auth/signup/organisation', { signupToken }).then((r) => r.data.organisations),
+
+  /**
+   * Rule 6 · send the code to the member ALREADY in the company. It lands in a
+   * THIRD PARTY's inbox, resolved server-side from the org — never an address
+   * the app supplies. Returns the masked `sentTo`.
+   */
+  signupClaimCode: ({ signupToken, choice }) =>
+    apiClient.post('/auth/signup/organisation/code', { signupToken, choice }).then((r) => r.data),
+
+  /** Rule 6 · verify it. On success the offers come back WITH the company name. */
+  signupClaimVerify: ({ signupToken, choice, code }) =>
     apiClient
-      .post('/auth/signup/complete', { signupToken, company, country, entityType, address })
+      .post('/auth/signup/organisation/verify', { signupToken, choice, code })
+      .then((r) => r.data.organisations),
+
+  signupComplete: ({ signupToken, company, country, entityType, address, claimChoice }) =>
+    apiClient
+      .post('/auth/signup/complete', {
+        signupToken,
+        company,
+        country,
+        entityType,
+        address,
+        // Omitted entirely when creating — the server's schema rejects unknown
+        // keys, and `undefined` would still serialise the key away, but being
+        // explicit keeps the create and join payloads visibly different.
+        ...(claimChoice ? { claimChoice } : {}),
+      })
       .then((r) => r.data),
 
   // --- login → OTP → tokens -------------------------------------------------

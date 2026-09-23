@@ -90,10 +90,19 @@ export function SaveButton({ targetType = 'product', targetId, name, className =
     toggle.mutate();
   };
 
+  /**
+   * `labelled` (2026-09-24) — a full-width button with the word "Save", for the
+   * search list-card's actions column. Same mutation, same auth gate, same
+   * optimistic state as the other two; only the shell differs. Added as a
+   * VARIANT rather than a second component so there is never a second place
+   * that knows how saving works.
+   */
   const base =
     variant === 'overlay'
       ? 'absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur transition-colors'
-      : 'flex h-9 w-9 items-center justify-center rounded-full border border-surface-border bg-white transition-colors';
+      : variant === 'labelled'
+        ? 'flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors'
+        : 'flex h-9 w-9 items-center justify-center rounded-full border border-surface-border bg-white transition-colors';
   // 🔴 `text-danger` — NOT `text-danger-DEFAULT`. The latter is not a Tailwind
   // class (DEFAULT is the bare name), so it compiled to nothing and the saved
   // heart rendered black (owner screenshot, 2026-08-16) — the exact trap
@@ -103,9 +112,19 @@ export function SaveButton({ targetType = 'product', targetId, name, className =
       ? saved
         ? 'bg-white text-danger shadow-card'
         : 'bg-black/30 text-white hover:bg-black/45'
-      : saved
-        ? 'text-danger hover:bg-surface-subtle'
-        : 'text-ink-500 hover:text-ink-900 hover:bg-surface-subtle';
+      : variant === 'labelled'
+        ? // 🔴 BLACK fill (owner, 2026-09-24) — it sits under a RED primary
+          // action, so a second red or a pale outline would either compete with
+          // it or disappear into the card's light tint. The saved state cannot
+          // lean on the fill any more, so it changes the CONTENT colour to a
+          // light red instead; the heart still fills and the word still flips
+          // between Save and Saved, which with `aria-pressed` is three signals.
+          saved
+          ? 'border-ink-900 bg-ink-900 text-primary-300'
+          : 'border-ink-900 bg-ink-900 text-white hover:bg-ink-800'
+        : saved
+          ? 'text-danger hover:bg-surface-subtle'
+          : 'text-ink-500 hover:text-ink-900 hover:bg-surface-subtle';
 
   return (
     <>
@@ -120,7 +139,14 @@ export function SaveButton({ targetType = 'product', targetId, name, className =
       >
         {/* Filled = saved. Colour alone never carries the state — the fill
             shape differs too, and aria-pressed announces it (web-design.md). */}
-        <HeartIcon className="h-5 w-5" style={saved ? { fill: 'currentColor' } : undefined} />
+        <HeartIcon
+          className={variant === 'labelled' ? 'h-4 w-4' : 'h-5 w-5'}
+          style={saved ? { fill: 'currentColor' } : undefined}
+        />
+        {/* The word is a THIRD signal on this variant, after fill and
+            aria-pressed — it is the only one that reads at a glance in a column
+            of buttons. */}
+        {variant === 'labelled' && <span>{saved ? 'Saved' : 'Save'}</span>}
       </button>
 
       {gateOpen && (

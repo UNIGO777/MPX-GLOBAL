@@ -224,7 +224,7 @@ export function Categories() {
     : categories;
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-ink-900">
+    <div className="flex min-h-screen flex-col bg-surface-subtle text-ink-900">
       <PublicHeader current="Categories" />
 
       <main className="flex-1">

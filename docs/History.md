@@ -175,6 +175,298 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-24 — Black given a JOB, so the product page and the search cards speak one vocabulary.**
+  Owner: *"do with some black colour, maintaining consistency of the colours"*.
+  - The rule is now complete and the same on both surfaces:
+    - **Red fill** = the primary action — Send enquiry / Open chat / the View-details fallback.
+    - **Black fill** = the secondary action — Save.
+    - **Light red block** = commercial terms (price, MOQ, lead time).
+    - **Grey block** = specification (key attributes, trade terms, the trust note).
+    - **Black** = navigation and structure.
+  - Two changes carried it on the product page:
+    - The quote rail gained a **black Save** under its red action, mirroring the search card's box
+      exactly. It shares state with the gallery heart — one `SaveButton`, one saved index — so the
+      two controls on the page can never disagree.
+    - The active **tab underline went from red to black**. Red now means an action; a tab is
+      navigation, and spending red on it was diluting the one thing red is meant to pull the eye to.
+  - 🔴 The value of this is not that it looks tidier. It is that a buyer who learns the vocabulary on
+    a search results page already knows it on a product page — red asks you to contact the supplier,
+    black keeps something for later, and neither ever means anything else.
+  - Build + lint pass. ⚠️ Not seen in a browser.
+- **2026-09-24 — A colour RULE, not more decoration: red = the deal, grey = the specification.**
+  Owner asked for the product page to "play with colour like these cards", after the search card's
+  actions box went light red and its buttons split red/black.
+  - **Red (`primary-50` + `primary-100`)** now marks the commercial terms wherever they appear: the
+    search card's actions box, the product page's price block, and the quote rail's price summary.
+    **Grey (`surface-subtle`)** marks the specification: key attributes, trade terms, gallery
+    thumbnails, the verified-supplier note.
+  - The point is that a buyer scanning the page knows which block is which **before reading a word**.
+    That is the difference between a colour system and a paint job, and it is why the trust note
+    stayed grey even though it is the kind of block that would look fine in red.
+  - **Buttons split by job, not by row:** red is *"send an enquiry"* (and the View-details fallback
+    that stands in for it, since the two are never shown together), black is *Save*. Red vs black is
+    3.54:1, so stacked they read as two buttons rather than one slab.
+  - The Save button's state can no longer lean on its fill, so it moved to the CONTENT: light-red
+    heart and word when saved, white when not — plus the heart fills and the word flips, which with
+    `aria-pressed` is three signals. Colour never carries it alone (`web-design.md`).
+  - Contrast checked rather than assumed: values on light red 18.36:1, labels 4.90:1 (over AA but
+    not by much — say if they read faint and they go to `ink-600`), white on black 20.31:1,
+    light-red-on-black 8.26:1.
+  - ⚠️ **My own slip, twice in one session:** a JSX comment placed inside `{cond && (…)}` makes two
+    adjacent nodes and stops the file parsing. Lint caught it both times; the comment belongs in the
+    block above the guard.
+  - Build + lint pass. ⚠️ None of this has been seen in a browser.
+- **2026-09-24 — The black "deal rail" came back off the search cards, same day it went on.** Owner
+  saw it and said remove it. The actions column is light again (`surface-subtle` with a hairline);
+  the red buttons carry the emphasis on their own.
+  - **Two props it had required are now DELETED, not left lying around** — nothing used them, and an
+    unused variant is dead code (CLAUDE.md):
+    - `PriceLine`'s `tone="dark"`
+    - `SaveButton`'s `onDark`
+    Both leave a short note where they were, saying what a dark surface would need if one ever
+    returns — the numbers were the whole point (`text-ink-900` is invisible on near-black,
+    `primary-600` measures ~2.3:1, `text-danger` drops from ~11:1 to ~1.5:1). Cheap to restore, and
+    the full version is in the entry below.
+  - **What black remains, and why:** the `Service` badge over the photo (`bg-ink-900/85`) — it sits
+    on a photograph, not on a card surface, and a light badge is unreadable over a light image. Say
+    if that should go too.
+  - Build + lint pass.
+- **2026-09-24 — Product photos now show WHOLE, on a blurred copy of themselves.** Owner: *"show
+  full image … and add same image with blur effect if image specs are changing"*.
+  - **The problem `object-cover` was causing:** sellers upload whatever they have — portrait saree
+    shots, square pack shots, wide fabric rolls — and a 4:3 frame filled by cropping cuts the top
+    and bottom off a portrait photo. The thing being sold is what gets removed. Now `object-contain`
+    keeps the whole picture and a blurred `object-cover` copy fills the leftover band with the
+    photo's OWN colours, so a mixed grid still reads as one tidy row.
+  - New shared `components/catalogue/ProductImage.jsx`, wired into all three surfaces: the grid
+    `ProductCard`, the `ProductListCard`, and `ProductDetail`'s gallery. One component because three
+    copies of this would drift.
+  - 🔴 **The backdrop is blurred BY CLOUDINARY, not by CSS — and that is the load-bearing decision.**
+    A category grid renders twenty of these; `blur-xl` on twenty full-size photos is twenty GPU
+    blurs of a ~2000px image every paint. The backdrop instead requests
+    `w_48,e_blur:800,q_30,f_auto`, which arrives already blurred. **Measured on a real product
+    image: 1,342 bytes against 134,125 — about 100× smaller**, and no GPU blur at all.
+  - A URL that is not a Cloudinary delivery URL falls back to the full image with a CSS blur, so
+    nothing breaks on a seed or external image — it just costs more. Guarded and unit-checked.
+  - `scale-110` hides the backdrop's soft edge, which otherwise shows as a pale halo inside the
+    frame; the backdrop is `aria-hidden` with `alt=""` because announcing the same picture twice is
+    noise.
+  - ⚠️ **Web only.** The APP's own `ProductCard` still uses a plain cropped `Image` — the same
+    change there is a separate pass.
+  - Build + lint pass. ⚠️ Not seen in a browser.
+- **2026-09-24 — Search list-card gains a black "deal rail". Red and black, as asked.** Owner:
+  *"nothing looking interesting … boring UI … play with red and black"*.
+  - **The diagnosis first:** every card was the same white weight with the same hairline, and the
+    only colour on the page was one small red button. Nothing led the eye, and `ink-900` — half the
+    brand — was being used for body text and nothing else.
+  - **The actions column is now `ink-900`.** Beyond taste it does two things: it gives every row an
+    anchor the eye can run down (which is what a list view is for), and it is the only surface on
+    which the brand red reads as URGENT rather than as one more link.
+  - 🔴 **Two components needed real dark support, not a CSS override** — and both would have been
+    unreadable otherwise:
+    - `PriceLine` hardcoded `text-ink-900`, which on ink-900 is **invisible**, and rendered
+      "Price on request" in `primary-600` (#CE061A), about **2.3:1** on near-black — a fail for
+      text. It now takes `tone="dark"`: white amounts, `ink-300` units, `primary-300` (#FA808D,
+      ~9:1) for the on-request line. I had first bodged this with `[&_*]:!text-white`; that whitened
+      the on-request line too, losing its meaning-as-information styling. Replaced with the prop.
+    - `SaveButton`'s `labelled` variant gained `onDark`. Its saved state is `text-danger`, a deep
+      maroon that measures ~11:1 on white and about **1.5:1** on black. The dark tone uses a light
+      red instead; fill and the word still carry the state.
+  - **Hover** now lifts the card, turns the border `ink-900`, and brightens the enquiry button via
+    `group-hover/card` — so the whole row responds, not just whatever the cursor is over.
+  - ⚠️ **Scope:** this is the DESKTOP search/category card. Mobile still renders the grid
+    `ProductCard`, which keeps the lighter treatment (white body, red enquiry footer). Carrying the
+    rail there is a separate call — a 2-up phone grid may not want that much black.
+  - Build + lint pass. ⚠️ **Not seen in a browser.** Every contrast figure above is arithmetic, not
+    observation, and the overall effect in a 2-up grid genuinely needs eyes.
+- **2026-09-24 — Category masthead redesigned; two-up list view on search and category.**
+  - **Masthead** (`CategoryListing.jsx`). Three faults, two of them the same mistake this site has
+    now made three times:
+    - It sat on a **pink gradient** (`from-primary-50 via-primary-50/40 to-white`) — the last tinted
+      ground left after the site went neutral. Now a white card.
+    - Its chips were **two different colours**, and one carried a **green `BadgeCheckIcon`**.
+      `success` is the verified/approved colour here, so putting it on a listings COUNT spends a
+      trust signal on a number. All three chips now share one neutral treatment; the NUMBER carries
+      the weight and the label stays quiet. The import went with it (lint caught it).
+    - The photo's mask faded from **55%**, which on a wide screen reads as a hard vertical seam
+      rather than a dissolve. Now `black 20% → transparent 95%`, fading across nearly the whole
+      width.
+  - **Two cards per row** (owner). `LIST` became a grid: one column at `md`, **two from `xl`**. Not
+    earlier — both pages carry a `FilterSidebar`, so at `lg` the results column is ~950px and a pair
+    would leave each card ~460px, which is the card's own minimum. The card also had to get more
+    compact at `xl` to make the pair work: image 200→**150px**, actions 230→**180px**, both widening
+    again at `2xl`. The photo gives width up first because it loses the least meaning.
+  - **Loading skeletons were still sized for the OLD card** (`md:w-[320px] … 2xl:w-[400px]`) on both
+    pages, so results landing would have jolted the layout. Synced to the real widths.
+  - Build + lint pass. ⚠️ Not seen in a browser — the `xl` pair is deliberately tight, so it wants a
+    look before this is called done.
+- **2026-09-24 — Search / category LIST view rebuilt to the owner's mockup: photo left, specs
+  middle, numbers and both actions in a right-hand column.**
+  - `ProductListCard` (search results + `/category/:slug` on desktop) now puts price, MOQ and lead
+    time — timeline for services — plus **Send enquiry** and **Save** in a fixed-width right column,
+    so a page of results compares down a single edge. That alignment is the point of a list view;
+    the old card scattered the same facts through the row.
+  - **`SaveButton` gained a `labelled` variant** rather than a second component: same mutation, same
+    auth gate, same optimistic state, only the shell differs. There is never a second place that
+    knows how saving works. The word "Save"/"Saved" is a THIRD signal after the heart fill and
+    `aria-pressed` — and the only one that reads at a glance in a column of buttons.
+  - 🔴 **Two things in the mockup do not exist and were not invented:**
+    - **A city under the seller ("Tirupur").** Only `country` is in the public organisation
+      projection — a seller's town is private (`m3-public-projection.md`). Country renders instead.
+    - **A "Verification pending" chip.** Same standing rule as the grid card: there is no
+      "not verified" badge, the absence of the tick is the only signal, and a pending chip would
+      publish review state onto a public surface.
+  - **`EnquiryButton` is deliberately not mounted here either** — it runs a per-product query for an
+    existing thread, so a 20-row list would fire 20 requests for every signed-in buyer. The button
+    navigates with `?enquire=1`, which the product page already honours. Anyone who cannot enquire
+    (exporter account, staff, own listing) gets **View details** in its place rather than nothing.
+  - **Dropped from the row:** the two-line description and "Listed {month}". The mockup trades them
+    for specs and actions, which is the right trade for a comparison view — both still live on the
+    product page.
+  - The `md:aspect-[4/3]` fix from 2026-09-23 was carried over verbatim, comment and all: with
+    `h-auto` the image column took its own natural height and one portrait photo doubled a row.
+  - Mobile is unchanged — Search renders the GRID `ProductCard` below `md`, which already carries
+    the trade strip and the same enquiry button, so the two views now agree.
+  - Build + lint pass. ⚠️ Not seen in a browser.
+- **2026-09-24 — Landing's goods/services pair rebuilt, and the duplicate `crimson` brand token
+  deleted.** Owner: *"these two cards … not matching and awkward"*, then *"fix kar do"* on the sweep.
+  - **The pair.** A crimson-tinted card beside a GREEN one — two hues with no system behind them.
+    The green was the real problem, not the mismatch: `success` is this product's verified/approved
+    colour (its own token comment says so), and spending it on decoration thins the one signal
+    buyers are meant to trust. Both cards are now the same white surface with a hairline, on the
+    landing's warm ground; they differ by ICON and COPY. Brand red survives on the icon and the
+    link, where it means "this is the action".
+  - **`crimson` is gone.** It was a SECOND brand ramp added for the 2026-08-23 landing-only trial,
+    and `tailwind.config.js` said at the time it should be "deleted rather than kept as a second
+    brand" once red was adopted. Red was adopted on 2026-09-22 and the token outlived it. 40 usages
+    in `Landing.jsx` swept to `primary-*`; the token removed; `App.jsx` and the config's own stale
+    references corrected.
+  - 🔴 **Verified as a no-op rather than assumed.** Before sweeping, both ramps were compared shade
+    by shade — every numbered shade byte-identical, `DEFAULT` present only on `primary` (which is
+    why a bare `bg-crimson` could never have existed). After: the built CSS holds **60 distinct
+    colours, the same set as before**, diffed. Nothing moved.
+  - **Why it mattered even though it looked like nothing:** two names for one hex drift. A page
+    using the copy silently stops following the brand the day someone edits only `primary`. The
+    config now says to trial a colour by changing `primary`'s values, never by adding a parallel
+    scale.
+  - `Landing.jsx`'s header still claimed "THE REST OF THE PRODUCT IS STILL BLUE" and described an
+    active trial. Both false since 2026-09-22; corrected in the same pass.
+  - Build + lint pass; dev server restarted (a `tailwind.config.js` change goes through PostCSS, not
+    HMR). ⚠️ Not seen in a browser.
+- **2026-09-24 — Public page grounds inverted: grey ground, white cards. Corrects my own mistake
+  from the previous step.** Owner: *"i can only see white color in product details page"*, then
+  *"make these boxes color white now"*.
+  - **What was wrong.** I had read the earlier "bg white, f8f8f8 in some places" literally and made
+    the PAGE white while the cards were also white — one flat sheet with the borders doing all the
+    work, and the grey confined to a small inset where it meant least. A card looks like a card
+    because of the ground UNDER it, so the ground is what carries the grey.
+  - Five public pages moved to `bg-surface-subtle` (#F8F8F8): product detail, category listing,
+    search, supplier profile, categories. The consoles were already correct — `ConsoleShell`'s
+    `<main>` has always been `bg-surface-subtle`, so the token repoint carried them.
+  - **Trade-terms tiles → white.** They sit DIRECTLY on the ground, so a grey fill made them vanish
+    into it. The rule that came out of this: grey belongs to insets INSIDE a white card (key
+    attributes, the price box, the trust note); anything the grey ground is already behind must be
+    white.
+  - 🔴 **Two regressions I caused with the ground change, found by sweeping rather than by eye:**
+    - `Search.jsx` unselected filter chips were `border-transparent bg-surface-subtle/70` — 70%
+      grey over a grey ground is the same grey with no border, so every unselected chip would have
+      been **invisible**. Now white with a hairline.
+    - `CategoryListing.jsx` had `<main className="bg-surface-subtle/50">` — a second, half-opacity
+      grey layer over the now-grey page. Removed; the ground already provides it.
+  - Still on their own grounds, deliberately: **Landing** (`surface-canvas` #F5F2EF, the warm hero
+    the owner approved) and **AI search** (its own deliberate gradient).
+  - Build + lint pass. Only component classes changed this time, so no dev-server restart was needed.
+- **2026-09-24 — `surface.subtle` repointed to #F8F8F8, site-wide. One token, 63 usages, all four
+  consoles.** Owner: *"use this color f8f8f8 in all pages"*.
+  - **Done as a TOKEN SWAP, not a sweep.** `surface.subtle` is already the canvas behind every card
+    in all four consoles and the fill of inset blocks inside a card, so changing the hex repaints the
+    whole product — which is exactly what `tailwind.config.js`'s own note promises ("swap the hex
+    values here and the whole app follows"). No component was edited to change a colour.
+  - **Why neutral:** `subtle` was a pale BLUE under the old brand, became **#FDF4F4** with the red
+    theme on 2026-09-22 (leaving it blue would have sat a red product on a blue wash), and is now
+    hue-free. A red-tinted ground competed with the one red element that should carry weight — the
+    primary action — and on a white page it read as a wash rather than a recess.
+  - **`surface.panel` deleted.** I had added it two days' work earlier as "a neutral inset grey,
+    distinct from `subtle`'s red tint". Once `subtle` became the same #F8F8F8 that justification was
+    gone, and two names for one hex always drift — its 5 usages moved to `subtle`.
+  - Verified the old pink is actually gone rather than merely unused: **zero** `rgb(253 244 244)` in
+    the built CSS and in what the dev server serves. Tailwind emits `rgb(r g b)`, not hex — grepping
+    for `#FDF4F4` would have "passed" while the colour was still shipping.
+  - The dev server was restarted: a `tailwind.config.js` change goes through PostCSS, not HMR, so it
+    keeps serving stale CSS otherwise (third time this has bitten in this session).
+  - ⚠️ **NOT changed, and it needs a decision:** `surface.canvas` (**#F5F2EF**, warm) is still the
+    landing hero's ground — 1 usage, `Landing.jsx`. It is the only page not now on the neutral grey,
+    and the owner approved that warm hero specifically, so it was left rather than silently altered.
+  - ⚠️ Also untouched: the APP's own `colors.surface.subtle` (**#F7F8FB**). Visually near-identical to
+    #F8F8F8 but no longer an exact mirror of web — a known, pre-existing divergence, now one shade
+    smaller. The request said web.
+  - Web build + lint pass. **Not seen in a browser** — this moves the ground under every console
+    screen, so it wants a look.
+- **2026-09-24 — Product cards rebuilt to the owner's "trade data" mockup, on web AND app.**
+  MOQ / lead time / origin in a mini table plus a direct **Send enquiry** button — "built for bulk
+  buyers comparing terms".
+  - **Web** (`components/catalogue/ProductCard.jsx`, used on 10 surfaces): category eyebrow, name,
+    price, a 3-cell trade strip, seller + tick, then the button. Goods get MOQ / lead time / origin;
+    SERVICES get engagement / timeline / origin — the same goods/service split `Product` itself uses.
+    A `Service` badge sits on the photo because a mixed grid otherwise cannot tell them apart.
+  - **App** (`components/ProductCard.jsx`, 5 surfaces): the same strip at **two** cells, not three —
+    the tile is far narrower and a third column truncated every value to noise. `onEnquire` goes
+    straight to `EnquiryForm` (the card already carries everything that screen needs), which is one
+    tap fewer than web's route via the product page.
+  - 🔴 **Two things in the mockup were NOT built, both on purpose:**
+    - A **"Verification pending" chip** beside the seller. There is no "not verified" badge anywhere
+      in this product — the ABSENCE of the tick is the only signal (CLAUDE.md "Roles",
+      `web-design.md`), and a pending chip leaks review state onto a public surface.
+    - **`EnquiryButton` on the card.** It runs a per-product query to find an existing thread; on a
+      20-card grid that is **20 requests per page** for every signed-in buyer. Web's card NAVIGATES
+      with `?enquire=1`, which the product page already honours by opening the form — the same
+      mechanism the return-from-sign-in path uses. No extra request, and the label stays true.
+  - **Empty cells are dropped, never dashed**, and with nothing filled the strip does not render — a
+    seller who left lead time blank must not make the card look broken.
+  - **Structural detail worth keeping:** the button sits OUTSIDE the `<Link>`, as the save heart
+    already did — a `<button>` inside an `<a>` is invalid and fights the card's own navigation. The
+    card shell moved to the `<li>`, so the hover state moved with it.
+  - **Who gets the button:** it mirrors `EnquiryButton`'s own rule (no exporter account, no staff, not
+    your own listing) by reading the session already in context — no request. On the app it follows
+    the file's established `onToggleSave` convention: **omit the prop and nothing renders**, so the
+    exporter's own list and the narrow horizontal rails simply do not pass it.
+  - Web build + lint pass; the four touched app files parse. ⚠️ **Not seen in a browser or on a
+    device** — the app has no lint or test setup, and the grid/rail spacing in particular wants eyes.
+- **2026-09-24 — Organisation claim (D7) built in the APP, with its rule-6 OTP; rule 7 read-only
+  applied to the app's company profile and KYC.** Owner: *"Claim flow in app and otp on both like
+  web"*. The backend and web shipped it on 2026-09-23; the app's `SignupCompanyScreen.jsx` was still
+  the stub.
+  - **The stub's own header comment had gone false** and was the first thing corrected: it said the
+    claim path *"has NO backend endpoint … nothing here fakes the path"*. Those three routes exist.
+    Its enumeration worry is answered by §A21 line 248 — the offer sits behind BOTH OTPs.
+  - **New:** `app/src/screens/auth/ClaimOffer.jsx`, the RN twin of the web component (web stays the
+    reference — `mobile-app.md` says implement every §A21 rule, never a simpler version). Screen now
+    has three views: `checking` → `join` → `create`.
+  - **`toAppError` was DROPPING the envelope's `code`** — fixed, plus `ERROR_CODES` / `isErrorCode`
+    in `utils/errors.js`. Without it the claim flow could only have branched on English message text,
+    which `api-endpoints.md` exists to prevent (a reword silently broke a client once already).
+  - 🔴 **Two details that are easy to "tidy" away and must not be:**
+    - The offer is fetched **once**, behind a ref guard. A re-run that hit a transient 500 would let
+      its `.catch` wipe `offers`, and someone genuinely entitled to join would silently get the
+      create form. Falling through to `create` is the correct degradation — it must not be able to
+      happen twice.
+    - `canEdit` / `canManage` are compared with **`=== false`**, never `!flag`. A response that omits
+      the flag falls through to EDITABLE: locking a company out of its own profile is the worse
+      failure, and the server refuses an unauthorised write regardless. The client renders; it never
+      decides (`mobile-app.md` trust boundary).
+  - **Rule 7:** `CompanyProfileScreen` drops its Save button entirely (not a disabled one implying
+    "fill something in") and explains why; `VerificationHubScreen` gates `canAddMore` **and**
+    short-circuits the footer ahead of `needsUpload` — a staff document request still renders so the
+    company sees what is being waited on, but the button would have walked a buyer into a 403.
+  - **Not built:** a second "chat"-style path or any app-side offer caching. `entityType`/address are
+    asked on a join only when the offer's `needs` says so, and only after the rule-6 code clears —
+    before that the offer is still masked and its needs are unknown.
+  - ⚠️ **Verification is thin and I want to be plain about it:** all touched files parse under
+    `babel-preset-expo` and the hook order was checked (every hook precedes both early returns). The
+    app has **no lint config and no test setup**, and none of this has been run on a device or
+    simulator. The claim path in particular needs a real two-account trial.
+  - `.claude/rules/mobile-app.md` updated in the same pass — its "still a stub" block was the guard
+    that told a session to build this, and leaving it would have had the next session build it again.
 - **2026-09-23 — Admins can create TOP categories (owner-approved after a red alert; create only).**
   Reverses the build-prompt rule "top categories: activate/deactivate only". `POST /admin/categories/top`
   (`category:manage`): name unique among tops, case-blind; URL exactly `/category/<slug>` — a clash

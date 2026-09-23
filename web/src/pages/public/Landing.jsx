@@ -24,15 +24,17 @@ import { PublicHeader } from '../../components/public/PublicHeader.jsx';
 /**
  * Public landing page (`/`) — SEO surface and the platform's front door.
  *
- * 🔴 CRIMSON TRIAL, 2026-08-23 (owner: "where we have implemented the blue color
- * there implement red, web only for now"). Every `primary-*` token on this page
- * was swapped for the parallel `crimson-*` shade — a mechanical swap, so
- * reverting is a find-and-replace back.
+ * ✅ The 2026-08-23 CRIMSON TRIAL is OVER — red was adopted platform-wide on
+ * 2026-09-22, `primary` became that ramp, and on 2026-09-24 this page's 40
+ * `crimson-*` classes were swept back to `primary-*` and the duplicate token
+ * deleted. Nothing moved visually: every numbered shade of the two ramps was
+ * byte-identical (verified before the sweep), which is exactly why a second
+ * brand token was dangerous — two names for one colour that could silently
+ * drift apart.
  *
- * ⚠️ THE REST OF THE PRODUCT IS STILL BLUE — the logo, the app, the admin
- * console and every other web page. On this page that means a royal-blue
- * wordmark sitting above a crimson hero. Flagged to the owner; this is a trial,
- * not an adopted brand.
+ * ⚠️ The old warning here said "the rest of the product is still blue". It is
+ * not: logo, app, admin console and every web page are red. Do not restore blue
+ * to match an old mockup — `tailwind.config.js` is the colour authority.
  *
  * 🔵 `LandingBlue.jsx` is an EXACT copy of the blue version, kept so the two can
  * be compared side by side and so reverting never depends on git history. It is
@@ -128,7 +130,7 @@ function BlockHead({ title, sub, to, cta = 'See all' }) {
       {to && (
         <Link
           to={to}
-          className="hidden shrink-0 rounded-xl border border-surface-border px-4 py-2 text-sm font-semibold text-crimson-700 hover:bg-crimson-50 sm:inline-block"
+          className="hidden shrink-0 rounded-xl border border-surface-border px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 sm:inline-block"
         >
           {cta} ›
         </Link>
@@ -193,7 +195,7 @@ export function Landing() {
     <form
       role="search"
       onSubmit={onSearch}
-      className="flex h-11 w-full min-w-0 items-center overflow-hidden rounded-xl border-2 border-crimson-600 bg-white focus-within:ring-2 focus-within:ring-crimson-600/20"
+      className="flex h-11 w-full min-w-0 items-center overflow-hidden rounded-xl border-2 border-primary-600 bg-white focus-within:ring-2 focus-within:ring-primary-600/20"
     >
       <label className="sr-only" htmlFor="landing-q">
         Search products, services or suppliers
@@ -209,14 +211,14 @@ export function Landing() {
       />
       <Link
         to="/ai-search"
-        className="mr-1 hidden shrink-0 items-center gap-1.5 rounded-lg bg-crimson-50 px-3 py-1.5 text-xs font-bold text-crimson-700 hover:bg-crimson-100 xl:flex"
+        className="mr-1 hidden shrink-0 items-center gap-1.5 rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-700 hover:bg-primary-100 xl:flex"
       >
         <SparkleIcon className="h-3.5 w-3.5" aria-hidden="true" />
         Ask AI instead
       </Link>
       <button
         type="submit"
-        className="h-full shrink-0 bg-crimson-600 px-5 text-sm font-bold text-white hover:bg-crimson-700"
+        className="h-full shrink-0 bg-primary-600 px-5 text-sm font-bold text-white hover:bg-primary-700"
       >
         Search
       </button>
@@ -258,7 +260,7 @@ export function Landing() {
           </a>
           <Link
             to="/ai-search"
-            className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 font-bold text-crimson-700 hover:bg-crimson-50 md:flex"
+            className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 font-bold text-primary-700 hover:bg-primary-50 md:flex"
           >
             <SparkleIcon className="h-4 w-4" aria-hidden="true" />
             AI Search
@@ -329,7 +331,7 @@ export function Landing() {
                       <li key={c.id}>
                         <Link
                           to={`/category/${c.slug ?? c.id}`}
-                          className="group flex items-center gap-2.5 rounded-xl px-2.5 py-2 font-medium text-ink-900 hover:bg-crimson-50 hover:text-crimson-700"
+                          className="group flex items-center gap-2.5 rounded-xl px-2.5 py-2 font-medium text-ink-900 hover:bg-primary-50 hover:text-primary-700"
                         >
                           {c.image ? (
                             <img
@@ -351,7 +353,7 @@ export function Landing() {
                   <div className="mt-2 border-t border-surface-border pt-2">
                     <Link
                       to="/categories"
-                      className="block rounded-xl px-2.5 py-2 text-sm font-bold text-crimson-700 hover:bg-crimson-50"
+                      className="block rounded-xl px-2.5 py-2 text-sm font-bold text-primary-700 hover:bg-primary-50"
                     >
                       All {topCategories.length} categories →
                     </Link>
@@ -365,7 +367,7 @@ export function Landing() {
                 `ink-900` (#000517), never #000000 — pure black is off the token
                 scale, and this is the same fill the footer uses. */}
             <div className="rounded-2xl bg-ink-900 px-6 py-8 sm:px-10 sm:py-10 lg:px-12">
-              <p className="mb-4 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-crimson-300">
+              <p className="mb-4 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-primary-300">
                 <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 Every tick checked by a person
               </p>
@@ -382,7 +384,7 @@ export function Landing() {
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   to="/categories"
-                  className="rounded-xl bg-crimson-600 px-5 py-3 text-sm font-bold text-white hover:bg-crimson-700 sm:px-6"
+                  className="rounded-xl bg-primary-600 px-5 py-3 text-sm font-bold text-white hover:bg-primary-700 sm:px-6"
                 >
                   Browse all categories
                 </Link>
@@ -405,7 +407,7 @@ export function Landing() {
                       <li key={c.id}>
                         <Link
                           to={`/category/${c.slug ?? c.id}`}
-                          className="flex h-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3.5 transition hover:border-crimson-300/40 hover:bg-white/[0.08]"
+                          className="flex h-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3.5 transition hover:border-primary-300/40 hover:bg-white/[0.08]"
                         >
                           {c.image ? (
                             <img
@@ -449,7 +451,7 @@ export function Landing() {
                     </p>
                     <Link
                       to="/signup/buyer"
-                      className="mt-4 block rounded-xl bg-crimson-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-crimson-700"
+                      className="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700"
                     >
                       Create free account
                     </Link>
@@ -474,7 +476,7 @@ export function Landing() {
                     </p>
                     <Link
                       to="/signup/exporter"
-                      className="mt-4 inline-block text-sm font-bold text-crimson-700 hover:underline"
+                      className="mt-4 inline-block text-sm font-bold text-primary-700 hover:underline"
                     >
                       Register as an exporter →
                     </Link>
@@ -497,15 +499,15 @@ export function Landing() {
                     <p className="mt-1 text-xs text-ink-600">
                       Nothing is on hold — you can browse, enquire and chat as normal.
                     </p>
-                    <Link to="/buyer/verification" className="mt-2 inline-block text-xs font-bold text-crimson-700 hover:underline">
+                    <Link to="/buyer/verification" className="mt-2 inline-block text-xs font-bold text-primary-700 hover:underline">
                       View status ›
                     </Link>
                   </div>
                   <hr className="my-5 border-surface-border" />
-                  <Link to="/buyer/chat" className="block py-1.5 text-sm font-semibold hover:text-crimson-700">
+                  <Link to="/buyer/chat" className="block py-1.5 text-sm font-semibold hover:text-primary-700">
                     Messages
                   </Link>
-                  <Link to="/saved" className="block py-1.5 text-sm font-semibold hover:text-crimson-700">
+                  <Link to="/saved" className="block py-1.5 text-sm font-semibold hover:text-primary-700">
                     Saved items
                   </Link>
                 </div>
@@ -519,13 +521,13 @@ export function Landing() {
                   </p>
                   <Link
                     to="/exporter/products"
-                    className="mt-4 block rounded-xl bg-crimson-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-crimson-700"
+                    className="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700"
                   >
                     Manage listings
                   </Link>
                   <Link
                     to="/exporter/chat"
-                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-crimson-700 hover:bg-crimson-50"
+                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-primary-700 hover:bg-primary-50"
                   >
                     Enquiries &amp; chat
                   </Link>
@@ -548,7 +550,7 @@ export function Landing() {
               { Icon: ChatIcon, title: 'Talk to the supplier directly', body: 'Structured enquiry, then live chat. No email chains.' },
             ].map(({ Icon, title, body }) => (
               <li key={title} className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-crimson-50 text-crimson-700">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700">
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span>
@@ -585,7 +587,10 @@ export function Landing() {
               The sub-count is REAL (`subs` from the live tree, 6–10 per top
               category) — the card needed a second line, and an invented one is
               exactly what this page refuses to carry. */}
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
+          {/* 🔴 Capped at SIX (owner, 2026-09-24). It ran to eight at 2xl, which
+              on a wide screen split 12 categories into 8 + an orphaned 4 and
+              shrank every tile to a thumbnail. Six gives two clean rows. */}
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
             {categories.isPending
               ? Array.from({ length: GRID_COUNT }).map((_, i) => <li key={i}><CardSkeleton ratio="aspect-[4/3]" /></li>)
               : topCategories.slice(0, GRID_COUNT).map((c) => {
@@ -594,7 +599,7 @@ export function Landing() {
                     <li key={c.id}>
                       <Link
                         to={`/category/${c.slug ?? c.id}`}
-                        className="group flex h-full flex-col rounded-2xl bg-white p-2.5 shadow-card ring-1 ring-surface-border/60 transition duration-200 hover:-translate-y-0.5 hover:shadow-lift hover:ring-crimson-200"
+                        className="group flex h-full flex-col rounded-2xl bg-white p-2.5 shadow-card ring-1 ring-surface-border/60 transition duration-200 hover:-translate-y-0.5 hover:shadow-lift hover:ring-primary-200"
                       >
                         <span className="block overflow-hidden rounded-xl bg-ink-100">
                           {c.image ? (
@@ -611,7 +616,7 @@ export function Landing() {
                           )}
                         </span>
                         <span className="flex flex-1 flex-col px-1.5 pb-1 pt-3">
-                          <span className="line-clamp-2 text-sm font-bold leading-snug text-ink-900 group-hover:text-crimson-700">
+                          <span className="line-clamp-2 text-sm font-bold leading-snug text-ink-900 group-hover:text-primary-700">
                             {c.name}
                           </span>
                           {subs > 0 && (
@@ -629,55 +634,65 @@ export function Landing() {
 
         {/* ═════════ GOODS / SERVICES — equal weight ═════════
             50/50 on purpose: the live catalogue is currently MOSTLY services, so
-            a goods-led layout would misrepresent the platform to its first buyers. */}
+            a goods-led layout would misrepresent the platform to its first buyers.
+
+            🔴 MATCHED PAIR, rebuilt 2026-09-24 (owner: "not matching and awkward").
+            They were a red-tinted card beside a GREEN one — two hues with no
+            system behind them, and the green was the bigger problem: `success` is
+            this product's verified/approved colour (see its token comment), so
+            spending it on decoration thins the one signal buyers are meant to
+            trust. Both cards are now the same white surface on the landing's warm
+            ground; they differ by ICON and COPY, which is what actually
+            distinguishes them. Brand colour survives on the icon and the link,
+            where it means "this is the action". */}
         <section className="grid w-full grid-cols-1 gap-4 px-4 pb-10 sm:gap-5 sm:px-6 sm:pb-12 lg:px-10 xl:px-16 lg:grid-cols-2">
           <Link
             to="/categories?type=goods"
-            className="group flex items-center gap-6 rounded-2xl bg-crimson-50 p-6 transition hover:shadow-lift sm:p-8"
+            className="group flex items-center gap-6 rounded-2xl border border-surface-border bg-white p-6 transition hover:border-primary-600 hover:shadow-lift sm:p-8"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-lg font-extrabold tracking-tight text-crimson-700 sm:text-xl">Physical goods</span>
+              <span className="block text-lg font-extrabold tracking-tight text-ink-900 sm:text-xl">Physical goods</span>
               <span className="mt-1.5 block text-sm text-ink-600">
                 Fabric, denim, leather, chemicals, machinery — with MOQ and per-unit pricing.
               </span>
-              <span className="mt-4 inline-block text-sm font-bold text-crimson-700 group-hover:underline">Browse goods ›</span>
+              <span className="mt-4 inline-block text-sm font-bold text-primary-700 group-hover:underline">Browse goods ›</span>
             </span>
-            <span className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-crimson-700 sm:flex">
+            <span className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700 sm:flex">
               <BoxIcon className="h-9 w-9" aria-hidden="true" />
             </span>
           </Link>
           <Link
             to="/categories?type=service"
-            className="group flex items-center gap-6 rounded-2xl bg-success-50 p-6 transition hover:shadow-lift sm:p-8"
+            className="group flex items-center gap-6 rounded-2xl border border-surface-border bg-white p-6 transition hover:border-primary-600 hover:shadow-lift sm:p-8"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-lg font-extrabold tracking-tight text-success-700 sm:text-xl">Business services</span>
+              <span className="block text-lg font-extrabold tracking-tight text-ink-900 sm:text-xl">Business services</span>
               <span className="mt-1.5 block text-sm text-ink-600">
                 Software, AI/ML, cloud, marketing, QC and inspection — scoped per engagement.
               </span>
-              <span className="mt-4 inline-block text-sm font-bold text-success-700 group-hover:underline">Browse services ›</span>
+              <span className="mt-4 inline-block text-sm font-bold text-primary-700 group-hover:underline">Browse services ›</span>
             </span>
-            <span className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-success-700 sm:flex">
+            <span className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700 sm:flex">
               <GridIcon className="h-9 w-9" aria-hidden="true" />
             </span>
           </Link>
         </section>
 
         {/* ═════════ AI BAND — the page's one coloured band ═════════ */}
-        <section className="bg-crimson-600">
+        <section className="bg-primary-600">
           <div className="flex w-full flex-col items-start gap-6 px-4 py-10 sm:px-6 sm:py-12 lg:flex-row lg:items-center lg:px-10 xl:px-16">
             <div className="min-w-0 flex-1">
               <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl lg:text-3xl">
                 Describe what you need. We&apos;ll find it.
               </h2>
-              <p className="mt-2 max-w-2xl text-sm text-crimson-100 sm:text-base">
+              <p className="mt-2 max-w-2xl text-sm text-primary-100 sm:text-base">
                 Skip the filters — write it the way you&apos;d say it to a colleague, and the
                 platform extracts the category, quantity and budget for you.
               </p>
             </div>
             <Link
               to="/ai-search"
-              className="flex shrink-0 items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-extrabold text-crimson-700 shadow-card hover:shadow-lift sm:px-7"
+              className="flex shrink-0 items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-extrabold text-primary-700 shadow-card hover:shadow-lift sm:px-7"
             >
               <SparkleIcon className="h-4 w-4" aria-hidden="true" />
               Try AI Search
@@ -696,13 +711,16 @@ export function Landing() {
           {feed.isError ? (
             <p className="rounded-2xl border border-surface-border bg-white p-8 text-center text-sm text-ink-600">
               Listings couldn&apos;t be loaded just now.{' '}
-              <button type="button" onClick={() => feed.refetch()} className="font-bold text-crimson-700 hover:underline">
+              <button type="button" onClick={() => feed.refetch()} className="font-bold text-primary-700 hover:underline">
                 Try again
               </button>
             </p>
           ) : (
             <>
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+              {/* Capped at FIVE (owner, 2026-09-24) — the product card now carries a
+                  trade strip and an enquiry button, so a sixth column squeezed
+                  both past legibility. */}
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
                 {feed.isPending
                   ? Array.from({ length: FEED_PAGE_SIZE }).map((_, i) => <li key={i}><CardSkeleton /></li>)
                   : products.map((p) => (
@@ -720,7 +738,7 @@ export function Landing() {
                       type="button"
                       onClick={() => feed.fetchNextPage()}
                       disabled={feed.isFetchingNextPage}
-                      className="rounded-xl border border-surface-border bg-white px-8 py-3 text-sm font-bold text-crimson-700 shadow-card hover:bg-crimson-50 disabled:opacity-60"
+                      className="rounded-xl border border-surface-border bg-white px-8 py-3 text-sm font-bold text-primary-700 shadow-card hover:bg-primary-50 disabled:opacity-60"
                     >
                       {feed.isFetchingNextPage ? 'Loading…' : 'Load more'}
                     </button>
@@ -760,7 +778,7 @@ export function Landing() {
                 ['Deal with confidence', 'The verified tick and a full conversation history keep both sides honest.'],
               ].map(([title, body], i) => (
                 <li key={title} className="rounded-2xl bg-white p-5 shadow-card">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-crimson-600 text-sm font-bold text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white">
                     {i + 1}
                   </span>
                   <p className="mt-3 text-sm font-bold">{title}</p>

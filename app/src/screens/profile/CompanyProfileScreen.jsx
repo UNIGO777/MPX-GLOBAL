@@ -271,6 +271,19 @@ export function CompanyProfileScreen({ navigation }) {
   };
 
   // --- save -------------------------------------------------------------------
+  /**
+   * D7 rule 7 · a buyer whose company already has an active EXPORTER account
+   * does not control the shared company profile — the seller side does. The
+   * server decides and sends `canEdit`; this screen only renders it.
+   *
+   * 🔴 `=== false`, never `!canEdit`. A response that omits the flag (an older
+   * server, or a shape change) must fall through to EDITABLE — silently locking
+   * a company out of its own profile is the worse failure, and the server
+   * refuses an unauthorised write regardless. The client renders; it never
+   * decides (mobile-app.md trust boundary).
+   */
+  const readOnly = org?.canEdit === false;
+
   const saveLabel =
     verified && changedLocked.length > 0 ? 'Save and re-submit for review' : 'Save';
 
@@ -395,10 +408,21 @@ export function CompanyProfileScreen({ navigation }) {
       onBack={() => navigation.goBack()}
       sheetTone="subtle"
       footer={
-        <Button label={saveLabel} onPress={save} loading={saving} disabled={!dirty || saving} />
+        // No disabled Save sitting there implying "fill something in": there is
+        // nothing this person can do here, and the notice above says why.
+        readOnly ? null : (
+          <Button label={saveLabel} onPress={save} loading={saving} disabled={!dirty || saving} />
+        )
       }
     >
       <View style={styles.body}>
+        {readOnly ? (
+          <Text style={styles.readOnlyNotice}>
+            Your company is managed from its seller account. You can see everything here, but
+            changes — including documents — are made by whoever runs that account.
+          </Text>
+        ) : null}
+
         {/* Status: the tick, or the owner-only state chip. Never both. */}
         <View style={styles.statusRow}>
           {verified ? <VerifiedBadge verified /> : chip ? <Badge tone={chip.tone} label={chip.label} /> : null}
@@ -769,6 +793,14 @@ function PreviewCard({ org, draftDescription, open, onToggle, onInvite }) {
 }
 
 const styles = StyleSheet.create({
+  readOnlyNotice: {
+    ...typography.caption,
+    color: colors.ink[700],
+    backgroundColor: colors.surface.subtle,
+    borderRadius: 12,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
+  },
   body: { gap: spacing[4] },
   flex: { flex: 1 },
   statusRow: { flexDirection: 'row' },

@@ -9,6 +9,7 @@ import { ChatIcon, EnquiryIcon } from '../ui/icons.jsx';
 import { Skeleton } from '../ui/Skeleton.jsx';
 import { EnquiryModal } from './EnquiryModal.jsx';
 import { PriceLine } from '../catalogue/PriceLine.jsx';
+import { SaveButton } from '../saved/SaveButton.jsx';
 import { CountrySelect } from '../ui/CountrySelect.jsx';
 import { Input } from '../ui/Input.jsx';
 
@@ -225,9 +226,12 @@ export function EnquiryButton({ product, framed = false }) {
 
       {/* A compact repeat of the price facts, so the sticky rail still says what
           is being quoted once the summary has scrolled away. Same fields, same
-          formatter — `PriceLine` renders the product's OWN currency. */}
+          formatter — `PriceLine` renders the product's OWN currency.
+
+          Light red since 2026-09-24, under the page-wide rule: RED blocks are
+          the commercial terms, GREY blocks are the specification. */}
       {(product?.price || product?.moq != null || product?.leadTime) && (
-        <div className="mt-3 rounded-xl bg-surface-panel p-3.5">
+        <div className="mt-3 rounded-xl border border-primary-100 bg-primary-50 p-3.5">
           <p className="text-[11px] text-muted">Indicative</p>
           <PriceLine price={product.price} unit={product.unit} />
           {(product.moq != null || product.leadTime) && (
@@ -274,6 +278,17 @@ export function EnquiryButton({ product, framed = false }) {
       {/* `body` sets its own top margin; an extra `[&_button]:mt-4` here used to
           stack on it (mt-5 + mt-4) and fight it in the other branch. */}
       {body}
+
+      {/* 🎨 BLACK secondary, under the RED primary — the same pairing the search
+          cards use, so the two surfaces teach the buyer one vocabulary: red is
+          "contact this supplier", black is "keep this for later".
+          It shares state with the heart on the gallery (one `SaveButton`, one
+          saved index), so the two never disagree. */}
+      {product?.id && (
+        <div className="mt-2">
+          <SaveButton targetId={product.id} name={product.name} variant="labelled" />
+        </div>
+      )}
 
       <p className="mt-3 text-[11px] leading-relaxed text-muted">
         {conversationId

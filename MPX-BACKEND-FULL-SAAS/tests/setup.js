@@ -50,6 +50,33 @@ process.env.JWT_ACCESS_SECRET =
 process.env.JWT_REFRESH_SECRET =
   process.env.JWT_REFRESH_SECRET || 'test_refresh_secret_at_least_32_chars_long_00';
 
+/**
+ * 🔴 SMTP OFF for the whole suite — same trap as push below, and it BIT on
+ * 2026-09-24.
+ *
+ * `isEmailConfigured()` reads SMTP_* straight from env, so with a developer's
+ * real credentials in `.env` the suite reached a live SMTP server. It went
+ * unnoticed while login only ever sent by SMS; the email FALLBACK added on
+ * 2026-09-23 (`otp.sender.js` — mobile-channel sends now fall back to the
+ * subject's own address) routed every login through it. A failed send throws out
+ * of `sendOtp` → `requestOtp` → `loginWithRole`, so a plain successful login
+ * returned **500** and `security-controls` failed on a test about response shape
+ * that has nothing to do with email.
+ *
+ * Empty, not deleted, so `env.js`'s optional() reads them as absent and delivery
+ * falls to the non-production "nothing could deliver it" branch, which warns and
+ * returns. Suites that exercise email mock `email.provider.js` outright.
+ */
+// ⚠️ SMTP_PORT is deliberately NOT touched: it is `z.coerce.number().positive()`,
+// so '' coerces to 0 and fails env validation — which takes the WHOLE suite down
+// at import time, not just the email cases (learned the hard way). The four
+// string vars are `z.string().optional()`, and `isEmailConfigured()` is an
+// AND-chain, so blanking them is enough to make it false.
+process.env.SMTP_HOST = '';
+process.env.SMTP_USER = '';
+process.env.SMTP_PASS = '';
+process.env.SMTP_FROM = '';
+
 // 🔴 Push OFF for the whole suite, regardless of what is in `.env`.
 // Now that a real Firebase credential lives there, leaving it visible would make
 // the tests behave differently on a machine that has one — and would let a test

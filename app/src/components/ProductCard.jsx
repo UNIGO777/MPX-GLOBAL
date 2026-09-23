@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { Animated, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors, radii, spacing, typography } from '../theme/index.js';
+import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/index.js';
 import { monogramTone } from '../utils/monogramTone.js';
 
 /**
@@ -33,8 +33,25 @@ import { monogramTone } from '../utils/monogramTone.js';
  * @param {string} [savedId]     saved row id when this product is saved
  * @param {func}   [onToggleSave] (product, savedId) => void — omit to hide the heart
  * @param {object} [style]       width override for horizontal rails
+ * @param {func}   [onEnquire]   (product) => void — omit to hide the button
+ *
+ * TRADE DATA (2026-09-24, owner's mockup — web's card carries the same): MOQ /
+ * lead time for goods, engagement / timeline for services, as a compact strip.
+ * Empty cells are DROPPED rather than shown as dashes, and with nothing filled
+ * the strip does not render — a seller who left lead time blank must not make
+ * the card look broken.
+ *
+ * 🔴 `onEnquire` follows `onToggleSave`'s rule: OMIT IT AND NOTHING RENDERS,
+ * never a dead control. It is deliberately not wired on the exporter's own list
+ * (enquiring about your own listing is meaningless) and not in narrow
+ * horizontal rails, where a full-width button would crowd the tile.
+ *
+ * 🔴 The mockup also put a "Verification pending" chip beside the seller. NOT
+ * built: there is no "not verified" badge in this product — the ABSENCE of the
+ * tick is the only signal, and a pending chip would leak review state onto a
+ * buyer-facing surface.
  */
-export function ProductCard({ product, onPress, savedId, onToggleSave, showStatus = false, style }) {
+export function ProductCard({ product, onPress, savedId, onToggleSave, onEnquire, showStatus = false, style }) {
   // `ownView` (seller's own list) returns image REFS `{url, publicId}`; the
   // public projections return bare URL strings. Accept both rather than making
   // every call site normalise.
@@ -123,9 +140,56 @@ export function ProductCard({ product, onPress, savedId, onToggleSave, showStatu
         <Text style={styles.price} numberOfLines={1}>
           {formatPrice(product.price, product.unit)}
         </Text>
+
+        {tradeCells(product).length > 0 ? (
+          <View style={styles.trade}>
+            {tradeCells(product).map(([label, value], i) => (
+              <View key={label} style={[styles.tradeCell, i > 0 && styles.tradeDivider]}>
+                <Text style={styles.tradeLabel} numberOfLines={1}>{label}</Text>
+                <Text style={styles.tradeValue} numberOfLines={1}>{value}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {onEnquire ? (
+          <Pressable
+            onPress={() => onEnquire(product)}
+            accessibilityRole="button"
+            accessibilityLabel={`Send enquiry about ${product.name}`}
+            style={({ pressed }) => [styles.enquire, pressed && styles.enquirePressed]}
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={14} color={colors.white} accessible={false} />
+            <Text style={styles.enquireText}>Send enquiry</Text>
+          </Pressable>
+        ) : null}
       </Animated.View>
     </Pressable>
   );
+}
+
+/**
+ * Two trade facts, chosen by the leaf's goods/service type — the same split
+ * `Product` itself uses. Two, not three: the app's tile is far narrower than
+ * web's card, and a third column truncated every value to noise.
+ */
+function tradeCells(product) {
+  const cells =
+    product.category?.type === 'service'
+      ? [
+          ['Engagement', product.engagementType],
+          ['Timeline', product.timeline],
+        ]
+      : [
+          [
+            'MOQ',
+            product.moq != null
+              ? `${product.moq.toLocaleString()}${product.unit ? ` ${product.unit}` : ''}`
+              : null,
+          ],
+          ['Lead time', product.leadTime],
+        ];
+  return cells.filter(([, value]) => value != null && value !== '');
 }
 
 /**
@@ -163,6 +227,31 @@ function formatPrice(price, unit) {
 }
 
 const styles = StyleSheet.create({
+  trade: {
+    flexDirection: 'row',
+    marginTop: spacing[2],
+    borderWidth: 1,
+    borderColor: colors.surface.border,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface.subtle,
+    overflow: 'hidden',
+  },
+  tradeCell: { flex: 1, minWidth: 0, paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
+  tradeDivider: { borderLeftWidth: 1, borderLeftColor: colors.surface.border },
+  tradeLabel: { ...typography.tiny, color: colors.muted },
+  tradeValue: { ...typography.caption, color: colors.ink[900], fontWeight: '600' },
+  enquire: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing[2],
+    marginTop: spacing[2],
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: radii.md,
+    backgroundColor: colors.primary[600],
+  },
+  enquirePressed: { backgroundColor: colors.primary[700] },
+  enquireText: { ...typography.label, color: colors.white },
   tile: {
     width: '100%',
     aspectRatio: 1,

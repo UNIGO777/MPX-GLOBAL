@@ -77,7 +77,18 @@ export function VerificationHubScreen({ navigation }) {
   const uploadedTypes = new Set(documents.map((d) => d.docType));
   const allDocsIn = namedTypes.length > 0 && namedTypes.every((t) => uploadedTypes.has(t));
   const atDocCap = documents.length >= KYC_MAX_DOCS;
-  const canAddMore = !allDocsIn && !atDocCap;
+  /**
+   * D7 rule 7 · a buyer whose company already has an active EXPORTER account
+   * does not manage the shared company's KYC — the seller side does. The server
+   * decides and sends `canManage` on the verification payload.
+   *
+   * 🔴 `=== false`, never `!canManage`. A response that omits it must fall
+   * through to MANAGEABLE: silently locking a company out of its own
+   * verification is the worse failure, and the upload endpoint refuses an
+   * unauthorised write regardless — the client renders, it never decides.
+   */
+  const readOnly = v?.canManage === false;
+  const canAddMore = !allDocsIn && !atDocCap && !readOnly;
 
   // Staff requests that are still outstanding. A fulfilled one is history, and
   // the server already sorts unfulfilled first — this is the "what is actually
@@ -124,7 +135,12 @@ export function VerificationHubScreen({ navigation }) {
         // being waited on. Without this the app showed the ask and then offered
         // no way to answer it, and a verified company with a pending change had
         // no route at all.
-        (status === 'verified' || (status === 'submitted' && !canAddMore)) && !needsUpload ? null : (
+        // 🔴 `readOnly` short-circuits everything, INCLUDING `needsUpload`. A
+        // staff document request still renders in the body so the company knows
+        // what is being waited on, but the person who can answer it is on the
+        // seller account — offering the button here would walk a buyer into a
+        // 403 (D7 rule 7).
+        readOnly ? null : (status === 'verified' || (status === 'submitted' && !canAddMore)) && !needsUpload ? null : (
           <Button
             // "Start verification" is only true BEFORE anything is sent. Once a
             // document is in, review has already started — saying "start" there
@@ -160,6 +176,16 @@ export function VerificationHubScreen({ navigation }) {
         </View>
       ) : (
         <View style={styles.block}>
+          {/* D7 rule 7 — the documents and any staff request still render below,
+              so the company can SEE where it stands; only the actions are gone.
+              Without this line the missing upload button reads as a bug. */}
+          {readOnly ? (
+            <Text style={styles.readOnlyNotice}>
+              Your company&apos;s verification is handled from its seller account. You can see the
+              documents and anything our team has asked for, but uploading is done there.
+            </Text>
+          ) : null}
+
           {/* A22 gate: say WHY the button leads to the profile, or it reads as
               a wrong turn. Shown only while something is actually missing. */}
           {profileIncomplete ? (
@@ -340,6 +366,14 @@ const FOOTER_LABEL = {
 };
 
 const styles = StyleSheet.create({
+  readOnlyNotice: {
+    ...typography.caption,
+    color: colors.ink[700],
+    backgroundColor: colors.surface.subtle,
+    borderRadius: 12,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
+  },
   gateNote: {
     flexDirection: 'row',
     gap: spacing[2],

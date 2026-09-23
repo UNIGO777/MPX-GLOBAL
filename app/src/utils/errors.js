@@ -11,6 +11,24 @@
 
 import { logger } from './logger.js';
 
+/**
+ * Discriminators the SERVER sets on an error (`errorCodes.js`). They exist
+ * precisely so a client never branches on the English message — a reword then
+ * silently breaks the UI, which has already happened once on this project.
+ *
+ * 🔴 Only the codes the app actually branches on live here. Add but never
+ * rename or repurpose one: it is part of the API contract.
+ */
+export const ERROR_CODES = {
+  SIGNUP_SESSION_EXPIRED: 'SIGNUP_SESSION_EXPIRED',
+  CLAIM_SEAT_TAKEN: 'CLAIM_SEAT_TAKEN',
+};
+
+/** True when a caught error carries this exact server code. */
+export function isErrorCode(error, code) {
+  return error?.response?.data?.error?.code === code;
+}
+
 export const ERROR_KIND = {
   offline: 'offline',
   timeout: 'timeout',
@@ -92,6 +110,11 @@ export function toAppError(error) {
     kind: kindForStatus(status),
     message: fieldDetail ? `${serverMessage ?? DEFAULT_MESSAGE}\n\n${fieldDetail}` : (serverMessage ?? DEFAULT_MESSAGE),
     fields,
+    // 🔴 Was DROPPED until 2026-09-24. The envelope's `code` is the only stable
+    // discriminator the server offers (api-endpoints.md: clients branching on
+    // the English text broke once when a message was reworded), and the claim
+    // flow needs two of them — CLAIM_SEAT_TAKEN and SIGNUP_SESSION_EXPIRED.
+    code: typeof envelope.code === 'string' ? envelope.code : null,
     status,
     // Surfaced so a user can quote it in a support ticket; it identifies a
     // server-side log entry and carries no data of its own.

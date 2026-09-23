@@ -7,6 +7,7 @@ import { EnquiryButton } from '../../components/chat/EnquiryButton.jsx';
 import { SaveButton } from '../../components/saved/SaveButton.jsx';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { PriceLine } from '../../components/catalogue/PriceLine.jsx';
+import { ProductImage } from '../../components/catalogue/ProductImage.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { SpecTable } from '../../components/catalogue/SpecTable.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
@@ -99,7 +100,7 @@ import { formatHsCode } from '../../components/catalogue/HsCodePicker.jsx';
  * mounted on click. `m3-seo.md` requires a product page to be indexable, and a
  * description that only exists after a click is not.
  */
-const DETAIL_TABS = ['Trade terms', 'Attributes', 'Supplier', 'Description'];
+const DETAIL_TABS = ['Trade terms', 'Specifications', 'Supplier', 'Description'];
 
 const GOODS_FACTS = [
   ['hsCode', 'HS code', TagIcon],
@@ -136,7 +137,15 @@ function Gallery({ images = [], name, productId }) {
   return (
     <div>
       <div className="relative overflow-hidden rounded-xl border border-surface-border bg-white">
-        <img src={images[active]} alt={name} className="aspect-[4/3] w-full object-cover" />
+        {/* Whole photo, blurred copy behind — the product page is the one
+            place a buyer looks CLOSELY, so cropping here is worst of all. */}
+        <ProductImage
+          src={images[active]}
+          alt={name}
+          ratio="aspect-[4/3]"
+          className="w-full"
+          loading="eager"
+        />
         <SaveButton targetId={productId} name={name} />
         {/* Fullscreen trigger (2026-08-12, owner's reference mockup) — real,
             working zoom, not a placeholder: it's pure client-side image
@@ -257,11 +266,16 @@ function Facts({ product, layout = 'list' }) {
 
   // The mockup's Trade-terms tab: one card per fact, three across. Same rows,
   // same "blank fields never render" rule — only the container differs.
+  //
+  // WHITE, not `surface-subtle`: these tiles sit directly on the page ground,
+  // which is #F8F8F8 since 2026-09-24, so a grey fill made them vanish into it.
+  // Grey belongs to insets INSIDE a white card (key attributes, the price box),
+  // never to something the ground is already grey behind.
   if (layout === 'grid') {
     return (
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map(([key, label, value, Icon]) => (
-          <li key={key} className="rounded-2xl border border-surface-border bg-surface-panel p-5">
+          <li key={key} className="rounded-2xl border border-surface-border bg-white p-5">
             <p className="flex items-center gap-2 text-[13px] text-muted">
               <Icon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
               {label}
@@ -315,7 +329,7 @@ function KeyAttributes({ attributes = [] }) {
   return (
     <section className="mt-6">
       <h2 className="text-[15px] font-bold text-ink-900">Key attributes</h2>
-      <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl bg-surface-panel p-5 sm:grid-cols-3">
+      <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl bg-surface-subtle p-5 sm:grid-cols-3">
         {rows.map((a) => (
           <div key={a.key} className="min-w-0">
             <dt className="truncate text-xs text-muted">{a.key}</dt>
@@ -323,39 +337,6 @@ function KeyAttributes({ attributes = [] }) {
           </div>
         ))}
       </dl>
-    </section>
-  );
-}
-
-/**
- * "Sourcing on MPX" — the mockup's trust panel.
- *
- * 🔴 Every line here is a statement about how THIS PLATFORM works, not a claim
- * about the supplier: those would need per-seller data that does not exist
- * (response time, enquiries answered, monthly capacity — all square-bracket
- * placeholders in the mockup). Each sentence below is literally true of the
- * built system, which is the only reason it can be shown on every listing.
- */
-function SourcingCard() {
-  const rows = [
-    [ShieldIcon, 'Human-verified suppliers', 'Business documents are reviewed by our team before a supplier earns the tick.'],
-    [ClockIcon, 'Every message on record', 'Your enquiry and chat history stay in your account.'],
-    [GlobeIcon, 'Shipping quoted by the supplier', 'Freight terms are agreed inside the quote, not assumed here.'],
-  ];
-  return (
-    <section className="rounded-2xl border border-surface-border bg-white p-5">
-      <h2 className="text-[15px] font-bold text-ink-900">Sourcing on MPX</h2>
-      <ul className="mt-3 space-y-3.5">
-        {rows.map(([Icon, title, body]) => (
-          <li key={title} className="flex gap-2.5">
-            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
-            <span>
-              <span className="block text-[13px] font-semibold text-ink-900">{title}</span>
-              <span className="mt-0.5 block text-[13px] leading-relaxed text-muted">{body}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
@@ -440,12 +421,12 @@ export function ProductDetail() {
   const chips = p ? headlineChips(p.attributes) : [];
 
   return (
-    /* 🎨 WHITE page, with `surface-panel` (#F8F8F8) for the INSET blocks —
-       owner, 2026-09-23. It replaced a warm `surface-canvas` ground, which put a
-       beige wash behind white cards and, next to the red price block, gave the
-       page three competing tints. White + one neutral recess reads calmer and
-       lets the brand red mean something again. */
-    <div className="flex min-h-screen flex-col bg-white text-ink-900">
+    /* 🎨 GREY ground (#F8F8F8 · `surface-subtle`), WHITE cards.
+       Corrected 2026-09-24 — the owner could "only see white". It had been the
+       other way round: a white page under white cards, which read as one flat
+       sheet with the borders doing all the work. The ground is what makes a card
+       look like a card, so it is the ground that carries the grey. */
+    <div className="flex min-h-screen flex-col bg-surface-subtle text-ink-900">
       <PublicHeader current="Categories" />
 
       <main className="flex-1">
@@ -595,7 +576,14 @@ export function ProductDetail() {
                       dominated every screenshot and competed with the one red
                       element that should — the enquiry button. The price is loud
                       because of its SIZE now, not its fill. */}
-                  <div className="mt-5 rounded-xl border border-surface-border bg-surface-panel p-4">
+                  {/* 🎨 LIGHT RED = the deal (2026-09-24, matching the search cards).
+                      One rule across the page, so the colour carries meaning
+                      instead of decorating: RED blocks are the commercial terms
+                      — price, MOQ, lead time, the action — and GREY blocks are
+                      the specification (key attributes, trade terms, the trust
+                      note). A buyer scanning knows which is which before
+                      reading a word. */}
+                  <div className="mt-5 rounded-xl border border-primary-100 bg-primary-50 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <p className="text-xs text-muted">Indicative price</p>
                       <p className="max-w-[190px] text-right text-[11px] leading-snug text-muted">
@@ -606,7 +594,7 @@ export function ProductDetail() {
                       <PriceLine price={p.price} unit={p.unit} size="lg" />
                     </div>
                     {(p.moq != null || p.supplyAbility || p.leadTime) && (
-                      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-surface-border pt-3 sm:grid-cols-3">
+                      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-primary-100 pt-3 sm:grid-cols-3">
                         {p.moq != null && (
                           <div>
                             <p className="text-xs text-muted">Minimum order</p>
@@ -644,9 +632,8 @@ export function ProductDetail() {
                 </section>
 
                 {/* ───────── RIGHT · the one action ───────── */}
-                <div className="space-y-4 lg:col-span-12 xl:col-span-3 xl:sticky xl:top-24 xl:self-start">
+                <div className="lg:col-span-12 xl:col-span-3 xl:sticky xl:top-24 xl:self-start">
                   <EnquiryButton product={p} framed />
-                  <SourcingCard />
                 </div>
               </div>
 
@@ -669,7 +656,11 @@ export function ProductDetail() {
                       onClick={() => setTab(t)}
                       className={`-mb-px whitespace-nowrap py-3.5 transition-colors ${
                         tab === t
-                          ? 'border-b-2 border-primary-600 font-semibold text-ink-900'
+                          ? // BLACK, not red (2026-09-24). Under the page's colour rule
+                            // red means an ACTION — enquire, view. A tab is
+                            // navigation, so spending red on it diluted the one
+                            // thing red is meant to pull the eye toward.
+                            'border-b-2 border-ink-900 font-semibold text-ink-900'
                           : 'text-muted hover:text-ink-900'
                       }`}
                     >
@@ -689,7 +680,10 @@ export function ProductDetail() {
                   <Facts product={p} layout="grid" />
                 </div>
 
-                <div id="panel-attributes" role="tabpanel" aria-labelledby="tab-attributes" hidden={tab !== 'Attributes'}>
+                {/* Renamed Attributes → Specifications (owner, 2026-09-24) and
+                    kept the incoming `custom` prop: the panel now shows the
+                    category's defined attributes AND the seller's own customSpecs. */}
+                <div id="panel-specifications" role="tabpanel" aria-labelledby="tab-specifications" hidden={tab !== 'Specifications'}>
                   {p.attributes?.length > 0 || p.customSpecs?.length > 0 ? (
                     <SpecTable
                       attributes={p.attributes ?? []}
@@ -715,9 +709,15 @@ export function ProductDetail() {
                       {/* 🔴 Verified sellers only, and the wording is careful: the
                           DOCUMENTS were reviewed, never the goods. For an
                           unverified seller nothing renders in its place — there is
-                          no "not verified" badge, by standing rule. */}
+                          no "not verified" badge, by standing rule.
+
+                          Fill is NEUTRAL since 2026-09-24 — it was `bg-primary-50`,
+                          the last pink PANEL on the page, and panels are what went
+                          grey site-wide. The trust signal now rides the shield
+                          icon, not the wash; brand tint still means "accent"
+                          wherever it is a chip or a selected state. */}
                       {p.seller.verified && (
-                        <div className="mt-4 flex items-start gap-3 rounded-xl bg-primary-50 p-4">
+                        <div className="mt-4 flex items-start gap-3 rounded-xl bg-surface-subtle p-4">
                           <ShieldIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary-700" aria-hidden="true" />
                           <p className="text-sm leading-relaxed text-ink-700">
                             This supplier&apos;s business documents were reviewed by the MPX team.

@@ -15,7 +15,6 @@ import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
 import {
-  BadgeCheckIcon,
   BoxIcon,
   CheckIcon,
   ChevronDownIcon,
@@ -86,7 +85,12 @@ const PAGE_SIZE = 12;
 // image column that scales to the room the rail leaves it (see
 // ProductListCard).
 const LIST_MOBILE = 'grid grid-cols-2 gap-3 md:hidden';
-const LIST = 'hidden md:flex md:flex-col md:gap-5';
+// 🔴 TWO-UP from xl (owner, 2026-09-24: "in one row we need to show two cards").
+// Not earlier: both pages carry a FilterSidebar, so at lg the results column is
+// roughly 950px and a horizontal card pair would leave each one ~460px — which
+// is exactly the card's own minimum (image + actions + a readable middle). xl is
+// the first width where two fit without the middle column collapsing.
+const LIST = 'hidden md:grid md:grid-cols-1 md:gap-5 xl:grid-cols-2';
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest first' },
@@ -331,7 +335,7 @@ function SpecialisationSheet({ open, ...props }) {
 function CardSkeleton() {
   return (
     <li className="flex flex-col overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card md:flex-row">
-      <Skeleton className="aspect-[4/3] w-full rounded-none md:aspect-auto md:h-56 md:w-[320px] lg:w-[300px] xl:w-[360px] 2xl:w-[400px]" />
+      <Skeleton className="aspect-[4/3] w-full rounded-none md:aspect-auto md:h-56 md:w-[220px] lg:w-[200px] xl:w-[150px] 2xl:w-[190px]" />
       <div className="flex-1 space-y-3 p-4">
         <Skeleton className="h-6 w-2/3" />
         <Skeleton className="h-3.5 w-1/3" />
@@ -813,12 +817,12 @@ export function CategoryListing() {
   });
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-ink-900">
+    <div className="flex min-h-screen flex-col bg-surface-subtle text-ink-900">
       <PublicHeader current="Categories" />
 
       {/* Off-white canvas (2026-08-14 polish pass): white cards read as
           SURFACES against it instead of dissolving into a white page. */}
-      <main className="flex-1 bg-surface-subtle/50">
+      <main className="flex-1">
         {/* Vertical scale (2026-08-14 finalise): py-8/10 left dead air under
             the sticky header and above the footer; left/right stay untouched
             (standing owner preference: full-bleed, slim side padding). */}
@@ -881,15 +885,28 @@ export function CategoryListing() {
                   to the flat toolbar — a category page leads with the
                   category, not its number of rows. */}
               {cat ? (
-                <section className="relative overflow-hidden rounded-2xl border border-surface-border bg-gradient-to-r from-primary-50 via-primary-50/40 to-white shadow-card">
+                /* 🎨 REDESIGNED 2026-09-24. Three things were wrong, and two of
+                   them were the same mistake made twice on this site:
+                     · the card sat on a PINK gradient (`from-primary-50 …`),
+                       the only tinted ground left once the site went neutral;
+                     · its two chips were two different colours, one of them
+                       carrying a GREEN `BadgeCheckIcon` — `success` is the
+                       verified/approved colour here, and a listings COUNT has
+                       nothing to do with verification, so the icon was spending
+                       a trust signal on a number;
+                     · the photo's fade began at 55%, which on a wide screen
+                       reads as a hard vertical seam rather than a dissolve. */
+                <section className="relative overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
                   {(cat.image ?? top?.image) && (
                     <img
                       src={cat.image ?? top?.image}
                       alt=""
-                      className="absolute inset-y-0 right-0 hidden h-full w-[45%] object-cover sm:block"
+                      className="absolute inset-y-0 right-0 hidden h-full w-1/2 object-cover sm:block"
                       style={{
-                        maskImage: 'linear-gradient(to left, black 55%, transparent)',
-                        WebkitMaskImage: 'linear-gradient(to left, black 55%, transparent)',
+                        // Fades across nearly the whole width — the seam is the
+                        // thing that made this look pasted on.
+                        maskImage: 'linear-gradient(to left, black 20%, transparent 95%)',
+                        WebkitMaskImage: 'linear-gradient(to left, black 20%, transparent 95%)',
                       }}
                     />
                   )}
@@ -903,20 +920,25 @@ export function CategoryListing() {
                       Sourced directly from Indian exporters — every verified tick is checked by MPX.
                     </p>
                     <div className="mt-4 flex flex-wrap items-center gap-2">
+                      {/* ONE chip treatment for all three — they are the same
+                          kind of fact (a count, a parent), so they should not
+                          look like three different kinds of thing. The NUMBER
+                          carries the weight; the label stays quiet. */}
                       {!onSubPage && (top?.subs?.length ?? 0) > 0 && (
-                        <span className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-primary-700 ring-1 ring-primary-200">
-                          {top.subs.length} specialisations
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-surface-subtle px-3 py-1 text-xs text-ink-700">
+                          <span className="font-bold text-ink-900">{top.subs.length}</span>
+                          specialisations
                         </span>
                       )}
                       {onSubPage && top && (
-                        <span className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-primary-700 ring-1 ring-primary-200">
-                          Part of {top.name}
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-surface-subtle px-3 py-1 text-xs text-ink-700">
+                          Part of <span className="font-bold text-ink-900">{top.name}</span>
                         </span>
                       )}
                       {products.isSuccess && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink-700 ring-1 ring-surface-border">
-                          <BadgeCheckIcon className="h-3.5 w-3.5 text-success" aria-hidden="true" />
-                          {total} listing{total === 1 ? '' : 's'}
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-surface-subtle px-3 py-1 text-xs text-ink-700">
+                          <span className="font-bold text-ink-900">{total}</span>
+                          listing{total === 1 ? '' : 's'}
                         </span>
                       )}
                     </div>

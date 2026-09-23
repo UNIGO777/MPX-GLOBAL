@@ -12,54 +12,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        // 🔴 CRIMSON — landing-page trial only (owner, 2026-08-23: "where we
-        // have implemented the blue color there implement red, web only for
-        // now"). Shade-for-shade parallel to `primary` below, so the landing
-        // swap is mechanical and reversing it is a find-and-replace.
-        //
-        // ⚠️ NOT the brand colour. The logo, the app, the admin console and
-        // every other web page remain royal blue, so a page using this sits
-        // beside a blue wordmark. Flagged to the owner; if crimson is adopted as
-        // the brand, `primary` itself changes and this scale is deleted rather
-        // than kept as a second brand.
-        //
-        // Named `crimson`, NOT `red`: Tailwind's default `red-50`/`red-700` are
-        // already used elsewhere in this codebase, and extending `red` would
-        // silently repaint them. Distinct from `danger` (#D92D20) on purpose —
-        // an error colour must never double as a brand colour, or a destructive
-        // warning stops reading as one.
-        // 🔴 Anchored on the owner's colour: **#CE061A is `crimson-600`**
-        // (2026-08-23). Everything else is derived around it.
-        //
-        // Why 600 and not a darker slot: white text on #CE061A measures
-        // **5.73:1**, which clears WCAG AA, so it can carry the hero and the AI
-        // band directly — the requested colour is what the page actually reads
-        // as, rather than a dark maroon derived from it. The landing's big fills
-        // were moved from `-800` to `-600` for exactly that reason.
-        //
-        // Why nothing brighter is used for buttons: the next step up
-        // (#E8202F) measures **4.49:1** — it fails AA by a hair, and a button
-        // label that fails contrast is a real defect, not a style preference.
-        // So #CE061A is the lightest red that carries white text here.
-        crimson: {
-          50: '#FFF0F1',
-          100: '#FFDBDE',
-          200: '#FFB3BA',
-          300: '#FA808D',
-          400: '#EE4657',
-          500: '#E01329',
-          600: '#CE061A', // ← the owner's colour. Actions AND the hero/band fill.
-          700: '#AE0416', // hover, and links on white (7.42:1)
-          800: '#8A0311', // pressed / deepest surfaces (9.99:1)
-          900: '#66020C',
-        },
-
         // Brand / primary — RED, adopted platform-wide (owner, 2026-09-22:
-        // "we will follow the theme and pallet of landing page"). The values are
-        // the `crimson` ramp above, verbatim: the landing page had already been
-        // built and approved in this palette, so promoting it to `primary` makes
-        // the rest of the web match a surface the owner has actually seen,
-        // rather than a new red nobody has looked at.
+        // "we will follow the theme and pallet of landing page"). The values came
+        // from the landing page's own trial ramp: it had already been built and
+        // approved in this palette, so promoting it makes the rest of the web
+        // match a surface the owner has actually seen, rather than a new red
+        // nobody has looked at.
+        //
+        // ✅ That trial ramp was called `crimson` and lived here as a SECOND
+        // brand token. It was deleted on 2026-09-24 and its 40 usages swept to
+        // `primary` — every numbered shade was byte-identical, so nothing moved.
+        // 🔴 Do not reintroduce a parallel brand scale to trial a colour: two
+        // names for one hex drift, and the page using the copy silently stops
+        // following the brand. Trial by changing THESE values.
         //
         // ⚠️ WAS ROYAL BLUE (#2A4DE0 / navy #1A2E8F) until 2026-09-22. Every
         // m1-webscreens and m2-webscreens mockup is still blue — the mockups are
@@ -120,22 +85,25 @@ export default {
           // blue cast, which fights a red brand — together they read cold and slightly
           // dirty. One token, one reason (web-design.md).
           canvas: '#F5F2EF',
-          // 🔴 A NEUTRAL light grey for INSET panels — the block inside a card
-          // (key attributes, a price box, a fact tile), never a page ground.
-          // Owner-chosen (#f8f8f8, 2026-09-23): "for the bg use white but in
-          // some places use this color".
-          //
-          // It is its own token rather than a reuse of the two above, and that
-          // is the whole point:
-          //   · `canvas` (#F5F2EF) is WARM and is a page ground — used as an
-          //     inset it reads beige against white, not as a recess.
-          //   · `subtle` (#FDF4F4) carries the brand's red tint and is the
-          //     canvas behind every card in all four consoles (62 usages), so
-          //     repointing it to a neutral grey would repaint the whole product.
-          // This one is deliberately hue-free: it recedes under white without
-          // adding a third colour cast to a page that already has red and navy.
-          panel: '#F8F8F8',
-          subtle: '#FDF4F4',
+          /**
+           * 🔴 The app-wide secondary ground — the canvas behind every card in
+           * all four consoles, and the fill of inset blocks inside a card
+           * (63 usages). Owner, 2026-09-24: "use this color f8f8f8 in all pages".
+           *
+           * History, because it has moved twice and the reasons matter:
+           *   · was a pale BLUE (#EAEEFF) under the old blue brand;
+           *   · became #FDF4F4 with the red theme on 2026-09-22, since leaving
+           *     it blue would have sat the whole red product on a blue wash;
+           *   · now NEUTRAL. A red-tinted ground competed with the one red
+           *     element that should carry weight — the primary action — and on
+           *     a white page it read as a wash rather than a recess.
+           *
+           * Deliberately hue-free: this page already carries red and navy, and
+           * a third cast is what made the product page look muddy. It briefly
+           * had a twin called `surface.panel`; that was folded back in here
+           * once both were #F8F8F8, because two names for one hex always drift.
+           */
+          subtle: '#F8F8F8',
           border: '#C5C6CF', // neutral blue-grey hairline — reads neutral, kept
           // The chat sidebar's unread row (owner-specified, 2026-08-18). A TOKEN
           // rather than an inline hex — `web-design.md` bans magic values in
