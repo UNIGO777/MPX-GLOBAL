@@ -44,32 +44,77 @@ export const kycApi = {
 };
 
 /**
- * Which document types the server accepts for each entity type. Mirrors
- * `KYC_DOCS_BY_ENTITY` in the backend enums — the upload is rejected if these
- * drift, so keep them in step.
+ * Labels for every docType the server can send back.
+ *
+ * 🔴 What is OFFERED and what is RENDERABLE are two different lists. This map is
+ * the RENDERABLE one and must stay a superset: a type dropped from the pickers
+ * still has documents stored under it, and without a label they show as a blank
+ * row on the verification screen for a file the reviewer can still open.
  */
-export const KYC_DOC_TYPES = {
-  business: [
-    { value: 'registration', label: 'Registration certificate' },
-    { value: 'gst', label: 'GST certificate' },
-    { value: 'certificate', label: 'Certificate of incorporation' },
-    { value: 'other', label: 'Other business document' },
-  ],
-  individual: [
-    { value: 'pan', label: 'PAN card' },
-    { value: 'aadhaar', label: 'Aadhaar' },
-    { value: 'passport', label: 'Passport' },
-    { value: 'other', label: 'Other identity document' },
-  ],
+export const DOC_TYPE_LABEL = {
+  // Cross-border generics — named for the instrument, not for any one country's
+  // title for it (UK/EU VAT, US EIN, UAE trade licence all land on `tax`/`licence`).
+  registration: 'Company registration certificate',
+  tax: 'Tax registration certificate',
+  licence: 'Trade or business licence',
+  passport: 'Passport',
+  national_id: 'National ID card',
+  driving_licence: 'Driving licence',
+  // India
+  gst: 'GST certificate',
+  iec: 'Import Export Code (IEC)',
+  pan: 'PAN card',
+  aadhaar: 'Aadhaar (masked only)',
+  certificate: 'Certificate of incorporation',
+  other: 'Other document',
 };
 
-/** Human labels for a docType coming back from the server. */
-export const DOC_TYPE_LABEL = Object.fromEntries(
-  [...KYC_DOC_TYPES.business, ...KYC_DOC_TYPES.individual].map((d) => [d.value, d.label]),
-);
+/**
+ * Which documents we ask for, BY COUNTRY then entity type. Mirrors the backend's
+ * `KYC_DOCS_DEFAULT` / `KYC_DOCS_BY_COUNTRY` (src/models/enums.js) — the server
+ * is authoritative and rejects the upload if these drift, so keep them in step.
+ *
+ * DEFAULT + OVERRIDES, never a per-country table: the picker offers the whole
+ * ISO list, so a table would be permanently incomplete, and a wrong document
+ * NAME reads worse than a generic one.
+ */
+export const DOCS_DEFAULT = {
+  business: ['registration', 'tax', 'licence', 'other'],
+  individual: ['passport', 'national_id', 'driving_licence'],
+};
+
+export const DOCS_BY_COUNTRY = {
+  IN: {
+    business: ['registration', 'gst', 'certificate', 'iec', 'other'],
+    // Aadhaar is MASKED ONLY. The label cannot enforce that — the reviewer can.
+    // `other` stays out for individuals: it was the back door that made an
+    // Aadhaar unfindable by query.
+    individual: ['pan', 'aadhaar', 'passport'],
+  },
+};
+
+/**
+ * The picker options for one company: `[{ value, label }]`.
+ * Unknown or missing country falls through to the default set, so a company we
+ * have no country for still gets a usable list rather than an empty screen.
+ */
+export function docTypesFor({ country, entityType }) {
+  if (!entityType) return [];
+  const set = DOCS_BY_COUNTRY[String(country ?? '').toUpperCase()] ?? DOCS_DEFAULT;
+  return (set[entityType] ?? []).map((value) => ({ value, label: DOC_TYPE_LABEL[value] ?? value }));
+}
 
 // Mirrors the server's own limits so the UI can fail fast with a useful message
 // instead of round-tripping a 10 MB photo to be told no.
 export const KYC_MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const KYC_MAX_DOCS = 20;
 export const KYC_ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+
+/**
+ * Shown on the upload screens for individuals, and the reason the Aadhaar slot
+ * can exist at all. It is a DETERRENT, not a control — nothing here can tell a
+ * masked file from an unmasked one. The reviewer is the control.
+ */
+export const AADHAAR_NOTICE =
+  'Aadhaar must be the MASKED version only — the one where the first 8 digits show as XXXX. ' +
+  'Download it from myaadhaar.uidai.gov.in (choose "Masked Aadhaar"). A full Aadhaar will be deleted, not reviewed.';

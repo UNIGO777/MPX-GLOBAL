@@ -88,7 +88,17 @@ import { Lightbox } from '../../components/ui/Lightbox.jsx';
 /** The reference component's four tabs. "Overview" is the default and is a
  *  superset of the other three — see the tablist's own note on why that
  *  matters for indexing. */
-const DETAIL_TABS = ['Overview', 'Specifications', 'Trade terms', 'About the supplier'];
+/**
+ * 🔴 The 2026-09-23 mockup drops the old "Overview" tab, which was what kept
+ * this page indexable: every other tab was a SUBSET of it, so a crawler saw
+ * everything on first render.
+ *
+ * With no such tab, each panel now carries content that lives nowhere else — so
+ * all four RENDER INTO THE DOM and inactive ones are hidden with CSS, never
+ * mounted on click. `m3-seo.md` requires a product page to be indexable, and a
+ * description that only exists after a click is not.
+ */
+const DETAIL_TABS = ['Trade terms', 'Attributes', 'Supplier', 'Description'];
 
 const GOODS_FACTS = [
   ['hsCode', 'HS code', TagIcon],
@@ -229,7 +239,7 @@ function Description({ text }) {
  * seller card with just a small-caps heading; that's now the seller card's
  * own space to breathe, and this stands as a clearly separate fact sheet.
  */
-function Facts({ product }) {
+function Facts({ product, layout = 'list' }) {
   const isService = product.category?.type === 'service';
   const rows = (isService ? SERVICE_FACTS : GOODS_FACTS)
     .map(([key, label, Icon]) => {
@@ -242,6 +252,24 @@ function Facts({ product }) {
 
   // Only filled fields render — never a wall of "—".
   if (rows.length === 0) return null;
+
+  // The mockup's Trade-terms tab: one card per fact, three across. Same rows,
+  // same "blank fields never render" rule — only the container differs.
+  if (layout === 'grid') {
+    return (
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {rows.map(([key, label, value, Icon]) => (
+          <li key={key} className="rounded-2xl border border-surface-border bg-surface-panel p-5">
+            <p className="flex items-center gap-2 text-[13px] text-muted">
+              <Icon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+              {label}
+            </p>
+            <p className="mt-1 text-[15px] font-semibold text-ink-900">{value}</p>
+          </li>
+        ))}
+      </ul>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-surface-border bg-white p-4">
@@ -270,6 +298,64 @@ function headlineChips(attributes = []) {
     .filter((a) => a && a.value != null && a.value !== '' && typeof a.value !== 'boolean')
     .slice(0, 3)
     .map((a) => (typeof a.value === 'number' ? `${a.value} ${a.key}` : String(a.value)));
+}
+
+/**
+ * The mockup's "Key attributes" box — the first few specs as a grid, so a buyer
+ * sees material/size/grade without opening a tab. The full set still lives in
+ * the Attributes tab; this is a lede, not a duplicate store of truth.
+ */
+function KeyAttributes({ attributes = [] }) {
+  const rows = attributes
+    .filter((a) => a && a.value != null && a.value !== '' && typeof a.value !== 'boolean')
+    .slice(0, 6);
+  if (rows.length === 0) return null;
+  return (
+    <section className="mt-6">
+      <h2 className="text-[15px] font-bold text-ink-900">Key attributes</h2>
+      <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl bg-surface-panel p-5 sm:grid-cols-3">
+        {rows.map((a) => (
+          <div key={a.key} className="min-w-0">
+            <dt className="truncate text-xs text-muted">{a.key}</dt>
+            <dd className="mt-0.5 truncate text-sm font-semibold text-ink-900">{String(a.value)}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+/**
+ * "Sourcing on MPX" — the mockup's trust panel.
+ *
+ * 🔴 Every line here is a statement about how THIS PLATFORM works, not a claim
+ * about the supplier: those would need per-seller data that does not exist
+ * (response time, enquiries answered, monthly capacity — all square-bracket
+ * placeholders in the mockup). Each sentence below is literally true of the
+ * built system, which is the only reason it can be shown on every listing.
+ */
+function SourcingCard() {
+  const rows = [
+    [ShieldIcon, 'Human-verified suppliers', 'Business documents are reviewed by our team before a supplier earns the tick.'],
+    [ClockIcon, 'Every message on record', 'Your enquiry and chat history stay in your account.'],
+    [GlobeIcon, 'Shipping quoted by the supplier', 'Freight terms are agreed inside the quote, not assumed here.'],
+  ];
+  return (
+    <section className="rounded-2xl border border-surface-border bg-white p-5">
+      <h2 className="text-[15px] font-bold text-ink-900">Sourcing on MPX</h2>
+      <ul className="mt-3 space-y-3.5">
+        {rows.map(([Icon, title, body]) => (
+          <li key={title} className="flex gap-2.5">
+            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+            <span>
+              <span className="block text-[13px] font-semibold text-ink-900">{title}</span>
+              <span className="mt-0.5 block text-[13px] leading-relaxed text-muted">{body}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 export function ProductDetail() {
@@ -352,25 +438,31 @@ export function ProductDetail() {
   const chips = p ? headlineChips(p.attributes) : [];
 
   return (
+    /* 🎨 WHITE page, with `surface-panel` (#F8F8F8) for the INSET blocks —
+       owner, 2026-09-23. It replaced a warm `surface-canvas` ground, which put a
+       beige wash behind white cards and, next to the red price block, gave the
+       page three competing tints. White + one neutral recess reads calmer and
+       lets the brand red mean something again. */
     <div className="flex min-h-screen flex-col bg-white text-ink-900">
       <PublicHeader current="Categories" />
 
       <main className="flex-1">
-        <div className="w-full px-4 py-8 sm:px-6 md:py-10">
+        <div className="w-full px-4 py-6 sm:px-6 md:py-8 lg:px-10 xl:px-16">
           {product.isPending && (
-            <div className="grid gap-10 lg:grid-cols-2">
-              <Skeleton className="aspect-[4/3] w-full rounded-xl" />
-              <div className="space-y-4">
+            <div className="grid gap-5 lg:grid-cols-12">
+              <Skeleton className="aspect-[4/3] w-full rounded-2xl lg:col-span-5 xl:col-span-4" />
+              <div className="space-y-4 lg:col-span-7 xl:col-span-5">
                 <Skeleton className="h-8 w-3/4" />
-                <Skeleton className="h-24 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
+                <Skeleton className="h-24 w-full rounded-2xl" />
+                <Skeleton className="h-20 w-full rounded-2xl" />
               </div>
+              <Skeleton className="h-64 w-full rounded-2xl lg:col-span-12 xl:col-span-3" />
             </div>
           )}
 
           {p && (
             <>
-              <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-muted">
+              <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-sm text-muted">
                 <Link to="/categories" className="hover:text-primary-700">Categories</Link>
                 <ChevronRightIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
                 {p.category && (
@@ -384,304 +476,267 @@ export function ProductDetail() {
                 <span className="font-medium text-ink-800">{p.name}</span>
               </nav>
 
-              <section className="rounded-2xl border border-surface-border bg-white p-5 shadow-card sm:p-8">
-                <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-                  {/* `self-start` + `sticky`: the buy panel (badges, price,
-                      seller card, trade facts) usually runs taller than a
-                      single 4:3 photo. Without this, the grid's default
-                      row-stretch left the gallery's own box exactly as tall
-                      as the buy panel with nothing to fill it — a slab of
-                      dead white space under the image. `self-start` lets the
-                      gallery size to its own content instead of stretching;
-                      `sticky` (desktop only) then keeps the photo in view as
-                      the taller column scrolls past, the standard pattern on
-                      product-detail pages for exactly this height mismatch. */}
-                  <div className="lg:sticky lg:top-24 lg:self-start">
+              {/* Three columns at xl, as the mockup draws them. Below xl the
+                  quote rail spans the full width UNDER the other two rather
+                  than being squeezed — a 320px card and a product summary do
+                  not both fit at 1024px. */}
+              <div className="grid gap-5 lg:grid-cols-12">
+                {/* ───────── LEFT · gallery + who is selling ───────── */}
+                <div className="space-y-4 lg:col-span-5 lg:sticky lg:top-24 lg:self-start xl:col-span-4">
+                  <div className="overflow-hidden rounded-2xl border border-surface-border bg-white p-3">
                     <Gallery images={p.images} name={p.name} productId={p.id} />
                   </div>
 
-                  {/* ---- the buy panel ---- */}
-                  <div>
-                    {p.category && (
-                      <p className="text-[11px] font-semibold uppercase tracking-widest text-primary-700">
-                        {p.category.name}
-                        {/* The leaf's own goods/service type, straight from the
-                            category — the mockup shows it beside the name and it
-                            is the one word that tells a buyer what KIND of thing
-                            they are looking at before they read anything else. */}
-                        {p.category.type && (
-                          <span className="text-ink-400"> · {p.category.type}</span>
-                        )}
-                      </p>
-                    )}
-                    {/* Serif, matching the landing hero (2026-09-23 mockup). The
-                        face comes from Tailwind's own `font-serif` stack — no web
-                        font is downloaded for one heading. */}
-                    <h1 className="mt-1.5 font-serif text-2xl leading-tight text-ink-900 sm:text-[2rem]">
-                      {p.name}
-                    </h1>
-                    {p.listedSince && (
-                      <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted">
-                        <ClockIcon className="h-4 w-4" aria-hidden="true" />
-                        Listed {formatDate(p.listedSince)}
-                      </p>
-                    )}
-                    {/* 🔴 The mockup also shows "Ref. [MPX-P-000000]" here. There
-                        is NO product reference number on `Product` — the square
-                        brackets in the mockup are the designer's own placeholder.
-                        Inventing one would put a fake identifier on the page a
-                        buyer is most likely to quote back in an enquiry. */}
-
-                    {chips.length > 0 && (
-                      <p className="mt-3 flex flex-wrap gap-1.5">
-                        {chips.map((c) => (
-                          <span
-                            key={c}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-white px-2.5 py-1 text-xs font-medium text-ink-700"
-                          >
-                            {/* One generic glyph for every chip, not a
-                                per-chip icon (2026-08-12 fidelity pass) — a
-                                chip is just the top few attribute values in
-                                whatever order the category defines, so there
-                                is no reliable "this one is architecture, that
-                                one is frequency" to hang a specific icon on
-                                without guessing. */}
-                            <TagIcon className="h-3 w-3 shrink-0 text-ink-400" aria-hidden="true" />
-                            {c}
-                          </span>
-                        ))}
-                      </p>
-                    )}
-
-                    {/* Price block — the panel's anchor. Promoted 2026-08-12
-                        from a flat neutral rectangle to a tinted, bordered
-                        card, with MOQ and supply ability as a two-column row
-                        underneath — this is the single number a buyer is on
-                        the page to find, so it should read as more than
-                        just larger text. Labels are neutral muted gray, not
-                        brand-blue caps (2026-08-12 fidelity pass against the
-                        reference) — the price itself is the loud element. */}
-                    {/* 🆕 2026-09-23 mockup: "Indicative price", and the facts a
-                        buyer weighs beside it — minimum order, supply ability and
-                        lead time — as a three-up row. All three are real fields on
-                        `Product`; each cell simply does not render when the seller
-                        left it blank, so the row self-sizes to one, two or three
-                        rather than showing an empty column. */}
-                    <div className="mt-5 rounded-xl border border-primary-100 bg-primary-50 p-4">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p className="text-xs text-muted">Indicative price</p>
-                        {/* Says plainly that the listed figure is not the final
-                            one — true of every listing here, and the thing a B2B
-                            buyer assumes anyway. */}
-                        <p className="max-w-[190px] text-right text-[11px] leading-snug text-muted">
-                          Final price is confirmed in the supplier&apos;s reply
-                        </p>
-                      </div>
-                      <div className="mt-1">
-                        <PriceLine price={p.price} unit={p.unit} size="lg" />
-                      </div>
-                      {(p.moq != null || p.supplyAbility || p.leadTime) && (
-                        <div className="mt-4 grid grid-cols-2 gap-4 border-t border-primary-100 pt-3 sm:grid-cols-3">
-                          {p.moq != null && (
-                            <div>
-                              <p className="text-xs text-muted">Minimum order</p>
-                              <p className="text-sm font-semibold text-ink-900">
-                                {p.moq.toLocaleString('en-IN')}
-                                {p.unit ? ` ${p.unit}` : ''}
-                              </p>
-                            </div>
-                          )}
-                          {p.supplyAbility && (
-                            <div>
-                              <p className="text-xs text-muted">Supply ability</p>
-                              <p className="text-sm font-semibold text-ink-900">{p.supplyAbility}</p>
-                            </div>
-                          )}
-                          {p.leadTime && (
-                            <div>
-                              <p className="text-xs text-muted">Lead time</p>
-                              <p className="text-sm font-semibold text-ink-900">{p.leadTime}</p>
-                            </div>
-                          )}
-                        </div>
+                  {/* Seller block — the PUBLIC projection only. Never contact
+                      details, never a city, never `kycStatus`.
+                      🔴 The mockup also shows response time, live listings,
+                      enquiries answered, monthly capacity, main markets and a
+                      "How this supplier was verified" link. None of those exist
+                      on `Organisation`, and the last one must not: the public
+                      API deliberately returns `verified` + `verifiedAt` and
+                      nothing about HOW (B7 / m3-public-projection.md). */}
+                  {p.seller && (
+                    <Link
+                      to={`/supplier/${p.seller.slug}`}
+                      className="flex items-center gap-3 rounded-2xl border border-surface-border bg-white p-4 transition-all hover:border-primary-600 hover:shadow-card"
+                    >
+                      {p.seller.logo ? (
+                        <img src={p.seller.logo} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
+                      ) : (
+                        <NoImagePanel label={p.seller.name} monogram ratio="h-11 w-11" className="shrink-0 rounded-lg" />
                       )}
-                    </div>
-
-                    {/* Seller block — the public projection only. Never contact
-                        details, never verification status, never `website`. */}
-                    {p.seller && (
-                      <Link
-                        to={`/supplier/${p.seller.slug}`}
-                        className="mt-5 flex items-center gap-3 rounded-xl border border-surface-border bg-white p-4 transition-all hover:border-primary-600 hover:shadow-card"
-                      >
-                        {p.seller.logo ? (
-                          <img src={p.seller.logo} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
-                        ) : (
-                          <NoImagePanel
-                            label={p.seller.name}
-                            monogram
-                            ratio="h-11 w-11"
-                            className="shrink-0 rounded-lg"
-                          />
-                        )}
-                        <span className="min-w-0 flex-1">
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span className="font-semibold text-ink-900">{p.seller.name}</span>
-                            {/* Pill wrap around the shared `VerifiedTick` —
-                                never fork its own logic/copy, that component
-                                is THE single verified-state convention (its
-                                own §1.1 comment). Only the container here is
-                                new. */}
-                            {p.seller.verified && (
-                              <VerifiedTick verified compact={false} className="rounded-full bg-success-50 px-2 py-0.5" />
-                            )}
-                          </span>
-                          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
-                            {p.seller.memberSince && (
-                              <span className="inline-flex items-center gap-1">
-                                <ClockIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                                Member since {p.seller.memberSince}
-                              </span>
-                            )}
-                            {(countryName(p.seller.country) ?? p.seller.country) && (
-                              <span className="inline-flex items-center gap-1">
-                                <MapPinIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                                {countryName(p.seller.country) ?? p.seller.country}
-                              </span>
-                            )}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-ink-900">{p.seller.name}</span>
+                          {p.seller.verified && (
+                            <VerifiedTick verified compact={false} className="rounded-full bg-success-50 px-2 py-0.5" />
+                          )}
+                        </span>
+                        <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted">
+                          {(countryName(p.seller.country) ?? p.seller.country) && (
                             <span className="inline-flex items-center gap-1">
-                              <UsersIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                              {p.seller.entityType === 'individual' ? 'Individual' : 'Business'}
+                              <MapPinIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                              {countryName(p.seller.country) ?? p.seller.country}
                             </span>
+                          )}
+                          {p.seller.memberSince && (
+                            <span className="inline-flex items-center gap-1">
+                              <ClockIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                              Since {p.seller.memberSince}
+                            </span>
+                          )}
+                          <span className="inline-flex items-center gap-1">
+                            <UsersIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                            {p.seller.entityType === 'individual' ? 'Individual' : 'Business'}
                           </span>
                         </span>
-                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-300" aria-hidden="true" />
-                      </Link>
-                    )}
-
-                    <div className="mt-5">
-                      <Facts product={p} />
-                    </div>
-
-                    {/* M4 (2026-08-17): the disabled "Send Enquiry" placeholder
-                        that sat here is now the REAL entry point — the one door
-                        into chat (M4-4), in the same position. It decides its
-                        own label ("Create enquiry" vs "Open chat") and renders
-                        nothing at all for an exporter account or for a buyer
-                        looking at their own company's listing. */}
-                    <EnquiryButton product={p} framed />
-                  </div>
+                      </span>
+                      <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-300" aria-hidden="true" />
+                    </Link>
+                  )}
                 </div>
-              </section>
 
-              {/* ═════════ TABBED DETAIL (owner's reference component, 2026-09-23)
-                  ═════════
-                  🔴 SEO is safe here, and it is worth saying why, because tabs
-                  usually are not: the OVERVIEW tab — the default — already holds
-                  everything. The other three are SUBSETS of it, so nothing is
-                  missing from the first render for a crawler. If a future tab
-                  ever carries content that lives nowhere else, it has to render
-                  into the DOM rather than being mounted on click (`m3-seo.md`:
-                  a product page must be indexable). */}
+                {/* ───────── CENTRE · what the thing is ───────── */}
+                <section className="rounded-2xl border border-surface-border bg-white p-5 sm:p-7 lg:col-span-7 xl:col-span-5">
+                  {p.category && (
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-primary-700">
+                      {p.category.name}
+                      {p.category.type && <span className="text-ink-400"> · {p.category.type}</span>}
+                    </p>
+                  )}
+                  <h1 className="mt-1.5 font-serif text-2xl leading-tight text-ink-900 sm:text-[1.9rem]">
+                    {p.name}
+                  </h1>
+
+                  {/* Mockup's meta strip. It also shows an enquiry COUNT — left
+                      out deliberately: it is not in the public projection, and
+                      publishing how many enquiries a listing has had exposes a
+                      seller's commercial position to their competitors. */}
+                  <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted">
+                    {p.listedSince && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <ClockIcon className="h-4 w-4" aria-hidden="true" />
+                        Listed {formatDate(p.listedSince)}
+                      </span>
+                    )}
+                    {p.hsCode && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <TagIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                        HS {p.hsCode}
+                      </span>
+                    )}
+                  </p>
+
+                  {chips.length > 0 && (
+                    <p className="mt-3 flex flex-wrap gap-1.5">
+                      {chips.map((c) => (
+                        <span
+                          key={c}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-white px-2.5 py-1 text-xs font-medium text-ink-700"
+                        >
+                          <TagIcon className="h-3 w-3 shrink-0 text-ink-400" aria-hidden="true" />
+                          {c}
+                        </span>
+                      ))}
+                    </p>
+                  )}
+
+                  {/* 🔴 The mockup prices this in four QUANTITY BANDS
+                      (₹520 / ₹480 / ₹430 / ₹390). `Product.price` holds
+                      `{mode, min, max, currency}` and nothing else — there are no
+                      tiers to render, and inventing a ladder would put prices on
+                      the page that the supplier never quoted. The real range is
+                      shown instead, and `PriceLine` formats the product's OWN
+                      currency (the catalogue mixes INR and USD — the mockup's ₹
+                      is not universal). */}
+                  {/* Neutral, not the old pink `primary-50` slab: on a white page it
+                      dominated every screenshot and competed with the one red
+                      element that should — the enquiry button. The price is loud
+                      because of its SIZE now, not its fill. */}
+                  <div className="mt-5 rounded-xl border border-surface-border bg-surface-panel p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="text-xs text-muted">Indicative price</p>
+                      <p className="max-w-[190px] text-right text-[11px] leading-snug text-muted">
+                        Final price is confirmed in the supplier&apos;s reply
+                      </p>
+                    </div>
+                    <div className="mt-1">
+                      <PriceLine price={p.price} unit={p.unit} size="lg" />
+                    </div>
+                    {(p.moq != null || p.supplyAbility || p.leadTime) && (
+                      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-surface-border pt-3 sm:grid-cols-3">
+                        {p.moq != null && (
+                          <div>
+                            <p className="text-xs text-muted">Minimum order</p>
+                            <p className="text-sm font-semibold text-ink-900">
+                              {p.moq.toLocaleString('en-IN')}
+                              {p.unit ? ` ${p.unit}` : ''}
+                            </p>
+                          </div>
+                        )}
+                        {p.supplyAbility && (
+                          <div>
+                            <p className="text-xs text-muted">Supply ability</p>
+                            <p className="text-sm font-semibold text-ink-900">{p.supplyAbility}</p>
+                          </div>
+                        )}
+                        {p.leadTime && (
+                          <div>
+                            <p className="text-xs text-muted">Lead time</p>
+                            <p className="text-sm font-semibold text-ink-900">{p.leadTime}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 🔴 Between the price and this box the mockup places a
+                      SAMPLE row ("₹X for 2 m swatch" + Ask for sample), a FINISH
+                      variant picker (Greige / Bleached / Dyed) and a
+                      CUSTOMIZATION list. None exist: `Product` has no sample
+                      price, no variants, and seller-defined extra fields were
+                      CANCELLED by §A17 (still an open question with the owner).
+                      Rendering any of them would be a dead control
+                      (`web-ui-notes.md`). */}
+                  <KeyAttributes attributes={p.attributes} />
+                </section>
+
+                {/* ───────── RIGHT · the one action ───────── */}
+                <div className="space-y-4 lg:col-span-12 xl:col-span-3 xl:sticky xl:top-24 xl:self-start">
+                  <EnquiryButton product={p} framed />
+                  <SourcingCard />
+                </div>
+              </div>
+
+              {/* ───────── tabbed detail ───────── */}
               <div
                 role="tablist"
                 aria-label="Product details"
                 className="mt-8 flex gap-8 overflow-x-auto border-b border-surface-border text-[15px]"
               >
-                {DETAIL_TABS.map((t) => (
-                  <button
-                    key={t}
-                    role="tab"
-                    type="button"
-                    id={`tab-${t.replace(/\s+/g, '-').toLowerCase()}`}
-                    aria-selected={tab === t}
-                    onClick={() => setTab(t)}
-                    className={`-mb-px whitespace-nowrap py-3.5 transition-colors ${
-                      tab === t
-                        ? 'border-b-2 border-primary-600 font-semibold text-ink-900'
-                        : 'text-muted hover:text-ink-900'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
+                {DETAIL_TABS.map((t) => {
+                  const id = t.replace(/\s+/g, '-').toLowerCase();
+                  return (
+                    <button
+                      key={t}
+                      role="tab"
+                      type="button"
+                      id={`tab-${id}`}
+                      aria-controls={`panel-${id}`}
+                      aria-selected={tab === t}
+                      onClick={() => setTab(t)}
+                      className={`-mb-px whitespace-nowrap py-3.5 transition-colors ${
+                        tab === t
+                          ? 'border-b-2 border-primary-600 font-semibold text-ink-900'
+                          : 'text-muted hover:text-ink-900'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
               </div>
 
+              {/* Every panel is in the DOM; `hidden` only hides it. See the
+                  DETAIL_TABS note — mounting on click would hide the description
+                  from crawlers. */}
               <div className="mt-6">
-                {tab === 'Overview' && (
-                  <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
-                    <section className="flex flex-col gap-4">
-                      {p.description && (
-                        <>
-                          <h2 className="text-xl font-semibold text-ink-900">About this product</h2>
-                          <Description text={p.description} />
-                        </>
-                      )}
-                      <Facts product={p} />
-                    </section>
+                <div id="panel-trade-terms" role="tabpanel" aria-labelledby="tab-trade-terms" hidden={tab !== 'Trade terms'}>
+                  {/* `Facts` returns null when the seller filled in none of
+                      these — an honest empty tab, not a wall of dashes. */}
+                  <Facts product={p} layout="grid" />
+                </div>
 
-                    <section className="flex flex-col gap-4">
-                      {p.attributes?.length > 0 && (
-                        <>
-                          <h2 className="text-xl font-semibold text-ink-900">Specifications</h2>
-                          <SpecTable attributes={p.attributes} defs={attrs.data?.attributes ?? []} columns={2} />
-                        </>
-                      )}
-                      {/* 🔴 Only for a VERIFIED seller, and the wording is
-                          careful: it says the DOCUMENTS were reviewed, never
-                          that the goods were. It also tells the buyer to
-                          confirm specs and samples themselves — the tick is a
-                          document check, not a guarantee of the listing, and
-                          the Terms say exactly the same thing. For an
-                          unverified seller nothing renders in its place: there
-                          is no "not verified" notice, by standing rule. */}
-                      {p.seller?.verified && (
-                        <div className="flex items-start gap-3 rounded-xl bg-primary-50 p-4">
-                          <ShieldIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary-700" aria-hidden="true" />
-                          <p className="text-sm leading-relaxed text-ink-700">
-                            This supplier&apos;s business documents were reviewed by the MPX team.
-                            Always confirm specs, samples and terms in the enquiry before placing
-                            an order.
-                          </p>
-                        </div>
-                      )}
-                    </section>
-                  </div>
-                )}
-
-                {tab === 'Specifications' &&
-                  (p.attributes?.length > 0 ? (
+                <div id="panel-attributes" role="tabpanel" aria-labelledby="tab-attributes" hidden={tab !== 'Attributes'}>
+                  {p.attributes?.length > 0 ? (
                     <SpecTable attributes={p.attributes} defs={attrs.data?.attributes ?? []} columns={2} />
                   ) : (
                     <p className="text-sm text-muted">The supplier has not listed specifications yet.</p>
-                  ))}
+                  )}
+                </div>
 
-                {/* `Facts` returns null by itself when the seller filled in
-                    none of these, so this tab can render empty — which is the
-                    honest outcome, not a hole to paper over. */}
-                {tab === 'Trade terms' && <Facts product={p} />}
+                <div id="panel-supplier" role="tabpanel" aria-labelledby="tab-supplier" hidden={tab !== 'Supplier'}>
+                  {p.seller && (
+                    <div className="max-w-2xl">
+                      {p.seller.description ? (
+                        <p className="text-base leading-relaxed text-ink-700">{p.seller.description}</p>
+                      ) : (
+                        <p className="text-sm text-muted">
+                          This supplier has not written a company description yet.
+                        </p>
+                      )}
+                      {/* 🔴 Verified sellers only, and the wording is careful: the
+                          DOCUMENTS were reviewed, never the goods. For an
+                          unverified seller nothing renders in its place — there is
+                          no "not verified" badge, by standing rule. */}
+                      {p.seller.verified && (
+                        <div className="mt-4 flex items-start gap-3 rounded-xl bg-primary-50 p-4">
+                          <ShieldIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary-700" aria-hidden="true" />
+                          <p className="text-sm leading-relaxed text-ink-700">
+                            This supplier&apos;s business documents were reviewed by the MPX team.
+                            Always confirm specs, samples and terms in the enquiry before placing an order.
+                          </p>
+                        </div>
+                      )}
+                      <Link
+                        to={`/supplier/${p.seller.slug}`}
+                        className="mt-4 inline-block text-sm font-semibold text-primary-700 hover:underline"
+                      >
+                        View full supplier profile →
+                      </Link>
+                    </div>
+                  )}
+                </div>
 
-                {tab === 'About the supplier' && p.seller && (
-                  <div className="max-w-2xl">
-                    {p.seller.description ? (
-                      <p className="text-base leading-relaxed text-ink-700">{p.seller.description}</p>
-                    ) : (
-                      <p className="text-sm text-muted">
-                        This supplier has not written a company description yet.
-                      </p>
-                    )}
-                    <Link
-                      to={`/supplier/${p.seller.slug}`}
-                      className="mt-4 inline-block text-sm font-semibold text-primary-700 hover:underline"
-                    >
-                      View full supplier profile →
-                    </Link>
-                  </div>
-                )}
+                <div id="panel-description" role="tabpanel" aria-labelledby="tab-description" hidden={tab !== 'Description'}>
+                  {p.description ? (
+                    <Description text={p.description} />
+                  ) : (
+                    <p className="text-sm text-muted">The supplier has not written a description yet.</p>
+                  )}
+                </div>
               </div>
 
-              {/* ---- more from this category (or its parent — see
-                  `relatedSection` above) ---- */}
               {relatedSection.rows.length > 0 && relatedSection.category && (
                 <section className="mt-10">
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -692,15 +747,10 @@ export function ProductDetail() {
                       to={`/category/${relatedSection.category.slug}`}
                       className="text-sm font-medium text-primary-700 hover:underline"
                     >
-                      View Category →
+                      View category →
                     </Link>
                   </div>
                   <ul className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-                    {/* The SHARED merchandising card (owner, 2026-08-14: "fix
-                        below cards") — the page-local skinny variant showed a
-                        category line that always duplicated the section title
-                        plus a bare price; this one carries chips, MOQ and the
-                        seller row, same as the category page. */}
                     {relatedSection.rows.map((r) => (
                       <ProductCard key={r.id} product={r} to={`/product/${r.slug}`} />
                     ))}

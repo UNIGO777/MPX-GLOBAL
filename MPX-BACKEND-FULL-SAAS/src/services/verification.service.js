@@ -1,9 +1,10 @@
 import { Organisation } from '../models/Organisation.js';
 import { Product } from '../models/Product.js';
 import { AppError } from '../utils/AppError.js';
-import { KYC_DOCS_BY_ENTITY, KYC_DOC_TYPE } from '../models/enums.js';
+import { kycDocsFor, KYC_DOC_TYPE_REQUESTABLE } from '../models/enums.js';
 import { recordAudit } from './audit.service.js';
 import { notifyVerificationResult } from './emailNotifications.service.js';
+import { deleteKycFile } from './kyc.storage.service.js';
 
 // Platform-staff operation: an employee (or the superadmin) reviews organisations
 // they do NOT own, so access is governed by PERMISSION (RBAC), not org-ownership. The org is
@@ -125,10 +126,17 @@ export async function requestDocuments({ orgId, sideFlag, docTypes, note, actor,
   if (!org) throw AppError.notFound('organisation not found', 'Not found.');
 
   // Valid for the entity type the documents would be reviewed against — the
-  // pending one when a change is switching identity, else the live one. An org
-  // with no entityType yet (buyer before first upload) may be asked anything.
+  // pending one when a change is switching identity, else the live one.
+  //
+  // An org with no entityType yet (buyer before first upload) may be asked for
+  // anything REQUESTABLE — deliberately not `KYC_DOC_TYPE`, which still carries
+  // retired types (`aadhaar`) so historical rows stay valid. Asking for one
+  // would create a request the upload endpoint then refuses.
   const target = org.pendingChanges?.values?.entityType ?? org.entityType;
-  const allowed = target ? KYC_DOCS_BY_ENTITY[target] : KYC_DOC_TYPE;
+  const targetCountry = org.pendingChanges?.values?.country ?? org.country;
+  const allowed = target
+    ? kycDocsFor({ country: targetCountry, entityType: target })
+    : KYC_DOC_TYPE_REQUESTABLE;
   const invalid = docTypes.filter((t) => !allowed.includes(t));
   if (invalid.length > 0) {
     throw AppError.badRequest(
@@ -152,6 +160,72 @@ export async function requestDocuments({ orgId, sideFlag, docTypes, note, actor,
   });
 
   return { docTypes, note };
+}
+
+/**
+ * Remove ONE stored KYC document, file and all (2026-09-23, owner).
+ *
+ * 🔴 The ONLY path in this codebase that destroys a KYC file. It exists because
+ * a reviewer who opens a PAN slot and finds an Aadhaar had no way to stop us
+ * holding it: rejection only wrote a status and a reason, and superseding only
+ * marked a row. Nothing was ever deleted.
+ *
+ * 🔴 Why it is PER-DOCUMENT and not a side effect of rejecting the org (owner
+ * confirmed 2026-09-23): a rejection is normally about one bad file. Wiping the
+ * whole submission would make a company whose GST was merely blurry re-send the
+ * documents that were fine, degrading the resubmit-after-rejection flow that
+ * quote Module 7 commits to — and a misclick in the review queue would destroy
+ * a whole set with no undo.
+ *
+ * 🔴 kycStatus is deliberately NOT touched. Removing a file does not un-make the
+ * human decision that granted the tick, and a status change hidden inside a
+ * delete would be a side effect nobody asked for. Reject, revoke and
+ * request-documents remain the deliberate ways to move the org.
+ *
+ * CLAUDE.md #7 holds: the FILE is destroyed, the audit RECORD that it existed
+ * and was destroyed is permanent and append-only.
+ */
+export async function removeDocument({ orgId, sideFlag, docId, reason, actor, meta }) {
+  const org = await Organisation.findOne({ _id: orgId, [sideFlag]: true }).select('+kycDocuments');
+  if (!org) throw AppError.notFound('organisation not found', 'Not found.');
+
+  const doc = org.kycDocuments?.id(docId);
+  if (!doc) throw AppError.notFound('kyc document not found', 'Not found.');
+
+  // Snapshot BEFORE anything is destroyed — `doc` is a live subdocument and the
+  // $pull below would leave nothing to record.
+  const before = {
+    docType: doc.docType,
+    uploadedAt: doc.uploadedAt,
+    superseded: Boolean(doc.supersededAt),
+  };
+
+  // 🔴 Order matters. The FILE goes first, the row second.
+  //
+  // Reversed, a storage failure would leave an unreferenced file in Cloudinary
+  // with the only pointer to it already deleted — we would be holding the exact
+  // document this action exists to get rid of, permanently and unfindably. This
+  // way a failed destroy throws before the row is touched, so the reviewer sees
+  // an error and can retry. The worst case is a row pointing at a gone file,
+  // which is recoverable and harmless.
+  await deleteKycFile({ storageKey: doc.storageKey });
+
+  await Organisation.updateOne({ _id: org._id }, { $pull: { kycDocuments: { _id: doc._id } } });
+
+  // `storageKey` is deliberately absent: it points at a private asset and, after
+  // the destroy above, at nothing (security-baseline rule 4).
+  await recordAudit({
+    actor,
+    action: 'kyc.document_remove',
+    entityType: 'Organisation',
+    entityId: org._id,
+    orgId: org._id,
+    before,
+    after: { removed: true, reason },
+    meta,
+  });
+
+  return { docType: before.docType, reason };
 }
 
 // ═══ Verification-redesign (2026-08-19) — change re-verification + revoke ═══

@@ -7,7 +7,7 @@ import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
 import { apiError, formatDate } from '../../lib/format.js';
 import { countryName } from '../../lib/countries.js';
-import { DOC_TYPES_BY_ENTITY, DOC_TYPE_LABELS, ENTITY_LABELS } from '../../lib/kycDocTypes.js';
+import { ALL_DOC_TYPES, DOC_TYPE_LABELS, ENTITY_LABELS, docTypesFor } from '../../lib/kycDocTypes.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -72,6 +72,7 @@ export function KycViewer() {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [showSuperseded, setShowSuperseded] = useState(false);
   const [revokeOpen, setRevokeOpen] = useState(false);
+  const [removeOpen, setRemoveOpen] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
   const [reason, setReason] = useState('');
   // Applicant name / country / submitted date live on the org record, not on
@@ -193,10 +194,14 @@ export function KycViewer() {
   const reasonValid = reason.trim().length >= 3 && reason.trim().length <= 500;
 
   const [requestTypes, setRequestTypes] = useState([]);
+  // Requestable types follow the COUNTRY as well as the entity type since
+  // 2026-09-23 — asking an Indian company for a "trade licence", or a German one
+  // for GST, would be a request its upload endpoint then refuses.
   const effectiveEntity = data?.pendingChanges?.requested?.entityType ?? data?.entityType ?? null;
+  const effectiveCountry = data?.pendingChanges?.requested?.country ?? data?.country ?? null;
   const requestableTypes = effectiveEntity
-    ? DOC_TYPES_BY_ENTITY[effectiveEntity]
-    : [...new Set(Object.values(DOC_TYPES_BY_ENTITY).flat())];
+    ? docTypesFor({ country: effectiveCountry, entityType: effectiveEntity })
+    : ALL_DOC_TYPES;
 
   const submitRequest = async () => {
     setActionError(null);
@@ -210,6 +215,30 @@ export function KycViewer() {
       await query.refetch();
     } catch (err) {
       setActionError(apiError(err, 'Could not request documents.'));
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  /**
+   * Destroy the selected document. The reviewer's case for this is finding
+   * something we must not hold — an Aadhaar in a PAN slot — so it deletes the
+   * FILE, not just the row, and the org's status is deliberately untouched.
+   */
+  const submitRemove = async () => {
+    if (!doc) return;
+    setActionError(null);
+    setProcessing(true);
+    try {
+      await adminApi.removeKycDocument(sidePath, orgId, doc.id, reason.trim());
+      setDecidedNote('Document deleted — the file is gone from storage. The removal is in the audit log.');
+      setRemoveOpen(false);
+      setReason('');
+      // The list shrinks under us; `selected` could now point past its end.
+      setSelected(0);
+      await query.refetch();
+    } catch (err) {
+      setActionError(apiError(err, 'Could not delete the document.'));
     } finally {
       setProcessing(false);
     }
@@ -449,17 +478,42 @@ export function KycViewer() {
                   <FileIcon className="h-4 w-4 text-ink-500" />
                   {doc ? (DOC_TYPE_LABELS[doc.docType] ?? doc.docType) : ''}
                 </span>
-                {doc && !expired && (
-                  <a
-                    href={doc.signedUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex h-9 items-center gap-2 rounded-lg border border-surface-border px-4 text-sm font-semibold text-ink-900 hover:bg-ink-50"
-                  >
-                    <ExternalIcon className="h-4 w-4" /> Open in new tab
-                  </a>
-                )}
+                <span className="flex items-center gap-2">
+                  {/* Gated on the SIDE review permission, not `canDecide`: a
+                      verified org with nothing pending has no decision to make,
+                      and is exactly where an Aadhaar might still be sitting. */}
+                  {doc && hasReviewPerm && (
+                    <Button variant="dangerOutline" size="sm" onClick={() => { setReason(''); setRemoveOpen(true); }}>
+                      <XIcon className="h-4 w-4" /> Delete document
+                    </Button>
+                  )}
+                  {doc && !expired && (
+                    <a
+                      href={doc.signedUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex h-9 items-center gap-2 rounded-lg border border-surface-border px-4 text-sm font-semibold text-ink-900 hover:bg-ink-50"
+                    >
+                      <ExternalIcon className="h-4 w-4" /> Open in new tab
+                    </a>
+                  )}
+                </span>
               </div>
+
+              {/* 🔴 The reviewer IS the masking control. The upload screen asks
+                  for a masked Aadhaar; nothing in the system can verify that, so
+                  this is where an unmasked one gets caught. Shown only for the
+                  Aadhaar docType so it stays meaningful rather than wallpaper. */}
+              {doc?.docType === 'aadhaar' && (
+                <div className="px-5 pt-4">
+                  <Alert tone="warning" title="Check this is a MASKED Aadhaar">
+                    Only the last 4 digits may be visible — the first 8 should read XXXX. If the full
+                    number is showing, do not verify it: use{' '}
+                    <span className="font-semibold">Delete document</span> above, then ask for a
+                    masked copy. We are not permitted to hold a full Aadhaar number.
+                  </Alert>
+                </div>
+              )}
 
               <div className="relative min-h-[420px] bg-ink-50">
                 {expired ? (
@@ -598,6 +652,50 @@ export function KycViewer() {
         />
         <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
           <span>This note is shown to the company on its verification page.</span>
+          <span>{reason.trim().length} / 500</span>
+        </div>
+      </Modal>
+
+      {/* Delete a document — the only irreversible action on this screen. The
+          copy says so plainly rather than relying on the red button alone. */}
+      <Modal
+        open={removeOpen}
+        onClose={() => setRemoveOpen(false)}
+        title={`Delete this ${doc ? (DOC_TYPE_LABELS[doc.docType] ?? doc.docType) : 'document'}?`}
+        danger
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setRemoveOpen(false)}>Cancel</Button>
+            <Button variant="danger" disabled={!reasonValid} loading={processing} onClick={submitRemove}>
+              Delete permanently
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm leading-relaxed text-ink-700">
+          <span className="font-semibold text-ink-900">This cannot be undone.</span> The file is
+          erased from storage, not hidden — use this when we must not be holding the document at
+          all, such as an Aadhaar sent in place of a PAN.
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-ink-700">
+          Nothing else changes: the company keeps its other documents and its current status. If
+          you need a replacement, use <span className="font-semibold">Request documents</span>{' '}
+          afterwards so the company knows what to send.
+        </p>
+        <label htmlFor="kyc-remove-reason" className="mt-4 block text-sm font-semibold text-ink-900">
+          Reason
+        </label>
+        <textarea
+          id="kyc-remove-reason"
+          rows={3}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          maxLength={500}
+          placeholder="Why is this being deleted? e.g. Aadhaar uploaded in the PAN slot — not accepted."
+          className={inputClasses(false, 'mt-2 h-auto py-2')}
+        />
+        <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
+          <span>Kept permanently in the audit log — the record outlives the file.</span>
           <span>{reason.trim().length} / 500</span>
         </div>
       </Modal>

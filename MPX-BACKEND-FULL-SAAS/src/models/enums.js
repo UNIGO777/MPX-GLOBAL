@@ -34,7 +34,24 @@ export const ENTITY_TYPE = ['business', 'individual'];
 // Accepted KYC document types. Business entities submit registration/GST/
 // certificate proofs; individuals submit a personal govt ID (PAN/Aadhaar/
 // passport). 'other' is a catch-all the reviewer can still inspect.
-export const KYC_DOC_TYPE = ['registration', 'gst', 'certificate', 'pan', 'aadhaar', 'passport', 'other'];
+/**
+ * Every docType a STORED document may carry.
+ *
+ * The three lists here do different jobs and must not be collapsed into one:
+ * STORABLE (this), REQUESTABLE (below) and OFFERED (`KYC_DOCS_BY_ENTITY`).
+ * Retiring a type changes the last two and never this one, so documents already
+ * stored under it keep passing mongoose validation and keep their label.
+ */
+export const KYC_DOC_TYPE = [
+  // Cross-border generics — one name each for instruments every country has
+  // under a different title (see KYC_DOCS_DEFAULT below).
+  'registration', 'tax', 'licence',
+  'passport', 'national_id', 'driving_licence',
+  // India-specific
+  'gst', 'iec', 'certificate', 'pan', 'aadhaar',
+  // Catch-all
+  'other',
+];
 
 // Verification-redesign (owner, 2026-08-19): a VERIFIED org's locked-field edit
 // becomes a pending change that must earn its way in through review.
@@ -44,11 +61,100 @@ export const KYC_DOC_TYPE = ['registration', 'gst', 'certificate', 'pan', 'aadha
 // Approve and cancel clear the subdocument entirely — history lives in the AuditLog.
 export const PENDING_CHANGE_STATE = ['awaiting_documents', 'awaiting_review', 'rejected'];
 
-// Which document types are valid for each entity type (enforced at upload).
-export const KYC_DOCS_BY_ENTITY = Object.freeze({
-  business: ['registration', 'gst', 'certificate', 'other'],
-  individual: ['pan', 'aadhaar', 'passport', 'other'],
+/**
+ * Which KYC documents we ask for, BY COUNTRY then entity type (owner,
+ * 2026-09-23). Enforced at upload — this is not a UI hint.
+ *
+ * 🔴 The shape is DEFAULT + OVERRIDES, deliberately not a 193-row matrix. The
+ * country picker offers the full ISO list and the server accepts any two-letter
+ * code, so a per-country table would be both unmaintainable and permanently
+ * incomplete — and a wrong document NAME on a KYC form reads worse than a
+ * generic one. An override earns its place only when a country's instruments
+ * have no honest generic name.
+ *
+ * Today India is the only override, because that is where our exporters are
+ * (CLAUDE.md: "Indian exporters, international buyers"). GST, IEC, PAN and
+ * Aadhaar have no cross-border equivalent worth pretending about.
+ *
+ * ⚠️ The list keys off COUNTRY, never off buyerSide/exporterSide. An
+ * Organisation may be BOTH (CLAUDE.md), so a side-based rule would put the
+ * Indian set in front of a German company that also sells. Exporters get the
+ * Indian set because they are Indian, not because they are exporters.
+ */
+export const KYC_DOCS_DEFAULT = Object.freeze({
+  /**
+   * Generic names chosen to cover the real instruments without naming any
+   * country's: `tax` is the UK/EU VAT certificate, the US EIN letter, a TIN
+   * registration; `licence` is the UAE trade licence, a municipal business
+   * licence, China's business licence; `registration` is a certificate of
+   * incorporation, Singapore's ACRA profile, a commercial-register extract.
+   */
+  business: ['registration', 'tax', 'licence', 'other'],
+  /** `other` stays out for individuals everywhere — see the India note below. */
+  individual: ['passport', 'national_id', 'driving_licence'],
 });
+
+export const KYC_DOCS_BY_COUNTRY = Object.freeze({
+  IN: Object.freeze({
+    /**
+     * `iec` — the DGFT Import Export Code. Added 2026-09-23: it is mandatory to
+     * export from India and it is the single most relevant document on an export
+     * marketplace, yet we were not asking for it at all. Offered like every other
+     * document (optional slot, reviewer decides) — making it a hard requirement
+     * would be a new GATE, and gates are guarded here (D1/D2/D3).
+     */
+    business: ['registration', 'gst', 'certificate', 'iec', 'other'],
+    /**
+     * 🔴 Aadhaar: removed, then RESTORED **masked-only**, both on 2026-09-23.
+     * Masked Aadhaar is a genuinely different document — UIDAI replaces the
+     * first eight digits with X, so the Aadhaar NUMBER, which is what the
+     * restriction is about, is not in the file.
+     *
+     * 🔴 The "(masked only)" in the label is a DETERRENT, NOT A CONTROL. Nothing
+     * here can tell a masked upload from an unmasked one. Two things carry it,
+     * both outside this file: the KYC viewer WARNS the reviewer whenever the
+     * docType is `aadhaar`, and `removeDocument` DESTROYS the file so an
+     * unmasked one can be got rid of rather than merely marked. Remove either
+     * and this list becomes a promise nobody keeps.
+     *
+     * 🚫 `other` is deliberately absent for individuals. Labelled "Other
+     * identity document" it was the back door — an Aadhaar landed there anyway
+     * and was then UNFINDABLE by query. A named docType keeps an unmasked copy
+     * recoverable. `other` stays for business, where it has no such failure mode.
+     */
+    individual: ['pan', 'aadhaar', 'passport'],
+  }),
+});
+
+/**
+ * The documents offered to one company. `country` is the ISO alpha-2 on the
+ * Organisation; anything without an override falls through to the default set,
+ * which is why an unknown or missing country is safe rather than empty.
+ */
+export function kycDocsFor({ country, entityType }) {
+  const set = KYC_DOCS_BY_COUNTRY[String(country ?? '').toUpperCase()] ?? KYC_DOCS_DEFAULT;
+  return set[entityType] ?? [];
+}
+
+/**
+ * What STAFF may ask any company to send — the union of every set above, so it
+ * tracks them automatically and can never drift above what upload accepts.
+ *
+ * Deliberately NOT `KYC_DOC_TYPE`: that enum also keeps values no country
+ * offers any more, so documents already stored under them stay valid and
+ * labelled. Validating a request against it let a reviewer ask for a document
+ * the upload endpoint then refuses (kyc.service.js) — an unsatisfiable request
+ * the company could only answer with a 400.
+ *
+ * ⚠️ It is country-BLIND on purpose: it is the outer schema guard. The
+ * per-company narrowing happens in `requestDocuments`, which knows the org.
+ */
+export const KYC_DOC_TYPE_REQUESTABLE = Object.freeze([
+  ...new Set([
+    ...Object.values(KYC_DOCS_DEFAULT).flat(),
+    ...Object.values(KYC_DOCS_BY_COUNTRY).flatMap((c) => Object.values(c).flat()),
+  ]),
+]);
 
 // --- M2 · Catalogue -----------------------------------------------------------
 

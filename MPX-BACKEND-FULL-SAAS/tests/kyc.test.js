@@ -10,6 +10,10 @@ vi.mock('../src/services/kyc.storage.service.js', () => ({
     format: 'pdf',
   })),
   verifyKycFile: vi.fn(),
+  // Added 2026-09-23 — `verification.service.js` now imports this. Vitest
+  // throws on an export the factory does not define, so a mock of this
+  // module must list it even when the suite never removes a document.
+  deleteKycFile: vi.fn(async () => 'ok'),
   signedKycUrl: vi.fn(({ storageKey }) => ({
     url: `https://signed.fake/${storageKey}?sig=abc`,
     expiresAt: new Date(Date.now() + 120000).toISOString(),

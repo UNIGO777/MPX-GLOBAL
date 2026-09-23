@@ -11,19 +11,71 @@ import { config } from '../config.js';
  */
 
 export const DOC_TYPE_LABELS = {
-  registration: 'Company registration',
-  gst: 'GST / tax document',
-  certificate: 'Certificate',
-  pan: 'PAN',
-  aadhaar: 'Aadhaar',
+  // Cross-border generics — deliberately named for the instrument, not for any
+  // one country's title for it (UK/EU VAT, US EIN, UAE trade licence, …).
+  registration: 'Company registration certificate',
+  tax: 'Tax registration certificate',
+  licence: 'Trade or business licence',
   passport: 'Passport',
+  national_id: 'National ID card',
+  driving_licence: 'Driving licence',
+  // India
+  gst: 'GST certificate',
+  iec: 'Import Export Code (IEC)',
+  pan: 'PAN',
+  aadhaar: 'Aadhaar (masked only)',
+  certificate: 'Certificate of incorporation',
   other: 'Other',
 };
 
-export const DOC_TYPES_BY_ENTITY = {
-  business: ['registration', 'gst', 'certificate', 'other'],
-  individual: ['pan', 'aadhaar', 'passport', 'other'],
+/**
+ * 🔴 Mirrors the backend's `KYC_DOCS_DEFAULT` / `KYC_DOCS_BY_COUNTRY` — the long
+ * reasoning lives in `src/models/enums.js` and the server is authoritative. Do
+ * not add a country here without adding it there; a mismatch means the form
+ * offers a slot the upload endpoint rejects with a 400.
+ *
+ * DEFAULT + OVERRIDES, never a 193-row matrix: the picker offers the whole ISO
+ * list, so a per-country table would be permanently incomplete, and a wrong
+ * document NAME reads worse than a generic one.
+ */
+export const DOCS_DEFAULT = {
+  business: ['registration', 'tax', 'licence', 'other'],
+  individual: ['passport', 'national_id', 'driving_licence'],
 };
+
+export const DOCS_BY_COUNTRY = {
+  IN: {
+    business: ['registration', 'gst', 'certificate', 'iec', 'other'],
+    // Aadhaar is MASKED ONLY and the label cannot enforce that — the reviewer
+    // can. `other` stays out for individuals: it was the back door that made an
+    // Aadhaar unfindable by query.
+    individual: ['pan', 'aadhaar', 'passport'],
+  },
+};
+
+/** Documents offered to one company. Unknown/missing country → the default set. */
+export function docTypesFor({ country, entityType }) {
+  if (!entityType) return [];
+  const set = DOCS_BY_COUNTRY[String(country ?? '').toUpperCase()] ?? DOCS_DEFAULT;
+  return set[entityType] ?? [];
+}
+
+/** Every type any country can offer — for the staff picker before a country is known. */
+export const ALL_DOC_TYPES = [
+  ...new Set([
+    ...Object.values(DOCS_DEFAULT).flat(),
+    ...Object.values(DOCS_BY_COUNTRY).flatMap((c) => Object.values(c).flat()),
+  ]),
+];
+
+/**
+ * Shown on the upload screens for individuals, and the reason the Aadhaar slot
+ * can exist at all. It is a DETERRENT, not a control — nothing here can tell a
+ * masked file from an unmasked one. The reviewer is the control.
+ */
+export const AADHAAR_NOTICE =
+  'Aadhaar must be the MASKED version only — the one where the first 8 digits show as XXXX. ' +
+  'Download it from myaadhaar.uidai.gov.in (choose "Masked Aadhaar"). A full Aadhaar will be deleted, not reviewed.';
 
 export const ENTITY_LABELS = {
   business: 'Business',

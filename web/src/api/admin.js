@@ -56,6 +56,16 @@ export const adminApi = {
     apiClient.post(`/employee/${side}/${orgId}/changes/approve`).then((r) => r.data.organisation),
   rejectChange: (side, orgId, reason) =>
     apiClient.post(`/employee/${side}/${orgId}/changes/reject`, { reason }).then((r) => r.data.organisation),
+  /**
+   * Destroy ONE stored KYC document — the file, not just the row (2026-09-23).
+   * Irreversible: there is no undo on the storage side. Per-document on purpose;
+   * rejecting an organisation still leaves its documents alone.
+   */
+  removeKycDocument: (side, orgId, docId, reason) =>
+    apiClient
+      .post(`/employee/${side}/${orgId}/kyc/documents/${docId}/remove`, { reason })
+      .then((r) => r.data.removed),
+
   revokeVerification: (side, orgId, reason) =>
     apiClient.post(`/employee/${side}/${orgId}/revoke`, { reason }).then((r) => r.data.organisation),
   requestKycDocuments: (side, orgId, { docTypes, note }) =>

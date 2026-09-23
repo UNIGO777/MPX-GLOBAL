@@ -66,6 +66,40 @@ export async function uploadKycDocument({ buffer, orgId, docType }) {
   return { storageKey: result.public_id, format: result.format ?? format, resourceType };
 }
 
+/**
+ * Permanently destroy a stored private KYC asset (2026-09-23).
+ *
+ * 🔴 This is the FIRST and ONLY delete path for a KYC file. `Organisation.js`
+ * used to say "there is deliberately still no delete path" — the owner reversed
+ * that so a reviewer who opens a slot and finds an Aadhaar can actually stop us
+ * holding it. Nothing else may call this: replacing or superseding a document
+ * still only MARKS it.
+ *
+ * There is no undo and no recycle bin. Cloudinary's destroy is immediate.
+ *
+ * `resource_type: 'image'` covers every accepted KYC type — PDFs included, see
+ * ALLOWED above. That matters: a resource-type mismatch does not throw, it
+ * answers "not found", so the file would quietly survive a delete that looked
+ * like it worked.
+ */
+export async function deleteKycFile({ storageKey }) {
+  assertConfigured();
+  const res = await cloudinary.uploader.destroy(storageKey, {
+    type: 'private',
+    resource_type: 'image',
+    invalidate: true, // purge any CDN copy too
+  });
+  // 'not found' is already the desired end state (a retry after a partial
+  // failure), so it is not an error — the caller must still drop the row.
+  if (res?.result !== 'ok' && res?.result !== 'not found') {
+    throw new AppError(`cloudinary destroy returned ${res?.result}`, {
+      statusCode: 502,
+      clientMessage: 'Could not delete the document. Please try again.',
+    });
+  }
+  return res.result;
+}
+
 // Mint a short-lived signed download URL for a stored private KYC asset (reviewer
 // view, M1-D). The URL expires; a leaked link is useless after the TTL.
 export function signedKycUrl({ storageKey, format, resourceType = 'image', ttlSeconds = 120 }) {

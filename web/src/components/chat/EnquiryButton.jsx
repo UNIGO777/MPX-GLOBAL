@@ -8,6 +8,9 @@ import { useChatDock } from '../../chat/ChatDockContext.jsx';
 import { ChatIcon, EnquiryIcon } from '../ui/icons.jsx';
 import { Skeleton } from '../ui/Skeleton.jsx';
 import { EnquiryModal } from './EnquiryModal.jsx';
+import { PriceLine } from '../catalogue/PriceLine.jsx';
+import { CountrySelect } from '../ui/CountrySelect.jsx';
+import { Input } from '../ui/Input.jsx';
 
 /**
  * M4 screen 1 — the ONE door into the whole chat module (M4-4: there are no
@@ -43,6 +46,15 @@ export function EnquiryButton({ product, framed = false }) {
   const location = useLocation();
   const dock = useChatDock();
   const [openedByClick, setOpenedByClick] = useState(false);
+  /**
+   * The quote rail's inline quantity + destination (owner, 2026-09-23 — "enquiry
+   * box bhi dalo"). They SEED `EnquiryModal`; they never submit on their own,
+   * because the API also requires a `note` the rail does not ask for.
+   * Goods only — a service enquiry takes engagement type and budget instead
+   * (SERVICE_FIELDS, inquiry.validators.js), so the pair would be meaningless.
+   */
+  const [quantity, setQuantity] = useState('');
+  const [deliveryCountry, setDeliveryCountry] = useState('');
 
   /**
    * Coming back from sign-in with `?enquire=1` reopens the form the guest was
@@ -57,6 +69,7 @@ export function EnquiryButton({ product, framed = false }) {
    */
   const wantsEnquiry = new URLSearchParams(location.search).has('enquire');
 
+  const isServiceListing = product?.category?.type === 'service';
   const isBuyer = user?.role === 'buyer';
   const isExporterAccount = user?.role === 'exporter';
   const isStaff = user?.role === 'employee' || user?.role === 'superadmin';
@@ -73,7 +86,31 @@ export function EnquiryButton({ product, framed = false }) {
     staleTime: 30_000,
   });
 
-  if (isExporterAccount || isStaff || ownProduct) return null;
+  /**
+   * Nobody here can send an enquiry — an exporter account, platform staff, or a
+   * buyer looking at their own company's listing.
+   *
+   * 🔴 Inline (`framed === false`) that still means render NOTHING: the button
+   * simply is not offered. But `framed` is a whole CARD in the product page's
+   * quote rail (2026-09-23), and returning null there leaves a visible hole
+   * where "Request a quote" should be — the page reads as broken rather than as
+   * "this is not for you". The owner reported exactly that. So the card stays
+   * and says why, and it still offers no action.
+   */
+  if (isExporterAccount || isStaff || ownProduct) {
+    if (!framed) return null;
+    const reason = ownProduct
+      ? 'This is your own listing. Buyers send their enquiries from this page, and they arrive in your enquiries list.'
+      : isStaff
+        ? 'Staff accounts do not send enquiries. Sign in with a buyer account to contact this supplier.'
+        : 'Enquiries are sent by buyer accounts. You are signed in as an exporter.';
+    return (
+      <section className="rounded-2xl border border-surface-border bg-white p-5">
+        <h2 className="text-[15px] font-bold text-ink-900">Request a quote</h2>
+        <p className="mt-2 text-[13px] leading-relaxed text-muted">{reason}</p>
+      </section>
+    );
+  }
 
   // Resolving: a skeleton, never a flash from "Create enquiry" to "Open chat".
   if (existing.isLoading) {
@@ -110,10 +147,14 @@ export function EnquiryButton({ product, framed = false }) {
     <>
       {conversationId ? (
         <div className="mt-5">
+          {/* FILLED, not outlined (2026-09-23). Outlined made sense when this sat
+              below a filled "Create enquiry" in the same view; once a thread
+              exists it is the only action on the card, and a lone outlined
+              button reads as secondary to nothing. */}
           <button
             type="button"
             onClick={openChat}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary-700 bg-white px-6 py-3 text-sm font-bold text-primary-700 transition-colors hover:bg-primary-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/20 transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
           >
             <ChatIcon className="h-4 w-4" aria-hidden="true" />
             Open chat
@@ -138,6 +179,14 @@ export function EnquiryButton({ product, framed = false }) {
       {formOpen && (
         <EnquiryModal
           product={product}
+          initialFields={{
+            ...(quantity ? { quantity } : {}),
+            // The listing's own unit travels with the number — the buyer typed a
+            // quantity against "meters" on screen, so sending it bare would lose
+            // half the meaning.
+            ...(quantity && product?.unit ? { unit: product.unit } : {}),
+            ...(deliveryCountry ? { deliveryCountry } : {}),
+          }}
           onClose={closeForm}
           onCreated={(id) => {
             closeForm();
@@ -154,26 +203,83 @@ export function EnquiryButton({ product, framed = false }) {
   if (!framed) return body;
 
   return (
-    <div className="mt-5 rounded-2xl bg-ink-900 p-5">
+    /* 🎨 WHITE card since the 2026-09-23 product-page mockup — it was a dark
+       ink-900 panel, which read as a banner rather than one of the page's cards
+       now that the page floats white cards on a warm canvas. `mt-0`: the rail
+       positions it, not the button. */
+    <section className="rounded-2xl border border-surface-border bg-white p-5">
+      {/* 🔴 Everything in this card branches on whether a thread already exists.
+          Before the fix it did not, so a buyer who had already enquired saw a
+          card headed "Request a quote", two inputs that fed a form they could
+          no longer open, and a line promising chat "once your enquiry is sent" —
+          which it had been. The one control that mattered, Open chat, sat under
+          all of it. */}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-sm font-bold text-white">Request a quote</p>
-        <p className="text-xs text-ink-400">Free · no commitment</p>
+        <h2 className="text-[15px] font-bold text-ink-900">
+          {conversationId ? 'Your enquiry' : 'Request a quote'}
+        </h2>
+        <p className="text-xs text-muted">
+          {conversationId ? 'Already sent' : 'Free · no commitment'}
+        </p>
       </div>
-      {/* 🔴 The mockup put quantity and destination country inline here. They
-          are NOT duplicated: both already live in `EnquiryModal`, alongside the
-          `note` the API requires (1–200 chars, `inquiry.validators.js`). An
-          inline pair would have collected two of the three fields and still had
-          to open the modal for the third — two places to keep in step, and a
-          form that looks submittable but is not. The panel frames the one
-          button; the modal asks for everything in one go. */}
-      <p className="mt-1.5 text-xs leading-relaxed text-ink-300">
-        Tell the supplier what you need — quantity, destination and a short note.
-        They reply with a quote and you carry on in live chat.
+
+      {/* A compact repeat of the price facts, so the sticky rail still says what
+          is being quoted once the summary has scrolled away. Same fields, same
+          formatter — `PriceLine` renders the product's OWN currency. */}
+      {(product?.price || product?.moq != null || product?.leadTime) && (
+        <div className="mt-3 rounded-xl bg-surface-panel p-3.5">
+          <p className="text-[11px] text-muted">Indicative</p>
+          <PriceLine price={product.price} unit={product.unit} />
+          {(product.moq != null || product.leadTime) && (
+            <p className="mt-1 text-[12px] text-muted">
+              {product.moq != null && `MOQ ${product.moq.toLocaleString('en-IN')}${product.unit ? ` ${product.unit}` : ''}`}
+              {product.moq != null && product.leadTime ? ' · ' : ''}
+              {product.leadTime && `Lead time ${product.leadTime}`}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* 🔴 The mockup also puts a second "Chat with supplier" button beside the
+          first. Still not built: chat does not exist before an enquiry does
+          (M4-4 — the enquiry is the one door into chat), so it would be dead on
+          every first visit. The single button below already becomes "Open chat"
+          once a thread exists, and the line under it says so. */}
+      {/* The mockup's inline pair. Rendered for GOODS only, and deliberately
+          NOT the whole form: `note` (1–200 chars) is required by the API and is
+          asked for in the modal, which these two fields prefill. That is what
+          keeps this from being a form that looks submittable but is not
+          (`web-ui-notes.md`) — nothing here is collected twice, and the buyer
+          can still change both in the modal. */}
+      {!conversationId && !isServiceListing && (
+        <div className="mt-4 space-y-3">
+          <Input
+            label={product?.unit ? `Quantity (${product.unit})` : 'Quantity'}
+            optional
+            type="number"
+            min="0"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            placeholder={product?.moq != null ? `Min. ${product.moq.toLocaleString('en-IN')}` : undefined}
+          />
+          <CountrySelect
+            label="Ship to"
+            optional
+            value={deliveryCountry}
+            onChange={setDeliveryCountry}
+          />
+        </div>
+      )}
+
+      {/* `body` sets its own top margin; an extra `[&_button]:mt-4` here used to
+          stack on it (mt-5 + mt-4) and fight it in the other branch. */}
+      {body}
+
+      <p className="mt-3 text-[11px] leading-relaxed text-muted">
+        {conversationId
+          ? 'Your messages with this supplier stay in your account. Contact details are shared only through the enquiry.'
+          : 'Chat opens once your enquiry is sent. Your contact details are shared through the enquiry, never shown publicly.'}
       </p>
-      <div className="[&_button]:mt-4">{body}</div>
-      <p className="mt-3 text-[11px] leading-relaxed text-ink-400">
-        Your contact details are shared through the enquiry, never shown publicly.
-      </p>
-    </div>
+    </section>
   );
 }

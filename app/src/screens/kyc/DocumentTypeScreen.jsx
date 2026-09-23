@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { kycApi, KYC_DOC_TYPES } from '../../api/kyc.js';
+import { kycApi, AADHAAR_NOTICE, docTypesFor } from '../../api/kyc.js';
 import { NavyCanopy } from '../../components/NavyCanopy.jsx';
 import { colors, radii, spacing, typography } from '../../theme/index.js';
 
@@ -19,6 +19,9 @@ import { colors, radii, spacing, typography } from '../../theme/index.js';
  */
 export function DocumentTypeScreen({ navigation, route }) {
   const [entityType, setEntityType] = useState(route.params?.entityType ?? null);
+  // Decides the document set alongside entityType (2026-09-23). Only the server
+  // knows it, so the list stays empty until the fetch lands.
+  const [country, setCountry] = useState(null);
   const [uploaded, setUploaded] = useState([]);
 
   useFocusEffect(
@@ -31,6 +34,7 @@ export function DocumentTypeScreen({ navigation, route }) {
           // Route param wins for the buyer who has just picked; otherwise the
           // account's own value (exporters).
           setEntityType((current) => current ?? v.entityType ?? null);
+          setCountry(v.country ?? null);
           setUploaded((v.documents ?? []).map((d) => d.docType));
         })
         .catch(() => {
@@ -43,7 +47,7 @@ export function DocumentTypeScreen({ navigation, route }) {
     }, []),
   );
 
-  const options = KYC_DOC_TYPES[entityType] ?? [];
+  const options = docTypesFor({ country, entityType });
 
   return (
     <NavyCanopy
@@ -58,6 +62,12 @@ export function DocumentTypeScreen({ navigation, route }) {
       sheetTone="subtle"
     >
       <View style={styles.block}>
+        {/* Aadhaar is no longer an option (owner, 2026-09-23). `other` still
+            accepts anything, so say plainly what not to send — the notice is a
+            deterrent, not a control. */}
+        {entityType === 'individual' && country === 'IN' ? (
+          <Text style={styles.warn}>{AADHAAR_NOTICE}</Text>
+        ) : null}
         {options.map((opt) => {
           const already = uploaded.includes(opt.value);
           return (
@@ -121,4 +131,5 @@ const styles = StyleSheet.create({
   rowTitle: { ...typography.label, color: colors.ink[900] },
   rowMeta: { ...typography.caption, color: colors.success, marginTop: spacing[1] },
   note: { ...typography.caption, color: colors.muted, marginTop: spacing[1] },
+  warn: { ...typography.caption, color: colors.danger[700], marginBottom: spacing[3] },
 });

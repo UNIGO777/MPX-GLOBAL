@@ -108,6 +108,28 @@ employeeRouter.post(
   ctrl.requestExporterDocuments,
 );
 
+/**
+ * Remove ONE stored KYC document — file destroyed, not marked (2026-09-23).
+ *
+ * Behind the SIDE REVIEW permission, deliberately NOT `kyc:view`: viewing is a
+ * read and this is an irreversible write. Same permission as revoke, which is
+ * the nearest destructive neighbour.
+ */
+employeeRouter.post(
+  '/employee/buyers/:id/kyc/documents/:docId/remove',
+  authenticate,
+  requirePermissions(PERMISSIONS.BUYER_APPROVE),
+  validate(V.removeDocumentSchema),
+  ctrl.removeBuyerDocument,
+);
+employeeRouter.post(
+  '/employee/exporters/:id/kyc/documents/:docId/remove',
+  authenticate,
+  requirePermissions(PERMISSIONS.EXPORTER_VERIFY),
+  validate(V.removeDocumentSchema),
+  ctrl.removeExporterDocument,
+);
+
 // KYC document viewer (M1-D): mints short-lived signed URLs for a reviewer. Needs
 // the kyc:view permission; records a kyc.view access audit.
 employeeRouter.get(

@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { kycApi, DOC_TYPE_LABEL, KYC_DOC_TYPES, KYC_MAX_DOCS } from '../../api/kyc.js';
+import { kycApi, DOC_TYPE_LABEL, docTypesFor, KYC_MAX_DOCS } from '../../api/kyc.js';
 import { Button } from '../../components/Button.jsx';
 import { FormError } from '../../components/FormError.jsx';
 import { NavyCanopy } from '../../components/NavyCanopy.jsx';
@@ -71,7 +71,7 @@ export function VerificationHubScreen({ navigation }) {
    * The 20-document cap is the other way this ends — the server refuses beyond
    * it, so offering the button there would just walk the user into a 409.
    */
-  const namedTypes = (KYC_DOC_TYPES[v?.entityType] ?? [])
+  const namedTypes = docTypesFor({ country: v?.country, entityType: v?.entityType })
     .map((d) => d.value)
     .filter((t) => t !== 'other');
   const uploadedTypes = new Set(documents.map((d) => d.docType));

@@ -5,8 +5,9 @@ import { kycApi } from '../../api/kyc.js';
 import { config } from '../../config.js';
 import { apiError, formatDate } from '../../lib/format.js';
 import {
+  AADHAAR_NOTICE,
   DOC_TYPE_LABELS,
-  DOC_TYPES_BY_ENTITY,
+  docTypesFor,
   ENTITY_LABELS,
   KYC_ACCEPT,
   checkKycFile,
@@ -42,8 +43,8 @@ import {
 // One FIXED row per accepted document type (owner request, 2026-08-10) — the
 // dropdown is gone. Rows exist only once an entity type is chosen, because the
 // type decides the list.
-const rowsFor = (entityType) =>
-  (entityType ? DOC_TYPES_BY_ENTITY[entityType] : []).map((docType) => ({
+const rowsFor = ({ country, entityType }) =>
+  docTypesFor({ country, entityType }).map((docType) => ({
     id: docType,
     docType,
     file: null,
@@ -79,7 +80,7 @@ export function KycUpload() {
       // (2026-08-19).
       const effective = v.pendingChanges?.values?.entityType ?? v.entityType ?? null;
       setEntityType(effective);
-      let slots = rowsFor(effective);
+      let slots = rowsFor({ country: v.pendingChanges?.values?.country ?? v.country, entityType: effective });
       const open = (v.documentRequests ?? []).filter((r) => !r.fulfilledAt);
       if (v.kycStatus === 'verified' && !v.pendingChanges && open.length > 0) {
         const asked = new Set(open.flatMap((r) => r.docTypes));
@@ -119,7 +120,7 @@ export function KycUpload() {
     setEntityType(value);
     // The row list IS the entity's document list now — switching reseeds it.
     // Picked files drop with it: they were chosen for types that no longer apply.
-    setRows(rowsFor(value));
+    setRows(rowsFor({ country: verification?.country, entityType: value }));
   };
 
   // role="radio" promises radiogroup keys: one tab stop, arrows to move between
@@ -402,6 +403,9 @@ export function KycUpload() {
                 ? `Send at least one — any of these works. Up to ${config.kyc.maxMb} MB per file.`
                 : 'Choose your account kind first — it decides which documents we accept.'}
             </p>
+            {entityType === 'individual' && verification?.country === 'IN' && (
+              <p className="mt-1 text-[13px] font-medium text-danger-700">{AADHAAR_NOTICE}</p>
+            )}
             {entityType && (
               <ul className="mt-4 space-y-3">
                 {rows.map((row) => (

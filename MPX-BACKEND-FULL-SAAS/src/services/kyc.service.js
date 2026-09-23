@@ -1,5 +1,5 @@
 import { Organisation } from '../models/Organisation.js';
-import { KYC_DOCS_BY_ENTITY } from '../models/enums.js';
+import { kycDocsFor } from '../models/enums.js';
 import { AppError } from '../utils/AppError.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
 import { recordAudit } from './audit.service.js';
@@ -95,11 +95,14 @@ export async function submitKycDocument({ user, entityType, docType, buffer, met
     );
   }
 
-  // The document type must be valid for the entity type it will be reviewed
-  // against — the PENDING one when a change is switching entity type (the new
-  // documents support the NEW identity), the live one otherwise.
+  // The document type must be valid for the COUNTRY and entity type it will be
+  // reviewed against — the PENDING values when a change is switching identity
+  // (the new documents support the NEW identity), the live ones otherwise.
+  // Country matters since 2026-09-23: an Indian company is asked for GST/IEC,
+  // everyone else for the cross-border generics.
   const targetEntity = pending?.values?.entityType ?? resolved;
-  if (!KYC_DOCS_BY_ENTITY[targetEntity]?.includes(docType)) {
+  const targetCountry = pending?.values?.country ?? org.country;
+  if (!kycDocsFor({ country: targetCountry, entityType: targetEntity }).includes(docType)) {
     throw AppError.badRequest('invalid docType for entity', 'This document type is not valid for your entity type.');
   }
 
@@ -211,6 +214,10 @@ export async function getOrgKycDocuments({ orgId, actor, meta }) {
   const documents = (org.kycDocuments ?? []).map((d) => {
     const { url, expiresAt } = signedKycUrl({ storageKey: d.storageKey, format: d.format });
     return {
+      // The subdocument id — needed so a reviewer can point at ONE document to
+      // remove it (2026-09-23). Opaque and already behind `kyc:view`; unlike
+      // `storageKey` it is not a pointer to the private asset.
+      id: String(d._id),
       docType: d.docType,
       uploadedAt: d.uploadedAt,
       verifiedAt: d.verifiedAt ?? null,
@@ -253,6 +260,9 @@ export async function getOrgKycDocuments({ orgId, actor, meta }) {
     exporterSide: Boolean(org.exporterSide),
     kycStatus: org.kycStatus,
     entityType: org.entityType ?? null,
+    // Drives which document types the reviewer may REQUEST (2026-09-23). Already
+    // public data on the org, so this exposes nothing new.
+    country: org.country ?? null,
     documents,
     pendingChanges: pendingDiff,
     documentRequests: documentRequestsView(org),

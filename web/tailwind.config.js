@@ -120,6 +120,21 @@ export default {
           // blue cast, which fights a red brand — together they read cold and slightly
           // dirty. One token, one reason (web-design.md).
           canvas: '#F5F2EF',
+          // 🔴 A NEUTRAL light grey for INSET panels — the block inside a card
+          // (key attributes, a price box, a fact tile), never a page ground.
+          // Owner-chosen (#f8f8f8, 2026-09-23): "for the bg use white but in
+          // some places use this color".
+          //
+          // It is its own token rather than a reuse of the two above, and that
+          // is the whole point:
+          //   · `canvas` (#F5F2EF) is WARM and is a page ground — used as an
+          //     inset it reads beige against white, not as a recess.
+          //   · `subtle` (#FDF4F4) carries the brand's red tint and is the
+          //     canvas behind every card in all four consoles (62 usages), so
+          //     repointing it to a neutral grey would repaint the whole product.
+          // This one is deliberately hue-free: it recedes under white without
+          // adding a third colour cast to a page that already has red and navy.
+          panel: '#F8F8F8',
           subtle: '#FDF4F4',
           border: '#C5C6CF', // neutral blue-grey hairline — reads neutral, kept
           // The chat sidebar's unread row (owner-specified, 2026-08-18). A TOKEN

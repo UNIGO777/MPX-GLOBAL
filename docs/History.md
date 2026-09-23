@@ -175,6 +175,286 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-23 — Quote rail: inline enquiry fields added, and the "already enquired" state fixed.**
+  Two owner reports against the new product page, both real.
+  - **"enquiry box bhi dalo"** — the mockup's inline **Quantity + Ship to** are now built. They were
+    left out because the API also requires a `note` (1–200 chars), so an inline pair would have
+    collected two of three fields and still opened the modal for the third. They now **seed**
+    `EnquiryModal` (`initialFields`) instead: the buyer types quantity and destination in the rail,
+    the modal opens with both filled and asks only for the note. Nothing is collected twice, the
+    buyer can still change them, and the structured section auto-expands so prefilled values are
+    visible. The listing's `unit` travels with the number — a bare quantity loses half its meaning.
+    Goods only; a service enquiry takes engagement type and budget instead.
+  - **"product page me enquiry box nhi h"** — `EnquiryButton` returns nothing for an exporter
+    account, staff, or a buyer on their own listing. That was fine when `framed` was one button in
+    the buy panel; once it became a whole CARD in a dedicated rail, returning null left a visible
+    hole and the page read as broken. The card now stays and **says why**, while still offering no
+    action. Inline (`framed === false`) still renders nothing — a card should not sprout there.
+  - **"if enquiry already sent give me the button to go to the chat"** — the Open-chat button already
+    existed; it was **buried under a bug I introduced**. The framed card did not branch on
+    `conversationId`, so a buyer who had already enquired saw a card headed "Request a quote", two
+    inputs feeding a form they could no longer open, and a footnote promising chat "once your enquiry
+    is sent" — which it had been. Now the heading reads **"Your enquiry / Already sent"**, the inline
+    pair is hidden, the footnote changes, and Open chat is **filled** rather than outlined: outlined
+    made sense below a filled "Create enquiry", but once it is the only action on the card it was
+    reading as secondary to nothing.
+  - Also removed a `[&_button]:mt-4` wrapper that stacked on the margins `body` already sets
+    (mt-5 + mt-4 in one branch, two conflicting margins in the other).
+  - Web build + lint pass; the running dev server was checked to be serving the new module. **Not
+    visually confirmed in a browser** — and the enquiry states need a BUYER account to see at all.
+- **2026-09-23 — Product page rebuilt to the new mockup: three columns on a warm grey canvas.**
+  Owner supplied the design and asked for "some type of grayish color … or same as image".
+  - **Layout:** gallery + supplier card (left, sticky) · product summary (centre) · quote rail +
+    "Sourcing on MPX" (right, sticky). Three columns at `xl`; below that the quote rail spans full
+    width under the other two rather than being squeezed — a 320px card and a product summary do not
+    both fit at 1024px.
+  - **Colour:** page ground is the existing `surface-canvas` (#F5F2EF), the landing hero's token. It
+    is WARM, not `ink-50` — the ink scale carries a blue cast that fights the red brand. No new token.
+  - `EnquiryButton`'s `framed` panel went from dark ink-900 to a **white card**: it read as a banner
+    once the page floats white cards on a canvas. It now also repeats the price/MOQ/lead-time facts,
+    so the sticky rail still says what is being quoted after the summary scrolls away.
+  - **Tabs are now Trade terms · Attributes · Supplier · Description**, and all four **render into the
+    DOM** with `hidden` on the inactive ones. This matters: the old set had an "Overview" tab that
+    held everything, so the others were subsets and a crawler saw the lot. Dropping it means each
+    panel carries content that lives nowhere else — mounting on click would hide the description from
+    crawlers, which `m3-seo.md` forbids.
+  - 🔴 **Eight things in the mockup were NOT built, because the data does not exist.** Listing them so
+    the gap is known rather than rediscovered:
+    - **Tiered pricing** (₹520 / ₹480 / ₹430 / ₹390 by quantity band) — `Product.price` is
+      `{mode, min, max, currency}`. There are no tiers; inventing a ladder would put prices on the
+      page the supplier never quoted. The real range renders instead.
+    - **Enquiry count on the listing** — not in the public projection, and publishing it exposes a
+      seller's commercial position to competitors.
+    - **Supplier stats** — response time, live listings, enquiries answered, monthly capacity, main
+      markets. None exist on `Organisation`; all are square-bracket placeholders in the mockup.
+    - **"How this supplier was verified"** — this one is a RULE, not a gap. The public API returns
+      `verified` + `verifiedAt` and deliberately nothing about how (B7 · `m3-public-projection.md`).
+    - **Finish variants** (Greige / Bleached / Dyed) — product variants do not exist.
+    - **Customization block** — this is precisely the seller-defined extra fields that **§A17
+      cancelled**, and still an open question with the owner.
+    - **Sample price + "Ask for sample"** — no sample field, no endpoint.
+    - **Seller city ("Tirupur, India")** — only `country` is public.
+  - Also left out on purpose: the mockup's inline **quantity + ship-to** inputs and a second
+    **"Chat with supplier"** button. Both are `web-ui-notes.md` dead controls — quantity/destination
+    live in `EnquiryModal` beside the `note` the API requires (1–200 chars), so an inline pair would
+    collect two of three fields and still open the modal for the third; and chat does not exist
+    before an enquiry does (M4-4), so that button would be dead on every first visit. The single
+    button already becomes "Open chat" once a thread exists, and the caption now says so.
+  - **`PriceLine` formats the product's own currency** — the mockup is all ₹, the catalogue is not.
+  - Web build + lint pass. **Not visually checked in a browser.**
+- **2026-09-23 — KYC documents now follow the company's COUNTRY, and Indian exporters are finally
+  asked for their IEC.** Owner: *"according to country user will select in making organizations
+  according to that we need to give him document list"*.
+  - **The finding that came out of surveying this: `iec` was missing entirely.** The DGFT Import
+    Export Code is mandatory to export from India and is the single most relevant document on an
+    export marketplace — and we were not asking for it. Added as an ordinary optional slot (owner's
+    choice); making it mandatory would be a new GATE, and gates are guarded here (D1/D2/D3).
+  - 🔴 **Shape is DEFAULT + OVERRIDES, deliberately not a 193-row matrix.** The picker offers the
+    whole ISO list and the server accepts any two-letter code, so a per-country table would be both
+    unmaintainable and permanently incomplete — and a wrong document NAME on a KYC form reads worse
+    than a generic one. **India is the only override**, because that is where our exporters are.
+    Everyone else gets cross-border generics that cover the real instruments without naming any one
+    country's: `tax` is the UK/EU VAT certificate, the US EIN letter, a TIN registration; `licence` is
+    the UAE trade licence, China's business licence; `registration` is a certificate of incorporation
+    or Singapore's ACRA profile. That is why no second override was built — three generic names
+    already cover the major buyer markets with zero maintenance.
+  - 🔴 **It keys off COUNTRY, never off buyerSide/exporterSide — and this is not a detail.** The owner
+    confirmed exporters are always Indian, but an Organisation may be **both** buyer- and
+    exporter-side (CLAUDE.md), so a side-based rule would have put GST and IEC in front of a German
+    company that also sells. Exporters get the Indian set because they are Indian, not because they
+    are exporters.
+  - **An unknown, missing or lower-case country falls THROUGH to the default set.** The failure mode
+    being avoided is an empty upload screen, which reads as "we want nothing from you" and blocks
+    verification outright. Test-pinned for `ZZ`, `''`, `null`, `undefined` and `'de'`.
+  - **New storable types:** `tax`, `licence`, `national_id`, `driving_licence`, `iec`. Nothing was
+    removed — `certificate` stays offered to Indian businesses (I had dropped it mid-change as a
+    tidy-up the owner never asked for; restored, and the test now pins that this change removed
+    nothing).
+  - **`country` had to be added to two API payloads** — `getMyVerification` and
+    `getOrgKycDocuments` — because neither client could otherwise know which list to render. It is
+    already public data on the Organisation, so nothing new is exposed.
+  - Backend: `KYC_DOCS_DEFAULT`, `KYC_DOCS_BY_COUNTRY`, `kycDocsFor({ country, entityType })`
+    replacing `KYC_DOCS_BY_ENTITY`; both enforcement points (`kyc.service.js` upload,
+    `verification.service.js` requestDocuments) now resolve country the same way they resolve entity
+    type — **pending change wins over live**, since the documents support the identity under review.
+  - Clients: web `docTypesFor()` + `ALL_DOC_TYPES`, app `docTypesFor()` returning `{value,label}`.
+    The Aadhaar notice is now gated on `country === 'IN'` too — it is about an Indian document and
+    was noise in front of a German individual.
+  - Tests: `kyc-aadhaar-masked.test.js` → **`kyc-country-documents.test.js`** (10, pass). It pins the
+    India/rest-of-world split, that India's instruments never leak into another country's list, the
+    fall-through, and that `other` stays out for individuals in **every** country.
+  - ✅ **Full suite 1114/1118** — the only failures are the same four pre-existing ones (3 × M4
+    `attachment` key lists from D9, `Settings` missing `declareScope()` from D8). Web build + lint,
+    app files parse.
+  - ⚠️ **Not done:** country is a LOCKED field, so changing it changes the required documents. Per the
+    owner, already-uploaded documents are left alone and the reviewer decides — no re-upload is
+    forced. Worth knowing that an org which switches country can therefore sit with documents its new
+    country's list does not name; they still display, because labels are a superset of what is offered.
+- **2026-09-23 — Aadhaar is accepted again, MASKED ONLY. Settles a policy that changed three times in
+  one day; this entry is the one that stands.** Owner: *"we will take addhar card again but in the ()
+  we will write masked aadhar only"*.
+  - **Why this is not a reversal back to where we started.** Masked Aadhaar is a genuinely different
+    document: UIDAI issues it with the first eight digits replaced by X, so the Aadhaar **number** —
+    which is what the restriction is actually about — is not in the file at all. Accepting a masked
+    copy is much closer to accepting any ordinary photo ID than to what we were doing this morning.
+  - 🔴 **The "(masked only)" in the label is a DETERRENT, NOT A CONTROL — and this is the sentence
+    that matters most in this entry.** Nothing in the codebase can tell a masked upload from an
+    unmasked one; a user who downloads their ordinary e-Aadhaar will sail straight through. It is the
+    same class of thing as the `other` back door we closed two hours earlier.
+  - **What makes it workable anyway are two controls that did not exist this morning:**
+    1. the **reviewer**, who sees every document before verifying and to whom a masked Aadhaar is
+       obvious on sight (`XXXX XXXX 1234`) — the KYC viewer now shows a warning whenever the docType
+       is `aadhaar`, telling them to delete rather than verify an unmasked one. The notice had to go
+       on the REVIEWER's screen, not just the uploader's; on the uploader's alone it is theatre;
+    2. **`removeDocument`** (built earlier the same day), which destroys the file so an unmasked one
+       can actually be got rid of rather than only marked.
+    🔴 **Remove either and this policy becomes a promise nobody keeps.**
+  - **`other` stays REMOVED for individuals**, and that is load-bearing here rather than leftover: a
+    named `aadhaar` docType means an unmasked copy that slips past review is still **findable by
+    query**. Under a catch-all it would not be. `other` stays for business.
+  - **docType reused rather than a new `aadhaar_masked` key** — deliberate: there is no production
+    data to disambiguate, and two Aadhaar labels on the reviewer's screen would confuse more than the
+    distinction would help.
+  - Files: `enums.js` (`individual: ['pan','aadhaar','passport']`, with the full reasoning inline),
+    `web/src/lib/kycDocTypes.js`, `app/src/api/kyc.js` (label → **"Aadhaar (masked only)"** in all
+    three), `AADHAAR_NOTICE` rewritten to say what masked means and where UIDAI issues it, and
+    `KycViewer` for the reviewer warning. `KYC_DOC_TYPE_REQUESTABLE` picks Aadhaar back up on its own
+    because it is derived, not hand-written — which was the point of deriving it.
+  - Tests: `kyc-aadhaar-retired.test.js` is **gone** (its name and every assertion asserted the
+    opposite) → **`kyc-aadhaar-masked.test.js`**, 7 cases, pins the individual list, the absence of a
+    catch-all, and that requestable stays derived from the per-entity lists.
+  - ✅ **Verified this time, for real.** 12/12 on the two new suites, 60/60 across the five KYC/
+    verification suites, web build + lint, app files parse.
+  - 🔴 **The blocker was never Docker** — an earlier entry blamed it. Tests use a local **Homebrew
+    `mongod`** on `127.0.0.1:27017`. `brew services start mongodb-community` fails with
+    `launchctl bootstrap` error 5; running `/opt/homebrew/bin/mongod --config /opt/homebrew/etc/mongod.conf`
+    directly works and is how the suite was run.
+  - ⚠️ **Found while verifying, NOT caused by this work and NOT fixed** — 4 tests fail on committed
+    code: three M4 message-projection suites pin an exact key list that never gained `attachment`
+    when D9 chat images shipped (`bae60ee`), and `security-controls` fails because the `Settings`
+    model (D8, `6166dbb`) never called `declareScope()`. Raised with the owner; left alone because
+    they belong to two other features.
+- **2026-09-23 — A reviewer can now DELETE one KYC document, file and all. The first delete path
+  for a KYC file that has ever existed in this codebase.** Owner: *"agar koi user pan me adhar upload
+  karega to bo to hum reject hi karenge na or jab hum reject karte h to documents ko delete kar do"*.
+  - **Why it was needed.** Retiring Aadhaar stops us ASKING for one; it cannot stop one arriving in
+    the PAN slot, and nothing can detect that. Until now a reviewer who spotted it had no way to act:
+    rejection wrote a status and a reason, superseding only set `supersededAt`, and
+    `Organisation.js` said outright *"there is deliberately still no delete path"*. So the moment a
+    reviewer recognised an Aadhaar was the moment we began **knowingly** holding one — with the
+    rejection audit row as the evidence that we knew.
+  - 🔴 **It is PER-DOCUMENT, not a side effect of rejecting the org — the owner was asked and chose
+    this.** The literal reading ("reject deletes the documents") would wipe a whole submission over
+    one bad file: a company whose GST was merely blurry would re-send the documents that were fine,
+    degrading the resubmit-after-rejection flow that quote **Module 7** commits to, and one misclick
+    in the review queue would destroy a set with no undo.
+  - 🔴 **kycStatus is deliberately untouched.** Deleting a file does not un-make the human decision
+    that granted a tick, and a status change hidden inside a delete is a side effect nobody asked
+    for. Reject, revoke and request-documents remain the deliberate ways to move an org.
+  - 🔴 **Delete ORDER is the load-bearing detail: file first, row second.** Reversed, a storage
+    failure would strand an unreferenced file in Cloudinary with its only pointer already gone —
+    permanently held and unfindable, the exact outcome the feature exists to prevent. It now fails
+    closed and the reviewer retries. Test-pinned.
+  - **CLAUDE.md #7 holds.** The FILE is destroyed; the audit record that it existed and was destroyed
+    is permanent and append-only, carries the mandatory reason, and deliberately carries **no**
+    `storageKey` (a pointer to a private asset, and afterwards a dangling one). For an Aadhaar we
+    never wanted, that record is the whole compliance story: proof we deleted it, without keeping it.
+  - **Permission:** the SIDE review permission (`buyer:approve` / `exporter:verify`), **not**
+    `kyc:view` — viewing is a read, this is an irreversible write. Same gate as revoke.
+  - Backend: `deleteKycFile()` in `kyc.storage.service.js` (the only caller is
+    `verification.service.js` `removeDocument`), `removeDocumentSchema`, two controllers, two routes
+    `POST /employee/{buyers|exporters}/:id/kyc/documents/:docId/remove`. The reviewer projection now
+    also returns each document's `id` — it did not before, so no client could name one.
+  - **Gotcha:** every allowed KYC type uploads with `resource_type: 'image'`, PDFs included. A
+    mismatch there does not throw, it answers `"not found"` — the file would quietly survive a delete
+    that looked successful. One resource type covers all of them; do not "fix" it to `raw` for PDFs.
+  - **Second gotcha:** four existing suites `vi.mock` the storage module. Vitest throws on an export a
+    mock factory omits, so all four needed `deleteKycFile` added even though none of them removes a
+    document.
+  - Web: `KycViewer` gains a **Delete document** action (`dangerOutline`) on the preview header,
+    gated on the side review permission rather than `canDecide` — a verified org with nothing pending
+    has no decision to make and is exactly where a stray Aadhaar would sit. Mandatory reason,
+    "this cannot be undone" stated in words, and the dialog points at *Request documents* for the
+    replacement. **App unchanged and correctly so — it has no staff surface at all** (buyer +
+    exporter only).
+  - ⚠️ **Deliberate gap:** removal does NOT notify the company or auto-create a document request. The
+    document simply disappears from their list. Coupling the two would spam a company on every
+    removal; the reviewer follows with *Request documents* instead. Flagged to the owner.
+  - ⚠️ **NOT VERIFIED — `tests/kyc-document-remove.test.js` is written (6 cases incl. the delete
+    order, the 403/404 split and the audit shape) but has never been executed: the Docker daemon is
+    not running, so Mongo is unreachable.** Backend files pass `node --check`; web lint + build pass.
+    This is security-relevant code that has not had a green run — run the suite before relying on it.
+- **2026-09-23 — `other` removed for individuals too; the Aadhaar decision becomes a CONTROL rather
+  than a request.**
+  - ⛔ **SUPERSEDED THE SAME DAY — Aadhaar is accepted again, MASKED ONLY.** Everything below about
+    Aadhaar being unavailable is now false; the `other` removal and the three-list split both
+    still stand. See the 2026-09-23 masked-Aadhaar entry at the top.
+ Owner: *"other ka option hata do ... ye sare changes app or web or backend teeno
+  me hi karne h"*. An individual now has **exactly two** accepted KYC documents: PAN and passport.
+  - **Why this was the step that mattered.** Retiring `aadhaar` while leaving a catch-all labelled
+    *"Other identity document"* open would have moved the problem, not solved it: the Aadhaar lands
+    in `other` instead, and a copy stored there is **unfindable by query** — strictly worse than the
+    named type it replaced, because you can no longer even enumerate who holds one. A notice on the
+    upload screen deters; removing the slot enforces.
+  - **`other` stays for BUSINESS**, where it carries legitimate papers (VAT certificate, export
+    licence) and has no Aadhaar failure mode. Removing it there was not asked for and would have
+    broken real uploads.
+  - **Second gap closed, one layer below the first.** `verification.service.js:131` fell back to
+    `KYC_DOC_TYPE` — the full **storable** enum — when an org has no `entityType` yet (a buyer before
+    their first upload). That is the widest list in the codebase and it still contains `aadhaar`, so
+    staff could ask a brand-new buyer for one. Now falls back to `KYC_DOC_TYPE_REQUESTABLE`. The
+    per-entity branch was already correct — only the org-less fallback was wrong.
+  - **Third, smaller trap:** the app's shared `DOC_TYPE_LABEL` would have rendered an individual's
+    pre-existing `other` document as *"Other business document"*, because after the removal only the
+    business entry defined that key. Pinned to a neutral `'Other document'`.
+  - `AADHAAR_NOTICE` reworded on web and app. It is no longer the control — it now covers the one
+    route still open: uploading an Aadhaar **image** into the PAN or passport slot. Nothing in the
+    system can detect that.
+  - Test: `tests/kyc-aadhaar-retired.test.js` now **10** (pass, no DB). It pins that an individual has
+    exactly `['pan','passport']` with no catch-all, that business keeps `other`, and — table-driven
+    over the whole storable enum — that the request schema accepts a type **iff** it is requestable.
+  - ⚠️ **Unchanged and still open:** the **5 existing Aadhaar documents** in Cloudinary and Mongo.
+    Removing the option does not remove them, and deleting them is destructive — still needs the owner.
+  - ⚠️ **Not verified:** the DB-backed KYC suites still could not run — the **Docker daemon is not
+    running**, so Mongo is unreachable. Both suites that touch `docType: 'other'` use `business`
+    orgs, so they are unaffected by inspection, but that is inspection, not a green run. Web build +
+    lint pass; the three app files parse under `babel-preset-expo`.
+- **2026-09-23 — Aadhaar retired as an accepted KYC document (owner decision); staff can no longer
+  request one either.**
+  - ⛔ **SUPERSEDED THE SAME DAY — Aadhaar is accepted again, MASKED ONLY.** Everything below about
+    Aadhaar being unavailable is now false; the `other` removal and the three-list split both
+    still stand. See the 2026-09-23 masked-Aadhaar entry at the top.
+ Owner: *"ha to hum adhar ka option nhi rakhenge"*. This was **not** a storage
+  fix — storage was already correct (private Cloudinary asset, signed short-lived URLs, audited
+  access, redacted in `logger.js`). It is an **authorisation** problem: UIDAI limits which entities
+  may hold Aadhaar copies, and a user's consent cannot grant a permission they do not have to give.
+  PAN and passport cover individual KYC.
+  - 🔴 **The gotcha worth saving: retiring a document type splits ONE list into THREE**, and each has
+    a different job. Collapsing them back is the likely future bug.
+    - **STORABLE** (`KYC_DOC_TYPE`) — **keeps `aadhaar`.** Five organisations already hold one;
+      dropping the value makes those rows fail mongoose validation on their organisation's next
+      save, and leaves the reviewer's screen with no label for a file it can still open.
+    - **REQUESTABLE** (`KYC_DOC_TYPE_REQUESTABLE`, new) — drops it. Derived as the union of
+      `KYC_DOCS_BY_ENTITY`, so it can never drift above what upload accepts.
+    - **OFFERED** (`KYC_DOCS_BY_ENTITY.individual` → `pan`/`passport`/`other`) — drops it.
+  - **Real gap found and closed:** `requestDocumentsSchema` validated staff document requests against
+    the full **storable** enum, so a reviewer could ask for an Aadhaar that `kyc.service.js:102` then
+    refuses at upload — an unsatisfiable request the company could only answer with a 400. It now
+    validates against `KYC_DOC_TYPE_REQUESTABLE`.
+  - **Client mirrors:** `web/src/lib/kycDocTypes.js` and `app/src/api/kyc.js`. The app's
+    `DOC_TYPE_LABEL` was **derived from the picker list**, so removing `aadhaar` silently removed its
+    label too — now `RETIRED_DOC_LABELS` is merged in. Web's `DOC_TYPE_LABELS` was already a
+    standalone map and needed no change.
+  - ❌ **EXPIRED the same day — this entry said `other` was "deliberately KEPT" for individuals as a
+    documented back door, with a notice as the deterrent. The owner closed it:** *"other ka option hata
+    do"*. `other` is gone for individuals (it stays for business). See the entry above.
+  - Test: `tests/kyc-aadhaar-retired.test.js` (7, pass, no DB) pins all three lists and the schema.
+  - ⚠️ **NOT done — needs the owner:** the **five existing Aadhaar documents** are still in Cloudinary
+    and Mongo. Deleting them is destructive and outward-facing, so it was not done unasked. Also still
+    open: the retention policy and consent capture (tracker **C2**), and the superseded-KYC purge.
+  - ⚠️ **Not verified:** the DB-backed KYC suites (`kyc.test.js`, `kyc-rounds-requests.test.js`) could
+    not run — Docker/Mongo is down, the same connect timeout as all of 2026-09-23. Web `npm run build`
+    and web lint pass; the app files parse under `babel-preset-expo`.
 - **2026-09-23 — App `danger` mirrored to web's maroon; a stale claim in `Pending-Work.md` struck.**
   Web moved `danger` to a deep maroon on 2026-09-22 because the old `#D92D20` measured **1.19:1**
   against the new crimson brand — indistinguishable by eye, so the destructive "Sign out" button

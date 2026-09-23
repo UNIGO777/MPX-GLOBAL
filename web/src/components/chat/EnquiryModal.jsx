@@ -42,11 +42,23 @@ const CURRENCY_OPTIONS = [
   })),
 ];
 
-export function EnquiryModal({ product, onClose, onCreated }) {
+/**
+ * `initialFields` (2026-09-23) seeds the structured section from the product
+ * page's quote rail, which asks for quantity and destination inline.
+ *
+ * 🔴 It is a SEED, not a second source of truth: the modal still owns the
+ * values, still sends them, and the buyer can change them here. The rail cannot
+ * submit on its own — `note` is required (1–200 chars, inquiry.validators.js)
+ * and is only asked for here — so prefilling is what keeps the inline pair from
+ * being a form that looks submittable but is not.
+ */
+export function EnquiryModal({ product, onClose, onCreated, initialFields }) {
   const isService = product?.category?.type === 'service';
   const [note, setNote] = useState('');
-  const [fields, setFields] = useState({});
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [fields, setFields] = useState(initialFields ?? {});
+  // Opened when something arrived prefilled — otherwise the buyer would have to
+  // expand the section to discover what they already typed.
+  const [detailsOpen, setDetailsOpen] = useState(Object.keys(initialFields ?? {}).length > 0);
   const [fieldError, setFieldError] = useState(null);
 
   const set = (key, value) => setFields((prev) => ({ ...prev, [key]: value }));

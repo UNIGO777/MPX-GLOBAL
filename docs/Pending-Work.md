@@ -34,7 +34,8 @@ Checked in code and **owed nothing** except B2 above:
 - Storage: Cloudinary `type: 'private'`, randomised `public_id`, 120s signed URLs, test-pinned
   (`tests/kycStorage.test.js`)
 
-**Quote Module 7 is done.** What remains on KYC is B2 (the email) and §2 C1 (the Aadhaar decision).
+**Quote Module 7 is done.** What remains on KYC is B2 (the email). ~~§2 C1 (the Aadhaar decision)~~ was
+**answered 2026-09-23** — see §2.
 
 ---
 
@@ -42,7 +43,7 @@ Checked in code and **owed nothing** except B2 above:
 
 | # | Item | Why it cannot wait |
 |---|---|---|
-| C1 | 🔴 **Aadhaar** — we accept and store Aadhaar images | Storage is technically correct (private, signed URLs). **Legally restricted in India** — UIDAI limits unlicensed entities holding Aadhaar copies. Three options in `docs/Note.md`: (a) drop `aadhaar` from the accepted list — cheapest, PAN/passport already satisfy individual KYC; (b) masked only; (c) DigiLocker. **Must be answered before real users upload anything.** Not a deferrable feature — a compliance decision. |
+| ~~C1~~ | ~~🔴 **Aadhaar** — we accept and store Aadhaar images~~ | ✅ **DECIDED AND DONE 2026-09-23 — option (b), MASKED ONLY.** The policy moved three times that day; this is where it landed. Aadhaar is accepted for individuals but only UIDAI's **masked** copy (first 8 digits shown as X), so the Aadhaar *number* — what the restriction is actually about — is never in the file. `other` stays REMOVED for individuals: a named docType keeps an unmasked copy findable by query, a catch-all would not. 🔴 **The "(masked only)" label is a deterrent, not a control** — nothing can detect an unmasked upload. Two things carry it instead, both built the same day: the **reviewer warning** on the KYC viewer, and **per-document delete** (`removeDocument`) so an unmasked one can be destroyed rather than marked. **Remove either and this becomes a promise nobody keeps.** Pinned by `tests/kyc-aadhaar-masked.test.js` (7) + `tests/kyc-document-remove.test.js` (5). The 5 pre-existing Aadhaar documents are dev test data (owner) — no action. Detail: `docs/History.md` 2026-09-23. |
 | C2 | 🔴 **Consent capture at signup** | No `consent`/`termsAccepted` field on any model. The screen states consent and links to the live `/terms` + `/privacy` but stores nothing — deliberately (`docs/UiWebNotes.md:56`): a checkbox would imply an agreement we do not hold. **Anyone who signs up before this exists can never be asked retroactively.** |
 | ~~C3~~ | ~~**Brand colour**~~ | ✅ **DECIDED AND DONE 2026-09-22 — red, web-wide.** `primary` is the landing's crimson ramp; `danger` moved to a deep maroon (forced — the old danger was 1.19:1 from the new brand); `surface.subtle` went warm; the new navy-and-red logo is wired with a real favicon; a `navy` token was added because the dashboard chart's series pairing broke. Landing page and the mobile app untouched by instruction. Detail + what was NOT verified: `docs/History.md` 2026-09-22. **Still open from it:** the app is now blue while the web is red (§5), the four signed-in consoles have not been seen in a browser, and `ConversationRow`'s frozen dot needs a shape difference rather than a colour one. |
 | C4 | **Support tickets** | Not built; `Ticket.js` is a skeleton. Part of quote **Module 6** (Employee panel) with enquiry routing and internal notes — a contracted module partially unbuilt by choice. Minimal version in month 1, or Bucket A2. |

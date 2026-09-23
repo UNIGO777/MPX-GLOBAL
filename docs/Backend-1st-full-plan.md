@@ -33,7 +33,10 @@
 **KYC process** — 🔨 build (ye tumhara main naya point)
 - Document upload:
   - **Business hai** → business ID proof: company registration, GST/tax, certificates
-  - **Business nahi hai** → personal ID proof (PAN / Aadhaar / passport type)
+  - **Business nahi hai** → personal ID proof — **PAN, Aadhaar (MASKED only) or passport**
+    (owner, 2026-09-23. The `other` catch-all is removed for individuals. The masked-only rule is not
+    machine-enforceable — the reviewer warning + per-document delete are what carry it; see
+    `docs/History.md`)
 - Cloudinary **signed expiring URLs**; `kycDocuments` **select:false** (A7) — public URL store nahi
 - `kycStatus`: `pending → submitted → verified / rejected`
 

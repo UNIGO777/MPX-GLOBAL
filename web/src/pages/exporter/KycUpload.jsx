@@ -6,8 +6,9 @@ import { useAuth } from '../../auth/AuthContext.jsx';
 import { config } from '../../config.js';
 import { apiError, formatDate } from '../../lib/format.js';
 import {
+  AADHAAR_NOTICE,
   DOC_TYPE_LABELS,
-  DOC_TYPES_BY_ENTITY,
+  docTypesFor,
   ENTITY_LABELS,
   KYC_ACCEPT,
   checkKycFile,
@@ -48,8 +49,8 @@ import {
 // labelled slot, stacked in order. Rows are never added or removed; only their
 // file changes. Uploading remains optional per row — the server takes any
 // subset.
-const rowsFor = (entityType) =>
-  DOC_TYPES_BY_ENTITY[entityType].map((docType) => ({
+const rowsFor = ({ country, entityType }) =>
+  docTypesFor({ country, entityType }).map((docType) => ({
     id: docType,
     docType,
     file: null,
@@ -84,7 +85,13 @@ export function KycUpload() {
       setProfile(p.status === 'fulfilled' ? p.value : null);
       // Documents support the entity type they'll be REVIEWED against — the
       // pending one when a profile change is switching identity (2026-08-19).
-      let slots = rowsFor(v.value.pendingChanges?.values?.entityType ?? v.value.entityType ?? 'business');
+      // Country decides the document set as much as entity type does; the
+      // PENDING values win for both, since the documents support the identity
+      // under review.
+      let slots = rowsFor({
+        country: v.value.pendingChanges?.values?.country ?? v.value.country,
+        entityType: v.value.pendingChanges?.values?.entityType ?? v.value.entityType ?? 'business',
+      });
       // A verified org with ONLY an open request may upload exactly what was
       // asked — the server refuses anything else, so nothing else is offered.
       const open = (v.value.documentRequests ?? []).filter((r) => !r.fulfilledAt);
@@ -390,6 +397,9 @@ export function KycUpload() {
               <p className="text-[13px] text-muted">
                 Send at least one — any of these works. Up to {config.kyc.maxMb} MB per file.
               </p>
+              {entityType === 'individual' && verification?.country === 'IN' && (
+                <p className="mt-1 text-[13px] font-medium text-danger-700">{AADHAAR_NOTICE}</p>
+              )}
             </span>
           </header>
           <ul className="space-y-3 p-5">

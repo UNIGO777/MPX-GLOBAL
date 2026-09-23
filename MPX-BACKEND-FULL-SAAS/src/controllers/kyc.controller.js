@@ -44,6 +44,9 @@ export async function getMyVerification(req, res) {
       // before offering an upload. The server enforces it regardless.
       profileComplete: isKycProfileComplete(org),
       entityType: org.entityType ?? null,
+      // The company's own country — decides which documents its upload screen
+      // offers (2026-09-23). Self-scoped read of their own organisation.
+      country: org.country ?? null,
       verifiedAt: org.verifiedAt ?? null,
       kycRejectionReason: org.kycStatus === 'rejected' ? (org.kycRejectionReason ?? null) : null,
       kycSubmittedAt: org.kycSubmittedAt ?? null,

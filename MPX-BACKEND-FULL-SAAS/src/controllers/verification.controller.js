@@ -51,6 +51,30 @@ export async function requestBuyerDocuments(req, res) {
   res.status(201).json({ request: result });
 }
 
+export async function removeBuyerDocument(req, res) {
+  const result = await svc.removeDocument({
+    orgId: req.params.id,
+    docId: req.params.docId,
+    sideFlag: 'buyerSide',
+    ...req.validated.body,
+    actor: req.user,
+    meta: meta(req),
+  });
+  res.json({ removed: result });
+}
+
+export async function removeExporterDocument(req, res) {
+  const result = await svc.removeDocument({
+    orgId: req.params.id,
+    docId: req.params.docId,
+    sideFlag: 'exporterSide',
+    ...req.validated.body,
+    actor: req.user,
+    meta: meta(req),
+  });
+  res.json({ removed: result });
+}
+
 export async function requestExporterDocuments(req, res) {
   const result = await svc.requestDocuments({
     orgId: req.params.id,
