@@ -153,7 +153,19 @@ describe('D10 · chat documents — what is accepted', () => {
     expect(att).toMatchObject({ kind: 'document', name: 'Quotation Sept.pdf', format: 'pdf' });
     expect(att.url).toMatch(/^https:\/\/api\.cloudinary\.test\//);
     expect(JSON.stringify(res.body)).not.toContain(uploads[0].public_id);
-    expect(signed.at(-1).opts).toMatchObject({ resource_type: 'raw', attachment: true });
+    // Two links for a PDF: the download (forced) and the in-browser view (inline).
+    const opts = signed.map((x) => x.opts);
+    expect(opts.some((o) => o.attachment === true)).toBe(true);
+    expect(opts.some((o) => o.resource_type === 'raw' && !('attachment' in o))).toBe(true);
+    expect(att.viewUrl).toMatch(/^https:\/\/api\.cloudinary\.test\//);
+  });
+
+  it('only a PDF gets a view link — Word and Excel stay download-only', async () => {
+    const d = await sendDoc(buyer.token, DOCX, 'spec.docx');
+    const x = await sendDoc(buyer.token, XLSX, 'prices.xlsx');
+    expect(d.body.message.attachment.viewUrl).toBeNull();
+    expect(x.body.message.attachment.viewUrl).toBeNull();
+    expect(d.body.message.attachment.url).toBeTruthy();
   });
 
   it('accepts .docx and .xlsx, detected by real bytes', async () => {
@@ -178,8 +190,35 @@ describe('D10 · chat documents — what is accepted', () => {
     expect(res.body.message.attachment.name).toBe('Qualité मूल्य सूची.pdf');
   });
 
-  it('a document still needs its line of text, like an image', async () => {
-    const res = await sendDoc(seller.token, PDF, 'q.pdf', null);
+  it('a document can go WITHOUT text, and the thread preview names the file (owner, 2026-09-24)', async () => {
+    const res = await sendDoc(seller.token, PDF, 'Price List.pdf', null);
+    expect(res.status).toBe(201);
+    expect(res.body.message.body).toBe('');
+    expect(res.body.message.attachment).toMatchObject({ kind: 'document', name: 'Price List.pdf' });
+    const conv = await Conversation.findById(conversationId).lean();
+    expect(conv.lastMessagePreview).toBe('📄 Price List.pdf');
+  });
+
+  it('a file route with neither text nor a file is refused, and stores nothing', async () => {
+    const res = await request(app)
+      .post(`/conversations/${conversationId}/messages/document`)
+      .set(bearer(seller.token))
+      .field('body', '   ');
+    expect(res.status).toBe(400);
+    expect(uploads).toHaveLength(0);
+    expect(await Message.countDocuments({ senderType: 'exporter' })).toBe(0);
+  });
+
+  it('the plain text route still requires text', async () => {
+    const res = await request(app)
+      .post(`/conversations/${conversationId}/messages`)
+      .set(bearer(seller.token))
+      .send({ body: '' });
+    expect(res.status).toBe(400);
+  });
+
+  it('text over 200 characters is still refused on a file route', async () => {
+    const res = await sendDoc(seller.token, PDF, 'q.pdf', 'x'.repeat(201));
     expect(res.status).toBe(400);
     expect(uploads).toHaveLength(0);
   });

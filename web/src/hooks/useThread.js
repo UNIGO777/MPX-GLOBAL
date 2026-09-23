@@ -30,6 +30,9 @@ function nextPendingId() {
   return pendingSeq;
 }
 
+// What a confirmed message and an optimistic bubble are matched on.
+const claimKey = (body, kind) => `${body ?? ''}\u0000${kind ?? ''}`;
+
 export function useThread(conversationId, { admin = false, enabled = true, viewerSide } = {}) {
   const queryClient = useQueryClient();
   const api = admin ? adminConversationsApi : conversationsApi;
@@ -75,8 +78,10 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
    * the race. Between the two, both were on screen.
    *
    * So the optimistic copy is now hidden the moment its confirmed twin exists,
-   * whichever path delivered it. Matching is by body against the sender's OWN
-   * recent messages, because the server cannot echo a client id back.
+   * whichever path delivered it. Matching is by body + attachment kind against
+   * the sender's OWN recent messages, because the server cannot echo a client
+   * id back. The kind matters since 2026-09-24: a file may now travel with NO
+   * text, so two file-only sends (or a photo and a plain "") share a body.
    *
    * Counted, not just "does the body exist": sending the same text twice in a
    * row must still show two bubbles, and only the confirmed ones NEWER than the
@@ -90,13 +95,15 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
     for (const m of confirmed) {
       if (m.senderType !== viewerSide) continue;
       if (new Date(m.createdAt).getTime() + 1000 < oldestPendingAt) continue;
-      claimable.set(m.body, (claimable.get(m.body) ?? 0) + 1);
+      const k = claimKey(m.body, m.attachment ? m.attachment.kind ?? 'image' : null);
+      claimable.set(k, (claimable.get(k) ?? 0) + 1);
     }
     return pending.filter((p) => {
       if (p.failed) return true;
-      const left = claimable.get(p.body) ?? 0;
+      const k = claimKey(p.body, p.file ? (isImageFile(p.file) ? 'image' : 'document') : null);
+      const left = claimable.get(k) ?? 0;
       if (left === 0) return true;
-      claimable.set(p.body, left - 1);
+      claimable.set(k, left - 1);
       return false;
     });
   })();
@@ -126,9 +133,9 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
     /**
      * D9 · one mutation, two transports (2026-09-23). A message with a file goes
      * to the multipart route; without one it takes the JSON route exactly as
-     * before. The variable is an OBJECT now rather than a bare string, but every
-     * optimistic-bubble lookup below still keys off `body` — the text is what
-     * identifies a pending bubble on screen, and an image never travels alone.
+     * before. Every optimistic-bubble lookup keys off `pendingId` — it used to
+     * be the body, which stopped being unique once a file could be sent with no
+     * text at all (owner, 2026-09-24).
      */
     // D10 · a non-image file is a document and takes its own route.
     mutationFn: ({ body, file }) => {
@@ -137,9 +144,9 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
         ? conversationsApi.sendImage(conversationId, { body, file })
         : conversationsApi.sendDocument(conversationId, { body, file });
     },
-    onSuccess: (message, { body }) => {
+    onSuccess: (message, { pendingId }) => {
       // Drop the optimistic copy and put the SERVER's message in the cache.
-      setPending((prev) => prev.filter((p) => p.body !== body));
+      setPending((prev) => prev.filter((p) => p.id !== pendingId));
       queryClient.setQueryData(keys.messages(conversationId), (old) => {
         if (!old) return old;
         // 🔴 The socket echoes this same message back to the sender, so BOTH
@@ -160,22 +167,24 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
       // until it reconnects; the MESSAGE itself is never at risk, because the
       // REST response above is what wrote it.
     },
-    onError: (_err, { body }) => {
+    onError: (_err, { pendingId }) => {
       // Keep the text on screen, marked failed, with a retry ON the bubble —
       // never a toast that floats away from the words the sender lost.
-      setPending((prev) => prev.map((p) => (p.body === body ? { ...p, failed: true } : p)));
+      setPending((prev) => prev.map((p) => (p.id === pendingId ? { ...p, failed: true } : p)));
     },
   });
 
   const sendMessage = useCallback(
     (body, file = null) => {
+      // Unique even when the same line is sent twice in a row.
+      const pendingId = `pending:${nextPendingId()}`;
       setPending((prev) => [
         // A previous FAILED attempt at the same text is replaced rather than
-        // stacked — otherwise retrying leaves two copies on screen.
-        ...prev.filter((p) => !(p.body === body && p.failed)),
+        // stacked — otherwise retrying leaves two copies on screen. Text-only:
+        // a file-only send has no text to be "the same" as.
+        ...prev.filter((p) => !(p.failed && !file && !p.file && p.body === body)),
         {
-          // Unique even when the same line is sent twice in a row.
-          id: `pending:${nextPendingId()}`,
+          id: pendingId,
           // The sender is always the viewer, so the optimistic bubble sits on
           // the right immediately instead of appearing as the counterparty's.
           senderType: viewerSide,
@@ -195,24 +204,22 @@ export function useThread(conversationId, { admin = false, enabled = true, viewe
           previewUrl: file && isImageFile(file) ? URL.createObjectURL(file) : null,
         },
       ]);
-      send.mutate({ body, file });
+      send.mutate({ pendingId, body, file });
     },
     [send, viewerSide],
   );
 
+  /** Retry ONE failed bubble, by its pending id — with its file, if it had one. */
   const retry = useCallback(
-    (body) => {
-      let file = null;
+    (pendingId) => {
+      const failed = pending.find((p) => p.id === pendingId);
+      if (!failed) return;
       setPending((prev) =>
-        prev.map((p) => {
-          if (p.body !== body) return p;
-          file = p.file ?? null;
-          return { ...p, failed: false, pending: true };
-        }),
+        prev.map((p) => (p.id === pendingId ? { ...p, failed: false, pending: true } : p)),
       );
-      send.mutate({ body, file });
+      send.mutate({ pendingId, body: failed.body, file: failed.file ?? null });
     },
-    [send],
+    [send, pending],
   );
 
   return {

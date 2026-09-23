@@ -12,28 +12,7 @@ import { fileBadge, formatFileSize } from '../../lib/chatFiles.js';
  * tab. While the bubble is still uploading there is no link yet.
  */
 function DocumentCard({ doc, own, compact }) {
-  const tone = own
-    ? 'bg-white/15 text-white hover:bg-white/25'
-    : 'bg-ink-50 text-ink-900 hover:bg-ink-100';
-  const inner = (
-    <>
-      <span
-        aria-hidden="true"
-        className={`flex shrink-0 items-center justify-center rounded-lg font-bold tracking-wide ${
-          compact ? 'h-9 w-9 text-[9.5px]' : 'h-10 w-10 text-[10.5px]'
-        } ${own ? 'bg-white text-primary-700' : 'bg-white text-primary-700 ring-1 ring-primary-100'}`}
-      >
-        {fileBadge(doc.format ?? doc.name)}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-semibold">{doc.name}</span>
-        <span className={`block text-[11px] ${own ? 'text-white/75' : 'text-muted'}`}>
-          {formatFileSize(doc.bytes)}
-        </span>
-      </span>
-      {doc.url && <DownloadIcon className="h-4 w-4 shrink-0 opacity-80" />}
-    </>
-  );
+  const hover = own ? 'hover:bg-white/20' : 'hover:bg-ink-100';
   /**
    * Save under the REAL name. The signed url is on Cloudinary's origin, where a
    * browser ignores the `download` attribute and Cloudinary names every raw
@@ -61,20 +40,63 @@ function DocumentCard({ doc, own, compact }) {
       window.location.assign(doc.url);
     }
   };
-  const cls = `mb-1.5 flex min-w-[200px] max-w-full items-center gap-2.5 rounded-xl p-2 transition-colors ${tone}`;
-  return doc.url ? (
-    <a
-      href={doc.url}
-      download={doc.name}
-      onClick={save}
-      rel="noopener noreferrer"
-      className={cls}
-      aria-label={`Download ${doc.name}`}
+
+  const info = (
+    <>
+      <span
+        aria-hidden="true"
+        className={`flex shrink-0 items-center justify-center rounded-lg bg-white font-bold tracking-wide text-primary-700 ${
+          compact ? 'h-9 w-9 text-[9.5px]' : 'h-10 w-10 text-[10.5px]'
+        } ${own ? '' : 'ring-1 ring-primary-100'}`}
+      >
+        {fileBadge(doc.format ?? doc.name)}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-semibold">{doc.name}</span>
+        <span className={`block text-[11px] ${own ? 'text-white/75' : 'text-muted'}`}>
+          {formatFileSize(doc.bytes)}
+          {doc.viewUrl && ' · Click to open'}
+        </span>
+      </span>
+    </>
+  );
+  const main = `flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1 text-left transition-colors ${doc.url ? hover : ''}`;
+
+  return (
+    <div
+      className={`mb-1.5 flex min-w-[220px] max-w-full items-center gap-1 rounded-xl p-1 ${
+        own ? 'bg-white/15 text-white' : 'bg-ink-50 text-ink-900'
+      }`}
     >
-      {inner}
-    </a>
-  ) : (
-    <div className={cls}>{inner}</div>
+      {/* OPEN — a PDF opens in the browser's own viewer in a new tab, on
+          Cloudinary's origin (see signedChatDocumentUrl). Word / Excel have no
+          in-browser viewer, so for them the card itself downloads. */}
+      {doc.viewUrl ? (
+        <a href={doc.viewUrl} target="_blank" rel="noopener noreferrer" className={main} aria-label={`Open ${doc.name}`}>
+          {info}
+        </a>
+      ) : doc.url ? (
+        <button type="button" onClick={save} className={main} aria-label={`Download ${doc.name}`}>
+          {info}
+        </button>
+      ) : (
+        <div className={main}>{info}</div>
+      )}
+
+      {doc.url && (
+        <button
+          type="button"
+          onClick={save}
+          title="Download"
+          aria-label={`Download ${doc.name}`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${hover} ${
+            own ? 'text-white' : 'text-ink-600'
+          }`}
+        >
+          <DownloadIcon className="h-4 w-4" />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -345,7 +367,8 @@ function PartyMessage({ message, align, tone, senderName, senderType, pending, f
               reserve exactly its width on the last line, and the real one is
               positioned over that gap. A one-line message therefore grows
               sideways and stays one line tall. */}
-          {/* D9 · the image, above its line of text (2026-09-23).
+          {/* D9 · the image, above its line of text (2026-09-23) — the text may
+              be empty since 2026-09-24.
               `previewUrl` is the local blob shown while an optimistic bubble
               uploads; `attachment.url` is the server's SHORT-LIVED SIGNED url,
               minted per read. Width/height come from the server so the bubble

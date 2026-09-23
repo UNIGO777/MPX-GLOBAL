@@ -50,10 +50,9 @@ export const conversationsApi = {
    * multipart one its own (tighter) upload rate limit — an 8 MB file does not
    * belong on the 60-a-minute text budget.
    *
-   * `body` still travels and is still required: an image always goes with a
-   * line of text. A bare photograph in a commercial thread says nothing, and
-   * the push notification (which never carries message text) would have had
-   * nothing to describe.
+   * `body` travels but may be EMPTY — a file can go on its own since
+   * 2026-09-24 (owner; reversing D9's "an image always goes with a line of
+   * text"). The server refuses a call with neither text nor a file.
    */
   sendImage: (id, { body, file }) => {
     const form = new FormData();

@@ -74,14 +74,21 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
 - **Controls (all server-side, `chatAttachment.storage.service.js`):** real-bytes type check;
   8 MB cap (`CHAT_ATTACHMENT_MAX_MB`); PDFs with JavaScript / launch / embedded files refused;
   Office files with a VBA project or ActiveX refused; stored as a Cloudinary PRIVATE raw asset
-  (the D9/KYC pattern); signed URL with a FORCED DOWNLOAD disposition — never rendered inline; the
+  (the D9/KYC pattern); signed URL with a FORCED DOWNLOAD disposition — **plus, for PDFs only
+  (owner 2026-09-24: "documents are not opening"), a second inline `viewUrl` that opens in the
+  browser's PDF viewer on CLOUDINARY's origin, never ours; .docx/.xlsx stay download-only (no
+  in-browser viewer without a third party)**; the
   display name is cleaned (no path, no bidi override) and its extension is the server's.
   Route: `POST /conversations/:id/messages/document` (field `document`), same guards and order as
   the image route. Tests: `tests/chat-documents.test.js` (15).
+- **Text is OPTIONAL with a file (owner, 2026-09-24)** — reverses D9's "an image always travels
+  with a line of text". The two file routes accept an empty `body` (`V.sendWithFile`); the JSON
+  text route still requires it; a call with neither is refused. The thread preview names the
+  file ("📷 Photo" / "📄 name"). Web and app both built (app not yet device-tested).
 - ⚠️ **Accepted with the override:** nothing SCANS the content (M4-15 — Phase 2); the active-content
   screen is conservative, not complete (a PDF can hide script in a compressed stream). The forced
-  download + private store are the other two layers. 🔴 **The mobile app does not show attachments
-  at all yet** — images or documents; an app user sees only the message text.
+  download + private store are the other two layers. The app shows and sends both since
+  2026-09-24 (Pending-Work B7) — not yet run on a device.
 
 ## D1 · Unverified seller = max 3 ACTIVE products (+10 drafts)  🧭 BUILD-TIME REMINDER (confirmed scope)
 - **Rule (owner-confirmed, refined by Part A §A10/§A15):** an unverified seller may hold at most

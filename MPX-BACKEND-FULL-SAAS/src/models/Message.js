@@ -37,7 +37,15 @@ const messageSchema = new Schema(
     // M4-17 is explicit that threads show COMPANY names, never person names.
     senderUserId: { type: Schema.Types.ObjectId, ref: 'User' },
 
-    body: { type: String, required: true, trim: true, maxlength: BODY_CEILING },
+    // Required unless the message carries a file — since 2026-09-24 a photo or
+    // document may be sent with no text (owner). Empty string, never absent.
+    body: {
+      type: String,
+      trim: true,
+      default: '',
+      maxlength: BODY_CEILING,
+      required: [function bodyRequired() { return !this.attachment?.storageKey; }, 'Message text is required.'],
+    },
 
     /**
      * M4 · image attachment (D9 — scope override 2026-09-23).
@@ -47,10 +55,10 @@ const messageSchema = new Schema(
      * short-lived signed URL per read, and the key itself must never reach a
      * client — it is the one field here that would outlive the TTL.
      *
-     * Optional: `body` stays required, so an image always travels with a line of
-     * text. That is deliberate — a bare image in a commercial thread says
-     * nothing, and the notification copy (which never includes message text,
-     * D-N1) would have had nothing to describe either.
+     * `body` may be EMPTY when this is set (owner, 2026-09-24 — reversing D9's
+     * "an image always travels with a line of text"). The push copy never
+     * carried message text anyway (D-N1), and the thread list's preview names
+     * the file instead (`previewFor` in message.service).
      */
     attachment: {
       // D10 (2026-09-24): documents join images. ABSENT on every image written

@@ -10,7 +10,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,11 +17,14 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { catalogueApi } from '../api/catalogue.js';
 import { conversationsApi } from '../api/conversations.js';
+import { ChatAttachment } from '../components/chat/ChatAttachment.jsx';
+import { ChatComposer } from '../components/chat/ChatComposer.jsx';
 import { ErrorState, Spinner } from '../components/Feedback.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useChat } from '../context/ChatContext.jsx';
 import { getSocket } from '../realtime/socket.js';
 import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/index.js';
+import { chatFileProblem } from '../utils/chatFiles.js';
 import { toAppError } from '../utils/errors.js';
 
 /**
@@ -71,6 +73,20 @@ export function ChatThreadScreen({ navigation, route }) {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  // D9/D10 · one queued attachment (image OR document), and why a picked file
+  // was refused before upload. The server still has the final word on every file.
+  const [file, setFile] = useState(null);
+  const [attachError, setAttachError] = useState(null);
+
+  const queueFile = useCallback((picked, kind) => {
+    const problem = chatFileProblem(picked, kind);
+    setAttachError(problem);
+    setFile(problem ? null : { ...picked, kind });
+  }, []);
+  const clearFile = useCallback(() => {
+    setFile(null);
+    setAttachError(null);
+  }, []);
   const idsRef = useRef(new Set()); // server ids seen — the de-dup ledger
   const focusedRef = useRef(false);
 
@@ -196,21 +212,33 @@ export function ChatThreadScreen({ navigation, route }) {
   const send = useCallback(
     async (retryLocal) => {
       const body = (retryLocal?.body ?? draft).trim();
-      if (!body || body.length > 200) return;
+      // 🔴 A retry re-reads the file from the failed bubble — without that,
+      // retrying a failed attachment would quietly deliver the text alone and
+      // the sender would believe the file had gone (the web's D9 rule).
+      const localFile = retryLocal ? retryLocal.localFile ?? null : file;
+      // Text is optional WITH a file (owner, 2026-09-24), required without one.
+      if ((!body && !localFile) || body.length > 200) return;
       const localId = retryLocal?.localId ?? `local-${Date.now()}`;
       const optimistic = {
         id: localId,
         localId,
         senderType: mySide,
         body,
+        localFile,
         createdAt: new Date().toISOString(),
         pending: true,
       };
       setMessages((current) => [optimistic, ...current.filter((m) => m.localId !== localId)]);
-      if (!retryLocal) setDraft('');
+      if (!retryLocal) {
+        setDraft('');
+        clearFile();
+      }
       setSending(true);
       try {
-        const message = await conversationsApi.send(id, body);
+        let message;
+        if (!localFile) message = await conversationsApi.send(id, body);
+        else if (localFile.kind === 'image') message = await conversationsApi.sendImage(id, { body, file: localFile });
+        else message = await conversationsApi.sendDocument(id, { body, file: localFile });
         setMessages((current) => {
           const withoutLocal = current.filter((m) => m.localId !== localId);
           if (idsRef.current.has(message.id)) return withoutLocal; // socket echo won
@@ -227,7 +255,7 @@ export function ChatThreadScreen({ navigation, route }) {
         setSending(false);
       }
     },
-    [draft, id, mySide],
+    [draft, file, id, mySide, clearFile],
   );
 
   const removeFailed = (localId) =>
@@ -391,27 +419,17 @@ export function ChatThreadScreen({ navigation, route }) {
             </Text>
           </View>
         ) : (
-          <View style={[styles.composer, { paddingBottom: Math.max(insets.bottom, spacing[3]) }]}>
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder="Write a message…"
-              placeholderTextColor={colors.ink[400]}
-              style={styles.input}
-              accessibilityLabel="Message"
-              multiline
-              maxLength={200}
-            />
-            <Pressable
-              onPress={() => send()}
-              disabled={sending || draft.trim().length === 0}
-              accessibilityRole="button"
-              accessibilityLabel="Send"
-              style={[styles.sendButton, (sending || draft.trim().length === 0) && styles.sendButtonOff]}
-            >
-              <Ionicons name="arrow-up" size={20} color={colors.white} accessible={false} />
-            </Pressable>
-          </View>
+          <ChatComposer
+            value={draft}
+            onChange={setDraft}
+            onSend={() => send()}
+            sending={sending}
+            file={file}
+            onQueueFile={queueFile}
+            onClearFile={clearFile}
+            attachError={attachError}
+            bottomInset={insets.bottom}
+          />
         )}
       </KeyboardAvoidingView>
     </View>
@@ -496,7 +514,9 @@ function MessageRow({ message: m, mySide, onRetry, onDiscard, conversation }) {
     <View style={[styles.messageWrap, mine ? styles.mineWrap : styles.theirsWrap]}>
       {m.showName ? <Text style={styles.senderName}>{senderName}</Text> : null}
       <View style={[styles.bubble, mine ? styles.mineBubble : styles.theirsBubble, m.failed && styles.failedBubble]}>
-        <Text style={[styles.bubbleText, mine && styles.mineText]}>{m.body}</Text>
+        <ChatAttachment message={m} mine={mine} />
+        {/* A file may arrive with no text — no empty line under it then. */}
+        {m.body ? <Text style={[styles.bubbleText, mine && styles.mineText]}>{m.body}</Text> : null}
       </View>
       {m.pending ? <Text style={styles.metaLine}>Sending…</Text> : null}
       {m.failed ? (
@@ -651,34 +671,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ink[50],
   },
   frozenComposerText: { ...typography.caption, color: colors.ink[600], textAlign: 'center' },
-
-  composer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing[2],
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[2],
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.surface.border,
-    backgroundColor: colors.surface.DEFAULT,
-  },
-  input: {
-    flex: 1,
-    ...typography.body,
-    color: colors.ink[900],
-    maxHeight: 110,
-    borderRadius: radii.lg,
-    backgroundColor: colors.ink[50],
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-  },
-  sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.full,
-    backgroundColor: colors.primary[600],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButtonOff: { backgroundColor: colors.ink[200] },
 });

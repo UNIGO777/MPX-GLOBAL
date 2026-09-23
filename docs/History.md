@@ -186,6 +186,39 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   mirrors the server's slug rule), and the new category is selected on create. 6 tests; the 22
   existing category tests still pass. Verified in a browser: create, duplicate refused, switch-on
   refused while empty. ⚠️ Deleting a top category is still not possible (not requested).
+  - 2026-09-24: **App matched to the web** (owner: "do same changes in app"): a file can be sent with
+    no text (send enabled with just a file, "Add a message (optional)…", no empty line under a text-less
+    bubble), and a PDF card OPENS on tap via `viewUrl` with a separate download button; Word/Excel still
+    download. The app list re-reads previews from the server, so "📷 Photo" / "📄 name" arrive there with
+    no client change. The app's optimistic bubbles were already keyed by `localId`, not text, so the web's
+    key-collision bug never existed there. 🔴 Still not run on a device (no `node_modules` in `app/`).
+  - 2026-09-24: **Photos and documents can be sent WITHOUT text** (owner: "not being sent without
+    writing message"). Reverses D9's "a file always travels with a line of text" — that was a deliberate
+    rule, not a bug. Server: the two file routes use `V.sendWithFile` (body optional, still ≤200);
+    `Message.body` is required only when there is no attachment (default ''); `sendMessage` refuses
+    neither-text-nor-file; `previewFor` makes the list preview "📷 Photo" / "📄 <name>" (mirrored in the
+    web socket patch). Web: send enabled with just a file; placeholder "Add a message (optional)…".
+    🔴 Gotcha fixed on the way: optimistic bubbles were keyed by their TEXT (success, failure, retry and
+    echo de-dup) — two file-only sends would have shared the key "". Now keyed by a pending id, and the
+    echo match uses body + attachment kind. Tests: 1 replaced + 3 new (19 in chat-documents); all chat test files pass.
+    App composer unchanged (still requires text).
+  - 2026-09-24: **Chat documents now OPEN, not only download (web)** — owner: "the documents only show
+    download and are not opening". Cause: every document link was forced-download by design. Now a PDF
+    also gets `attachment.viewUrl` (signed, same 10-min TTL, INLINE) and the web card opens it in a new tab
+    (`noopener noreferrer`) — served from api.cloudinary.com, never our origin; upload still refuses PDFs
+    with scripts. The download button beside it keeps the real file name. `.docx`/`.xlsx` get
+    `viewUrl: null` and stay download-only: a browser can't show them, and a Google/Microsoft viewer would
+    mean sending the private file to a third party (not done without the owner). +1 test (16). App not
+    changed yet (owner: "first in web only").
+  - 2026-09-24: **App chat brought level with the web** (owner: "make same chat changes in app also").
+    `app/src/components/chat/ChatComposer.jsx` — one row: "+" (Photo / Document, inline panel) · message ·
+    emoji (the web's 40-glyph set, `utils/chatEmoji.js`, greyed when it would pass 200) · send (dims when
+    empty). `ChatAttachment.jsx` — photo bubbles with a full-screen viewer; document cards open the signed
+    link (forced download → the phone's browser). `conversationsApi.sendImage/sendDocument` (multipart
+    {uri,name,type}); a failed send keeps its file for Retry. No new dependency (`expo-image-picker` /
+    `expo-document-picker` were already in). Photo picks use quality 0.8 so an iPhone HEIC arrives as
+    JPEG (server allowlist). 🔴 Not run on a device — no `node_modules` in `app/` here; esbuild parse +
+    ESLint no-undef pass only. ⚠️ App downloads get Cloudinary's generic "file.pdf" name.
   - 2026-09-24: **D10 · chat DOCUMENTS (PDF, .docx, .xlsx)** — red-alerted (M4-14 + D9's own
     exclusion), owner confirmed "make it"; types chosen as the safe default since none were picked.
     Backend: `POST /conversations/:id/messages/document`; `uploadChatDocument` / `verifyChatDocument` /
@@ -206,6 +239,8 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
     red ring. `PaperclipIcon` removed (unused). The 200-char ring around Send is unchanged.
     Follow-up (phone): the emoji picker was rendered without `compact`, so its old 44px wrapper sat round a
     32px button — dead space either side. Now + → emoji → text run 0 / 6 px apart.
+    Then (owner): emoji moved to the RIGHT, beside Send; its panel opens right-aligned. Row is now
+    + · message · emoji · send.
   - 2026-09-24: chat composer gains an EMOJI button (owner request; web). `web/src/components/chat/EmojiPicker.jsx`
     — a curated 40-glyph panel, no library (no new dependency). Inserts at the caret; stays open for several
     picks; Esc/outside click closes. 🔴 Emoji are 2+ UTF-16 units and the server's 200 cap (M4-12) counts

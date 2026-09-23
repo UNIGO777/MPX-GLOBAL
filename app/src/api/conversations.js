@@ -14,12 +14,25 @@ import { apiClient } from './client.js';
  *                participants, lastMessageAt, lastMessagePreview, unread,
  *                frozen, frozenLabel{tone,text}, blockedReason, createdAt }
  *   messageView: { id, senderType: 'buyer'|'exporter'|'system', systemKind,
- *                  body, createdAt } — company-level only, never a person.
+ *                  body, attachment, createdAt } — company-level only, never a person.
+ *   attachment: null | { kind:'image', url, width, height }
+ *                    | { kind:'document', url, viewUrl, name, format, bytes }
+ *     `viewUrl` — PDFs only: an INLINE link that opens instead of downloading.
+ *     `url` is a SHORT-LIVED signed link (10 min), minted per read.
  *
  * 🔴 `blockedReason` is the reason BOTH parties may see (M4-25); the acting
  * admin is never serialised. Do not add fields client-side that the view
  * withholds.
  */
+function sendFile(id, field, { body, file }) {
+  const form = new FormData();
+  form.append(field, { uri: file.uri, name: file.name, type: file.mimeType });
+  form.append('body', body);
+  return apiClient
+    .post(`/conversations/${id}/messages/${field}`, form, { headers: { 'Content-Type': 'multipart/form-data' } })
+    .then((r) => r.data.message);
+}
+
 export const conversationsApi = {
   /** q searches the three denormalised names; cursor-paginated. */
   list: (params = {}) => apiClient.get('/conversations', { params }).then((r) => r.data),
@@ -47,6 +60,16 @@ export const conversationsApi = {
   /** REST send BROADCASTS server-side (§0.1) — the sender also receives the
    *  same message over the socket, so callers must de-duplicate by `id`. */
   send: (id, body) => apiClient.post(`/conversations/${id}/messages`, { body }).then((r) => r.data.message),
+
+  /**
+   * D9 · an image, D10 · a document (PDF / .docx / .xlsx) — each its own
+   * multipart route, same guards as `send`. `body` travels but may be EMPTY —
+   * a file can go on its own since 2026-09-24 (owner). The server sniffs the
+   * real bytes; nothing here is trusted. React Native's FormData takes the
+   * {uri, name, type} shape, not a Blob.
+   */
+  sendImage: (id, { body, file }) => sendFile(id, 'image', { body, file }),
+  sendDocument: (id, { body, file }) => sendFile(id, 'document', { body, file }),
 
   markRead: (id) => apiClient.post(`/conversations/${id}/read`).then((r) => r.data),
 

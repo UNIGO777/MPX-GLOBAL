@@ -99,7 +99,7 @@ conversationRouter.post(
   authenticate,
   uploadLimiter,
   uploadChatImage,
-  validate(V.sendMessage),
+  validate(V.sendWithFile),
   ctrl.send,
 );
 
@@ -110,7 +110,7 @@ conversationRouter.post(
   authenticate,
   uploadLimiter,
   uploadChatDocument,
-  validate(V.sendMessage),
+  validate(V.sendWithFile),
   ctrl.send,
 );
 

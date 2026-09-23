@@ -87,7 +87,15 @@ function patchListRow(queryClient, conversationId, message, viewerSide) {
     found = true;
     const patched = {
       ...row,
-      lastMessagePreview: message.body.slice(0, PREVIEW_LENGTH),
+      // Mirrors the server's `previewFor`: a file sent with no text names the
+      // file rather than leaving the row blank.
+      lastMessagePreview: message.body
+        ? message.body.slice(0, PREVIEW_LENGTH)
+        : message.attachment?.kind === 'document'
+          ? `📄 ${message.attachment.name}`.slice(0, PREVIEW_LENGTH)
+          : message.attachment
+            ? '📷 Photo'
+            : '',
       lastMessageAt: message.createdAt,
       unread: message.senderType === viewerSide ? row.unread : true,
     };

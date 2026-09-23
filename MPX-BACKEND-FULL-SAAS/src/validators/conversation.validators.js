@@ -48,6 +48,18 @@ export const sendMessage = {
   body: z.object({ body: zString({ min: 1, max: 200 }) }),
 };
 
+/**
+ * The two FILE routes (D9 image · D10 document). Same 200 cap, but the text is
+ * OPTIONAL — a photo or document may go on its own (owner, 2026-09-24; this
+ * reverses D9's "a file always travels with a line of text"). The plain JSON
+ * route above still requires text, and `sendMessage` refuses a multipart call
+ * that carries neither text nor a file.
+ */
+export const sendWithFile = {
+  params: z.object({ id: zObjectId() }),
+  body: z.object({ body: zString({ max: 200 }).optional().default('') }),
+};
+
 // --- staff moderation (M4-E) -------------------------------------------------
 
 // m5-rules §9 — conversation lists are CURSOR paginated, never page numbers.

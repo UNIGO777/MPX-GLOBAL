@@ -72,7 +72,9 @@ export function Composer({
   }, [value]);
 
   const trimmed = value.trim();
-  const canSend = trimmed.length > 0 && trimmed.length <= MAX_LENGTH && !sending;
+  // A queued file can go on its own — the text is optional then (owner,
+  // 2026-09-24; it used to be required with every attachment).
+  const canSend = (trimmed.length > 0 || Boolean(image)) && trimmed.length <= MAX_LENGTH && !sending;
   const remaining = MAX_LENGTH - value.length;
   const showRing = value.length >= RING_FROM;
   const filled = Math.min(1, Math.max(0, (value.length - RING_FROM) / (MAX_LENGTH - RING_FROM)));
@@ -157,8 +159,8 @@ export function Composer({
         submit();
       }}
       /* Redesigned 2026-09-24 (owner: "looking cheap", then "still not good").
-         ONE row, the layout working chat tools use: attach + emoji on the left,
-         the message in the middle, send on the right. The three loose icons
+         ONE row, the layout working chat tools use: attach on the left, the
+         message in the middle, emoji and send on the right (owner, 2026-09-24). The three loose icons
          became one "+" menu; the always-on keyboard hint is gone. Focus is a
          soft halo on a darker border, not a 2px brand-red ring. */
       className="rounded-[22px] border border-surface-border bg-white shadow-[0_1px_2px_rgba(0,5,23,0.04),0_6px_16px_rgba(0,5,23,0.05)] transition-[border-color,box-shadow] focus-within:border-ink-300 focus-within:shadow-[0_0_0_4px_rgba(0,5,23,0.05),0_6px_16px_rgba(0,5,23,0.06)]"
@@ -206,12 +208,6 @@ export function Composer({
         <span className="flex h-10 items-center">
           <AttachMenu onPickImage={onPickImage} onPickDocument={onPickDocument} disabled={sending} />
         </span>
-        <span className="flex h-10 items-center">
-          {/* `compact` = the h-8 box. Without it the picker kept its old 44px
-              wrapper around a 32px button — dead space either side that was
-              plain to see on a phone (owner, 2026-09-24). */}
-          <EmojiPicker onPick={insertAtCaret} canFit={fitsAtCaret} compact align="left" disabled={sending} />
-        </span>
 
         <label htmlFor="chat-composer" className="sr-only">
           Write a message
@@ -225,7 +221,7 @@ export function Composer({
           maxLength={MAX_LENGTH}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={placeholder ?? 'Write a message…'}
+          placeholder={image ? 'Add a message (optional)…' : placeholder ?? 'Write a message…'}
           className={`ml-1.5 mr-1 block min-w-0 flex-1 resize-none border-0 bg-transparent px-0 py-[9px] leading-[22px] text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-0 ${
             compact ? 'text-[13px]' : 'text-[14.5px]'
           }`}
@@ -233,6 +229,13 @@ export function Composer({
         {/* The count survives for anyone who cannot see the ring. */}
         <span aria-live="polite" className="sr-only">
           {showRing ? `${remaining} characters remaining` : ''}
+        </span>
+
+        <span className="flex h-10 items-center">
+          {/* `compact` = the h-8 box. Without it the picker kept its old 44px
+              wrapper around a 32px button — dead space either side that was
+              plain to see on a phone (owner, 2026-09-24). */}
+          <EmojiPicker onPick={insertAtCaret} canFit={fitsAtCaret} compact align="right" disabled={sending} />
         </span>
 
         {sendButton}

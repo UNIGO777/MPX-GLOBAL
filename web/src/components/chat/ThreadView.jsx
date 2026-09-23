@@ -358,7 +358,7 @@ export function ThreadView({
                       // and platform notices render at page scale inside it.
                       compact={variant === 'dock'}
                       counterpartyName={nameFor(message.senderType)}
-                      onRetry={() => thread.retry(message.body)}
+                      onRetry={() => thread.retry(message.id)}
                       startsGroup={newDay || !sameRun(previous, message)}
                     />
                   </Fragment>

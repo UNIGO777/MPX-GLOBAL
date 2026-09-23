@@ -176,6 +176,9 @@ function attachmentView(att) {
     return {
       kind: 'document',
       url: signedChatDocumentUrl({ storageKey: att.storageKey }),
+      // PDFs only: a second link that OPENS in the browser's viewer. Null for
+      // .docx/.xlsx — a browser cannot show them without a third party.
+      viewUrl: att.format === 'pdf' ? signedChatDocumentUrl({ storageKey: att.storageKey, inline: true }) : null,
       name: att.name ?? `document.${att.format}`,
       format: att.format,
       bytes: att.bytes ?? null,

@@ -232,16 +232,23 @@ export async function uploadChatDocument({ buffer, originalName, conversationId 
 }
 
 /**
- * Signed URL for a stored document — same TTL reasoning as images — with
- * `attachment: true`, so the browser DOWNLOADS it rather than rendering it
- * inline. A PDF opened inside our origin's tab would run in the viewer with
- * whatever it carries; a download hands it to the person's own reader instead.
+ * Signed URL for a stored document — same TTL reasoning as images.
+ *
+ * Default: `attachment: true`, a forced DOWNLOAD.
+ *
+ * `inline: true` (PDF only — the view layer enforces that; owner 2026-09-24:
+ * "documents are not opening") serves the same file for the browser's own PDF
+ * viewer. Accepted because it opens on CLOUDINARY's origin, never ours, so
+ * nothing in it can reach our session or storage; the upload already refused
+ * PDFs carrying JavaScript / launch actions / embedded files; and the link
+ * dies with the TTL. Word and Excel have no in-browser viewer that doesn't
+ * mean shipping the private file to a third party, so they stay download-only.
  */
-export function signedChatDocumentUrl({ storageKey, ttlSeconds = 600 }) {
+export function signedChatDocumentUrl({ storageKey, inline = false, ttlSeconds = 600 }) {
   assertConfigured();
   return cloudinary.utils.private_download_url(storageKey, '', {
     resource_type: 'raw',
-    attachment: true,
+    ...(inline ? {} : { attachment: true }),
     expires_at: Math.floor(Date.now() / 1000) + ttlSeconds,
   });
 }

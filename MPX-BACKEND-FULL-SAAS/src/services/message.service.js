@@ -26,6 +26,18 @@ import { emitNewMessage } from '../realtime/socket.js';
 const PREVIEW_LENGTH = 200;
 
 /**
+ * The thread list's one-line preview. A file sent with no text would otherwise
+ * preview as a blank row, so it names the file instead — never the storage key
+ * or a URL, only the cleaned display name the other party already sees.
+ */
+function previewFor(body, attachment) {
+  if (body) return body.slice(0, PREVIEW_LENGTH);
+  if (attachment?.kind === 'document') return `📄 ${attachment.name}`.slice(0, PREVIEW_LENGTH);
+  if (attachment) return '📷 Photo';
+  return '';
+}
+
+/**
  * A party sends a message. `senderType` is derived from the caller's role and is
  * never read from the body — otherwise a buyer could post as `system` and
  * impersonate the platform.
@@ -58,6 +70,12 @@ export async function sendMessage({ user, conversationId, body, imageBuffer = nu
    * this sits below `loadPartyConversation` (membership) and below the frozen
    * check: a closed thread accepts no new content of any kind.
    */
+  // Nothing to send: a multipart call with neither text nor a file. The JSON
+  // route can't get here empty (its validator requires text).
+  if (!body && !imageBuffer && !document) {
+    throw AppError.badRequest('empty message', 'Write a message or attach a file.');
+  }
+
   // D10 · documents follow the same order: guards first, bytes second.
   let attachment;
   if (imageBuffer) {
@@ -86,7 +104,7 @@ export async function sendMessage({ user, conversationId, body, imageBuffer = nu
   const readField = side === 'buyer' ? 'buyerLastReadAt' : 'exporterLastReadAt';
   await Conversation.updateOne(
     { _id: conversation._id },
-    { $set: { lastMessageAt: sentAt, lastMessagePreview: body.slice(0, PREVIEW_LENGTH), [readField]: sentAt } },
+    { $set: { lastMessageAt: sentAt, lastMessagePreview: previewFor(body, attachment), [readField]: sentAt } },
   );
 
   // §7.1 — LIVE delivery, from the one place every send path passes through.
