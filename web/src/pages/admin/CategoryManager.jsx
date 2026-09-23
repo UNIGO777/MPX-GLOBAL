@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminCatalogueApi, adminCatalogueKeys } from '../../api/adminCatalogue.js';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
+import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { Drawer } from '../../components/ui/Drawer.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
@@ -241,11 +242,6 @@ export function CategoryManager() {
   // Guard on noticeState itself: while the tree loads selectedId is undefined,
   // and `undefined === undefined` would read .text off null.
   const notice = noticeState && noticeState.topId === selectedId ? noticeState.text : null;
-  useEffect(() => {
-    if (!noticeState) return undefined;
-    const t = setTimeout(() => setNoticeState(null), 8000);
-    return () => clearTimeout(t);
-  }, [noticeState]);
 
   const refresh = () => qc.invalidateQueries({ queryKey: adminCatalogueKeys.tree });
   const onError = (err) => setError(err?.response?.data?.error?.message ?? 'Something went wrong.');
@@ -357,17 +353,9 @@ export function CategoryManager() {
 
       {error && <Alert tone="danger" className="mb-5">{error}</Alert>}
       {notice && (
-        <div className="relative mb-5">
-          <Alert tone="info" className="pr-11">{notice}</Alert>
-          <button
-            type="button"
-            onClick={() => setNoticeState(null)}
-            aria-label="Dismiss message"
-            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900"
-          >
-            <XIcon className="h-4 w-4" />
-          </button>
-        </div>
+        <FlashMessage tone="info" className="mb-5" onDismiss={() => setNoticeState(null)}>
+          {notice}
+        </FlashMessage>
       )}
 
       {tree.isPending && <SkeletonRows rows={8} />}

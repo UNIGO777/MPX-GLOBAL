@@ -61,6 +61,21 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
   - Staff with `conversation:read` will see attachments when they read a thread; that read is
     already audited, and the admin viewer needs the same signed-URL treatment.
 
+## D11 · Platform warnings in chat (staff-sent, pre-written)  ✅ OVERRIDE GRANTED 2026-09-24 — BUILT
+- **What it was:** out of scope — `m4.md` line 284 "Admin can read; admin cannot speak", screen 5
+  "Read-only thread. No composer", scope-of-work chat monitoring "(view-only)".
+- **🔴 RED ALERT raised 2026-09-24; owner confirmed:** "staff cannot write just select the existing
+  warning labels"; pre-written list only; same permission as Block.
+- **Built:** six fixed warnings (`src/utils/chatWarnings.js` — the ONLY place the words live);
+  `GET /admin/conversation-warnings`, `POST /admin/conversations/:id/warn` (`{ warning: key }`,
+  `conversation:block`); posts as the platform, TONED by nature (owner, same day) — systemKind
+  `warning_<tone>`: reminder (slate, "Platform reminder") · caution (amber) · serious (red) · final
+  (deep red, "Final warning"); the tone lives on each warning in `chatWarnings.js`, and the admin's
+  selection window shows the same colour as the thread notice (`web/.../chat/warningTones.js`); no freeze, no push, frozen thread refused (409); audit `conversation.warn` with the key.
+  Web: "Send a warning" above "Block conversation" in the admin viewer. Tests: `chat-warnings.test.js` (9).
+- 🔴 **Still guarded:** free-text staff messages of ANY kind; push/email for warnings (D5); warnings in
+  the admin conversation LIST row actions (only the viewer has the button).
+
 ## D10 · Chat attachments (DOCUMENTS)  ✅ OVERRIDE GRANTED 2026-09-24 — BUILT
 - **What it was:** deferred twice over — `m4.md` **M4-14** ("Document exchange waits for the
   Quotation module", Bucket A1) and D9's own scope line ("PDFs and other documents are NOT covered").

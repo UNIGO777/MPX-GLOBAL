@@ -1,5 +1,6 @@
 import * as svc from '../services/adminConversations.service.js';
 import { conversationStaffView, messageView } from '../views/conversation.view.js';
+import { chatWarningList } from '../utils/chatWarnings.js';
 
 function meta(req) {
   return { ip: req.ip, userAgent: req.headers['user-agent'], requestId: req.id };
@@ -35,6 +36,18 @@ export async function messages(req, res) {
 export async function block(req, res) {
   const { conversation, product, logos } = await svc.blockConversation({
     id: req.params.id, reason: req.validated.body.reason, actor: req.user, meta: meta(req),
+  });
+  res.json({ conversation: conversationStaffView(conversation, { product, logos }) });
+}
+
+/** The fixed warning list — the admin UI never holds its own copy of the text. */
+export function warnings(_req, res) {
+  res.json({ warnings: chatWarningList() });
+}
+
+export async function warn(req, res) {
+  const { conversation, product, logos } = await svc.warnConversation({
+    id: req.params.id, warning: req.validated.body.warning, actor: req.user, meta: meta(req),
   });
   res.json({ conversation: conversationStaffView(conversation, { product, logos }) });
 }

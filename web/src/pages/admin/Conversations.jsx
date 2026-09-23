@@ -338,12 +338,15 @@ export function Conversations() {
                   sized to its content, and View always lands on screen. */}
               <table className="w-full table-fixed text-left text-sm">
                 <colgroup>
+                  {/* 2026-09-24: the fixed columns were sized for slack, not
+                      content — together ~46rem of a ~58rem table, which left the
+                      one column that matters (who, about what) cut to "S1 Co …". */}
                   <col />
-                  <col className="w-[11.5rem]" />
-                  <col className="w-[9rem]" />
-                  <col className="w-[7rem]" />
-                  <col className="hidden w-[8rem] xl:table-column" />
-                  <col className={mayBlock ? 'w-[10.5rem]' : 'w-[5.5rem]'} />
+                  <col className="w-[9.5rem]" />
+                  <col className="w-[8rem]" />
+                  <col className="w-[5.5rem]" />
+                  <col className="hidden w-[7rem] xl:table-column" />
+                  <col className={mayBlock ? 'w-[10.5rem]' : 'w-[5rem]'} />
                 </colgroup>
                 <thead className="border-b border-surface-border bg-ink-50 text-[11px] uppercase tracking-wider text-ink-500">
                   <tr>
@@ -366,7 +369,9 @@ export function Conversations() {
                         <div className="flex items-start gap-2.5">
                           <OrgPair conversation={c} />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-semibold text-ink-900">
+                            {/* Two lines before it truncates: the pair of company
+                                names IS the row's identity (2026-09-24). */}
+                            <p className="line-clamp-2 break-words font-semibold leading-snug text-ink-900">
                               {c.buyerOrg?.name} <span className="text-ink-400">×</span>{' '}
                               {c.exporterOrg?.name}
                             </p>

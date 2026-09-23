@@ -60,18 +60,20 @@
    * The dots MUST be declared before the gradient: the first background is the
    * topmost layer.
    */
+  /* 2026-09-24 (owner: "make the chat more professional … not cheap"): the
+     pink field and its dot grid are gone. A NEUTRAL, near-white ground lets the
+     two kinds of message carry the colour — a thread that was pink behind red
+     behind pink read as loud rather than branded. A faint cool gradient keeps
+     it from looking like a blank sheet. */
   .chat-canvas {
-    background-color: #FAEFEF;
-    background-image:
-      radial-gradient(rgba(102, 2, 12, 0.035) 1px, transparent 1px),
-      linear-gradient(180deg, #FFFAFA 0%, #FAEFEF 60%, #F7EAEB 100%);
-    background-size: 22px 22px, 100% 100%;
+    background-color: #F3F4F7;
+    background-image: linear-gradient(180deg, #F7F8FA 0%, #F3F4F7 55%, #F0F1F5 100%);
   }
 
   /* The strip the composer floats on — the canvas gradient's own end colour, so
      the two read as one continuous field rather than a panel with a seam. */
   .chat-foot {
-    background-color: #F7EAEB;
+    background-color: #F0F1F5;
   }
 
   /* The conversation column. Tinted, so the rows can be WHITE CARDS on it —
@@ -119,7 +121,10 @@
   }
 
   .chat-rail {
-    background-color: #FCF5F5;
+    /* WHITE (2026-09-24 redesign). The list is a clean column of rows split by
+       hairlines; state is carried by each row (rose = open, grey = closed,
+       bold + red = unread), so the panel itself stays neutral. */
+    background-color: #FFFFFF;
   }
 }
 

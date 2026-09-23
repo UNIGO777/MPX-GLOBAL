@@ -45,23 +45,34 @@ export function ConversationRow({ conversation, active = false, onSelect, compac
    * separated by a FADING hairline instead, so the rhythm comes from the gaps
    * rather than from borders.
    *
-   * Selection is carried by the fill and the accent bar. A frozen row keeps its
-   * wash while open and merely deepens — turning it white on select hid the
-   * freeze at the one moment the reader is looking straight at the thread.
+   * Selection is carried by the fill and the accent bar.
+   *
+   * 🔴 Reworked 2026-09-24 (owner: "the chats cannot be differentiated"). A
+   * frozen row used a danger-50 wash — which after the crimson rebrand is
+   * #FDF3F2 against the list's own #FDF4F4 canvas: the row simply vanished into
+   * the panel. The wash was once the ONLY freeze signal; the chip below is now
+   * solid white-on-maroon and carries that on its own, so:
+   *   · the OPEN row is a white card in every state (the bar turns maroon when
+   *     the thread is frozen), so the selection is always obvious;
+   *   · a frozen row NOT open sits in a neutral grey wash — "closed", and
+   *     distinct from both the pink canvas and the pink unread fill.
    */
+  // 2026-09-24 redesign, on a WHITE list:
+  //   open    → a NEUTRAL grey tint + the red bar (maroon when frozen) — rose
+  //             was too close to the blocked red, so red now means blocked only
+  //   frozen  → a RED wash (owner: "blocked should be shown in red") — on the
+  //             white list it finally reads; on the old pink rail it vanished
+  //   unread  → NO fill: bold name, red time and a red dot, the convention
+  //             every mail and chat client uses (the old pink fill competed
+  //             with the selection tint)
+  //   default → white, grey on hover
   const surface = frozen
     ? active
-      ? 'bg-danger-50'
-      : 'bg-danger-50/40 hover:bg-danger-50/70'
+      ? 'bg-danger-100 ring-1 ring-inset ring-danger-300'
+      : 'bg-danger-100/70 ring-1 ring-inset ring-danger-200 hover:bg-danger-100'
     : active
-      ? 'bg-white shadow-[0_1px_2px_rgba(0,5,23,0.06)]'
-      : unread
-        // A STANDING fill, with no hover variant: the colour is the unread
-        // state itself, and shifting it under the cursor made it read as a
-        // hover effect instead. Selection still wins — opening a row clears
-        // unread within a second anyway.
-        ? 'bg-surface-unread'
-        : 'hover:bg-white/70';
+      ? 'bg-ink-100/80'
+      : 'hover:bg-ink-50';
 
   return (
     <li className="relative">
@@ -77,7 +88,7 @@ export function ConversationRow({ conversation, active = false, onSelect, compac
           <span
             aria-hidden="true"
             className={`absolute inset-y-2 left-0 w-[3px] rounded-r-full ${
-              frozen ? 'bg-danger-500' : 'bg-primary-600'
+              frozen ? 'bg-danger-600' : 'bg-primary-600'
             }`}
           />
         )}
@@ -96,7 +107,7 @@ export function ConversationRow({ conversation, active = false, onSelect, compac
           <span className="flex items-baseline gap-2">
             <span
               className={`min-w-0 flex-1 truncate text-[14px] leading-snug ${
-                unread ? 'font-bold text-ink-900' : 'font-semibold text-ink-800'
+                unread ? 'font-bold text-ink-900' : frozen ? 'font-semibold text-danger-800' : 'font-semibold text-ink-800'
               }`}
             >
               {company}
@@ -114,8 +125,12 @@ export function ConversationRow({ conversation, active = false, onSelect, compac
           {/* The product anchor, as an object rather than a caption. */}
           {product?.name && (
             <span className="mt-1 flex">
-              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md bg-primary-50 px-1.5 text-[11.5px] font-medium leading-[18px] text-primary-700 ring-1 ring-inset ring-primary-100">
-                <BoxIcon className="h-3 w-3 shrink-0 text-primary-500" aria-hidden="true" />
+              {/* Neutral (2026-09-24): a red tag on every row made the brand
+                  colour mean nothing — it now belongs to unread and selection. */}
+              {/* A quiet line, not a chip (2026-09-24) — a filled tag on every
+                  row was the busiest thing in the list. */}
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-[12px] font-medium leading-[18px] text-ink-500">
+                <BoxIcon className="h-3 w-3 shrink-0 text-ink-400" aria-hidden="true" />
                 <span className="truncate">{product.name}</span>
               </span>
             </span>
@@ -141,7 +156,7 @@ export function ConversationRow({ conversation, active = false, onSelect, compac
                a mistake rather than as rhythm. */
             <span
               className={`mt-1 block truncate text-[12px] leading-[18px] ${
-                unread ? 'text-ink-700' : 'text-ink-500'
+                unread ? 'font-medium text-ink-900' : 'text-ink-500'
               }`}
             >
               {lastMessagePreview || 'No messages yet'}

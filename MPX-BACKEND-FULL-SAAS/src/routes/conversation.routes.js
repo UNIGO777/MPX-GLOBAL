@@ -119,6 +119,8 @@ conversationRouter.post(
 // to employees: `conversation:block` supersedes M4-38's "read only in month 1"
 // on the owner's decision (2026-07-31). Superadmin passes as all-access.
 // There is no composer here at any level — admin can read, admin cannot speak.
+// ONE narrow exception (owner, 2026-09-24): `/warn` posts a PRE-WRITTEN platform
+// warning chosen by key — staff never write text (utils/chatWarnings.js).
 
 conversationRouter.get(
   '/admin/conversations',
@@ -154,6 +156,23 @@ conversationRouter.post(
   generalLimiter,
   validate(V.blockConversation),
   adminCtrl.block,
+);
+
+conversationRouter.get(
+  '/admin/conversation-warnings',
+  authenticate,
+  requirePermissions(PERMISSIONS.CONVERSATION_BLOCK),
+  generalLimiter,
+  adminCtrl.warnings,
+);
+
+conversationRouter.post(
+  '/admin/conversations/:id/warn',
+  authenticate,
+  requirePermissions(PERMISSIONS.CONVERSATION_BLOCK),
+  generalLimiter,
+  validate(V.warnConversation),
+  adminCtrl.warn,
 );
 
 conversationRouter.post(

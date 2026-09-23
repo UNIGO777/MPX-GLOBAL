@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { adminApi } from '../../api/admin.js';
@@ -7,6 +7,7 @@ import { apiError } from '../../lib/format.js';
 import { PERMISSION_GROUPS, PERMISSION_LIST, PERMISSION_LABELS } from '../../lib/permissions.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
+import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { Checkbox, CheckboxBox } from '../../components/ui/Checkbox.jsx';
 import { Drawer } from '../../components/ui/Drawer.jsx';
@@ -232,12 +233,6 @@ export function Employees() {
   const error = list.error ? apiError(list.error) : null;
   const load = list.refetch;
 
-  useEffect(() => {
-    if (!toast) return undefined;
-    const t = setTimeout(() => setToast(null), 5000);
-    return () => clearTimeout(t);
-  }, [toast]);
-
   const openAdd = () => {
     setForm(EMPTY_FORM);
     setDrawerError(null);
@@ -342,9 +337,9 @@ export function Employees() {
       </div>
 
       {toast && (
-        <div className="mb-4 max-w-3xl">
-          <Alert tone="success">{toast}</Alert>
-        </div>
+        <FlashMessage className="mb-4 max-w-3xl" onDismiss={() => setToast(null)}>
+          {toast}
+        </FlashMessage>
       )}
 
       <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">

@@ -186,6 +186,85 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   mirrors the server's slug rule), and the new category is selected on create. 6 tests; the 22
   existing category tests still pass. Verified in a browser: create, duplicate refused, switch-on
   refused while empty. ⚠️ Deleting a top category is still not possible (not requested).
+  - 2026-09-24: **App thread aligned to the web**: the per-run "You" / company label is gone (a run is
+    marked by extra space, as on the web), and the app gets DAY MARKERS ("Today" / "Yesterday" / date,
+    sentence-case pill) — it had none, so days ran together. Welcome notice back to its warm tint (web +
+    app). Not device-tested. Still open: app document downloads save as "file.pdf" (needs expo-file-system
+    + expo-sharing — new deps, owner to approve).
+  - 2026-09-24: **Chat redesign, second pass** (owner: full permission to change "any colour, design, size,
+    position … from side chat to message background and warning messages"). Principles: neutral surfaces,
+    crimson only as accent (own messages, selection, unread, brand); one hierarchy per screen; platform
+    voice distinct from people; compact and calm. Changes —
+    LIST: white panel (`.chat-rail` #FFF); filled soft-grey search that turns white on focus; header 18px;
+    rows (revised same day at the owner's word): blocked = RED wash (danger-100, maroon name; app too),
+    open = NEUTRAL grey + red bar (rose clashed with the blocked red, so red now means blocked only), unread = bold +
+    red time + dot with NO fill (the owner's #FFE9EB `surface-unread` fill retired — token kept, marked),
+    product as a quiet icon line not a chip.
+    THREAD: bubbles rounded-18 with more air between runs; the company name inside bubbles now shows ONLY
+    in the staff viewer (the header already names the counterparty in a 1:1); date marker in sentence case.
+    NOTICES — a severity ladder: information (reopened, restored, resumed) = WHITE card with a coloured
+    edge — the WELCOME / default notice keeps its warm brand tint (owner asked for it back the same day); warnings = tinted (warningTones); blocked = solid. Freeze strip under a blocked thread
+    now solid maroon (FreezeBanner red variant; body colours now per-variant).
+    ADMIN LIST: fixed columns were ~46rem of ~58rem, cutting the conversation to "S1 Co …" — tightened, and
+    the company pair wraps to two lines.
+    APP: same ladder (white informational notices with a hairline), solid maroon top strip and closed-
+    composer line for a block; list already used bold + dot. Not device-tested.
+  - 2026-09-24: **Chat UI refresh — "professional, not cheap"** (owner: "enhance full chat UI every screen
+    and component" / "chats cannot be differentiated"). Audit found the cheapness was mostly SATURATION:
+    pink canvas + dot grid, bright crimson own-bubbles, red product tags, pink avatars, pink header — one
+    tint everywhere, so nothing stood out. Changes (web, shared chat components → inbox, dock and admin
+    viewer alike): neutral `.chat-canvas` (#F3F4F7, no dots) and `.chat-rail` (#F7F8FA); own bubble flat
+    `primary-700` (was a primary-600 gradient); counterparty bubble white + hairline ring; header white;
+    product tag neutral grey; list rows — OPEN row always a white card (maroon bar if frozen), frozen-not-
+    open rows a grey wash (the danger-50 wash was #FDF3F2 on a #FDF4F4 rail — invisible); company
+    MONOGRAMS now hash to one of 8 muted tints (`CompanyAvatar` · app `utils/monogramTone.js`, same hash,
+    same colour everywhere). App mirrors bubbles, thread ground and avatar tints. Not device-tested.
+  - 2026-09-24: **Blocked rows stand out in the conversation LISTS** (owner: "I was talking about the side
+    where all conversations are shown as a list"). The red freeze chip was `bg-danger-50 text-danger-700` —
+    after the crimson rebrand that pale pink read the same as the pale-crimson PRODUCT chip right above it.
+    `FreezeChip` red tone is now SOLID white-on-maroon (`bg-danger-600 text-white`), matching the blocked
+    notice in the thread; it squares off (rounded-lg) when it wraps. One component, so the buyer/seller
+    inbox and the admin list both change; "Product no longer available" shares the red tone. App
+    `ChatListScreen` chip made solid the same way. Amber "Product under review" unchanged (reversible).
+  - 2026-09-24: **Blocked notice made unmistakable** (owner: "as theme changed there is no colour change for
+    blocked conversation?"). Two real causes: (1) after the crimson rebrand the pale-maroon "Conversation
+    blocked" was near-identical to the new pale "Final warning" — blocked is now the ONE solid notice
+    (white on maroon, web + app; a notice kind may now set its own body colour); (2) blocks made before
+    2026-08-18 carry no `systemKind` (M4-13, can't be tagged) and rendered as a plain "Platform notice".
+    `messageView` now recognises the platform's own fixed FREEZE_NOTICES wording ON READ for UNTAGGED rows
+    only (blocked / reopened / takedown / restored / account paused / resumed) — nothing written, and a
+    tagged row always keeps its tag. Gotcha: conversationFreeze.service ↔ conversation.view is an import
+    cycle, so the lookup reads FREEZE_NOTICES at call time. +2 tests (12 in chat-warnings); chat suites 101/101.
+  - 2026-09-24: **Confirmation messages now disappear — platform-wide** (owner: "warning sent not
+    disappearing … fix this for all other such messages across whole platform"). New
+    `web/src/components/ui/FlashMessage.jsx` (✕ + self-hide: 6 s, 10 s for warning/danger tone). Moved
+    onto it: admin conversation outcome (warning sent / blocked / reopened), Staff "Permissions saved"
+    (had a 5 s timer, no ✕), Settings "Saved", Company profile saved / sent-for-review / cancelled, the
+    OTP / signup-verify / reset "new code sent" notices, and the category page's notice (its own timer
+    and ✕ replaced). Deliberately NOT: error banners and current-state notices (pending change, revoked,
+    publish refused, claim notices). App unchanged — its `Toast` already auto-hides. Rule written into
+    `.claude/rules/web-design.md` so new confirmations follow it.
+  - 2026-09-24: Warnings **coloured by nature** (owner: "all these are in yellow … show respective colour
+    in selection window also"). Each warning in `utils/chatWarnings.js` carries a `tone` and posts as
+    systemKind `warning_<tone>`: reminder = slate "Platform reminder" (off-platform, payment safety,
+    accuracy) · caution = amber (conduct) · serious = red (suspicious) · final = deep red "Final warning".
+    Slate, not navy, because the theme reserves navy for charts and the logo. One map
+    (`web/src/components/chat/warningTones.js`) drives both the thread notice and the selection window
+    (coloured edge, tone chip, tinted selection); the app uses the same four tones. The bare `warning` kind
+    stays valid and amber — notices sent earlier that day keep it (M4-13, no backfill). +1 test (10).
+    Viewer header shortened to "Read-only — set warnings only" (the longer line collided with the product chip).
+    Follow-up: the selection window cached the warning LIST for the whole session (`staleTime: Infinity`), so
+    a tab opened before tones existed painted every card amber. Now re-read on every opening, and an
+    unknown tone falls back to neutral slate instead of a disguising amber.
+  - 2026-09-24: **D11 · Platform warnings in chat** (client request) — red-alerted (m4.md "admin cannot
+    speak", screen 5 "no composer", scope-of-work "monitoring view-only"); owner confirmed pre-written only,
+    same permission as Block. Server: `utils/chatWarnings.js` (6 warnings — the only copy of the words),
+    `GET /admin/conversation-warnings`, `POST /admin/conversations/:id/warn` (key only; zod enum, extra
+    fields stripped), systemKind `warning`, no freeze, no push, 409 on a frozen thread, audit
+    `conversation.warn`. Web: "Send a warning" above Block (hidden on a frozen thread) → radio list showing
+    the exact text → amber "Platform warning" notice; app renders the same style. 9 tests; moderation suite
+    still green. Viewer header now says "staff can't write here, only send set warnings". Recorded in
+    m4.md, Note D11, remind.md.
   - 2026-09-24: **App matched to the web** (owner: "do same changes in app"): a file can be sent with
     no text (send enabled with just a file, "Add a message (optional)…", no empty line under a text-less
     bubble), and a PDF card OPENS on tap via `viewUrl` with a separate download button; Word/Excel still

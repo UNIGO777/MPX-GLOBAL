@@ -6,13 +6,13 @@ import { adminConversationsApi, conversationKeys } from '../../api/conversations
 import { CompanyAvatar } from '../../components/chat/CompanyAvatar.jsx';
 import { FreezeChip } from '../../components/chat/FreezeChip.jsx';
 import { ThreadView } from '../../components/chat/ThreadView.jsx';
-import { Alert } from '../../components/ui/Alert.jsx';
+import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { ChevronLeftIcon, ExternalIcon, InfoIcon, ShieldIcon } from '../../components/ui/icons.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
-import { BlockModal, UnblockModal } from '../../components/chat/ModerationModals.jsx';
+import { BlockModal, UnblockModal, WarnModal } from '../../components/chat/ModerationModals.jsx';
 import { useThread } from '../../hooks/useThread.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { apiError, formatDate, formatTime } from '../../lib/format.js';
@@ -49,6 +49,7 @@ export function ConversationViewer() {
   const queryClient = useQueryClient();
   const [blockOpen, setBlockOpen] = useState(false);
   const [unblockOpen, setUnblockOpen] = useState(false);
+  const [warnOpen, setWarnOpen] = useState(false);
   const [outcome, setOutcome] = useState(null);
   // Phone only — at lg+ the rail is on screen and the modal is unreachable.
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -75,6 +76,17 @@ export function ConversationViewer() {
     },
   });
 
+  // A platform warning — a pre-written notice, never staff text (2026-09-24).
+  const warn = useMutation({
+    mutationFn: ({ key }) => adminConversationsApi.warn(id, key),
+    onSuccess: (_updated, { reset }) => {
+      reset();
+      setWarnOpen(false);
+      setOutcome({ tone: 'success', text: 'Warning sent. Both parties can see it in the thread.' });
+      refresh();
+    },
+  });
+
   const unblock = useMutation({
     mutationFn: (reason) => adminConversationsApi.unblock(id, reason),
     onSuccess: (updated) => {
@@ -96,8 +108,24 @@ export function ConversationViewer() {
     },
   });
 
-  const actionButton = mayBlock
-    ? (conversation?.blockedReason ? (
+  // "Send a warning" sits ABOVE Block (owner, 2026-09-24): the lighter step
+  // first. Only on an open thread — the server refuses a warning into a frozen
+  // one, since nobody could act on it there.
+  const actionButton = mayBlock ? (
+    <div className="space-y-2.5">
+      {!conversation?.frozen && (
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={() => {
+            warn.reset();
+            setWarnOpen(true);
+          }}
+        >
+          Send a warning
+        </Button>
+      )}
+      {conversation?.blockedReason ? (
         <Button variant="secondary" fullWidth onClick={() => setUnblockOpen(true)}>
           Unblock conversation
         </Button>
@@ -105,8 +133,9 @@ export function ConversationViewer() {
         <Button variant="danger" fullWidth onClick={() => setBlockOpen(true)}>
           Block conversation
         </Button>
-      ))
-    : null;
+      )}
+    </div>
+  ) : null;
 
   /**
    * The facts panel. ONE definition, rendered in the desktop rail and in the
@@ -216,7 +245,9 @@ export function ConversationViewer() {
       </div>
 
       {outcome && (
-        <Alert tone={outcome.tone} className="mb-4">{outcome.text}</Alert>
+        <FlashMessage tone={outcome.tone} className="mb-4" onDismiss={() => setOutcome(null)}>
+          {outcome.text}
+        </FlashMessage>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem] lg:items-start">
@@ -278,6 +309,13 @@ export function ConversationViewer() {
         onConfirm={block.mutate}
         pending={block.isPending}
         error={block.isError ? apiError(block.error) : null}
+      />
+      <WarnModal
+        open={warnOpen}
+        onClose={() => setWarnOpen(false)}
+        onConfirm={(key, reset) => warn.mutate({ key, reset })}
+        pending={warn.isPending}
+        error={warn.isError ? apiError(warn.error) : null}
       />
       <UnblockModal
         open={unblockOpen}

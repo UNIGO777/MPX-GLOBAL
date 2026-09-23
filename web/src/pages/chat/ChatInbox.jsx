@@ -96,9 +96,9 @@ function ConversationList({ role, activeId, onSelect }) {
           white bar sitting on top of it — two surfaces meeting at a hairline
           read as a seam, and the column has no reason to be split in two. The
           search box is a white object on the field, exactly like the cards. */}
-      <div className="shrink-0 border-b border-surface-border/60 px-3 pb-3 pt-4">
+      <div className="shrink-0 border-b border-ink-200/70 px-4 pb-3 pt-4">
         <div className="mb-3 flex items-center gap-2">
-          <h2 className="text-[16px] font-bold tracking-tight text-ink-900">Messages</h2>
+          <h2 className="text-[18px] font-bold tracking-tight text-ink-900">Messages</h2>
           {unreadRows > 0 && (
             <span className="rounded-full bg-primary-600 px-2 py-0.5 text-[11px] font-bold text-white">
               {unreadRows} new
@@ -125,7 +125,10 @@ function ConversationList({ role, activeId, onSelect }) {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Search by product or company"
-            className="h-10 w-full rounded-lg border border-surface-border bg-white pl-9 pr-9 text-[13px] text-ink-900 placeholder:text-ink-400 focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20"
+            /* Filled, not boxed (2026-09-24): a soft grey field that turns
+               white on focus — a bordered box on a white column read as a
+               form, not as a filter. */
+            className="h-10 w-full rounded-xl border border-transparent bg-ink-100/80 pl-9 pr-9 text-[13px] text-ink-900 transition-colors placeholder:text-ink-500 hover:bg-ink-100 focus:border-ink-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-ink-900/5"
           />
           {search && (
             <button

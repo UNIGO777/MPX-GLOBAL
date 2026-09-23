@@ -19,6 +19,7 @@ import {
 import { postSystemMessage } from './message.service.js';
 import { recomputeFreeze, FREEZE_NOTICES } from './conversationFreeze.service.js';
 import { emitFreeze, emitUnfreeze } from '../realtime/socket.js';
+import { CHAT_WARNINGS } from '../utils/chatWarnings.js';
 
 /**
  * M4-E — staff moderation of conversations.
@@ -269,6 +270,35 @@ export async function blockConversation({ id, reason, actor, meta }) {
     orgId: conversation.exporterOrgId,
     before: { frozen: conversation.frozen, frozenReason: conversation.frozenReason ?? null },
     after: { reason },
+    meta,
+  });
+
+  return reloadWithProduct(conversation._id);
+}
+
+/**
+ * A platform WARNING (owner, 2026-09-24). Staff choose a key; the server owns
+ * the words, posts them as the platform (never a person, M4-17) and records who
+ * sent what. It freezes nothing — the parties keep talking. A thread that is
+ * already closed gets no warning: nobody can act on it there.
+ */
+export async function warnConversation({ id, warning, actor, meta }) {
+  const conversation = await loadConversation(id);
+  if (conversation.frozen) {
+    throw AppError.conflict('conversation frozen', 'This conversation is already closed — a warning would not change anything.');
+  }
+  const { body, tone } = CHAT_WARNINGS[warning];
+
+  await postSystemMessage({ conversationId: conversation._id, body, systemKind: `warning_${tone}` });
+
+  await recordAudit({
+    actor,
+    action: 'conversation.warn',
+    entityType: 'Conversation',
+    entityId: conversation._id,
+    orgId: conversation.exporterOrgId,
+    before: null,
+    after: { warning },
     meta,
   });
 

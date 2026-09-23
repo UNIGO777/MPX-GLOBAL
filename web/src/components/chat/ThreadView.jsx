@@ -195,8 +195,11 @@ export function ThreadView({
          * product is a chip beside it (that is what about), and the platform's
          * presence sits underneath as one quiet line — still always visible,
          * because M4-1 requires it.
+         *
+         * White since 2026-09-24 — the pink wash made the header compete with
+         * the thread under it.
          */
-        <header className="z-10 shrink-0 border-b border-surface-border bg-gradient-to-b from-white to-primary-50/90 px-3 py-2.5 shadow-[0_1px_3px_rgba(102,2,12,0.07)] backdrop-blur-md sm:px-4">
+        <header className="z-10 shrink-0 border-b border-ink-200/80 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(0,5,23,0.04)] sm:px-4">
           <div className="flex items-center gap-3">
             {onBack && (
               <button
@@ -258,7 +261,7 @@ export function ThreadView({
                     {/* The full sentence needs the room of a wide screen; on a
                         phone "Read-only" alone still answers the question the
                         line exists for — where is the composer. */}
-                    Read-only<span className="hidden sm:inline"> — staff cannot post here</span>
+                    Read-only<span className="hidden sm:inline"> — set warnings only</span>
                   </span>
                 ) : (
                   <ParticipantsLine participants={conversation?.participants} className="flex" />

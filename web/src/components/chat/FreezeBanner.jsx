@@ -22,12 +22,17 @@ const VARIANTS = {
     icon: 'text-warning-600',
     title: 'text-warning-900',
   },
+  // SOLID, like the blocked notice and the list chip (2026-09-24): the strip
+  // that replaces the composer is the last thing a party sees — a pale pink bar
+  // there read as a hint, not as "this conversation is closed".
   red: {
     Icon: SlashIcon,
-    wrap: 'bg-gradient-to-r from-danger-50 to-danger-50/20 ring-danger-200/70',
-    bar: 'bg-danger-500',
-    icon: 'text-danger-600',
-    title: 'text-danger-900',
+    wrap: 'bg-gradient-to-r from-danger-600 to-danger-500 ring-danger-700',
+    bar: 'bg-danger-900',
+    icon: 'text-white',
+    title: 'text-white',
+    body: 'text-white/90',
+    sep: 'text-white/50',
   },
   // The account-block cascade: the server sends no chip for it, so this neutral
   // variant is the only place a party learns why the thread went quiet.
@@ -88,14 +93,14 @@ export function FreezeBanner({ label, blockedReason, compact = false, className 
         />
         <p className={`min-w-0 flex-1 leading-snug ${compact ? 'text-[11.5px]' : 'text-[13px]'}`}>
           <span className={`font-semibold ${variant.title}`}>{heading}</span>
-          <span aria-hidden="true" className="mx-1.5 text-ink-300">·</span>
+          <span aria-hidden="true" className={`mx-1.5 ${variant.sep ?? 'text-ink-300'}`}>·</span>
           {blockedReason ? (
             <>
-              <span className="font-medium text-ink-700">Reason: </span>
-              <span className="text-ink-700">{blockedReason}</span>
+              <span className={`font-medium ${variant.body ?? 'text-ink-700'}`}>Reason: </span>
+              <span className={variant.body ?? 'text-ink-700'}>{blockedReason}</span>
             </>
           ) : (
-            <span className="text-ink-600">{explanation}</span>
+            <span className={variant.body ?? 'text-ink-600'}>{explanation}</span>
           )}
         </p>
       </div>

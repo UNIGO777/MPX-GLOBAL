@@ -246,6 +246,14 @@ export const MESSAGE_SYSTEM_KIND = [
   'product_restored',
   'account_paused',
   'account_restored',
+  // A staff-chosen platform warning (2026-09-24) — text from utils/chatWarnings.js.
+  // `warning` alone was the first day's kind (all amber); since the same day each
+  // warning carries its TONE. The bare value stays so those notices still validate.
+  'warning',
+  'warning_reminder',
+  'warning_caution',
+  'warning_serious',
+  'warning_final',
 ];
 
 // Why messaging is frozen. FIRST REASON WINS and is never overwritten (M4-29).

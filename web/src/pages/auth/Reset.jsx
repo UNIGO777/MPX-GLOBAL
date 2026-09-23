@@ -6,6 +6,7 @@ import { config } from '../../config.js';
 import { apiError } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
+import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { OtpInput } from '../../components/ui/OtpInput.jsx';
@@ -161,7 +162,9 @@ export function Reset() {
               </p>
             )}
             {error && <Alert tone="danger">{error}</Alert>}
-            {emailNotice && !error && <Alert tone="success">{emailNotice}</Alert>}
+            {emailNotice && !error && (
+              <FlashMessage onDismiss={() => setEmailNotice(null)}>{emailNotice}</FlashMessage>
+            )}
 
             <Input
               label="Email or mobile"

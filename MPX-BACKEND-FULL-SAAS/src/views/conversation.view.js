@@ -13,6 +13,31 @@
  */
 
 import { signedChatDocumentUrl, signedChatImageUrl } from '../services/chatAttachment.storage.service.js';
+import { FREEZE_NOTICES } from '../services/conversationFreeze.service.js';
+
+/**
+ * The kind of a system notice written BEFORE `systemKind` existed (pre
+ * 2026-08-18). Those rows can never be tagged — messages are append-only
+ * (M4-13) — so they rendered as a plain "Platform notice", and a block looked
+ * like any other notice (owner, 2026-09-24).
+ *
+ * Recognised on READ from the platform's own fixed wording. Nothing is written.
+ * Deliberately limited to untagged rows: a tagged row always uses its tag, so
+ * rewording a notice today can never change how a new message renders — only
+ * these frozen historical sentences are matched.
+ */
+function legacySystemKind(body = '') {
+  // Read at call time, not module load: the freeze service imports this view
+  // (a cycle), so FREEZE_NOTICES is not initialised when this file first runs.
+  const blockedPrefix = FREEZE_NOTICES.blocked('').replace(/\s*Reason:\s*$/, '');
+  if (body.startsWith(blockedPrefix)) return 'blocked';
+  if (body === FREEZE_NOTICES.unblocked) return 'unblocked';
+  if (body === FREEZE_NOTICES.takedown) return 'product_takedown';
+  if (body === FREEZE_NOTICES.restored) return 'product_restored';
+  if (body === FREEZE_NOTICES.account) return 'account_paused';
+  if (body === FREEZE_NOTICES.accountRestored) return 'account_restored';
+  return null;
+}
 
 const PLATFORM_NAME = 'MPX Global';
 
@@ -205,7 +230,8 @@ export function messageView(message) {
     // differently from a reopen without matching on the copy. Null on every
     // party message, and on system notices written before the field existed —
     // messages are append-only (M4-13), so those can never be backfilled.
-    systemKind: message.senderType === 'system' ? (message.systemKind ?? null) : null,
+    systemKind:
+      message.senderType === 'system' ? (message.systemKind ?? legacySystemKind(message.body)) : null,
     body: message.body,
     /**
      * D9 · the image, as a SHORT-LIVED SIGNED URL minted per read.

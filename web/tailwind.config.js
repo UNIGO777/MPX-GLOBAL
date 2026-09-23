@@ -142,6 +142,9 @@ export default {
           // components — and its own name rather than an alias of `primary-100`
           // (#FFDBDE): keeping it separate means a later tweak to the brand
           // scale cannot silently move a colour the owner chose.
+          // ⚠️ RETIRED from the chat row 2026-09-24 (owner granted full design
+          // freedom): unread is now bold name + red time + dot, no fill, and
+          // the SELECTED row carries the tint. Kept so reverting is one line.
           unread: '#FFE9EB',
         },
         // Semantic — status & feedback.

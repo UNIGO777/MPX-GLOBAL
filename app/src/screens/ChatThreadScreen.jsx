@@ -26,6 +26,7 @@ import { getSocket } from '../realtime/socket.js';
 import { colors, radii, spacing, typography, MIN_TOUCH_TARGET } from '../theme/index.js';
 import { chatFileProblem } from '../utils/chatFiles.js';
 import { toAppError } from '../utils/errors.js';
+import { monogramTone } from '../utils/monogramTone.js';
 
 /**
  * M4 app screen 4 — the chat thread; the app's hardest screen (brief §5.4).
@@ -298,11 +299,20 @@ export function ChatThreadScreen({ navigation, route }) {
           >
             <Ionicons name="arrow-back" size={24} color={colors.ink[900]} />
           </Pressable>
-          <View style={styles.headerAvatar}>
+          <View
+            style={[
+              styles.headerAvatar,
+              !conversation?.counterparty?.logo && {
+                backgroundColor: monogramTone(conversation?.counterparty?.name).bg,
+              },
+            ]}
+          >
             {conversation?.counterparty?.logo ? (
               <Image source={{ uri: conversation.counterparty.logo }} style={styles.headerAvatarImage} />
             ) : (
-              <Text style={styles.headerMonogram}>{initials(conversation?.counterparty?.name)}</Text>
+              <Text style={[styles.headerMonogram, { color: monogramTone(conversation?.counterparty?.name).fg }]}>
+                {initials(conversation?.counterparty?.name)}
+              </Text>
             )}
           </View>
           <View style={styles.headerText}>
@@ -377,11 +387,11 @@ export function ChatThreadScreen({ navigation, route }) {
             <Ionicons
               name="alert-circle-outline"
               size={16}
-              color={freezeLabel.tone === 'red' ? '#912018' : '#93370D'}
+              color={freezeLabel.tone === 'red' ? colors.white : '#93370D'}
               accessible={false}
             />
             <Text
-              style={[styles.freezeBannerText, { color: freezeLabel.tone === 'red' ? '#912018' : '#93370D' }]}
+              style={[styles.freezeBannerText, { color: freezeLabel.tone === 'red' ? colors.white : '#93370D' }]}
             >
               {freezeLabel.text}
               {conversation?.blockedReason ? ` — ${conversation.blockedReason}` : ''}
@@ -393,7 +403,7 @@ export function ChatThreadScreen({ navigation, route }) {
           data={decorated}
           keyExtractor={(m) => m.id}
           inverted
-          renderItem={({ item }) => <MessageRow message={item} mySide={mySide} onRetry={send} onDiscard={removeFailed} conversation={conversation} />}
+          renderItem={({ item }) => <MessageRow message={item} mySide={mySide} onRetry={send} onDiscard={removeFailed} />}
           onEndReached={loadOlder}
           onEndReachedThreshold={0.4}
           ListFooterComponent={
@@ -403,6 +413,7 @@ export function ChatThreadScreen({ navigation, route }) {
               </View>
             ) : null
           }
+          style={styles.thread}
           contentContainerStyle={styles.threadContent}
           showsVerticalScrollIndicator={false}
           keyboardDismissMode="interactive"
@@ -411,8 +422,14 @@ export function ChatThreadScreen({ navigation, route }) {
         {/* Composer — or the freeze notice in its place. The draft is kept in
             state either way, so unfreezing hands the words back. */}
         {frozen ? (
-          <View style={[styles.frozenComposer, { paddingBottom: Math.max(insets.bottom, spacing[4]) }]}>
-            <Text style={styles.frozenComposerText}>
+          <View
+            style={[
+              styles.frozenComposer,
+              freezeLabel?.tone === 'red' && styles.frozenComposerRed,
+              { paddingBottom: Math.max(insets.bottom, spacing[4]) },
+            ]}
+          >
+            <Text style={[styles.frozenComposerText, freezeLabel?.tone === 'red' && styles.frozenComposerTextRed]}>
               {freezeLabel?.tone === 'red'
                 ? 'This conversation is closed to new messages.'
                 : 'Messaging is paused while this is under review.'}
@@ -438,14 +455,19 @@ export function ChatThreadScreen({ navigation, route }) {
 
 /**
  * Run decoration over the newest-first array: in inverted order the OLDER
- * neighbour is index+1 and the NEWER is index-1. Name goes where the older
- * neighbour differs (run start); clock where the newer differs (run end).
- * System messages stand alone and never join a run.
+ * neighbour is index+1 and the NEWER is index-1. A run starts where the older
+ * neighbour differs (extra space above it); the clock goes where the newer
+ * differs (run end). System messages stand alone and never join a run.
+ *
+ * `newDay` marks the first message of a calendar day, which gets the
+ * "Today" / "Yesterday" / date marker above it (2026-09-24 — the app had no day
+ * markers at all, so days ran together; the web's DateSeparator has always had).
  */
 function decorateRuns(messages) {
   return messages.map((m, i) => {
-    if (m.senderType === 'system') return { ...m, showName: false, showClock: true };
     const older = messages[i + 1];
+    const newDay = !older || new Date(older.createdAt).toDateString() !== new Date(m.createdAt).toDateString();
+    if (m.senderType === 'system') return { ...m, newDay, startsRun: false, showClock: true };
     const newer = messages[i - 1];
     const startsRun =
       !older ||
@@ -455,7 +477,7 @@ function decorateRuns(messages) {
       !newer ||
       newer.senderType !== m.senderType ||
       new Date(newer.createdAt) - new Date(m.createdAt) > RUN_GAP_MS;
-    return { ...m, showName: startsRun, showClock: endsRun };
+    return { ...m, newDay, startsRun, showClock: endsRun };
   });
 }
 
@@ -469,24 +491,38 @@ function decorateRuns(messages) {
  * name (M4-17 — the platform, never a person; the copy itself already says
  * "MPX Global").
  */
+// 2026-09-24 — the web's SEVERITY LADDER: white card + coloured edge for
+// information, a tint for warnings, solid for a block. `line` draws the
+// hairline a white card needs on the grey thread ground.
+// The welcome keeps its warm brand tint (owner, 2026-09-24), as on the web.
 const NOTICE_DEFAULT = { label: 'Platform notice', icon: 'shield-checkmark-outline', bar: colors.primary[600], bg: colors.primary[50], fg: colors.primary[700] };
 const NOTICE_KINDS = {
   welcome: NOTICE_DEFAULT,
-  blocked: { label: 'Conversation blocked', icon: 'ban-outline', bar: colors.danger.DEFAULT, bg: colors.danger[50], fg: '#912018' },
-  unblocked: { label: 'Conversation reopened', icon: 'checkmark-circle-outline', bar: colors.success, bg: '#E7F7EF', fg: '#05603A' },
+  // The ONE filled notice (2026-09-24, as on the web): white on maroon, so a
+  // closed thread never looks like the pale "Final warning".
+  blocked: { label: 'Conversation blocked', icon: 'ban-outline', bar: colors.danger[900], bg: colors.danger[600], fg: colors.white, text: colors.white },
+  unblocked: { label: 'Conversation reopened', icon: 'checkmark-circle-outline', bar: colors.success, bg: colors.white, fg: '#05603A', line: true },
   product_takedown: { label: 'Product under review', icon: 'alert-circle-outline', bar: colors.warning, bg: '#FEF0DC', fg: '#93370D' },
-  product_restored: { label: 'Product available again', icon: 'checkmark-circle-outline', bar: colors.success, bg: '#E7F7EF', fg: '#05603A' },
+  product_restored: { label: 'Product available again', icon: 'checkmark-circle-outline', bar: colors.success, bg: colors.white, fg: '#05603A', line: true },
   // Neutral on purpose (F1-B): the account cascade must not say anything
   // about the other party's account status — not even in colour.
   account_paused: { label: 'Conversation paused', icon: 'shield-outline', bar: colors.ink[300], bg: colors.ink[100], fg: colors.ink[600] },
-  account_restored: { label: 'Conversation resumed', icon: 'checkmark-circle-outline', bar: colors.success, bg: '#E7F7EF', fg: '#05603A' },
+  account_restored: { label: 'Conversation resumed', icon: 'checkmark-circle-outline', bar: colors.success, bg: colors.white, fg: '#05603A', line: true },
+  // Platform warnings, toned by nature (2026-09-24) — same tones as the web
+  // (`warningTones.js`). `warning` alone is the first day's kind, kept so those
+  // notices still render.
+  warning_reminder: { label: 'Platform reminder', icon: 'information-circle-outline', bar: colors.ink[500], bg: colors.ink[100], fg: colors.ink[700] },
+  warning_caution: { label: 'Platform warning', icon: 'warning-outline', bar: colors.warning, bg: '#FEF0DC', fg: '#93370D' },
+  warning_serious: { label: 'Platform warning', icon: 'warning-outline', bar: colors.primary[600], bg: colors.primary[50], fg: colors.primary[700] },
+  warning_final: { label: 'Final warning', icon: 'alert-circle', bar: colors.danger[700], bg: colors.danger[100], fg: colors.danger[800] },
+  warning: { label: 'Platform warning', icon: 'warning-outline', bar: colors.warning, bg: '#FEF0DC', fg: '#93370D' },
 };
 
 function SystemNotice({ message }) {
   const kind = NOTICE_KINDS[message.systemKind] ?? NOTICE_DEFAULT;
   return (
     <View style={styles.noticeWrap}>
-      <View style={[styles.notice, { backgroundColor: kind.bg }]}>
+      <View style={[styles.notice, { backgroundColor: kind.bg }, kind.line && styles.noticeLine]}>
         <View style={[styles.noticeBar, { backgroundColor: kind.bar }]} />
         <View style={styles.noticeBody}>
           <View style={styles.noticeHead}>
@@ -495,24 +531,56 @@ function SystemNotice({ message }) {
             <Text style={[styles.noticeDot, { color: kind.fg }]}>·</Text>
             <Text style={[styles.noticeTime, { color: kind.fg }]}>{clock(message.createdAt)}</Text>
           </View>
-          <Text style={styles.noticeText}>{message.body}</Text>
+          <Text style={[styles.noticeText, kind.text && { color: kind.text }]}>{message.body}</Text>
         </View>
       </View>
     </View>
   );
 }
 
-function MessageRow({ message: m, mySide, onRetry, onDiscard, conversation }) {
+/** The web's day marker: "Today" / "Yesterday" / "24 Sept 2026", sentence case. */
+function dayLabel(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return 'Today';
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function DayMarker({ at }) {
+  return (
+    <View style={styles.dayWrap} accessibilityRole="header">
+      <Text style={styles.dayText}>{dayLabel(at)}</Text>
+    </View>
+  );
+}
+
+/**
+ * One cell of the INVERTED list. FlatList flips each cell back upright, so
+ * inside a cell the order is normal: the day marker is drawn first, i.e. ABOVE
+ * the message it introduces.
+ */
+function MessageRow({ message: m, mySide, onRetry, onDiscard }) {
+  const marker = m.newDay ? <DayMarker at={m.createdAt} /> : null;
   if (m.senderType === 'system') {
-    return <SystemNotice message={m} />;
+    return (
+      <>
+        {marker}
+        <SystemNotice message={m} />
+      </>
+    );
   }
   const mine = m.senderType === mySide;
-  const senderName = mine
-    ? 'You'
-    : conversation?.counterparty?.name ?? (m.senderType === 'buyer' ? 'Buyer' : 'Seller');
+  // No "You" / company label on each run (2026-09-24, as on the web): in a 1:1
+  // thread the header already names the counterparty and the side says who
+  // spoke. A run is marked by the extra space above it instead.
   return (
-    <View style={[styles.messageWrap, mine ? styles.mineWrap : styles.theirsWrap]}>
-      {m.showName ? <Text style={styles.senderName}>{senderName}</Text> : null}
+    <>
+    {marker}
+    <View style={[styles.messageWrap, mine ? styles.mineWrap : styles.theirsWrap, m.startsRun && styles.runStart]}>
       <View style={[styles.bubble, mine ? styles.mineBubble : styles.theirsBubble, m.failed && styles.failedBubble]}>
         <ChatAttachment message={m} mine={mine} />
         {/* A file may arrive with no text — no empty line under it then. */}
@@ -534,6 +602,7 @@ function MessageRow({ message: m, mySide, onRetry, onDiscard, conversation }) {
         <Text style={styles.metaLine}>{clock(m.createdAt)}</Text>
       ) : null}
     </View>
+    </>
   );
 }
 
@@ -620,14 +689,18 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[2],
   },
   freezeYellow: { backgroundColor: '#FEF0DC' },
-  freezeRed: { backgroundColor: colors.danger[50] },
+  // Solid, like the blocked notice (2026-09-24) — a pale strip read as a hint.
+  freezeRed: { backgroundColor: colors.danger[600] },
   freezeBannerText: { ...typography.tiny, flex: 1, fontWeight: '600' },
 
+  // The neutral thread ground — the web's `.chat-canvas` colour.
+  thread: { backgroundColor: '#F3F4F7' },
   threadContent: { paddingHorizontal: spacing[5], paddingVertical: spacing[3] },
   olderLoading: { paddingVertical: spacing[3], alignItems: 'center' },
 
   // Signage, not speech — see SystemNotice's own note.
   noticeWrap: { alignItems: 'center', marginVertical: spacing[3] },
+  noticeLine: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.ink[200] },
   notice: {
     flexDirection: 'row',
     width: '100%',
@@ -646,14 +719,34 @@ const styles = StyleSheet.create({
   messageWrap: { marginVertical: 1, maxWidth: '82%' },
   mineWrap: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   theirsWrap: { alignSelf: 'flex-start', alignItems: 'flex-start' },
-  senderName: { ...typography.tiny, color: colors.muted, marginTop: spacing[2], marginBottom: 2 },
+  runStart: { marginTop: spacing[3] },
+  dayWrap: { alignItems: 'center', marginVertical: spacing[3] },
+  dayText: {
+    ...typography.tiny,
+    fontWeight: '600',
+    color: colors.ink[500],
+    backgroundColor: colors.white,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink[200],
+    borderRadius: radii.full,
+    overflow: 'hidden',
+    paddingHorizontal: spacing[3],
+    paddingVertical: 3,
+  },
   bubble: {
     borderRadius: radii.lg,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
   },
-  mineBubble: { backgroundColor: colors.primary[600], borderBottomRightRadius: radii.sm },
-  theirsBubble: { backgroundColor: colors.ink[100], borderBottomLeftRadius: radii.sm },
+  // 2026-09-24 (as on the web): own = the deeper brand red, flat; the other
+  // side = white with a hairline on the neutral thread ground.
+  mineBubble: { backgroundColor: colors.primary[700], borderBottomRightRadius: radii.sm },
+  theirsBubble: {
+    backgroundColor: colors.white,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink[200],
+    borderBottomLeftRadius: radii.sm,
+  },
   failedBubble: { opacity: 0.6 },
   bubbleText: { ...typography.body, color: colors.ink[900] },
   mineText: { color: colors.white },
@@ -671,4 +764,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ink[50],
   },
   frozenComposerText: { ...typography.caption, color: colors.ink[600], textAlign: 'center' },
+  frozenComposerRed: { backgroundColor: colors.danger[600], borderTopColor: colors.danger[700] },
+  frozenComposerTextRed: { color: colors.white, fontWeight: '600' },
 });

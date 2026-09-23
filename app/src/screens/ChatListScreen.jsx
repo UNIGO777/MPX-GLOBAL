@@ -22,6 +22,7 @@ import { useChat } from '../context/ChatContext.jsx';
 import { getSocket } from '../realtime/socket.js';
 import { colors, radii, spacing, typography } from '../theme/index.js';
 import { toAppError } from '../utils/errors.js';
+import { monogramTone } from '../utils/monogramTone.js';
 
 /**
  * M4 app screen 3 — the Chats tab, WhatsApp-style (M4-37). ONE design, two
@@ -222,13 +223,21 @@ function ThreadRow({ conversation: c, onPress }) {
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={c.title}
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      // A blocked / closed thread sits in a RED wash (owner, 2026-09-24), as on the web.
+      style={({ pressed }) => [styles.row, frozen && c.frozenLabel?.tone === 'red' && styles.rowBlocked, pressed && styles.rowPressed]}
     >
-      <View style={styles.avatar}>
+      <View
+        style={[
+          styles.avatar,
+          !c.counterparty?.logo && { backgroundColor: monogramTone(c.counterparty?.name).bg },
+        ]}
+      >
         {c.counterparty?.logo ? (
           <Image source={{ uri: c.counterparty.logo }} style={styles.avatarImage} />
         ) : (
-          <Text style={styles.monogram}>{initials(c.counterparty?.name)}</Text>
+          <Text style={[styles.monogram, { color: monogramTone(c.counterparty?.name).fg }]}>
+            {initials(c.counterparty?.name)}
+          </Text>
         )}
       </View>
       <View style={styles.rowText}>
@@ -325,6 +334,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.surface.border,
   },
   rowPressed: { backgroundColor: colors.ink[50] },
+  rowBlocked: { backgroundColor: colors.danger[100] },
   avatar: {
     width: 48,
     height: 48,
@@ -361,10 +371,12 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   freezeYellow: { backgroundColor: '#FEF0DC' },
-  freezeRed: { backgroundColor: colors.danger[50] },
+  // Solid, as on the web (2026-09-24): a pale danger-50 chip read the same as
+  // the brand-crimson product line after the rebrand. White on maroon.
+  freezeRed: { backgroundColor: colors.danger[600] },
   freezeText: { ...typography.tiny, fontWeight: '600' },
   freezeTextYellow: { color: '#93370D' },
-  freezeTextRed: { color: '#912018' },
+  freezeTextRed: { color: colors.white },
 
   skeletonWrap: { paddingHorizontal: spacing[5], paddingTop: spacing[3] },
   skeletonRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingVertical: spacing[3] },

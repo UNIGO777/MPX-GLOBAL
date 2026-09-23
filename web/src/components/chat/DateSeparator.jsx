@@ -11,8 +11,10 @@ export function DateSeparator({ at, compact = false }) {
   return (
     <li className={`flex justify-center px-3 ${compact ? 'my-2.5' : 'my-4'}`} aria-hidden="true">
       <span
-        className={`rounded-full bg-white/85 font-semibold uppercase tracking-[0.08em] text-ink-500 shadow-[0_1px_2px_rgba(0,5,23,0.06)] ring-1 ring-inset ring-white/60 backdrop-blur-sm ${
-          compact ? 'px-2.5 py-0.5 text-[9.5px]' : 'px-3 py-1 text-[11px]'
+        // Sentence case (2026-09-24): an uppercase tracked "TODAY" shouted
+        // louder than the messages it sits between.
+        className={`rounded-full bg-white font-semibold text-ink-500 ring-1 ring-inset ring-ink-200/80 ${
+          compact ? 'px-2.5 py-0.5 text-[10px]' : 'px-3 py-1 text-[11.5px]'
         }`}
       >
         {formatDayLabel(at)}

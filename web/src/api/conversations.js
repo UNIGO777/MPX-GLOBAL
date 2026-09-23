@@ -115,6 +115,13 @@ export const adminConversationsApi = {
     apiClient.get(`/admin/conversations/${id}/messages`, { params }).then((r) => r.data),
   block: (id, reason) =>
     apiClient.post(`/admin/conversations/${id}/block`, { reason }).then((r) => r.data.conversation),
+  /**
+   * Platform warnings (owner, 2026-09-24). The server owns the list AND the
+   * words; the client only ever sends a key — there is no free-text path.
+   */
+  warnings: () => apiClient.get('/admin/conversation-warnings').then((r) => r.data.warnings),
+  warn: (id, warning) =>
+    apiClient.post(`/admin/conversations/${id}/warn`, { warning }).then((r) => r.data.conversation),
   // The reason is optional and audit-only — parties never see it (unlike block).
   unblock: (id, reason) =>
     apiClient

@@ -75,6 +75,12 @@ owner's call — ask before inventing a brand identity.
   raw server/stack message to the user.
 - Destructive actions (deactivate seller, reject verification) confirm first and state the
   consequence.
+- **Confirmations disappear (owner, 2026-09-24).** A message that reports something JUST
+  happened ("Saved.", "Warning sent.", "A new code was sent") is a `<FlashMessage>`
+  (`components/ui/FlashMessage.jsx`): it has a ✕ and hides itself (6 s, or 10 s for a
+  warning-toned one). Never a plain `<Alert>` that sits there until the next action. **Errors
+  and status notices describing the current state** (under review, revoked, can't publish) stay
+  plain `<Alert>`s — hiding those loses information. The app's `Toast` already behaves this way.
 
 ## Assets & performance
 

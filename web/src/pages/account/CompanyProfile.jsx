@@ -6,6 +6,7 @@ import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { organisationApi, organisationKeys } from '../../api/organisation.js';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
+import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { Combobox } from '../../components/ui/Combobox.jsx';
 import { CountrySelect } from '../../components/ui/CountrySelect.jsx';
@@ -749,7 +750,11 @@ export function CompanyProfile() {
 
       {org.data && form && (
         <div className="space-y-5">
-          {notice && <Alert tone={notice === 'Saved.' ? 'success' : 'warning'}>{notice}</Alert>}
+          {notice && (
+            <FlashMessage tone={notice === 'Saved.' ? 'success' : 'warning'} onDismiss={() => setNotice(null)}>
+              {notice}
+            </FlashMessage>
+          )}
           {error && <Alert tone="danger">{error}</Alert>}
 
           {readOnly && (

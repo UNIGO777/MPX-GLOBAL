@@ -4,6 +4,7 @@ import { formatTime } from '../../lib/format.js';
 import { Lightbox } from '../ui/Lightbox.jsx';
 import { AlertIcon, CheckIcon, DownloadIcon, ShieldIcon, SlashIcon } from '../ui/icons.jsx';
 import { fileBadge, formatFileSize } from '../../lib/chatFiles.js';
+import { WARNING_TONES } from './warningTones.js';
 
 /**
  * D10 · a document in a bubble: badge, name, size — and, once sent, a DOWNLOAD
@@ -147,6 +148,18 @@ const SENDER_TONE = {
  * append-only (M4-13), so there is no backfill. `DEFAULT` is what they render as,
  * and it must stay a sensible neutral rather than a placeholder.
  */
+/*
+ * 2026-09-24 redesign — a SEVERITY LADDER, readable before a word is:
+ *   white card + coloured edge → information (welcome, reopened, restored)
+ *   tinted card                → a warning (warningTones.js)
+ *   SOLID card                 → the conversation is blocked
+ * Information used to be tinted pink/green like everything else, so a thread
+ * full of notices read as one wall of colour.
+ */
+// The WELCOME keeps its warm brand tint (owner, 2026-09-24: "should be same as
+// before") — it is the platform introducing itself, the one notice meant to be
+// noticed on arrival. Also the look of untagged pre-2026-08-18 notices, most of
+// which are welcomes.
 const NOTICE_DEFAULT = {
   label: 'Platform notice',
   Icon: ShieldIcon,
@@ -158,21 +171,26 @@ const NOTICE_DEFAULT = {
 
 const NOTICE_KINDS = {
   welcome: NOTICE_DEFAULT,
+  // 🔴 The ONE filled notice (owner, 2026-09-24: after the crimson rebrand a
+  // pale-maroon "blocked" was indistinguishable from the pale "Final warning").
+  // A closed conversation is the strongest thing the platform says, so it is
+  // the only notice drawn solid — white on maroon, readable at a glance.
   blocked: {
     label: 'Conversation blocked',
     Icon: SlashIcon,
-    bar: 'bg-danger-500',
-    wrap: 'from-danger-50 to-danger-50/20 ring-danger-200/60',
-    head: 'text-danger-700',
-    dot: 'text-danger-300',
+    bar: 'bg-danger-900',
+    wrap: 'from-danger-600 to-danger-500 ring-danger-700',
+    head: 'text-white',
+    dot: 'text-white/50',
+    body: 'text-white',
   },
   unblocked: {
     label: 'Conversation reopened',
     Icon: CheckIcon,
     bar: 'bg-success-500',
-    wrap: 'from-success-50 to-success-50/20 ring-success-200/60',
+    wrap: 'from-white to-white ring-ink-200/80 shadow-[0_1px_2px_rgba(0,5,23,0.04)]',
     head: 'text-success-700',
-    dot: 'text-success-300',
+    dot: 'text-ink-300',
   },
   product_takedown: {
     label: 'Product under review',
@@ -186,9 +204,9 @@ const NOTICE_KINDS = {
     label: 'Product available again',
     Icon: CheckIcon,
     bar: 'bg-success-500',
-    wrap: 'from-success-50 to-success-50/20 ring-success-200/60',
+    wrap: 'from-white to-white ring-ink-200/80 shadow-[0_1px_2px_rgba(0,5,23,0.04)]',
     head: 'text-success-700',
-    dot: 'text-success-300',
+    dot: 'text-ink-300',
   },
   // Neutral on purpose. The server withholds a freeze chip for the account
   // cascade so neither party is told anything about the other's account status
@@ -205,9 +223,23 @@ const NOTICE_KINDS = {
     label: 'Conversation resumed',
     Icon: CheckIcon,
     bar: 'bg-success-500',
-    wrap: 'from-success-50 to-success-50/20 ring-success-200/60',
+    wrap: 'from-white to-white ring-ink-200/80 shadow-[0_1px_2px_rgba(0,5,23,0.04)]',
     head: 'text-success-700',
-    dot: 'text-success-300',
+    dot: 'text-ink-300',
+  },
+  // Platform warnings, toned by nature (2026-09-24). `warning` alone is the
+  // first day's kind (all amber) — kept so those notices still render.
+  warning_reminder: WARNING_TONES.reminder,
+  warning_caution: WARNING_TONES.caution,
+  warning_serious: WARNING_TONES.serious,
+  warning_final: WARNING_TONES.final,
+  warning: {
+    label: 'Platform warning',
+    Icon: AlertIcon,
+    bar: 'bg-warning-500',
+    wrap: 'from-warning-50 to-warning-50/20 ring-warning-200/60',
+    head: 'text-warning-700',
+    dot: 'text-warning-300',
   },
 };
 
@@ -235,7 +267,7 @@ function SystemNotice({ message, compact }) {
     //
     // No name label: the server copy already says "by MPX Global" (M4-17 — the
     // platform, never a person), so a header would repeat it.
-    <li className="my-4 flex justify-center px-3">
+    <li className="my-5 flex justify-center px-3">
       {/* 🔴 Four attempts sit behind this block; the notes are here so the fifth
           person does not repeat them.
             · white card + sender name + time top-right  → read as a MESSAGE
@@ -253,8 +285,8 @@ function SystemNotice({ message, compact }) {
           dissolving into the canvas at the far edge. A flat rectangle of tint
           read as a slab dropped on the thread; this sits IN it. */}
       <div
-        className={`relative w-full overflow-hidden rounded-lg bg-gradient-to-r ring-1 ring-inset ${
-          compact ? 'max-w-full py-1 pl-2.5 pr-2' : 'max-w-[30rem] py-2 pl-[1.125rem] pr-4'
+        className={`relative w-full overflow-hidden rounded-xl bg-gradient-to-r ring-1 ring-inset ${
+          compact ? 'max-w-full py-1.5 pl-3 pr-2.5' : 'max-w-[28rem] py-2.5 pl-[1.125rem] pr-4'
         } ${kind.wrap}`}
       >
         <span className={`absolute inset-y-0 left-0 w-[3px] ${kind.bar}`} aria-hidden="true" />
@@ -281,7 +313,7 @@ function SystemNotice({ message, compact }) {
         </div>
 
         <p
-          className={`mt-0.5 whitespace-pre-wrap leading-snug text-ink-800 ${
+          className={`mt-0.5 whitespace-pre-wrap leading-snug ${kind.body ?? 'text-ink-800'} ${
             compact ? 'text-[11px]' : 'text-[13px]'
           }`}
         >
@@ -311,22 +343,26 @@ function PartyMessage({ message, align, tone, senderName, senderType, pending, f
   const own = tone === 'own';
 
   return (
-    <li className={`flex px-3 ${right ? 'justify-end' : 'justify-start'} ${startsGroup ? 'mt-3' : 'mt-[3px]'}`}>
+    <li className={`flex px-4 ${right ? 'justify-end' : 'justify-start'} ${startsGroup ? 'mt-4' : 'mt-1'}`}>
       <div className={`flex max-w-[88%] flex-col sm:max-w-[min(68%,34rem)] ${right ? 'items-end' : 'items-start'}`}>
         <div
           className={[
-            'relative rounded-2xl',
+            'relative rounded-[18px]',
             compact
-              ? 'px-2.5 pb-0.5 pt-1 text-[12px] leading-[1.35]'
-              : 'px-3 pb-1 pt-1.5 text-[14px] leading-[1.4]',
+              ? 'px-3 pb-1 pt-1.5 text-[12.5px] leading-[1.4]'
+              : 'px-3.5 pb-1.5 pt-2 text-[14px] leading-[1.45]',
             // 🔴 No 1px border on the counterparty's bubble. On the tinted
             // canvas a white card separates by ELEVATION, and a border made the
             // thread look like a stack of form fields. The own-side bubble gets
             // a soft vertical gradient so a long block of accent has depth
             // instead of reading as one flat slab of brand red.
+            // 2026-09-24: own = the DEEPER brand red, flat — the bright
+            // primary-600 gradient turned a thread into a column of loud red
+            // blocks. The other side: white with a hairline ring now that the
+            // canvas is neutral grey (on the old pink it separated by shadow).
             own
-              ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white shadow-[0_1px_2px_rgba(102,2,12,0.28)]'
-              : 'bg-white text-ink-900 shadow-[0_1px_2px_rgba(0,5,23,0.10)]',
+              ? 'bg-primary-700 text-white shadow-[0_1px_2px_rgba(102,2,12,0.22)]'
+              : 'bg-white text-ink-900 shadow-[0_1px_2px_rgba(0,5,23,0.06)] ring-1 ring-inset ring-ink-200/70',
             // The outer corner is squared on the FIRST bubble of a run, where
             // the tail attaches.
             right
@@ -342,7 +378,7 @@ function PartyMessage({ message, align, tone, senderName, senderType, pending, f
             <span
               aria-hidden="true"
               className={`absolute top-0 h-3 w-2.5 ${
-                right ? `-right-[9px] ${own ? 'bg-primary-600' : 'bg-white'}` : '-left-[9px] bg-white'
+                right ? `-right-[9px] ${own ? 'bg-primary-700' : 'bg-white'}` : '-left-[9px] bg-white'
               }`}
               style={{
                 clipPath: right ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(0 0, 100% 0, 100% 100%)',
@@ -488,7 +524,11 @@ export function MessageBubble({
       message={message}
       align={align}
       tone={own ? 'own' : 'other'}
-      senderName={counterpartyName}
+      // The company name inside the bubble is for the STAFF viewer, where two
+      // companies share one transcript. In a party's own 1:1 thread the header
+      // already names the counterparty, so repeating it on every run was noise
+      // (2026-09-24 redesign).
+      senderName={staff ? counterpartyName : null}
       senderType={message.senderType}
       pending={message.pending}
       failed={message.failed}

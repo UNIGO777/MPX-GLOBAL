@@ -95,6 +95,10 @@ while any close-time security commitment remains unraised.
   **M4-14**, which parks document exchange with the Quotation module). The red alert was raised
   2026-09-23 and the owner confirmed. Stored PRIVATE (the KYC pattern), never the public
   product-image pattern. Detail: `docs/Note.md` **D9**.
+- **D11 — Platform warnings in chat.** Red alert raised 2026-09-24, owner confirmed: staff with
+  `conversation:block` pick one of the PRE-WRITTEN warnings (`src/utils/chatWarnings.js`); it posts
+  as the platform, audited. 🔴 **Staff still never write free text into a thread** — any free-text
+  or per-person staff message is a new decision and needs its own alert. Detail: `docs/Note.md` **D11**.
 - **D10 — Chat attachments (DOCUMENTS: PDF, .docx, .xlsx ONLY).** Red alert raised 2026-09-24,
   owner confirmed ("make it"). Same private store, a forced-download URL (+ an inline `viewUrl`
   for PDFs only, opening on Cloudinary's origin) and an active-content screen (PDF scripts,

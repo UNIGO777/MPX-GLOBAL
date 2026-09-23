@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { zString, zObjectId } from './helpers.js';
+import { CHAT_WARNING_KEYS } from '../utils/chatWarnings.js';
 
 // M4-C — thread reads. `q` is a plain string; the service decides whether it is
 // an id or a text search (native `$text` cannot sit inside an `$or`, so the two
@@ -104,6 +105,12 @@ export const adminMessages = {
 export const blockConversation = {
   params: z.object({ id: zObjectId() }),
   body: z.object({ reason: zString({ min: 3, max: 500 }) }),
+};
+
+// A platform warning: a KEY from the fixed list, never text (owner, 2026-09-24).
+export const warnConversation = {
+  params: z.object({ id: zObjectId() }),
+  body: z.object({ warning: z.enum(CHAT_WARNING_KEYS) }),
 };
 
 // The reason here explains the reversal for the audit trail; it is not the

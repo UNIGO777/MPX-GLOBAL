@@ -6,6 +6,7 @@ import { config } from '../../config.js';
 import { ERROR_CODES, apiError, isErrorCode } from '../../lib/format.js';
 import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
+import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { OtpInput } from '../../components/ui/OtpInput.jsx';
 
@@ -176,7 +177,7 @@ export function SignupVerify() {
 
       {/* Same rhythm as the other auth screens (owner, 2026-08-02). */}
       <div className="mt-5 space-y-4">
-        {notice && !error && <Alert tone="success">{notice}</Alert>}
+        {notice && !error && <FlashMessage onDismiss={() => setNotice(null)}>{notice}</FlashMessage>}
         {error && <Alert tone="danger">{error}</Alert>}
 
         {sessionDead ? (

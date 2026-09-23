@@ -28,6 +28,33 @@ export function initialsOf(name = '') {
   );
 }
 
+/**
+ * A muted colour PER COMPANY for the monogram (owner, 2026-09-24: "the chats
+ * cannot be differentiated"). Every company used to get the same pink square, so
+ * a list of chats was a column of identical marks. Now each name hashes to one
+ * of eight soft tints — stable (same company, same colour, every screen),
+ * quiet (tint + dark text, never a saturated block), and never the only
+ * identifier (the name is always written beside it).
+ *
+ * Class strings are written out in full so Tailwind's scanner keeps them.
+ */
+const MONOGRAM_TONES = [
+  'bg-sky-50 text-sky-800 ring-sky-200',
+  'bg-teal-50 text-teal-800 ring-teal-200',
+  'bg-violet-50 text-violet-800 ring-violet-200',
+  'bg-amber-50 text-amber-800 ring-amber-200',
+  'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  'bg-indigo-50 text-indigo-800 ring-indigo-200',
+  'bg-rose-50 text-rose-800 ring-rose-200',
+  'bg-slate-100 text-slate-700 ring-slate-300',
+];
+
+export function monogramTone(name = '') {
+  let h = 0;
+  for (let i = 0; i < name.length; i += 1) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return MONOGRAM_TONES[h % MONOGRAM_TONES.length];
+}
+
 export function CompanyAvatar({ name, logo, size = 'md', className = '' }) {
   const box = `${SIZES[size] ?? SIZES.md} shrink-0 overflow-hidden ${className}`;
 
@@ -52,7 +79,7 @@ export function CompanyAvatar({ name, logo, size = 'md', className = '' }) {
   return (
     <span
       aria-hidden="true"
-      className={`${box} flex items-center justify-center bg-primary-50 font-bold text-primary-700 ring-1 ring-inset ring-primary-200`}
+      className={`${box} flex items-center justify-center font-bold ring-1 ring-inset ${monogramTone(name)}`}
     >
       {initialsOf(name)}
     </span>

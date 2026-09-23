@@ -18,7 +18,12 @@ import { AlertIcon, SlashIcon } from '../ui/icons.jsx';
  */
 const TONES = {
   yellow: { className: 'bg-warning-50 text-warning-700', Icon: AlertIcon },
-  red: { className: 'bg-danger-50 text-danger-700', Icon: SlashIcon },
+  // SOLID (owner, 2026-09-24): after the crimson rebrand a pale danger-50 chip
+  // was indistinguishable from the pale-crimson PRODUCT chip right above it, so
+  // a blocked row did not stand out in the list at all. A closed conversation is
+  // now the one solid chip in a row — the same white-on-maroon as the blocked
+  // notice inside the thread.
+  red: { className: 'bg-danger-600 text-white', Icon: SlashIcon },
 };
 
 const SIZES = {
@@ -37,8 +42,10 @@ export function FreezeChip({ label, wrap = false, size = 'md', className = '' })
   const { Icon } = tone;
   return (
     <span
-      className={`inline-flex max-w-full gap-1.5 rounded-full font-semibold ${SIZES[size] ?? SIZES.md} ${
-        wrap ? 'items-start text-left' : 'items-center whitespace-nowrap'
+      // A pill only while it is one line — wrapped over two or three lines a
+      // fully-rounded solid chip becomes a blob, so it squares off a little.
+      className={`inline-flex max-w-full gap-1.5 font-semibold ${SIZES[size] ?? SIZES.md} ${
+        wrap ? 'items-start rounded-lg text-left' : 'items-center whitespace-nowrap rounded-full'
       } ${tone.className} ${className}`}
     >
       <Icon

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { settingsApi, settingsKeys } from '../../api/settings.js';
 import { Alert } from '../../components/ui/Alert.jsx';
+import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Field, inputClasses } from '../../components/ui/Field.jsx';
@@ -148,9 +149,9 @@ export function Settings() {
         </Alert>
       )}
       {saved && !dirty && (
-        <Alert tone="success" className="mb-4">
+        <FlashMessage className="mb-4" onDismiss={() => setSaved(false)}>
           Saved. The change is live immediately — no restart needed.
-        </Alert>
+        </FlashMessage>
       )}
 
       <div className="space-y-5">
