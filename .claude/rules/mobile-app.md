@@ -17,6 +17,23 @@ signup" model:** buyer and exporter are **separate accounts** — the login scre
 "no exporter signup screen" note is superseded; confirm the exact app signup surface with the
 owner before building it (S1 alert still applies).
 
+🔴 **Organisation claim in the app (`SignupCompanyScreen.jsx` is still a stub).** When it is
+built, implement **every** rule in build-prompt **§A21 "Organisation claim"** (2026-09-23) — do
+not re-derive them, and do not ship a simpler version: a list of offers with a picker when the
+email and phone reach different companies; the `claim_org_email` code to the existing member's
+inbox (`POST /auth/signup/organisation/code` + `/verify`) whenever the offer says
+`needsOrgEmailOtp`; the company name withheld until then; the opaque `claimChoice` sent to
+`complete` (never an org id); `CLAIM_SEAT_TAKEN` → swap to the create form without restarting;
+"set up a separate company" always available; and rule 7 — a buyer whose company has an active
+exporter sees the company profile and KYC read-only (`canEdit` / `canManage` false). The web
+screen (`web/src/pages/auth/SignupCompany.jsx` + `ClaimOffer.jsx`) is the reference.
+
+✅ **"Don't have your phone?" is already in the app** (2026-09-23): `OtpScreen.jsx` ("Use email
+instead" / back to phone) and `ResetPasswordScreen.jsx` ("Send the code to my email") call
+`resend-otp` / `forgot-password` with `channel: 'email'`. Keep them when touching those screens;
+never send a typed address — the server uses the account's own email. Rules: `auth-sessions.md`
+"the email channel" and build-prompt §A21 "OTP channel".
+
 ## Storage (G1)
 
 Tokens and credentials go in `expo-secure-store` — Android Keystore and iOS Keychain.

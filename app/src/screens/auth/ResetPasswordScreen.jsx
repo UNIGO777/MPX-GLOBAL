@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authApi } from '../../api/auth.js';
 import { Button } from '../../components/Button.jsx';
@@ -9,6 +9,7 @@ import { Input } from '../../components/Input.jsx';
 import { NavyCanopy } from '../../components/NavyCanopy.jsx';
 import { OtpInput } from '../../components/OtpInput.jsx';
 import { PasswordStrength } from '../../components/PasswordStrength.jsx';
+import { useToast } from '../../components/Toast.jsx';
 import { colors, radii, spacing, typography } from '../../theme/index.js';
 import { toAppError } from '../../utils/errors.js';
 import {
@@ -47,6 +48,30 @@ export function ResetPasswordScreen({ navigation, route }) {
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const toast = useToast();
+
+  // "No phone to hand" (owner, 2026-09-23): the reset code goes to the
+  // account's OWN email instead. The answer stays as generic as the first
+  // request — it must not reveal whether an account exists.
+  const sendToEmail = async () => {
+    const invalid = validateIdentifier(identifier);
+    if (invalid) {
+      setFieldErrors((f) => ({ ...f, identifier: invalid }));
+      return;
+    }
+    setFormError(null);
+    setEmailSending(true);
+    try {
+      await authApi.forgotPassword({ identifier: identifier.trim(), portal, channel: 'email' });
+      setCode('');
+      toast.show('If an account exists, a new code has been sent to its email.', { tone: 'success' });
+    } catch (error) {
+      setFormError(toAppError(error));
+    } finally {
+      setEmailSending(false);
+    }
+  };
 
   const submit = async () => {
     const errors = collectErrors({
@@ -144,6 +169,20 @@ export function ResetPasswordScreen({ navigation, route }) {
             disabled={submitting}
             autoFocus={false}
           />
+          <View style={styles.emailRow}>
+            <Text style={styles.emailLabel}>Don&apos;t have your phone?</Text>
+            <Pressable
+              onPress={sendToEmail}
+              disabled={emailSending || submitting}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: emailSending || submitting }}
+            >
+              <Text style={[styles.link, (emailSending || submitting) && styles.linkDisabled]}>
+                {emailSending ? 'Sending…' : 'Send the code to my email'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         <View>
@@ -187,6 +226,10 @@ const styles = StyleSheet.create({
   form: { gap: spacing[4] },
   codeBlock: { gap: spacing[2] },
   label: { ...typography.label, color: colors.ink[700] },
+  emailRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing[2] },
+  emailLabel: { ...typography.caption, color: colors.ink[700] },
+  link: { ...typography.label, color: colors.primary[600] },
+  linkDisabled: { color: colors.ink[400] },
   strength: { marginTop: spacing[2] },
   doneBody: { alignItems: 'center', gap: spacing[3], paddingTop: spacing[4] },
   doneIcon: {

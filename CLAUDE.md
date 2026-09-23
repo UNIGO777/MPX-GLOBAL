@@ -67,13 +67,32 @@ signup or login.
   account first let anyone permanently burn a stranger's address with no proof of ownership.
   The two codes use **different OTP purposes** (`signup_email` / `signup_mobile`) because
   `requestOtp` keeps one live challenge per (subject, purpose) — a shared purpose would make
-  each new code delete the other. 🚫 Organisation **claim** is still not built; complete always
-  creates.
+  each new code delete the other.
+- **Organisation claim is BUILT (D7, rule set of 2026-09-23 — authoritative text: build-prompt
+  §A21 "Organisation claim").** In short: one ACTIVE buyer + one ACTIVE exporter per
+  organisation (unique partial index); the verified email OR mobile reaching a member → offer;
+  email and mobile reaching different companies → show both, labelled, pick one; a claim always
+  proves the **existing member's email** (a `claim_org_email` code to their inbox, skipped only
+  when it is the claimant's own — this closes the recycled-SIM hijack); the company's name is
+  withheld until then; the client sends an opaque `claimChoice`, **never an org id**, and
+  `complete` re-checks eligibility (`CLAIM_SEAT_TAKEN` keeps the signup so it can create
+  instead). Changing who holds a seat is a **support action** (deactivate, then re-claim) —
+  there is no self-service add/remove. **Building claim anywhere (the app included) means
+  implementing ALL of §A21's rules, not re-deriving them.**
+- **"Don't have your phone?" — sign-in and reset codes can go to EMAIL (2026-09-23).** Buyers
+  and sellers (**not staff**) can move the code to the account's OWN stored email:
+  `POST /auth/resend-otp` / `POST /auth/forgot-password` with `channel: 'email'` — never an
+  address from the request; the A3 lock survives a switch; forgot-password stays generic. Built on
+  web and app. Detail: build-prompt §A21 "OTP channel".
 - **One company = one Organisation.** A claimed Organisation **carries its verification over** —
   no second KYC, one tick, one public profile. An Organisation may be buyer-side,
   exporter-side, or both, so `Organisation.type` is **not** the buyer/exporter discriminator.
-- **Both buyer and exporter can edit their own company profile (§A22).** Organisation data is
-  not write-once at signup. Fields verified against the KYC documents — name, country, address,
+- **Who edits the company profile (§A22 + D7 rule 7, 2026-09-23).** An organisation with an
+  **active exporter** account: the **exporter** controls the company profile — name, country,
+  address, `entityType`, logo, cover, description, pending changes and **KYC uploads**; the
+  buyer account there keeps its buyer functions and its own password only (server-enforced,
+  `PROFILE_MANAGED_BY_EXPORTER`). **No active exporter: the buyer edits it**, as before.
+  Organisation data is not write-once at signup. Fields verified against the KYC documents — name, country, address,
   `entityType` — are the LOCKED set, and since 2026-08-19 they follow the **pending-change
   model** (this supersedes the old demote-on-edit): on a VERIFIED org, editing one does NOT
   touch the live profile or the tick — the change lands in `Organisation.pendingChanges`, the

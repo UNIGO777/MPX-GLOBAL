@@ -4,6 +4,7 @@ import { AppError } from '../utils/AppError.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
 import { recordAudit } from './audit.service.js';
 import { uploadKycDocument, signedKycUrl } from './kyc.storage.service.js';
+import { assertControlsCompanyProfile } from './profileControl.service.js';
 
 // Hard cap on stored KYC documents per organisation (owner decision 2026-07-30):
 // without it a hostile account can push unlimited 10-MB files to Cloudinary
@@ -42,6 +43,11 @@ export async function submitKycDocument({ user, entityType, docType, buffer, met
   // +kycDocuments (select:false) loaded ONLY to count — never returned.
   const org = await Organisation.findOne({ _id: user.orgId }).select('+kycDocuments');
   if (!org) throw AppError.notFound('org not found', 'Not found.');
+
+  // D7 rule 7 — one KYC file per company, held by the side whose review is
+  // stricter and whose tick is public. A buyer in a company with a seller
+  // account does not upload into it.
+  await assertControlsCompanyProfile({ user, org });
 
   // The A22 gate — server-side, because the app's redirect is UX, not access
   // control. Stable code so the client can route to the profile screen.

@@ -26,7 +26,22 @@ export const KYC_STATUS = ['pending', 'submitted', 'verified', 'rejected'];
 // new code silently destroy the other one and the flow could never complete.
 // Separate purposes also give each channel its own A3 lock (5 attempts → 15 min),
 // which is the behaviour we want: failing the email code must not lock the phone.
-export const OTP_PURPOSE = ['login', 'forgot_password', 'signup_email', 'signup_mobile'];
+//
+// ⚠️ `claim_org_email` (D7 rule 6, 2026-09-23) is separate for the SAME reason,
+// and the reason bites harder here: a mobile-matched claim holds a live
+// `signup_email` challenge already, so reusing that purpose would have each new
+// code delete the other and the claim could never complete. It is also a
+// different thing being proved — not "this is my address" but "I can read the
+// address of the member already in this company" — and it therefore deserves its
+// own A3 lock, so probing a stranger's inbox cannot lock the claimant out of
+// their own signup.
+export const OTP_PURPOSE = [
+  'login',
+  'forgot_password',
+  'signup_email',
+  'signup_mobile',
+  'claim_org_email',
+];
 
 // KYC entity type — drives the KYC document path (business docs vs personal ID).
 export const ENTITY_TYPE = ['business', 'individual'];

@@ -75,14 +75,23 @@ export async function aiSearch(req, res) {
   });
 }
 
+/**
+ * D7 8e · a signed-in BUYER's own company is excluded from search and facets.
+ * Buyers only: an exporter looking at the marketplace legitimately wants to see
+ * their own listings in context. Guests are unaffected.
+ */
+function viewerExclusion(req) {
+  return req.user?.role === 'buyer' && req.user.orgId ? { excludeOrgId: req.user.orgId } : {};
+}
+
 export async function facets(req, res) {
-  const query = req.validated.query;
+  const query = { ...req.validated.query, ...viewerExclusion(req) };
   const attributes = query.type === 'supplier' ? [] : await attributeFilters(query);
   res.json({ type: query.type, facets: await getFacets({ ...query, attributes }) });
 }
 
 export async function search(req, res) {
-  const query = req.validated.query;
+  const query = { ...req.validated.query, ...viewerExclusion(req) };
 
   if (query.type === 'supplier') {
     const { rows, total, page, pageSize } = await svc.searchSuppliers(query);

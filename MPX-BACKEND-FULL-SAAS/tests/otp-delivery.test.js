@@ -107,9 +107,55 @@ describe('routing', () => {
   it('🔴 falls back to EMAIL for an international number — the buyer path', async () => {
     // Regression guard: without this, every non-Indian buyer is locked out of
     // login because their code is posted to a gateway that cannot deliver it.
-    await sendOtp({ channel: 'mobile', identifier: INTERNATIONAL, code: CODE, purpose: 'login' });
+    //
+    // ⚠️ THIS TEST USED TO PROVE NOTHING (fixed 2026-09-23). It asserted only
+    // `sms.send` was NOT called — the absence of the wrong thing — and never that
+    // the code reached the buyer. So it stayed green for months while
+    // `otp.sender.js` dropped the code on the floor and threw in production. A
+    // fallback test has to assert the FALLBACK happened, not merely that the
+    // primary transport was skipped.
+    await sendOtp({
+      channel: 'mobile',
+      identifier: INTERNATIONAL,
+      code: CODE,
+      purpose: 'login',
+      fallbackEmail: EMAIL,
+    });
 
     expect(sms.send).not.toHaveBeenCalled();
+    expect(email.send).toHaveBeenCalledOnce();
+    expect(email.send.mock.calls[0][0].to).toBe(EMAIL);
+  });
+
+  it('🔴 falls back to EMAIL when SMS is UNCONFIGURED — this locked out everyone', async () => {
+    // `smsDeliverable` includes `isSmsConfigured()`, so a missing/wrong SMS key —
+    // or a half-finished provider swap — took down login for EVERY user, Indian
+    // numbers included, not just international ones. This is the case that made
+    // the broken fallback a total outage rather than a subset problem.
+    sms.configured = false;
+
+    await sendOtp({
+      channel: 'mobile',
+      identifier: INDIAN,
+      code: CODE,
+      purpose: 'login',
+      fallbackEmail: EMAIL,
+    });
+
+    expect(sms.send).not.toHaveBeenCalled();
+    expect(email.send).toHaveBeenCalledOnce();
+    expect(email.send.mock.calls[0][0].to).toBe(EMAIL);
+  });
+
+  it('still throws in production when there is no fallback address either', async () => {
+    // The fallback must not paper over a genuinely undeliverable state — with no
+    // email on the subject there is nothing to fall back TO, and a production
+    // login that cannot send a code must fail loudly (see 'failure posture').
+    await expect(
+      sendOtp({ channel: 'mobile', identifier: INTERNATIONAL, code: CODE, purpose: 'login' }),
+    ).resolves.toBeUndefined(); // non-production: prints, does not throw
+    expect(sms.send).not.toHaveBeenCalled();
+    expect(email.send).not.toHaveBeenCalled();
   });
 
   it('uses SMTP when the channel is email', async () => {

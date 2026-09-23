@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { rateLimit, ipKeyGenerator } from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 
@@ -104,6 +106,26 @@ export const otpLimiter = buildLimiter({
   windowMs: 10 * MINUTE,
   limit: 5,
   keyGenerator: otpKeyGenerator,
+});
+
+// D7 rule 6 · the claim code goes to SOMEONE ELSE's inbox — the member already
+// in the company. So the budget is keyed on the SIGNUP TOKEN, not the target
+// address and not only the IP: one signup must not be able to flood a stranger's
+// mailbox by rotating IPs, and the recipient's address is never ours to key on.
+// Hashed so the token itself never lands in Redis.
+function signupTokenKeyGenerator(req) {
+  const token = req.body?.signupToken;
+  if (typeof token === 'string' && token) {
+    return `st:${createHash('sha256').update(token).digest('hex')}`;
+  }
+  return `ip:${ipKeyGenerator(req.ip)}`;
+}
+
+export const claimCodeLimiter = buildLimiter({
+  prefix: 'rl:claim-code:',
+  windowMs: 10 * MINUTE,
+  limit: 3,
+  keyGenerator: signupTokenKeyGenerator,
 });
 
 // A21: staff login / OTP has its OWN limiter (separate counter) so the staff

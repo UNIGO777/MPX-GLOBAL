@@ -144,3 +144,15 @@
     animation: none;
   }
 }
+
+@layer utilities {
+  /* Scrolls, but draws no scrollbar — for swipeable strips (the console's
+     mobile nav) where a bar on the brand colour read as a stray brown line. */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

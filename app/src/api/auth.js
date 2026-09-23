@@ -40,8 +40,12 @@ export const authApi = {
     apiClient.post('/auth/login', { identifier, password, portal }).then((r) => r.data),
   verifyOtp: ({ loginToken, code }) =>
     apiClient.post('/auth/verify-otp', { loginToken, code }).then((r) => r.data),
-  resendOtp: ({ loginToken }) =>
-    apiClient.post('/auth/resend-otp', { loginToken }).then((r) => r.data),
+  // `channel: 'email'` — no phone to hand (owner, 2026-09-23). Picks one of the
+  // account's OWN addresses; the server resolves it, never the request.
+  resendOtp: ({ loginToken, channel }) =>
+    apiClient
+      .post('/auth/resend-otp', { loginToken, ...(channel ? { channel } : {}) })
+      .then((r) => r.data),
 
   // --- session --------------------------------------------------------------
   me: () => apiClient.get('/auth/me').then((r) => r.data.user),
@@ -50,8 +54,10 @@ export const authApi = {
     apiClient.post('/auth/change-password', { currentPassword, newPassword }).then((r) => r.data),
 
   // --- password reset -------------------------------------------------------
-  forgotPassword: ({ identifier, portal }) =>
-    apiClient.post('/auth/forgot-password', { identifier, portal }).then((r) => r.data),
+  forgotPassword: ({ identifier, portal, channel }) =>
+    apiClient
+      .post('/auth/forgot-password', { identifier, portal, ...(channel ? { channel } : {}) })
+      .then((r) => r.data),
   resetPassword: ({ identifier, code, newPassword, portal }) =>
     apiClient.post('/auth/reset-password', { identifier, code, newPassword, portal }).then((r) => r.data),
 };

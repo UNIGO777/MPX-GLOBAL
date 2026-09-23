@@ -73,7 +73,10 @@ async function seedWorld() {
   await Organisation.updateOne({ _id: sellerOrg._id }, { $set: { name: 'TextileHub Exports' } });
   sellerOrg.name = 'TextileHub Exports';
   // A second person in the SAME seller org — D-N2 says both should be reachable.
-  seller2 = await makeUser('exporter', {}, sellerOrg);
+  // Their BUYER account, not a second exporter: since D7 rule 1 (2026-09-23) an
+  // organisation holds at most one active account per role, enforced by a unique
+  // index, so a second active exporter here is no longer a state that can exist.
+  seller2 = await makeUser('buyer', {}, sellerOrg);
 
   buyer = await makeUser('buyer', { buyerSide: true, country: 'AU' });
   await Organisation.updateOne({ _id: buyer.org._id }, { $set: { name: 'Sydney Imports' } });

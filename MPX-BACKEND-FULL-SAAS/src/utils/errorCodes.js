@@ -28,4 +28,11 @@ export const ERROR_CODES = {
   /** KYC upload refused: the company profile is missing identity fields the
    *  reviewer verifies against (A22 gate). Client routes to the profile screen. */
   PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
+  /** D7 claim: the chosen company can no longer be joined (seat filled, company
+   *  blocked, or the choice is not one this signup was offered). The pending
+   *  signup is KEPT, so the client swaps to the create form and finishes there. */
+  CLAIM_SEAT_TAKEN: 'CLAIM_SEAT_TAKEN',
+  /** D7 rule 7: this company has a seller account, and it manages the company
+   *  profile and KYC. The client renders those screens read-only. */
+  PROFILE_MANAGED_BY_EXPORTER: 'PROFILE_MANAGED_BY_EXPORTER',
 };

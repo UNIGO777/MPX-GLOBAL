@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { User } from '../models/User.js';
 import { Organisation } from '../models/Organisation.js';
+import { OtpChallenge } from '../models/OtpChallenge.js';
 import { AppError } from '../utils/AppError.js';
 import { slugify } from '../utils/slug.js';
 import { hashPassword, verifyPassword, verifyDummy } from './password.service.js';
@@ -19,7 +20,9 @@ import { verifyTotp } from './twofactor.service.js';
 import { recordAudit } from './audit.service.js';
 import { notifyPasswordChanged } from './emailNotifications.service.js';
 // ONE mask definition, shared with signup — see utils/mask.js.
-import { maskMobile } from '../utils/mask.js';
+import { maskEmail, maskMobile } from '../utils/mask.js';
+import { logger } from '../utils/logger.js';
+import { ERROR_CODES } from '../utils/errorCodes.js';
 
 // --- helpers ------------------------------------------------------------------
 
@@ -111,6 +114,37 @@ export async function createUserWithOrg({ org, user }) {
     throw mapDuplicate(err);
   }
 }
+
+/**
+ * A21 step 2 · attach a NEW user to an EXISTING organisation (D7 claim).
+ *
+ * The counterpart to `createUserWithOrg`: same identity guard, no org insert.
+ * `assertIdentityAvailable` still runs — it is what stops a second account of
+ * the SAME role joining, so claiming can only ever add the missing side.
+ *
+ * 🔴 The org is resolved by the CALLER from the pending signup's verified
+ * identity. Never pass an org the client named: that is the difference between
+ * "join the company that already holds my email" and "join any company".
+ */
+export async function createUserInOrg({ orgId, user }) {
+  await assertIdentityAvailable({ email: user.email, e164: user.mobile.e164, role: user.role });
+  try {
+    return await User.create({ ...user, orgId });
+  } catch (err) {
+    // F5 · the unique `(orgId, role)` index lost this race for the seat — the
+    // SAME situation as rule 5 discovered late, so it gets the same answer and
+    // the client falls through to create. Anything else is an identity clash.
+    if (err?.code === 11000 && err?.keyPattern?.orgId) {
+      throw AppError.conflict(
+        'claim seat taken in race',
+        'That company can no longer be joined from this signup. You can continue by setting up your company.',
+        ERROR_CODES.CLAIM_SEAT_TAKEN,
+      );
+    }
+    throw mapDuplicate(err);
+  }
+}
+
 
 // --- registration -------------------------------------------------------------
 //
@@ -214,6 +248,7 @@ export async function completeLogin({ loginToken, code, ip, userAgent, requestId
   const { sub, method } = verifyLoginToken(loginToken);
   const user = await User.findOne({ _id: sub, isActive: true }).select('+twoFactorSecret');
   if (!user) throw AppError.unauthorized('user gone', 'Invalid credentials.');
+  let otpChannel = null;
 
   if (method === 'totp') {
     if (!(await verifyTotp(user.twoFactorSecret, code))) {
@@ -221,6 +256,13 @@ export async function completeLogin({ loginToken, code, ip, userAgent, requestId
     }
   } else {
     await verifyOtp({ userId: user._id, purpose: 'login', code });
+    // Which channel carried it — the challenge just consumed. An email-channel
+    // sign-in is the one worth being able to find later.
+    const used = await OtpChallenge.findOne({ userId: user._id, purpose: 'login', consumedAt: { $ne: null } })
+      .sort({ consumedAt: -1 })
+      .select('channel')
+      .lean();
+    otpChannel = used?.channel ?? null;
   }
 
   const accessToken = signAccessToken(user);
@@ -232,6 +274,9 @@ export async function completeLogin({ loginToken, code, ip, userAgent, requestId
     entityType: 'User',
     entityId: user._id,
     orgId: user.orgId,
+    // Which channel carried the second factor — an email-channel sign-in is the
+    // one worth being able to find later (2026-09-23 "no phone to hand").
+    after: { method, otpChannel },
     meta: { ip, userAgent, requestId },
   });
 
@@ -251,13 +296,34 @@ export async function logout({ refreshToken }) {
   if (refreshToken) await revokeRefreshToken(refreshToken);
 }
 
+/**
+ * 2026-09-23 (owner) · a buyer or seller who does not have their phone to hand
+ * can take the code by EMAIL instead. Staff stay phone-only: the superadmin's
+ * second factor is already weaker than planned (TOTP moved to month 2, D4), and
+ * this must not weaken it further.
+ *
+ * 🔴 `channel` picks one of the account's OWN stored addresses — it is never an
+ * address (A3). Switching replaces the live challenge (one per subject+purpose),
+ * so the phone code stops working; the A3 lock is checked before that, so a
+ * switch never resets it.
+ */
+function assertChannelAllowed(user, channel) {
+  if (channel === 'email' && isStaffRole(user.role)) {
+    throw AppError.badRequest('email otp not for staff', 'Codes for staff accounts are sent to your phone.');
+  }
+}
+
 // Resend the login OTP using only the login-pending token (no password re-entry).
 // requestOtp still enforces the durable lock, so this can throw "too many attempts".
-export async function resendLoginOtp({ loginToken }) {
+export async function resendLoginOtp({ loginToken, channel = 'mobile' }) {
   const { sub } = verifyLoginToken(loginToken);
   const user = await User.findOne({ _id: sub, isActive: true });
   if (!user) throw AppError.unauthorized('user gone', 'Login session expired. Please sign in again.');
-  await requestOtp({ user, purpose: 'login', channel: 'mobile' });
+  assertChannelAllowed(user, channel);
+  await requestOtp({ user, purpose: 'login', channel });
+  // Masked destination — safe here for the same reason as at login: the
+  // password was verified to obtain this token.
+  return { sentTo: channel === 'email' ? maskEmail(user.email) : maskMobile(user.mobile.e164) };
 }
 
 // --- change / forgot / reset password -----------------------------------------
@@ -300,13 +366,44 @@ export async function changePassword({ userId, currentPassword, newPassword, ip,
 
 // Generic; never reveal whether an account exists; only active accounts get an OTP.
 // Role-scoped like login (A21): a wrong portal finds no user → still generic.
-async function forgotWithRole({ identifier, roleFilter }) {
+//
+// 🔴 FIXED 2026-09-23 — the identical response message was NOT enough. This
+// awaited `requestOtp`, which THROWS in two reachable states, while an unknown
+// identifier never reaches it and so can never throw:
+//
+//   real account, OTP-locked  → 401 OTP_LOCKED   |  unknown → 200
+//   real account, no transport → 500             |  unknown → 200
+//
+// Either one is an account-enumeration oracle an unauthenticated caller can read,
+// and the first is self-inflicted: five wrong codes on the reset form locks the
+// challenge (A3). So the OTP is now dispatched inside a catch — the caller's
+// response is identical in EVERY state, not just the happy one.
+//
+// 🔴 Swallowed for the RESPONSE only, never for the operator: the failure is
+// logged at error level (`secrets-and-hygiene.md` — channel and purpose only, no
+// identifier, no code). A silent catch here would hide a dead SMTP/SMS config
+// behind a reset screen that looks like it worked, which is the failure mode
+// `otp.sender.js` throws to expose.
+//
+// `channel: 'email'` (2026-09-23, buyer/seller portals only — the staff route's
+// schema has no channel) sends the reset code to the account's OWN email. Owner
+// accepted the trade-off: control of that inbox alone can now reset a password.
+async function forgotWithRole({ identifier, roleFilter, channel = 'mobile' }) {
   const user = await User.findOne({ ...identifierQuery(identifier), ...roleFilter, isActive: true });
-  if (user) await requestOtp({ user, purpose: 'forgot_password', channel: 'mobile' });
+  if (!user) return;
+
+  try {
+    await requestOtp({ user, purpose: 'forgot_password', channel });
+  } catch (err) {
+    logger.error(
+      { purpose: 'forgot_password', code: err?.code ?? null, err: err?.message },
+      'forgot-password: otp not issued — response stays generic',
+    );
+  }
 }
 
-export function forgotPassword({ identifier, portal }) {
-  return forgotWithRole({ identifier, roleFilter: { role: portal } });
+export function forgotPassword({ identifier, portal, channel }) {
+  return forgotWithRole({ identifier, roleFilter: { role: portal }, channel });
 }
 
 export function staffForgotPassword({ identifier }) {

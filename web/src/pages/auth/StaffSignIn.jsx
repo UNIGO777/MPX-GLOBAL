@@ -50,6 +50,8 @@ export function StaffSignIn() {
           identifier: identifier.trim(),
           from: location.state?.from ?? null,
           backTo: '/signin/staff',
+          // Staff codes stay on the phone — the OTP screen hides "use email".
+          staff: true,
         },
       });
     } catch (err) {

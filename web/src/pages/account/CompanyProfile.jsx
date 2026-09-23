@@ -131,6 +131,30 @@ function PendingDiff({ field, live, values }) {
   );
 }
 
+/** D7 rule 7 · the buyer's view of a company its seller account manages. */
+function ReadOnlyCompany({ org }) {
+  const a = org.address ?? {};
+  const address = [a.line1, a.line2, a.city, a.state, a.postalCode].filter(Boolean).join(', ');
+  const rows = [
+    ['Company name', org.name],
+    ['Country', countryName(org.country) ?? org.country],
+    ['Entity type', org.entityType === 'individual' ? 'Individual' : org.entityType ? 'Business' : null],
+    ['Registered address', address || null],
+  ];
+  return (
+    <SectionCard icon={BuildingIcon} title="Registered details" desc="Managed by your company's seller account.">
+      <dl className="space-y-2">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex flex-wrap items-baseline gap-2 text-sm">
+            <dt className="w-40 shrink-0 font-medium text-ink-800">{label}</dt>
+            <dd className="text-ink-700">{value ?? '—'}</dd>
+          </div>
+        ))}
+      </dl>
+    </SectionCard>
+  );
+}
+
 export function CompanyProfile() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -173,6 +197,12 @@ export function CompanyProfile() {
 
   const verified = org.data?.kycStatus === 'verified';
   const pending = org.data?.pendingChanges ?? null;
+  // D7 rule 7: a buyer whose company has a seller account sees this read-only —
+  // the seller account manages the company profile. The server refuses every
+  // write regardless (PROFILE_MANAGED_BY_EXPORTER); this only avoids offering
+  // controls that cannot work. `!== false` so a write response (which carries
+  // no flag) never flips a controller to read-only.
+  const readOnly = org.data?.canEdit === false;
   // Self-scoped read of the OWN org — the one place raw kycStatus is
   // legitimate (web-design.md). Only two states get a chip; rejection
   // messaging belongs to the verification screen, not a passing badge.
@@ -691,7 +721,7 @@ export function CompanyProfile() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {dirty && (
+            {!readOnly && dirty && (
               <>
                 <span className="hidden text-xs text-muted md:block">Unsaved changes</span>
                 <Button variant="ghost" size="sm" onClick={() => { setForm(null); setNotice(null); }}>
@@ -699,9 +729,11 @@ export function CompanyProfile() {
                 </Button>
               </>
             )}
-            <Button size="sm" loading={save.isPending} disabled={!dirty} onClick={trySave}>
-              Save changes
-            </Button>
+            {!readOnly && (
+              <Button size="sm" loading={save.isPending} disabled={!dirty} onClick={trySave}>
+                Save changes
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -720,8 +752,16 @@ export function CompanyProfile() {
           {notice && <Alert tone={notice === 'Saved.' ? 'success' : 'warning'}>{notice}</Alert>}
           {error && <Alert tone="danger">{error}</Alert>}
 
+          {readOnly && (
+            <Alert tone="info" title="Managed by your seller account">
+              Your company also has a seller account on MPX Global, and it manages the company&apos;s
+              name, address, logo and verification documents. Your own buyer account, password and
+              enquiries are unchanged.
+            </Alert>
+          )}
+
           {/* The lock rule, stated up front — not discovered at save. */}
-          {verified && !pending && (
+          {!readOnly && verified && !pending && (
             <Alert tone="info" title="You're verified">
               {LOCKED_HELP}
             </Alert>
@@ -761,6 +801,7 @@ export function CompanyProfile() {
                   cancel the change.
                 </p>
               )}
+              {!readOnly && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {pending.state === 'awaiting_documents' && (
                   <Button
@@ -774,6 +815,7 @@ export function CompanyProfile() {
                   Cancel this change
                 </Button>
               </div>
+              )}
             </div>
           )}
 
@@ -851,8 +893,8 @@ export function CompanyProfile() {
           ) : (
             /* ---------- buyer: single calm column ---------- */
             <>
-              {registeredCard}
-              {buyerIconCard}
+              {readOnly ? <ReadOnlyCompany org={org.data} /> : registeredCard}
+              {!readOnly && buyerIconCard}
               <SectionCard icon={ShieldIcon} title="Account" desc="Sign-in settings for your own user.">
                 {/* The change-password screen has existed since M1 and works for
                     every role — this is its first party-side entry point. */}

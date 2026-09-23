@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+
 import { Category } from '../models/Category.js';
 import { Organisation } from '../models/Organisation.js';
 import { idOrSlugFilter } from '../utils/idOrSlug.js';
@@ -64,6 +66,18 @@ export async function buildPublicProductFilter(params = {}) {
     const org = await Organisation.findOne(idOrSlugFilter(params.seller)).select('_id').lean();
     if (!org) return { filter: null }; // unknown seller → empty result set
     filter.exporterOrgId = org._id;
+  }
+
+  // D7 8e · a signed-in buyer never sees their OWN company's listings — one org
+  // may hold both sides, and claim makes that the normal case. ObjectId, not the
+  // string: these filters feed `aggregate`, which does not cast.
+  if (params.excludeOrgId) {
+    const own = new mongoose.Types.ObjectId(String(params.excludeOrgId));
+    if (filter.exporterOrgId) {
+      if (String(filter.exporterOrgId) === String(own)) return { filter: null };
+    } else {
+      filter.exporterOrgId = { $ne: own };
+    }
   }
 
   if (params.country) filter.sellerCountry = params.country.toUpperCase();

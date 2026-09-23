@@ -75,7 +75,9 @@ while any close-time security commitment remains unraised.
   the account, and the only one that returns a session). Screens shipped for web and app on
   2026-08-03; S1 was raised for them.
 - **A22 · Company profile screens (M1, new — S1 covers them too)** — buyer **and** exporter can view
-  and edit their own `Organisation`; Organisation data is **not write-once at signup** (A21 creates,
+  and edit their own `Organisation` — ⚠️ **except (D7 rule 7, 2026-09-23): once the organisation has
+  an active EXPORTER account, only the exporter edits the company profile and uploads KYC; the buyer
+  there sees it read-only** (`canEdit` / `canManage`, server-enforced); Organisation data is **not write-once at signup** (A21 creates,
   A22 edits — keep the field sets identical). Exporter screen also carries **logo + description**
   (M3's public seller page has no other capture path for them) plus a public-page preview through
   the shared `toPublic()` projection. **Pending-change model (2026-08-19 — supersedes the old
@@ -104,11 +106,20 @@ while any close-time security commitment remains unraised.
   `auth-sessions` **A4**. If month 2 ends without it, **raise it at project close** — the
   close-checklist guard below still applies. Detail (what is already built, and the two decisions
   it still needs): `docs/Note.md` D4.
-- **D7** — **Organisation claim at signup (A21 step 2).** Owner said **build it later** (2026-08-18).
-  Until then `completeSignup` always CREATES an Organisation, so one company signing up as buyer and
-  as exporter gets **two orgs → two KYCs, two public profiles, and a "Block company" that hits only
-  one of them**. The enumeration worry logged in `UiWebNotes` is already answered by §A21 line 248
-  (step 2 sits behind both OTPs) — do not re-raise it as a blocker. Detail: `docs/Note.md` **D7**.
+- ✅ **D7 — Organisation claim at signup (A21 step 2). BUILT 2026-09-23. Do NOT alert on it again.**
+  The hold (owner, 2026-08-18) was surfaced and the owner reaffirmed the instruction.
+  **Revised the same day to the owner's seven-rule model — authoritative text: build-prompt §A21
+  "Organisation claim"; build ALL of it on any client, the app included.** One active buyer + one
+  active exporter per org (unique index); the offer is a list (email and phone can reach different
+  companies — pick one); a claim proves the **existing member's email** (`claim_org_email` code,
+  name withheld until then — the recycled-SIM fix); the exporter controls the company profile.
+  🔴 **The security model is that the client cannot NAME a target** — it echoes an opaque
+  `claimChoice` the server issued, and `complete` re-checks eligibility (the stored offer
+  restricts, never grants). Never add an org id, or a typed company name, to any claim endpoint:
+  that turns it into a company-membership oracle and then a way to join an arbitrary company.
+  Seat changes (a colleague, a departed holder — F3/F4) are **support-mediated**, not a feature.
+  Tests: `d7-organisation-claim.test.js`, `d7-profile-control.test.js`.
+  🔴 **The APP claim screen is still a stub** — raise it when app signup work comes up.
 - ✅ **D8 — Platform settings page (§3.5). BUILT 2026-09-22. Do NOT alert on it again.** The hold
   (owner, 2026-08-21) was surfaced as a red alert and the owner explicitly confirmed the override.
   Shipped at `/admin/settings`, **superadmin-only**, with the exact decided contents: the AI guest
@@ -124,6 +135,8 @@ while any close-time security commitment remains unraised.
   ✅ **CARVE-OUT 2026-07-31 — FCM push is APPROVED into month 1** (owner-confirmed), built in M4:
   `firebase-admin` + `DeviceToken` + dead-token cleanup + **two events only** (new enquiry → seller,
   new message → counterparty). **Do not re-alert on that slice.** Everything else in D5 still is.
+  ✅ **Email events approved so far: six** — the sixth is "someone joined your company" (D7 F6,
+  owner 2026-09-23, built). A **seventh** email event needs a fresh alert.
 
 Phase-1 reality: **buyer** has no gate (fully active from signup); **seller** is public with a
 verified tick and a **3-active-listing limit while unverified** (taken-down excluded from the count — §A10; + 10-draft cap §A15) (D1). Verification/approval is status

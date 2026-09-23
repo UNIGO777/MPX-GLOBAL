@@ -54,11 +54,13 @@ publicRouter.get('/public/featured', publicRoute, generalLimiter, featuredCtrl.l
 
 // M3-B: the one search surface (native $text — §A26). Guests included; login is
 // only ever needed to SAVE. Its own tighter limiter (api-endpoints rule).
-publicRouter.get('/public/search', publicRoute, searchLimiter, validate(SV.search), searchCtrl.search);
+// `optionalAuthenticate` (D7 8e): a signed-in buyer's own company is left out of
+// the results. Never throws on a bad token — the caller just continues as a guest.
+publicRouter.get('/public/search', optionalAuthenticate, searchLimiter, validate(SV.search), searchCtrl.search);
 
 // Facets take the SAME params as search — counts are always "for the current
 // query" (§A27.2 computes each group excluding its own selection).
-publicRouter.get('/public/facets', publicRoute, searchLimiter, validate(SV.facets), searchCtrl.facets);
+publicRouter.get('/public/facets', optionalAuthenticate, searchLimiter, validate(SV.facets), searchCtrl.facets);
 
 // M3-E: AI search. PUBLIC (guests may use it) but `optionalAuthenticate` picks
 // up a signed-in caller so the limiter and the per-org daily quota can key on

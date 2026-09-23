@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { XIcon } from './icons.jsx';
 
 /** Right-side panel (the Employees add/edit surface). Esc + overlay close. */
-export function Drawer({ open, onClose, title, subtitle, children, footer }) {
+export function Drawer({ open, onClose, title, subtitle, icon: Icon, children, footer }) {
   const panelRef = useRef(null);
 
   // `onClose` is an inline arrow at every call site, so it is a NEW function on
@@ -49,9 +49,25 @@ export function Drawer({ open, onClose, title, subtitle, children, footer }) {
         className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white shadow-card outline-none"
       >
         <div className="flex items-start justify-between gap-4 border-b border-surface-border px-6 py-5">
-          <div>
-            {title && <h2 className="text-lg font-semibold text-ink-900">{title}</h2>}
-            {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
+          {/* Optional icon tile — a drawer that creates or changes something
+              important (a staff account, its access) gets a stronger header. */}
+          <div className="flex min-w-0 items-start gap-3.5">
+            {Icon && (
+              <span
+                aria-hidden="true"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 ring-1 ring-primary-100"
+              >
+                <Icon className="h-5 w-5" />
+              </span>
+            )}
+            <div className="min-w-0">
+              {title && (
+                <h2 className={`${Icon ? 'text-xl font-bold' : 'text-lg font-semibold'} leading-tight text-ink-900`}>
+                  {title}
+                </h2>
+              )}
+              {subtitle && <p className={`${Icon ? 'mt-1' : 'mt-0.5'} text-sm leading-snug text-muted`}>{subtitle}</p>}
+            </div>
           </div>
           <button
             type="button"

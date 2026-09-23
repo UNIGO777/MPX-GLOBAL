@@ -15,13 +15,19 @@ const PASSWORD = 'longpassword1';
 let seq = 0;
 
 // One org with N users on it — the shape the cascade actually has to handle.
+// D7 rule 1 (2026-09-23): an organisation holds at most ONE active account per
+// party role, enforced by a unique index. A second user is therefore the
+// company's OTHER side (the two-sided company a claim produces); a third active
+// user is no longer a state that can exist.
 async function makeOrgWithUsers(role, { users = 1, kycStatus = 'verified' } = {}) {
+  if (users > 2) throw new Error('an organisation holds at most one active buyer + one active exporter');
+  const other = role === 'exporter' ? 'buyer' : 'exporter';
   seq += 1;
   const org = await Organisation.create({
     name: `${role} Co ${seq}`,
     type: 'business',
-    buyerSide: role === 'buyer',
-    exporterSide: role === 'exporter',
+    buyerSide: role === 'buyer' || users > 1,
+    exporterSide: role === 'exporter' || users > 1,
     kycStatus,
     entityType: 'business',
     country: 'IN',
@@ -36,7 +42,7 @@ async function makeOrgWithUsers(role, { users = 1, kycStatus = 'verified' } = {}
         email: `u_${Date.now()}_${seq}@example.com`,
         mobile: { countryCode: '+91', number: `98${1000000 + seq}`, e164: `+9198${1000000 + seq}` },
         passwordHash: await hashPassword(PASSWORD),
-        role,
+        role: i === 0 ? role : other,
         orgId: org._id,
         isActive: true,
       }),
@@ -81,7 +87,7 @@ beforeEach(async () => {
 describe('F1-A · org block — the two writes', () => {
   it('blocking sets Organisation.isActive=false AND cascades to every user', async () => {
     const sa = await makeSuperadmin();
-    const { org, users } = await makeOrgWithUsers('exporter', { users: 3 });
+    const { org, users } = await makeOrgWithUsers('exporter', { users: 2 });
     const versionsBefore = users.map((u) => u.tokenVersion);
 
     const res = await request(app)
@@ -91,7 +97,7 @@ describe('F1-A · org block — the two writes', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.organisation.isActive).toBe(false);
-    expect(res.body.usersCascaded).toBe(3);
+    expect(res.body.usersCascaded).toBe(2);
 
     const freshOrg = await Organisation.findById(org._id);
     expect(freshOrg.isActive).toBe(false);
@@ -100,7 +106,7 @@ describe('F1-A · org block — the two writes', () => {
 
     // every user row: deactivated + tokenVersion bumped (kills live sessions)
     const fresh = await User.find({ orgId: org._id }).sort({ email: 1 });
-    expect(fresh).toHaveLength(3);
+    expect(fresh).toHaveLength(2);
     fresh.forEach((u, i) => {
       expect(u.isActive).toBe(false);
       expect(u.tokenVersion).toBe(versionsBefore[i] + 1);
@@ -191,10 +197,10 @@ describe('F1-A · the three holes', () => {
 
   it('unblock restores PRIOR per-user state, not everyone', async () => {
     const sa = await makeSuperadmin();
-    const { org, users } = await makeOrgWithUsers('exporter', { users: 3 });
+    const { org, users } = await makeOrgWithUsers('exporter', { users: 2 });
 
     // one user is deactivated INDIVIDUALLY before the org block
-    const singled = users[2];
+    const singled = users[1];
     const deact = await request(app)
       .post(`/admin/users/${singled._id}/deactivate`)
       .set(bearer(sa.token))
@@ -213,7 +219,7 @@ describe('F1-A · the three holes', () => {
 
     expect(unblock.status).toBe(200);
     expect(unblock.body.organisation.isActive).toBe(true);
-    expect(unblock.body.usersRestored).toBe(2); // NOT 3
+    expect(unblock.body.usersRestored).toBe(1); // NOT 2
 
     const restored = await User.find({ orgId: org._id, _id: { $ne: singled._id } });
     restored.forEach((u) => expect(u.isActive).toBe(true));

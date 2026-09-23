@@ -42,6 +42,30 @@ export async function resend(req, res) {
   res.json({ message: 'A new code has been sent.', ...state });
 }
 
+/**
+ * A21 step 2 · which companies may this verified identity join?
+ *
+ * `{ organisations: [] }` when there is nothing to claim — an ordinary answer,
+ * not an error, so the screen simply shows the create form.
+ */
+export async function claimOffer(req, res) {
+  res.json(await signupService.getClaimOffer(req.validated.body));
+}
+
+/** D7 rule 6 · send the join code to the member already in the company. */
+export async function claimCodeSend(req, res) {
+  const { sentTo } = await signupService.sendClaimOrgCode({
+    ...req.validated.body,
+    meta: clientMeta(req),
+  });
+  res.json({ message: 'A code has been sent to the company email.', sentTo });
+}
+
+/** D7 rule 6 · check the join code; answers with the re-served offer. */
+export async function claimCodeVerify(req, res) {
+  res.json(await signupService.verifyClaimOrgCode(req.validated.body));
+}
+
 export async function complete(req, res) {
   const result = await signupService.completeSignup({
     ...req.validated.body,

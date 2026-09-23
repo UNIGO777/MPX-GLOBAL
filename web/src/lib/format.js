@@ -134,6 +134,10 @@ export const ERROR_CODES = {
   SIGNUP_SESSION_EXPIRED: 'SIGNUP_SESSION_EXPIRED',
   REFRESH_TOKEN_MISSING: 'REFRESH_TOKEN_MISSING',
   SESSION_EXPIRED: 'SESSION_EXPIRED',
+  // D7 claim: the chosen company can no longer be joined — swap to the create form.
+  CLAIM_SEAT_TAKEN: 'CLAIM_SEAT_TAKEN',
+  // D7 rule 7: the company's seller account manages the profile and KYC.
+  PROFILE_MANAGED_BY_EXPORTER: 'PROFILE_MANAGED_BY_EXPORTER',
 };
 
 /**

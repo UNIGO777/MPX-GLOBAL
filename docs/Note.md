@@ -158,6 +158,12 @@ Do not start the screens without surfacing this alert.
 > The event belongs to the request-more-info / `in_review` work — build it there, not on its own.
 > **The guard itself stays**: a SIXTH event still needs a fresh alert.
 >
+> ✅ **2026-09-23 — owner approved a SIXTH email event: "someone joined your company" → the member
+> already in it** (D7 claim, finding F6). Sent on every join; carries the joiner's name only, never
+> their contact details. **Built** (`notifyOrganisationJoined`). **The guard moves again: a SEVENTH
+> event needs a fresh alert.** (The rule-6 `claim_org_email` code is an OTP, not a notification
+> event — it does not count toward this.)
+>
 > 🔴 **Still ON HOLD and still needing an alert:** **WhatsApp**, the `Notification` model / in-app
 > centre, admin per-type enable-disable, and delivery tracking + retry.
 - **WhatsApp** additionally depends on external template approval (outside the build). Build later.
@@ -197,7 +203,44 @@ Do not start the screens without surfacing this alert.
 
 ---
 
-## D7 · Organisation **claim** at signup (A21 step 2)  ⏸ ON HOLD (owner, 2026-08-18)
+## D7 · Organisation **claim** at signup (A21 step 2)  ✅ BUILT 2026-09-23 (owner confirmed)
+
+> 🔁 **REVISED THE SAME DAY (2026-09-23) — the owner set a seven-rule claim model after the first
+> cut was probed, and it is built.** Authoritative text: build-prompt **§A21 "Organisation claim"**.
+> What changed from the first cut described next: the offer is a **list** (email and phone can reach
+> different companies — show both, pick one); `complete` takes an opaque **`claimChoice`**, not the
+> old `claimOrganisation: true` boolean, and **re-checks eligibility** (`CLAIM_SEAT_TAKEN` keeps the
+> signup); a claim **proves the existing member's email** (`claim_org_email` code — the recycled-SIM
+> fix, F1/F2), with the company's name withheld until then; **one active account per role per org**
+> at the database (F5); blocked companies never offered (F7); the member is notified of every join
+> (F6); a rejected org also returns to `submitted` (8d); and **rule 7 — the exporter controls the
+> company profile and KYC** when one exists. Tests: `d7-organisation-claim.test.js` (33) +
+> `d7-profile-control.test.js` (9).
+>
+> 🟢 **F3 / F4 (a colleague needs a second seller login; a seat holder has left) — RESOLVED as
+> SUPPORT-MEDIATED (owner, 2026-09-23).** One account per role per company, no self-service
+> add/remove. Support deactivates the departed holder (`POST /admin/users/:id/deactivate`), which
+> frees the seat, and the replacement claims normally. Runbook: `docs/Support-Runbook.md`. Do not
+> build invite/remove-member without a new decision.
+>
+> 🔴 **Still open: the APP's claim screen** (`app/src/screens/auth/SignupCompanyScreen.jsx`) is a
+> stub, so every app signup creates a duplicate organisation. When built it must implement all of
+> §A21's rules (`.claude/rules/mobile-app.md` points there).
+>
+> _The first-cut note follows, kept for history._
+>
+> ✅ **DONE — do NOT red-alert on this any more.** The hold below was real until 2026-09-23, when
+> the alert was surfaced and the owner reaffirmed the instruction. Shipped exactly to the design
+> recorded here, including the asymmetry: `POST /auth/signup/organisation` returns the offer, and
+> `/auth/signup/complete` takes **`claimOrganisation: true`** — a boolean, never an org id, because
+> the server re-derives the target from the identity both OTPs proved. An exporter claiming a
+> buyer-verified org supplies `entityType` + address and the org drops to `submitted`, withholding
+> the tick until the exporter side is reviewed; a buyer claiming a verified exporter org carries the
+> tick over untouched. Product-add then works immediately under the D1 caps, as decided.
+> Tests: `d7-organisation-claim.test.js` (12 cases). **The consequence described below — two orgs,
+> two KYCs, a half-effective company block — no longer accrues.**
+>
+> _Original entry kept below: it is the specification this was built from._
 
 - **What it is:** A21's step-2 branch — after both OTPs pass, show whether an Organisation already
   exists for that verified email/mobile and offer **claim** or **create-new**. A claimed org

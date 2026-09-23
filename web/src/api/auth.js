@@ -21,9 +21,39 @@ export const authApi = {
   signupResend: ({ signupToken, channel }) =>
     apiClient.post('/auth/signup/resend', { signupToken, channel }).then((r) => r.data),
   // The only call that creates anything — and the only one that returns a session.
-  signupComplete: ({ signupToken, company, country, entityType, address }) =>
+  /**
+   * A21 step 2 · which companies may this verified identity join? → an array,
+   * empty when there is nothing to claim. Each row carries an opaque `choice`,
+   * `matchedOn`, and — once rule 6's code is not outstanding — the company's
+   * name, country, derived `verified`, `needs[]` and `carriesTickOver`.
+   *
+   * 🔴 There is deliberately no org id anywhere: the client echoes `choice`
+   * back, and the server resolves it against the stored offer and re-checks
+   * eligibility, so the client can never name a company to join.
+   */
+  signupClaimOffer: ({ signupToken }) =>
+    apiClient.post('/auth/signup/organisation', { signupToken }).then((r) => r.data.organisations),
+
+  /** Rule 6 · send the join code to the member already in that company. */
+  signupClaimCode: ({ signupToken, choice }) =>
+    apiClient.post('/auth/signup/organisation/code', { signupToken, choice }).then((r) => r.data),
+
+  /** Rule 6 · check the join code → the re-served offer, now named. */
+  signupClaimVerify: ({ signupToken, choice, code }) =>
     apiClient
-      .post('/auth/signup/complete', { signupToken, company, country, entityType, address })
+      .post('/auth/signup/organisation/verify', { signupToken, choice, code })
+      .then((r) => r.data.organisations),
+
+  signupComplete: ({ signupToken, company, country, entityType, address, claimChoice }) =>
+    apiClient
+      .post('/auth/signup/complete', {
+        signupToken,
+        company,
+        country,
+        entityType,
+        address,
+        ...(claimChoice ? { claimChoice } : {}),
+      })
       .then((r) => r.data),
 
   // --- login → OTP → tokens -------------------------------------------------
@@ -33,8 +63,12 @@ export const authApi = {
     apiClient.post('/auth/staff/login', { identifier, password }).then((r) => r.data),
   verifyOtp: ({ loginToken, code }) =>
     apiClient.post('/auth/verify-otp', { loginToken, code }).then((r) => r.data),
-  resendOtp: ({ loginToken }) =>
-    apiClient.post('/auth/resend-otp', { loginToken }).then((r) => r.data),
+  // `channel: 'email'` — no phone to hand (buyer/seller only; staff stay on the
+  // phone). Picks one of the account's OWN addresses; the server resolves it.
+  resendOtp: ({ loginToken, channel }) =>
+    apiClient
+      .post('/auth/resend-otp', { loginToken, ...(channel ? { channel } : {}) })
+      .then((r) => r.data),
 
   // --- session --------------------------------------------------------------
   me: () => apiClient.get('/auth/me').then((r) => r.data.user),
@@ -45,8 +79,10 @@ export const authApi = {
     apiClient.post('/auth/change-password', { currentPassword, newPassword }).then((r) => r.data),
 
   // --- password reset (party carries portal; staff pair does not) -----------
-  forgotPassword: ({ identifier, portal }) =>
-    apiClient.post('/auth/forgot-password', { identifier, portal }).then((r) => r.data),
+  forgotPassword: ({ identifier, portal, channel }) =>
+    apiClient
+      .post('/auth/forgot-password', { identifier, portal, ...(channel ? { channel } : {}) })
+      .then((r) => r.data),
   resetPassword: ({ identifier, code, newPassword, portal }) =>
     apiClient.post('/auth/reset-password', { identifier, code, newPassword, portal }).then((r) => r.data),
   staffForgotPassword: ({ identifier }) =>

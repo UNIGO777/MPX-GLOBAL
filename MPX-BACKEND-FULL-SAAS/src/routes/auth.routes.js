@@ -6,6 +6,7 @@ import { requireRole } from '../middleware/authorize.js';
 import { publicRoute } from '../config/routeGuard.js';
 import {
   authLimiter,
+  claimCodeLimiter,
   otpLimiter,
   refreshLimiter,
   staffOtpLimiter,
@@ -35,6 +36,16 @@ authRouter.post('/auth/signup/start', publicRoute, otpLimiter, validate(SV.start
 // mobile, but the API deliberately does not encode that order.
 authRouter.post('/auth/signup/verify', publicRoute, authLimiter, validate(SV.verifySignup), signupCtrl.verify);
 authRouter.post('/auth/signup/resend', publicRoute, otpLimiter, validate(SV.resendSignup), signupCtrl.resend);
+// A21 step 2 (D7) — the claim offer. Public by necessity (no session exists
+// yet), but gated on a signup token whose BOTH channels are already verified,
+// which is what §A21 line 248 relies on when it permits showing the company's
+// name. `authLimiter`, same as the other post-OTP steps.
+authRouter.post('/auth/signup/organisation', publicRoute, authLimiter, validate(SV.claimOffer), signupCtrl.claimOffer);
+// D7 rule 6 — the join code for a company reached through an identifier that is
+// not the claimant's own email. It lands in a THIRD PARTY's inbox, so sending is
+// budgeted per signup token (`claimCodeLimiter`), not per recipient.
+authRouter.post('/auth/signup/organisation/code', publicRoute, claimCodeLimiter, validate(SV.claimCodeSend), signupCtrl.claimCodeSend);
+authRouter.post('/auth/signup/organisation/verify', publicRoute, authLimiter, validate(SV.claimCodeVerify), signupCtrl.claimCodeVerify);
 authRouter.post('/auth/signup/complete', publicRoute, authLimiter, validate(SV.completeSignup), signupCtrl.complete);
 
 // Login → second factor → tokens. Public (identity is being established here).

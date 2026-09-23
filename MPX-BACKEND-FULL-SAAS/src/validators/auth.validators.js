@@ -13,6 +13,10 @@ const mobile = z.object({
   number: zString({ min: 4, max: 15 }),
 });
 const otpCode = zString({ min: 4, max: 12 });
+// Which of the account's OWN stored addresses gets the code (2026-09-23 — for a
+// user who does not have their phone to hand). Never an address: the server
+// resolves it from the account record (A3).
+const otpChannel = z.enum(['mobile', 'email']);
 const opaqueToken = zString({ min: 10, max: 4096 });
 
 // `country`, `entityType` and `address` moved to validators/signup.validators.js
@@ -67,7 +71,7 @@ export const verifyOtp = {
 };
 
 export const resendOtp = {
-  body: z.object({ loginToken: opaqueToken }),
+  body: z.object({ loginToken: opaqueToken, channel: otpChannel.optional() }),
 };
 
 // A21/A2: the token may arrive in the httpOnly cookie (browser) OR the body
@@ -83,7 +87,7 @@ export const logout = {
 };
 
 export const forgotPassword = {
-  body: z.object({ identifier: zString({ min: 3, max: 200 }), portal }),
+  body: z.object({ identifier: zString({ min: 3, max: 200 }), portal, channel: otpChannel.optional() }),
 };
 
 export const staffForgotPassword = {

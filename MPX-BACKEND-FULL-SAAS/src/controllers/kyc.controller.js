@@ -1,6 +1,7 @@
 import * as svc from '../services/kyc.service.js';
 import { isKycProfileComplete } from '../services/kyc.service.js';
 import { AppError } from '../utils/AppError.js';
+import { controlsCompanyProfile } from '../services/profileControl.service.js';
 
 function meta(req) {
   return { ip: req.ip, userAgent: req.headers['user-agent'], requestId: req.id };
@@ -43,6 +44,9 @@ export async function getMyVerification(req, res) {
       // A22 gate: false → the client sends the user to the company profile
       // before offering an upload. The server enforces it regardless.
       profileComplete: isKycProfileComplete(org),
+      // D7 rule 7: false → this is a buyer in a company with a seller account;
+      // the screen shows status only. The upload route refuses regardless.
+      canManage: await controlsCompanyProfile({ user: req.user, org }),
       entityType: org.entityType ?? null,
       verifiedAt: org.verifiedAt ?? null,
       kycRejectionReason: org.kycStatus === 'rejected' ? (org.kycRejectionReason ?? null) : null,
