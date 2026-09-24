@@ -32,7 +32,7 @@ import { PriceLine } from './PriceLine.jsx';
  * would fire 20 requests for every signed-in buyer.
  */
 export function ProductListCard({ product, to }) {
-  const { user } = useAuth();
+  const { user, restoring } = useAuth();
   const navigate = useNavigate();
 
   const cover = product.images?.[0];
@@ -49,7 +49,10 @@ export function ProductListCard({ product, to }) {
   // Mirrors `EnquiryButton`'s own rule so the two surfaces never disagree:
   // no exporter account, no platform staff, not your own company's listing.
   const ownProduct = Boolean(user?.orgId) && user?.orgId === seller?.id;
+  // Not while the session is restoring: the same-sized fallback link shows until
+  // we know the viewer, so an exporter never sees "Send enquiry" flash.
   const canEnquire =
+    !restoring &&
     Boolean(to) &&
     user?.role !== 'exporter' &&
     user?.role !== 'employee' &&

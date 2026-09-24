@@ -347,6 +347,18 @@ Do not start the screens without surfacing this alert.
 > `AI_GUEST_DAILY_MAX` as the boot-time floor. Tests: `d8-platform-settings.test.js`.
 > **The exclusions below still stand** — they are why the page is two fields and not ten.
 >
+> ✅ **EXTENDED 2026-09-25 — red alert raised, owner confirmed THREE additions** (and declined a
+> fourth, the signed-in company AI allowance, which stays 100/day hard-coded):
+> - **Support hours** — shown beside the contact on the Help page (web + app) and in every email foot.
+> - **Ticket auto-close days** — 3–90, default 14 (`TICKET_AUTO_CLOSE_DAYS`). The nightly job reads
+>   it; each auto-closed ticket stamps `autoClosedAfterDays`; staff rows carry a server-computed
+>   `autoCloseAt`. Lowering it closes already-waiting tickets at the next 03:30 run (the screen warns).
+> - **Company footer details** — registered name, address, LinkedIn (https://linkedin.com only). Site
+>   footer shows all three; emails show name + address as plain text (they carry no links, by design).
+> The public `GET /public/support-contact` was widened consciously for these: `support.hours` and a
+> `company` block — exact key sets pinned in `tests/support-contact.test.js`. Five settings now;
+> **a sixth is a new decision.**
+>
 > _Original entry kept below, because the reasoning is still the reason the page looks like this._
 
 **Why it is on this list at all:** every other outstanding Clause-3 item is scheduled by agreement

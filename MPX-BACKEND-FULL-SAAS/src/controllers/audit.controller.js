@@ -16,6 +16,10 @@ export async function list(req, res) {
   });
 }
 
+export async function facets(_req, res) {
+  res.json(await svc.auditFacets());
+}
+
 export async function get(req, res) {
   const { entry, actor, targetName } = await svc.getAuditEntry(req.params.id);
   res.json({ entry: auditDetailView(entry, actor, targetName) });

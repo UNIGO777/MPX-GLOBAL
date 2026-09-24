@@ -66,6 +66,22 @@ const settingsSchema = new Schema(
     supportEmail: { type: String, trim: true, lowercase: true, default: null },
     supportPhone: { type: String, trim: true, default: null },
 
+    /*
+     * ✅ Added 2026-09-25 (owner confirmed the D8 red alert: "Support hours,
+     * Ticket auto-close days, Company footer details"). All display copy or an
+     * operational number — none of the D8 exclusions below.
+     */
+    // "Mon–Sat, 10:00–18:00 IST" — shown beside the contact on Help and in email.
+    supportHours: { type: String, trim: true, maxlength: 80, default: null },
+    // Days a ticket waiting on the company stays open before it closes itself.
+    // `null` = the built-in default (TICKET_AUTO_CLOSE_DAYS, 14).
+    ticketAutoCloseDays: { type: Number, min: 3, max: 90, default: null },
+    // Footer copy: the site footer and the foot of every email (name + address;
+    // the LinkedIn link is website-only — platform emails carry no links).
+    companyLegalName: { type: String, trim: true, maxlength: 120, default: null },
+    companyAddress: { type: String, trim: true, maxlength: 300, default: null },
+    companyLinkedinUrl: { type: String, trim: true, maxlength: 200, default: null },
+
     // Who last changed anything here. The full history is the AuditLog's job —
     // this is only so the screen can say "last changed by X" without a join.
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },

@@ -75,8 +75,21 @@ export const updateFeatured = {
       subtitle: zString({ max: 240 }).nullish(),
       linkUrl: linkUrl.nullish(),
       ...curation,
+      // `null` REMOVES a date (show right away / until removed). It must be
+      // explicit: `z.coerce.date()` turns a bare null into 1970-01-01, which as
+      // an `endsAt` would silently take the slot off the landing page.
+      startsAt: isoDate.nullable().optional(),
+      endsAt: isoDate.nullable().optional(),
     })
     .refine(windowIsOrdered, windowMessage),
+};
+
+/** The Add dialog's word-prefix search. */
+export const pickCandidates = {
+  query: z.object({
+    kind: z.enum(['product', 'category', 'supplier']),
+    q: zString({ max: 60 }).optional(),
+  }),
 };
 
 export const featuredIdParam = {

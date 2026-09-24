@@ -93,6 +93,42 @@ export async function listErrorEntries(params) {
   return { rows, userById, total, page, pageSize: size, userFor };
 }
 
+/**
+ * The screen's overview (owner, 2026-09-24): how many 5xx in the last day /
+ * week / retention window, and the routes failing most this week. Ids inside a
+ * path (ObjectIds, UUIDs, numbers) collapse to ":id" and the query string is
+ * dropped, so one route does not split into a row per record. Capped read of
+ * the week's routes only — never the stacks.
+ */
+const DAY = 24 * 60 * 60 * 1000;
+export function routePattern(route) {
+  return String(route ?? '')
+    .split('?')[0]
+    .replace(/\/[0-9a-f]{24}(?=\/|$)/gi, '/:id')
+    .replace(/\/[0-9a-f]{8}-[0-9a-f-]{27}(?=\/|$)/gi, '/:id')
+    .replace(/\/\d+(?=\/|$)/g, '/:id');
+}
+
+export async function errorSummary({ now = new Date() } = {}) {
+  const since = (ms) => ({ occurredAt: { $gte: new Date(now.getTime() - ms) } });
+  const [last24h, last7d, total, weekRoutes] = await Promise.all([
+    ErrorLog.countDocuments(since(DAY)),
+    ErrorLog.countDocuments(since(7 * DAY)),
+    ErrorLog.countDocuments({}),
+    ErrorLog.find(since(7 * DAY)).select('route').sort({ occurredAt: -1 }).limit(2000).lean(),
+  ]);
+  const byPattern = new Map();
+  for (const r of weekRoutes) {
+    const key = routePattern(r.route);
+    byPattern.set(key, (byPattern.get(key) ?? 0) + 1);
+  }
+  const topRoutes = [...byPattern.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([route, count]) => ({ route, count }));
+  return { last24h, last7d, total, topRoutes };
+}
+
 export async function getErrorEntry(id) {
   const entry = await ErrorLog.findOne({ _id: id }).lean();
   if (!entry) throw AppError.notFound('error log entry not found', 'Not found.');

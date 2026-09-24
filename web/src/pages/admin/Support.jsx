@@ -7,7 +7,7 @@ import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
 import { actionLabel } from '../../lib/auditFormat.js';
 import { apiError, formatDate, formatListTime, formatTime } from '../../lib/format.js';
-import { CATEGORY_LABEL, TICKET_CATEGORIES, autoCloseDate } from '../../lib/support.js';
+import { CATEGORY_LABEL, LEGACY_AUTO_CLOSE_DAYS, TICKET_CATEGORIES } from '../../lib/support.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { CompanyAvatar, initialsOf } from '../../components/chat/CompanyAvatar.jsx';
 import { TicketStatusChip } from '../../components/support/TicketStatusChip.jsx';
@@ -96,7 +96,7 @@ export function Support() {
   const cards = [
     { key: 'needs_reply', label: 'Needs a reply', hint: 'The company wrote last', value: c?.needsReply, Icon: ChatIcon, tone: 'text-primary-700 bg-primary-50', go: { status: 'needs_reply' } },
     { key: 'unassigned', label: 'Unassigned', hint: 'Nobody has picked it up', value: c?.unassigned, Icon: UserIcon, tone: 'text-warning-800 bg-warning-50', go: { status: 'active', assignee: 'unassigned' } },
-    { key: 'waiting', label: 'Waiting on company', hint: 'Closes itself after 14 days', value: c?.waiting, Icon: ClockIcon, tone: 'text-sky-700 bg-sky-50', go: { status: 'waiting' } },
+    { key: 'waiting', label: 'Waiting on company', hint: `Closes itself after ${overview.data?.autoCloseDays ?? LEGACY_AUTO_CLOSE_DAYS} days`, value: c?.waiting, Icon: ClockIcon, tone: 'text-sky-700 bg-sky-50', go: { status: 'waiting' } },
     { key: 'resolved', label: 'Resolved', hint: 'In the last 7 days', value: c?.resolved7d, Icon: CheckCircleIcon, tone: 'text-success-700 bg-success-50', go: { status: 'resolved' } },
   ];
   const activeCard = tab === 'queue'
@@ -327,7 +327,7 @@ function Queue({ status, setStatus, assignee, setAssignee }) {
 
 /** Small row tags: a follow-up link, and the auto-close date while waiting on the company. */
 function RowTags({ t, inline = false }) {
-  const closes = t.status !== 'resolved' ? autoCloseDate(t.awaitingCompanySince) : null;
+  const closes = t.status !== 'resolved' && t.autoCloseAt ? new Date(t.autoCloseAt) : null;
   if (!t.followUpOf && !closes) return null;
   const tags = (
     <>
@@ -501,7 +501,7 @@ export function LogPhrase({ row }) {
       return row.to ? <>assigned it to <b>{row.to}</b>{row.from ? <> (was {row.from})</> : null}</> : <>unassigned it{row.from ? <> (was {row.from})</> : null}</>;
     case 'ticket.status':
       if (row.to === 'resolved' && row.by === 'company') return <><b className="text-success-700">marked it solved</b> (company)</>;
-      if (row.to === 'resolved' && row.by === 'auto') return <><b className="text-success-700">closed it</b> — no reply for 14 days</>;
+      if (row.to === 'resolved' && row.by === 'auto') return <><b className="text-success-700">closed it</b> — no reply for {row.afterDays ?? LEGACY_AUTO_CLOSE_DAYS} days</>;
       return row.to === 'resolved' ? <><b className="text-success-700">resolved</b> it</> : <>set status to <b>{row.to === 'in_progress' ? 'In progress' : row.to}</b></>;
     case 'ticket.reopen':
       return <>re-opened it by replying</>;

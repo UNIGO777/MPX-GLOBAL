@@ -528,3 +528,16 @@ describe('staff password reset (A21 — the staff portal has its own pair)', () 
     expect(missingPortal.status).toBe(400);
   });
 });
+
+describe('/auth/me — own account dates (My account page, 2026-09-25)', () => {
+  it('returns memberSince + lastLoginAt for the caller, and nothing secret', async () => {
+    const b = makeBuyer();
+    const { accessToken } = await signupAndLogin(b);
+    const me = await request(app).get('/auth/me').set(bearer(accessToken));
+    expect(me.status).toBe(200);
+    expect(new Date(me.body.user.memberSince).getTime()).toBeGreaterThan(0);
+    expect(new Date(me.body.user.lastLoginAt).getTime()).toBeGreaterThan(0);
+    expect(me.body.user).not.toHaveProperty('passwordHash');
+    expect(me.body.user).not.toHaveProperty('tokenVersion');
+  });
+});

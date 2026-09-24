@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportApi, supportKeys } from '../../api/support.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { apiError, formatDate, formatTime } from '../../lib/format.js';
-import { CATEGORY_LABEL } from '../../lib/support.js';
+import { CATEGORY_LABEL, autoClosedDays } from '../../lib/support.js';
 import { PortalLayout } from '../../layouts/PortalLayout.jsx';
 import { BUYER_NAV } from '../buyer/buyerNav.js';
 import { EXPORTER_NAV } from '../exporter/exporterNav.js';
@@ -254,7 +254,7 @@ function TicketDetails({ ticket, messageCount, framed = true }) {
 function closedLine(ticket) {
   const on = ticket.resolvedAt ? ` on ${formatDate(ticket.resolvedAt)}` : '';
   if (ticket.closedBy === 'company') return `You marked this ticket as solved${on}.`;
-  if (ticket.closedBy === 'auto') return `Closed automatically${on} — we had no reply for 14 days.`;
+  if (ticket.closedBy === 'auto') return `Closed automatically${on} — we had no reply for ${autoClosedDays(ticket)} days.`;
   return `This ticket was resolved${on} and is closed.`;
 }
 

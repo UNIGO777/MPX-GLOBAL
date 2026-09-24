@@ -80,7 +80,7 @@ function tradeCells(product) {
 }
 
 export function ProductCard({ product, showSeller = true, to }) {
-  const { user } = useAuth();
+  const { user, restoring } = useAuth();
   const navigate = useNavigate();
 
   const cover = product.images?.[0];
@@ -194,7 +194,15 @@ export function ProductCard({ product, showSeller = true, to }) {
 
   // Same reason the heart sits outside the Link. Navigating (rather than opening
   // a modal from here) is what keeps the grid free of per-card requests.
-  const enquire = canEnquire ? (
+  // While the session is still being restored we don't know who is looking, so
+  // the strip's SPACE is held but nothing is shown — a signed-in exporter must
+  // not see "Send enquiry" flash in and out on every reload (owner, 2026-09-25).
+  const enquire = to && restoring ? (
+    <span aria-hidden="true" className="invisible flex w-full items-center justify-center gap-2 border-t border-transparent px-4 py-2.5 text-xs font-bold">
+      <EnquiryIcon className="h-3.5 w-3.5" />
+      Send enquiry
+    </span>
+  ) : canEnquire ? (
     <button
       type="button"
       onClick={() => navigate(`${to}?enquire=1`)}

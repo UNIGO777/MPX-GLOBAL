@@ -224,6 +224,8 @@ export function attachmentView(att) {
  * anyone needs to render the thread, and a person's identity is not ours to show.
  */
 export function messageView(message) {
+  // Derived once: legacySystemKind() pattern-matches the body, so it is not free.
+  const systemKind = message.senderType === 'system' ? (message.systemKind ?? legacySystemKind(message.body)) : null;
   return {
     id: String(message._id),
     senderType: message.senderType,
@@ -231,13 +233,10 @@ export function messageView(message) {
     // differently from a reopen without matching on the copy. Null on every
     // party message, and on system notices written before the field existed —
     // messages are append-only (M4-13), so those can never be backfilled.
-    systemKind:
-      message.senderType === 'system' ? (message.systemKind ?? legacySystemKind(message.body)) : null,
+    systemKind,
     // Presentation rules for append-only text (routed-notice wording, country
     // names) — see utils/messageText.js.
-    body: presentBody(message.body, {
-      systemKind: message.senderType === 'system' ? (message.systemKind ?? legacySystemKind(message.body)) : null,
-    }),
+    body: presentBody(message.body, { systemKind }),
     /**
      * D9 · the image, as a SHORT-LIVED SIGNED URL minted per read.
      *

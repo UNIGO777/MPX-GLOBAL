@@ -17,6 +17,10 @@ export async function list(req, res) {
   });
 }
 
+export async function summary(_req, res) {
+  res.json(await svc.errorSummary());
+}
+
 export async function get(req, res) {
   const { entry, user } = await svc.getErrorEntry(req.params.id);
   res.json({ entry: errorDetailView(entry, user) });

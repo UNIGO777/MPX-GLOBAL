@@ -550,6 +550,8 @@ export function Dashboard() {
   const feedIsAuthOnly = feedActions.length === 0 && feedAll.length > 0;
   const feed = (feedIsAuthOnly ? feedAll : feedActions).slice(0, FEED_SHOW);
   const queueRows = queue.data?.organisations ?? [];
+  // The verification queue panel shows only while it has something (or is loading / failed).
+  const showQueue = canOrgs && (queue.isLoading || Boolean(queue.error) || queueRows.length > 0);
   const convRows = convs.data?.conversations ?? [];
 
   // The panels about MY work — for an employee they come FIRST (their
@@ -909,7 +911,7 @@ export function Dashboard() {
           {/* ── Work queues, as real tables ──────────────────────────────── */}
           {(canOrgs || canAudit) && (
             <div className="grid gap-5 lg:grid-cols-3">
-              {canOrgs && (queue.isLoading || queue.error || queueRows.length > 0) && (
+              {showQueue && (
                 <Panel
                   Icon={BadgeCheckIcon}
                   tone="warning"
@@ -974,15 +976,20 @@ export function Dashboard() {
                   accessory={<LiveDot />}
                   to={cp('/admin/audit')}
                   toLabel="Open"
-                  className="rise-in"
+                  // Beside the queue it is one column; with no queue to show it takes
+                  // the whole row (it used to stay a third wide next to empty space).
+                  className={`rise-in ${showQueue ? '' : 'lg:col-span-3'}`}
                   style={{ animationDelay: '320ms' }}
                 >
                   <PanelBody query={activity} empty={feed.length === 0 ? 'Nothing recorded yet.' : null}>
                     <div className="relative">
-                      <span aria-hidden="true" className="absolute bottom-4 left-[23px] top-4 w-px bg-ink-100" />
-                      <ul>
+                      {/* The connecting line only reads in a single column. */}
+                      <span aria-hidden="true" className={`absolute bottom-4 left-[23px] top-4 w-px bg-ink-100 ${showQueue ? '' : 'lg:hidden'}`} />
+                      {/* Wide: two COLUMNS (newest runs down the first, then the second) — a
+                          grid would zig-zag left/right and break the time order. */}
+                      <ul className={showQueue ? '' : 'lg:columns-2 lg:gap-x-2'}>
                         {feed.map((row) => (
-                          <li key={row.id} className="relative flex gap-3 px-5 py-2.5">
+                          <li key={row.id} className="relative flex break-inside-avoid gap-3 px-5 py-2.5">
                             <span
                               aria-hidden="true"
                               className={`z-10 mt-1.5 h-2 w-2 shrink-0 rounded-full ring-2 ring-white ${actionDot(row.action)}`}

@@ -116,6 +116,85 @@ export async function getLandingFeatured({ now = new Date() } = {}) {
 
 // --- admin ------------------------------------------------------------------
 
+function escapeRegex(input) {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const PICK_LIMIT = 8;
+
+/**
+ * The Add dialog's search: WORD-PREFIX match on the name, so "twi" finds
+ * "Organic Cotton Twill" while the curator is still typing. The public search
+ * cannot do this — it is MongoDB `$text` (whole words, stemmed; §A26) — and a
+ * type-as-you-go picker that finds nothing until a word is complete reads as
+ * broken (owner, 2026-09-25).
+ *
+ * Offers only what the landing could actually SHOW — the same availability
+ * rules as the public read — so nothing picked here is dead on arrival. No
+ * term → the newest. Names only in the reply; this is a staff route, but it
+ * still returns nothing a curator doesn't need to choose.
+ */
+export async function pickCandidates({ kind, q }) {
+  const term = (q ?? '').trim();
+  const nameMatch = term ? { name: new RegExp(`(^|[^a-z0-9])${escapeRegex(term)}`, 'i') } : {};
+
+  if (kind === 'product') {
+    const products = await Product.find({ ...(await buildAvailabilityFilter()), ...nameMatch })
+      .select('name images exporterOrgId categoryId createdAt')
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(PICK_LIMIT)
+      .maxTimeMS(2000)
+      .lean();
+    const [orgs, cats] = await Promise.all([
+      Organisation.find({ _id: { $in: products.map((p) => p.exporterOrgId) } }).select('name').lean(),
+      Category.find({ _id: { $in: products.map((p) => p.categoryId) } }).select('name').lean(),
+    ]);
+    const orgName = new Map(orgs.map((o) => [String(o._id), o.name]));
+    const catName = new Map(cats.map((c) => [String(c._id), c.name]));
+    return products.map((p) => ({
+      id: String(p._id),
+      name: p.name,
+      image: p.images?.[0]?.url ?? null,
+      meta: [orgName.get(String(p.exporterOrgId)), catName.get(String(p.categoryId))].filter(Boolean).join(' · ') || null,
+      verified: false,
+    }));
+  }
+
+  if (kind === 'supplier') {
+    const orgs = await Organisation.find({ exporterSide: true, isActive: true, ...nameMatch })
+      .select('name logo country kycStatus createdAt')
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(PICK_LIMIT)
+      .maxTimeMS(2000)
+      .lean();
+    return orgs.map((o) => ({
+      id: String(o._id),
+      name: o.name,
+      image: o.logo ?? null,
+      meta: o.country ?? null,
+      // The derived tick only — never the raw kycStatus (CLAUDE.md, B7).
+      verified: o.kycStatus === 'verified',
+    }));
+  }
+
+  // category
+  const cats = await Category.find({ active: true, ...nameMatch })
+    .select('name image parentId')
+    .sort({ parentId: 1, name: 1 })
+    .limit(PICK_LIMIT)
+    .maxTimeMS(2000)
+    .lean();
+  const parents = await Category.find({ _id: { $in: cats.map((c) => c.parentId).filter(Boolean) } }).select('name').lean();
+  const parentName = new Map(parents.map((c) => [String(c._id), c.name]));
+  return cats.map((c) => ({
+    id: String(c._id),
+    name: c.name,
+    image: c.image ?? null,
+    meta: c.parentId ? `In ${parentName.get(String(c.parentId)) ?? 'a category'}` : 'Top category',
+    verified: false,
+  }));
+}
+
 /**
  * Confirm the target exists before it can be featured.
  *
@@ -146,14 +225,14 @@ export async function listFeatured() {
 
   const [products, categories, suppliers, livePublicProducts] = await Promise.all([
     ids.product.length
-      ? Product.find({ _id: { $in: ids.product } }).select('name slug images').lean()
+      ? Product.find({ _id: { $in: ids.product } }).select('name slug images exporterOrgId categoryId').lean()
       : [],
     ids.category.length
-      ? Category.find({ _id: { $in: ids.category } }).select('name slug image active').lean()
+      ? Category.find({ _id: { $in: ids.category } }).select('name slug image active parentId').lean()
       : [],
     ids.supplier.length
       ? Organisation.find({ _id: { $in: ids.supplier } })
-          .select('name slug logo exporterSide isActive')
+          .select('name slug logo exporterSide isActive country')
           .lean()
       : [],
     ids.product.length
@@ -169,6 +248,30 @@ export async function listFeatured() {
     supplier: new Map(suppliers.map((t) => [String(t._id), t])),
   };
   const liveProduct = new Set(livePublicProducts.map((t) => String(t._id)));
+
+  // A second, small lookup for the admin row's context line: the product's
+  // seller + category, a category's parent. Names only — this is the staff
+  // screen telling two "Cotton Roll" slots apart, not a wider projection.
+  const orgIds = [...new Set(products.map((p) => String(p.exporterOrgId)).filter(Boolean))];
+  const catIds = [
+    ...new Set([
+      ...products.map((p) => String(p.categoryId)),
+      ...categories.map((c) => (c.parentId ? String(c.parentId) : null)),
+    ].filter(Boolean)),
+  ];
+  const [ctxOrgs, ctxCats] = await Promise.all([
+    orgIds.length ? Organisation.find({ _id: { $in: orgIds } }).select('name').lean() : [],
+    catIds.length ? Category.find({ _id: { $in: catIds } }).select('name').lean() : [],
+  ]);
+  const orgName = new Map(ctxOrgs.map((o) => [String(o._id), o.name]));
+  const catName = new Map(ctxCats.map((c) => [String(c._id), c.name]));
+  const contextOf = (kind, t) => {
+    if (kind === 'product') {
+      return [orgName.get(String(t.exporterOrgId)), catName.get(String(t.categoryId))].filter(Boolean).join(' · ') || null;
+    }
+    if (kind === 'category') return t.parentId ? `In ${catName.get(String(t.parentId)) ?? 'a category'}` : 'Top category';
+    return t.country ?? null;
+  };
 
   return rows.map((row) => {
     if (row.kind === 'banner') return row;
@@ -186,6 +289,7 @@ export async function listFeatured() {
         ? {
             name: t.name,
             slug: t.slug ?? null,
+            context: contextOf(row.kind, t),
             image:
               (row.kind === 'product'
                 ? t.images?.[0]?.url
@@ -264,6 +368,11 @@ export async function updateFeatured({ id, patch, actor, meta }) {
   for (const key of ['order', 'active', 'title', 'subtitle', 'linkUrl', 'startsAt', 'endsAt']) {
     if (patch[key] !== undefined) item[key] = patch[key];
   }
+  // The validator only sees the dates it was sent; moving ONE end past the
+  // stored other end has to be caught against the merged row.
+  if (item.startsAt && item.endsAt && item.startsAt > item.endsAt) {
+    throw AppError.badRequest('featured window inverted', 'The start date must not be after the end date.', 'VALIDATION_ERROR');
+  }
   await item.save();
 
   await recordAudit({
@@ -272,7 +381,15 @@ export async function updateFeatured({ id, patch, actor, meta }) {
     entityType: 'FeaturedItem',
     entityId: item._id,
     before,
-    after: { order: item.order, active: item.active },
+    after: {
+      order: item.order,
+      active: item.active,
+      title: item.title,
+      subtitle: item.subtitle,
+      linkUrl: item.linkUrl,
+      startsAt: item.startsAt,
+      endsAt: item.endsAt,
+    },
     meta,
   });
   return item;

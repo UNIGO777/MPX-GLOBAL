@@ -19,7 +19,8 @@ function withFile(fields, file) {
 }
 
 export const supportApi = {
-  contact: () => apiClient.get('/public/support-contact').then((r) => r.data.support),
+  // → { support: { email, phone, hours }, company: { name, address, linkedinUrl } }
+  contact: () => apiClient.get('/public/support-contact').then((r) => r.data),
 
   // ── company ──
   myTickets: (params) => apiClient.get('/support/tickets', { params }).then((r) => r.data),

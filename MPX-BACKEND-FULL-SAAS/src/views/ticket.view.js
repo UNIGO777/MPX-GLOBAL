@@ -23,6 +23,7 @@ export function companyTicketView(t) {
     createdAt: t.createdAt,
     resolvedAt: t.resolvedAt ?? null,
     closedBy: t.closedBy ?? null, // 'staff' | 'company' | 'auto' | null
+    autoClosedAfterDays: t.autoClosedAfterDays ?? null,
     followUpOf: t.followUpOf ? { id: String(t.followUpOf), ref: t.followUpRef } : null,
   };
 }
@@ -41,7 +42,7 @@ export function companyMessageView(m) {
  * @param names Map<string, {name, email?}> of user ids → display data
  * @param orgs  Map<string, {name, slug?}>
  */
-export function staffTicketView(t, { names = new Map(), orgs = new Map() } = {}) {
+export function staffTicketView(t, { names = new Map(), orgs = new Map(), autoCloseDays = null } = {}) {
   const org = orgs.get(String(t.orgId));
   const creator = names.get(String(t.createdBy));
   const assignee = t.assignedTo ? names.get(String(t.assignedTo)) : null;
@@ -61,6 +62,13 @@ export function staffTicketView(t, { names = new Map(), orgs = new Map() } = {})
     resolvedAt: t.resolvedAt ?? null,
     closedBy: t.closedBy ?? null,
     awaitingCompanySince: t.awaitingCompanySince ?? null,
+    // When it will close itself, computed HERE from the setting in force so no
+    // screen carries its own copy of the day count (2026-09-25).
+    autoCloseAt:
+      t.status !== 'resolved' && t.awaitingCompanySince && autoCloseDays
+        ? new Date(new Date(t.awaitingCompanySince).getTime() + autoCloseDays * 86_400_000)
+        : null,
+    autoClosedAfterDays: t.autoClosedAfterDays ?? null,
     followUpOf: t.followUpOf ? { id: String(t.followUpOf), ref: t.followUpRef } : null,
   };
 }

@@ -1,15 +1,16 @@
-import { MailIcon, PhoneIcon } from '../ui/icons.jsx';
+import { ClockIcon, MailIcon, PhoneIcon } from '../ui/icons.jsx';
 import { useSupportContact } from '../../hooks/useSupportContact.js';
 
 /**
  * The published support contact as two cards (email · phone). Step 1a.
  *
  * Only what a superadmin has actually published renders — no invented address,
- * and no invented service promise (reply times, hours) either.
+ * and no invented service promise. Hours appear only when a superadmin has
+ * published them in Settings (2026-09-25).
  * When nothing is set yet it says so plainly rather than showing an empty card.
  */
 export function SupportContactCards({ stacked = false }) {
-  const { email, phone, hasAny, isLoading } = useSupportContact();
+  const { email, phone, hours, hasAny, isLoading } = useSupportContact();
 
   if (isLoading) {
     return <div className="h-24 animate-pulse rounded-2xl bg-ink-100" aria-hidden="true" />;
@@ -28,6 +29,7 @@ export function SupportContactCards({ stacked = false }) {
   ].filter(Boolean);
 
   return (
+    <div>
     <div className={`grid gap-3 ${cards.length > 1 && !stacked ? 'sm:grid-cols-2' : ''}`}>
       {cards.map(({ Icon, label, value, href }) => (
         <a
@@ -46,6 +48,13 @@ export function SupportContactCards({ stacked = false }) {
           </span>
         </a>
       ))}
+    </div>
+    {hours && (
+      <p className="mt-3 flex items-center gap-2 text-[13px] text-ink-600">
+        <ClockIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+        <span><span className="font-semibold text-ink-800">Support hours:</span> {hours}</span>
+      </p>
+    )}
     </div>
   );
 }

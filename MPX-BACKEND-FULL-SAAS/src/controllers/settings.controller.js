@@ -27,7 +27,11 @@ export async function updateSettings(req, res) {
   res.json({ settings });
 }
 
-/** Public: the support email + phone only (see settingsService.getSupportContact). */
+/** Public: the support contact + the company footer block — published copy only. */
 export async function getSupportContact(req, res) {
-  res.json({ support: await settingsService.getSupportContact() });
+  const [support, company] = await Promise.all([
+    settingsService.getSupportContact(),
+    settingsService.getCompanyDetails(),
+  ]);
+  res.json({ support, company });
 }

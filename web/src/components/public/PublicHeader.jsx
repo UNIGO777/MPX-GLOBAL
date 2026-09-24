@@ -36,7 +36,7 @@ const pill =
   'inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition-colors';
 
 export function PublicHeader({ centerSlot = null, current }) {
-  const { user } = useAuth();
+  const { user, restoring } = useAuth();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const rootRef = useRef(null);
@@ -101,7 +101,11 @@ export function PublicHeader({ centerSlot = null, current }) {
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Logo + two actions + burger overflows a 320–375px bar, so below sm
               the label shortens and "Sign In" moves into the menu panel. */}
-          {home ? (
+          {restoring ? (
+            // Session still being restored: hold the space, show neither the
+            // guest CTAs nor the dashboard link (no flash either way on reload).
+            <span aria-hidden="true" className={`${pill} invisible px-4 py-2 sm:px-5`}>Get Started</span>
+          ) : home ? (
             <Link to={home} className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-700 sm:px-5`}>
               <span className="sm:hidden">Dashboard</span>
               <span className="hidden sm:inline">Go to your dashboard</span>
@@ -168,7 +172,7 @@ export function PublicHeader({ centerSlot = null, current }) {
             ),
           )}
           {/* Only below sm, where the header drops "Sign In". */}
-          {!home && (
+          {!home && !restoring && (
             <Link
               to="/signin"
               onClick={() => setMenuOpen(false)}

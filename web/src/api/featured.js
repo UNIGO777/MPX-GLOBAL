@@ -22,6 +22,9 @@ export const featuredApi = {
 
   // admin (featured:manage)
   list: () => apiClient.get('/admin/featured').then((r) => r.data.items),
+  // The Add dialog's word-prefix search (availability-filtered, newest when q is empty).
+  candidates: (kind, q) =>
+    apiClient.get('/admin/featured/candidates', { params: { kind, ...(q ? { q } : {}) } }).then((r) => r.data.items),
   create: (payload) => apiClient.post('/admin/featured', payload).then((r) => r.data.item),
   // Banners are multipart: the image file rides with the create.
   createBanner: (formData) =>

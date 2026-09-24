@@ -3,7 +3,19 @@ import { User } from '../models/User.js';
 import { logger } from '../utils/logger.js';
 import { isEmailConfigured, sendEmail } from './email.provider.js';
 import { renderEmail } from './emailTemplate.js';
-import { getSupportContact } from './settings.service.js';
+import { getCompanyDetails, getSupportContact } from './settings.service.js';
+
+/**
+ * What every email's foot shows: the published support contact (+ hours) and
+ * the company's registered name/address (owner-confirmed D8 additions,
+ * 2026-09-25). Plain text only — the LinkedIn URL is deliberately NOT here,
+ * because these emails carry no links at all (anti-phishing; tests pin it).
+ * Never throws: both reads degrade to "nothing published".
+ */
+async function emailFooter() {
+  const [support, company] = await Promise.all([getSupportContact(), getCompanyDetails()]);
+  return { ...support, company: { name: company.name, address: company.address } };
+}
 
 /**
  * Transactional email notifications.
@@ -92,7 +104,7 @@ export function notifyVerificationResult({ org, role, approved, reason }) {
 
       const { text, html } = renderEmail({
         // Step 1a: the published support contact under the signature (never throws).
-        support: await getSupportContact(),
+        support: await emailFooter(),
         heading: approved ? 'You’re verified' : 'We need another look',
         preheader: approved
           ? 'Your MPX Global profile is now verified'
@@ -144,7 +156,7 @@ export function notifyWelcome({ user, org }) {
 
       const { text, html } = renderEmail({
         // Step 1a: the published support contact under the signature (never throws).
-        support: await getSupportContact(),
+        support: await emailFooter(),
         heading: 'Welcome to MPX Global',
         preheader: isExporter
           ? 'Your exporter profile is live'
@@ -171,7 +183,7 @@ export function notifyPasswordChanged({ user }) {
     (async () => {
       const { text, html } = renderEmail({
         // Step 1a: the published support contact under the signature (never throws).
-        support: await getSupportContact(),
+        support: await emailFooter(),
         heading: 'Your password was changed',
         preheader: 'A security notice from MPX Global',
         paragraphs: [
@@ -212,7 +224,7 @@ export function notifyNewEnquiryEmail({ conversation, buyerOrgName }) {
 
       const { text, html } = renderEmail({
         // Step 1a: the published support contact under the signature (never throws).
-        support: await getSupportContact(),
+        support: await emailFooter(),
         heading: 'You have a new enquiry',
         preheader: `${buyerOrgName} enquired about ${conversation.productNameSnapshot}`,
         status: { tone: 'info', label: 'New enquiry' },
@@ -251,7 +263,7 @@ export function notifyOrganisationJoined({ org, recipient, joiner }) {
   return safely(
     (async () => {
       const asSeller = joiner?.role === 'exporter';
-      const support = await getSupportContact();
+      const support = await emailFooter();
       const { text, html } = renderEmail({
         // Step 1a: the published support contact under the signature (never throws).
         support,
@@ -304,7 +316,7 @@ export function notifyTicketReply({ ticket }) {
       const recipient = await ticketRecipient(ticket);
       if (!recipient) return;
       const { text, html } = renderEmail({
-        support: await getSupportContact(),
+        support: await emailFooter(),
         heading: 'We replied to your support ticket',
         preheader: `MPX Global Support replied to ${ticket.ref}`,
         status: { tone: 'info', label: `Ticket ${ticket.ref}` },
@@ -320,21 +332,21 @@ export function notifyTicketReply({ ticket }) {
   );
 }
 
-export function notifyTicketResolved({ ticket, auto = false }) {
+export function notifyTicketResolved({ ticket, auto = false, afterDays = TICKET_AUTO_CLOSE_DAYS }) {
   if (!isEmailConfigured()) return Promise.resolve();
   return safely(
     (async () => {
       const recipient = await ticketRecipient(ticket);
       if (!recipient) return;
       const { text, html } = renderEmail({
-        support: await getSupportContact(),
+        support: await emailFooter(),
         heading: 'Your support ticket is resolved',
         preheader: `${ticket.ref} is resolved`,
         status: { tone: 'success', label: 'Resolved' },
         paragraphs: [
           `Hello ${recipient.name},`,
           auto
-            ? `Your ticket **${ticket.subject}** (${ticket.ref}) was closed because we had no reply for ${TICKET_AUTO_CLOSE_DAYS} days.`
+            ? `Your ticket **${ticket.subject}** (${ticket.ref}) was closed because we had no reply for ${afterDays} days.`
             : `We've marked your ticket **${ticket.subject}** (${ticket.ref}) as resolved.`,
           'If you still need help, raise a new ticket from **Help & support** in your account and mention this reference.',
         ],

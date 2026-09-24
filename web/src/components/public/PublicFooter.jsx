@@ -23,7 +23,7 @@ export function PublicFooter() {
   const { pathname } = useLocation();
   const categoriesHref = pathname === '/' ? '#categories' : '/#categories';
   // Step 1a: the published support contact — only what a superadmin has set.
-  const { email, phone } = useSupportContact();
+  const { email, phone, hours, company } = useSupportContact();
 
   return (
     <footer className="bg-ink-900 px-4 py-14 text-white sm:px-6">
@@ -33,7 +33,26 @@ export function PublicFooter() {
           <p className="mt-3 text-sm text-white/60">
             The B2B marketplace connecting verified Indian exporters with international buyers.
           </p>
-          <p className="mt-6 text-xs text-white/40">© 2026 MPX Global. All rights reserved.</p>
+          {/* Company footer details — only what a superadmin published in Settings (2026-09-25). */}
+          {(company.name || company.address) && (
+            <address className="mt-5 text-xs not-italic leading-relaxed text-white/55">
+              {company.name && <span className="block font-semibold text-white/75">{company.name}</span>}
+              {company.address && <span className="block whitespace-pre-line">{company.address}</span>}
+            </address>
+          )}
+          {company.linkedinUrl && (
+            <a
+              href={company.linkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-white/70 hover:text-white"
+            >
+              LinkedIn
+              <span aria-hidden="true">↗</span>
+              <span className="sr-only">(opens in a new tab)</span>
+            </a>
+          )}
+          <p className="mt-6 text-xs text-white/40">© {new Date().getFullYear()} {company.name || 'MPX Global'}. All rights reserved.</p>
         </div>
         <div className="grid flex-1 grid-cols-2 gap-8 md:grid-cols-4">
           <div>
@@ -62,6 +81,7 @@ export function PublicFooter() {
               {phone && (
                 <li><a href={`tel:${phone.replace(/\s+/g, '')}`} className="inline-block py-1.5 hover:text-white">{phone}</a></li>
               )}
+              {hours && (email || phone) && <li className="py-1.5 text-white/45">{hours}</li>}
             </ul>
           </div>
           <div>

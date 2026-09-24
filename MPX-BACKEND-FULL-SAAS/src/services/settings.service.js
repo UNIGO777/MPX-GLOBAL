@@ -1,4 +1,5 @@
 import { Settings, SETTINGS_ID } from '../models/Settings.js';
+import { TICKET_AUTO_CLOSE_DAYS } from '../models/enums.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { recordAudit } from './audit.service.js';
@@ -22,6 +23,12 @@ function view(doc) {
     envAiGuestDailyMax: env.AI_GUEST_DAILY_MAX ?? null,
     supportEmail: doc?.supportEmail ?? null,
     supportPhone: doc?.supportPhone ?? null,
+    supportHours: doc?.supportHours ?? null,
+    ticketAutoCloseDays: doc?.ticketAutoCloseDays ?? null,
+    defaultTicketAutoCloseDays: TICKET_AUTO_CLOSE_DAYS,
+    companyLegalName: doc?.companyLegalName ?? null,
+    companyAddress: doc?.companyAddress ?? null,
+    companyLinkedinUrl: doc?.companyLinkedinUrl ?? null,
     updatedAt: doc?.updatedAt ?? null,
     updatedBy: doc?.updatedBy ? String(doc.updatedBy) : null,
   };
@@ -50,9 +57,11 @@ export async function getSettings() {
  * The support contact, for the PUBLIC surface (Step 1a, 2026-09-24) — the help
  * page, the portal/app support screens, the privacy page and email footers.
  *
- * 🔴 A deliberate WHITELIST of two fields. The rest of the settings document
- * (the AI ceiling, who last edited it) is platform governance and stays behind
- * the superadmin route; widening this object widens a public endpoint.
+ * 🔴 A deliberate WHITELIST. The rest of the settings document (the AI
+ * ceiling, the auto-close days, who last edited it) is platform governance and
+ * stays behind the superadmin route; widening this object widens a public
+ * endpoint. Widened ONCE, consciously, on 2026-09-25 (owner-confirmed D8
+ * additions): `hours`, and the `company` footer block — all published copy.
  *
  * Never throws: a failed read degrades to "not published" — a help page must
  * not 500 because the settings row is briefly unreachable.
@@ -60,11 +69,45 @@ export async function getSettings() {
 export async function getSupportContact() {
   try {
     const doc = await load();
-    return { email: doc?.supportEmail ?? null, phone: doc?.supportPhone ?? null };
+    return {
+      email: doc?.supportEmail ?? null,
+      phone: doc?.supportPhone ?? null,
+      hours: doc?.supportHours ?? null,
+    };
   } catch (err) {
     logger.warn({ err: err?.message }, 'support contact read failed — serving none');
-    return { email: null, phone: null };
+    return { email: null, phone: null, hours: null };
   }
+}
+
+/** The public footer block (site footer + email foot). Same never-throws rule. */
+export async function getCompanyDetails() {
+  try {
+    const doc = await load();
+    return {
+      name: doc?.companyLegalName ?? null,
+      address: doc?.companyAddress ?? null,
+      linkedinUrl: doc?.companyLinkedinUrl ?? null,
+    };
+  } catch (err) {
+    logger.warn({ err: err?.message }, 'company details read failed — serving none');
+    return { name: null, address: null, linkedinUrl: null };
+  }
+}
+
+/**
+ * Days a ticket waiting on the company stays open. The override, else the
+ * built-in 14. Never throws — a settings blip must not stop the nightly job or
+ * a ticket screen; it falls back to the default.
+ */
+export async function effectiveTicketAutoCloseDays() {
+  try {
+    const doc = await load();
+    if (doc?.ticketAutoCloseDays != null) return doc.ticketAutoCloseDays;
+  } catch (err) {
+    logger.warn({ err: err?.message }, 'settings unreadable — ticket auto-close uses the default');
+  }
+  return TICKET_AUTO_CLOSE_DAYS;
 }
 
 /**
@@ -107,7 +150,16 @@ export async function updateSettings({ actor, patch, meta }) {
 
   // Only fields the caller actually sent, and only where the value differs —
   // a no-op save must not write an audit entry claiming something changed.
-  const FIELDS = ['aiGuestDailyMax', 'supportEmail', 'supportPhone'];
+  const FIELDS = [
+    'aiGuestDailyMax',
+    'supportEmail',
+    'supportPhone',
+    'supportHours',
+    'ticketAutoCloseDays',
+    'companyLegalName',
+    'companyAddress',
+    'companyLinkedinUrl',
+  ];
   const before = {};
   const after = {};
   for (const f of FIELDS) {

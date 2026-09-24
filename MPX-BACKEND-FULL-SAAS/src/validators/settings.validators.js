@@ -37,6 +37,19 @@ export const updateSettings = {
       // enough that a regex here would reject valid numbers. It is display copy,
       // never dialled by the server.
       supportPhone: clearable(z.string().trim().max(40)),
+
+      // ✅ 2026-09-25 — owner-confirmed D8 additions (see models/Settings.js).
+      supportHours: clearable(z.string().trim().max(80)),
+      // 3–90: below 3 a ticket could close over a weekend before anyone reads
+      // the reply; above 90 "auto-close" stops meaning anything. null = default.
+      ticketAutoCloseDays: z.coerce.number().int().min(3).max(90).nullable().optional(),
+      companyLegalName: clearable(z.string().trim().max(120)),
+      companyAddress: clearable(z.string().trim().max(300)),
+      // LinkedIn only, https only — it is rendered as an href on every public
+      // page, so an open URL field would be a stored-link injection point.
+      companyLinkedinUrl: clearable(
+        z.string().trim().max(200).regex(/^https:\/\/([a-z]{2,3}\.)?(www\.)?linkedin\.com\/[^\s]*$/i, 'must be a https://linkedin.com/… address'),
+      ),
     })
     .strict()
     .refine((body) => Object.keys(body).length > 0, {

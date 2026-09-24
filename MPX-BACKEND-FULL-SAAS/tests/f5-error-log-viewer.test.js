@@ -360,3 +360,24 @@ describe('F5 · secret redaction at the write site', () => {
     expect(JSON.stringify(res.body)).not.toContain(env.MONGODB_URI);
   });
 });
+
+describe('error summary — the overview (owner, 2026-09-24)', () => {
+  it('counts 24h / 7d / all and groups the week\'s routes by pattern, gated like the log', async () => {
+    const { routePattern } = await import('../src/services/errorLogViewer.service.js');
+    expect(routePattern('/admin/orgs/6ab3f9b17da71ed9549f529b?x=1')).toBe('/admin/orgs/:id');
+    expect(routePattern('/auth/signup/organisation')).toBe('/auth/signup/organisation');
+
+    const before = (await request(app).get('/admin/errors/summary').set(bearer(viewer.token))).body;
+    await entry({ route: '/admin/orgs/6ab3f9b17da71ed9549f529b', occurredAt: new Date() });
+    await entry({ route: '/admin/orgs/6ab3f9b17da71ed9549f529c', occurredAt: new Date() });
+    await entry({ route: '/admin/orgs/6ab3f9b17da71ed9549f529d', occurredAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) });
+    const res = await request(app).get('/admin/errors/summary').set(bearer(viewer.token));
+    expect(res.status).toBe(200);
+    expect(res.body.last24h).toBe(before.last24h + 2);
+    expect(res.body.last7d).toBe(before.last7d + 3);
+    expect(res.body.topRoutes.find((r) => r.route === '/admin/orgs/:id').count).toBeGreaterThanOrEqual(3);
+
+    expect((await request(app).get('/admin/errors/summary').set(bearer(auditor.token))).status).toBe(403);
+    expect((await request(app).get('/admin/errors/summary')).status).toBe(401);
+  });
+});

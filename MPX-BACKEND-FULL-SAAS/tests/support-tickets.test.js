@@ -318,6 +318,36 @@ describe('Closing, follow-ups, badges and auto-close (owner, 2026-09-24)', () =>
     expect(await Ticket.countDocuments({ createdBy: buyerA.user._id })).toBe(before);
   });
 
+  it('auto-close follows the Settings day count, stamps it on the ticket, and staff see the close date', async () => {
+    const { autoCloseStaleTickets } = await import('../src/services/support.service.js');
+    const { Settings, SETTINGS_ID } = await import('../src/models/Settings.js');
+    await Settings.findOneAndUpdate({ _id: SETTINGS_ID }, { $set: { ticketAutoCloseDays: 5 } }, { upsert: true });
+    try {
+      const six = await raise(buyerA);
+      const four = await raise(buyerA);
+      for (const t of [six, four]) {
+        await request(app).post(`/admin/support/tickets/${t.id}/messages`).set(bearer(agent.token)).send({ body: 'Any update?' });
+      }
+      const now = new Date();
+      const daysAgo = (d) => new Date(now.getTime() - d * 24 * 60 * 60 * 1000);
+      await Ticket.updateOne({ _id: six.id }, { $set: { awaitingCompanySince: daysAgo(6) } });
+      await Ticket.updateOne({ _id: four.id }, { $set: { awaitingCompanySince: daysAgo(4) } });
+
+      const staffView = await request(app).get(`/admin/support/tickets/${four.id}`).set(bearer(agent.token));
+      expect(new Date(staffView.body.ticket.autoCloseAt).getTime()).toBe(daysAgo(4).getTime() + 5 * 86_400_000);
+
+      await autoCloseStaleTickets({ now });
+      const [s6, s4] = await Promise.all([six, four].map((t) => Ticket.findById(t.id)));
+      expect(s6.status).toBe('resolved');
+      expect(s6.autoClosedAfterDays).toBe(5);
+      expect(s4.status).toBe('in_progress');
+      const mine = await request(app).get(`/support/tickets/${six.id}`).set(bearer(buyerA.token));
+      expect(mine.body.ticket.autoClosedAfterDays).toBe(5);
+    } finally {
+      await Settings.updateOne({ _id: SETTINGS_ID }, { $set: { ticketAutoCloseDays: null } });
+    }
+  });
+
   it('auto-close: only tickets waiting on the company for 14+ days close, logged as "Automatic"', async () => {
     const { autoCloseStaleTickets } = await import('../src/services/support.service.js');
     const waiting = await raise(buyerA); // staff replied, company silent 15 days → closes

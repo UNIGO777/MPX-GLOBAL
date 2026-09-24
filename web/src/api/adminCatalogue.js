@@ -75,6 +75,8 @@ export const adminCatalogueApi = {
 
   audit: (params) => apiClient.get('/admin/audit', { params }).then((r) => r.data),
   auditEntry: (id) => apiClient.get(`/admin/audit/${id}`).then((r) => r.data.entry),
+  // The actions and target types present in the log — the filter pickers' options.
+  auditFacets: () => apiClient.get('/admin/audit/facets').then((r) => r.data),
 };
 
 export const adminCatalogueKeys = {
@@ -84,4 +86,5 @@ export const adminCatalogueKeys = {
   productsPage: (params) => ['admin', 'products', params],
   audit: (params) => ['admin', 'audit', params],
   auditEntry: (id) => ['admin', 'audit', 'entry', id],
+  auditFacets: ['admin', 'audit', 'facets'],
 };

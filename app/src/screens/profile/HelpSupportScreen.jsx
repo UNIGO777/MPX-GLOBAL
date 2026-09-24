@@ -22,16 +22,16 @@ import { openLegal } from '../../utils/legal.js';
  * Nothing here is invented: no reply-time or hours promise.
  */
 export function HelpSupportScreen({ navigation }) {
-  const [state, setState] = useState({ loading: true, email: null, phone: null, failed: false });
+  const [state, setState] = useState({ loading: true, email: null, phone: null, hours: null, failed: false });
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, failed: false }));
     try {
       const c = await supportApi.contact();
-      setState({ loading: false, email: c?.email ?? null, phone: c?.phone ?? null, failed: false });
+      setState({ loading: false, email: c?.email ?? null, phone: c?.phone ?? null, hours: c?.hours ?? null, failed: false });
     } catch (err) {
       logger.warn('support contact load failed', { message: err?.message });
-      setState({ loading: false, email: null, phone: null, failed: true });
+      setState({ loading: false, email: null, phone: null, hours: null, failed: true });
     }
   }, []);
 
@@ -55,7 +55,7 @@ export function HelpSupportScreen({ navigation }) {
     }, [loadTickets]),
   );
 
-  const { loading, email, phone, failed } = state;
+  const { loading, email, phone, hours, failed } = state;
 
   return (
     <NavyCanopy
@@ -131,6 +131,8 @@ export function HelpSupportScreen({ navigation }) {
                 onPress={() => Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`)}
               />
             )}
+            {/* Published in web Settings since 2026-09-25; absent → nothing shown. */}
+            {hours && <Text style={[styles.muted, { paddingTop: 10 }]}>Support hours: {hours}</Text>}
           </View>
         )}
 

@@ -109,7 +109,8 @@ export function adminFeaturedView(row) {
     createdAt: row.createdAt ?? null,
     // Admin-only pointer resolution (M6 §3): what the row points at, and whether
     // it currently qualifies for the landing page. A banner is its own content.
-    // `target` is identity only — name/slug/image — never a wider projection.
+    // `target` is identity only — name/slug/image, plus `context` (seller ·
+    // category / parent / country, names only) — never a wider projection.
     target: row._target ?? null,
     targetLive: row.kind === 'banner' ? true : Boolean(row._targetLive),
   };
