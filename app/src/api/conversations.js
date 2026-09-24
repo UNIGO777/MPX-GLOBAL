@@ -14,7 +14,12 @@ import { apiClient } from './client.js';
  *                participants, lastMessageAt, lastMessagePreview, unread,
  *                frozen, frozenLabel{tone,text}, blockedReason, createdAt }
  *   messageView: { id, senderType: 'buyer'|'exporter'|'system', systemKind,
- *                  body, attachment, createdAt } — company-level only, never a person.
+ *                  body, attachment, quotationId, createdAt } — company-level
+ *                  only, never a person.
+ *     `quotationId` — set only on a `quotation_*` notice (2026-09-25), so the
+ *     thread can render the quotation LIVE rather than freezing its state into a
+ *     message. The id alone discloses nothing: a quotation is two-party scoped
+ *     on every read.
  *   attachment: null | { kind:'image', url, width, height }
  *                    | { kind:'document', url, viewUrl, name, format, bytes }
  *     `viewUrl` — PDFs only: an INLINE link that opens instead of downloading.

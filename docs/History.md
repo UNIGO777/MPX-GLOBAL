@@ -175,6 +175,26 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-25 — The APP can now answer a quotation: Accept and Negotiate, same rules as the web.**
+  Owner: "in app also this quotation and negotiation make same as web". Closes the gap flagged when
+  the feature shipped web-only.
+  - New: `app/src/api/quotations.js` (get · negotiate · request-code · confirm), `utils/money.js`
+    (the web's `toMinor`/`formatMinor` and the server's `MAX_MINOR`, because the two clients talk to
+    one server), and `components/chat/QuotationCard.jsx` — the document card plus both modals.
+  - **The same rules, mirrored from the server, not re-derived:** you may accept an offer THE OTHER
+    SIDE put on the table and never your own; a side that has accepted does not get to counter; the
+    figure is the LAST OFFER, not the printed total; both parties confirm with a code sent to their
+    own registered email. 🔴 Every string says "confirmed acceptance" — never signature.
+  - **The card appears in two places, as on the web:** on the `quotation_sent` notice (the document)
+    and on the NEWEST notice that still leaves something to do. 🔴 The app's list is `inverted` and
+    `messages` is newest-FIRST, so the newest match is the FIRST one found — scanning the other way
+    would have put the buttons on the oldest offer in the thread.
+  - Cards re-read when a new quotation notice lands (`refreshToken` counts them): the other party's
+    move arrives as a message, and without it a card keeps the state it was born with.
+  - ⚠️ **Still web-only, by design:** building and SENDING a quotation (a long priced form with a
+    bank-details confirmation is desk work) and the PDF. The app reads and answers.
+  - ⚠️ **No linter or test runner exists for `app/`** — syntax was checked with `@babel/parser`, and
+    the screens have not been run on a device. That gap is worth closing separately.
 - **2026-09-25 — Landing hero: the six category tiles are gone on phones.** Owner: "remove categoris
   in hero center section in mobile version". Below `sm` that grid is a single column, so six
   full-width tiles pushed the signup card — the only CTA a guest sees above the fold — and everything

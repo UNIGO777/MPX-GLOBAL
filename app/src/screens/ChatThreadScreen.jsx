@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { catalogueApi } from '../api/catalogue.js';
 import { conversationsApi } from '../api/conversations.js';
 import { ChatAttachment } from '../components/chat/ChatAttachment.jsx';
+import { QuotationCard } from '../components/chat/QuotationCard.jsx';
 import { ChatComposer } from '../components/chat/ChatComposer.jsx';
 import { ErrorState, Spinner } from '../components/Feedback.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -280,6 +281,9 @@ export function ChatThreadScreen({ navigation, route }) {
   }
 
   const decorated = decorateRuns(messages);
+  // How many quotation notices the thread carries. It only ever grows, so a
+  // change means the quotation MOVED and every card on screen should re-read it.
+  const quotationEvents = messages.filter((m) => m.quotationId).length;
   const frozen = Boolean(conversation?.frozen);
   const freezeLabel = conversation?.frozenLabel;
 
@@ -403,7 +407,16 @@ export function ChatThreadScreen({ navigation, route }) {
           data={decorated}
           keyExtractor={(m) => m.id}
           inverted
-          renderItem={({ item }) => <MessageRow message={item} mySide={mySide} onRetry={send} onDiscard={removeFailed} />}
+          renderItem={({ item }) => (
+            <MessageRow
+              message={item}
+              mySide={mySide}
+              latestQuotationNotice={item.latestQuotationNotice}
+              quotationEvents={quotationEvents}
+              onRetry={send}
+              onDiscard={removeFailed}
+            />
+          )}
           onEndReached={loadOlder}
           onEndReachedThreshold={0.4}
           ListFooterComponent={
@@ -464,10 +477,34 @@ export function ChatThreadScreen({ navigation, route }) {
  * markers at all, so days ran together; the web's DateSeparator has always had).
  */
 function decorateRuns(messages) {
+  /**
+   * The newest quotation notice that still leaves something to do — the one
+   * that carries the figure and the buttons.
+   *
+   * 🔴 `messages` is NEWEST-FIRST here (the list is `inverted`), so the newest
+   * match is the FIRST one found, not the last. Scanning the other way would put
+   * the buttons on the oldest offer in the thread — an answer to a figure nobody
+   * is offering any more.
+   */
+  const latestQuotationNoticeId = messages.find(
+    (m) =>
+      m.senderType === 'system' &&
+      m.quotationId &&
+      (m.systemKind === 'quotation_offer' || m.systemKind === 'quotation_accept_pending'),
+  )?.id;
+
   return messages.map((m, i) => {
     const older = messages[i + 1];
     const newDay = !older || new Date(older.createdAt).toDateString() !== new Date(m.createdAt).toDateString();
-    if (m.senderType === 'system') return { ...m, newDay, startsRun: false, showClock: true };
+    if (m.senderType === 'system') {
+      return {
+        ...m,
+        newDay,
+        startsRun: false,
+        showClock: true,
+        latestQuotationNotice: Boolean(m.id) && m.id === latestQuotationNoticeId,
+      };
+    }
     const newer = messages[i - 1];
     const startsRun =
       !older ||
@@ -535,8 +572,27 @@ const NOTICE_KINDS = {
   quotation_withdrawn: { label: 'Quotation withdrawn', icon: 'document-text-outline', bar: colors.ink[300], bg: colors.ink[100], fg: colors.ink[600] },
 };
 
-function SystemNotice({ message }) {
+/**
+ * 🔴 Quotations arrive in the thread as a CARD with its own two answers, the
+ * same as the web (owner, 2026-09-25). `quotation_sent` carries the document;
+ * the NEWEST notice that still leaves something to do — a counter-offer, or one
+ * side having confirmed — carries the figure and the buttons, because after a
+ * round of offers the document card is scrolled far above and the thing a person
+ * is looking at had nothing to press.
+ *
+ * Only the newest: buttons on every historical offer would be several ways to
+ * answer one question, most of them about a figure nobody is offering any more.
+ */
+const ACTIONABLE_QUOTATION_KINDS = ['quotation_offer', 'quotation_accept_pending'];
+
+function SystemNotice({ message, mySide, latestQuotationNotice, quotationEvents }) {
   const kind = NOTICE_KINDS[message.systemKind] ?? NOTICE_DEFAULT;
+  const showsDocument = message.systemKind === 'quotation_sent' && Boolean(message.quotationId);
+  const showsActions =
+    latestQuotationNotice &&
+    Boolean(message.quotationId) &&
+    ACTIONABLE_QUOTATION_KINDS.includes(message.systemKind);
+
   return (
     <View style={styles.noticeWrap}>
       <View style={[styles.notice, { backgroundColor: kind.bg }, kind.line && styles.noticeLine]}>
@@ -549,6 +605,17 @@ function SystemNotice({ message }) {
             <Text style={[styles.noticeTime, { color: kind.fg }]}>{clock(message.createdAt)}</Text>
           </View>
           <Text style={[styles.noticeText, kind.text && { color: kind.text }]}>{message.body}</Text>
+
+          {showsDocument || showsActions ? (
+            <View style={styles.noticeQuotation}>
+              <QuotationCard
+                quotationId={message.quotationId}
+                mySide={mySide}
+                variant={showsDocument ? 'document' : 'inline'}
+                refreshToken={quotationEvents}
+              />
+            </View>
+          ) : null}
         </View>
       </View>
     </View>
@@ -580,13 +647,18 @@ function DayMarker({ at }) {
  * inside a cell the order is normal: the day marker is drawn first, i.e. ABOVE
  * the message it introduces.
  */
-function MessageRow({ message: m, mySide, onRetry, onDiscard }) {
+function MessageRow({ message: m, mySide, latestQuotationNotice, quotationEvents, onRetry, onDiscard }) {
   const marker = m.newDay ? <DayMarker at={m.createdAt} /> : null;
   if (m.senderType === 'system') {
     return (
       <>
         {marker}
-        <SystemNotice message={m} />
+        <SystemNotice
+          message={m}
+          mySide={mySide}
+          latestQuotationNotice={latestQuotationNotice}
+          quotationEvents={quotationEvents}
+        />
       </>
     );
   }
@@ -731,6 +803,7 @@ const styles = StyleSheet.create({
   noticeLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2 },
   noticeDot: { fontSize: 10, opacity: 0.5 },
   noticeTime: { fontSize: 10, fontWeight: '600' },
+  noticeQuotation: { marginTop: 10 },
   noticeText: { ...typography.caption, color: colors.ink[800] },
 
   messageWrap: { marginVertical: 1, maxWidth: '82%' },
