@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useCanonical } from '../../lib/seo.js';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
+import { SupportContactInline } from '../../components/public/SupportContact.jsx';
 
 /**
  * `/terms` and `/privacy` — one component, two documents.
@@ -193,7 +194,9 @@ function Terms() {
 
       <Section id="contact-terms" title="11. Contact">
         <p>
-          Questions about these terms should go to the contact address published by MPX Global.
+          {/* Step 1a: the real published contact (it pointed at an address
+              published nowhere). Falls back to the old wording if unset. */}
+          Questions about these terms should go to <SupportContactInline />.
         </p>
       </Section>
     </>
@@ -340,7 +343,7 @@ function Privacy() {
       <Section id="contact-privacy" title="11. Contact">
         <p>
           To ask about this policy, request a copy of your data, or ask for it to be corrected or
-          deleted, use the contact address published by MPX Global.
+          deleted, contact <SupportContactInline />.
         </p>
       </Section>
     </>

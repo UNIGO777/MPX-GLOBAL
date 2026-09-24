@@ -69,6 +69,9 @@ export function orgDetailView({ org, users, derived, chats, products, buyerActiv
       address: org.address ?? null,
       entityType: org.entityType ?? null,
       logo: org.logo ?? null,
+      // The storefront banner (2026-09-24) — already PUBLIC on the supplier page,
+      // so showing it to staff exposes nothing new. Heads the admin detail page.
+      coverImage: org.coverImage ?? null,
       description: org.description ?? null,
     },
 
@@ -128,10 +131,10 @@ export function orgDetailView({ org, users, derived, chats, products, buyerActiv
     sides: {
       ...sidesOf(org),
       signupAt: derived.signupAt,
-      // ⚠️ Empty until A21 Step 4b writes `org.claim` rows. The screen must say
-      // "no claim recorded" — not imply the history was lost.
+      // Claims are recorded since D7 shipped (2026-09-23) — an empty list now
+      // means "nobody joined by claim", not "not tracked".
       claimHistory: derived.claimHistory,
-      claimHistoryAvailable: false,
+      claimHistoryAvailable: true,
     },
 
     // V2 — no `permissions`, no `passwordHash`, for anyone.

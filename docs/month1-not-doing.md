@@ -50,15 +50,16 @@ structured source na hona, acceptance/eSign ka Bucket-B me hona, PDF server par 
 > mgmt, category, audit view) month 1 me **ban rahe hain** super admin ke liye. Wo deferred NAHI.
 > Deferred sirf ye employee-only cheezein:
 
-- **Ticket / query handling** — open/in-progress/resolved queue, assign/respond/resolve
-  - ⚠️ **DECISION PENDING:** owner ko decide karna hai — minimal ticket create+list month 1 me
-    chahiye ya poora deferred. **Abhi deferred maan ke rakha hai.**
-- **Enquiry routing** — employee buyer ko seller se manually connect kare *(buyer khud
+- ~~**Ticket / query handling**~~ ✅ **BUILT 2026-09-24** (Step 1b of the Phase-1 completion roadmap) — open/in-progress/resolved queue, assign/respond/resolve
+- ~~**Enquiry routing**~~ ✅ **BUILT 2026-09-24** (Step 1d) — employee buyer ko seller se manually connect kare *(buyer khud
   enquiry+chat month 1 me hai; ye employee-routing layer baad me)*
-- **Internal notes** — sellers / conversations pe
-- **Per-employee "sirf mere assigned modules" dashboard**
-- **Per-employee scoped reports**
-- **Employee create + permissions assign ka UI** *(backend hard superadmin-gate hai, UI baad me)*
+- ~~**Internal notes**~~ ✅ **BUILT 2026-09-24** (Step 1c) — sellers / conversations pe
+- ~~**Per-employee "sirf mere assigned modules" dashboard**~~ ✅ **BUILT 2026-09-24** (Step 1e) — dashboard "My work" panel
+- ~~**Per-employee scoped reports**~~ ✅ **BUILT 2026-09-24** (Step 1e) — `/admin/reports`; an employee sees only their own row
+- ~~**Employee create + permissions assign ka UI**~~ ✅ **APPROVED INTO MONTH 1 — owner, 2026-09-24.**
+  The Staff page (`/admin/employees`: create employee + assign the grantable permissions — 21 since 2026-09-24) was
+  already built; the owner confirmed it after a red alert. Backend gates unchanged — create and
+  permission assignment stay hard `requireRole('superadmin')`; governance is never grantable.
 
 ### A3 · Notification layer (Module 8) — OTP ke aage sab kuch
 > ✅ **PARTIAL CARVE-OUT — 2026-07-31, owner ne explicitly confirm kiya:** **FCM push ab month 1 me

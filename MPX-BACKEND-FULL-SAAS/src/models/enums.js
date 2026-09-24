@@ -281,6 +281,9 @@ export const MESSAGE_SYSTEM_KIND = [
   'quotation_accepted',
   'quotation_declined',
   'quotation_withdrawn',
+  // Step 1d (2026-09-24): staff connected a buyer's "find me a supplier"
+  // request to this seller — shown in the thread so both sides know why it exists.
+  'routed',
 ];
 
 // Why messaging is frozen. FIRST REASON WINS and is never overwritten (M4-29).
@@ -319,6 +322,21 @@ export const QUOTATION_STATUS = [
   'declined',
   'withdrawn',
 ];
+
+// Step 1b · support tickets. Three states on purpose: a company only needs to
+// know "waiting", "being looked at", "done". Resolved is closed for the company
+// (owner, 2026-09-24) — more help is a new ticket; only staff can re-open one.
+export const TICKET_STATUS = ['open', 'in_progress', 'resolved'];
+export const TICKET_CATEGORIES = ['account', 'verification', 'products', 'enquiries', 'technical', 'other'];
+export const TICKET_SIDES = ['buyer', 'exporter'];
+export const TICKET_AUTHOR = ['company', 'staff'];
+// Who closed a ticket. 'auto' = no company reply for AUTO_CLOSE_DAYS after staff wrote.
+export const TICKET_CLOSED_BY = ['staff', 'company', 'auto'];
+// A ticket waiting on the company this long after staff wrote closes itself.
+export const TICKET_AUTO_CLOSE_DAYS = 14;
+
+// Step 1d · enquiry routing ("help me find a supplier").
+export const LEAD_STATUS = ['new', 'in_progress', 'routed', 'closed'];
 
 // Device platforms for FCM push registration.
 export const DEVICE_PLATFORM = ['android', 'ios', 'web'];

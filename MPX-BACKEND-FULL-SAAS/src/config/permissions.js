@@ -35,6 +35,10 @@ export const PERMISSIONS = Object.freeze({
   // 🚫 Supersedes M4-38 ("employees get read permission only in month 1") — owner
   // decision 2026-07-31. Still default-deny and granted per employee, never blanket.
   CONVERSATION_BLOCK: 'conversation:block',
+  // Post one of the PRE-WRITTEN platform warnings into a thread (D11). Split from
+  // CONVERSATION_BLOCK by the owner on 2026-09-24: warning is a lighter act than
+  // freezing a chat, so it can be granted on its own.
+  CONVERSATION_WARN: 'conversation:warn',
 
   // --- M5 · Admin console (owner-decided 2026-08-01).
   // Organisation list + detail. A READ grant: it never carries KYC documents and
@@ -64,4 +68,31 @@ export const PERMISSIONS = Object.freeze({
   // categories (whose read feeds pickers on other admin screens), the featured
   // list has no separate consumer — the landing page reads the PUBLIC endpoint.
   FEATURED_MANAGE: 'featured:manage',
+
+  // --- Step 1b · Support tickets (quote Module 6 "ticket/query queue"). Split
+  // into four grants by the owner on 2026-09-24 (was one `support:manage`).
+  // Every action route ALSO requires SUPPORT_READ (requirePermissions is all-of),
+  // so an action grant without read does nothing. Reaches only tickets — never
+  // KYC documents, conversations or anyone's access.
+  // View the queue, tickets, the ticket log; add internal notes on a ticket.
+  SUPPORT_READ: 'support:read',
+  // Reply to the company as "MPX Global Support" (a first reply takes an
+  // unassigned ticket). Only holders appear in the "Assigned to" list.
+  SUPPORT_REPLY: 'support:reply',
+  // Assign / re-assign a ticket to ANY eligible person. Without it, staff can
+  // only take an unassigned ticket for themselves.
+  SUPPORT_ASSIGN: 'support:assign',
+  // Resolve, re-open, mark in progress.
+  SUPPORT_STATUS: 'support:status',
+
+  // --- Step 1d · Enquiry routing (quote Module 6). GRANTABLE: read buyers'
+  // "find me a supplier" requests and connect them to a seller's product —
+  // which opens a normal enquiry in the BUYER's name. Reaches no documents and
+  // no conversation contents.
+  LEAD_MANAGE: 'lead:manage',
+
+  // --- Step 1e · Reports (owner, 2026-09-24). Lets a chosen employee (a team
+  // lead) see the WHOLE team's staff report instead of only their own row.
+  // Read-only; it grants no action on anything.
+  REPORTS_TEAM: 'reports:team',
 });

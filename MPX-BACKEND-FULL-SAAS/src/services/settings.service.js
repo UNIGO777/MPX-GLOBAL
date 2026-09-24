@@ -47,6 +47,27 @@ export async function getSettings() {
 }
 
 /**
+ * The support contact, for the PUBLIC surface (Step 1a, 2026-09-24) — the help
+ * page, the portal/app support screens, the privacy page and email footers.
+ *
+ * 🔴 A deliberate WHITELIST of two fields. The rest of the settings document
+ * (the AI ceiling, who last edited it) is platform governance and stays behind
+ * the superadmin route; widening this object widens a public endpoint.
+ *
+ * Never throws: a failed read degrades to "not published" — a help page must
+ * not 500 because the settings row is briefly unreachable.
+ */
+export async function getSupportContact() {
+  try {
+    const doc = await load();
+    return { email: doc?.supportEmail ?? null, phone: doc?.supportPhone ?? null };
+  } catch (err) {
+    logger.warn({ err: err?.message }, 'support contact read failed — serving none');
+    return { email: null, phone: null };
+  }
+}
+
+/**
  * The guest AI ceiling actually in force: the runtime override when one is set,
  * otherwise the env floor.
  *

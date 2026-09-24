@@ -11,6 +11,11 @@ import { CaptureDocumentScreen } from '../screens/kyc/CaptureDocumentScreen.jsx'
 import { withUnverifiedGuard } from '../screens/kyc/RequireUnverified.jsx';
 import { CompanyProfileScreen } from '../screens/profile/CompanyProfileScreen.jsx';
 import { ChangePasswordScreen } from '../screens/profile/ChangePasswordScreen.jsx';
+import { HelpSupportScreen } from '../screens/profile/HelpSupportScreen.jsx';
+import { NewTicketScreen } from '../screens/support/NewTicketScreen.jsx';
+import { SupportTicketScreen } from '../screens/support/SupportTicketScreen.jsx';
+import { FindSupplierScreen } from '../screens/support/FindSupplierScreen.jsx';
+import { NewLeadScreen } from '../screens/support/NewLeadScreen.jsx';
 import { CategoryBrowseScreen } from '../screens/CategoryBrowseScreen.jsx';
 import { CategoryProductsScreen } from '../screens/CategoryProductsScreen.jsx';
 import { ChatThreadScreen } from '../screens/ChatThreadScreen.jsx';
@@ -76,6 +81,14 @@ export function AppStack({ role }) {
 
       {/* Screen 16 sub-screen — pushed from Profile's Security section. */}
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+
+      {/* Step 1a — Help & support, pushed from Profile. */}
+      <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
+      <Stack.Screen name="NewTicket" component={NewTicketScreen} />
+      <Stack.Screen name="SupportTicket" component={SupportTicketScreen} />
+      {/* Step 1d — buyer "find me a supplier" requests. */}
+      <Stack.Screen name="FindSupplier" component={FindSupplierScreen} />
+      <Stack.Screen name="NewLead" component={NewLeadScreen} />
 
       {/* M2 app screens 1 + 2 — buyer-only, reached from Buyer Home (no
           tab-bar entry, owner decision 2026-08-07). CategoryProducts is the

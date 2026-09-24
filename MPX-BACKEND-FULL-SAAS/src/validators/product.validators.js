@@ -161,6 +161,8 @@ export const productIdParam = {
 export const listMine = {
   query: z.object({
     status: z.enum(['draft', 'active', 'inactive', 'archived']).optional(),
+    // Name search over the seller's OWN products (2026-09-24).
+    q: zString({ min: 1, max: 80 }).optional(),
     page: z.coerce.number().int().min(1).default(1),
     pageSize: z.coerce.number().int().min(1).max(100).default(20),
   }),

@@ -26,6 +26,17 @@ const TONES = {
   red: { className: 'bg-danger-600 text-white', Icon: SlashIcon },
 };
 
+/**
+ * Short forms for LIST cells (2026-09-24): the full "Conversation blocked by
+ * MPX Global" wrapped a table cell into a three-line block. The full text stays
+ * as the tooltip and inside the thread.
+ */
+const SHORT = {
+  'Conversation blocked by MPX Global': 'Blocked',
+  'Product under review': 'Under review',
+  'Product no longer available': 'Product removed',
+};
+
 const SIZES = {
   md: 'px-2.5 py-1 text-[12px]',
   // Sized to sit on the same baseline rhythm as a chat row's preview line, so
@@ -33,7 +44,7 @@ const SIZES = {
   sm: 'px-2 py-0.5 text-[11.5px] leading-4',
 };
 
-export function FreezeChip({ label, wrap = false, size = 'md', className = '' }) {
+export function FreezeChip({ label, wrap = false, size = 'md', short = false, className = '' }) {
   const tone = TONES[label?.tone];
   // `tone: 'none'` (an open thread — and an account-frozen one, which the server
   // deliberately leaves unlabelled) renders nothing at all.
@@ -42,6 +53,7 @@ export function FreezeChip({ label, wrap = false, size = 'md', className = '' })
   const { Icon } = tone;
   return (
     <span
+      title={short ? label.text : undefined}
       // A pill only while it is one line — wrapped over two or three lines a
       // fully-rounded solid chip becomes a blob, so it squares off a little.
       className={`inline-flex max-w-full gap-1.5 font-semibold ${SIZES[size] ?? SIZES.md} ${
@@ -54,7 +66,7 @@ export function FreezeChip({ label, wrap = false, size = 'md', className = '' })
       />
       {/* Wrapped in a table cell, truncated in a tight row — but never cut in a
           place where the reason becomes unreadable. */}
-      <span className={wrap ? 'leading-snug' : 'truncate'}>{label.text}</span>
+      <span className={wrap ? 'leading-snug' : 'truncate'}>{(short && SHORT[label.text]) || label.text}</span>
     </span>
   );
 }

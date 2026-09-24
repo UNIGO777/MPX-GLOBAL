@@ -3,10 +3,16 @@ import { useLayoutEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 
-import { AuthProvider } from './auth/AuthContext.jsx';
+import { AuthProvider, useAuth } from './auth/AuthContext.jsx';
+import { roleHome } from './auth/roleHome.js';
+import { ADMIN_BASE, STAFF_BASE, consoleBaseFor } from './lib/consolePath.js';
 import { queryClient } from './lib/queryClient.js';
 import { Landing } from './pages/public/Landing.jsx';
 import { Legal } from './pages/public/Legal.jsx';
+import { Help } from './pages/public/Help.jsx';
+import { MySupport } from './pages/support/MySupport.jsx';
+import { MyTicket } from './pages/support/MyTicket.jsx';
+import { FindSupplier } from './pages/support/FindSupplier.jsx';
 import { LandingBlue } from './pages/public/LandingBlue.jsx';
 import { Categories } from './pages/public/Categories.jsx';
 import { CategoryListing } from './pages/public/CategoryListing.jsx';
@@ -84,6 +90,16 @@ const Organisations = lazy(() =>
 const ProductMonitoring = lazy(() =>
   import('./pages/admin/ProductMonitoring.jsx').then((m) => ({ default: m.ProductMonitoring })),
 );
+// Step 1e · per-employee reports.
+const Reports = lazy(() => import('./pages/admin/Reports.jsx').then((m) => ({ default: m.Reports })));
+// Step 1d · supplier requests (enquiry routing).
+const Leads = lazy(() => import('./pages/admin/Leads.jsx').then((m) => ({ default: m.Leads })));
+const LeadDetail = lazy(() => import('./pages/admin/LeadDetail.jsx').then((m) => ({ default: m.LeadDetail })));
+// Step 1b · the support desk (admin chunk, like the rest of the console).
+const Support = lazy(() => import('./pages/admin/Support.jsx').then((m) => ({ default: m.Support })));
+const SupportTicket = lazy(() =>
+  import('./pages/admin/SupportTicket.jsx').then((m) => ({ default: m.SupportTicket })),
+);
 const Conversations = lazy(() =>
   import('./pages/admin/Conversations.jsx').then((m) => ({ default: m.Conversations })),
 );
@@ -105,6 +121,64 @@ const AdminSettings = lazy(() =>
 const NoAccess = lazy(() =>
   import('./pages/admin/ComingSoon.jsx').then((m) => ({ default: m.NoAccess })),
 );
+
+const Account = lazy(() => import('./pages/admin/Account.jsx').then((m) => ({ default: m.Account })));
+
+/**
+ * The console's pages, written once. Each is mounted under BOTH `/admin` (the
+ * super admin) and `/staff` (employees); `superadminOnly` pages exist only
+ * under `/admin`. Per-page permissions stay the server's — the sidebar only
+ * hides what a 403 would refuse.
+ */
+const CONSOLE_ROUTES = [
+  { path: '/dashboard', element: <Dashboard /> },
+  { path: '/organisations', element: <Organisations /> },
+  { path: '/organisations/:id', element: <OrganisationDetail /> },
+  { path: '/users', element: <Users /> },
+  { path: '/categories', element: <CategoryManager /> },
+  { path: '/categories/:id/attributes', element: <AttributeManager /> },
+  { path: '/products', element: <ProductMonitoring /> },
+  { path: '/verification', element: <VerificationQueue /> },
+  { path: '/verification/:orgId/kyc', element: <KycViewer /> },
+  { path: '/conversations', element: <Conversations /> },
+  { path: '/conversations/:id', element: <ConversationViewer /> },
+  { path: '/support', element: <Support /> },
+  { path: '/support/:id', element: <SupportTicket /> },
+  { path: '/leads', element: <Leads /> },
+  { path: '/leads/:id', element: <LeadDetail /> },
+  { path: '/reports', element: <Reports /> },
+  { path: '/audit', element: <AuditLog /> },
+  { path: '/errors', element: <ErrorLog /> },
+  { path: '/featured', element: <Featured /> },
+  { path: '/account', element: <Account /> },
+  { path: '/no-access', element: <NoAccess /> },
+  { path: '/staff', element: <Employees />, superadminOnly: true },
+  // Was /admin/employees until 2026-08-18 — kept as a redirect for bookmarks.
+  { path: '/employees', element: <Navigate to="/admin/staff" replace />, superadminOnly: true },
+  { path: '/settings', element: <AdminSettings />, superadminOnly: true },
+];
+
+/**
+ * Keeps each role in its own console: a super admin on `/staff/*` or an
+ * employee on `/admin/*` is moved to the same page under their own prefix
+ * (query and hash kept). Presentation only — the server authorises by role.
+ */
+function ConsoleArea({ base }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  const own = consoleBaseFor(user?.role);
+  if (base !== own) {
+    const rest = location.pathname.slice(base.length);
+    return <Navigate to={`${own}${rest}${location.search}${location.hash}`} replace />;
+  }
+  return <Outlet />;
+}
+
+/** `/admin` or `/staff` on its own → that person's home. */
+function ConsoleHome() {
+  const { user } = useAuth();
+  return <Navigate to={roleHome(user)} replace />;
+}
 
 /** Shown only while an admin chunk is in flight — never a blank screen. */
 function ChunkFallback() {
@@ -193,6 +267,7 @@ export function App() {
                 "you agree to our Terms" line had nothing behind it until 2026-08-23. */}
             <Route path="/terms" element={<Legal />} />
             <Route path="/privacy" element={<Legal />} />
+            <Route path="/help" element={<Help />} />
             {/* 🔵 The pre-crimson landing, kept verbatim for side-by-side
                 comparison (owner, 2026-08-23). Temporary — delete this route and
                 `LandingBlue.jsx` once the colour is decided. */}
@@ -244,6 +319,9 @@ export function App() {
                     thread replaces the list. */}
                 <Route path="/buyer/chat" element={<ChatInbox />} />
                 <Route path="/buyer/chat/:id" element={<ChatInbox />} />
+                <Route path="/buyer/support" element={<MySupport />} />
+                <Route path="/buyer/support/:id" element={<MyTicket />} />
+                <Route path="/buyer/find-supplier" element={<FindSupplier />} />
               </Route>
             </Route>
 
@@ -277,6 +355,8 @@ export function App() {
                     (M4-35), scoped server-side by the caller's own org. */}
                 <Route path="/exporter/chat" element={<ChatInbox />} />
                 <Route path="/exporter/chat/:id" element={<ChatInbox />} />
+                <Route path="/exporter/support" element={<MySupport />} />
+                <Route path="/exporter/support/:id" element={<MyTicket />} />
               </Route>
             </Route>
 
@@ -291,33 +371,27 @@ export function App() {
                     </Suspense>
                   }
                 >
-                  <Route path="/admin/organisations" element={<Organisations />} />
-                  <Route path="/admin/organisations/:id" element={<OrganisationDetail />} />
-                  <Route path="/admin/users" element={<Users />} />
-                  <Route path="/admin/categories" element={<CategoryManager />} />
-                  <Route path="/admin/categories/:id/attributes" element={<AttributeManager />} />
-                  <Route path="/admin/products" element={<ProductMonitoring />} />
-                  <Route path="/admin/verification" element={<VerificationQueue />} />
-                  {/* M4 screens 5-6 — permissioned per endpoint on the server;
-                      the sidebar item hides without `conversation:read`. */}
-                  <Route path="/admin/conversations" element={<Conversations />} />
-                  <Route path="/admin/conversations/:id" element={<ConversationViewer />} />
-                  <Route path="/admin/verification/:orgId/kyc" element={<KycViewer />} />
-                  <Route element={<RequireRole roles={['superadmin']} />}>
-                    <Route path="/admin/staff" element={<Employees />} />
-                    {/* The screen was /admin/employees until 2026-08-18. Kept as
-                        a redirect rather than deleted: the old path is in the
-                        owner's bookmarks and in older History entries, and a
-                        superadmin hitting a dead admin URL has no way to tell a
-                        rename from a permission problem. */}
-                    <Route path="/admin/employees" element={<Navigate to="/admin/staff" replace />} />
-                  </Route>
-                  <Route path="/admin/dashboard" element={<Dashboard />} />
-                  <Route path="/admin/audit" element={<AuditLog />} />
-                  <Route path="/admin/errors" element={<ErrorLog />} />
-                  <Route path="/admin/featured" element={<Featured />} />
-                  <Route path="/admin/settings" element={<AdminSettings />} />
-                  <Route path="/admin/no-access" element={<NoAccess />} />
+                  {/* ONE route table, mounted under both consoles (owner, 2026-09-24):
+                      the super admin works in /admin/*, employees in /staff/*.
+                      `ConsoleArea` moves anyone on the wrong prefix to their own. */}
+                  {[ADMIN_BASE, STAFF_BASE].map((base) => (
+                    <Route key={base} element={<ConsoleArea base={base} />}>
+                      {CONSOLE_ROUTES.map((r) =>
+                        // A super-admin-only page typed into the staff console:
+                        // the calm no-access page, not a 404.
+                        r.superadminOnly && base === STAFF_BASE ? (
+                          <Route key={r.path} path={`${base}${r.path}`} element={<NoAccess />} />
+                        ) : r.superadminOnly ? (
+                          <Route key={r.path} element={<RequireRole roles={['superadmin']} />}>
+                            <Route path={`${base}${r.path}`} element={r.element} />
+                          </Route>
+                        ) : (
+                          <Route key={r.path} path={`${base}${r.path}`} element={r.element} />
+                        ),
+                      )}
+                      <Route path={base} element={<ConsoleHome />} />
+                    </Route>
+                  ))}
                 </Route>
               </Route>
             </Route>

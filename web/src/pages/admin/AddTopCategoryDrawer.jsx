@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button.jsx';
 import { Drawer } from '../../components/ui/Drawer.jsx';
 import { Field, inputClasses } from '../../components/ui/Field.jsx';
 import { GridIcon } from '../../components/ui/icons.jsx';
-import { ImageTile, KeywordInput } from './categoryFormParts.jsx';
+import { AddressLine, FormStack, ImageTile, KeywordInput } from './categoryFormParts.jsx';
 import { slugify } from '../../lib/slug.js';
 
 /**
@@ -56,7 +56,7 @@ export function AddTopCategoryDrawer({ open, onClose, onSave, saving, error }) {
         </>
       }
     >
-      <div className="space-y-6">
+      <FormStack>
         {error && <Alert tone="danger">{error}</Alert>}
 
         {/* Name + the address it becomes, read together. */}
@@ -74,13 +74,11 @@ export function AddTopCategoryDrawer({ open, onClose, onSave, saving, error }) {
               />
             )}
           </Field>
-          <p className="mt-2 text-xs text-muted">
-            Page address{' '}
-            <span className="rounded bg-ink-100 px-1.5 py-0.5 font-mono text-[12px] text-ink-800">
-              /category/{slug || 'your-category'}
-            </span>
-          </p>
-          <p className="mt-1 text-xs text-muted">Must be unique — two categories can&apos;t share a name.</p>
+          {/* Same address line as the other two category panels. */}
+          <AddressLine
+            path={`/category/${slug || 'your-category'}`}
+            note="Must be unique — two categories can’t share a name."
+          />
         </div>
 
         <ImageTile file={imageFile} onPick={setImageFile} />
@@ -104,7 +102,7 @@ export function AddTopCategoryDrawer({ open, onClose, onSave, saving, error }) {
             ))}
           </ol>
         </div>
-      </div>
+      </FormStack>
     </Drawer>
   );
 }

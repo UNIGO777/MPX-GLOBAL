@@ -161,7 +161,8 @@ conversationRouter.post(
 conversationRouter.get(
   '/admin/conversation-warnings',
   authenticate,
-  requirePermissions(PERMISSIONS.CONVERSATION_BLOCK),
+  // D11 warnings have their own grant since 2026-09-24 (split from block).
+  requirePermissions(PERMISSIONS.CONVERSATION_WARN),
   generalLimiter,
   adminCtrl.warnings,
 );
@@ -169,7 +170,7 @@ conversationRouter.get(
 conversationRouter.post(
   '/admin/conversations/:id/warn',
   authenticate,
-  requirePermissions(PERMISSIONS.CONVERSATION_BLOCK),
+  requirePermissions(PERMISSIONS.CONVERSATION_WARN),
   generalLimiter,
   validate(V.warnConversation),
   adminCtrl.warn,

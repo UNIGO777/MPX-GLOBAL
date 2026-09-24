@@ -24,10 +24,22 @@ vi.mock('../src/services/email.provider.js', () => ({
 
 vi.mock('../src/utils/logger.js', () => ({ logger: log }));
 
+// Step 1a: emails carry the published support contact. This suite has no
+// database, so the settings read is stubbed like the User lookup below.
+vi.mock('../src/services/settings.service.js', () => ({
+  getSupportContact: async () => ({ email: 'help@example.com', phone: null }),
+}));
+
 vi.mock('../src/models/User.js', () => ({
   User: {
     findOne: () => ({
-      select: () => ({ sort: async () => users.owner }),
+      // `.select().sort()` (org owner lookup) and `await .select()` (ticket
+      // recipient, Step 1b) both resolve to the configured user.
+      select: () => {
+        const p = Promise.resolve(users.owner);
+        p.sort = async () => users.owner;
+        return p;
+      },
     }),
   },
 }));
@@ -37,6 +49,8 @@ const {
   notifyWelcome,
   notifyPasswordChanged,
   notifyNewEnquiryEmail,
+  notifyTicketReply,
+  notifyTicketResolved,
 } = await import('../src/services/emailNotifications.service.js');
 
 const OWNER = { name: 'Asha', email: 'asha@exportco.in' };
@@ -226,5 +240,47 @@ describe('new enquiry', () => {
     expect(mail.text).toContain('Cotton Yarn 30s');
     // The buyer's note, quantity and price live behind auth — never in an email.
     expect(mail.text).not.toMatch(/quantity|price|budget|note:/i);
+  });
+});
+
+describe('support contact (Step 1a)', () => {
+  it('puts the published contact under the signature', async () => {
+    await notifyPasswordChanged({ user: OWNER });
+    expect(lastMail().text).toContain('Need help? help@example.com');
+  });
+});
+
+describe('support tickets (Step 1b — email events 7 + 8)', () => {
+  const TICKET = { ref: 'T-ABC234', subject: 'Cannot upload GST', createdBy: 'u1' };
+
+  it('staff reply → the raiser, names the ticket, never an employee, no link', async () => {
+    await notifyTicketReply({ ticket: TICKET });
+    const mail = lastMail();
+    expect(mail.to).toBe(OWNER.email);
+    expect(mail.subject).toContain('T-ABC234');
+    expect(mail.text).toContain('MPX Global Support');
+    expect(mail.text).toContain('Help & support');
+    expect(mail.html).not.toMatch(/<a\s/i);
+  });
+
+  it('resolved → the raiser, says more help is a new ticket', async () => {
+    await notifyTicketResolved({ ticket: TICKET });
+    const mail = lastMail();
+    expect(mail.subject).toMatch(/resolved/i);
+    expect(mail.text).toMatch(/new ticket/);
+    expect(mail.text).not.toMatch(/re-opens/);
+  });
+
+  it('auto-closed → says why it closed (no reply for 14 days) and how to get more help', async () => {
+    await notifyTicketResolved({ ticket: TICKET, auto: true });
+    const mail = lastMail();
+    expect(mail.text).toMatch(/no reply for 14 days/);
+    expect(mail.text).toMatch(/new ticket/);
+  });
+
+  it('skips a deactivated or missing raiser silently', async () => {
+    users.owner = null;
+    await notifyTicketReply({ ticket: TICKET });
+    expect(email.send).not.toHaveBeenCalled();
   });
 });

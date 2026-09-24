@@ -39,6 +39,7 @@ const bearer = (t) => ({ Authorization: `Bearer ${t}` });
 let seq = 0;
 let sa;
 let blocker;
+let warner;
 let reader;
 let buyer;
 let seller;
@@ -84,6 +85,7 @@ beforeEach(async () => {
   const leaf = await Category.create({ name: 'Cotton fabric', parentId: top._id, type: 'goods' });
   sa = await makeUser('superadmin');
   blocker = await makeUser('employee', {}, ['conversation:read', 'conversation:block']);
+  warner = await makeUser('employee', {}, ['conversation:read', 'conversation:warn']);
   reader = await makeUser('employee', {}, ['conversation:read']);
   seller = await makeUser('exporter', { exporterSide: true, country: 'IN' });
   buyer = await makeUser('buyer', { buyerSide: true, country: 'AU' });
@@ -130,7 +132,7 @@ describe('platform warnings — what they do', () => {
   });
 
   it('lists the fixed warnings for the admin UI, with the exact text that will post', async () => {
-    const res = await request(app).get('/admin/conversation-warnings').set(bearer(blocker.token));
+    const res = await request(app).get('/admin/conversation-warnings').set(bearer(warner.token));
     expect(res.status).toBe(200);
     expect(res.body.warnings.map((w) => w.key)).toEqual(Object.keys(CHAT_WARNINGS));
     expect(res.body.warnings[0]).toEqual({ key: 'off_platform', ...CHAT_WARNINGS.off_platform });
@@ -161,16 +163,17 @@ describe('platform warnings — what is refused', () => {
     expect(w.body).toBe(CHAT_WARNINGS.conduct.body);
   });
 
-  it('needs conversation:block — read-only staff and the parties themselves are refused', async () => {
+  it('needs conversation:warn — read-only staff, block-only staff and the parties are refused', async () => {
     expect((await warn(reader.token, 'conduct')).status).toBe(403);
+    expect((await warn(blocker.token, 'conduct')).status).toBe(403);
     expect((await warn(buyer.token, 'conduct')).status).toBe(403);
     expect((await warn(seller.token, 'conduct')).status).toBe(403);
     expect((await request(app).get('/admin/conversation-warnings').set(bearer(reader.token))).status).toBe(403);
     expect(await Message.countDocuments({ systemKind: /^warning/ })).toBe(0);
   });
 
-  it('an employee granted conversation:block may send one', async () => {
-    expect((await warn(blocker.token, 'payment_safety')).status).toBe(200);
+  it('an employee granted conversation:warn may send one', async () => {
+    expect((await warn(warner.token, 'payment_safety')).status).toBe(200);
   });
 
   it('a closed (frozen) conversation gets no warning', async () => {

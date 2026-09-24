@@ -185,6 +185,15 @@ export const searchLimiter = buildLimiter({
 // thread on another product — which makes spraying enquiries across a catalogue
 // the obvious abuse path. Keyed per authenticated user (the route is behind
 // `authenticate`), IP as fallback.
+// Step 1b · raising a support ticket, per user. Replies use `uploadLimiter`
+// (they may carry a file); this caps NEW tickets so the queue cannot be flooded.
+export const ticketLimiter = buildLimiter({
+  prefix: 'rl:ticket:',
+  windowMs: 24 * 60 * MINUTE,
+  limit: 20,
+  keyGenerator: (req) => (req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
+});
+
 export const enquiryLimiter = buildLimiter({
   prefix: 'rl:enquiry:',
   windowMs: 60 * MINUTE,

@@ -4,6 +4,7 @@ import {
   BoxIcon,
   ChatIcon,
   BuildingIcon,
+  HelpIcon,
 } from '../../components/ui/icons.jsx';
 
 /**
@@ -24,4 +25,6 @@ export const EXPORTER_NAV = [
   // day's enquiries is inbox work, not something to do in a 380px window.
   { to: '/exporter/chat', label: 'Chat', Icon: ChatIcon, unreadBadge: true },
   { to: '/exporter/company', label: 'Company profile', Icon: BuildingIcon, dividerBefore: true },
+  // Step 1b (2026-09-24): the portal's own Help & support — tickets + contact.
+  { to: '/exporter/support', label: 'Help & support', Icon: HelpIcon, supportBadge: true },
 ];

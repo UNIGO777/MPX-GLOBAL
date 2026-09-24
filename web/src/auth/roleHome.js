@@ -1,11 +1,11 @@
-/**
- * Post-login landing per role (plan §2). An employee lands on the first admin
- * screen their granted permissions can actually open — in the sidebar's own
- * order — and an employee with no relevant grant gets the calm no-access page
- * (a normal state, not an error).
- */
-const QUEUE_PERMISSIONS = ['organisation:read', 'buyer:approve', 'exporter:verify'];
+import { consoleBaseFor } from '../lib/consolePath.js';
 
+/**
+ * Post-login landing per role (plan §2). Staff land on THEIR console's
+ * dashboard — `/admin/dashboard` for the super admin, `/staff/dashboard` for
+ * an employee (split by role, owner 2026-09-24). The dashboard adapts to the
+ * person's permissions and says so plainly when they have none.
+ */
 export function roleHome(user) {
   if (!user) return '/signin';
   switch (user.role) {
@@ -17,13 +17,8 @@ export function roleHome(user) {
     case 'exporter':
       return '/exporter/dashboard';
     case 'superadmin':
-      return '/admin/users';
-    case 'employee': {
-      const held = new Set(user.permissions ?? []);
-      if (held.has('user:read')) return '/admin/users';
-      if (QUEUE_PERMISSIONS.some((p) => held.has(p))) return '/admin/verification';
-      return '/admin/no-access';
-    }
+    case 'employee':
+      return `${consoleBaseFor(user.role)}/dashboard`;
     default:
       return '/signin';
   }

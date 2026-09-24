@@ -115,16 +115,18 @@ async function loadCompany(id) {
 /**
  * The four values that have NO field anywhere (rule 14 — do NOT add one).
  *
- * ⚠️ `org.claim` rows are never written today because A21 Step 4b (signup
- * step-2 organisation claim) is not built. So `claimHistory` comes back empty
- * and the screen must say "no claim recorded" — not imply the data went missing.
+ * Claim history (fixed 2026-09-24): the claim flow is BUILT (D7, 2026-09-23)
+ * and audits as `organisation.claim` — this query asked for `org.claim`, a name
+ * nothing ever writes, so every real claim was invisible here. Both names are
+ * matched (the old one costs nothing and covers any early row). Each entry
+ * carries HOW the person got in — the question an F1 investigation asks.
  */
 async function deriveFromAudit(orgId) {
   const rows = await AuditLog.find({
     orgId,
-    action: { $in: ['buyer.approve', 'exporter.verify', 'kyc.submit', 'org.claim', 'auth.signup'] },
+    action: { $in: ['buyer.approve', 'exporter.verify', 'kyc.submit', 'org.claim', 'organisation.claim', 'auth.signup'] },
   })
-    .select('action occurredAt actorId')
+    .select('action occurredAt actorId actorRole after')
     .sort({ occurredAt: 1 })
     .lean();
 
@@ -147,8 +149,16 @@ async function deriveFromAudit(orgId) {
     reviewedAt: reviews.length ? reviews[0].occurredAt : null,
     resubmitCount: rows.filter((r) => r.action === 'kyc.submit').length,
     claimHistory: rows
-      .filter((r) => r.action === 'org.claim')
-      .map((r) => ({ at: r.occurredAt, byUserId: r.actorId ? String(r.actorId) : null })),
+      .filter((r) => r.action === 'org.claim' || r.action === 'organisation.claim')
+      .map((r) => ({
+        at: r.occurredAt,
+        byUserId: r.actorId ? String(r.actorId) : null,
+        role: r.actorRole ?? null,
+        // email | mobile | both — which identifier reached the company.
+        matchedOn: r.after?.matchedOn ?? null,
+        // own_email | org_email_otp — how the join was proved.
+        verifiedVia: r.after?.verifiedVia ?? null,
+      })),
     signupAt: rows.find((r) => r.action === 'auth.signup')?.occurredAt ?? null,
   };
 }

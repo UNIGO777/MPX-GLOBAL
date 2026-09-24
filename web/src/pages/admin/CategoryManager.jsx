@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { adminCatalogueApi, adminCatalogueKeys } from '../../api/adminCatalogue.js';
-import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
+import { initialsOf, monogramTone } from '../../components/chat/CompanyAvatar.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -13,25 +13,30 @@ import { Field, inputClasses } from '../../components/ui/Field.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { RowMenu } from '../../components/ui/RowMenu.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
-import { StatusChip } from '../../components/ui/StatusChip.jsx';
 import { Switch } from '../../components/ui/Switch.jsx';
 import {
   AlertIcon,
   CheckIcon,
   ChevronDownIcon,
+  ImageIcon,
+  ChevronRightIcon,
+  EyeIcon,
+  PlusIcon,
+  EyeOffIcon,
+  ExternalIcon,
   ListIcon,
   SearchIcon,
   SettingsIcon,
   TrashIcon,
-  UploadIcon,
   XIcon,
 } from '../../components/ui/icons.jsx';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { AddTopCategoryDrawer } from './AddTopCategoryDrawer.jsx';
-import { AddressLine, ImageTile, KeywordInput, OrderInput, PartLabel } from './categoryFormParts.jsx';
+import { AddressLine, FormStack, ImageTile, KeywordInput, OrderInput, PartLabel } from './categoryFormParts.jsx';
 import { slugify } from '../../lib/slug.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
+import { cp } from '../../lib/consolePath.js';
 
 /**
  * M2 web screen 8 — the category manager (`/admin/categories`).
@@ -64,32 +69,55 @@ import { can } from '../../auth/roleHome.js';
  * `category:read` alone the page is a browsing view — state dots instead of
  * switches, no menus, no add, no upload.
  */
-function TypeChip({ type }) {
+
+/**
+ * Live / Hidden as a chip with its word (2026-09-24) — replaces the grey
+ * uppercase "INACTIVE" tag, which read as a label rather than a state and
+ * said nothing when the category WAS live.
+ */
+function LiveChip({ on, small = false }) {
   return (
-    <StatusChip
-      label={type === 'service' ? 'Service' : 'Goods'}
-      tone={type === 'service' ? 'warning' : 'muted'}
-    />
+    <span
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full font-semibold ${
+        small ? 'px-2 py-px text-[10.5px]' : 'px-2.5 py-0.5 text-[11.5px]'
+      } ${on ? 'bg-success-50 text-success-700' : 'bg-ink-100 text-ink-600'}`}
+    >
+      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-success-500' : 'bg-ink-400'}`} />
+      {on ? 'Live' : 'Hidden'}
+    </span>
   );
 }
 
-/** One top-category row (image · name · inactive chip · sub count). */
-function TopRowBody({ t }) {
+/** One top-category row (image · name · hidden chip · sub count). */
+function TopRowBody({ t, compact = false }) {
+  const n = t.subs?.length ?? 0;
+  // The desktop rail (2026-09-24): ONE line per category — name, a Hidden chip
+  // when off, and the sub count as a small number on the right. Forty two-line
+  // rows made the rail a long scroll of repeated "N sub-categories".
+  if (compact) {
+    return (
+      <>
+        <CategoryThumb name={t.name} image={t.image} sizeClasses="h-8 w-8" text="text-[11px]" rounded="rounded-lg" />
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="truncate text-[13.5px] font-medium text-ink-900">{t.name}</span>
+          {!t.active && <LiveChip on={false} small />}
+        </span>
+        <span
+          title={`${n} sub-categor${n === 1 ? 'y' : 'ies'}`}
+          className="shrink-0 rounded-full bg-ink-100 px-2 py-px text-[11px] font-semibold tabular-nums text-ink-600"
+        >
+          {n}
+        </span>
+      </>
+    );
+  }
   return (
     <>
-      {t.image ? (
-        <img src={t.image} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
-      ) : (
-        <NoImagePanel label={t.name} monogram ratio="h-9 w-9" className="shrink-0 rounded" />
-      )}
+      <CategoryThumb name={t.name} image={t.image} sizeClasses="h-9 w-9" text="text-[12px]" rounded="rounded-lg" />
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
           <span className="truncate text-sm font-medium text-ink-900">{t.name}</span>
-          {!t.active && (
-            <span className="shrink-0 rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-500">
-              Inactive
-            </span>
-          )}
+          {!t.active && <LiveChip on={false} small />}
         </span>
         <span className="block text-xs text-muted">{t.subs?.length ?? 0} sub-categories</span>
       </span>
@@ -189,12 +217,22 @@ function CategorySheet({ open, ...props }) {
 }
 
 
-/** Plain category thumbnail — image or neutral monogram. Never a control. */
-function CategoryThumb({ name, image, sizeClasses, monogram = true }) {
+/**
+ * Category thumbnail — its image, or a TINTED monogram (2026-09-24). Every
+ * category used to get the same grey block, so the rail was a column of
+ * identical "T7" squares; the tint hashes from the name (same hash as company
+ * marks), stable across screens. `object-cover`: these are photos, not logos.
+ */
+function CategoryThumb({ name, image, sizeClasses, text = 'text-sm', rounded = 'rounded-xl' }) {
   return image ? (
-    <img src={image} alt="" className={`${sizeClasses} shrink-0 rounded-xl object-cover`} />
+    <img src={image} alt="" className={`${sizeClasses} ${rounded} shrink-0 object-cover`} />
   ) : (
-    <NoImagePanel label={name} monogram={monogram} ratio={sizeClasses} className="shrink-0 rounded-xl" />
+    <span
+      aria-hidden="true"
+      className={`${sizeClasses} ${rounded} ${text} ${monogramTone(name)} flex shrink-0 items-center justify-center font-bold ring-1 ring-inset`}
+    >
+      {initialsOf(name)}
+    </span>
   );
 }
 
@@ -229,6 +267,7 @@ export function CategoryManager() {
   // picks another one, on its ✕, or by itself after a few seconds — it used to
   // stay until the next save, long after it stopped being true.
   const [noticeState, setNoticeState] = useState(null); // { text, topId }
+  const [railQ, setRailQ] = useState(''); // desktop rail filter
 
   const tree = useQuery({ queryKey: adminCatalogueKeys.tree, queryFn: adminCatalogueApi.tree });
 
@@ -237,6 +276,16 @@ export function CategoryManager() {
   const tops = useMemo(() => tree.data ?? [], [tree.data]);
   const selectedId = params.get('top') ?? tops[0]?.id;
   const top = useMemo(() => tops.find((t) => t.id === selectedId), [tops, selectedId]);
+  const railNorm = railQ.trim().toLowerCase();
+  const railTops = railNorm
+    ? tops.filter((t) => `${t.name} ${(t.synonyms ?? []).join(' ')}`.toLowerCase().includes(railNorm))
+    : tops;
+
+  useEffect(() => {
+    const previous = document.title;
+    document.title = 'Categories — MPX Global';
+    return () => { document.title = previous; };
+  }, []);
 
   const setNotice = (text, topId = selectedId) => setNoticeState(text ? { text, topId } : null);
   // Guard on noticeState itself: while the tree loads selectedId is undefined,
@@ -276,7 +325,13 @@ export function CategoryManager() {
   // ORDER and SYNONYMS are editable — and the synonyms input is the ONLY entry
   // path for the top-40 keyword list (§A12).
   const saveTop = useMutation({
-    mutationFn: ({ id, body }) => adminCatalogueApi.update(id, body),
+    // The settings drawer can now carry a new image too (2026-09-24) — it
+    // uploads with Save, the same way a sub-category's panel does.
+    mutationFn: async ({ id, body, imageFile }) => {
+      const saved = body ? await adminCatalogueApi.update(id, body) : null;
+      if (imageFile) await adminCatalogueApi.uploadImage(id, imageFile);
+      return saved;
+    },
     onMutate: () => { setError(null); setNotice(null); },
     onSuccess: () => { setNotice('Category updated.'); refresh(); },
     onError,
@@ -334,22 +389,34 @@ export function CategoryManager() {
 
   return (
     <AdminLayout>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="text-2xl font-bold text-ink-900">Categories</h1>
-          {tree.isSuccess && (
-            <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
-              {tops.length} categories
-            </span>
-          )}
+      <header className="mb-4 flex items-start justify-between gap-3 sm:mb-6">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-xl font-bold leading-tight text-ink-900 sm:text-2xl">Categories</h1>
+            {tree.isSuccess && (
+              <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+                {tops.length} categories
+              </span>
+            )}
+          </div>
+          <p className="mt-1 hidden text-sm text-muted sm:block">
+            What buyers browse by. Products live in the sub-categories.
+          </p>
         </div>
-        {/* Below xl there is no rail to sit under — the title row is its home. */}
+        {/* The ONE "New category" control, on the title row at every width
+            (owner, 2026-09-24: as the rail's last row it went unnoticed). */}
         {canManage && tree.isSuccess && (
-          <Button size="sm" variant="secondary" className="xl:hidden" onClick={() => setAddTopOpen(true)}>
-            + New category
-          </Button>
+          <button
+            type="button"
+            onClick={() => setAddTopOpen(true)}
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary-600 px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/20"
+          >
+            <PlusIcon className="h-4 w-4" aria-hidden="true" />
+            <span className="sm:hidden">New</span>
+            <span className="hidden sm:inline">New category</span>
+          </button>
         )}
-      </div>
+      </header>
 
       {error && <Alert tone="danger" className="mb-5">{error}</Alert>}
       {notice && (
@@ -368,19 +435,28 @@ export function CategoryManager() {
               unusable at 40 entries — owner, 2026-08-11); lg+: the vertical
               rail. --- */}
           <div className="xl:hidden">
+            {/* Below xl: a labelled SELECT-style field (owner's pick,
+                2026-09-24, after a switcher on the hero went unnoticed). It
+                opens the searchable sheet — 40 entries don't fit a native
+                select usefully. */}
             {top && (
-              <button
-                type="button"
-                onClick={() => setPickerOpen(true)}
-                aria-haspopup="dialog"
-                className="flex w-full items-center gap-3 rounded-2xl border border-surface-border bg-white p-3 text-left shadow-card active:bg-surface-subtle"
-              >
-                <TopRowBody t={top} />
-                <span className="flex items-center gap-1.5 text-xs font-medium text-primary-700">
-                  Change
-                  <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
-                </span>
-              </button>
+              <>
+                <p id="cat-picker-label" className="mb-1.5 text-[12px] font-semibold text-ink-600">Category</p>
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-labelledby="cat-picker-label cat-picker-value"
+                  className="flex w-full items-center gap-3 rounded-xl border border-ink-200 bg-white p-2.5 pr-3 text-left shadow-sm transition-colors hover:border-ink-300 focus:border-primary-600 focus:outline-none focus:ring-4 focus:ring-primary-600/10"
+                >
+                  <span id="cat-picker-value" className="flex min-w-0 flex-1 items-center gap-3">
+                    <TopRowBody t={top} />
+                  </span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink-100 text-ink-600">
+                    <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                </button>
+              </>
             )}
             {/* No separate "add sub-category" here any more (owner, 2026-09-24):
                 it was added when the inline settings card pushed the SubList
@@ -399,36 +475,49 @@ export function CategoryManager() {
             />
           </div>
 
-          <aside className="hidden xl:block xl:w-80 xl:shrink-0">
-            <ul className="max-h-[70vh] divide-y divide-surface-border overflow-y-auto rounded-2xl border border-surface-border bg-white shadow-card">
-              {tops.map((t) => {
-                const active = t.id === selectedId;
-                return (
-                  <li key={t.id}>
-                    <button
-                      type="button"
-                      onClick={() => setParams({ top: t.id })}
-                      aria-current={active || undefined}
-                      className={`flex w-full items-center gap-3 px-3 py-2.5 text-left ${
-                        active ? 'bg-primary-50' : 'hover:bg-surface-subtle'
-                      } ${t.active ? '' : 'opacity-55'}`}
-                    >
-                      <TopRowBody t={t} />
-                    </button>
+          <aside className="hidden self-start xl:sticky xl:top-4 xl:block xl:w-80 xl:shrink-0">
+            {/* The rail as ONE card with its own search (2026-09-24) — the list
+                grows to 40, and the phone sheet already had a search. Matches
+                on names AND keywords, like the sheet. */}
+            <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
+              <div className="relative border-b border-surface-border p-2.5">
+                <SearchIcon className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
+                <input
+                  type="search"
+                  aria-label="Filter categories"
+                  placeholder={`Filter ${tops.length} categories…`}
+                  value={railQ}
+                  onChange={(e) => setRailQ(e.target.value)}
+                  className="h-9 w-full rounded-full border border-ink-200 bg-white pl-9 pr-3 text-[13px] text-ink-900 placeholder:text-ink-500 hover:border-ink-300 focus:border-primary-600 focus:outline-none focus:ring-4 focus:ring-primary-600/10"
+                />
+              </div>
+              <ul className="max-h-[65vh] divide-y divide-surface-border overflow-y-auto">
+                {railTops.length === 0 && (
+                  <li className="px-4 py-6 text-center text-[13px] text-muted">
+                    No category matches &ldquo;{railQ.trim()}&rdquo;.
                   </li>
-                );
-              })}
-            </ul>
-            {/* The empty space under the rail (owner, 2026-09-23). */}
-            {canManage && (
-              <button
-                type="button"
-                onClick={() => setAddTopOpen(true)}
-                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-primary-300 bg-white px-3 py-3 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-50"
-              >
-                <span aria-hidden="true" className="text-lg leading-none">+</span> Add new category
-              </button>
-            )}
+                )}
+                {railTops.map((t) => {
+                  const active = t.id === selectedId;
+                  return (
+                    <li key={t.id}>
+                      <button
+                        type="button"
+                        onClick={() => setParams({ top: t.id })}
+                        aria-current={active || undefined}
+                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors ${
+                          active
+                            ? 'bg-primary-50/70 shadow-[inset_3px_0_0_theme(colors.primary.600)]'
+                            : 'hover:bg-ink-50'
+                        } ${t.active ? '' : 'opacity-60'}`}
+                      >
+                        <TopRowBody t={t} compact />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </aside>
 
           {/* --- Right: the selected category as a DETAIL VIEW --- */}
@@ -451,6 +540,7 @@ export function CategoryManager() {
                     width; name/order/keywords open in a DRAWER from the header,
                     the same pattern a sub-category already edits with. */}
                 <SubList
+                  key={`l-${top.id}`}
                   top={top}
                   canManage={canManage}
                   busyId={busyId}
@@ -470,9 +560,9 @@ export function CategoryManager() {
                   canManage={canManage}
                   saving={saveTop.isPending}
                   error={error}
-                  onSave={(body) =>
+                  onSave={(body, imageFile) =>
                     saveTop.mutate(
-                      { id: top.id, body },
+                      { id: top.id, body, imageFile },
                       { onSuccess: () => setSettingsOpen(false) },
                     )
                   }
@@ -546,91 +636,180 @@ export function CategoryManager() {
 }
 
 /**
- * Identity + the master switch, together. The image IS the §A20 upload
- * control — click or drop a file on it (the 40 top images arrive through this,
- * not a seed). The switch's consequence is written beside it, not implied.
+ * The selected category as a HERO (owner, 2026-09-24: "still not that
+ * impressive"). Its own photo becomes a cover banner with the name over it —
+ * the categories carry real images, and a 64px thumbnail wasted them. No image:
+ * the category's tint as a soft banner. "Change image" on the banner is the
+ * §A20 upload control (instant upload, as before). Below: a numbers strip and
+ * the master switch with its consequence written beside it.
  */
 function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle, onSettings }) {
-  const liveSubs = (top.subs ?? []).filter((s) => s.active).length;
+  const subs = top.subs ?? [];
+  const liveSubs = subs.filter((s) => s.active).length;
+  const fieldCount = subs.reduce((n, s) => n + (s.attributeCount ?? 0), 0);
   const fileRef = useRef(null);
 
+  const stats = [
+    { label: subs.length === 1 ? 'Sub-category' : 'Sub-categories', value: subs.length },
+    { label: 'Live', value: liveSubs },
+    { label: fieldCount === 1 ? 'Field' : 'Fields', value: fieldCount },
+  ];
+
   return (
-    <section className="rounded-2xl border border-surface-border bg-white shadow-card">
-      {/* Identity row — the name owns the width; nothing competes with it. */}
-      <div className="flex items-center gap-4 p-5">
-        <CategoryThumb name={top.name} image={top.image} sizeClasses="h-16 w-16" />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="truncate text-lg font-bold text-ink-900">{top.name}</h2>
-            {!top.active && (
-              <span className="rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-500">
-                Inactive
-              </span>
-            )}
-          </div>
-          <p className="mt-0.5 text-[13px] text-muted">
-            {(top.subs ?? []).length} sub-categories · {liveSubs} live
-          </p>
+    <section className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
+      <div className={`relative h-36 sm:h-40 ${top.image ? 'bg-ink-900' : monogramTone(top.name)}`}>
+        {top.image ? (
+          <img
+            src={top.image}
+            alt=""
+            className={`absolute inset-0 h-full w-full object-cover ${top.active ? '' : 'grayscale'}`}
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="absolute right-6 top-1/2 -translate-y-1/2 select-none text-7xl font-black opacity-20 sm:text-8xl"
+          >
+            {initialsOf(top.name)}
+          </span>
+        )}
+        {/* Legibility scrim — the name sits on the photo's darkest band. */}
+        <div
+          aria-hidden="true"
+          className={`absolute inset-0 ${
+            top.image ? 'bg-gradient-to-t from-black/75 via-black/25 to-black/10' : 'bg-gradient-to-t from-black/10 to-transparent'
+          }`}
+        />
+
+        <div className="absolute right-3 top-3 flex items-center gap-2">
           {canManage && (
-            <div className="mt-2">
-              <Button size="sm" variant="secondary" loading={uploading} onClick={() => fileRef.current?.click()}>
-                <UploadIcon className="mr-1.5 h-4 w-4" />
-                {top.image ? 'Replace image' : 'Add image'}
-              </Button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="sr-only"
-                aria-label={`Choose ${top.name} image`}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) onUpload(file);
-                  e.target.value = '';
-                }}
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/90 px-3 text-[13px] font-semibold text-ink-800 shadow-sm backdrop-blur transition-colors hover:bg-white disabled:opacity-70"
+            >
+              {uploading ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-300 border-t-ink-700" />
+              ) : (
+                <ImageIcon className="h-4 w-4" aria-hidden="true" />
+              )}
+              <span className="hidden sm:inline">{top.image ? 'Change image' : 'Add image'}</span>
+              <span className="sr-only sm:hidden">{top.image ? 'Change image' : 'Add image'}</span>
+            </button>
+          )}
+          {/* Read-only staff get Settings too (fields render disabled there,
+              keeping the keyword list browsable). */}
+          <button
+            type="button"
+            onClick={onSettings}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/90 px-3 text-[13px] font-semibold text-ink-800 shadow-sm backdrop-blur transition-colors hover:bg-white"
+          >
+            <SettingsIcon className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Settings</span>
+            <span className="sr-only sm:hidden">Settings for {top.name}</span>
+          </button>
+        </div>
+        {canManage && (
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            aria-label={`Choose ${top.name} image`}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUpload(file);
+              e.target.value = '';
+            }}
+          />
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 px-4 pb-4 sm:px-6 sm:pb-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2
+              className={`min-w-0 break-words text-xl font-bold leading-tight sm:text-2xl ${
+                top.image ? 'text-white drop-shadow-sm' : 'text-ink-900'
+              }`}
+            >
+              {top.name}
+            </h2>
+            <LiveChip on={top.active} />
+          </div>
+          {top.slug && (
+            <p className="mt-1 min-w-0">
+              {/* The public page exists only while the category is live —
+                  a hidden one would open a 404, so it stays plain text. */}
+              {top.active ? (
+                <a
+                  href={`/category/${top.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`inline-flex max-w-full items-center gap-1 font-mono text-[12px] hover:underline ${
+                    top.image ? 'text-white/85' : 'text-primary-700'
+                  }`}
+                >
+                  <span className="truncate">/category/{top.slug}</span>
+                  <ExternalIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+                </a>
+              ) : (
+                <span className={`inline-block max-w-full truncate font-mono text-[12px] ${top.image ? 'text-white/70' : 'text-ink-600'}`}>
+                  /category/{top.slug}
+                </span>
+              )}
+            </p>
           )}
         </div>
-        {!canManage && <StateDot on={top.active} onWord="Live" offWord="Hidden" />}
-        {/* Card-level action in the card's corner, where every other card puts
-            its actions (⋮ menus). Gear icon only (owner, 2026-08-14) — the
-            drawer title says the rest. Read-only staff get it too (fields
-            render disabled there, keeping the keyword list browsable). */}
-        <button
-          type="button"
-          aria-label={`Settings for ${top.name}`}
-          title="Category settings"
-          onClick={onSettings}
-          className="flex h-9 w-9 shrink-0 items-center justify-center self-start rounded-full text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900"
-        >
-          <SettingsIcon className="h-[18px] w-[18px]" />
-        </button>
       </div>
 
-      {/* The master switch gets its OWN row — at no width does it fight the
-          name for space (owner screenshot, 2026-08-11: the title truncated to
-          "Tex…" beside empty space). */}
-      {canManage && (
-        <div className="flex items-center justify-between gap-4 border-t border-ink-100 px-5 py-3">
-          <p className="min-w-0 text-[13px] leading-snug">
-            <span className="block font-semibold text-ink-900">
-              {top.active ? 'Live in the catalogue' : 'Hidden from the catalogue'}
-            </span>
-            <span className="block text-xs text-muted">
-              {top.active
-                ? 'Buyers can browse it and everything inside.'
-                : 'Every sub-category and product inside is hidden too.'}
-            </span>
-          </p>
-          <Switch
-            checked={top.active}
-            busy={busy || uploading}
-            onChange={onToggle}
-            label={top.active ? `Turn ${top.name} off` : `Turn ${top.name} on`}
-          />
-        </div>
-      )}
+      {/* Numbers strip + the master switch, side by side only from 2xl — at
+          lg the switch squeezed the labels to "Sub-categori…". */}
+      <div className="grid 2xl:grid-cols-[minmax(0,1fr)_auto]">
+        <dl className="grid grid-cols-3 divide-x divide-surface-border">
+          {stats.map((st) => (
+            <div key={st.label} className="min-w-0 px-3.5 py-2 sm:px-5 sm:py-3">
+              <dd className={`text-base font-bold sm:text-xl tabular-nums leading-tight ${st.value ? 'text-ink-900' : 'text-ink-400'}`}>
+                {st.value}
+              </dd>
+              <dt className="truncate text-[11px] font-medium text-muted sm:text-[12px]">{st.label}</dt>
+            </div>
+          ))}
+        </dl>
+        {canManage ? (
+          <div
+            className={`flex items-center justify-between gap-4 border-t border-surface-border px-4 py-3 sm:px-5 2xl:border-l 2xl:border-t-0 ${
+              top.active ? 'bg-success-50/40' : 'bg-ink-50/70'
+            }`}
+          >
+            <p className="flex min-w-0 items-start gap-2.5 text-[13px] leading-snug">
+              {top.active ? (
+                <EyeIcon className="mt-0.5 h-4 w-4 shrink-0 text-success-600" aria-hidden="true" />
+              ) : (
+                <EyeOffIcon className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+              )}
+              <span>
+                <span className="block font-semibold text-ink-900">
+                  {top.active ? 'Live in the catalogue' : 'Hidden from the catalogue'}
+                </span>
+                <span className="block text-xs text-muted">
+                  {top.active
+                    ? 'Buyers can browse it and everything inside.'
+                    : 'Every sub-category and product inside is hidden too.'}
+                </span>
+              </span>
+            </p>
+            <Switch
+              checked={top.active}
+              busy={busy || uploading}
+              onChange={onToggle}
+              label={top.active ? `Turn ${top.name} off` : `Turn ${top.name} on`}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center border-t border-surface-border px-4 py-3 sm:px-5 2xl:border-l 2xl:border-t-0">
+            <StateDot on={top.active} onWord="Live" offWord="Hidden" />
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -654,11 +833,14 @@ function TopSettingsBody({ top, onClose, canManage, saving, error, onSave }) {
   const [name, setName] = useState(top.name);
   const [order, setOrder] = useState(top.order ?? '');
   const [synonyms, setSynonyms] = useState(top.synonyms ?? []);
+  const [imageFile, setImageFile] = useState(null); // uploads with Save
 
-  const dirty =
+  const fieldsDirty =
     name.trim() !== top.name ||
     String(order) !== String(top.order ?? '') ||
     JSON.stringify(synonyms) !== JSON.stringify(top.synonyms ?? []);
+  const dirty = fieldsDirty || Boolean(imageFile);
+  const subs = top.subs ?? [];
 
   return (
     <Drawer
@@ -677,7 +859,12 @@ function TopSettingsBody({ top, onClose, canManage, saving, error, onSave }) {
               disabled={!dirty || !name.trim()}
               loading={saving}
               onClick={() =>
-                onSave({ name: name.trim(), synonyms, ...(order !== '' ? { order: Number(order) } : {}) })
+                onSave(
+                  // Only send the PATCH when a field moved — an image-only
+                  // save should not write an empty update to the audit log.
+                  fieldsDirty ? { name: name.trim(), synonyms, ...(order !== '' ? { order: Number(order) } : {}) } : null,
+                  imageFile,
+                )
               }
             >
               Save changes
@@ -686,8 +873,20 @@ function TopSettingsBody({ top, onClose, canManage, saving, error, onSave }) {
         ) : null
       }
     >
-      <div className="space-y-6">
+      <FormStack>
         {error && <Alert tone="danger">{error}</Alert>}
+
+        {/* What is being edited, at a glance (2026-09-24). */}
+        <div className="flex items-center gap-3 rounded-xl border border-surface-border bg-ink-50/60 p-3">
+          <CategoryThumb name={top.name} image={top.image} sizeClasses="h-12 w-12" text="text-[15px]" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold text-ink-900">{top.name}</p>
+            <p className="text-xs text-muted">
+              {subs.length} sub-categor{subs.length === 1 ? 'y' : 'ies'} · {subs.filter((x) => x.active).length} live
+            </p>
+          </div>
+          <LiveChip on={top.active} />
+        </div>
 
         <div>
           <Field label="Category name">
@@ -718,12 +917,11 @@ function TopSettingsBody({ top, onClose, canManage, saving, error, onSave }) {
           placeholder="e.g. medicine, pharma, dawai"
         />
 
-        {/* The image lives on the page header (§A20 — click or drop there);
-            pointing at it beats a second upload path that could disagree. */}
-        <p className="rounded-xl bg-ink-50 px-4 py-3 text-xs leading-relaxed text-muted">
-          To change the category image, click the image at the top of the page.
-        </p>
-      </div>
+        {/* The image, here too (2026-09-24): the card's tile uploads at once;
+            this uploads with Save. Same endpoint (§A20), so they cannot
+            disagree — the last upload wins either way. */}
+        <ImageTile file={imageFile} current={top.image} onPick={setImageFile} disabled={!canManage} />
+      </FormStack>
     </Drawer>
   );
 }
@@ -736,40 +934,98 @@ function TopSettings({ open, ...props }) {
 }
 
 
+const SUB_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'live', label: 'Live' },
+  { key: 'off', label: 'Off' },
+  { key: 'nofields', label: 'Needs fields' },
+];
+
 /**
- * The sub-categories as a LIST with a real switch per row. While the parent is
- * OFF the switches set RESTORE INTENT (`prevActive`), and the banner above the
- * list is what makes that legible — nothing visible changes on a row when the
- * intent flips, so without the banner the control looks broken.
+ * The sub-categories as compact TILES (owner, 2026-09-24 — the photo-card grid
+ * "not looking good": a storefront, not a manager). Two per row: a small image,
+ * the name (click = edit), one line of facts, the switch and the ⋮ menu. Goods
+ * is the norm and goes unmarked in a chip; only Service gets one. A filter row
+ * finds what needs work — hidden subs, subs with no fields.
+ *
+ * While the parent is OFF the switches set RESTORE INTENT (`prevActive`), and
+ * the banner above the tiles is what makes that legible — nothing visible
+ * changes on a tile when the intent flips, so without it the control looks
+ * broken.
  */
 function SubList({ top, canManage, busyId, onAdd, onEdit, onToggle, onDelete }) {
   const subs = top.subs ?? [];
   const parentOff = !top.active;
+  const [filter, setFilter] = useState('all');
+
+  // Parent off → the switch binds to RESTORE INTENT, not visibility.
+  const isOn = (sub) => (parentOff ? sub.prevActive !== false : Boolean(sub.active));
+  const counts = {
+    all: subs.length,
+    live: subs.filter(isOn).length,
+    off: subs.filter((x) => !isOn(x)).length,
+    nofields: subs.filter((x) => !x.attributeCount).length,
+  };
+  const shown = subs.filter((x) =>
+    filter === 'live' ? isOn(x) : filter === 'off' ? !isOn(x) : filter === 'nofields' ? !x.attributeCount : true,
+  );
 
   return (
     <section className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 px-5 py-4">
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
-            <ListIcon className="h-[18px] w-[18px]" />
-          </span>
-          <span>
-            <h3 className="flex items-center gap-2 text-[15px] font-bold text-ink-900">
-              Sub-categories
-              <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-medium text-ink-600">
-                {subs.length}
-              </span>
-            </h3>
-            <p className="text-[13px] text-muted">
-              Where products actually live — each carries its own fields.
-            </p>
-          </span>
-        </div>
-        {canManage && <Button size="sm" onClick={onAdd}>+ Add sub-category</Button>}
+      {/* Title + Add on one row, the filter on its own row below — at every
+          width (2026-09-24: squeezed between them on a big screen it looked
+          off). The filter uses the site's segmented style; Add is a plain
+          solid button — no shadow, no tint. */}
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2.5 border-b border-surface-border px-4 py-3 sm:px-5">
+        <h3 className="flex items-center gap-2 text-[15px] font-bold text-ink-900">
+          Sub-categories
+          <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-600">{subs.length}</span>
+        </h3>
+        {canManage && (
+          <button type="button" onClick={onAdd} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary-600 px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/20 ml-auto">
+            <PlusIcon className="h-4 w-4" aria-hidden="true" />
+            <span className="sm:hidden">Add</span>
+            <span className="hidden sm:inline">Add sub-category</span>
+          </button>
+        )}
+        {subs.length > 0 && (
+          <div
+            role="group"
+            aria-label="Show"
+            className="scrollbar-none flex w-full overflow-x-auto"
+          >
+            <div className="inline-flex rounded-full border border-ink-200 bg-white p-0.5">
+              {SUB_FILTERS.map((f) => {
+                const on = filter === f.key;
+                const warn = f.key === 'nofields' && counts.nofields > 0;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setFilter(f.key)}
+                    className={`inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[12.5px] font-semibold transition-colors ${
+                      on ? 'bg-primary-600 text-white' : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900'
+                    }`}
+                  >
+                    {f.label}
+                    <span
+                      className={`rounded-full px-1.5 text-[11px] tabular-nums ${
+                        on ? 'bg-white/20 text-white' : warn ? 'bg-warning-100 text-warning-800' : 'bg-ink-100 text-ink-500'
+                      }`}
+                    >
+                      {counts[f.key]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </header>
 
       {parentOff && (
-        <div className="flex gap-3 border-b border-warning-100 bg-warning-50 px-5 py-3">
+        <div className="flex gap-3 border-b border-warning-100 bg-warning-50 px-4 py-3 sm:px-5">
           <AlertIcon className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
           <p className="text-[13px] leading-relaxed text-ink-900">
             <span className="font-semibold">{top.name} is switched off</span> — everything below is
@@ -779,50 +1035,81 @@ function SubList({ top, canManage, busyId, onAdd, onEdit, onToggle, onDelete }) 
       )}
 
       {subs.length === 0 ? (
-        <p className="px-5 py-8 text-center text-sm text-muted">
-          No sub-categories yet{canManage ? ' — add one above.' : '.'}
-        </p>
+        <div className="px-5 py-10 text-center">
+          <p className="text-sm font-semibold text-ink-900">No sub-categories yet</p>
+          <p className="mt-1 text-[13px] text-muted">
+            Products are listed inside sub-categories{canManage ? ' — add the first one to open this category up.' : '.'}
+          </p>
+          {canManage && (
+            <Button size="sm" variant="secondary" className="mt-4" onClick={onAdd}>
+              + Add sub-category
+            </Button>
+          )}
+        </div>
+      ) : shown.length === 0 ? (
+        <p className="px-5 py-8 text-center text-sm text-muted">Nothing here — try another filter.</p>
       ) : (
-        <ul className="divide-y divide-surface-border">
-          {subs.map((sub) => {
-            // Parent off → the switch binds to RESTORE INTENT, not visibility.
-            const checked = parentOff ? sub.prevActive !== false : Boolean(sub.active);
-            const muted = parentOff ? !checked : !sub.active;
+        <ul className="grid grid-cols-[minmax(0,1fr)] divide-y divide-surface-border md:grid-cols-2 md:gap-2.5 md:divide-y-0 md:p-4">
+          {shown.map((sub) => {
+            const checked = isOn(sub);
+            const fields = sub.attributeCount ?? 0;
             return (
               <li
                 key={sub.id}
-                className={`flex items-center gap-3 px-4 py-3.5 sm:gap-4 sm:px-5 ${muted ? 'opacity-55' : ''}`}
+                // Phones: plain divided rows (a bordered tile inside the bordered
+                // card read as boxes-in-boxes). md+: the tiles.
+                className={`flex items-center gap-3 px-4 py-3 pr-2 transition-colors md:rounded-xl md:border md:p-2.5 md:pr-2 ${
+                  checked
+                    ? 'bg-white md:border-surface-border md:hover:border-ink-300'
+                    : 'bg-ink-50/60 md:border-dashed md:border-ink-200'
+                }`}
               >
-                <CategoryThumb name={sub.name} image={sub.image} sizeClasses="h-10 w-10" />
+                <span className={checked ? '' : 'opacity-50 grayscale'}>
+                  <CategoryThumb name={sub.name} image={sub.image} sizeClasses="h-14 w-14" text="text-[15px]" />
+                </span>
+
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate font-medium text-ink-900">{sub.name}</p>
-                    <TypeChip type={sub.type} />
-                  </div>
-                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
-                    <Link
-                      to={`/admin/categories/${sub.id}/attributes`}
-                      className="font-medium text-primary-700 hover:underline"
-                    >
-                      {sub.attributeCount ?? 0} fields
-                    </Link>
-                    {sub.order != null && (
-                      <>
-                        <span aria-hidden="true" className="text-ink-300">·</span>
-                        <span>Order {sub.order}</span>
-                      </>
+                  <div className="flex items-center gap-1.5">
+                    {canManage ? (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(sub)}
+                        className={`line-clamp-2 min-w-0 text-left text-[14px] font-semibold leading-snug hover:text-primary-700 hover:underline ${
+                          checked ? 'text-ink-900' : 'text-ink-500'
+                        }`}
+                      >
+                        {sub.name}
+                      </button>
+                    ) : (
+                      <p className={`line-clamp-2 min-w-0 text-[14px] font-semibold leading-snug ${checked ? 'text-ink-900' : 'text-ink-500'}`}>
+                        {sub.name}
+                      </p>
                     )}
-                    {parentOff && (
-                      <>
-                        <span aria-hidden="true" className="text-ink-300">·</span>
-                        <span>{checked ? 'Comes back with parent' : 'Stays off'}</span>
-                      </>
+                  </div>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-muted">
+                    {/* No fields = sellers get only the standard form; amber so
+                        it reads as a to-do, not a count. */}
+                    <Link
+                      to={cp(`/admin/categories/${sub.id}/attributes`)}
+                      className={`inline-flex items-center gap-0.5 rounded-full px-2 py-px font-semibold transition-colors ${
+                        fields ? 'bg-ink-100 text-ink-700 hover:bg-ink-200' : 'bg-warning-50 text-warning-800 hover:bg-warning-100'
+                      }`}
+                    >
+                      {fields ? `${fields} field${fields === 1 ? '' : 's'}` : 'Add fields'}
+                      <ChevronRightIcon className="h-3 w-3" aria-hidden="true" />
+                    </Link>
+                    {sub.type === 'service' && <span className="font-semibold text-warning-800">Service</span>}
+                    {sub.order != null && <span className="tabular-nums">#{sub.order}</span>}
+                    {parentOff ? (
+                      <span>{checked ? 'Returns with parent' : 'Stays off'}</span>
+                    ) : (
+                      !checked && <span className="font-semibold text-ink-500">Off</span>
                     )}
                   </p>
                 </div>
 
                 {canManage ? (
-                  <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                  <div className="flex shrink-0 items-center gap-0.5">
                     <Switch
                       checked={checked}
                       busy={busyId === sub.id}
@@ -837,11 +1124,7 @@ function SubList({ top, canManage, busyId, onAdd, onEdit, onToggle, onDelete }) 
                       label={`Actions for ${sub.name}`}
                       items={[
                         { label: 'Edit', Icon: SettingsIcon, onSelect: () => onEdit(sub) },
-                        {
-                          label: 'Manage fields',
-                          Icon: ListIcon,
-                          to: `/admin/categories/${sub.id}/attributes`,
-                        },
+                        { label: 'Manage fields', Icon: ListIcon, to: cp(`/admin/categories/${sub.id}/attributes`) },
                         { label: 'Delete', Icon: TrashIcon, danger: true, onSelect: () => onDelete(sub) },
                       ]}
                     />
@@ -918,7 +1201,7 @@ function SubPanel({ panel, top, saving, error, onClose, onSave }) {
         </>
       }
     >
-      <div className="space-y-6">
+      <FormStack>
         {error && <Alert tone="danger">{error}</Alert>}
 
         <div>
@@ -1014,7 +1297,7 @@ function SubPanel({ panel, top, saving, error, onClose, onSave }) {
           subject={name.trim() || undefined}
           placeholder="e.g. chess, carrom, ludo"
         />
-      </div>
+      </FormStack>
     </Drawer>
   );
 }

@@ -21,6 +21,8 @@ import { savedRouter } from './routes/saved.routes.js';
 import { inquiryRouter } from './routes/inquiry.routes.js';
 import { conversationRouter } from './routes/conversation.routes.js';
 import { quotationRouter } from './routes/quotation.routes.js';
+import { supportRouter } from './routes/support.routes.js';
+import { leadsRouter } from './routes/leads.routes.js';
 
 const JSON_BODY_LIMIT = '1mb';
 
@@ -113,6 +115,8 @@ export function createApp() {
   app.use(inquiryRouter);
   app.use(conversationRouter);
   app.use(quotationRouter);
+  app.use(supportRouter);
+  app.use(leadsRouter);
 
   // Any unmatched route becomes a JSON 404 through the central handler.
   app.use((req, _res, next) => {

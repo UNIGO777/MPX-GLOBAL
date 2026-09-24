@@ -85,9 +85,13 @@ const STATUS_TONES = {
  * @param {{tone:'success'|'warning'|'info', label:string}} [params.status]
  * @param {string} [params.footerNote] small print above the signature
  * @param {string} [params.preheader]  inbox preview line
+ * @param {{email?:string|null, phone?:string|null}} [params.support] the published
+ *        support contact (Step 1a) — a "Need help?" line under the signature
+ *        when either is set; nothing when neither is
  * @returns {{ text: string, html: string }}
  */
-export function renderEmail({ heading, paragraphs = [], code, expiryMinutes, status, footerNote, preheader }) {
+export function renderEmail({ heading, paragraphs = [], code, expiryMinutes, status, footerNote, preheader, support }) {
+  const supportParts = [support?.email, support?.phone].filter(Boolean);
   // --- plain-text alternative ----------------------------------------------
   // Not an afterthought: it is what screen readers and text-only clients get,
   // and what lands if the HTML part is stripped.
@@ -103,6 +107,7 @@ export function renderEmail({ heading, paragraphs = [], code, expiryMinutes, sta
   textParts.push(...paragraphs.map(toPlainParagraph));
   if (footerNote) textParts.push('', footerNote);
   textParts.push('', '— MPX Global', 'The trusted B2B network connecting Indian exporters with international buyers.');
+  if (supportParts.length) textParts.push(`Need help? ${supportParts.join(' · ')}`);
   const text = textParts.join('\n');
 
   // --- HTML ----------------------------------------------------------------
@@ -191,6 +196,15 @@ ${
         <div style="font-family:${FONT};font-size:12px;line-height:18px;color:${COLORS.muted}">
           MPX Global &middot; The trusted B2B network connecting Indian exporters with international buyers.
         </div>
+        ${
+          supportParts.length
+            ? // PLAIN TEXT, never a link: these emails carry no link anywhere by
+              // design (anti-phishing — tests pin it), and a mailto is a link.
+              `<div style="font-family:${FONT};font-size:12px;line-height:18px;color:${COLORS.muted};padding-top:6px">Need help? ${supportParts
+                .map(escapeHtml)
+                .join(' &middot; ')}</div>`
+            : ''
+        }
       </td></tr>
 
     </table>

@@ -25,7 +25,8 @@ RED-ALERT **before** writing, editing, enabling, scaffolding, or stubbing anythi
   modules, or a new feature not in the quote; **OR**
 - **(Bucket A)** touches anything in `docs/month1-not-doing.md` Bucket A — **Quotation &
   negotiation (quote Module 4)**, the **employee-only pieces** (ticket/query handling, enquiry
-  routing, internal notes, per-employee dashboard/reports, employee-permission UI), or the
+  routing, internal notes, per-employee dashboard/reports — ✅ NOT the employee-permission UI,
+  approved into month 1 by the owner 2026-09-24), or the
   **notification layer (quote Module 8)** beyond OTP **and beyond the approved FCM slice below**;
   **OR**
 
@@ -70,9 +71,10 @@ RED-ALERT **before** writing, editing, enabling, scaffolding, or stubbing anythi
 - **Phase-2 skeleton models** (`Escrow`, `Contract`, `Order`, `Shipment`, `PayoutAccount`,
   `PayoutRequest`, `Milestone`, `TrustScore`, `Investment`, `Incentive`, `Subscription`,
   `PremiumApplication`) — **do not touch, extend, wire, or delete.** They are placeholders.
-- **⚠️ Decision pending — Ticket/query handling (Bucket A2):** owner hasn't decided if a minimal
-  ticket create+list lands in month 1. Until they say so, it is **deferred** — alert before
-  building any of it.
+- ✅ **Ticket/query handling, internal notes, enquiry routing, per-employee dashboard/reports
+  (Bucket A2)** — approved by the owner and **BUILT 2026-09-24** (roadmap Step 1). Do not alert on them.
+- ⏸ **In-app notifications (roadmap Step 2, Module 8)** — owner put it **on hold** 2026-09-24
+  (`docs/Pending-Work.md` B8). Still guarded: alert before building any of it.
 - Building month-1 in-scope work (Modules 2, 3, 5, shared employee-ops, auth) needs **no** alert
   — that's the confirmed first-draft scope. Only the triggers above require the alert. This
   includes **`modules-in-detailed/m4` (Enquiry & Chat)** — see the numbering table above.

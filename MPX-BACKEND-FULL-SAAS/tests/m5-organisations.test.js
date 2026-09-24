@@ -285,7 +285,7 @@ describe('M5-D · detail — the three things it must be honest about', () => {
     );
     // …and they are not rendered as empty company fields either.
     expect(Object.keys(res.body.organisation.company).sort()).toEqual(
-      ['address', 'country', 'description', 'entityType', 'logo'].sort(),
+      ['address', 'country', 'coverImage', 'description', 'entityType', 'logo'].sort(),
     );
   });
 });
@@ -402,11 +402,24 @@ describe('M5-D · detail — sides, counts and the empty claim history', () => {
     expect(res.body.organisation.buyerActivity).not.toBeNull();
   });
 
-  it('🔴 claim history is EMPTY and says so — A21 Step 4b never writes org.claim', async () => {
+  it('claim history is tracked (D7 is built) — empty means nobody joined by claim', async () => {
     const res = await detailAs(reader.token, sellerOrg._id);
     expect(res.body.organisation.sides.claimHistory).toEqual([]);
-    // The flag is what stops a screen implying the data went missing.
-    expect(res.body.organisation.sides.claimHistoryAvailable).toBe(false);
+    expect(res.body.organisation.sides.claimHistoryAvailable).toBe(true);
+  });
+
+  it('a real `organisation.claim` audit row shows up, with how the person got in', async () => {
+    const { AuditLog } = await import('../src/models/AuditLog.js');
+    await AuditLog.create({
+      actorId: buyer.user._id, actorRole: 'buyer', action: 'organisation.claim',
+      entityType: 'Organisation', entityId: sellerOrg._id, orgId: sellerOrg._id,
+      after: { matchedOn: 'mobile', verifiedVia: 'org_email_otp' },
+    });
+    const res = await detailAs(reader.token, sellerOrg._id);
+    expect(res.body.organisation.sides.claimHistory).toHaveLength(1);
+    expect(res.body.organisation.sides.claimHistory[0]).toMatchObject({
+      byUserId: String(buyer.user._id), role: 'buyer', matchedOn: 'mobile', verifiedVia: 'org_email_otp',
+    });
   });
 
   it('counts resubmits from the kyc.submit audit rows (no field stores it)', async () => {

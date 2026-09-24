@@ -1,4 +1,4 @@
-import { Calendar, CreditCard, Download, Expand, KeyRound, LayoutGrid, Mail, MapPin, MessageSquarePlus, MessagesSquare, Send, Shield, SlidersHorizontal, Smile, Sparkles } from 'lucide-react';
+import { Calendar, CreditCard, Download, Expand, KeyRound, LayoutGrid, Link2, Mail, MapPin, MessageSquarePlus, Handshake, Lock, MessagesSquare, LifeBuoy, Paperclip, Phone, Send, Shield, SlidersHorizontal, Smile, Sparkles } from 'lucide-react';
 
 /**
  * Minimal inline SVG icon set (1.8 stroke, currentColor) — no icon-font network
@@ -228,6 +228,36 @@ export const EnquiryIcon = ({ className = 'h-5 w-5', ...rest }) => (
 
 export const MailIcon = ({ className = 'h-5 w-5', ...rest }) => (
   <Mail aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** Help & support (Step 1 — the help page, portal nav, footer). */
+export const HelpIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <LifeBuoy aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** "Find me a supplier" requests (Step 1d enquiry routing). */
+export const HandshakeIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Handshake aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** Staff-only content (internal notes). */
+export const LockIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Lock aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** Attach a file (support ticket reply box). */
+export const PaperclipIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Paperclip aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** A linked record (a follow-up ticket pointing at the earlier one). */
+export const LinkIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Link2 aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
+);
+
+/** Mobile number rows (admin user details drawer). */
+export const PhoneIcon = ({ className = 'h-5 w-5', ...rest }) => (
+  <Phone aria-hidden="true" strokeWidth={1.8} className={className} {...rest} />
 );
 
 /** Seller card's country row (`ProductDetail.jsx`) — a location pin reads

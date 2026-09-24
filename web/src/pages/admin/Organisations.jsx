@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { adminApi } from '../../api/admin.js';
@@ -7,17 +7,20 @@ import { config } from '../../config.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
 import { apiError, KYC_STATUS_META } from '../../lib/format.js';
+import { countryName } from '../../lib/countries.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
-import { Combobox } from '../../components/ui/Combobox.jsx';
+import { FilterChip } from '../../components/ui/FilterChip.jsx';
+import { ToolbarSearch } from '../../components/ui/ToolbarSearch.jsx';
 import { CompanyAvatar } from '../../components/chat/CompanyAvatar.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
 import { RowMenu } from '../../components/ui/RowMenu.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
-import { BoxIcon, BuildingIcon, ChatIcon, FileIcon, SearchIcon, XIcon } from '../../components/ui/icons.jsx';
+import { BoxIcon, BuildingIcon, ChatIcon, FileIcon } from '../../components/ui/icons.jsx';
+import { cp } from '../../lib/consolePath.js';
 
 /**
  * M5 screen 14 — the Organisation list.
@@ -46,19 +49,19 @@ import { BoxIcon, BuildingIcon, ChatIcon, FileIcon, SearchIcon, XIcon } from '..
 const PAGE_SIZE_DEFAULT = 20;
 
 const SIDE_OPTIONS = [
-  { value: '', label: 'Any side' },
+  { value: '', label: 'Any' },
   { value: 'buyer', label: 'Buyer side' },
   { value: 'exporter', label: 'Exporter side' },
   { value: 'both', label: 'Both sides' },
 ];
 
 const VERIFICATION_OPTIONS = [
-  { value: '', label: 'Any verification' },
+  { value: '', label: 'Any' },
   ...Object.entries(KYC_STATUS_META).map(([value, meta]) => ({ value, label: meta.label })),
 ];
 
 const STATE_OPTIONS = [
-  { value: '', label: 'Any state' },
+  { value: '', label: 'Any' },
   { value: 'false', label: 'Active' },
   { value: 'true', label: 'Blocked' },
 ];
@@ -73,9 +76,45 @@ function SidesBadge({ sides }) {
         ? 'Buyer'
         : 'No side';
   return (
-    <span className="inline-flex items-center rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-medium text-ink-600">
+    <span className="inline-flex shrink-0 items-center rounded-full bg-ink-100 px-2 py-px text-[11px] font-medium text-ink-600">
       {label}
     </span>
+  );
+}
+
+/**
+ * The company's second line (2026-09-24): which sides it trades on, where it
+ * is, and its slug. The side used to sit under the VERIFICATION chip — it
+ * describes the company, not its verification, and stacking it there made
+ * every row ~85px tall. The slug stays: names collide, the slug never does.
+ */
+function CompanyMeta({ org }) {
+  const where = [countryName(org.country) ?? org.country, org.slug].filter(Boolean).join(' · ');
+  return (
+    <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+      <SidesBadge sides={org.sides} />
+      <span className="truncate text-xs text-muted">{where || '—'}</span>
+    </div>
+  );
+}
+
+/**
+ * Products and takedowns as ONE compact cell (2026-09-24) — two full columns
+ * of mostly "0" were the widest thing in the table. A takedown only speaks up
+ * when there is one.
+ */
+function Activity({ products, takedowns }) {
+  return (
+    <div className="text-[13px] leading-snug">
+      <span className={products ? 'font-semibold text-ink-900' : 'text-ink-400'}>
+        {products || 0} {products === 1 ? 'product' : 'products'}
+      </span>
+      {takedowns > 0 && (
+        <span className="block text-xs font-semibold text-danger-700">
+          {takedowns} {takedowns === 1 ? 'takedown' : 'takedowns'}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -89,16 +128,6 @@ function StateChip({ blocked }) {
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-success-50 px-2.5 py-1 text-[12px] font-semibold text-success-700">
       <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-success-500" />
       Active
-    </span>
-  );
-}
-
-/** A count that is zero is muted — only the ones with something to look at read as numbers. */
-function Count({ value, tone = 'ink' }) {
-  if (!value) return <span className="text-ink-400">0</span>;
-  return (
-    <span className={tone === 'danger' ? 'font-semibold text-danger-700' : 'font-semibold text-ink-900'}>
-      {value}
     </span>
   );
 }
@@ -123,8 +152,28 @@ export function Organisations() {
   const [lastQ, setLastQ] = useState(q);
   if (lastQ !== q) {
     setLastQ(q);
-    setDraft(q);
+    // Only when q moved for another reason (back/forward, Clear) — not when it
+    // is just our own debounced echo, which would eat a trailing space mid-word.
+    if (q !== draft.trim()) setDraft(q);
   }
+
+  // Search as you type (owner, 2026-09-24 — it used to wait for Enter). A
+  // short pause, then `?q` updates; the FUNCTIONAL update keeps any filter
+  // clicked during the pause, and `replace` keeps typing out of history.
+  useEffect(() => {
+    const term = draft.trim();
+    if (term === q) return undefined;
+    const t = setTimeout(() => {
+      setParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (term) next.set('q', term);
+        else next.delete('q');
+        next.delete('page');
+        return next;
+      }, { replace: true });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [draft, q, setParams]);
 
   const setFilter = (patch) => {
     const next = new URLSearchParams(params);
@@ -171,17 +220,25 @@ export function Organisations() {
    */
   const rowActions = (org) => {
     const items = [
-      { label: 'Open company', Icon: BuildingIcon, to: `/admin/organisations/${org.id}` },
-      { label: 'View products', Icon: BoxIcon, to: `/admin/products?seller=${org.id}` },
-      { label: 'View conversations', Icon: ChatIcon, to: `/admin/conversations?orgId=${org.id}` },
+      { label: 'Open company', Icon: BuildingIcon, to: cp(`/admin/organisations/${org.id}`) },
+      { label: 'View products', Icon: BoxIcon, to: cp(`/admin/products?seller=${org.id}`) },
+      { label: 'View conversations', Icon: ChatIcon, to: cp(`/admin/conversations?orgId=${org.id}`) },
     ];
     if (can(me, 'kyc:view')) {
-      items.push({ label: 'KYC documents', Icon: FileIcon, to: `/admin/verification/${org.id}/kyc` });
+      items.push({ label: 'KYC documents', Icon: FileIcon, to: cp(`/admin/verification/${org.id}/kyc`) });
     }
     return items;
   };
 
   const clearAll = () => setParams(new URLSearchParams(), { replace: true });
+
+  // Clicking anywhere on a row/card opens the company — unless the click was on
+  // something interactive inside it (the name link, the ⋮ menu).
+  const navigate = useNavigate();
+  const openRow = (e, org) => {
+    if (e.target.closest('a, button, [role="menu"], [role="menuitem"]')) return;
+    navigate(cp(`/admin/organisations/${org.id}`));
+  };
 
   return (
     <AdminLayout>
@@ -203,70 +260,47 @@ export function Organisations() {
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap items-center gap-2 sm:gap-3">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            setFilter({ q: draft.trim() });
-          }}
-          className="relative min-w-[12rem] flex-1 basis-64"
-        >
-          <label htmlFor="org-search" className="sr-only">Search companies</label>
-          <SearchIcon
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
-            aria-hidden="true"
-          />
-          <input
+      {/* Toolbar (2026-09-24): a bordered white search and FILTER CHIPS. The
+          three full-width dropdowns read as form fields, showed nothing about
+          which filters were on, and wrapped unevenly on phones (one left alone
+          on its own row, "Any verification" cut off). Chips scroll sideways on
+          small screens; an active one turns brand-tinted and names its value. */}
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="lg:max-w-md lg:flex-1">
+          <ToolbarSearch
             id="org-search"
-            type="search"
+            label="Search companies"
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Starts with — company name"
-            className="h-11 w-full rounded-lg border border-surface-border bg-white pl-9 pr-9 text-sm text-ink-900 placeholder:text-ink-500 focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20"
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => setFilter({ q: '' })}
-              aria-label="Clear search"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
-            >
-              <XIcon className="h-4 w-4" />
-            </button>
-          )}
-        </form>
-
-        <div className="w-[8.5rem] shrink-0 sm:w-[11rem]">
-          <label htmlFor="org-side" className="sr-only">Filter by side</label>
-          <Combobox
-            id="org-side"
-            value={side}
-            placeholder="Any side"
-            options={SIDE_OPTIONS}
-            onChange={(v) => setFilter({ side: v })}
+            onChange={setDraft}
+            onSubmit={() => setFilter({ q: draft.trim() })}
+            onClear={() => {
+              setDraft('');
+              setFilter({ q: '' });
+            }}
+            placeholder="Company name starts with…"
           />
         </div>
-
-        <div className="w-[9.5rem] shrink-0 sm:w-[12rem]">
-          <label htmlFor="org-verification" className="sr-only">Filter by verification</label>
-          <Combobox
-            id="org-verification"
+        <div className="scrollbar-none -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5">
+          <FilterChip label="Side" value={side} options={SIDE_OPTIONS} onChange={(v) => setFilter({ side: v })} />
+          <FilterChip
+            label="Verification"
             value={verification}
-            placeholder="Any verification"
             options={VERIFICATION_OPTIONS}
             onChange={(v) => setFilter({ verification: v })}
           />
-        </div>
-
-        <div className="w-[8rem] shrink-0 sm:w-[10rem]">
-          <label htmlFor="org-state" className="sr-only">Filter by state</label>
-          <Combobox
-            id="org-state"
-            value={blocked}
-            placeholder="Any state"
-            options={STATE_OPTIONS}
-            onChange={(v) => setFilter({ blocked: v })}
-          />
+          <FilterChip label="State" value={blocked} options={STATE_OPTIONS} onChange={(v) => setFilter({ blocked: v })} />
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={() => {
+                setDraft('');
+                clearAll();
+              }}
+              className="ml-1 shrink-0 whitespace-nowrap rounded-full px-2 py-1.5 text-[13px] font-semibold text-primary-700 hover:bg-primary-50"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       </div>
 
@@ -285,89 +319,92 @@ export function Organisations() {
           </EmptyState>
         ) : (
           <>
-            {/* Phones get cards — five columns cannot survive 390px, which is the
-                same reason the spec caps the table at five in the first place. */}
-            <ul className="divide-y divide-surface-border md:hidden">
+            {/* Cards below lg — phones AND tablets (2026-09-24). The table used
+                to start at md, and between md and lg its fixed columns crushed
+                the company name to "D..". */}
+            <ul className="divide-y divide-surface-border lg:hidden">
               {rows.map((org) => (
-                <li key={org.id} className={org.blocked ? 'bg-danger-50/40 p-4' : 'p-4'}>
+                <li
+                  key={org.id}
+                  onClick={(e) => openRow(e, org)}
+                  className={`cursor-pointer p-4 transition-colors ${
+                    org.blocked ? 'bg-danger-50/40 hover:bg-danger-50/70' : 'hover:bg-ink-50/70'
+                  }`}
+                >
                   <div className="flex items-start gap-3">
                     <CompanyAvatar name={org.name} logo={org.logo} size="sm" />
                     <div className="min-w-0 flex-1">
                       <Link
-                        to={`/admin/organisations/${org.id}`}
+                        to={cp(`/admin/organisations/${org.id}`)}
                         className="block truncate font-semibold text-ink-900 hover:text-primary-700 hover:underline"
                       >
                         {org.name}
                       </Link>
-                      <p className="truncate text-xs text-muted">
-                        {[org.country, org.slug].filter(Boolean).join(' · ') || '—'}
-                      </p>
+                      <CompanyMeta org={org} />
                     </div>
                     <RowMenu label={`Actions for ${org.name}`} items={rowActions(org)} />
                   </div>
 
-                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                    <StatusChip status={org.verification} />
-                    <SidesBadge sides={org.sides} />
-                    <StateChip blocked={org.blocked} />
-                  </div>
-
-                  <div className="mt-2 flex gap-4 text-xs text-muted">
-                    <span>Products <Count value={org.products} /></span>
-                    <span>Takedowns <Count value={org.takedowns} tone="danger" /></span>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 pl-12">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusChip status={org.verification} />
+                      <StateChip blocked={org.blocked} />
+                    </div>
+                    <Activity products={org.products} takedowns={org.takedowns} />
                   </div>
                 </li>
               ))}
             </ul>
 
-            <div className="hidden overflow-x-auto md:block">
+            <div className="hidden lg:block">
               <table className="w-full table-fixed text-left text-sm">
+                {/* ~27rem of fixed columns (was ~37rem): the company column keeps
+                    ~240px even at a 1024px window with the sidebar open. */}
                 <colgroup>
                   <col />
-                  <col className="w-[10rem]" />
-                  <col className="w-[7rem]" />
-                  <col className="w-[7.5rem]" />
+                  <col className="w-[9.5rem]" />
                   <col className="w-[8rem]" />
-                  <col className="w-[4rem]" />
+                  <col className="w-[6.5rem]" />
+                  <col className="w-[3.5rem]" />
                 </colgroup>
                 <thead className="border-b border-surface-border bg-ink-50/60 text-[11px] uppercase tracking-wider text-ink-500">
                   <tr>
                     <th scope="col" className="px-4 py-3 font-semibold">Company</th>
                     <th scope="col" className="px-4 py-3 font-semibold">Verification</th>
-                    <th scope="col" className="px-4 py-3 font-semibold">Products</th>
-                    <th scope="col" className="px-4 py-3 font-semibold">Takedowns</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Activity</th>
                     <th scope="col" className="px-4 py-3 font-semibold">State</th>
                     <th scope="col" className="px-4 py-3 font-semibold"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-border">
                   {rows.map((org) => (
-                    <tr key={org.id} className={`transition-colors ${org.blocked ? 'bg-danger-50/40 hover:bg-danger-50/70' : 'hover:bg-primary-50/50'}`}>
+                    <tr
+                      key={org.id}
+                      // The whole row opens the company (2026-09-24); the name
+                      // stays a real link for keyboard and screen-reader users.
+                      onClick={(e) => openRow(e, org)}
+                      className={`cursor-pointer transition-colors ${org.blocked ? 'bg-danger-50/40 hover:bg-danger-50/70' : 'hover:bg-ink-50/70'}`}
+                    >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <CompanyAvatar name={org.name} logo={org.logo} size="sm" />
                           <div className="min-w-0">
                             <Link
-                              to={`/admin/organisations/${org.id}`}
+                              to={cp(`/admin/organisations/${org.id}`)}
                               className="block truncate font-semibold text-ink-900 hover:text-primary-700 hover:underline"
                             >
                               {org.name}
                             </Link>
-                            {/* The second line the spec asks for: names collide. */}
-                            <p className="truncate text-xs text-muted">
-                              {[org.country, org.slug].filter(Boolean).join(' · ') || '—'}
-                            </p>
+                            <CompanyMeta org={org} />
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex flex-col items-start gap-1">
-                          <StatusChip status={org.verification} />
-                          <SidesBadge sides={org.sides} />
-                        </div>
+                        <StatusChip status={org.verification} />
                       </td>
-                      <td className="px-4 py-3"><Count value={org.products} /></td>
-                      <td className="px-4 py-3"><Count value={org.takedowns} tone="danger" /></td>
+                      <td className="px-4 py-3">
+                        <Activity products={org.products} takedowns={org.takedowns} />
+                      </td>
                       <td className="px-4 py-3"><StateChip blocked={org.blocked} /></td>
                       <td className="px-4 py-3 text-right">
                         <RowMenu label={`Actions for ${org.name}`} items={rowActions(org)} />

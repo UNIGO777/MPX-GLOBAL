@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '../../api/admin.js';
 import { adminCatalogueApi, adminCatalogueKeys } from '../../api/adminCatalogue.js';
 import { adminConversationsApi, conversationKeys } from '../../api/conversations.js';
+import { LEAD_STATUS, leadsApi, leadsKeys, reportsApi, reportsKeys, supportApi, supportKeys } from '../../api/support.js';
+import { TicketStatusChip } from '../../components/support/TicketStatusChip.jsx';
 import { config } from '../../config.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
@@ -29,11 +31,14 @@ import {
   ChatIcon,
   ChevronRightIcon,
   ClockIcon,
+  HandshakeIcon,
+  HelpIcon,
   HomeIcon,
   ListIcon,
   RefreshIcon,
   UsersIcon,
 } from '../../components/ui/icons.jsx';
+import { cp } from '../../lib/consolePath.js';
 
 /**
  * M5 screen 12 — the dashboard as an OPERATIONS CONSOLE (owner-directed
@@ -65,6 +70,9 @@ const PREVIEW = 5;
 const FEED_FETCH = 20;
 const FEED_SHOW = 8;
 
+// Server link paths (API names) → console pages. Keys are what the SERVER
+// sends and must stay exactly as they are; `cp()` is applied when the href is
+// built, so the page lands in the viewer's own console (/admin or /staff).
 const ROUTE_FOR = {
   '/admin/orgs': '/admin/organisations',
   '/admin/products': '/admin/products',
@@ -74,7 +82,7 @@ const ROUTE_FOR = {
 
 function hrefOf(link) {
   if (!link?.path) return null;
-  const base = ROUTE_FOR[link.path] ?? link.path;
+  const base = cp(ROUTE_FOR[link.path] ?? link.path);
   const query = new URLSearchParams(link.query ?? {}).toString();
   return query ? `${base}?${query}` : base;
 }
@@ -297,6 +305,24 @@ function LiveDot() {
   );
 }
 
+/** A row of clickable counts — each opens its page already filtered. `warn`
+ * tints a non-zero count (something needs someone). */
+function CountStrip({ items, last = false }) {
+  return (
+    <div className={`grid grid-cols-2 gap-px bg-surface-border sm:grid-cols-4 ${last ? '' : 'border-b border-surface-border'}`}>
+      {items.map((c) => {
+        const hot = c.warn && c.value > 0;
+        return (
+          <Link key={c.label} to={c.to} className="group bg-white px-5 py-3 transition-colors hover:bg-ink-50">
+            <p className={`text-xl font-bold tabular-nums ${hot ? 'text-warning-800' : c.value ? 'text-ink-900' : 'text-ink-400'}`}>{c.value ?? 0}</p>
+            <p className="text-[12px] font-medium text-muted group-hover:text-primary-700">{c.label}</p>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 const TH = 'px-4 py-2.5 text-left text-[10.5px] font-semibold uppercase tracking-wider text-ink-500';
 
 /* ── the page ────────────────────────────────────────────────────────────── */
@@ -308,6 +334,8 @@ export function Dashboard() {
   const canConvs = can(me, 'conversation:read');
   const canAudit = can(me, 'audit:read');
   const canVerify = can(me, 'buyer:approve', 'exporter:verify');
+  const canSupport = can(me, 'support:read');
+  const canLeads = can(me, 'lead:manage');
 
   // The chart window (owner, 2026-08-19). Server-allowlisted; the whole
   // dashboard payload rides the same call, so the stat-bar deltas follow the
@@ -328,18 +356,31 @@ export function Dashboard() {
     queryFn: () => adminConversationsApi.list({ limit: PREVIEW }),
     enabled: canConvs,
   });
+  // Step 1b · the Support section (owner, 2026-09-24): open tickets and who holds each.
+  const support = useQuery({
+    queryKey: supportKeys.overview,
+    queryFn: supportApi.overview,
+    enabled: canSupport,
+  });
+  // Step 1d · supplier requests — the counts, so a new request is never invisible.
+  const leads = useQuery({ queryKey: leadsKeys.overview, queryFn: leadsApi.overview, enabled: canLeads });
+  // Step 1e · "My work" — what is waiting on me + my last 30 days.
+  const mine = useQuery({ queryKey: reportsKeys.myWork, queryFn: reportsApi.myWork });
   const activity = useQuery({
     queryKey: adminCatalogueKeys.audit({ preview: FEED_FETCH }),
     queryFn: () => adminCatalogueApi.audit({ pageSize: FEED_FETCH }),
     enabled: canAudit,
   });
 
-  const anyFetching = dash.isFetching || queue.isFetching || convs.isFetching || activity.isFetching;
+  const anyFetching = dash.isFetching || queue.isFetching || convs.isFetching || activity.isFetching || support.isFetching;
   const refreshAll = () => {
     dash.refetch();
     if (canOrgs) queue.refetch();
     if (canConvs) convs.refetch();
     if (canAudit) activity.refetch();
+    if (canSupport) support.refetch();
+    if (canLeads) leads.refetch();
+    mine.refetch();
   };
 
   // "Updated Xs ago" — the clock lives in STATE (the compiler rule forbids
@@ -451,7 +492,7 @@ export function Dashboard() {
             ? `avg ${turnaround.averageDaysToVerify} days to clear`
             : 'submitted & waiting',
       accent: { icon: 'text-warning-500', label: 'text-warning-700' },
-      href: canVerify ? '/admin/verification' : undefined,
+      href: canVerify ? cp('/admin/verification') : undefined,
     },
     orgs && {
       key: 'companies',
@@ -461,7 +502,7 @@ export function Dashboard() {
       delta: orgDelta > 0 ? `+${nf(orgDelta)}` : undefined,
       hint: orgDelta > 0 ? `in ${rangeDays} days` : `none new in ${rangeDays} days`,
       accent: { icon: 'text-primary-500', label: 'text-primary-700' },
-      href: '/admin/organisations',
+      href: cp('/admin/organisations'),
     },
     totals.activeProducts != null && {
       key: 'products',
@@ -470,7 +511,7 @@ export function Dashboard() {
       value: totals.activeProducts,
       hint: 'in the public catalogue',
       accent: { icon: 'text-success-500', label: 'text-success-700' },
-      href: '/admin/products?status=active',
+      href: cp('/admin/products?status=active'),
     },
     totals.conversations != null && {
       key: 'conversations',
@@ -480,7 +521,7 @@ export function Dashboard() {
       delta: enqDelta > 0 ? `+${nf(enqDelta)}` : undefined,
       hint: enqDelta > 0 ? `enquiries in ${rangeDays} days` : `no new enquiries in ${rangeDays} days`,
       accent: { icon: 'text-primary-700', label: 'text-primary-700' },
-      href: '/admin/conversations',
+      href: cp('/admin/conversations'),
     },
     totals.users != null && {
       key: 'accounts',
@@ -489,7 +530,7 @@ export function Dashboard() {
       value: totals.users,
       hint: 'buyers, exporters & staff',
       accent: { icon: 'text-ink-500', label: 'text-ink-700' },
-      href: '/admin/users',
+      href: cp('/admin/users'),
     },
     turnaround?.averageDaysToVerify != null && {
       key: 'turnaround',
@@ -510,6 +551,154 @@ export function Dashboard() {
   const feed = (feedIsAuthOnly ? feedAll : feedActions).slice(0, FEED_SHOW);
   const queueRows = queue.data?.organisations ?? [];
   const convRows = convs.data?.conversations ?? [];
+
+  // The panels about MY work — for an employee they come FIRST (their
+  // dashboard is their to-do list); a superadmin keeps the platform view on top.
+  const isSuper = me?.role === 'superadmin';
+  // The platform-growth chart is the super admin's view (owner, 2026-09-24);
+  // an employee's dashboard is their work, not platform trends.
+  const showChart = isSuper && chartSeries.length > 0;
+  const workPanels = (
+    <>
+    {/* ── My work (Step 1e) ───────────────────────────────────────────── */}
+    <Panel Icon={UsersIcon} tone="brand" title="My work" to={cp('/admin/reports')} toLabel="My report" className="rise-in">
+      <PanelBody query={mine}>
+        {mine.data && (
+          <div className="grid gap-px bg-surface-border lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="bg-white">
+              <p className="px-5 pb-1 pt-3 text-[12px] font-semibold text-ink-500">Waiting on me</p>
+              {!mine.data.canTickets && !mine.data.canLeads ? (
+                <p className="px-5 pb-4 text-sm text-muted">You don&apos;t handle support tickets or supplier requests.</p>
+              ) : mine.data.tickets.length + mine.data.leads.length === 0 ? (
+                <p className="px-5 pb-4 text-sm text-muted">Nothing assigned to you right now.</p>
+              ) : (
+                <ul className="divide-y divide-surface-border">
+                  {mine.data.tickets.map((t) => (
+                    <li key={`t${t.id}`}>
+                      <Link to={cp(`/admin/support/${t.id}`)} className="flex items-center gap-3 px-5 py-2.5 hover:bg-ink-50">
+                        <HelpIcon className="h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
+                        <span className="min-w-0 flex-1">
+                          <span className={`block truncate text-[13.5px] ${t.unread ? 'font-bold' : 'font-semibold'} text-ink-900`}>{t.subject}</span>
+                          <span className="block truncate text-xs text-muted"><span className="font-mono">{t.ref}</span> · {t.org}</span>
+                        </span>
+                        <TicketStatusChip status={t.status} size="sm" />
+                      </Link>
+                    </li>
+                  ))}
+                  {mine.data.leads.map((l) => (
+                    <li key={`l${l.id}`}>
+                      <Link to={cp(`/admin/leads/${l.id}`)} className="flex items-center gap-3 px-5 py-2.5 hover:bg-ink-50">
+                        <HandshakeIcon className="h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[13.5px] font-semibold text-ink-900">{l.what}</span>
+                          <span className="block truncate text-xs text-muted"><span className="font-mono">{l.ref}</span> · {l.org}</span>
+                        </span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${LEAD_STATUS[l.status]?.cls ?? ''}`}>{LEAD_STATUS[l.status]?.label}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="bg-white">
+              <p className="px-5 pb-1 pt-3 text-[12px] font-semibold text-ink-500">My last 30 days</p>
+              {mine.data.last30 && mine.data.last30.total > 0 ? (
+                <ul className="grid grid-cols-2 gap-x-4 gap-y-2 px-5 pb-4 pt-1">
+                  {mine.data.columns
+                    .filter((c) => mine.data.last30.counts[c.key] > 0)
+                    .map((c) => (
+                      <li key={c.key} className="flex items-baseline gap-2">
+                        <span className="text-lg font-bold tabular-nums text-ink-900">{mine.data.last30.counts[c.key]}</span>
+                        <span className="text-[12px] leading-tight text-muted">{c.label}</span>
+                      </li>
+                    ))}
+                </ul>
+              ) : (
+                <p className="px-5 pb-4 text-sm text-muted">No recorded actions yet.</p>
+              )}
+            </div>
+          </div>
+        )}
+      </PanelBody>
+    </Panel>
+
+    {/* ── Support tickets (Step 1b) ─────────────────────────────────── */}
+    {canSupport && (
+      <Panel
+        Icon={HelpIcon}
+        tone="brand"
+        title="Support tickets"
+        to={cp('/admin/support')}
+        toLabel="Open queue"
+        className="rise-in"
+      >
+        <PanelBody query={support}>
+          {support.data && (
+            <>
+              {/* The SAME four counts as the Support page, each opening it on that filter. */}
+              <CountStrip
+                items={[
+                  { label: 'Needs a reply', value: support.data.counts.needsReply, warn: true, to: cp('/admin/support?view=needs_reply') },
+                  { label: 'Unassigned', value: support.data.counts.unassigned, warn: true, to: cp('/admin/support?view=unassigned') },
+                  { label: 'Waiting on company', value: support.data.counts.waiting, to: cp('/admin/support?view=waiting') },
+                  { label: 'Resolved · 7 days', value: support.data.counts.resolved7d, to: cp('/admin/support?view=resolved') },
+                ]}
+              />
+              {support.data.openTickets.length === 0 ? (
+                <p className="px-5 py-4 text-sm text-muted">No open tickets — all caught up.</p>
+              ) : (
+                <ul className="divide-y divide-surface-border">
+                  {support.data.openTickets.map((t) => (
+                    <li key={t.id}>
+                      <Link to={cp(`/admin/support/${t.id}`)} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-50">
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-2">
+                            {t.unread && <span className="h-2 w-2 shrink-0 rounded-full bg-primary-600" aria-label="New from the company" />}
+                            <span className={`truncate text-[14px] ${t.unread ? 'font-bold' : 'font-semibold'} text-ink-900`}>{t.subject}</span>
+                          </span>
+                          <span className="block truncate text-xs text-muted">
+                            <span className="font-mono">{t.ref}</span> · {t.org.name} · {formatListTime(t.lastMessageAt)}
+                          </span>
+                        </span>
+                        <span className="hidden shrink-0 sm:block">
+                          {t.assignedTo ? (
+                            <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[12px] font-semibold text-ink-700">{t.assignedTo.name}</span>
+                          ) : (
+                            <span className="rounded-full bg-warning-50 px-2.5 py-0.5 text-[12px] font-semibold text-warning-800">Unassigned</span>
+                          )}
+                        </span>
+                        <TicketStatusChip status={t.status} size="sm" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </PanelBody>
+      </Panel>
+    )}
+
+    {/* ── Supplier requests (Step 1d) — counts only; the page has the list. */}
+    {canLeads && (
+      <Panel Icon={HandshakeIcon} tone="brand" title="Supplier requests" to={cp('/admin/leads')} toLabel="Open requests" className="rise-in">
+        <PanelBody query={leads}>
+          {leads.data && (
+            <CountStrip
+              items={[
+                { label: 'New', value: leads.data.counts.new, warn: true, to: cp('/admin/leads?view=new') },
+                { label: 'Finding suppliers', value: leads.data.counts.inProgress, to: cp('/admin/leads?view=finding') },
+                { label: 'Unassigned', value: leads.data.counts.unassigned, warn: true, to: cp('/admin/leads?view=unassigned') },
+                { label: 'Connected · 7 days', value: leads.data.counts.routed7d, to: cp('/admin/leads?view=routed') },
+              ]}
+              last
+            />
+          )}
+        </PanelBody>
+      </Panel>
+    )}
+    </>
+  );
 
   return (
     <AdminLayout>
@@ -565,7 +754,7 @@ export function Dashboard() {
             </button>
             {canVerify && (
               <Link
-                to="/admin/verification"
+                to={cp('/admin/verification')}
                 className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-primary-700 shadow-sm transition-colors hover:bg-primary-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
               >
                 Review verifications
@@ -581,25 +770,37 @@ export function Dashboard() {
       </header>
 
       {nothingAtAll ? (
-        <EmptyState icon={HomeIcon} title="Nothing to show yet">
-          Your permissions don&apos;t cover any of the queues this dashboard reports on.
+        <EmptyState icon={HomeIcon} title="You don't have any access yet">
+          Your account has no permissions, so there is nothing to work on here. Ask a super admin to
+          grant you access on the Staff page — it takes effect immediately, no need to sign in again.
         </EmptyState>
       ) : (
         <div className="grid gap-5">
+          {!isSuper && workPanels}
+
           {/* ── The stat bar — one connected panel, hairline-divided ──────── */}
           {stats.length > 0 && (
             <div className="rise-in overflow-hidden rounded-2xl border border-surface-border shadow-card" style={{ animationDelay: '60ms' }}>
-              <div className="grid grid-cols-2 gap-px bg-surface-border sm:grid-cols-3 xl:grid-cols-6">
-                {stats.map((k) => (
-                  <StatCell key={k.key} {...k} />
+              {/* Exactly as many columns as THIS person has stats (permissions
+                  decide which exist) — a fixed six left grey holes for an
+                  employee with one or two. An odd last cell spans on phones. */}
+              <div
+                className={`grid gap-px bg-surface-border ${stats.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} sm:[grid-template-columns:repeat(var(--stat-cols),minmax(0,1fr))]`}
+                style={{ '--stat-cols': Math.min(stats.length, 6) }}
+              >
+                {stats.map(({ key, ...k }, i) => (
+                  <div key={key} className={`flex ${stats.length % 2 === 1 && i === stats.length - 1 && stats.length > 1 ? 'col-span-2 sm:col-span-1' : ''} [&>*]:flex-1`}>
+                    <StatCell {...k} />
+                  </div>
                 ))}
               </div>
             </div>
           )}
 
           {/* ── Chart × worklist ─────────────────────────────────────────── */}
-          <div className="grid items-stretch gap-5 lg:grid-cols-5">
-            {chartSeries.length > 0 && (
+          {/* `empty:hidden` — a person who sees neither the chart nor "Needs action" gets no empty row. */}
+          <div className="grid items-stretch gap-5 empty:hidden lg:grid-cols-5">
+            {showChart && (
               <Panel
                 Icon={ChartIcon}
                 title="Platform activity"
@@ -625,7 +826,7 @@ export function Dashboard() {
                     ))}
                   </div>
                 }
-                className="rise-in lg:col-span-3"
+                className={`rise-in ${ACTIONS.length > 0 ? 'lg:col-span-3' : 'lg:col-span-5'}`}
                 style={{ animationDelay: '140ms' }}
               >
                 <div className="px-5 pb-5 pt-4">
@@ -646,7 +847,7 @@ export function Dashboard() {
                     </span>
                   ) : null
                 }
-                className={`rise-in ${chartSeries.length > 0 ? 'lg:col-span-2' : 'lg:col-span-5'}`}
+                className={`rise-in ${showChart ? 'lg:col-span-2' : 'lg:col-span-5'}`}
                 style={{ animationDelay: '200ms' }}
               >
                 {pressing.length === 0 ? (
@@ -703,6 +904,8 @@ export function Dashboard() {
             )}
           </div>
 
+          {isSuper && workPanels}
+
           {/* ── Work queues, as real tables ──────────────────────────────── */}
           {(canOrgs || canAudit) && (
             <div className="grid gap-5 lg:grid-cols-3">
@@ -711,7 +914,7 @@ export function Dashboard() {
                   Icon={BadgeCheckIcon}
                   tone="warning"
                   title="Verification queue"
-                  to="/admin/verification"
+                  to={cp('/admin/verification')}
                   toLabel="Open queue"
                   className={`rise-in ${canAudit ? 'lg:col-span-2' : 'lg:col-span-3'}`}
                   style={{ animationDelay: '260ms' }}
@@ -748,7 +951,7 @@ export function Dashboard() {
                               </td>
                               <td className="whitespace-nowrap px-4 py-2.5 text-right">
                                 <Link
-                                  to={`/admin/organisations/${org.id}`}
+                                  to={cp(`/admin/organisations/${org.id}`)}
                                   className="text-[13px] font-semibold text-primary-700 hover:underline"
                                 >
                                   Open
@@ -769,7 +972,7 @@ export function Dashboard() {
                   tone="ink"
                   title="Recent activity"
                   accessory={<LiveDot />}
-                  to="/admin/audit"
+                  to={cp('/admin/audit')}
                   toLabel="Open"
                   className="rise-in"
                   style={{ animationDelay: '320ms' }}
@@ -815,7 +1018,7 @@ export function Dashboard() {
             <Panel
               Icon={ChatIcon}
               title="Latest conversations"
-              to="/admin/conversations"
+              to={cp('/admin/conversations')}
               toLabel="View all"
               className="rise-in"
               style={{ animationDelay: '380ms' }}
@@ -867,7 +1070,7 @@ export function Dashboard() {
                           </td>
                           <td className="whitespace-nowrap px-4 py-2.5 text-right">
                             <Link
-                              to={`/admin/conversations/${c.id}`}
+                              to={cp(`/admin/conversations/${c.id}`)}
                               className="text-[13px] font-semibold text-primary-700 hover:underline"
                             >
                               Open

@@ -1,7 +1,8 @@
 import { ConsoleShell } from './ConsoleShell.jsx';
 import { useAuth } from '../auth/AuthContext.jsx';
+import { cp } from '../lib/consolePath.js';
 import { can } from '../auth/roleHome.js';
-import { AlertIcon, BoxIcon, BuildingIcon, ChatIcon, HomeIcon, ImageIcon, ListIcon, SettingsIcon, ShieldIcon, UserIcon, UsersIcon } from '../components/ui/icons.jsx';
+import { AlertIcon, BoxIcon, BuildingIcon, ChartIcon, ChatIcon, HandshakeIcon, HelpIcon, HomeIcon, ImageIcon, KeyIcon, ListIcon, SettingsIcon, ShieldIcon, UserIcon, UsersIcon } from '../components/ui/icons.jsx';
 
 /**
  * Staff console. Same standard shell as the buyer/exporter panels
@@ -46,14 +47,22 @@ const NAV = [
     Icon: ChatIcon,
     perms: ['conversation:read'],
   },
+  // Step 1b · the support desk (grantable `support:read`).
+  { to: '/admin/support', label: 'Support', Icon: HelpIcon, perms: ['support:read'] },
+  // Step 1d · buyers' "find me a supplier" requests (grantable `lead:manage`).
+  { to: '/admin/leads', label: 'Supplier requests', Icon: HandshakeIcon, perms: ['lead:manage'] },
   { to: '/admin/staff', label: 'Staff', Icon: UserIcon, superadminOnly: true },
-  { to: '/admin/audit', label: 'Audit log', Icon: ListIcon, perms: ['audit:read'], dividerBefore: true },
+  // Step 1e · every staff member sees their own report; superadmins the team.
+  { to: '/admin/reports', label: 'Reports', Icon: ChartIcon, dividerBefore: true },
+  { to: '/admin/audit', label: 'Audit log', Icon: ListIcon, perms: ['audit:read'] },
   { to: '/admin/errors', label: 'Errors', Icon: AlertIcon, perms: ['errorlog:read'] },
   { to: '/admin/featured', label: 'Featured', Icon: ImageIcon, perms: ['featured:manage'] },
   // Superadmin-only, matching the HARD role gate on the route — platform
   // governance is never a grantable employee permission. Without this flag an
   // employee saw a row that 403s.
   { to: '/admin/settings', label: 'Settings', Icon: SettingsIcon, superadminOnly: true },
+  // Every staff member: profile, password, and what they can do.
+  { to: '/admin/account', label: 'My account', Icon: KeyIcon, dividerBefore: true },
 ];
 
 const ROLE_LABELS = { superadmin: 'Super Admin', employee: 'Employee' };
@@ -65,7 +74,9 @@ export function AdminLayout({ children }) {
     if (item.superadminOnly) return user?.role === 'superadmin';
     if (item.perms) return can(user, ...item.perms);
     return true; // "Soon" rows stay — a narrowly granted employee still sees a finished console
-  });
+  })
+    // Links point into THIS person's console (/admin or /staff) — see consolePath.js.
+    .map((item) => ({ ...item, to: cp(item.to) }));
 
   return (
     <ConsoleShell

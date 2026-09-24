@@ -1,3 +1,4 @@
+import { countryName } from '../utils/messageText.js';
 import { Inquiry } from '../models/Inquiry.js';
 import { Conversation } from '../models/Conversation.js';
 import { Message } from '../models/Message.js';
@@ -55,7 +56,9 @@ const FIELD_LABELS = {
 export function composeEnquiryMessage({ fields, note }) {
   const lines = Object.entries(fields ?? {})
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
-    .map(([key, value]) => `${FIELD_LABELS[key] ?? key}: ${value}`);
+    // The country is stored as a code on the Inquiry (queryable) but written
+    // into the human message as its name ("Delivery to: Australia").
+    .map(([key, value]) => `${FIELD_LABELS[key] ?? key}: ${key === 'deliveryCountry' ? countryName(value) : value}`);
   return [...lines, note].filter(Boolean).join('\n');
 }
 

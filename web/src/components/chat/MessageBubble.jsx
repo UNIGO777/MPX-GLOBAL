@@ -234,6 +234,16 @@ const NOTICE_KINDS = {
     head: 'text-success-700',
     dot: 'text-ink-300',
   },
+  // Step 1d: staff connected the buyer's "find me a supplier" request here —
+  // information, so a white card with a brand edge.
+  routed: {
+    label: 'Connected by MPX Global',
+    Icon: ShieldIcon,
+    bar: 'bg-primary-600',
+    wrap: 'from-white to-white ring-ink-200/80 shadow-[0_1px_2px_rgba(0,5,23,0.04)]',
+    head: 'text-primary-700',
+    dot: 'text-ink-300',
+  },
   product_takedown: {
     label: 'Product under review',
     Icon: AlertIcon,

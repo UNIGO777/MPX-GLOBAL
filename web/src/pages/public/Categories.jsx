@@ -243,7 +243,7 @@ export function Categories() {
                 type="search"
                 aria-label="Find a category"
                 placeholder="Search categories or sub-categories…"
-                className="h-11 w-full rounded-full border border-surface-border bg-white pl-10 pr-10 text-sm outline-none placeholder:text-ink-500 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/20"
+                className="search-own-clear h-11 w-full rounded-full border border-surface-border bg-white pl-10 pr-10 text-sm outline-none placeholder:text-ink-500 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/20"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />

@@ -4,6 +4,8 @@ import {
   HeartIcon,
   ChatIcon,
   BuildingIcon,
+  HandshakeIcon,
+  HelpIcon,
 } from '../../components/ui/icons.jsx';
 
 /**
@@ -20,9 +22,13 @@ export const BUYER_NAV = [
   // points at the public search page, "Saved" at the buyer's own list.
   { to: '/search', label: 'Search suppliers', Icon: SearchIcon },
   { to: '/saved', label: 'Saved', Icon: HeartIcon, savedBadge: true },
+  // Step 1d (2026-09-24): ask the MPX team to find and connect suppliers.
+  { to: '/buyer/find-supplier', label: 'Find a supplier', Icon: HandshakeIcon },
   // M4 (2026-08-17): ONE chat item. The old "Enquiries" placeholder is gone —
   // M4-35 is explicit that there is no enquiry inbox: an enquiry and its thread
   // are one-to-one, so a separate list would show the same rows twice.
   { to: '/buyer/chat', label: 'Chat', Icon: ChatIcon, unreadBadge: true },
   { to: '/buyer/company', label: 'Company profile', Icon: BuildingIcon, dividerBefore: true },
+  // Step 1b (2026-09-24): the portal's own Help & support — tickets + contact.
+  { to: '/buyer/support', label: 'Help & support', Icon: HelpIcon, supportBadge: true },
 ];

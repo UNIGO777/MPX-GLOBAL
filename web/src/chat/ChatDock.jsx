@@ -38,7 +38,12 @@ import { useUnreadTitle } from './useUnreadTitle.js';
  * and every thread they open is audited — a persistent moderation window would
  * generate audit noise and imply a participation that does not exist.
  */
-const HIDDEN_ON = [/^\/signin/, /^\/signup/, /^\/otp/, /^\/forgot/, /^\/reset/, /^\/change-password/];
+// A single support ticket pins its own reply box to the bottom — the floating
+// button would sit on top of its Send button (owner review, 2026-09-24).
+const HIDDEN_ON = [
+  /^\/signin/, /^\/signup/, /^\/otp/, /^\/forgot/, /^\/reset/, /^\/change-password/,
+  /^\/(buyer|exporter)\/support\/[^/]+/,
+];
 
 function DockList({ role, onSelect }) {
   // The SAME hook the inbox page uses — same key, same shape. See

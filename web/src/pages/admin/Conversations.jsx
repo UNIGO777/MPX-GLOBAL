@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -9,14 +9,16 @@ import { CompanyAvatar } from '../../components/chat/CompanyAvatar.jsx';
 import { BlockModal, UnblockModal } from '../../components/chat/ModerationModals.jsx';
 import { FreezeChip } from '../../components/chat/FreezeChip.jsx';
 import { Button } from '../../components/ui/Button.jsx';
-import { Combobox } from '../../components/ui/Combobox.jsx';
+import { FilterChip } from '../../components/ui/FilterChip.jsx';
+import { ToolbarSearch } from '../../components/ui/ToolbarSearch.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { Spinner } from '../../components/ui/Spinner.jsx';
-import { BoxIcon, ChatIcon, ChevronRightIcon, SearchIcon, XIcon } from '../../components/ui/icons.jsx';
+import { BoxIcon, ChatIcon, ChevronRightIcon, XIcon } from '../../components/ui/icons.jsx';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { formatDate, formatListTime } from '../../lib/format.js';
+import { cp } from '../../lib/consolePath.js';
 
 /**
  * M4 screen 5 — every conversation on the platform (`/admin/conversations`).
@@ -72,19 +74,43 @@ function UnreadFlags({ unread, placeholder = false }) {
  */
 function OrgPair({ conversation }) {
   return (
-    <span className="flex shrink-0 -space-x-2" aria-hidden="true">
+    // 2026-09-24: a diagonal stack instead of a tight side-by-side overlap —
+    // the second mark covered the first one's initials ("SC" read as "S(").
+    <span className="relative block h-11 w-11 shrink-0" aria-hidden="true">
       <CompanyAvatar
         name={conversation.buyerOrg?.name ?? ''}
         logo={conversation.buyerOrg?.logo}
         size="xs"
-        className="outline outline-2 outline-white"
+        className="absolute left-0 top-0 ring-2 ring-white"
       />
       <CompanyAvatar
         name={conversation.exporterOrg?.name ?? ''}
         logo={conversation.exporterOrg?.logo}
         size="xs"
-        className="outline outline-2 outline-white"
+        className="absolute bottom-0 right-0 ring-2 ring-white"
       />
+    </span>
+  );
+}
+
+const STATE_OPTIONS = [
+  { value: '', label: 'Any' },
+  { value: 'open', label: 'Open' },
+  { value: 'frozen', label: 'Frozen — any reason' },
+  { value: 'blocked', label: 'Blocked by MPX' },
+  { value: 'takedown', label: 'Product under review' },
+  { value: 'account', label: 'Account paused' },
+];
+
+/** A scope that arrived in the URL (org / product) — shown, removable, never a
+ *  control of its own. */
+function ScopeChip({ children, onClear, clearLabel }) {
+  return (
+    <span className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-primary-600 bg-primary-50 pl-3.5 pr-2 text-[13px] font-semibold text-primary-700">
+      {children}
+      <button type="button" onClick={onClear} aria-label={clearLabel} className="rounded-full p-1 hover:bg-primary-100">
+        <XIcon className="h-3.5 w-3.5" />
+      </button>
     </span>
   );
 }
@@ -104,6 +130,18 @@ export function Conversations() {
    * pause is not about this thread at all.
    */
   const [state, setState] = useState('');
+
+  // Search as you type (2026-09-24), same pause as the other admin lists.
+  useEffect(() => {
+    const t = setTimeout(() => setQuery(draft.trim()), 350);
+    return () => clearTimeout(t);
+  }, [draft]);
+
+  useEffect(() => {
+    const previous = document.title;
+    document.title = 'Conversations — MPX Global';
+    return () => { document.title = previous; };
+  }, []);
 
   /**
    * An organisation filter arrives in the URL, from the Organisations list's
@@ -180,110 +218,61 @@ export function Conversations() {
         </p>
       </header>
 
-      {/* Search and state sit on ONE row: they narrow the same list and a
-          moderator sets them together. The search box keeps the width — it is
-          the field that holds a pasted organisation id. */}
-      <div className="mb-4 flex items-center gap-2 sm:gap-3">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          setQuery(draft.trim());
-        }}
-        className="relative min-w-0 flex-1"
-      >
-        <label htmlFor="admin-chat-search" className="sr-only">Search conversations</label>
-        <SearchIcon
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
-          aria-hidden="true"
-        />
-        <input
-          id="admin-chat-search"
-          type="search"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Search names or org ID"
-          className="h-11 w-full rounded-lg border border-surface-border bg-white pl-9 pr-9 text-sm text-ink-900 placeholder:text-ink-500 focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => {
-              setDraft('');
-              setQuery('');
-            }}
-            aria-label="Clear search"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
-          >
-            <XIcon className="h-4 w-4" />
-          </button>
-        )}
-      </form>
-
-        {/* Narrower on a phone so both fit: the SEARCH gives up width first,
-            because a truncated placeholder still reads while a truncated state
-            label ("Product under…") does not. */}
-        <div className="w-[8.5rem] shrink-0 sm:w-[13rem]">
-          <label htmlFor="admin-chat-state" className="sr-only">Filter by state</label>
-          <Combobox
-            id="admin-chat-state"
-            value={state}
-            placeholder="Any state"
-            options={[
-              { value: '', label: 'Any state' },
-              { value: 'open', label: 'Open' },
-              { value: 'frozen', label: 'Frozen — any reason' },
-              { value: 'blocked', label: 'Blocked by MPX' },
-              { value: 'takedown', label: 'Product under review' },
-              { value: 'account', label: 'Account paused' },
-            ]}
-            onChange={setState}
+      {/* Toolbar (2026-09-24) — the admin list language: a bordered search and
+          FILTER CHIPS. The org / product scopes (they arrive from other
+          screens' cross-links and have no control here) sit in the same chip
+          row as removable chips instead of banners of their own. */}
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="lg:max-w-md lg:flex-1">
+          <ToolbarSearch
+            id="admin-chat-search"
+            label="Search conversations"
+            value={draft}
+            onChange={setDraft}
+            onSubmit={() => setQuery(draft.trim())}
+            onClear={() => { setDraft(''); setQuery(''); }}
+            placeholder="Search company, product or org ID…"
           />
         </div>
+        <div className="scrollbar-none -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5">
+          <FilterChip label="State" value={state} options={STATE_OPTIONS} onChange={setState} />
+          {orgId && (
+            <ScopeChip onClear={clearParam('orgId')} clearLabel="Show all organisations">
+              Organisation{side ? ` · as ${side}` : ''}
+              <code className="font-mono text-[11px] font-normal">{orgId.slice(-6)}</code>
+              {side && (
+                <button
+                  type="button"
+                  onClick={clearParam('side')}
+                  className="font-medium underline decoration-primary-300 underline-offset-2"
+                >
+                  both sides
+                </button>
+              )}
+            </ScopeChip>
+          )}
+          {productId && (
+            <ScopeChip onClear={clearParam('productId')} clearLabel="Show threads about every product">
+              One product
+              <code className="font-mono text-[11px] font-normal">{productId.slice(-6)}</code>
+            </ScopeChip>
+          )}
+          {(query || state || orgId || productId) && (
+            <button
+              type="button"
+              onClick={() => {
+                setDraft('');
+                setQuery('');
+                setState('');
+                setParams(new URLSearchParams(), { replace: true });
+              }}
+              className="ml-1 shrink-0 whitespace-nowrap rounded-full px-2 py-1.5 text-[13px] font-semibold text-primary-700 hover:bg-primary-50"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       </div>
-
-      {productId && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-700 ring-1 ring-inset ring-primary-100">
-            One product&apos;s threads
-            <code className="font-mono text-[11px] text-primary-700">{productId}</code>
-            <button
-              type="button"
-              onClick={clearParam('productId')}
-              aria-label="Show threads about every product"
-              className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-700"
-            >
-              <XIcon className="h-3.5 w-3.5" />
-            </button>
-          </span>
-        </div>
-      )}
-
-      {orgId && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-700 ring-1 ring-inset ring-primary-100">
-            One organisation&apos;s threads{side ? ` · as ${side}` : ''}
-            <code className="font-mono text-[11px] text-primary-700">{orgId}</code>
-            {side && (
-              <button
-                type="button"
-                onClick={clearParam('side')}
-                aria-label="Show both sides for this organisation"
-                className="font-semibold text-primary-700 underline decoration-primary-300 underline-offset-2 hover:text-primary-600"
-              >
-                both sides
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={clearParam('orgId')}
-              aria-label="Show all organisations"
-              className="rounded-full p-0.5 text-primary-600 hover:bg-primary-100 hover:text-primary-700"
-            >
-              <XIcon className="h-3.5 w-3.5" />
-            </button>
-          </span>
-        </div>
-      )}
 
       <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
         {list.isLoading ? (
@@ -325,11 +314,11 @@ export function Conversations() {
           </EmptyState>
         ) : (
           <>
-            {/* 🔴 The table is md+ ONLY. `table-fixed` with sized columns needs
-                ~33rem; at 390px the flexible Conversation column collapsed to
-                nothing and the headers printed on top of each other. Phones get
-                the card list below — the same pattern /admin/products uses. */}
-            <div className="hidden overflow-x-auto md:block">
+            {/* 🔴 The table is xl+ ONLY (2026-09-24; it was md+). At 1024 with
+                the sidebar open the sized columns left the Conversation column
+                "S1 Co 7504…". Below xl the card list takes over — the same
+                pattern the other admin lists use. */}
+            <div className="hidden xl:block">
               {/* 🔴 `min-w-[64rem]` is gone. It forced the table wider than the
                   canvas, so the ACTION column — the only way into a thread —
                   was clipped at the right edge and reachable only by
@@ -342,31 +331,31 @@ export function Conversations() {
                       content — together ~46rem of a ~58rem table, which left the
                       one column that matters (who, about what) cut to "S1 Co …". */}
                   <col />
-                  <col className="w-[9.5rem]" />
-                  <col className="w-[8rem]" />
+                  <col className="w-[9rem]" />
+                  <col className="w-[8.5rem]" />
                   <col className="w-[5.5rem]" />
-                  <col className="hidden w-[7rem] xl:table-column" />
+                  <col className="hidden w-[7rem] 2xl:table-column" />
                   <col className={mayBlock ? 'w-[10.5rem]' : 'w-[5rem]'} />
                 </colgroup>
-                <thead className="border-b border-surface-border bg-ink-50 text-[11px] uppercase tracking-wider text-ink-500">
+                <thead className="border-b border-surface-border bg-ink-50/60 text-[11px] uppercase tracking-wider text-ink-500">
                   <tr>
                     <th scope="col" className="px-4 py-3 font-semibold">Conversation</th>
                     <th scope="col" className="px-4 py-3 font-semibold">State</th>
                     <th scope="col" className="px-4 py-3 font-semibold">Unread</th>
                     <th scope="col" className="px-4 py-3 font-semibold">Activity</th>
-                    <th scope="col" className="hidden px-4 py-3 font-semibold xl:table-cell">Started</th>
+                    <th scope="col" className="hidden px-4 py-3 font-semibold 2xl:table-cell">Started</th>
                     <th scope="col" className="px-4 py-3 font-semibold"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-border">
                   {rows.map((c) => (
-                    <tr key={c.id} className={c.frozen ? 'bg-danger-50/40' : 'hover:bg-ink-50/60'}>
+                    <tr key={c.id} className={c.frozen ? 'bg-danger-50/40' : 'hover:bg-ink-50/70'}>
                       <td className="px-4 py-3">
                         {/* M4-17 — companies and the product, never a person.
                             Split across two lines: the composed title ran to
                             ~60 characters and was squeezing every other column
                             off the screen. */}
-                        <div className="flex items-start gap-2.5">
+                        <div className="flex items-start gap-3">
                           <OrgPair conversation={c} />
                           <div className="min-w-0 flex-1">
                             {/* Two lines before it truncates: the pair of company
@@ -387,7 +376,7 @@ export function Conversations() {
                       </td>
                       <td className="px-4 py-3">
                         {c.frozenLabel?.text ? (
-                          <FreezeChip label={c.frozenLabel} wrap />
+                          <FreezeChip label={c.frozenLabel} short />
                         ) : (
                           /* A chip, not bare grey text — the state column is
                              what a moderator scans down, and it needs a shape
@@ -402,14 +391,14 @@ export function Conversations() {
                       <td className="whitespace-nowrap px-4 py-3 text-ink-700">
                         {formatListTime(c.lastMessageAt)}
                       </td>
-                      <td className="hidden whitespace-nowrap px-4 py-3 text-ink-500 xl:table-cell">
+                      <td className="hidden whitespace-nowrap px-4 py-3 text-ink-500 2xl:table-cell">
                         {formatDate(c.createdAt)}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <span className="inline-flex items-center justify-end gap-1.5">
                           <Link
-                            to={`/admin/conversations/${c.id}`}
-                            className="inline-flex items-center rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-ink-800 transition-colors hover:border-primary-600 hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
+                            to={cp(`/admin/conversations/${c.id}`)}
+                            className="inline-flex items-center rounded-full border border-ink-200 px-3.5 py-1.5 text-xs font-semibold text-ink-800 transition-colors hover:border-primary-600 hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
                           >
                             View
                           </Link>
@@ -418,7 +407,7 @@ export function Conversations() {
                               <button
                                 type="button"
                                 onClick={() => setUnblockTarget(c)}
-                                className="inline-flex items-center rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-ink-800 transition-colors hover:border-primary-600 hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
+                                className="inline-flex items-center rounded-full border border-ink-200 px-3.5 py-1.5 text-xs font-semibold text-ink-800 transition-colors hover:border-primary-600 hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
                               >
                                 Unblock
                               </button>
@@ -426,7 +415,7 @@ export function Conversations() {
                               <button
                                 type="button"
                                 onClick={() => setBlockTarget(c)}
-                                className="inline-flex items-center rounded-lg border border-danger-200 px-3 py-1.5 text-xs font-semibold text-danger-700 transition-colors hover:bg-danger-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-danger-300"
+                                className="inline-flex items-center rounded-full border border-danger-200 px-3.5 py-1.5 text-xs font-semibold text-danger-700 transition-colors hover:bg-danger-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-danger-300"
                               >
                                 Block
                               </button>
@@ -445,11 +434,11 @@ export function Conversations() {
                 being the thing a moderator actually reads. One tap target, a
                 chevron to say so, and the vertical space goes back to the list.
                 Same data as the table; nothing is phone-only. */}
-            <ul className="divide-y divide-surface-border md:hidden">
+            <ul className="divide-y divide-surface-border xl:hidden">
               {rows.map((c) => (
                 <li key={c.id} className={c.frozen ? 'bg-danger-50/40' : ''}>
                   <Link
-                    to={`/admin/conversations/${c.id}`}
+                    to={cp(`/admin/conversations/${c.id}`)}
                     className="flex items-center gap-3 px-4 py-3.5 transition-colors active:bg-ink-50"
                   >
                     <OrgPair conversation={c} />
@@ -479,7 +468,7 @@ export function Conversations() {
 
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
                         {c.frozenLabel?.text ? (
-                          <FreezeChip label={c.frozenLabel} size="sm" wrap />
+                          <FreezeChip label={c.frozenLabel} size="sm" short />
                         ) : (
                           <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-success-50 px-2 py-0.5 text-[11px] font-semibold text-success-700">
                             <span className="h-1.5 w-1.5 rounded-full bg-success-500" aria-hidden="true" />

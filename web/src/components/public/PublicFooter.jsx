@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 
 import { Logo } from '../ui/Logo.jsx';
+import { useSupportContact } from '../../hooks/useSupportContact.js';
 
 /**
  * The public chrome's footer. Shared by every guest-visible page.
@@ -21,6 +22,8 @@ import { Logo } from '../ui/Logo.jsx';
 export function PublicFooter() {
   const { pathname } = useLocation();
   const categoriesHref = pathname === '/' ? '#categories' : '/#categories';
+  // Step 1a: the published support contact — only what a superadmin has set.
+  const { email, phone } = useSupportContact();
 
   return (
     <footer className="bg-ink-900 px-4 py-14 text-white sm:px-6">
@@ -47,6 +50,18 @@ export function PublicFooter() {
               <li><Link to="/search" className="inline-block py-1.5 hover:text-white">Search</Link></li>
               <li><Link to="/ai-search" className="inline-block py-1.5 hover:text-white">AI search</Link></li>
               <li><Link to="/search?type=supplier" className="inline-block py-1.5 hover:text-white">Suppliers</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-3 text-sm font-semibold">Support</h4>
+            <ul className="space-y-1 text-sm text-white/60">
+              <li><Link to="/help" className="inline-block py-1.5 hover:text-white">Help &amp; support</Link></li>
+              {email && (
+                <li><a href={`mailto:${email}`} className="inline-block break-all py-1.5 hover:text-white">{email}</a></li>
+              )}
+              {phone && (
+                <li><a href={`tel:${phone.replace(/\s+/g, '')}`} className="inline-block py-1.5 hover:text-white">{phone}</a></li>
+              )}
             </ul>
           </div>
           <div>

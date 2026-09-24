@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { adminApi } from '../../api/admin.js';
 import { config } from '../../config.js';
 import { apiError } from '../../lib/format.js';
-import { PERMISSION_GROUPS, PERMISSION_LIST, PERMISSION_LABELS } from '../../lib/permissions.js';
+import { PERMISSION_GROUPS, PERMISSION_LIST, PERMISSION_REQUIRES, withDependencies } from '../../lib/permissions.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
@@ -18,7 +18,10 @@ import { MobileInput } from '../../components/ui/MobileInput.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
-import { CheckCircleIcon, CopyIcon, InfoIcon, KeyIcon, UserIcon, UsersIcon } from '../../components/ui/icons.jsx';
+import { CheckCircleIcon, CopyIcon, KeyIcon, PlusIcon, UserIcon, UsersIcon } from '../../components/ui/icons.jsx';
+import { FilterChip } from '../../components/ui/FilterChip.jsx';
+import { ToolbarSearch } from '../../components/ui/ToolbarSearch.jsx';
+import { monogramTone } from '../../components/chat/CompanyAvatar.jsx';
 
 /**
  * Employees (superadmin-only; mockup: admin_employees_edit_permissions_drawer).
@@ -49,6 +52,7 @@ import { CheckCircleIcon, CopyIcon, InfoIcon, KeyIcon, UserIcon, UsersIcon } fro
 const STAFF_ROLES = 'employee,superadmin';
 
 const PERMISSION_COUNT = PERMISSION_LIST.length;
+const KNOWN = new Set(PERMISSION_LIST.map((p) => p.value));
 
 function initials(name = '') {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?';
@@ -98,7 +102,9 @@ function SelectAll({ group, keys, held, value, onToggle, disabled }) {
   );
 }
 
-function PermissionChecklist({ value, onToggle, disabled }) {
+function PermissionChecklist({ value, onToggle: setValue, disabled }) {
+  // Every change keeps action grants and their read grant together.
+  const onToggle = (next) => setValue(withDependencies(value, next));
   // §10 — grouped by area, matching the server catalogue: 14 flat checkboxes
   // stopped being scannable when the set grew from 3. Each area is a card with
   // its own "Select all".
@@ -142,7 +148,7 @@ function PermissionChecklist({ value, onToggle, disabled }) {
                   key={p.value}
                   plain
                   label={p.label}
-                  help={p.help}
+                  help={PERMISSION_REQUIRES[p.value] ? `${p.help} · includes viewing` : p.help}
                   checked={value.includes(p.value)}
                   disabled={disabled}
                   onChange={(checked) =>
@@ -157,6 +163,158 @@ function PermissionChecklist({ value, onToggle, disabled }) {
     </div>
   );
 }
+
+/**
+ * What an employee can reach, as AREA chips (2026-09-24) — "7 permissions" said
+ * how many, never what. Up to two areas by name, the rest as "+N".
+ */
+function AccessSummary({ row, perms, onOpen }) {
+  if (row.role === 'superadmin') {
+    return (
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-primary-600 px-2.5 py-0.5 text-[12px] font-semibold text-white">
+        <KeyIcon className="h-3.5 w-3.5" aria-hidden="true" />
+        Full access
+      </span>
+    );
+  }
+  if (!perms) return <span className="text-[13px] text-muted" title="Not returned for this account">—</span>;
+  if (perms.length === 0) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-ink-100 px-2.5 py-0.5 text-[12px] font-semibold text-ink-600">
+        No access yet
+      </span>
+    );
+  }
+  const areas = PERMISSION_GROUPS.filter((g) => g.items.some((i) => perms.includes(i.value))).map((g) => g.group);
+  const shown = areas.slice(0, 2);
+  const more = areas.length - shown.length;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`See all ${perms.length} permissions for ${row.name}`}
+      title={`${perms.length} of ${PERMISSION_COUNT} permissions — click for the list`}
+      className="group flex max-w-full flex-wrap items-center gap-1.5 text-left"
+    >
+      {shown.map((a) => (
+        <span
+          key={a}
+          className="whitespace-nowrap rounded-full bg-primary-50 px-2.5 py-0.5 text-[12px] font-semibold text-primary-700 group-hover:bg-primary-100"
+        >
+          {a}
+        </span>
+      ))}
+      {more > 0 && (
+        <span className="whitespace-nowrap rounded-full bg-ink-100 px-2 py-0.5 text-[12px] font-semibold text-ink-600 group-hover:bg-ink-200">
+          +{more}
+        </span>
+      )}
+      <span className="whitespace-nowrap text-[11.5px] text-muted group-hover:text-primary-700">
+        {perms.length}/{PERMISSION_COUNT}
+      </span>
+    </button>
+  );
+}
+
+function PersonMark({ row }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ring-1 ring-inset ${
+        row.isActive ? monogramTone(row.name) : 'bg-ink-100 text-ink-400 ring-ink-200'
+      }`}
+    >
+      {initials(row.name)}
+    </span>
+  );
+}
+
+function StatusChip({ active }) {
+  return active ? (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-success-50 px-2.5 py-0.5 text-[12px] font-semibold text-success-700">
+      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-success-500" />
+      Active
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink-100 px-2.5 py-0.5 text-[12px] font-semibold text-ink-600">
+      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-ink-400" />
+      Deactivated
+    </span>
+  );
+}
+
+/**
+ * The powers that are NEVER grantable (owner, 2026-09-24: "make sure all kinds
+ * of permissions are listed"). They are hard `requireRole('superadmin')` gates
+ * on the server — listed here so the full picture of access is on one screen,
+ * never as checkboxes.
+ */
+const SUPERADMIN_ONLY = [
+  'Create staff and assign permissions',
+  'Activate / deactivate user accounts',
+  'Block / unblock a company',
+  'Platform settings',
+];
+
+function SuperadminOnlyNote() {
+  return (
+    <div className="rounded-xl border border-dashed border-ink-200 bg-ink-50/60 p-4">
+      <p className="flex items-center gap-2 text-[13px] font-semibold text-ink-800">
+        <KeyIcon className="h-4 w-4 text-ink-500" aria-hidden="true" />
+        Super admin only — never grantable
+      </p>
+      <ul className="mt-2 grid gap-x-4 gap-y-1 text-[12.5px] text-ink-600 sm:grid-cols-2">
+        {SUPERADMIN_ONLY.map((x) => (
+          <li key={x} className="flex items-start gap-1.5">
+            <span aria-hidden="true" className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-ink-400" />
+            {x}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Name with a role badge — "Super admin" is the one role that changes what
+ *  the row means, so it is named rather than implied by a chip colour. */
+function PersonName({ row }) {
+  return (
+    <p className="flex min-w-0 items-center gap-2">
+      <span className="truncate font-semibold text-ink-900">{row.name}</span>
+      {row.role === 'superadmin' && (
+        <span className="shrink-0 rounded-full bg-ink-900 px-2 py-px text-[10.5px] font-bold uppercase tracking-wide text-white">
+          Super admin
+        </span>
+      )}
+    </p>
+  );
+}
+
+/** A superadmin row has nothing to grant (the server refuses a set anyway),
+ *  so it gets a quiet note, never a button that can only fail. */
+function RowAction({ row, onEdit }) {
+  if (row.role === 'superadmin') {
+    return <span className="whitespace-nowrap text-[12px] text-muted">By role</span>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={onEdit}
+      aria-label={`Manage access for ${row.name}`}
+      className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-ink-200 bg-white px-2.5 text-[12.5px] font-semibold text-ink-800 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 sm:px-3"
+    >
+      <KeyIcon className="h-3.5 w-3.5" aria-hidden="true" />
+      {/* Icon-only on phones — the label squeezed the email to a few letters. */}
+      <span className="hidden sm:inline">Manage access</span>
+    </button>
+  );
+}
+
+const ROLE_OPTIONS = [
+  { value: '', label: 'Any' },
+  { value: 'employee', label: 'Employees' },
+  { value: 'superadmin', label: 'Super admins' },
+];
 
 const EMPTY_FORM = {
   name: '',
@@ -199,6 +357,25 @@ async function copyText(text) {
 export function Employees() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(config.table.pageSizes[0]);
+  const [draft, setDraft] = useState('');
+  const [q, setQ] = useState('');
+  const [role, setRole] = useState('');
+
+  // Search as you type (same pause as the other admin lists). The server's
+  // `q` is a prefix match on name, email or mobile.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setQ(draft.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [draft]);
+
+  useEffect(() => {
+    const previous = document.title;
+    document.title = 'Staff — MPX Global';
+    return () => { document.title = previous; };
+  }, []);
 
   // `GET /admin/users` now returns each employee's granted set to a superadmin
   // (owner-approved 2026-08-04), so the list IS the source of truth. This map
@@ -207,7 +384,13 @@ export function Employees() {
   const [knownPerms, setKnownPerms] = useState({});
 
   /** Freshest known set for a row, or null if the server sent none. */
-  const permsFor = (row) => knownPerms[row.id] ?? row.permissions ?? null;
+  // Only strings the catalogue still knows — a retired grant (e.g. the old
+  // `support:manage`, split 2026-09-24) would otherwise ride back on save and
+  // be refused by the server.
+  const permsFor = (row) => {
+    const raw = knownPerms[row.id] ?? row.permissions ?? null;
+    return raw ? raw.filter((p) => KNOWN.has(p)) : raw;
+  };
 
   const [drawer, setDrawer] = useState(null); // {mode:'add'} | {mode:'edit', row}
   const [form, setForm] = useState(EMPTY_FORM);
@@ -224,8 +407,8 @@ export function Employees() {
 
   // TanStack Query rather than a fetch in an effect (`web-frontend.md`).
   const list = useQuery({
-    queryKey: ['admin', 'employees', { page, pageSize }],
-    queryFn: () => adminApi.listUsers({ role: STAFF_ROLES, page, pageSize }),
+    queryKey: ['admin', 'employees', { page, pageSize, q, role }],
+    queryFn: () => adminApi.listUsers({ role: role || STAFF_ROLES, page, pageSize, ...(q ? { q } : {}) }),
     placeholderData: (prev) => prev,
   });
   const data = list.data ?? null;
@@ -312,28 +495,62 @@ export function Employees() {
 
   return (
     <AdminLayout>
-      {/* One row at every width: the text shrinks and wraps beside the button;
-          the button never drops underneath it. */}
-      <div className="mb-5 flex items-start justify-between gap-3 sm:items-end">
-        <div className="min-w-0 flex-1">
+      <header className="mb-4 flex items-start justify-between gap-3 sm:mb-6">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-2xl font-bold leading-tight text-ink-900">Staff</h1>
+            <h1 className="text-xl font-bold leading-tight text-ink-900 sm:text-2xl">Staff</h1>
             {data && (
               <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
                 {(data.total ?? rows.length).toLocaleString()} staff
               </span>
             )}
           </div>
-          <p className="mt-1 max-w-2xl text-sm text-muted">
-            Everyone who can reach this console. Employees hold granted permissions; super
-            admins have full access by role.
+          <p className="mt-1 hidden text-sm text-muted sm:block">
+            Everyone who can reach this console, and what each person can do.
           </p>
         </div>
-        <Button onClick={openAdd} className="shrink-0 whitespace-nowrap" aria-label="Add employee">
-          <span aria-hidden="true" className="text-lg leading-none">+</span>
-          <span className="hidden sm:inline">Add employee</span>
+        {/* Same compact solid button as "New category" — the tall shadowed one
+            outweighed the whole header. */}
+        <button
+          type="button"
+          onClick={openAdd}
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-primary-600 px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/20"
+        >
+          <PlusIcon className="h-4 w-4" aria-hidden="true" />
           <span className="sm:hidden">Add</span>
-        </Button>
+          <span className="hidden sm:inline">Add employee</span>
+        </button>
+      </header>
+
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="lg:max-w-md lg:flex-1">
+          <ToolbarSearch
+            id="staff-search"
+            label="Search staff — starts with name, email or mobile"
+            value={draft}
+            onChange={setDraft}
+            onSubmit={() => { setQ(draft.trim()); setPage(1); }}
+            onClear={() => setDraft('')}
+            placeholder="Name, email or mobile starts with…"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <FilterChip
+            label="Role"
+            value={role}
+            options={ROLE_OPTIONS}
+            onChange={(v) => { setRole(v); setPage(1); }}
+          />
+          {(q || role) && (
+            <button
+              type="button"
+              onClick={() => { setDraft(''); setQ(''); setRole(''); setPage(1); }}
+              className="ml-1 shrink-0 whitespace-nowrap rounded-full px-2 py-1.5 text-[13px] font-semibold text-primary-700 hover:bg-primary-50"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       </div>
 
       {toast && (
@@ -352,7 +569,7 @@ export function Employees() {
         {!loading && !error && rows.length === 0 && (
           <EmptyState
             icon={UsersIcon}
-            title="No staff accounts yet"
+            title={q || role ? 'No staff match' : 'No staff accounts yet'}
             action={
               <Button size="sm" onClick={openAdd}>
                 Add employee
@@ -365,182 +582,70 @@ export function Employees() {
 
         {!loading && !error && rows.length > 0 && (
           <>
-            {/* ROWS until there is room for the table. The admin sidebar takes
-                260px from lg up, so a 720px table only fits at xl — below that
-                it used to scroll sideways on tablets and small laptops. One
-                person per row (owner, 2026-09-23): stacked on phones, laid out
-                horizontally from md where there is width for it. */}
+            {/* Cards below xl (the sidebar takes 260px from lg, so the table
+                only fits at xl). One person per card. */}
             <ul className="divide-y divide-surface-border xl:hidden">
               {rows.map((row) => {
                 const perms = permsFor(row);
                 return (
-                  <li
-                    key={row.id}
-                    className="flex min-w-0 flex-col gap-2.5 p-4 md:flex-row md:items-center md:justify-between md:gap-6 md:px-5"
-                  >
-                    <div className="flex min-w-0 items-start gap-3 md:items-center">
-                      <span
-                        aria-hidden="true"
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                          row.isActive ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
-                        }`}
-                      >
-                        {initials(row.name)}
-                      </span>
+                  <li key={row.id} className={`p-4 sm:px-5 ${row.isActive ? '' : 'bg-ink-50/50'}`}>
+                    <div className="flex items-start gap-3">
+                      <PersonMark row={row} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-ink-900">{row.name}</p>
-                        <p className="truncate text-xs text-muted">{row.email}</p>
-                        {row.mobile && <p className="truncate text-xs text-muted">{row.mobile}</p>}
+                        <PersonName row={row} />
+                        <p className="truncate text-xs text-muted">
+                          {[row.email, row.mobile].filter(Boolean).join(' · ')}
+                        </p>
                       </div>
+                      <RowAction row={row} onEdit={() => openEdit(row)} />
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 md:shrink-0 md:flex-nowrap md:gap-4">
-                      {row.role === 'superadmin' ? (
-                        <span className="whitespace-nowrap rounded-md bg-primary-600 px-2 py-1 text-xs font-semibold text-white">
-                          Full access
-                        </span>
-                      ) : !perms ? (
-                        <span className="text-xs text-muted">—</span>
-                      ) : perms.length === 0 ? (
-                        <span className="text-xs text-muted">No access yet</span>
-                      ) : (
-                        <span className="flex items-center gap-1.5">
-                          <span className="whitespace-nowrap rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
-                            {perms.length === 1
-                              ? (PERMISSION_LABELS[perms[0]] ?? perms[0])
-                              : `${perms.length} permissions`}
-                          </span>
-                          {perms.length > 1 && (
-                            <button
-                              type="button"
-                              aria-label={`See all ${perms.length} permissions for ${row.name}`}
-                              onClick={() => setPermsView({ row, perms })}
-                              className="rounded-full p-1 text-ink-500 transition-colors hover:bg-primary-50 hover:text-primary-600"
-                            >
-                              <InfoIcon className="h-4 w-4" />
-                            </button>
-                          )}
-                        </span>
-                      )}
-                      <span className="inline-flex items-center gap-1.5 text-[12px] font-medium">
-                        <span
-                          aria-hidden="true"
-                          className={`h-1.5 w-1.5 rounded-full ${row.isActive ? 'bg-success-500' : 'bg-ink-300'}`}
-                        />
-                        <span className={row.isActive ? 'text-ink-800' : 'text-muted'}>
-                          {row.isActive ? 'Active' : 'Deactivated'}
-                        </span>
-                      </span>
-                      <span className="ml-auto md:ml-0">
-                        {row.role === 'superadmin' ? (
-                          <span className="whitespace-nowrap text-xs text-muted">Role-based — nothing to grant</span>
-                        ) : (
-                          <Button variant="secondary" size="sm" onClick={() => openEdit(row)}>
-                            Edit permissions
-                          </Button>
-                        )}
-                      </span>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 pl-[3.25rem]">
+                      <AccessSummary row={row} perms={perms} onOpen={() => setPermsView({ row, perms })} />
+                      <StatusChip active={row.isActive} />
                     </div>
                   </li>
                 );
               })}
             </ul>
 
-            <div className="hidden overflow-x-auto xl:block">
-              {/* M2 redesign (2026-08-11): email stacks under the name beside a
-                  monogram avatar — one identity cell, less horizontal scroll. */}
-              <table className="w-full min-w-[720px] text-left text-sm">
-                <thead>
-                  <tr className="bg-ink-50 border-b border-surface-border text-xs uppercase tracking-wide text-muted">
-                    <th className="px-5 py-3 font-semibold">Employee</th>
-                    <th className="px-5 py-3 font-semibold">Mobile</th>
-                    <th className="px-5 py-3 font-semibold">Permissions</th>
-                    <th className="px-5 py-3 font-semibold">Status</th>
-                    <th className="px-5 py-3 text-right font-semibold">Actions</th>
+            <div className="hidden xl:block">
+              <table className="w-full table-fixed text-left text-sm">
+                <colgroup>
+                  <col />
+                  <col className="w-[20rem]" />
+                  <col className="w-[8.5rem]" />
+                  <col className="w-[10.5rem]" />
+                </colgroup>
+                <thead className="border-b border-surface-border bg-ink-50/60 text-[11px] uppercase tracking-wider text-ink-500">
+                  <tr>
+                    <th scope="col" className="px-5 py-3 font-semibold">Person</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Access</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Status</th>
+                    <th scope="col" className="px-5 py-3"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-ink-100">
+                <tbody className="divide-y divide-surface-border">
                   {rows.map((row) => {
                     const perms = permsFor(row);
                     return (
-                      <tr key={row.id} className="transition-colors hover:bg-surface-subtle/50">
-                        <td className="px-5 py-3.5">
+                      <tr key={row.id} className={`transition-colors hover:bg-ink-50/70 ${row.isActive ? '' : 'bg-ink-50/50'}`}>
+                        <td className="px-5 py-3">
                           <div className="flex items-center gap-3">
-                            <span
-                              aria-hidden="true"
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                                row.isActive ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
-                              }`}
-                            >
-                              {initials(row.name)}
-                            </span>
+                            <PersonMark row={row} />
                             <div className="min-w-0">
-                              <p className="truncate font-semibold text-ink-900">{row.name}</p>
-                              <p className="truncate text-xs text-muted">{row.email}</p>
+                              <PersonName row={row} />
+                              <p className="truncate text-xs text-muted">
+                                {[row.email, row.mobile].filter(Boolean).join(' · ')}
+                              </p>
                             </div>
                           </div>
                         </td>
-                        <td className="whitespace-nowrap px-5 py-3.5 text-muted">{row.mobile ?? '—'}</td>
-                        {/* One grant reads fine as a chip; several would wrap
-                            the row, so they collapse to a count with an (i)
-                            that opens the full list. */}
-                        <td className="whitespace-nowrap px-5 py-3.5">
-                          {row.role === 'superadmin' ? (
-                            <span className="inline-block whitespace-nowrap rounded-md bg-primary-600 px-2 py-1 text-xs font-semibold text-white">
-                              Full access
-                            </span>
-                          ) : !perms ? (
-                            <span className="text-muted" title="Not returned for this account">
-                              —
-                            </span>
-                          ) : perms.length === 0 ? (
-                            <span className="text-muted">No access yet</span>
-                          ) : perms.length === 1 ? (
-                            <span className="inline-block whitespace-nowrap rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
-                              {PERMISSION_LABELS[perms[0]] ?? perms[0]}
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-2">
-                              <span className="whitespace-nowrap rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
-                                {perms.length} permissions
-                              </span>
-                              <button
-                                type="button"
-                                aria-label={`See all ${perms.length} permissions for ${row.name}`}
-                                title="See all permissions"
-                                onClick={() => setPermsView({ row, perms })}
-                                className="rounded-full p-1 text-ink-500 transition-colors hover:bg-primary-50 hover:text-primary-600"
-                              >
-                                <InfoIcon className="h-4 w-4" />
-                              </button>
-                            </span>
-                          )}
+                        <td className="px-4 py-3">
+                          <AccessSummary row={row} perms={perms} onOpen={() => setPermsView({ row, perms })} />
                         </td>
-                        <td className="whitespace-nowrap px-5 py-3.5">
-                          <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
-                            <span
-                              aria-hidden="true"
-                              className={`h-1.5 w-1.5 rounded-full ${row.isActive ? 'bg-success-500' : 'bg-ink-300'}`}
-                            />
-                            <span className={row.isActive ? 'text-ink-800' : 'text-muted'}>
-                              {row.isActive ? 'Active' : 'Deactivated'}
-                            </span>
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 text-right">
-                          {row.role === 'superadmin' ? (
-                            <span className="whitespace-nowrap text-xs text-muted">
-                              Role-based — nothing to grant
-                            </span>
-                          ) : (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="whitespace-nowrap"
-                              onClick={() => openEdit(row)}
-                            >
-                              Edit permissions
-                            </Button>
-                          )}
+                        <td className="px-4 py-3"><StatusChip active={row.isActive} /></td>
+                        <td className="px-5 py-3 text-right">
+                          <RowAction row={row} onEdit={() => openEdit(row)} />
                         </td>
                       </tr>
                     );
@@ -700,6 +805,9 @@ export function Employees() {
               onToggle={(v) => setForm((f) => ({ ...f, permissions: v }))}
               disabled={saving}
             />
+            <div className="mt-3">
+              <SuperadminOnlyNote />
+            </div>
           </section>
         </div>
       </Drawer>
@@ -709,7 +817,7 @@ export function Employees() {
         open={drawer?.mode === 'edit'}
         onClose={() => !saving && setDrawer(null)}
         title={`Permissions — ${drawer?.row?.name ?? ''}`}
-        subtitle="Effective immediately after saving; no re-sign-in needed."
+        subtitle={`${editPerms.length} of ${PERMISSION_COUNT} granted · effective immediately, no re-sign-in`}
         icon={KeyIcon}
         footer={
           <>
@@ -738,6 +846,7 @@ export function Employees() {
             set</strong> — untick everything for no access at all.
           </Alert>
           <PermissionChecklist value={editPerms} onToggle={setEditPerms} disabled={saving} />
+          <SuperadminOnlyNote />
         </div>
       </Drawer>
 
