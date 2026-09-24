@@ -27,7 +27,13 @@ vi.mock('../src/utils/logger.js', () => ({ logger: log }));
 // Step 1a: emails carry the published support contact. This suite has no
 // database, so the settings read is stubbed like the User lookup below.
 vi.mock('../src/services/settings.service.js', () => ({
-  getSupportContact: async () => ({ email: 'help@example.com', phone: null }),
+  getSupportContact: async () => ({ email: 'help@example.com', phone: null, hours: 'Mon–Sat, 10:00–18:00 IST' }),
+  // The LinkedIn URL is set here ON PURPOSE: the footer must never print it.
+  getCompanyDetails: async () => ({
+    name: 'MPX Global Pvt Ltd',
+    address: '12 Trade Street, Mumbai',
+    linkedinUrl: 'https://www.linkedin.com/company/mpx',
+  }),
 }));
 
 vi.mock('../src/models/User.js', () => ({
@@ -247,6 +253,17 @@ describe('support contact (Step 1a)', () => {
   it('puts the published contact under the signature', async () => {
     await notifyPasswordChanged({ user: OWNER });
     expect(lastMail().text).toContain('Need help? help@example.com');
+  });
+
+  it('adds the support hours and the company name + address — as text, never the LinkedIn link', async () => {
+    await notifyPasswordChanged({ user: OWNER });
+    const mail = lastMail();
+    expect(mail.text).toContain('Need help? help@example.com (Mon–Sat, 10:00–18:00 IST)');
+    expect(mail.text).toContain('MPX Global Pvt Ltd, 12 Trade Street, Mumbai');
+    expect(mail.html).toContain('MPX Global Pvt Ltd, 12 Trade Street, Mumbai');
+    expect(mail.text).not.toContain('linkedin');
+    expect(mail.html).not.toContain('linkedin');
+    expect(mail.html).not.toMatch(/<a\s+href/i);
   });
 });
 

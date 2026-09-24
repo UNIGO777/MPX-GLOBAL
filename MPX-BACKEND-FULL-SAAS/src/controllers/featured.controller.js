@@ -20,6 +20,11 @@ export async function list(req, res) {
   res.json({ items: rows.map(adminFeaturedView) });
 }
 
+export async function candidates(req, res) {
+  const { kind, q } = req.validated.query;
+  res.json({ items: await svc.pickCandidates({ kind, q }) });
+}
+
 export async function create(req, res) {
   const item = await svc.createFeatured({
     data: req.validated.body,

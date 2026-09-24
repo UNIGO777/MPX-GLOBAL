@@ -181,6 +181,20 @@ export async function listAuditEntries(params) {
   };
 }
 
+/**
+ * The filter pickers' options: every action and target type that ACTUALLY
+ * appears in the log (owner, 2026-09-24 — the screen used to take a typed exact
+ * action name and a hand-kept type list that had fallen behind). `distinct` on
+ * `action` is served by its index. Read-only, like everything here.
+ */
+export async function auditFacets() {
+  const [actions, entityTypes] = await Promise.all([AuditLog.distinct('action'), AuditLog.distinct('entityType')]);
+  return {
+    actions: actions.filter(Boolean).sort(),
+    entityTypes: entityTypes.filter(Boolean).sort((a, b) => a.localeCompare(b)),
+  };
+}
+
 export async function getAuditEntry(id) {
   const entry = await AuditLog.findOne({ _id: id }).lean();
   if (!entry) throw AppError.notFound('audit entry not found', 'Not found.');

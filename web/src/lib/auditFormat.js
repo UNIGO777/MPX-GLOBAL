@@ -68,3 +68,38 @@ export function actionLabel(action) {
   const noun = entity.charAt(0).toUpperCase() + entity.slice(1);
   return `${noun} ${verb}`.trim();
 }
+
+/**
+ * Target types in plain words (the stored values are model names, some of them
+ * lower-case). Unknown types fall back to a readable split of the raw name, so
+ * a new entity never shows as blank.
+ */
+const ENTITY_LABELS = {
+  Organisation: 'Company',
+  User: 'User account',
+  Product: 'Product',
+  Conversation: 'Conversation',
+  Category: 'Category',
+  CategoryAttribute: 'Category field',
+  FeaturedItem: 'Featured item',
+  Settings: 'Platform settings',
+  PendingSignup: 'Signup in progress',
+  ticket: 'Support ticket',
+  lead: 'Supplier request',
+  note: 'Internal note',
+};
+
+export function entityTypeLabel(type) {
+  if (!type) return '—';
+  if (ENTITY_LABELS[type]) return ENTITY_LABELS[type];
+  const words = type.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[._]/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase();
+}
+
+/** Staff roles as people read them ("superadmin" → "Super admin"). */
+export function roleLabel(role) {
+  if (role === 'superadmin') return 'Super admin';
+  if (role === 'employee') return 'Employee';
+  if (!role) return 'System';
+  return role.charAt(0).toUpperCase() + role.slice(1);
+}

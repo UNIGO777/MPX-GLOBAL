@@ -37,6 +37,9 @@ const ticketSchema = new Schema(
     // Who closed it: staff, the company itself ("Mark as solved"), or the
     // auto-close job. Null while the ticket is open.
     closedBy: { type: String, enum: [...TICKET_CLOSED_BY, null], default: null },
+    // Set only by the auto-close job: the day count IN FORCE when it closed, so
+    // "no reply for N days" stays true after the setting changes (2026-09-25).
+    autoClosedAfterDays: { type: Number, default: null },
     // Set when staff reply or re-open (the ball is in the company's court),
     // cleared when the company writes or the ticket closes. The auto-close job
     // reads ONLY this — never lastMessageAt, which a staff re-open does not move.

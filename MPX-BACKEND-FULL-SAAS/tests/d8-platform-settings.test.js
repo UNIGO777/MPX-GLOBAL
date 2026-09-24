@@ -117,12 +117,52 @@ describe('reading', () => {
     // that makes them come and read D8's "never a secret" note first.
     expect(Object.keys(res.body.settings).sort()).toEqual([
       'aiGuestDailyMax',
+      'companyAddress',
+      'companyLegalName',
+      'companyLinkedinUrl',
+      'defaultTicketAutoCloseDays',
       'envAiGuestDailyMax',
       'supportEmail',
+      'supportHours',
       'supportPhone',
+      'ticketAutoCloseDays',
       'updatedAt',
       'updatedBy',
     ]);
+  });
+});
+
+describe('2026-09-25 additions — hours, ticket auto-close days, company footer', () => {
+  it('saves and clears them, and audits only what moved', async () => {
+    const { token } = await makeStaff('superadmin');
+    const body = {
+      supportHours: 'Mon–Sat, 10:00–18:00 IST',
+      ticketAutoCloseDays: 7,
+      companyLegalName: 'MPX Global Pvt Ltd',
+      companyAddress: '12 Trade Street, Mumbai',
+      companyLinkedinUrl: 'https://www.linkedin.com/company/mpx',
+    };
+    const res = await request(app).patch('/admin/settings').set(bearer(token)).send(body).expect(200);
+    expect(res.body.settings).toMatchObject(body);
+    const cleared = await request(app).patch('/admin/settings').set(bearer(token)).send({ ticketAutoCloseDays: null, supportHours: '' }).expect(200);
+    expect(cleared.body.settings.ticketAutoCloseDays).toBeNull();
+    expect(cleared.body.settings.supportHours).toBeNull();
+    const last = await AuditLog.findOne({ action: 'settings.update' }).sort({ _id: -1 }).lean();
+    expect(Object.keys(last.after).sort()).toEqual(['supportHours', 'ticketAutoCloseDays']);
+  });
+
+  it('refuses days outside 3–90 and any non-LinkedIn / non-https link', async () => {
+    const { token } = await makeStaff('superadmin');
+    for (const bad of [{ ticketAutoCloseDays: 2 }, { ticketAutoCloseDays: 91 }, { ticketAutoCloseDays: 7.5 },
+      { companyLinkedinUrl: 'javascript:alert(1)' }, { companyLinkedinUrl: 'http://linkedin.com/x' },
+      { companyLinkedinUrl: 'https://evil.example/linkedin.com/' }, { supportHours: 'x'.repeat(81) }]) {
+      await request(app).patch('/admin/settings').set(bearer(token)).send(bad).expect(400);
+    }
+  });
+
+  it('employees cannot change them either', async () => {
+    const { token } = await makeStaff('employee');
+    await request(app).patch('/admin/settings').set(bearer(token)).send({ ticketAutoCloseDays: 5 }).expect(403);
   });
 });
 

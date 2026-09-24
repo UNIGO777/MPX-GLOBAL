@@ -96,3 +96,12 @@ export const PERMISSIONS = Object.freeze({
   // Read-only; it grants no action on anything.
   REPORTS_TEAM: 'reports:team',
 });
+
+/**
+ * Who sees the WHOLE team's activity (staff report + ticket log): a superadmin,
+ * or an employee granted `reports:team`. ONE rule, used everywhere team scope
+ * is decided, so the report and the log can never disagree.
+ */
+export function hasTeamScope(actor) {
+  return actor?.role === 'superadmin' || (actor?.permissions ?? []).includes(PERMISSIONS.REPORTS_TEAM);
+}

@@ -5,6 +5,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { useCanonical } from '../../lib/seo.js';
+import { BannerStrip, SupplierCard, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
@@ -155,7 +156,7 @@ function CardSkeleton({ ratio = 'aspect-square' }) {
 /* ---------------------------------- page ---------------------------------- */
 
 export function Landing() {
-  const { user } = useAuth();
+  const { user, restoring } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   useCanonical('/');
@@ -176,6 +177,14 @@ export function Landing() {
   });
 
   const topCategories = categories.data ?? [];
+  const featured = useLandingFeatured();
+  // Curated categories lead the grid; the usual ones top it up to a full grid,
+  // so nothing curated means exactly the default grid (owner, 2026-09-25).
+  const featuredCategoryIds = new Set(featured.categories.map((c) => c.id));
+  const gridCategories = [
+    ...featured.categories,
+    ...topCategories.filter((c) => !featuredCategoryIds.has(c.id)),
+  ].slice(0, GRID_COUNT);
   const products = feed.data?.pages.flatMap((p) => p.products ?? []) ?? [];
   const productTotal = feed.data?.pages[0]?.total ?? 0;
 
@@ -449,7 +458,13 @@ export function Landing() {
                 instead of being hidden: on a phone it carries the only signup
                 CTA a guest sees above the fold. */}
             <aside className="space-y-4 xl:w-80">
-              {!user && (
+              {/* While the session restores, a neutral placeholder — not the
+                  guest signup cards, which a signed-in visitor must never see
+                  flash on reload (owner, 2026-09-25). */}
+              {restoring && (
+                <div aria-hidden="true" className="h-56 animate-pulse rounded-2xl bg-white shadow-card motion-reduce:animate-none" />
+              )}
+              {!restoring && !user && (
                 <>
                   <div className="rounded-2xl bg-white p-6 shadow-card">
                     <p className="text-base font-extrabold">Start sourcing</p>
@@ -544,6 +559,15 @@ export function Landing() {
           </div>
         </section>
 
+        {/* ═════════ FEATURED BANNERS — curated in /admin/featured ═════════
+            Under the hero, never inside it (owner, 2026-09-25): the hero is the
+            default and stays exactly as built. No live banner → no strip. */}
+        {featured.banners.length > 0 && (
+          <section className="w-full bg-surface-canvas px-4 pb-4 sm:px-6 sm:pb-6 lg:px-10 xl:px-16">
+            <BannerStrip banners={featured.banners} />
+          </section>
+        )}
+
         {/* ═════════ VALUE STRIP — factual, no counts ═════════
             Carries `id="platform"`: the shared header links there, and this strip
             plus the AI band below are what replaced the old platform-tabs
@@ -569,15 +593,12 @@ export function Landing() {
           </ul>
         </section>
 
-        {/* 🔴 `FeaturedStrips` was rendered here and was REMOVED on the owner's
-            instruction (2026-08-23), after the banner rotation showed test
-            curation ("sssd" / "dvsfv", with a screenshot uploaded as the banner
-            image) on the rebuilt landing page.
-            ⚠️ CONSEQUENCE, flagged to the owner: `/admin/featured` still exists
-            and still writes `FeaturedItem` rows, but nothing on the site renders
-            them any more — curating content there now has no visible effect.
-            The component and its API are untouched, so restoring this is one
-            line; the alternative fix was to clear the test rows in admin. */}
+        {/* `FeaturedStrips` was removed from here on 2026-08-23 (test curation
+            reached the banner rotation) and RESTORED on 2026-09-25 (owner) as
+            pieces placed into this page's own sections — banners under the
+            hero, featured categories leading the category grid, featured
+            products above "Recently listed", highlighted suppliers below it.
+            Each falls back to the page's default when nothing is curated. */}
 
         {/* ═════════ CATEGORIES ═════════ */}
         <section id="categories" className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
@@ -600,7 +621,7 @@ export function Landing() {
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
             {categories.isPending
               ? Array.from({ length: GRID_COUNT }).map((_, i) => <li key={i}><CardSkeleton ratio="aspect-[4/3]" /></li>)
-              : topCategories.slice(0, GRID_COUNT).map((c) => {
+              : gridCategories.map((c) => {
                   const subs = c.subs?.length ?? 0;
                   return (
                     <li key={c.id}>
@@ -707,6 +728,19 @@ export function Landing() {
           </div>
         </section>
 
+        {/* ═════════ FEATURED PRODUCTS — curated; none → section absent ═════════ */}
+        {featured.products.length > 0 && (
+          <section className="w-full px-4 pt-10 sm:px-6 sm:pt-12 lg:px-10 xl:px-16">
+            <BlockHead title="Featured products" sub="Picked by the MPX Global team." to="/search" />
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+              {/* ProductCard renders its own <li>. */}
+              {featured.products.map((p) => (
+                <ProductCard key={p.id} product={p} to={`/product/${p.slug ?? p.id}`} />
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* ═════════ RECENTLY LISTED ═════════ */}
         <section className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
           <BlockHead
@@ -731,9 +765,8 @@ export function Landing() {
                 {feed.isPending
                   ? Array.from({ length: FEED_PAGE_SIZE }).map((_, i) => <li key={i}><CardSkeleton /></li>)
                   : products.map((p) => (
-                      <li key={p.id}>
-                        <ProductCard product={p} to={`/product/${p.slug ?? p.id}`} />
-                      </li>
+                      // ProductCard renders its own <li> — wrapping it nested one in another.
+                      <ProductCard key={p.id} product={p} to={`/product/${p.slug ?? p.id}`} />
                     ))}
               </ul>
 
@@ -760,6 +793,21 @@ export function Landing() {
             </>
           )}
         </section>
+
+        {/* ═════════ HIGHLIGHTED SUPPLIERS — curated only ═════════
+            There is deliberately NO default here: the default suppliers section
+            is the one removed below, and curation must not bring it back by the
+            side door when nothing is picked. */}
+        {featured.suppliers.length > 0 && (
+          <section className="w-full px-4 pb-10 sm:px-6 sm:pb-12 lg:px-10 xl:px-16">
+            <BlockHead title="Highlighted suppliers" sub="Companies picked by the MPX Global team." to="/search?type=supplier" />
+            <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+              {featured.suppliers.map((sup) => (
+                <li key={sup.id}><SupplierCard supplier={sup} /></li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* 🔴 The "Verified suppliers" section was REMOVED from this page on the
             owner's instruction (2026-09-23).

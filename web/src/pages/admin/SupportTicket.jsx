@@ -6,7 +6,7 @@ import { notesApi, notesKeys, supportApi, supportKeys } from '../../api/support.
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { can } from '../../auth/roleHome.js';
 import { apiError, formatDate, formatTime } from '../../lib/format.js';
-import { CATEGORY_LABEL, TICKET_AUTO_CLOSE_DAYS, autoCloseDate } from '../../lib/support.js';
+import { CATEGORY_LABEL, autoClosedDays } from '../../lib/support.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { CompanyAvatar } from '../../components/chat/CompanyAvatar.jsx';
 import { InternalNotes } from '../../components/support/InternalNotes.jsx';
@@ -88,7 +88,7 @@ export function SupportTicket() {
   const canAssign = can(user, 'support:assign');
   const canStatus = can(user, 'support:status');
   const resolved = t?.status === 'resolved';
-  const closes = t && !resolved ? autoCloseDate(t.awaitingCompanySince) : null;
+  const closes = t && !resolved && t.autoCloseAt ? new Date(t.autoCloseAt) : null;
 
   // Rendered in the xl column AND the drawer (below xl) — the id suffix keeps
   // the assignee field's id unique while both are mounted.
@@ -274,7 +274,7 @@ export function SupportTicket() {
 function closedBy(t) {
   const on = t.resolvedAt ? ` on ${formatDate(t.resolvedAt)}` : '';
   if (t.closedBy === 'company') return `The company marked it solved${on}.`;
-  if (t.closedBy === 'auto') return `Closed automatically${on} — no reply for ${TICKET_AUTO_CLOSE_DAYS} days.`;
+  if (t.closedBy === 'auto') return `Closed automatically${on} — no reply for ${autoClosedDays(t)} days.`;
   return `Resolved${on}.`;
 }
 

@@ -13,7 +13,7 @@ import { XIcon } from './icons.jsx';
  * way out). Used by the destructive confirms; the default left-aligned shape
  * stays for form dialogs.
  */
-export function Modal({ open, onClose, title, children, footer, danger = false, centered = false, icon: Icon }) {
+export function Modal({ open, onClose, title, children, footer, danger = false, centered = false, wide = false, icon: Icon }) {
   const panelRef = useRef(null);
 
   // `onClose` is an inline arrow at every call site, so it is a NEW function on
@@ -79,7 +79,7 @@ export function Modal({ open, onClose, title, children, footer, danger = false, 
         aria-label={typeof title === 'string' ? title : undefined}
         tabIndex={-1}
         className={`relative w-full bg-white shadow-card outline-none ${
-          centered ? 'max-w-[480px] rounded-2xl p-8 text-center' : 'max-w-md rounded-lg p-6'
+          centered ? 'max-w-[480px] rounded-2xl p-8 text-center' : `${wide ? 'max-w-4xl' : 'max-w-md'} rounded-lg p-6`
         }`}
       >
         {centered ? (

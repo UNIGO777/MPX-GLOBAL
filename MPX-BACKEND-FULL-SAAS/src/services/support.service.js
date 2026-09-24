@@ -4,16 +4,16 @@ import mongoose from 'mongoose';
 import { fileTypeFromBuffer } from 'file-type';
 
 import { AuditLog } from '../models/AuditLog.js';
-import { TICKET_AUTO_CLOSE_DAYS } from '../models/enums.js';
 import { Organisation } from '../models/Organisation.js';
 import { Ticket } from '../models/Ticket.js';
 import { TicketMessage } from '../models/TicketMessage.js';
 import { User } from '../models/User.js';
-import { PERMISSIONS } from '../config/permissions.js';
+import { PERMISSIONS, hasTeamScope } from '../config/permissions.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 import { uploadChatDocument, uploadChatImage } from './chatAttachment.storage.service.js';
 import { notifyTicketReply, notifyTicketResolved } from './emailNotifications.service.js';
+import { effectiveTicketAutoCloseDays } from './settings.service.js';
 import {
   companyMessageView,
   companyTicketView,
@@ -37,7 +37,6 @@ import {
  */
 
 const REF_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-export const AUTO_CLOSE_DAYS = TICKET_AUTO_CLOSE_DAYS;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COMPANY_ROLES = new Set(['buyer', 'exporter']);
 
@@ -287,7 +286,8 @@ export async function listTickets({ actor, status, category, side, assignee, q, 
     loadNames(rows.flatMap((t) => [t.createdBy, t.assignedTo])),
     loadOrgs(rows.map((t) => t.orgId)),
   ]);
-  return { rows: rows.map((t) => staffTicketView(t, { names, orgs })), total, page, pageSize };
+  const autoCloseDays = await effectiveTicketAutoCloseDays();
+  return { rows: rows.map((t) => staffTicketView(t, { names, orgs, autoCloseDays })), total, page, pageSize };
 }
 
 export async function getTicket({ id }) {
@@ -299,7 +299,11 @@ export async function getTicket({ id }) {
     ticket.unread.staff = false;
   }
   return {
-    ticket: staffTicketView(ticket, { names, orgs: await loadOrgs([ticket.orgId]) }),
+    ticket: staffTicketView(ticket, {
+      names,
+      orgs: await loadOrgs([ticket.orgId]),
+      autoCloseDays: await effectiveTicketAutoCloseDays(),
+    }),
     messages: messages.map((m) => staffMessageView(m, names)),
   };
 }
@@ -371,20 +375,26 @@ export async function setTicketStatus({ actor, id, status, meta }) {
 
 /**
  * The nightly sweep: a ticket where staff wrote last (or re-opened it) and the
- * company has not answered for AUTO_CLOSE_DAYS closes itself. System action —
+ * company has not answered for the auto-close days closes itself. The day
+ * count is the Settings value (owner-editable since 2026-09-25) or the default
+ * 14, read once per run and stamped on each closed ticket (`autoClosedAfterDays`)
+ * so its "no reply for N days" line stays true if the setting changes later.
+ * Lowering the setting closes already-waiting tickets at the next run — the
+ * Settings screen says so. System action —
  * no acting user — written to the append-only log with a job request id, and
  * the company gets the (existing) "resolved" email, worded for this case.
  * Each close re-checks its own condition, so a company reply that lands during
  * the sweep wins. `now` is injectable for tests.
  */
 export async function autoCloseStaleTickets({ now = new Date() } = {}) {
-  const cutoff = new Date(now.getTime() - AUTO_CLOSE_DAYS * DAY_MS);
+  const days = await effectiveTicketAutoCloseDays();
+  const cutoff = new Date(now.getTime() - days * DAY_MS);
   const stale = await Ticket.find({ status: { $ne: 'resolved' }, awaitingCompanySince: { $ne: null, $lte: cutoff } });
   let closed = 0;
   for (const ticket of stale) {
     const res = await Ticket.updateOne(
       { _id: ticket._id, status: { $ne: 'resolved' }, awaitingCompanySince: { $ne: null, $lte: cutoff } },
-      { $set: { status: 'resolved', resolvedAt: now, closedBy: 'auto', awaitingCompanySince: null, 'unread.company': true } },
+      { $set: { status: 'resolved', resolvedAt: now, closedBy: 'auto', autoClosedAfterDays: days, awaitingCompanySince: null, 'unread.company': true } },
     );
     if (!res.modifiedCount) continue;
     await AuditLog.create({
@@ -394,11 +404,11 @@ export async function autoCloseStaleTickets({ now = new Date() } = {}) {
       entityId: ticket._id,
       orgId: ticket.orgId,
       before: { status: ticket.status },
-      after: { ref: ticket.ref, status: 'resolved', by: 'auto', afterDays: AUTO_CLOSE_DAYS },
+      after: { ref: ticket.ref, status: 'resolved', by: 'auto', afterDays: days },
       requestId: 'job:ticket-auto-close',
       occurredAt: now,
     });
-    notifyTicketResolved({ ticket, auto: true });
+    notifyTicketResolved({ ticket, auto: true, afterDays: days });
     closed += 1;
   }
   return { closed };
@@ -460,13 +470,16 @@ export async function supportOverview() {
     Ticket.countDocuments({ status: 'resolved', resolvedAt: { $gte: since } }),
     Ticket.find({ status: { $ne: 'resolved' } }).sort({ lastMessageAt: -1 }).limit(10).lean(),
   ]);
-  const [names, orgs] = await Promise.all([
+  const [names, orgs, autoCloseDays] = await Promise.all([
     loadNames(openRows.flatMap((t) => [t.createdBy, t.assignedTo])),
     loadOrgs(openRows.map((t) => t.orgId)),
+    effectiveTicketAutoCloseDays(),
   ]);
   return {
     counts: { open, inProgress, unassigned, needsReply, waiting, resolved7d },
-    openTickets: openRows.map((t) => staffTicketView(t, { names, orgs })),
+    // For the "Waiting on company — closes itself after N days" hint.
+    autoCloseDays,
+    openTickets: openRows.map((t) => staffTicketView(t, { names, orgs, autoCloseDays })),
   };
 }
 
@@ -505,6 +518,8 @@ async function logRows(filter, page, pageSize) {
         from: r.before?.status ?? (r.action === 'ticket.assign' ? nameOf(r.before?.assignedTo) : null),
         to: r.after?.status ?? (r.action === 'ticket.assign' ? nameOf(r.after?.assignedTo) : null),
         by: r.after?.by ?? null,
+        // The day count an auto-close used (audited since the job began).
+        afterDays: r.after?.afterDays ?? null,
       };
     }),
     total,
@@ -529,8 +544,7 @@ export async function ticketLog({ actor, actorId, action, from, to, page = 1, pa
   const filter = { entityType: 'ticket', action: action ? action : { $in: LOG_ACTIONS } };
   // The whole team: a superadmin, or an employee granted `reports:team`
   // (owner, 2026-09-24). Anyone else sees only their own actions.
-  const seesTeam = actor.role === 'superadmin' || (actor.permissions ?? []).includes(PERMISSIONS.REPORTS_TEAM);
-  if (!seesTeam) filter.actorId = actor.userId;
+  if (!hasTeamScope(actor)) filter.actorId = actor.userId;
   else if (actorId) filter.actorId = actorId;
   if (from || to) {
     filter.occurredAt = {};

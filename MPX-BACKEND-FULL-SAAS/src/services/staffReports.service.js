@@ -3,7 +3,7 @@ import { Lead } from '../models/Lead.js';
 import { Organisation } from '../models/Organisation.js';
 import { Ticket } from '../models/Ticket.js';
 import { User } from '../models/User.js';
-import { PERMISSIONS } from '../config/permissions.js';
+import { PERMISSIONS, hasTeamScope } from '../config/permissions.js';
 
 /**
  * Step 1e · per-employee "My work" + staff reports (quote Module 6).
@@ -77,8 +77,7 @@ async function countsByActor({ since, actorIds }) {
 export async function staffReport({ actor, days = 30, actorId, selfOnly = false }) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   // The team view: a superadmin, or an employee granted `reports:team`.
-  const seesTeam = actor.role === 'superadmin' || (actor.permissions ?? []).includes(PERMISSIONS.REPORTS_TEAM);
-  const onlySelf = selfOnly || !seesTeam;
+  const onlySelf = selfOnly || !hasTeamScope(actor);
   const who = onlySelf ? [actor.userId] : actorId ? [actorId] : null;
 
   const staff = await User.find({

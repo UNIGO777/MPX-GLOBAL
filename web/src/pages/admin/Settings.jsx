@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { settingsApi, settingsKeys } from '../../api/settings.js';
@@ -8,9 +9,10 @@ import { Button } from '../../components/ui/Button.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Field, inputClasses } from '../../components/ui/Field.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
-import { apiError, formatListTime } from '../../lib/format.js';
+import { cp } from '../../lib/consolePath.js';
+import { apiError, formatDate, formatTime } from '../../lib/format.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
-import { MailIcon, SparkleIcon } from '../../components/ui/icons.jsx';
+import { AlertIcon, BuildingIcon, CheckCircleIcon, ClockIcon, HelpIcon, ListIcon, MailIcon, PhoneIcon, SparkleIcon } from '../../components/ui/icons.jsx';
 
 /**
  * D8 · Platform settings (§3.5) — superadmin only.
@@ -21,24 +23,51 @@ import { MailIcon, SparkleIcon } from '../../components/ui/icons.jsx';
  * Client could do at all. This page is what makes that sentence true.
  *
  * 🔴 KEEP IT SMALL. The contents were decided on 2026-08-21 (`docs/Note.md` D8)
- * and are deliberately two things. Do not "round it out":
+ * as two things; on 2026-09-25 the owner confirmed three more after a D8 red
+ * alert — support hours, ticket auto-close days, company footer details.
+ * Anything further is a new decision. Do not "round it out":
  *   · **NOT the D1 caps** (3 active / 10 drafts) — those are written into
  *     agreement **§3.2**, and an editable cap invites someone to set 5 and put
  *     the running platform silently out of step with the contract.
  *   · **NOT OTP knobs** — security controls, env-only.
  *   · **NEVER a secret** — no API key, no SMTP password.
  *   · **NOT banners/featured** — that is `/admin/featured` already.
- * §3.11.1 fixes scope to Clause 3, where "Platform settings" is undefined, so
- * anything elaborate here is scope creep rather than delivery. The server
- * schema is `.strict()`, so a field added here without a server change is
- * refused rather than silently dropped.
+ * The server schema is `.strict()`, so a field added here without a server
+ * change is refused rather than silently dropped.
  *
- * Every save writes an AuditLog entry (§11.1) — visible at `/admin/audit` under
- * `settings.update`, with the before/after of only the fields that moved.
+ * 2026-09-25 redesign (owner: "fix setting screen"): a label column + control
+ * card per setting; plain status for what is IN FORCE (with a warning when guest
+ * AI is uncapped); a live "what people see" preview for the contact; checks in
+ * the form before saving; and a save bar that says when something is unsaved and
+ * can discard it. Every save still writes one AuditLog entry (§11.1), linked
+ * from the header.
  */
 
 // `null`/undefined → '' so the inputs stay controlled; '' on save means "clear".
 const toInput = (v) => (v == null ? '' : String(v));
+
+// Mirrors the server's rules (settings.validators.js), which stay the authority.
+const MAX_LIMIT = 1_000_000;
+function limitProblem(v) {
+  if (v === '') return null;
+  const n = Number(v);
+  if (!Number.isInteger(n) || n < 1) return 'Enter a whole number, 1 or more.';
+  if (n > MAX_LIMIT) return `At most ${MAX_LIMIT.toLocaleString()}.`;
+  return null;
+}
+const emailProblem = (v) => (v.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? 'That doesn’t look like an email address.' : null);
+const phoneProblem = (v) => (v.trim().length > 40 ? 'Keep it under 40 characters.' : null);
+const maxLen = (n) => (v) => (v.trim().length > n ? `Keep it under ${n} characters.` : null);
+function daysProblem(v) {
+  if (v === '') return null;
+  const n = Number(v);
+  return Number.isInteger(n) && n >= 3 && n <= 90 ? null : 'Enter a whole number of days from 3 to 90.';
+}
+// LinkedIn only, https only — it becomes a link on every public page.
+const linkedinProblem = (v) =>
+  v.trim() && !/^https:\/\/([a-z]{2,3}\.)?(www\.)?linkedin\.com\/[^\s]*$/i.test(v.trim())
+    ? 'Use your LinkedIn page address, starting with https://www.linkedin.com/'
+    : null;
 
 export function Settings() {
   const qc = useQueryClient();
@@ -48,23 +77,30 @@ export function Settings() {
   const [saved, setSaved] = useState(false);
   const [seededFrom, setSeededFrom] = useState(null);
 
+  useEffect(() => {
+    const previous = document.title;
+    document.title = 'Platform settings — MPX Global';
+    return () => { document.title = previous; };
+  }, []);
+
   // Server state seeds the form once it lands, and RE-seeds after a save so the
-  // inputs reflect what was actually stored (the server lowercases the email,
-  // for one) rather than what was typed.
-  //
-  // Adjusted during render rather than in an effect — the React-recommended
-  // shape for "derive state from a changed prop", and it avoids the cascading
-  // extra render an effect-plus-setState causes (react-hooks/set-state-in-effect).
-  // Keyed on the query data's identity, so it re-seeds exactly when a new object
-  // arrives and never on an unrelated re-render.
+  // inputs show what was actually stored (the server lowercases the email, for
+  // one). Adjusted during render — the React-recommended shape for "derive state
+  // from a changed prop" — keyed on the query data's identity.
   const data = query.data;
+  const seed = (d) => ({
+    aiGuestDailyMax: toInput(d.aiGuestDailyMax),
+    supportEmail: toInput(d.supportEmail),
+    supportPhone: toInput(d.supportPhone),
+    supportHours: toInput(d.supportHours),
+    ticketAutoCloseDays: toInput(d.ticketAutoCloseDays),
+    companyLegalName: toInput(d.companyLegalName),
+    companyAddress: toInput(d.companyAddress),
+    companyLinkedinUrl: toInput(d.companyLinkedinUrl),
+  });
   if (data && seededFrom !== data) {
     setSeededFrom(data);
-    setForm({
-      aiGuestDailyMax: toInput(data.aiGuestDailyMax),
-      supportEmail: toInput(data.supportEmail),
-      supportPhone: toInput(data.supportPhone),
-    });
+    setForm(seed(data));
   }
 
   const save = useMutation({
@@ -75,17 +111,17 @@ export function Settings() {
     },
   });
 
-  if (query.isLoading || !form) {
-    return (
-      <AdminLayout>
-        <SkeletonRows rows={5} />
-      </AdminLayout>
-    );
-  }
   if (query.error) {
     return (
       <AdminLayout>
-        <ErrorState message={apiError(query.error).message} onRetry={() => query.refetch()} />
+        <ErrorState title="We couldn't load the settings" message={apiError(query.error).message} onRetry={() => query.refetch()} />
+      </AdminLayout>
+    );
+  }
+  if (query.isLoading || !form) {
+    return (
+      <AdminLayout>
+        <SkeletonRows rows={6} />
       </AdminLayout>
     );
   }
@@ -102,44 +138,83 @@ export function Settings() {
   if (form.aiGuestDailyMax !== toInput(data.aiGuestDailyMax)) {
     patch.aiGuestDailyMax = form.aiGuestDailyMax === '' ? null : Number(form.aiGuestDailyMax);
   }
-  if (form.supportEmail !== toInput(data.supportEmail)) patch.supportEmail = form.supportEmail;
-  if (form.supportPhone !== toInput(data.supportPhone)) patch.supportPhone = form.supportPhone;
+  if (form.supportEmail !== toInput(data.supportEmail)) patch.supportEmail = form.supportEmail.trim();
+  if (form.supportPhone !== toInput(data.supportPhone)) patch.supportPhone = form.supportPhone.trim();
+  if (form.ticketAutoCloseDays !== toInput(data.ticketAutoCloseDays)) {
+    patch.ticketAutoCloseDays = form.ticketAutoCloseDays === '' ? null : Number(form.ticketAutoCloseDays);
+  }
+  for (const key of ['supportHours', 'companyLegalName', 'companyAddress', 'companyLinkedinUrl']) {
+    if (form[key] !== toInput(data[key])) patch[key] = form[key].trim();
+  }
   const dirty = Object.keys(patch).length > 0;
 
-  // What the platform is ACTUALLY enforcing right now — the override if one is
-  // set, otherwise the env floor. Stated plainly so nobody has to infer it.
-  const effective = data.aiGuestDailyMax ?? data.envAiGuestDailyMax;
-
+  const problems = {
+    aiGuestDailyMax: limitProblem(form.aiGuestDailyMax),
+    supportEmail: emailProblem(form.supportEmail),
+    supportPhone: phoneProblem(form.supportPhone),
+    supportHours: maxLen(80)(form.supportHours),
+    ticketAutoCloseDays: daysProblem(form.ticketAutoCloseDays),
+    companyLegalName: maxLen(120)(form.companyLegalName),
+    companyAddress: maxLen(300)(form.companyAddress),
+    companyLinkedinUrl: linkedinProblem(form.companyLinkedinUrl),
+  };
+  const invalid = Object.values(problems).some(Boolean);
   const error = save.error ? apiError(save.error) : null;
 
   return (
     <AdminLayout>
-      <header className="mb-5">
-        <h1 className="text-[26px] font-bold leading-tight text-ink-900">Platform settings</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted">
-          Two platform-wide controls. Everything else — verification, categories, featured content,
-          staff permissions — has its own screen. Every change here is recorded in the audit log.
-        </p>
+      <header className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold leading-tight text-ink-900 sm:text-2xl">Platform settings</h1>
+          <p className="mt-1 text-sm text-muted">Changes apply straight away — no restart.</p>
+        </div>
+        <Link
+          to={cp('/admin/audit?action=settings.update')}
+          className="inline-flex items-center gap-1.5 self-start text-[13px] font-semibold text-primary-700 hover:underline sm:self-auto"
+        >
+          <ListIcon className="h-4 w-4" aria-hidden="true" />
+          {data.updatedAt ? `Last changed ${formatDate(data.updatedAt)}, ${formatTime(data.updatedAt)}` : 'Change history'}
+        </Link>
       </header>
 
-      {/* --- floating action bar: Save is never a scroll away ---
-           Sticky TOP, matching `ProductForm` and `CompanyProfile`. A bottom bar
-           was tried first and floated over the last field until you scrolled to
-           the very end of the page. */}
+      {/* Save bar — sticky, so Save is never a scroll away, and it SAYS when
+          something is unsaved instead of just enabling a grey button. */}
       <div className="sticky top-0 z-20 mb-5 pt-1">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-border bg-white/95 px-4 py-2.5 shadow-lift backdrop-blur">
-          <p className="min-w-0 text-[12.5px] text-muted">
-            {data.updatedAt ? `Last changed ${formatListTime(data.updatedAt)}` : 'Never changed'}
-            {' · Recorded in the audit log'}
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-2.5 shadow-lift backdrop-blur transition-colors ${
+            dirty ? 'border-warning-200 bg-warning-50/95' : 'border-surface-border bg-white/95'
+          }`}
+        >
+          <p className="flex min-w-0 items-center gap-2 text-[13px]" aria-live="polite">
+            {dirty ? (
+              <>
+                <AlertIcon className="h-4 w-4 shrink-0 text-warning-700" aria-hidden="true" />
+                <span className="font-semibold text-warning-900">
+                  {invalid ? 'Fix the highlighted field to save' : 'You have unsaved changes'}
+                </span>
+              </>
+            ) : (
+              <>
+                <CheckCircleIcon className="h-4 w-4 shrink-0 text-success-600" aria-hidden="true" />
+                <span className="text-ink-600">Everything is saved</span>
+              </>
+            )}
           </p>
-          <Button
-            size="sm"
-            onClick={() => save.mutate(patch)}
-            disabled={!dirty || save.isPending}
-            loading={save.isPending}
-          >
-            Save changes
-          </Button>
+          <div className="flex items-center gap-2">
+            {dirty && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => { setForm(seed(data)); save.reset(); }}
+                disabled={save.isPending}
+              >
+                Discard
+              </Button>
+            )}
+            <Button size="sm" onClick={() => save.mutate(patch)} disabled={!dirty || invalid || save.isPending} loading={save.isPending}>
+              Save changes
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -150,123 +225,359 @@ export function Settings() {
       )}
       {saved && !dirty && (
         <FlashMessage className="mb-4" onDismiss={() => setSaved(false)}>
-          Saved. The change is live immediately — no restart needed.
+          Saved. It’s live now, and the change is in the audit log.
         </FlashMessage>
       )}
 
       <div className="space-y-5">
-        {/* ── AI guest ceiling ─────────────────────────────────────────────── */}
-        <section className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
-          <div className="flex items-center gap-3 border-b border-surface-border px-5 py-3.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
-              <SparkleIcon className="h-[18px] w-[18px]" aria-hidden="true" />
-            </span>
-            <h2 className="text-[15px] font-bold text-ink-900">AI search — guest daily limit</h2>
-          </div>
+        <AiLimitSetting form={form} data={data} set={set} problem={problems.aiGuestDailyMax} onUseDefault={() => set('aiGuestDailyMax')({ target: { value: '' } })} />
+        <SupportContactSetting form={form} data={data} set={set} problems={problems} />
+        <TicketSetting form={form} data={data} set={set} problem={problems.ticketAutoCloseDays} onUseDefault={() => set('ticketAutoCloseDays')({ target: { value: '' } })} />
+        <CompanySetting form={form} set={set} problems={problems} />
+      </div>
+    </AdminLayout>
+  );
+}
 
-          <div className="space-y-4 px-5 py-4">
-            <p className="max-w-2xl text-sm leading-relaxed text-ink-700">
-              How many AI searches signed-out visitors may run between them each day, across the
-              whole site. Past it, guests still get ordinary keyword results — search never breaks,
-              it stops spending. Signed-in companies have their own separate allowance and are not
-              affected by this number.
-            </p>
+/** Label column on the left (lg+), the controls in a card on the right. */
+function SettingRow({ Icon, title, children, aside }) {
+  return (
+    <section className="grid gap-4 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)] lg:gap-8">
+      <div className="min-w-0">
+        <h2 className="flex items-center gap-2.5 text-[15px] font-bold text-ink-900">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-700">
+            <Icon className="h-4 w-4" aria-hidden="true" />
+          </span>
+          {title}
+        </h2>
+        <div className="mt-2 space-y-2 text-[13px] leading-relaxed text-ink-600">{aside}</div>
+      </div>
+      <div className="min-w-0 rounded-2xl border border-surface-border bg-white p-5 shadow-card sm:p-6">{children}</div>
+    </section>
+  );
+}
 
-            <div className="max-w-xs">
-              <Field
-                label="Daily limit for guests"
-                helper={
-                  form.aiGuestDailyMax === ''
-                    ? `Empty — using the server default of ${data.envAiGuestDailyMax ?? 'no limit'}.`
-                    : 'Applies immediately once saved.'
-                }
-              >
-                {(id, hasError) => (
-                  <input
-                    id={id}
-                    type="number"
-                    min="1"
-                    inputMode="numeric"
-                    value={form.aiGuestDailyMax}
-                    onChange={set('aiGuestDailyMax')}
-                    placeholder={data.envAiGuestDailyMax != null ? String(data.envAiGuestDailyMax) : 'No limit'}
-                    className={inputClasses(hasError)}
-                  />
-                )}
-              </Field>
-            </div>
+function AiLimitSetting({ form, data, set, problem, onUseDefault }) {
+  const override = data.aiGuestDailyMax;
+  const envDefault = data.envAiGuestDailyMax;
+  const effective = override ?? envDefault;
 
-            <div className="rounded-xl bg-ink-50 px-4 py-3 text-[13px] leading-relaxed text-ink-700">
-              <p>
-                <span className="font-semibold">In force now: </span>
-                {effective != null ? `${effective} searches a day` : 'No limit configured'}
-                {data.aiGuestDailyMax == null && data.envAiGuestDailyMax != null && ' (the server default)'}
-              </p>
-              {/* The env var is not retired by this field — it stays the floor the
-                  process boots with, and the value the platform falls back to if
-                  this setting can't be read. Saying so here stops the next person
-                  wondering why the .env still has it. */}
-              <p className="mt-1 text-muted">
-                Leave the box empty to go back to the server default
-                {data.envAiGuestDailyMax != null ? ` (${data.envAiGuestDailyMax})` : ''}. The default
-                is set on the server and is also what the platform falls back to if this setting
-                can’t be read.
-              </p>
-            </div>
-          </div>
-        </section>
+  return (
+    <SettingRow
+      Icon={SparkleIcon}
+      title="AI search for guests"
+      aside={(
+        <>
+          <p>How many AI searches signed-out visitors can run in total each day, across the whole site.</p>
+          <p>
+            When the limit is reached, guests get normal keyword search instead — nothing breaks, the AI simply
+            stops costing money until tomorrow. Signed-in companies have their own allowance and aren&apos;t
+            affected.
+          </p>
+        </>
+      )}
+    >
+      {/* What is enforced RIGHT NOW, stated so nobody has to work it out. */}
+      {effective != null ? (
+        <p className="mb-4 flex flex-wrap items-center gap-2 text-[13.5px] text-ink-700">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-50 px-2.5 py-1 text-[12.5px] font-semibold text-success-800 ring-1 ring-inset ring-success-200">
+            <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            In force: {effective.toLocaleString()} a day
+          </span>
+          <span className="text-muted">{override != null ? 'your setting' : 'the server default'}</span>
+        </p>
+      ) : (
+        <Alert tone="warning" className="mb-4">
+          <b>No limit is in force.</b> Guests can run unlimited AI searches, so AI costs have no daily cap. Set a
+          number below to cap it.
+        </Alert>
+      )}
 
-        {/* ── Support contact ──────────────────────────────────────────────── */}
-        <section className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
-          <div className="flex items-center gap-3 border-b border-surface-border px-5 py-3.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
-              <MailIcon className="h-[18px] w-[18px]" aria-hidden="true" />
-            </span>
-            <h2 className="text-[15px] font-bold text-ink-900">Support contact</h2>
-          </div>
-
-          <div className="space-y-4 px-5 py-4">
-            <p className="max-w-2xl text-sm leading-relaxed text-ink-700">
-              Shown to buyers and exporters when they need to reach you — in transactional email and
-              on the public pages.{' '}
-              <span className="font-semibold text-ink-900">
-                The Terms and Privacy pages currently tell people to use “the contact address
-                published by MPX Global”, and nothing is published until this is filled in.
+      <div className="max-w-xs">
+        <Field
+          label="Daily limit"
+          error={problem ?? undefined}
+          helper={form.aiGuestDailyMax === ''
+            ? envDefault != null
+              ? `Empty uses the server default (${envDefault.toLocaleString()}).`
+              : 'Empty means no limit.'
+            : undefined}
+        >
+          {(id) => (
+            <div className="relative">
+              <input
+                id={id}
+                type="number"
+                min="1"
+                max={MAX_LIMIT}
+                step="1"
+                inputMode="numeric"
+                value={form.aiGuestDailyMax}
+                onChange={set('aiGuestDailyMax')}
+                placeholder={envDefault != null ? String(envDefault) : 'No limit'}
+                aria-invalid={problem ? true : undefined}
+                className={inputClasses(Boolean(problem), 'pr-28')}
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-muted">
+                searches / day
               </span>
-            </p>
-
-            <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
-              <Field label="Support email" helper="Where account and privacy questions go.">
-                {(id, hasError) => (
-                  <input
-                    id={id}
-                    type="email"
-                    autoComplete="off"
-                    value={form.supportEmail}
-                    onChange={set('supportEmail')}
-                    placeholder="support@example.com"
-                    className={inputClasses(hasError)}
-                  />
-                )}
-              </Field>
-              <Field label="Support phone" optional helper="Include the country code.">
-                {(id, hasError) => (
-                  <input
-                    id={id}
-                    type="tel"
-                    autoComplete="off"
-                    value={form.supportPhone}
-                    onChange={set('supportPhone')}
-                    placeholder="+91 98765 43210"
-                    className={inputClasses(hasError)}
-                  />
-                )}
-              </Field>
             </div>
-          </div>
-        </section>
+          )}
+        </Field>
+      </div>
+      {override != null && form.aiGuestDailyMax !== '' && (
+        <button type="button" onClick={onUseDefault} className="mt-3 text-[13px] font-semibold text-primary-700 hover:underline">
+          Go back to the server default{envDefault != null ? ` (${envDefault.toLocaleString()})` : ''}
+        </button>
+      )}
+    </SettingRow>
+  );
+}
+
+function SupportContactSetting({ form, data, set, problems }) {
+  const email = form.supportEmail.trim();
+  const phone = form.supportPhone.trim();
+  const hours = form.supportHours.trim();
+  const nothingPublished = !data.supportEmail && !data.supportPhone;
+
+  return (
+    <SettingRow
+      Icon={MailIcon}
+      title="Support contact"
+      aside={(
+        <>
+          <p>How buyers and exporters reach you. It appears on the Help page and at the foot of every email the platform sends.</p>
+          <p>The Terms and Privacy pages also point people to it.</p>
+        </>
+      )}
+    >
+      {nothingPublished && (
+        <Alert tone="warning" className="mb-4">
+          <b>Nothing is published yet.</b> The Help page and emails have no contact to show until you add one.
+        </Alert>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Email" error={problems.supportEmail ?? undefined}>
+          {(id) => (
+            <input
+              id={id}
+              type="email"
+              autoComplete="off"
+              value={form.supportEmail}
+              onChange={set('supportEmail')}
+              placeholder="support@yourcompany.com"
+              aria-invalid={problems.supportEmail ? true : undefined}
+              className={inputClasses(Boolean(problems.supportEmail))}
+            />
+          )}
+        </Field>
+        <Field label="Phone" optional helper="With the country code, e.g. +91." error={problems.supportPhone ?? undefined}>
+          {(id) => (
+            <input
+              id={id}
+              type="tel"
+              autoComplete="off"
+              value={form.supportPhone}
+              onChange={set('supportPhone')}
+              placeholder="+91 98765 43210"
+              aria-invalid={problems.supportPhone ? true : undefined}
+              className={inputClasses(Boolean(problems.supportPhone))}
+            />
+          )}
+        </Field>
+        <div className="sm:col-span-2">
+          <Field label="Support hours" optional helper="When someone replies — include the time zone." error={problems.supportHours ?? undefined}>
+            {(id) => (
+              <input
+                id={id}
+                value={form.supportHours}
+                maxLength={80}
+                onChange={set('supportHours')}
+                placeholder="Mon–Sat, 10:00–18:00 IST"
+                aria-invalid={problems.supportHours ? true : undefined}
+                className={inputClasses(Boolean(problems.supportHours))}
+              />
+            )}
+          </Field>
+        </div>
       </div>
 
-    </AdminLayout>
+      {/* Live preview of what the public sees — follows the typing. */}
+      <div className="mt-5 rounded-xl border border-dashed border-surface-border bg-surface-subtle/60 p-4">
+        <p className="text-[11px] font-bold uppercase tracking-wide text-muted">What people will see</p>
+        {email || phone ? (
+          <ul className="mt-2 space-y-1.5 text-[14px] text-ink-900">
+            {email && (
+              <li className="flex items-center gap-2">
+                <MailIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                <span className="min-w-0 break-all font-semibold text-primary-700">{email.toLowerCase()}</span>
+              </li>
+            )}
+            {phone && (
+              <li className="flex items-center gap-2">
+                <PhoneIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                <span className="font-semibold">{phone}</span>
+              </li>
+            )}
+            {hours && (
+              <li className="flex items-center gap-2 text-[13px] text-ink-600">
+                <ClockIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                <span>Support hours: {hours}</span>
+              </li>
+            )}
+          </ul>
+        ) : (
+          <p className="mt-2 text-[13px] text-muted">No contact — the Help page will show only the ticket option.</p>
+        )}
+      </div>
+    </SettingRow>
+  );
+}
+
+function TicketSetting({ form, data, set, problem, onUseDefault }) {
+  const def = data.defaultTicketAutoCloseDays;
+  const effective = data.ticketAutoCloseDays ?? def;
+  const typed = form.ticketAutoCloseDays === '' ? def : Number(form.ticketAutoCloseDays);
+  const lowering = !problem && Number.isInteger(typed) && typed < effective;
+
+  return (
+    <SettingRow
+      Icon={HelpIcon}
+      title="Support tickets"
+      aside={(
+        <>
+          <p>When your team has replied and the company doesn&apos;t answer, the ticket closes itself after this many days.</p>
+          <p>The company is emailed when it closes and can raise a follow-up. Closed tickets keep the number that applied at the time.</p>
+        </>
+      )}
+    >
+      <p className="mb-4 flex flex-wrap items-center gap-2 text-[13.5px] text-ink-700">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-success-50 px-2.5 py-1 text-[12.5px] font-semibold text-success-800 ring-1 ring-inset ring-success-200">
+          <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+          In force: {effective} days
+        </span>
+        <span className="text-muted">{data.ticketAutoCloseDays != null ? 'your setting' : 'the default'}</span>
+      </p>
+      <div className="max-w-xs">
+        <Field
+          label="Close a waiting ticket after"
+          error={problem ?? undefined}
+          helper={form.ticketAutoCloseDays === '' ? `Empty uses the default (${def} days).` : 'From 3 to 90 days.'}
+        >
+          {(id) => (
+            <div className="relative">
+              <input
+                id={id}
+                type="number"
+                min="3"
+                max="90"
+                step="1"
+                inputMode="numeric"
+                value={form.ticketAutoCloseDays}
+                onChange={set('ticketAutoCloseDays')}
+                placeholder={String(def)}
+                aria-invalid={problem ? true : undefined}
+                className={inputClasses(Boolean(problem), 'pr-14')}
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-muted">days</span>
+            </div>
+          )}
+        </Field>
+      </div>
+      {lowering && (
+        <Alert tone="warning" className="mt-4">
+          Tickets already waiting {typed} days or more will close at the next nightly run (03:30), and each company gets
+          the &ldquo;closed&rdquo; email.
+        </Alert>
+      )}
+      {data.ticketAutoCloseDays != null && form.ticketAutoCloseDays !== '' && (
+        <button type="button" onClick={onUseDefault} className="mt-3 text-[13px] font-semibold text-primary-700 hover:underline">
+          Go back to the default ({def} days)
+        </button>
+      )}
+    </SettingRow>
+  );
+}
+
+function CompanySetting({ form, set, problems }) {
+  const name = form.companyLegalName.trim();
+  const address = form.companyAddress.trim();
+  const linkedin = form.companyLinkedinUrl.trim();
+
+  return (
+    <SettingRow
+      Icon={BuildingIcon}
+      title="Company details"
+      aside={(
+        <>
+          <p>Your registered company name and address, shown in the website footer and at the foot of every email.</p>
+          <p>The LinkedIn link appears on the website only — platform emails never contain links.</p>
+        </>
+      )}
+    >
+      <div className="grid gap-4">
+        <Field label="Registered company name" optional error={problems.companyLegalName ?? undefined}>
+          {(id) => (
+            <input
+              id={id}
+              value={form.companyLegalName}
+              maxLength={120}
+              onChange={set('companyLegalName')}
+              placeholder="MPX Global Private Limited"
+              aria-invalid={problems.companyLegalName ? true : undefined}
+              className={inputClasses(Boolean(problems.companyLegalName))}
+            />
+          )}
+        </Field>
+        <Field
+          label="Registered address"
+          optional
+          error={problems.companyAddress ?? undefined}
+          trailing={<span className="text-xs text-muted">{300 - form.companyAddress.length} left</span>}
+        >
+          {(id) => (
+            <textarea
+              id={id}
+              rows={3}
+              value={form.companyAddress}
+              maxLength={300}
+              onChange={set('companyAddress')}
+              placeholder={'Office 12, Trade Centre\nMumbai 400001, India'}
+              aria-invalid={problems.companyAddress ? true : undefined}
+              className={inputClasses(Boolean(problems.companyAddress), 'h-auto py-2.5')}
+            />
+          )}
+        </Field>
+        <Field label="LinkedIn page" optional error={problems.companyLinkedinUrl ?? undefined}>
+          {(id) => (
+            <input
+              id={id}
+              type="url"
+              value={form.companyLinkedinUrl}
+              maxLength={200}
+              onChange={set('companyLinkedinUrl')}
+              placeholder="https://www.linkedin.com/company/…"
+              aria-invalid={problems.companyLinkedinUrl ? true : undefined}
+              className={inputClasses(Boolean(problems.companyLinkedinUrl), 'font-mono text-[13px]')}
+            />
+          )}
+        </Field>
+      </div>
+
+      {/* Live preview of the website footer block. */}
+      <div className="mt-5 rounded-xl bg-ink-900 p-4 text-white">
+        <p className="text-[11px] font-bold uppercase tracking-wide text-white/50">Website footer</p>
+        {name || address || linkedin ? (
+          <div className="mt-2 text-xs leading-relaxed text-white/60">
+            {name && <p className="font-semibold text-white/85">{name}</p>}
+            {address && <p className="whitespace-pre-line">{address}</p>}
+            {linkedin && !problems.companyLinkedinUrl && <p className="mt-2 font-semibold text-white/80">LinkedIn ↗</p>}
+          </div>
+        ) : (
+          <p className="mt-2 text-xs text-white/50">Nothing extra — the footer shows only the MPX Global line.</p>
+        )}
+      </div>
+    </SettingRow>
   );
 }

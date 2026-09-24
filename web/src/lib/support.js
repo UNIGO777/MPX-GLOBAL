@@ -15,11 +15,13 @@ export const TICKET_STATUS = {
   resolved: { label: 'Resolved', tone: 'success' },
 };
 
-/** Mirrors the server's TICKET_AUTO_CLOSE_DAYS: a ticket waiting on the company this long closes itself. */
-export const TICKET_AUTO_CLOSE_DAYS = 14;
+/**
+ * The auto-close day count is a Settings value since 2026-09-25, so no screen
+ * keeps its own copy: staff rows carry the server-computed `autoCloseAt`, and a
+ * closed ticket carries `autoClosedAfterDays` (the count in force when it
+ * closed). This is only the fallback for tickets auto-closed before that field.
+ */
+export const LEGACY_AUTO_CLOSE_DAYS = 14;
 
-/** The date a waiting ticket will auto-close, or null. */
-export function autoCloseDate(awaitingCompanySince) {
-  if (!awaitingCompanySince) return null;
-  return new Date(new Date(awaitingCompanySince).getTime() + TICKET_AUTO_CLOSE_DAYS * 86_400_000);
-}
+/** "no reply for N days" for an auto-closed ticket. */
+export const autoClosedDays = (t) => t?.autoClosedAfterDays ?? LEGACY_AUTO_CLOSE_DAYS;

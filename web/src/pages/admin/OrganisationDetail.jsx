@@ -209,6 +209,9 @@ export function OrganisationDetail() {
   const isSuperadmin = me?.role === 'superadmin';
 
   const [blockOpen, setBlockOpen] = useState(false);
+  // "Now" read once per page open (render must stay pure) — enough for a
+  // 7-day "recently unblocked" window.
+  const [openedAt] = useState(() => Date.now());
   const [reason, setReason] = useState('');
   const [actionError, setActionError] = useState(null);
 
@@ -309,6 +312,16 @@ export function OrganisationDetail() {
   const statCols = stats.length <= 5 ? stats.length : Math.ceil(stats.length / 2);
   const statGap = statCols * Math.ceil(stats.length / statCols) - stats.length;
   const oddOnPhone = stats.length % 2 === 1;
+
+  // An unblock's restore cascade finished in the last 7 days — shown as a
+  // green confirmation, then it drops away (the audit trail keeps the record).
+  const recentUnblock =
+    !blocked &&
+    cascade?.direction === 'unblock' &&
+    cascade?.status !== 'running' &&
+    !cascade?.failed &&
+    cascade?.completedAt &&
+    openedAt - new Date(cascade.completedAt).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   return (
     <AdminLayout>
@@ -440,9 +453,18 @@ export function OrganisationDetail() {
           the cascade's progress / result. What a block REACHES is explained in
           the Block / Unblock dialog, where the decision is made — the old rail
           card repeated it and made the column long. */}
-      {(blocked || cascade?.status === 'running') && (
+      {(blocked || cascade?.status === 'running' || recentUnblock) && (
         <div className="mb-5 max-w-3xl">
-          <Alert tone={blocked ? 'danger' : 'warning'}>
+          <Alert tone={blocked ? 'danger' : cascade?.status === 'running' ? 'warning' : 'success'}>
+            {recentUnblock && (
+              // The cascade also runs on UNBLOCK (restoring listings and chats) —
+              // say it finished and what came back, for a week after.
+              <span className="block">
+                <span className="font-semibold">Unblocked</span> · restore completed {formatDate(cascade.completedAt)}
+                {cascade.products != null ? ` · ${cascade.products} product${cascade.products === 1 ? '' : 's'} restored` : ''}
+                {cascade.conversations != null ? ` · ${cascade.conversations} conversation${cascade.conversations === 1 ? '' : 's'} reopened` : ''}
+              </span>
+            )}
             {blocked && (
               <>
                 <span className="font-semibold">Blocked{header.blockedAt ? ` ${formatDate(header.blockedAt)}` : ''}</span>
@@ -458,7 +480,7 @@ export function OrganisationDetail() {
                 Cascade running — taking listings down and freezing conversations…
               </span>
             )}
-            {blocked && cascade?.completedAt && !cascade.failed && (
+            {blocked && cascade?.direction !== 'unblock' && cascade?.completedAt && !cascade.failed && (
               <span className="mt-1 block text-xs opacity-80">
                 Cascade completed {formatDate(cascade.completedAt)}
                 {cascade.products != null ? ` · ${cascade.products} product${cascade.products === 1 ? '' : 's'} taken down` : ''}

@@ -412,3 +412,19 @@ describe('M5-C · target names', () => {
     expect(res.body.entries[0].target.name).toBeNull();
   });
 });
+
+describe('audit facets — the filter pickers (owner, 2026-09-24)', () => {
+  it('lists exactly the actions and target types present in the log, gated like the log', async () => {
+    await entry({ action: 'product.takedown', entityType: 'Product' });
+    await entry({ action: 'ticket.reply', entityType: 'ticket' });
+    await entry({ action: 'ticket.reply', entityType: 'ticket' });
+    const res = await request(app).get('/admin/audit/facets').set(bearer(auditor.token));
+    expect(res.status).toBe(200);
+    expect(res.body.actions).toEqual(expect.arrayContaining(['product.takedown', 'ticket.reply']));
+    expect(new Set(res.body.actions).size).toBe(res.body.actions.length);
+    expect(res.body.entityTypes).toEqual(expect.arrayContaining(['Product', 'ticket']));
+    const none = await makeUser('employee');
+    expect((await request(app).get('/admin/audit/facets').set(bearer(none.token))).status).toBe(403);
+    expect((await request(app).get('/admin/audit/facets')).status).toBe(401);
+  });
+});

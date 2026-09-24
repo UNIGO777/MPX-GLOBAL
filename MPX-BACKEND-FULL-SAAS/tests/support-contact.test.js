@@ -34,16 +34,20 @@ describe('GET /public/support-contact', () => {
     await Settings.deleteOne({ _id: SETTINGS_ID });
     const res = await request(app).get('/public/support-contact');
     expect(res.status).toBe(200);
-    expect(res.body.support).toEqual({ email: null, phone: null });
+    expect(res.body.support).toEqual({ email: null, phone: null, hours: null });
+    expect(res.body.company).toEqual({ name: null, address: null, linkedinUrl: null });
   });
 
-  it('returns ONLY the email and phone — no other settings field leaks', async () => {
+  it('returns ONLY the published contact + company footer — no other settings field leaks', async () => {
     await Settings.findOneAndUpdate(
       { _id: SETTINGS_ID },
       {
         $set: {
           supportEmail: 'help@example.com',
           supportPhone: '+91 90000 00000',
+          supportHours: 'Mon–Fri 9–6',
+          companyLegalName: 'MPX Global Pvt Ltd',
+          ticketAutoCloseDays: 45,
           aiGuestDailyMax: 123,
           updatedBy: new mongoose.Types.ObjectId(),
         },
@@ -52,10 +56,14 @@ describe('GET /public/support-contact', () => {
     );
     const res = await request(app).get('/public/support-contact');
     expect(res.status).toBe(200);
-    expect(res.body.support).toEqual({ email: 'help@example.com', phone: '+91 90000 00000' });
-    expect(Object.keys(res.body)).toEqual(['support']);
-    expect(Object.keys(res.body.support).sort()).toEqual(['email', 'phone']);
+    expect(res.body.support).toEqual({ email: 'help@example.com', phone: '+91 90000 00000', hours: 'Mon–Fri 9–6' });
+    // Widened ONCE, consciously (owner-confirmed D8 additions, 2026-09-25).
+    expect(Object.keys(res.body).sort()).toEqual(['company', 'support']);
+    expect(Object.keys(res.body.support).sort()).toEqual(['email', 'hours', 'phone']);
+    expect(Object.keys(res.body.company).sort()).toEqual(['address', 'linkedinUrl', 'name']);
+    // Governance values never leak: the AI ceiling, the auto-close days, the editor.
     expect(JSON.stringify(res.body)).not.toContain('123');
+    expect(JSON.stringify(res.body)).not.toContain('45');
   });
 
   it('needs no sign-in', async () => {

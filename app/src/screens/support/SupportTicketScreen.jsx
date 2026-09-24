@@ -197,7 +197,8 @@ export function SupportTicketScreen({ navigation, route }) {
 /** Says WHO closed it, so an automatic close is never a surprise. */
 function closedLine(t) {
   if (t.closedBy === 'company') return 'You marked this ticket as solved.';
-  if (t.closedBy === 'auto') return 'Closed automatically — we had no reply for 14 days.';
+  // The count in force when it closed (Settings-editable since 2026-09-25); 14 for older tickets.
+  if (t.closedBy === 'auto') return `Closed automatically — we had no reply for ${t.autoClosedAfterDays ?? 14} days.`;
   return 'This ticket is resolved and closed.';
 }
 

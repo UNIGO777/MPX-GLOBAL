@@ -13,6 +13,7 @@ import {
   BoxIcon,
   BuildingIcon,
   ChatIcon,
+  ClockIcon,
   HandshakeIcon,
   HelpIcon,
   ListIcon,
@@ -33,7 +34,7 @@ import {
  * placeholder articles, and no invented service promise (hours, reply times).
  */
 export function Help() {
-  const { user } = useAuth();
+  const { user, restoring } = useAuth();
   useCanonical('/help');
 
   useEffect(() => {
@@ -62,7 +63,8 @@ export function Help() {
               Questions about your account, verification or a conversation — a person on the
               MPX Global team reads every request.
             </p>
-            <HeroActions user={user} side={side} />
+            {/* Nothing until the session is known — no guest buttons flashing for a signed-in visitor. */}
+            {restoring ? <div className="mt-7 h-12" aria-hidden="true" /> : <HeroActions user={user} side={side} />}
           </div>
           <ContactPanel />
         </section>
@@ -135,7 +137,7 @@ function HeroActions({ user, side }) {
 }
 
 function ContactPanel() {
-  const { email, phone, hasAny, isLoading } = useSupportContact();
+  const { email, phone, hours, hasAny, isLoading } = useSupportContact();
   const rows = [
     email && { Icon: MailIcon, label: 'Email us', value: email, href: `mailto:${email}` },
     phone && { Icon: PhoneIcon, label: 'Call us', value: phone, href: `tel:${phone.replace(/\s+/g, '')}` },
@@ -172,6 +174,13 @@ function ContactPanel() {
             </li>
           ))}
         </ul>
+      )}
+      {/* Published in Settings since 2026-09-25 — shown only when set. */}
+      {!isLoading && hasAny && hours && (
+        <p className="mt-3 flex items-center gap-2 text-[13px] text-ink-600">
+          <ClockIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+          <span><span className="font-semibold text-ink-800">Support hours:</span> {hours}</span>
+        </p>
       )}
     </div>
   );

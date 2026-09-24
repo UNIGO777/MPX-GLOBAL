@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'rea
 import { QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider, useAuth } from './auth/AuthContext.jsx';
-import { roleHome } from './auth/roleHome.js';
+import { can, roleHome } from './auth/roleHome.js';
 import { ADMIN_BASE, STAFF_BASE, consoleBaseFor } from './lib/consolePath.js';
 import { queryClient } from './lib/queryClient.js';
 import { Landing } from './pages/public/Landing.jsx';
@@ -127,29 +127,35 @@ const Account = lazy(() => import('./pages/admin/Account.jsx').then((m) => ({ de
 /**
  * The console's pages, written once. Each is mounted under BOTH `/admin` (the
  * super admin) and `/staff` (employees); `superadminOnly` pages exist only
- * under `/admin`. Per-page permissions stay the server's — the sidebar only
- * hides what a 403 would refuse.
+ * under `/admin`.
+ *
+ * `perms` (any-of, the SAME lists the sidebar uses) decides whether the page is
+ * drawn at all: without one, a typed or bookmarked URL gets the calm per-page
+ * no-access screen instead of a half-drawn page over a "couldn't load" error
+ * (owner, 2026-09-25). This is presentation only — the server re-checks every
+ * request and its 403 remains the lock. Pages with no `perms` are open to all
+ * staff (dashboard, reports — self-scoped server-side — account).
  */
 const CONSOLE_ROUTES = [
   { path: '/dashboard', element: <Dashboard /> },
-  { path: '/organisations', element: <Organisations /> },
-  { path: '/organisations/:id', element: <OrganisationDetail /> },
-  { path: '/users', element: <Users /> },
-  { path: '/categories', element: <CategoryManager /> },
-  { path: '/categories/:id/attributes', element: <AttributeManager /> },
-  { path: '/products', element: <ProductMonitoring /> },
-  { path: '/verification', element: <VerificationQueue /> },
-  { path: '/verification/:orgId/kyc', element: <KycViewer /> },
-  { path: '/conversations', element: <Conversations /> },
-  { path: '/conversations/:id', element: <ConversationViewer /> },
-  { path: '/support', element: <Support /> },
-  { path: '/support/:id', element: <SupportTicket /> },
-  { path: '/leads', element: <Leads /> },
-  { path: '/leads/:id', element: <LeadDetail /> },
+  { path: '/organisations', element: <Organisations />, perms: ['organisation:read'] },
+  { path: '/organisations/:id', element: <OrganisationDetail />, perms: ['organisation:read'] },
+  { path: '/users', element: <Users />, perms: ['user:read'] },
+  { path: '/categories', element: <CategoryManager />, perms: ['category:read', 'category:manage'] },
+  { path: '/categories/:id/attributes', element: <AttributeManager />, perms: ['category:read', 'category:manage'] },
+  { path: '/products', element: <ProductMonitoring />, perms: ['product:read', 'product:takedown'] },
+  { path: '/verification', element: <VerificationQueue />, perms: ['organisation:read', 'buyer:approve', 'exporter:verify', 'kyc:view'] },
+  { path: '/verification/:orgId/kyc', element: <KycViewer />, perms: ['kyc:view'] },
+  { path: '/conversations', element: <Conversations />, perms: ['conversation:read'] },
+  { path: '/conversations/:id', element: <ConversationViewer />, perms: ['conversation:read'] },
+  { path: '/support', element: <Support />, perms: ['support:read'] },
+  { path: '/support/:id', element: <SupportTicket />, perms: ['support:read'] },
+  { path: '/leads', element: <Leads />, perms: ['lead:manage'] },
+  { path: '/leads/:id', element: <LeadDetail />, perms: ['lead:manage'] },
   { path: '/reports', element: <Reports /> },
-  { path: '/audit', element: <AuditLog /> },
-  { path: '/errors', element: <ErrorLog /> },
-  { path: '/featured', element: <Featured /> },
+  { path: '/audit', element: <AuditLog />, perms: ['audit:read'] },
+  { path: '/errors', element: <ErrorLog />, perms: ['errorlog:read'] },
+  { path: '/featured', element: <Featured />, perms: ['featured:manage'] },
   { path: '/account', element: <Account /> },
   { path: '/no-access', element: <NoAccess /> },
   { path: '/staff', element: <Employees />, superadminOnly: true },
@@ -172,6 +178,13 @@ function ConsoleArea({ base }) {
     return <Navigate to={`${own}${rest}${location.search}${location.hash}`} replace />;
   }
   return <Outlet />;
+}
+
+/** Draws a console page only for someone holding one of its `perms`. */
+function PermGate({ perms, children }) {
+  const { user } = useAuth();
+  if (perms && !can(user, ...perms)) return <NoAccess page />;
+  return children;
 }
 
 /** `/admin` or `/staff` on its own → that person's home. */
@@ -386,7 +399,7 @@ export function App() {
                             <Route path={`${base}${r.path}`} element={r.element} />
                           </Route>
                         ) : (
-                          <Route key={r.path} path={`${base}${r.path}`} element={r.element} />
+                          <Route key={r.path} path={`${base}${r.path}`} element={<PermGate perms={r.perms}>{r.element}</PermGate>} />
                         ),
                       )}
                       <Route path={base} element={<ConsoleHome />} />

@@ -156,10 +156,19 @@ export async function me(req, res) {
   // from the verified token, so there is no tenant question here; the rule is
   // absolute precisely so nobody has to make that judgement call per call site.
   const user = await User.findOne({ _id: req.user.userId }).select(
-    'name email mobile role orgId isActive mustChangePassword',
+    'name email mobile role orgId isActive mustChangePassword createdAt lastLoginAt',
   );
   if (!user) throw AppError.unauthorized('user not found', 'Not authenticated.');
-  res.json({ user: { ...authUserView(user), permissions: req.user.permissions ?? [] } });
+  res.json({
+    user: {
+      ...authUserView(user),
+      permissions: req.user.permissions ?? [],
+      // Your OWN account dates, for the console's My account page (2026-09-25).
+      // Only here, on the caller's own record — never on login/refresh payloads.
+      memberSince: user.createdAt ?? null,
+      lastLoginAt: user.lastLoginAt ?? null,
+    },
+  });
 }
 
 export async function forgotPassword(req, res) {

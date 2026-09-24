@@ -135,7 +135,12 @@ while any close-time security commitment remains unraised.
   (owner, 2026-08-21) was surfaced as a red alert and the owner explicitly confirmed the override.
   Shipped at `/admin/settings`, **superadmin-only**, with the exact decided contents: the AI guest
   daily ceiling (§3.3 promises the Client may change it "at any time", which the env var alone
-  could not deliver) + the support contact. Backend: single-document `Settings` model,
+  could not deliver) + the support contact.
+  ✅ **Extended 2026-09-25 (red alert raised, owner confirmed exactly three):** support hours,
+  ticket auto-close days (3–90, default 14 — the nightly job, emails and staff screens follow it),
+  and company footer details (registered name, address, LinkedIn — the link is website-only,
+  emails stay link-free). NOT added: a company AI-allowance setting (stays 100/day, hard-coded).
+  **Anything beyond these five is a new decision and needs its own alert.** Backend: single-document `Settings` model,
   `GET/PATCH /admin/settings`, an AuditLog entry on every change (§11.1), `aiQuota.service.js`
   reading the override with `AI_GUEST_DAILY_MAX` as the boot-time floor.
   🔴 **The exclusions are still live rules** — this page must NEVER gain the D1 caps (written into

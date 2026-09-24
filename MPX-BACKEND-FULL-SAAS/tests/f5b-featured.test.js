@@ -162,6 +162,42 @@ describe('F5b · admin list resolves the pointer (M6 screen 3, 2026-08-19)', () 
     expect(row.targetLive).toBe(true);
   });
 
+  it('the admin row names the product\'s seller and category — names only, nothing wider', async () => {
+    await feature('product', product._id);
+    const res = await request(app).get('/admin/featured').set(bearer(curator.token));
+    const row = res.body.items.find((i) => i.kind === 'product');
+    expect(Object.keys(row.target).sort()).toEqual(['context', 'image', 'name', 'slug']);
+    const org = await Organisation.findById(product.exporterOrgId).lean();
+    expect(row.target.context).toContain(org.name);
+    expect(row.target.context).toContain(' · ');
+  });
+
+  it('the picker finds a product by the START of any word in its name', async () => {
+    const word = product.name.split(/\s+/).pop();
+    const res = await request(app)
+      .get(`/admin/featured/candidates?kind=product&q=${encodeURIComponent(word.slice(0, 3))}`)
+      .set(bearer(curator.token));
+    expect(res.status).toBe(200);
+    expect(res.body.items.map((i) => i.id)).toContain(String(product._id));
+    expect(Object.keys(res.body.items[0]).sort()).toEqual(['id', 'image', 'meta', 'name', 'verified']);
+  });
+
+  it('the picker never offers a taken-down product, and treats regex characters literally', async () => {
+    await Product.updateOne({ _id: product._id }, { $set: { 'takedown.isDown': true } });
+    const res = await request(app).get('/admin/featured/candidates?kind=product').set(bearer(curator.token));
+    expect(res.body.items.map((i) => i.id)).not.toContain(String(product._id));
+    const weird = await request(app).get('/admin/featured/candidates?kind=product&q=.*').set(bearer(curator.token));
+    expect(weird.status).toBe(200);
+    expect(weird.body.items).toHaveLength(0);
+  });
+
+  it('the picker is gated by featured:manage and validates kind', async () => {
+    expect((await request(app).get('/admin/featured/candidates?kind=product')).status).toBe(401);
+    expect((await request(app).get('/admin/featured/candidates?kind=product').set(bearer(plain.token))).status).toBe(403);
+    expect((await request(app).get('/admin/featured/candidates?kind=product').set(bearer(buyer.token))).status).toBe(403);
+    expect((await request(app).get('/admin/featured/candidates?kind=banner').set(bearer(curator.token))).status).toBe(400);
+  });
+
   it('a taken-down product row keeps its identity but reports targetLive: false', async () => {
     await feature('product', product._id);
     await Product.updateOne(
@@ -378,6 +414,34 @@ describe('F5b · curation rules', () => {
     // Unknown keys are stripped, so the slot still points where it did.
     expect(String(after.targetId)).toBe(String(product._id));
     expect(after.kind).toBe('product');
+  });
+
+  it('null clears a schedule date — never coerced to 1970', async () => {
+    const item = await FeaturedItem.create({
+      kind: 'product', targetId: product._id,
+      startsAt: new Date(Date.now() - 60_000), endsAt: new Date(Date.now() + 60_000),
+    });
+    const res = await request(app).patch(`/admin/featured/${item._id}`).set(bearer(curator.token)).send({ startsAt: null, endsAt: null });
+    expect(res.status).toBe(200);
+    const after = await FeaturedItem.findById(item._id).lean();
+    expect(after.startsAt).toBeNull();
+    expect(after.endsAt).toBeNull();
+    const landing = await request(app).get('/public/featured');
+    expect(landing.body.products).toHaveLength(1);
+  });
+
+  it('refuses moving one date past the stored other one', async () => {
+    const item = await FeaturedItem.create({ kind: 'product', targetId: product._id, startsAt: new Date('2026-10-10') });
+    const res = await request(app).patch(`/admin/featured/${item._id}`).set(bearer(curator.token)).send({ endsAt: '2026-10-01' });
+    expect(res.status).toBe(400);
+    expect((await FeaturedItem.findById(item._id).lean()).endsAt ?? null).toBeNull();
+  });
+
+  it('the update audit row records the schedule and banner text it set', async () => {
+    const item = await FeaturedItem.create({ kind: 'product', targetId: product._id });
+    await request(app).patch(`/admin/featured/${item._id}`).set(bearer(curator.token)).send({ endsAt: '2027-01-01T00:00:00.000Z' });
+    const row = await AuditLog.findOne({ action: 'featured.update', entityId: item._id }).lean();
+    expect(new Date(row.after.endsAt).toISOString()).toBe('2027-01-01T00:00:00.000Z');
   });
 
   it('deletes a slot', async () => {

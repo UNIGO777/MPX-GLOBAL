@@ -17,9 +17,12 @@ import { apiClient } from './client.js';
 export const errorLogApi = {
   list: (params) => apiClient.get('/admin/errors', { params }).then((r) => r.data),
   entry: (id) => apiClient.get(`/admin/errors/${id}`).then((r) => r.data.entry),
+  // Overview: counts for 24h / 7d / all, and the week's most-failing route patterns.
+  summary: () => apiClient.get('/admin/errors/summary').then((r) => r.data),
 };
 
 export const errorLogKeys = {
   list: (params) => ['admin', 'errors', params],
   entry: (id) => ['admin', 'errors', 'entry', id],
+  summary: ['admin', 'errors', 'summary'],
 };

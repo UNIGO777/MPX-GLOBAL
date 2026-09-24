@@ -101,6 +101,9 @@ adminRouter.get(
   validate(AV.listAudit),
   auditCtrl.list,
 );
+// The pickers' options — the actions and target types present in the log.
+// Before `/:id`, or "facets" would be read as an id.
+adminRouter.get('/admin/audit/facets', authenticate, requirePermissions(PERMISSIONS.AUDIT_READ), auditCtrl.facets);
 adminRouter.get(
   '/admin/audit/:id',
   authenticate,
@@ -124,6 +127,8 @@ adminRouter.get(
   validate(EV.listErrors),
   errorCtrl.list,
 );
+// The overview (counts + most-failing routes). Before `/:id`.
+adminRouter.get('/admin/errors/summary', authenticate, requirePermissions(PERMISSIONS.ERRORLOG_READ), errorCtrl.summary);
 adminRouter.get(
   '/admin/errors/:id',
   authenticate,
@@ -142,6 +147,15 @@ adminRouter.get(
   authenticate,
   requirePermissions(PERMISSIONS.FEATURED_MANAGE),
   featuredCtrl.list,
+);
+// The Add dialog's search — word-prefix, availability-filtered. Declared before
+// `/admin/featured/:id` so "candidates" is never read as an id.
+adminRouter.get(
+  '/admin/featured/candidates',
+  authenticate,
+  requirePermissions(PERMISSIONS.FEATURED_MANAGE),
+  validate(FV.pickCandidates),
+  featuredCtrl.candidates,
 );
 // Feature an existing product / category / supplier (JSON).
 adminRouter.post(
