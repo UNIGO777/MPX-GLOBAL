@@ -175,6 +175,324 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-24 — DECISION (owner): staff console split by role + employee panel completed.** (1) **URLs:** super admin `/admin/*`, employees `/staff/*` (web only — API paths unchanged). One `CONSOLE_ROUTES` table in `App.jsx` mounted under both bases; `ConsoleArea` redirects a wrong prefix to the person's own (path, query and hash kept); super-admin-only pages (`staff`, `employees`, `settings`) only under `/admin` — under `/staff` they render the no-access page; `/admin` or `/staff` alone → the person's dashboard. Links: `lib/consolePath.js` `cp()` rewrites `/admin/...` to the viewer's console from the CURRENT URL at render time (all 16 console pages codemodded; the dashboard's server-link table keeps the server's own keys and applies `cp()` when building hrefs; the sidebar maps `cp()` over its fixed list). (2) **Landing:** every staff member now lands on their console dashboard (was users/verification/no-access by grant). (3) **My account** (`/admin/account` · `/staff/account`, in every staff member's menu): read-only profile (name/email/mobile — changed by a super admin), change password via the existing `POST /auth/change-password` (session rotated, others signed out), and "Your access" listing the grants from `/auth/me`. (4) **Dashboard per permission:** employees get their work first (My work, Support tickets, Supplier requests), NO platform-growth chart, a stat strip sized to the stats they can see (no grey filler), an empty row collapses, and a no-permission employee is told to ask a super admin. CLAUDE.md "Auth shape" updated with the URL rule. Browser-checked as super admin and as an employee (redirects both ways, nav hrefs, ticket link, no-access page, account page); lint + build green.
+- **2026-09-24 — DECISION (owner): finer staff permissions — catalogue 16 → 21.** (a) `support:manage` split into **`support:read`** (queue, tickets, log, ticket notes), **`support:reply`**, **`support:assign`**, **`support:status`**; every action route requires read AND its action (`requirePermissions` is all-of). Without `support:assign` staff may only TAKE an unassigned ticket for themselves (needs `support:reply`); giving one away or taking over is 403. Only read+reply holders appear in "Assigned to". (b) **`conversation:warn`** split from `conversation:block` (D11 warnings + their list route). (c) **`reports:team`** — an employee sees the whole team's staff report ("My work" stays personal). Supplier requests keep `lead:manage` (owner declined that split). Web: Staff page groups "Support tickets" (4) + "Supplier requests"; ticking an action auto-ticks its read, clearing read clears its actions; retired strings are dropped on save; ticket page hides reply / status / assign controls per grant ("Take this ticket" for reply-without-assign); chat viewer shows warn and block independently. No data migration (not live) — the dev employee Ravi was re-granted via the Staff page. Rules updated: `remind.md` + `Note.md` D11 now name `conversation:warn`. Tests: +4 support split, +2 reports:team, warn tests updated, catalogue test pins 21.
+- **2026-09-24 — Reports: expandable rows keyboard-operable (Enter/Space, `aria-expanded`, focus ring); an employee with no activity sees "You have no recorded actions…".** Not browser-checked as an employee: the test employee (Ravi) still has a temporary password and is sent to the change-password gate first (correct behaviour). The own-row-only rule is covered by `staff-reports.test.js`.
+- **2026-09-24 — Reports page redesigned (owner).** The eleven audit columns are grouped into five work areas (Verification · Catalogue · Chat moderation · Support & notes · Supplier requests): five area cards with a plain-words breakdown ("15 blocked / warned · 116 read"), then "By staff member" ranked by total with the areas as columns, a share-of-work bar, click-to-expand full breakdown, and idle staff folded behind "Show N staff with no activity". Cards below lg. Period switch and CSV unchanged (CSV keeps all eleven columns). No server change.
+- **2026-09-24 — Admin dashboard: support/request panels fixed (owner: "see if any issue").** The Support tickets panel now shows the SAME four counts as the Support page (Needs a reply · Unassigned · Waiting on company · Resolved · 7 days), each a link that opens the page on that filter (`/admin/support?view=…`, read on load); ticket rows show the unread dot. New "Supplier requests" panel for `lead:manage` (New · Finding suppliers · Unassigned · Connected · 7 days, each linking to `/admin/leads?view=…`) — a new unassigned request was previously invisible on the dashboard. "My work" wording for roles without tickets/requests clarified.
+- **2026-09-24 — Admin Supplier requests list + detail redesigned (owner review).** List: four filtering stat cards (New · Finding suppliers · Unassigned · Connected, with "N in the last 7 days"), a search box (ref or product — new `q` on `GET /admin/leads`), a table from `lg` (request · buyer monogram · assignee initials / Unassigned pill · status · raised), cards below. Detail: same shape as the staff ticket page — header card (title + status, Close request / Re-open as a real button, own action bar below lg), icon fact strip (ref · quantity · destination · buyer · raised · assignee), the buyer's staff-only note, Connected suppliers (with View chat), Connect a supplier with a "The supplier will receive" preview, and a details column / tabbed "Details & notes" drawer (assignee people-only, facts, notes, scrolling timeline with icons). **Same assignment rule as tickets**: `PATCH /admin/leads/:id/assign` requires a person (400 on null). +2 tests (search, no unassign).
+- **2026-09-24 — Staff ticket timeline box scrolls (owner).** In the xl column the timeline is capped at 18rem, scrolls inside, opens at the newest event, and shows an "N events" count in its title. The drawer's Timeline tab scrolls with the drawer.
+- **2026-09-24 — Shared `Combobox`: a mouse/touch pick now releases focus (owner: "after selecting from list field still active").** The field no longer keeps its focus ring after a pick; an Enter pick still keeps focus for keyboard users. Applies to every Combobox in the app.
+- **2026-09-24 — DECISION (owner): a ticket can never go back to "unassigned".** It starts unassigned; once someone holds it, it can move to another person only. Server: `PATCH /admin/support/tickets/:id/assign` now requires a person (`assigneeId` no longer nullable → 400), +1 test. Web: the assignee list holds only people (with a Super admin / Employee hint); "Unassigned" is the empty field's placeholder, not an option. Also granted the test employee Ravi Kumar `support:manage` via the Staff page, so he now appears in the list.
+- **2026-09-24 — Staff ticket header: info vs actions separated (owner: "no clear separation").** Info is quiet (status chip; topic + side as small square tags; follow-up as a plain link); actions are square-cornered 40px buttons. Below lg the actions move to their own bar under a divider (full-width grid on phones, Details as an icon button); lg+ they sit beside the title.
+- **2026-09-24 — Staff ticket page: header, phones, notes, Details window (owner review).** Header is now ONE card like the organisation page: topic icon + subject + chips (status · topic · side · follow-up link) with the actions on the right, and an icon fact strip underneath (ref · opened · company · raised by · assignee; phones keep ref/company/assignee). Phones: the page scrolls and the reply box is `sticky bottom-0` (a fixed-height panel under the taller header pushed it below the fold). **Internal notes** (shared component — org, conversation, request pages too): count in the title, each note = author initials + name + time over a soft yellow bubble, newest first, friendlier empty state, composer at the foot; `bare` mode for drawers. **Details & notes drawer**: three tabs (Details · Notes n · Timeline n) with flat content instead of cards-in-a-drawer; the timeline has a connecting line.
+- **2026-09-24 — Staff ticket page (`/admin/support/:id`) redesigned to match the company ticket page (owner review).** Page header (topic icon, subject, status, ref/topic/opened, follow-up link, company monogram + side + raised-by) with the status actions on the right (Mark in progress / Resolve / Re-open); a screen-height conversation panel that scrolls inside with the reply box pinned at its foot and a slim notice above it for "closed by …" or "waiting on the company · closes <date>"; a details column (assignee, ticket facts, raiser email, internal notes, timeline with the log's action icons — `logIcon` now exported from `Support.jsx`) that becomes a "Details & notes" drawer below xl. Checked at 1440 / 1024 / 390, no horizontal scroll.
+- **2026-09-24 — Admin Support page redesigned, both tabs (owner review).** Four stat cards that filter the queue: Needs a reply (`unread.staff`), Unassigned, Waiting on company (auto-close clock running), Resolved · 7 days — backed by two new `status` views on `GET /admin/support/tickets` (`needs_reply`, `waiting`) and two new overview counts (+1 test). Queue: a real table from `lg` (ticket with topic icon · company monogram + side · assignee initials or an "Unassigned" pill · status · activity), cards below; row tags for "Follow-up of T-…" and "Waiting · closes <date>". Ticket log: grouped by day (Today / Yesterday / date), a coloured icon per action type (system/auto rows get a clock), a clickable ticket chip, a total count. Tabs moved beside the title. `lib/support.js` gained `TICKET_AUTO_CLOSE_DAYS` + `autoCloseDate()` (the staff ticket page uses them too).
+- **2026-09-24 — "Find me a supplier" request drawer redesigned (owner review).** Same guided pattern as the new-ticket drawer (shared `components/support/StepTitle.jsx`): 1 product (counter + three tap-to-fill examples), 2 quantity & delivery (optional, inline quantity check), 3 note for our team (optional, lock icon — staff-only). A "What suppliers will see" preview mirrors exactly what routing sends (product text + quantity/unit/destination; never the note). Footer says what is missing. No server change.
+- **2026-09-24 — Support tickets: every closing scenario covered (owner: "fix all this as per convenience").**
+  (1) **Company "Mark as solved"** — `POST /support/tickets/:id/close` (scoped `{_id, orgId, side}` → 404), confirm modal on web / `Alert` on app, logged as `ticket.status` by the company (`after.by: 'company'`; not counted in staff reports). (2)+(3) **Badges** — a staff resolve AND a staff re-open now set `unread.company`, so the company list shows "Update" (was "New reply"). No email for a re-open — a 9th email event would need its own alert (D5). (4) **Auto-close** — new `Ticket.awaitingCompanySince` (set on a staff reply or re-open, cleared on a company reply or close); nightly `jobs/ticketAutoClose.js` (node-cron, 03:30 + boot catch-up, same pattern as the purge job, off in tests) closes tickets waiting ≥ `TICKET_AUTO_CLOSE_DAYS` (14) with a system AuditLog row (`actorId: null`, `requestId: job:ticket-auto-close`, shown as "Automatic") and the EXISTING resolved email, worded for auto-close. Staff see "Closes automatically on <date>". (5) **Follow-ups** — `Ticket.followUpOf/followUpRef`; "Raise a new ticket" from a closed ticket carries it (`?from=&ref=` on web, route params on app); the server only accepts the caller's own ticket (404 otherwise, checked before any upload). Both sides show "follow-up to T-…". New `Ticket.closedBy` ('staff'|'company'|'auto') drives the closed-bar wording. Tests: support-tickets +6, email +1. Browser-tested end to end (solve → follow-up → staff view). App: parse + lint only, not device-tested.
+- **2026-09-24 — Closed-ticket race handled (web + app).** If staff resolve a ticket while the company has the reply box open, Send gets `TICKET_CLOSED`; the page now reloads into the closed bar and says "Your message wasn't sent — this ticket was closed while you were writing" (web), instead of keeping a dead reply box until the 30 s poll. Browser-tested end to end; app lint/parse only.
+- **2026-09-24 — DECISION (owner): a resolved support ticket is CLOSED to the company.** Supersedes Step 1b's "a company reply re-opens it". Server: `replyMyTicket` refuses with **409 `TICKET_CLOSED`** before any file is stored (no more `ticket.reopen` rows; old ones still show in the log). Staff reply on a resolved ticket moves it back to **in progress** (audited `ticket.status` resolved→in_progress) so staff never message a company that cannot answer; staff "Re-open" button unchanged. Ongoing tickets: a company message/file keeps the status and flags "new reply" for staff; a staff reply takes open→in progress (+ self-assign if unassigned). Web: closed tickets show a lock bar + "Raise a new ticket" (→ `/…/support?new=1`, which opens the form); the app screen does the same. The "resolved" email now says "raise a new ticket … mention this reference" (email count unchanged — same event). Tests: support-tickets +2 (closed refusal, staff re-open), email test updated; 43/43 in the affected suites.
+- **2026-09-24 — "New support ticket" drawer redesigned (owner review).** Three numbered steps (topic → describe it → add a file, optional) whose numbers turn into ticks when done; topic cards with a check badge; a per-topic "what to include" tip once a topic is picked; character counters on subject and message; an image preview for a picked image; the footer says what is still missing ("Pick a topic to send"). Gotcha: an object-URL preview revoked in an effect cleanup breaks under StrictMode (simulated unmount revokes it before the <img> loads) — it is now released in `onLoad`.
+- **2026-09-24 — Ticket page: "View details" below xl (owner).** Under 1280px the details column is hidden and a **View details** button opens the same card in a drawer (beside the title from `sm`, under the reference on phones so the title keeps its width). The floating chat dock is now hidden on `/buyer|exporter/support/:id` (added to `ChatDock` `HIDDEN_ON`) — it sat on top of the pinned Send button, same reason it hides on the inbox.
+- **2026-09-24 — Company ticket page (`/buyer|exporter/support/:id`) redesigned (owner review).** Page header (topic icon, subject, status) + two columns: a chat-style conversation panel that fills the screen, scrolls inside and opens at the newest message, with the reply box pinned at its foot (`ReplyBox embedded`); and a "Ticket details" side card (status + what it means, reference, topic, opened, last update, message count) above the contact cards. Resolved notice sits inside the panel. `TicketThread` gained small avatars (staff shield / company building) and a plain white bubble for the other side — this also changes the staff ticket view.
+- **2026-09-24 — DUMMY support contact set on the DEV database (owner: "use dummy email and phone for now").** `support@example.com` / `+91 98765 43210`, entered through `/admin/settings` (audited), NOT hard-coded — code still shows only what Settings holds. 🔴 The real contact must be entered in Settings before launch (production DB starts empty).
+- **2026-09-24 — Public `/help` page redesigned (owner: "design is not good").** Dark hero matching the landing banner ("How can we help?") with the one real action per visitor — signed-in buyer/exporter: **Raise a support ticket** (+ buyer: Help me find a supplier); guest: Sign in to raise a ticket / Create a free account; staff: Open your console — beside a "Talk to our team" panel with the published email/phone (honest empty state when unpublished). Topics became a 3-column icon-card grid, different for guests and signed-in users; every card links to a built page. Gotcha fixed: the page never linked to support tickets after Step 1b shipped.
+- **2026-09-24 — Step 2 (in-app notifications, Module 8) put ON HOLD by the owner.** Recorded as `Pending-Work.md` B8 and in the roadmap; not started. Also removed the stale "ticket decision pending" line from `scope-guard.md` (tickets were approved and built in Step 1b).
+- **2026-09-24 — Step 1e · Per-employee dashboard + reports — Step 1 (quote Module 6) COMPLETE.**
+  `staffReports.service.js` counts each staff member's actions straight from the append-only AuditLog
+  (11 columns: verifications, documents, KYC views, takedowns, chat moderation, chat reads, ticket
+  replies, tickets resolved = `ticket.status`→resolved, suppliers connected, catalogue, notes) — no new
+  data, nothing a person can edit to inflate their numbers. `GET /admin/reports/staff?days=7|30|90`
+  (superadmin: whole team, idle staff shown as zero rows; employee: forced to their own row from the
+  token, whatever the query says) and `GET /admin/my-work` (tickets/requests assigned to me, gated by
+  `support:manage` / `lead:manage`, + my 30-day counts). Web: `/admin/reports` (7/30/90 toggle, CSV,
+  team totals, table scrolls inside its card on mobile) and a "My work" panel on the dashboard. Sign-ins
+  and a company's own actions are not counted. Tests: `staff-reports.test.js` (6). Full suite 1273/1273.
+- **2026-09-24 — Step 1d · Enquiry routing — "find me a supplier" (quote Module 6).** Owner's pick:
+  buyer asks, staff route. `Lead` skeleton filled (platform-owned; buyer reads its own via an explicit
+  `{ buyerOrgId }` filter → 404 otherwise): what (≤200, becomes the enquiry note), quantity, unit,
+  destination country, note (≤500, staff-only), status new → in_progress → routed / closed, assignee,
+  `routedTo[]`. New grantable permission **`lead:manage`** (catalogue 15 → 16; m5-foundation test
+  updated with the decision). ROUTE = `createInquiry` acting as the buyer who raised it, so every
+  existing guard applies (publicly live product, no self-enquiry, one thread per buyer × product —
+  an existing thread is LINKED, `created: false`); a new `routed` system notice ("MPX Global
+  connected you with this supplier at your request") is added; the seller hears via the EXISTING
+  new-enquiry push/email — no new notification event. Each action = one AuditLog row
+  (`lead.create|assign|status|route`). Buyer view never names staff (test-pinned). Internal notes
+  gained the `lead` subject (`lead:manage`).
+  - Web: buyer nav "Find a supplier" → `/buyer/find-supplier` (requests with connected suppliers →
+    "Open chat", "How it works", request panel); admin sidebar "Supplier requests" →
+    `/admin/leads` (Status / Assignee chips) + `/admin/leads/:id` (request, connected suppliers,
+    "Connect a supplier" searching the PUBLIC catalogue, status, assign, notes, timeline). Chat
+    bubble styles the `routed` notice as a white information card.
+  - App: Profile → "Find a supplier" (buyers) → list + New request (unit + country pickers);
+    parse + no-undef/unused checked, not on a device.
+  - Tests: `tests/lead-routing.test.js` (7). Browser: routed a real sample request on the test DB
+    (R-QDRNVH → Beta Traders, a real enquiry thread now exists in dev data).
+- **2026-09-24 — Step 1c · Internal notes (quote Module 6), staff-only.** New `InternalNote` model
+  (platform scope, APPEND-ONLY — the same app-layer guards as AuditLog: no update/delete query, no
+  re-save; a correction is a new note). Subjects: organisation · conversation · ticket.
+  `GET/POST /admin/notes` admit staff roles only; the service then requires the SUBJECT's own
+  permission (organisation:read / conversation:read / support:manage; superadmin passes) —
+  default-deny, unknown subject refused, missing subject 404. Adding a note writes an AuditLog row
+  `note.add` WITHOUT the note text. No company-facing route exists; tests pin that a company account
+  is refused and that its own ticket / company profile carry no note. Web: shared
+  `components/support/InternalNotes.jsx` ("Internal notes · Staff only", amber-edged) on the
+  organisation detail rail, the conversation viewer (under Thread details; under the transcript
+  below xl) and the support ticket page. Tests: `tests/internal-notes.test.js` (5).
+- **2026-09-24 — Step 1b · Support tickets (quote Module 6 "ticket/query queue") + super admin
+  Support section + ticket log.** Owner decisions: tickets from signed-in buyers/exporters (web +
+  app), thread + ONE image/PDF/.docx/.xlsx per message, two emails (staff reply → company;
+  resolved → company), dashboard Support section with who holds each ticket, a "who did what" log.
+  - Backend: `Ticket` (filled the skeleton) + new `TicketMessage` (append-only); scoped
+    `{ _id, orgId, side }` from the token → 404 (a both-sides company's buyer and exporter accounts
+    never see each other's). New grantable permission **`support:manage`** (catalogue 14 → 15; web
+    mirror updated, Staff page picks it up). Routes `/support/tickets*` (company) and
+    `/admin/support/*` (queue, ticket, reply, status, assign, assignees, overview, timeline, log).
+    Staff replies post as "MPX Global Support" — the company view carries no assignee, no author id
+    or name (test-pinned). First staff reply takes an unassigned ticket and moves Open → In progress;
+    a company reply on a resolved ticket re-opens it. Every action = ONE AuditLog row
+    (`ticket.create|reply|assign|status|reopen`) — that trail is the ticket log (append-only). The
+    team-wide log is superadmin-only; an employee's log is forced to their own actions server-side.
+    Attachments reuse the chat storage path (magic bytes, macro screen, private Cloudinary) under
+    `mpx/support/<ticketId>` (new optional `folder` on the upload helpers). `ticketLimiter` (20 new
+    tickets/user/day). Log ordering ties broken by `_id` — one reply writes up to 3 rows in the same
+    millisecond (a flaky test found it).
+  - Emails 7 + 8 (`notifyTicketReply`, `notifyTicketResolved`): plain text, no link, never names
+    the employee. `docs/Note.md` D5 + `.claude/rules/remind.md` updated (eight approved; a ninth
+    needs an alert).
+  - Web: portal `/buyer|exporter/support` (topic-icon ticket list with All/Active/Resolved, "New
+    reply" marker, "How support works", contact cards) + a New-ticket panel (topic picture cards,
+    subject, message, drop-zone attachment) + `/…/support/:id` thread with reply box; nav "Help &
+    support" carries a new-reply badge. Admin: sidebar "Support" (`support:manage`) → `/admin/support`
+    with Queue (search, Status / Assignee / Topic / From chips) and Ticket log tabs;
+    `/admin/support/:id` (thread, reply, Resolve / Re-open / In progress, assign, timeline).
+    Dashboard: "Support tickets" section — Open · In progress · Unassigned · Resolved 7d + open
+    tickets with their assignee (or "Unassigned").
+  - App: Help & support lists the account's tickets (refreshed on focus) with a "New ticket" footer;
+    `NewTicketScreen` (topic cards, photo/document), `SupportTicketScreen` (thread, pull-to-refresh,
+    reply with attach). Parse + no-undef/unused checked; NOT run on a device.
+  - Tests: `tests/support-tickets.test.js` (15) + 3 email tests. Browser-checked on the test DB with
+    3 tickets created through the API (they stay in the dev DB as sample data).
+- **2026-09-24 — Step 1a · Support contact shown everywhere (roadmap: `my-plans/phase1-remaining/`).**
+  The Settings page's support email/phone had no reader anywhere. Now:
+  - Backend: `GET /public/support-contact` → `{ support: { email, phone } }` — a WHITELIST of two
+    fields (the AI ceiling and last editor stay superadmin-side), no auth, never throws (a failed
+    read serves nulls). `settings.service.getSupportContact()`.
+  - Web: new public `/help` page (contact cards + common topics — every link a real page; topics
+    adapt to a signed-in buyer/exporter); footer "Support" column; Terms §11 + Privacy §11 now show
+    the real contact (they pointed at "the contact address published by MPX Global", published
+    nowhere); "Help & support" in the buyer + exporter portal nav (→ `/help` until 1b's portal
+    Support screen). Shared `components/public/SupportContact.jsx`, `hooks/useSupportContact.js`.
+  - App: Profile → "Help & support" (`HelpSupportScreen`) — tap to email / call, plus Terms/Privacy.
+    Parse + no-undef/unused checked; not run on a device.
+  - Email: the 5 notification emails carry "Need help? <email> · <phone>" under the signature, and
+    the "someone joined your company" line names the real address. 🔴 Plain text, NOT a mailto —
+    these emails carry no link anywhere by design (anti-phishing); three existing tests caught my
+    first version with a link. OTP emails are unchanged (nothing added before a code goes out).
+  - No invented promises: the first draft said "We reply on working days" — removed; nobody
+    decided that.
+  - Tests: `tests/support-contact.test.js` (6) + `email-notifications.test.js` (+1, settings read
+    stubbed — the suite has no DB and each email was waiting out a 10 s buffer timeout).
+- **2026-09-24 — 🔴 Bucket A2 "employee create + permissions UI" APPROVED into month 1, and the Staff
+  page redesigned.** Red alert raised (the page already existed while `month1-not-doing.md` still
+  listed it as deferred); owner chose "Approve: redesign it". Updated `month1-not-doing.md` and
+  `.claude/rules/scope-guard.md`. Owner also said "we are completing whole phase 1 project so no
+  do later" — recorded as a standing memory (Phase 2 / D3 remain guarded).
+  - Permission audit: server catalogue = 14 grantable strings (`src/config/permissions.js`), every
+    one used by a route; the web mirror lists all 14 in 6 areas. Governance (create staff/assign
+    permissions, user activate/deactivate, company block, platform settings) is hard
+    `requireRole('superadmin')` and never grantable — now LISTED in both drawers as a "Super admin
+    only — never grantable" note so the full picture of access is on one screen.
+  - Page: admin header + compact solid "+ Add employee"; `ToolbarSearch` (as-you-type, server `q`
+    prefix) + Role chip (Any / Employees / Super admins); `table-fixed` from `xl` — Person (tinted
+    initials, name + SUPER ADMIN badge, email · mobile) | Access (area chips, e.g. "Verification ·
+    Catalogue", "+N", "7/14" — click opens the full list) | Status chip | "Manage access" (quiet
+    pill; icon-only on phones) or "By role" for superadmins; cards below `xl`.
+  - Edit drawer subtitle shows "N of 14 granted". Logic unchanged: PATCH replaces the set,
+    superadmin rows have nothing to grant, temp password shown once.
+- **2026-09-24 — Admin conversation viewer polished.** UI only; still no composer, access still
+  audited on open, `blockedBy` still staff-only.
+  - Details rail only from `xl` (was `lg`): at 1024 it squeezed the thread until the header's
+    product chip sat on the title. Below xl: the header's info button + a pinned action bar.
+  - Actions: "Send a warning" + "Block/Unblock" side by side in the phone/tablet bar, stacked in the
+    rail; compact size (the full-height stacked pair took a fifth of a phone screen).
+  - Rail: parties as a `PartyRow` (mark, name linking to `/admin/organisations/:id`, quiet org id);
+    "Latest message" as Buyer/Exporter seen/unseen chips; sentence-case labels; state chip on one line.
+  - Thread header (shared `ThreadView`, staff only): the two company marks sit side by side — any
+    overlap at that size hid the first one's initials. The list keeps its diagonal stack.
+  - Phone bar: "Send warning" / "Block chat" (short labels below `sm`, nowrap — "Block
+    conversation" wrapped to two lines at 360–375 px) and bottom padding honours the safe area.
+    On a FROZEN thread "Send a warning" is absent by design (the server refuses it — nobody can
+    reply) — the owner read that as the button vanishing, so the action area now says so:
+    "Warnings are off while this conversation is frozen — nobody can reply to one."
+  - Open question for the owner: the welcome notice ("MPX Global is part of this conversation")
+    renders in the brand tint, which became RED with the rebrand — the owner once asked for it
+    "in orange shade". Not changed without a decision.
+- **2026-09-24 — Admin Conversations list redesigned.** UI only — browsing stays un-audited,
+  opening a thread is still the audited read; cursor paging unchanged.
+  - Toolbar: `ToolbarSearch` (search as you type, 350 ms) + a State `FilterChip` (Any · Open ·
+    Frozen · Blocked by MPX · Product under review · Account paused); the org / product scopes that
+    arrive by URL are removable chips IN the chip row (no more separate banners); Clear filters.
+  - Table only from `xl` (cards below — at 1024 the Conversation column was "S1 Co 7504…");
+    Started column from `2xl`; pill-shaped View / Block / Unblock.
+  - `FreezeChip` gained `short`: list cells say "Blocked" / "Under review" / "Product removed"
+    (full text as the tooltip) — the full "Conversation blocked by MPX Global" wrapped a cell into
+    a three-line block. Still the solid chip the owner asked for.
+  - Company pair: a diagonal stack of the two marks — the tight overlap hid the first one's
+    initials.
+  - Cards (below xl) carry no Block button, as before on phones — block from the thread viewer.
+- **2026-09-24 — Admin Organisations + Products search as you type.** Both searched only on Enter.
+  A 350 ms debounce now writes `?q` with a FUNCTIONAL `setParams` (a filter chip clicked during the
+  pause is kept) and `replace` (typing stays out of history); Enter still works. The box ↔ URL sync
+  only resets the box when `q` changed for another reason — resetting on our own echo would trim
+  a trailing space mid-word ("beta " → "beta").
+- **2026-09-24 — Fix: FilterChip menus could not be scrolled.** The menu closes on page scroll
+  (it is `position: fixed` and would drift off its chip), but the capture-phase `scroll` listener
+  also caught scrolls INSIDE the menu, so a long list (Products → Category, 40 entries) closed on
+  the first wheel. Scrolls whose target is inside the menu are now ignored. Affects every
+  FilterChip (Organisations, Users, Products).
+- **2026-09-24 — Admin Products (`ProductMonitoring.jsx`) redesigned.** UI only — every moderation
+  rule in the file header is unchanged (three statuses, no drafts/archived, substring search,
+  takedown actor staff-only in the drawer).
+  - Toolbar in the Organisations language: `ToolbarSearch` (submits on Enter, box synced with `?q`)
+    + `FilterChip`s Category → Sub-category (the sub chip appears once a category is picked) ·
+    Status (Any / Active / Inactive / Blocked) + a "Nearing purge" toggle chip + the seller filter
+    as a removable chip + Clear filters. The old card of `Combobox`es collapsed to three empty "⌄"
+    boxes on phones.
+  - `table-fixed` from `lg`: Product (image · name · exporter + takedown count) | Category |
+    Status (taken-down rows: chip, "Was live · down <date>", purge countdown) | Listed (xl only) | ⋮;
+    cards below `lg` (the table cut its last columns at 1024). Row / card click opens the drawer;
+    one `rowActions()` feeds both.
+  - Drawer (second pass, owner "also details window"): subtitle is the category; 16:10 image with
+    the status chip on it (greyed when taken down); a takedown record (date, reason, staff-only
+    actor, what the exporter had it as, purge countdown); an EXPORTER card (mark, name, takedown
+    count, "Open exporter" / "Public profile"); a Listing card (category, listed, public page —
+    "Not public" unless live); footer: "View chats" + Take down / Restore (`product:takedown`).
+  - Note: the category filter is a chip menu now, not the searchable combobox — fine at 40 tops
+    and one top's subs; revisit if the top list grows a lot.
+- **2026-09-24 — Categories: headers and add buttons redone (owner: "the top headers with add button
+  … not quite right").** Sub-categories header is ONE toolbar: title + count · segmented filter
+  (the site's bordered-track / red-active-pill style — the black pills were off-language) · solid
+  "+ Add sub-category" (no shadow, no tint). Filter is inline from `xl`, its own row below. The
+  description line is gone. Rail: header is just the filter box; "New category" is the list's own
+  last row (dashed plus tile) — the tinted header pill is gone. Title-row "New category" (below
+  xl) uses the same solid style.
+  Follow-up ("still not good in big screen"): the filter squeezed between title and Add at ≥xl —
+  now title + Add on row one and the filter on its own row at every width. Tried 3 tile columns
+  at 2xl (names wrapped badly) — kept 2.
+  "New category" (owner: "hidden in there, unnoticed" as the rail's last row): now a solid button on
+  the page title row at EVERY width; the rail row is removed.
+  Small screens: the separate "Change" picker card is gone (it repeated the hero's name right
+  above it) — an "All N categories ⌄" pill on the hero's top-left opens the same searchable sheet
+  (below `xl`); stats tighter. → REVERSED the same day: the pill went unnoticed, a red version was
+  "even worse". Owner picked (from three previews) a labelled "Category" SELECT-STYLE field above
+  the hero below `xl` (thumb · name · sub count · chevron) that opens the searchable sheet; the
+  hero carries no switcher.
+  Phone polish ("structure ok but design looking off"): sub-categories are plain divided rows inside
+  the card below `md` (bordered tiles in a bordered card read as boxes-in-boxes; tiles from `md`),
+  the stats band is slimmer, and the page description is hidden below `sm`.
+- **2026-09-24 — Categories page, second pass (owner: "still not that impressive", "sub categories
+  cards not looking good").** UI only.
+  - Hero: the category's own image is now a cover banner (h-36/40) with name, Live/Hidden chip and
+    slug over a scrim; "Change image" (instant §A20 upload, same endpoint) and "Settings" sit on
+    the banner. No image → the category's tint + big faint initials. Numbers strip (sub-categories ·
+    live · fields) + the master switch below.
+  - Sub-categories: tried a photo-card grid (rejected: a storefront, not a manager); now COMPACT
+    TILES, two per row from `md` — 56px image, name (click = edit, 2-line clamp), one facts line
+    (fields pill — amber "Add fields" when 0 —, "Service" only when not goods, #position,
+    Off / Returns with parent), switch, ⋮. Off tiles are dashed + greyed. Filter pills: All · Live ·
+    Off · Needs fields with counts (restore-intent aware while the parent is off). Grid needs
+    `grid-cols-[minmax(0,1fr)]` or the tiles overflow on phones.
+  - Rail: sticky on xl; header "All categories (n)" with a tinted "+ New" (the dashed button under
+    the rail is gone); rows are one line — thumb, name, Hidden chip, sub count on the right.
+  - Monograms are tinted per category (`monogramTone`, same hash as company marks).
+  - Buttons: "Add sub-category" / "New category" are compact tinted pills with a plus icon (the
+    big red shadowed button beside a section title "looked off").
+  - Settings drawer: summary card at the top and an image picker that uploads with Save
+    (`saveTop` chains the upload; an image-only save skips the PATCH). `FormStack` now wraps each
+    section — padding put on the children themselves landed inside boxed sections.
+  - Checked with a mocked tree (picsum images) — nothing written.
+- **2026-09-24 — Categories, its side panels and the Fields page redesigned.** UI only — no API,
+  permission or data-shape change.
+  - Categories page: admin header (title · count · one-line description; "+ New" on the title row
+    on phones); the desktop rail is one card with its own filter (names + keywords, like the phone
+    sheet) and a left-accent selected row; the uppercase "INACTIVE" tag became a `LiveChip`
+    (● Live / ● Hidden); the category card shows its `/category/slug` (a link only while live).
+  - Side panels (category settings · add/edit sub-category · new category): new `FormStack` in
+    `categoryFormParts.jsx` separates sections with hairlines; "Display order" shows "Last" when
+    empty; the new-category panel uses the shared `AddressLine`; the settings copy no longer says
+    "click the image" (the card has an Add/Replace image button).
+  - Fields page (`AttributeManager.jsx`): the 8-column sideways-scrolling table became Field (name +
+    key) | Type (+ unit / option count) | Rules (Required / Filter chips) | ⋮ from `lg`, cards below.
+    Add/edit panel: type as 4 described choice cards, options as chips (case kept — the keyword
+    input lower-cases), Required / Buyer filter as switches, `OrderInput`, subtitle names the
+    category. 🔴 Bug fixed: a save error rendered on the page BEHIND the drawer, so a failed save
+    looked like nothing happened — it now shows inside the panel. Unit is hidden for Yes/No fields.
+  - Checked with mocked responses (dev data has no fields) — nothing written.
+- **2026-09-24 — Verification queue + KYC viewer finalised.** Queue: a decision now shows a
+  self-hiding `FlashMessage` naming the company ("… is verified — the tick is live"; the card used
+  to vanish silently); tab title set. KYC viewer: success notes (approve/reject/request/delete/
+  revoke) are `FlashMessage`s, while the 409 "another reviewer decided it" stays a plain Alert
+  (it describes state — web-design "Confirmations disappear"); the reject modal says "Reject the
+  profile changes…" in change mode; the header bar is sticky only from `sm` (on phones it covered
+  a third of the screen); the request-documents checklist is one column on phones; tab title
+  carries the company name. Approve flow checked against mocked endpoints — no DB writes.
+- **2026-09-24 — KYC document viewer (`/admin/verification/:orgId/kyc`) redesigned.** UI only; every
+  permission gate, the signed-URL expiry overlay, the Aadhaar masking warning and all modals are
+  unchanged.
+  - Header: back link above the sticky bar; the bar carries `CompanyAvatar`, name + status, and
+    entity type / country / sent date with icons. Phones: Reject / Verify (or Request / Revoke)
+    split full width below.
+  - Open document requests show doc types by NAME ("GST certificate", not the raw key `gst`), with
+    the note on its own line. The change diff shows country and entity type by name too.
+  - Documents: one card with compact rows (selected = tint + left accent, "Previous · date" on
+    superseded ones). Below `lg` it becomes a sideways row of file chips so the preview is not a
+    screen down. Preview toolbar: icon-first Open / Delete (labels from `sm`).
+  - Gotcha: the sideways chip row inside an auto grid track stretched the grid past the screen on
+    phones and cut the preview off — the grid needs `grid-cols-[minmax(0,1fr)]` + `min-w-0`.
+  - Checked with mocked responses in the browser (the test DB has no org with documents) — no
+    audit rows were written by the check.
+  - "Show previous" (owner: previous files "look same as current"): superseded uploads now sit
+    AFTER the current ones under their own "Previous uploads (n)" divider, faded, with a dashed
+    file icon and a REPLACED tag (dashed chips on phones); opening one shows a "Previous upload —
+    not part of the current review" strip above the preview. The Documents count is current files only.
+- **2026-09-24 — Verification queue redesigned + 🔴 change re-verifications were never shown.**
+  - Bug: the queue loads first-time submissions AND profile changes (`change_pending`), but then
+    filtered rows on `verification === 'submitted'`. A change sits on a VERIFIED org (kycStatus stays
+    `verified`), so every change row was dropped — counted in the tab number, never listed, so
+    reviewers could not approve/reject them from here. Filter now keeps `kind === 'change'` too.
+  - Design: the Organisations header language (title + "N waiting" pill); the stat-tile tabs became a
+    segmented control with count badges; cards use `CompanyAvatar` (logo), the name links to the
+    org detail, the chip says "First verification" / "Profile change", facts carry icons (country,
+    entity type, submitted, documents — a 2-column grid on phones), and the old → new diff sits in
+    a tinted footer strip with country/entity type shown by name. Phones: View documents full width,
+    Reject / Verify split below. Checked with mocked responses in the browser (dev queue is empty) —
+    nothing written to the DB.
+- **2026-09-24 — Admin Users page redesigned + one ✕ per search box.**
+  - Users: the Organisations toolbar language (`ToolbarSearch` + `FilterChip` Role / Verification,
+    "Any" = no filter), cards below `lg`, a `table-fixed` table from `lg` (User | Verification |
+    Account | Joined (xl only) | ⋮). Role badge + email · mobile ride on the name's second line; the
+    Role and Mobile columns are gone. Account state is a chip; a blocked company tints the row. Click
+    anywhere on a row opens the details drawer. No backend change.
+  - Details drawer: role + account chips, then Contact / Company (logo, verification, "Open
+    company") / Account cards, and a footer with only what the viewer can do (Review KYC with
+    `kyc:view`, Deactivate/Activate for superadmin; no footer when neither).
+  - Double ✕: `type="search"` draws the browser's own clear button next to ours. `.search-own-clear`
+    (index.css) hides the native one on the 7 inputs that draw their own ✕; search boxes without a
+    custom ✕ keep the native one.
+- **2026-09-24 — Admin organisation detail on phones.** The stats strip was a sideways-scrolling
+  line that cut the third stat mid-word ("Takedowns all ti…"); it is now a 2-column grid (an odd
+  last stat spans both). The Block button moved top-right beside the logo (smaller on phones) and
+  the name sits under the logo at full width — the button used to hang alone under the chips.
+  The meta line (country · joined · slug) stays on ONE line on phones and never scrolls (a
+  sideways line read as a slider): 12px text, the "Joined"/"Verified" words drop on phones (the
+  icons carry them; screen readers still get them), the slug truncates. Wraps normally from `sm`.
+- **2026-09-24 — Admin organisation detail: the stats strip no longer leaves an empty cell.**
+  A buyer-only company (5 stats) in a fixed 3-column grid left a blank grey slot. Now: up to 5
+  stats sit in one row; more split into two rows (`ceil(n/2)` columns) and the last stat spans
+  any leftover cell (column count and span passed as CSS variables). Checked at 5 / 6 / 8 stats.
 - **2026-09-24 — Black given a JOB, so the product page and the search cards speak one vocabulary.**
   Owner: *"do with some black colour, maintaining consistency of the colours"*.
   - The rule is now complete and the same on both surfaces:
@@ -478,6 +796,59 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   mirrors the server's slug rule), and the new category is selected on create. 6 tests; the 22
   existing category tests still pass. Verified in a browser: create, duplicate refused, switch-on
   refused while empty. ⚠️ Deleting a top category is still not possible (not requested).
+  - 2026-09-24: **Dev-DB cleanup (owner: "delete organisation with 0 accounts" → confirmed as a one-off
+    cleanup, NOT a feature).** In the dev database only: 8 organisations with no user accounts (signup-test
+    leftovers — five "Nxtgendigitals", "NxtGen Digitals", "Fabrichub", "Fabrichubs", created 5–13 Aug)
+    deleted, with their 1 product ("Silk fabric"), its 1 conversation (25 messages), 1 enquiry and 1 saved
+    item. Each org re-checked for zero accounts at delete time. Audit rows kept (append-only). Search needs
+    no rebuild — its fields live on the product row. No admin "delete organisation" capability was added
+    (admins block, they don't delete — that would be a scope change).
+  - 2026-09-24: **Admin list toolbars — Organisations first** (owner: "fix the organisation screen search and
+    filter bars"). New shared primitives: `ui/ToolbarSearch.jsx` (white, bordered, rounded search) and
+    `ui/FilterChip.jsx` (a filter as a chip: white "Side ▾" when off, brand-tinted "Side: Exporter side ▾"
+    when on; menu positioned FIXED from the chip so the sideways-scrolling chip row can't clip it; closes
+    on outside click / Esc / scroll / resize; ↑↓ Enter Esc; pick-on-click like the shared Combobox).
+    Organisations: three full-width dropdowns → search + Side / Verification / State chips + "Clear
+    filters" when any is on. Phone: search full width, chips in one scrolling row (they wrapped 2+1 and cut
+    "Any verification" off). Same pattern exists on Users, Audit log, Products, Conversations, Attribute
+    manager and Error log — not converted yet.
+    Organisations TABLE fixed the same day (owner: "does this table need fixing?" → "do it"): at 1024px the
+    fixed columns (~37rem) crushed the company to "D.." — now ~27rem, company ≥240px at 1024; the side
+    badge moved from under the VERIFICATION chip to the company's second line (rows 85 → 69px);
+    Products + Takedowns merged into one "Activity" cell (takedowns shown only when > 0, in red); country
+    shown by name; the slug KEPT (names collide — the original reason for it); the whole row / card opens
+    the company (the name stays a real link; clicks on links, buttons and the ⋮ menu are ignored); cards
+    below lg (tablets too). No horizontal overflow at 1280 / 1024 / 768 / 375.
+    Organisation DETAIL page fixed the same day: two columns only from xl (at 1024 the right rail got ~230px
+    and clipped its values); counter pills scroll in one line on phones and zeros are muted; Block button
+    no longer full-width on phones; "Never captured (Phase 2): registrationNumber…" → plain English.
+    🔴 BUG FIXED: the Sides card said "Claims: not recorded — claim is not built" and the server hard-coded
+    `claimHistoryAvailable: false` while querying audit action `org.claim` — but D7 (built 2026-09-23)
+    writes `organisation.claim`, so every real claim was invisible to staff. Now both names are matched,
+    the flag is true, and each claim carries role / matchedOn / verifiedVia ("matched by phone · confirmed
+    by the company's email code"). The m5 test that pinned the broken behaviour was replaced (29/29).
+    Then (owner: "still UI too plain"): header gets a BANNER — the company's storefront `coverImage` when it
+    has one (now sent in the admin view; already public, so nothing new exposed; m5 field-list test
+    updated), otherwise `.org-banner` (soft rose/grey wash + dot texture; a solid red gradient was tried and
+    rejected: "plain red banner not looking good") — with a larger logo overlapping it and an icon meta line
+    (country · joined · verified · slug linking to the public supplier page). Counters became one STATS card
+    (icon + number + label, zeros muted, takedowns red): one scrolling line on phones (the 2026-08-18
+    reason for pills), an even grid from sm (4 across for 8, 3 for 6). Every section card gets an icon badge
+    and a sentence-case title. Gotcha: a negative margin does nothing on an inline span, and nothing either
+    on a flex item aligned `items-end` — the logo needed `block` + `items-start` to overlap.
+  - 2026-09-24: **Exporter "My products" screen redesigned, fully responsive** (owner: "enhance it", "make it
+    fully responsive and fix for small screen"). The five stat tiles were BOTH the filter and the D1/A15
+    quota (bars inside two tiles → uneven; cut off on phones) — split into a SEGMENTED filter bar with
+    counts (scrolls sideways on small screens) and a "Listing limits" card (unverified only; Live + Drafts
+    meters + Get verified). New name SEARCH: `GET /products/mine?q=` (escaped, case-insensitive, inside the
+    exporterOrgId scope; counts/caps stay whole) + `?q=` in the URL; 3 tests (`products-search.test.js`).
+    Publish = filled, Hide = secondary (was red outline vs plain text). Cards below lg (phones AND tablets —
+    the 820px table used to start at md and scrolled sideways on tablets); spacer so the floating chat
+    button never covers the last card. Checked at 375 / 820 / 1280 px — no horizontal overflow.
+    Follow-up (owner: filter and search "not clearly visible"): both now WHITE with a border and soft shadow
+    (grey fills vanished into the tinted canvas); the selected filter is a solid brand-red pill.
+    All rules kept: caps only while unverified, Live-count vs slots disagreement, no Blocked tab, All
+    excludes archived. App's product list not changed.
   - 2026-09-24: **HS code picker + Unit dropdown on the product form** (owner: "make hs code dropdown in new
     product add page", "make unit also text dropdown"). Decided: international 6-digit HS 2022 list; a
     typed 6–8 digit code allowed when not listed; web + app; I fetch the data. DATA: UN Comtrade public

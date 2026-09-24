@@ -529,13 +529,24 @@ export async function getOwnProduct({ user, id }) {
 // The seller's own list. `status` is optional — omitted means the "All" tab.
 // Counts and caps ride along on every page so the tabs and the meter can never
 // disagree with the rows, and so publishing refreshes all three in one call.
-export async function listMine({ user, status, page, pageSize }) {
+// Local, as in every service that builds a name regex from user input: the
+// query is data, never a pattern.
+function escapeRegex(input) {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export async function listMine({ user, status, q, page, pageSize }) {
   // No status = "All", and All EXCLUDES archived (owner, 2026-08-11): archived
   // rows are dead history and drowned the working list. They remain reachable
   // via ?status=archived — their tab/tile is the only window into them.
+  //
+  // `q` (2026-09-24) narrows the ROWS by name — escaped, case-insensitive, and
+  // inside the same exporterOrgId scope. The counts and caps stay whole: they
+  // describe the catalogue, not the search.
   const filter = {
     exporterOrgId: user.orgId,
     ...(status ? { status } : { status: { $ne: 'archived' } }),
+    ...(q ? { name: new RegExp(escapeRegex(q), 'i') } : {}),
   };
   const [rows, total, counts, caps] = await Promise.all([
     Product.find(filter)

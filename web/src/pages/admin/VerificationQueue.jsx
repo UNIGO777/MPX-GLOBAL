@@ -10,13 +10,25 @@ import { countryName } from '../../lib/countries.js';
 import { ENTITY_LABELS } from '../../lib/kycDocTypes.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
+import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { inputClasses } from '../../components/ui/Field.jsx';
-import { CheckCircleIcon, CheckIcon, DocIcon, InfoIcon, RefreshIcon } from '../../components/ui/icons.jsx';
+import {
+  BuildingIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  CheckIcon,
+  DocIcon,
+  GlobeIcon,
+  InfoIcon,
+  RefreshIcon,
+} from '../../components/ui/icons.jsx';
+import { CompanyAvatar } from '../../components/chat/CompanyAvatar.jsx';
+import { cp } from '../../lib/consolePath.js';
 
 /**
  * Verification queue (mockup: admin_verification_queue_stacked_with_modal).
@@ -43,6 +55,15 @@ export function VerificationQueue() {
   const [rejectTarget, setRejectTarget] = useState(null); // org row
   const [reason, setReason] = useState('');
   const [staleNotice, setStaleNotice] = useState(false);
+  // What was just decided (2026-09-24): the card used to vanish with no word
+  // of what happened. Self-hiding, per web-design "Confirmations disappear".
+  const [doneNote, setDoneNote] = useState(null);
+
+  useEffect(() => {
+    const previous = document.title;
+    document.title = 'Verification queue — MPX Global';
+    return () => { document.title = previous; };
+  }, []);
 
   const canDecide = tab === 'exporter' ? can(me, 'exporter:verify') : can(me, 'buyer:approve');
 
@@ -119,6 +140,15 @@ export function VerificationQueue() {
       } else if (action === 'approve') await adminApi.approveBuyer(org.id);
       else await adminApi.rejectBuyer(org.id, reasonText);
       setStaleNotice(false);
+      setDoneNote(
+        org.kind === 'change'
+          ? action === 'approve'
+            ? `${org.name}: changes approved — the new details are live.`
+            : `${org.name}: changes rejected — the company sees your reason.`
+          : action === 'approve'
+            ? `${org.name} is ${tab === 'exporter' ? 'verified' : 'approved'} — the tick is live.`
+            : `${org.name} was rejected — the company sees your reason and can resubmit.`,
+      );
       // Decided rows leave the queue immediately. Written into the query cache
       // rather than a parallel `useState` copy, so there is exactly one source
       // of truth for this list and a later refetch cannot resurrect the row.
@@ -149,7 +179,10 @@ export function VerificationQueue() {
   };
 
   const current = lists[tab];
-  const rows = (current?.organisations ?? []).filter((o) => o.verification === 'submitted');
+  // 🔴 A change re-verification is on a VERIFIED company (its kycStatus stays
+  // `verified` while the change waits), so filtering on `submitted` alone
+  // dropped every change row — counted in the tab, never shown (fixed 2026-09-24).
+  const rows = (current?.organisations ?? []).filter((o) => o.verification === 'submitted' || o.kind === 'change');
   const counts = {
     exporter: lists.exporter?.total ?? 0,
     buyer: lists.buyer?.total ?? 0,
@@ -172,24 +205,30 @@ export function VerificationQueue() {
 
   return (
     <AdminLayout>
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold leading-tight text-ink-900">Verification queue</h1>
+      <header className="mb-4 sm:mb-6">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h1 className="text-xl font-bold leading-tight text-ink-900 sm:text-2xl">Verification queue</h1>
+          <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+            {counts.exporter + counts.buyer} waiting
+          </span>
+        </div>
         <p className="mt-1 text-sm text-muted">
           Review submitted documents and decide who gets a verified tick.
         </p>
-      </div>
+      </header>
 
-      {/* Stat tiles ARE the tabs (M2 language, 2026-08-11) — same tablist
-          semantics and arrow-key behaviour as the underline strip they replace. */}
+      {/* Tabs as a SEGMENTED control with counts (2026-09-24) — the same
+          language as the exporter's product filter. Same tablist semantics and
+          arrow keys as before. */}
       <div
         role="tablist"
         aria-label="Queue"
         onKeyDown={onTabKeyDown}
-        className="grid grid-cols-2 gap-3 sm:max-w-[440px]"
+        className="mb-4 inline-flex w-full rounded-full border border-ink-200 bg-white p-1 shadow-sm sm:w-auto"
       >
         {[
-          { key: 'exporter', label: 'Exporters to verify' },
-          { key: 'buyer', label: 'Buyers to verify' },
+          { key: 'exporter', label: 'Exporters' },
+          { key: 'buyer', label: 'Buyers' },
         ].map((t) => {
           const on = tab === t.key;
           return (
@@ -202,16 +241,16 @@ export function VerificationQueue() {
               aria-selected={on}
               tabIndex={on ? 0 : -1}
               onClick={() => setTab(t.key)}
-              className={`rounded-xl border p-3.5 text-left transition-all ${
-                on
-                  ? 'border-primary-600 bg-primary-50 shadow-card ring-1 ring-primary-600'
-                  : 'border-surface-border bg-white hover:border-primary-400 hover:shadow-card'
+              className={`inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-full px-4 text-[13px] font-semibold transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/15 sm:flex-initial ${
+                on ? 'bg-primary-600 text-white' : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900'
               }`}
             >
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted">
-                {t.label}
-              </span>
-              <span className="mt-0.5 block text-2xl font-bold leading-tight text-ink-900">
+              {t.label}
+              <span
+                className={`min-w-[1.5rem] rounded-full px-1.5 py-px text-center text-[11px] font-bold tabular-nums ${
+                  on ? 'bg-white/20 text-white' : counts[t.key] ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
+                }`}
+              >
                 {counts[t.key]}
               </span>
             </button>
@@ -221,11 +260,6 @@ export function VerificationQueue() {
 
       {/* The panel the tabs control — labelled by whichever tab is selected. */}
       <div id="queue-panel" role="tabpanel" aria-labelledby={`queue-tab-${tab}`}>
-      <p className="mb-4 mt-4 text-sm text-muted">
-        {rows.length} {tab === 'exporter' ? 'exporter' : 'buyer'}
-        {rows.length === 1 ? '' : 's'} awaiting review
-      </p>
-
       {/* A 409 means someone else decided while this page was open. */}
       {staleNotice && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-surface-border bg-white px-5 py-4 shadow-card">
@@ -244,6 +278,12 @@ export function VerificationQueue() {
             <RefreshIcon className="h-4 w-4" /> Refresh
           </Button>
         </div>
+      )}
+
+      {doneNote && (
+        <FlashMessage className="mb-4" onDismiss={() => setDoneNote(null)}>
+          {doneNote}
+        </FlashMessage>
       )}
 
       {actionError && (
@@ -283,131 +323,135 @@ export function VerificationQueue() {
           !error &&
           rows.map((org) => {
             const d = detail[org.id];
-            const meta = [
-              { k: 'Country', v: countryName(org.country) || '—' },
-              {
-                k: 'Entity type',
-                v: d?.data ? (ENTITY_LABELS[d.data.company?.entityType] ?? '—') : d?.failed ? '—' : '…',
-              },
+            const pending = d?.data ? null : d?.failed ? '—' : '…';
+            const docCount = d?.data ? (d.data.verification?.kycDocumentCount ?? 0) : null;
+            const facts = [
+              { k: 'Country', Icon: GlobeIcon, v: countryName(org.country) || '—' },
+              { k: 'Entity type', Icon: BuildingIcon, v: pending ?? (ENTITY_LABELS[d.data.company?.entityType] ?? '—') },
               {
                 k: 'Submitted',
-                v: d?.data ? formatDate(d.data.verification?.submittedAt) : d?.failed ? '—' : '…',
+                Icon: CalendarIcon,
+                v: pending ?? (d.data.verification?.submittedAt ? formatDate(d.data.verification.submittedAt) : '—'),
+              },
+              {
+                k: 'Documents',
+                Icon: DocIcon,
+                v: docCount === null ? pending : `${docCount} document${docCount === 1 ? '' : 's'}`,
               },
             ];
-            const docCount = d?.data ? (d.data.verification?.kycDocumentCount ?? 0) : null;
             return (
-              <div
+              <article
                 key={org.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-surface-border bg-white px-4 py-4 shadow-card sm:px-5"
+                className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card"
               >
-                <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
-                  <span
-                    aria-hidden="true"
-                    className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-sm font-bold text-primary-700"
-                  >
-                    {org.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <h2 className="truncate text-base font-bold text-ink-900">{org.name}</h2>
-                      {org.kind === 'change' ? (
-                        <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
-                          <span className="text-[11px] font-semibold text-primary-700">Change re-verification</span>
-                        </span>
-                      ) : (
-                        <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-warning-50 px-2.5 py-0.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-warning" />
-                          <span className="text-[11px] font-semibold text-warning-800">Awaiting review</span>
-                        </span>
-                      )}
-                    </div>
-                    {/* The old → new diff a change decision is ABOUT. Verified
-                        company keeps trading either way; only these move. */}
-                    {org.kind === 'change' && d?.data?.pendingChanges && (
-                      <dl className="mt-2 space-y-0.5 rounded-lg bg-primary-50/50 px-3 py-2">
-                        {d.data.pendingChanges.changedFields.map((f) => {
-                          const fmt = (v) =>
-                            f === 'address'
-                              ? Object.values(v ?? {}).filter((x) => typeof x === 'string' && x).join(', ') || '—'
-                              : String(v ?? '—');
-                          return (
-                            <div key={f} className="flex flex-wrap items-baseline gap-1.5 text-[12.5px]">
-                              <dt className="font-semibold capitalize text-ink-800">
-                                {f === 'entityType' ? 'Entity type' : f}:
-                              </dt>
-                              <dd className="text-ink-600">
-                                <span className="line-through decoration-ink-300">{fmt(d.data.pendingChanges.current[f])}</span>
-                                <span aria-hidden="true" className="mx-1 text-ink-400">→</span>
-                                <span className="font-medium text-ink-900">{fmt(d.data.pendingChanges.requested[f])}</span>
-                              </dd>
-                            </div>
-                          );
-                        })}
-                      </dl>
-                    )}
-                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">
-                      {meta.map(({ k, v }, i) => (
-                        <span key={k} className="flex items-center gap-2">
-                          {i > 0 && <span aria-hidden="true" className="text-ink-300">·</span>}
-                          <span>
-                            <span className="sr-only">{k}: </span>
-                            {v}
+                <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center">
+                  <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+                    <CompanyAvatar name={org.name} logo={org.logo} size="lg" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          to={cp(`/admin/organisations/${org.id}`)}
+                          className="min-w-0 break-words text-base font-bold leading-snug text-ink-900 hover:text-primary-700 hover:underline sm:truncate"
+                        >
+                          {org.name}
+                        </Link>
+                        {org.kind === 'change' ? (
+                          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary-700">
+                            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-primary-500" />
+                            Profile change
                           </span>
-                        </span>
-                      ))}
-                      <span aria-hidden="true" className="text-ink-300">·</span>
-                      <span className="flex items-center gap-1.5">
-                        <DocIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                        {docCount === null
-                          ? 'Loading documents…'
-                          : `${docCount} document${docCount === 1 ? '' : 's'}`}
-                      </span>
-                    </p>
+                        ) : (
+                          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-warning-50 px-2.5 py-0.5 text-[11px] font-semibold text-warning-800">
+                            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-warning" />
+                            First verification
+                          </span>
+                        )}
+                      </div>
+                      {/* Facts with icons; a 2-column grid on phones so they
+                          line up instead of wrapping into a ragged sentence. */}
+                      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[13px] text-ink-600 sm:flex sm:flex-wrap sm:gap-x-5">
+                        {facts.map(({ k, Icon, v }) => (
+                          <div key={k} className="flex min-w-0 items-center gap-1.5">
+                            <dt className="shrink-0">
+                              <Icon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+                              <span className="sr-only">{k}</span>
+                            </dt>
+                            <dd className="truncate">{v}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  </div>
+
+                  {/* Phones: documents on its own row, the decision pair split
+                      below it (a shrink-0 cluster beside the text once clipped
+                      "Verify" off-screen — QA, 2026-08-14). lg+: one row. */}
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center lg:shrink-0 lg:flex-nowrap">
+                    {can(me, 'kyc:view') && (
+                      <Link
+                        to={cp(`/admin/verification/${org.id}/kyc`)}
+                        className="col-span-2 inline-flex h-9 items-center justify-center gap-2 rounded-full border border-ink-200 bg-white px-4 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50"
+                      >
+                        <DocIcon className="h-4 w-4" aria-hidden="true" />
+                        View documents
+                      </Link>
+                    )}
+                    {canDecide && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="dangerOutline"
+                          disabled={processing === org.id}
+                          onClick={() => {
+                            setReason('');
+                            setRejectTarget(org);
+                          }}
+                        >
+                          {org.kind === 'change' ? 'Reject changes' : 'Reject'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="success"
+                          loading={processing === org.id}
+                          onClick={() => decide(org, 'approve')}
+                        >
+                          <CheckIcon className="h-4 w-4" />
+                          {org.kind === 'change' ? 'Approve changes' : tab === 'exporter' ? 'Verify' : 'Approve'}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* Phones: the cluster takes its own full-width row (a shrink-0
-                    cluster beside flex-1 text overflowed the card and clipped
-                    "Verify" off-screen — QA, 2026-08-14). sm+: unchanged. */}
-                <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
-                  {can(me, 'kyc:view') && (
-                    <Link
-                      to={`/admin/verification/${org.id}/kyc`}
-                      className="flex h-9 w-full items-center justify-center gap-2 rounded-full border border-surface-border bg-white px-4 text-sm font-semibold text-ink-900 transition-colors hover:bg-ink-50 sm:w-auto"
-                    >
-                      <DocIcon className="h-4 w-4" />
-                      View documents
-                    </Link>
-                  )}
-                  {canDecide && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="dangerOutline"
-                        className="flex-1 sm:flex-initial"
-                        disabled={processing === org.id}
-                        onClick={() => {
-                          setReason('');
-                          setRejectTarget(org);
-                        }}
-                      >
-                        {org.kind === 'change' ? 'Reject changes' : 'Reject'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="success"
-                        className="flex-1 sm:flex-initial"
-                        loading={processing === org.id}
-                        onClick={() => decide(org, 'approve')}
-                      >
-                        <CheckIcon className="h-4 w-4" />
-                        {org.kind === 'change' ? 'Approve changes' : tab === 'exporter' ? 'Verify' : 'Approve'}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
+                {/* The old → new diff a change decision is ABOUT. The verified
+                    company keeps trading either way; only these fields move. */}
+                {org.kind === 'change' && d?.data?.pendingChanges && (
+                  <dl className="space-y-1.5 border-t border-surface-border bg-ink-50/50 px-4 py-3 sm:px-5">
+                    {d.data.pendingChanges.changedFields.map((f) => {
+                      const fmt = (v) =>
+                        f === 'address'
+                          ? Object.values(v ?? {}).filter((x) => typeof x === 'string' && x).join(', ') || '—'
+                          : f === 'entityType'
+                            ? (ENTITY_LABELS[v] ?? String(v ?? '—'))
+                            : f === 'country'
+                              ? (countryName(v) ?? String(v ?? '—'))
+                              : String(v ?? '—');
+                      return (
+                        <div key={f} className="grid gap-0.5 text-[13px] sm:grid-cols-[8rem_1fr] sm:gap-3">
+                          <dt className="font-semibold capitalize text-ink-700">
+                            {f === 'entityType' ? 'Entity type' : f}
+                          </dt>
+                          <dd className="min-w-0 text-ink-600">
+                            <span className="line-through decoration-ink-300">{fmt(d.data.pendingChanges.current[f])}</span>
+                            <span aria-hidden="true" className="mx-1.5 text-ink-400">→</span>
+                            <span className="font-semibold text-ink-900">{fmt(d.data.pendingChanges.requested[f])}</span>
+                          </dd>
+                        </div>
+                      );
+                    })}
+                  </dl>
+                )}
+              </article>
             );
           })}
         </div>

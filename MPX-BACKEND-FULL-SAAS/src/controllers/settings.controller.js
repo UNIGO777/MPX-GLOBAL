@@ -26,3 +26,8 @@ export async function updateSettings(req, res) {
   });
   res.json({ settings });
 }
+
+/** Public: the support email + phone only (see settingsService.getSupportContact). */
+export async function getSupportContact(req, res) {
+  res.json({ support: await settingsService.getSupportContact() });
+}

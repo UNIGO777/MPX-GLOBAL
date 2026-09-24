@@ -108,14 +108,20 @@ describe('M5-A · the two new permission strings are in the catalogue', () => {
   // 14th — `featured:manage`, owner-decided 2026-08-01 (FINALIZE F5b): grantable
   // like `category:manage`, because curating the landing page is content work,
   // not governance — it cannot change anyone's access and it is fully audited.
-  it('the catalogue is exactly the fourteen decided strings — a fifteenth needs an owner decision first', () => {
+  // Support + `lead:manage` are the owner's decisions of 2026-09-24 (Module 6
+  // completion). The same day the owner split support into read / reply /
+  // assign / status, split `conversation:warn` from `conversation:block`, and
+  // added `reports:team` — 21 strings. A 22nd still needs its own decision.
+  it('the catalogue is exactly the twenty-one decided strings — another needs an owner decision first', () => {
     expect(Object.values(PERMISSIONS).sort()).toEqual(
       [
         'buyer:approve', 'exporter:verify', 'user:read', 'kyc:view',
         'category:read', 'category:manage', 'product:read', 'product:takedown',
-        'conversation:read', 'conversation:block',
+        'conversation:read', 'conversation:block', 'conversation:warn',
         'organisation:read', 'audit:read',
         'errorlog:read', 'featured:manage',
+        'support:read', 'support:reply', 'support:assign', 'support:status',
+        'lead:manage', 'reports:team',
       ].sort(),
     );
   });

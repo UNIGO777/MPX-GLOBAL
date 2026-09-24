@@ -15,6 +15,8 @@ const SIZES = {
   sm: 'h-9 w-9 text-[12px] rounded-xl',
   md: 'h-10 w-10 text-[13px] rounded-xl',
   lg: 'h-11 w-11 text-sm rounded-xl',
+  // The admin organisation header's mark, overlapping its banner (2026-09-24).
+  xl: 'h-16 w-16 text-lg rounded-2xl',
 };
 
 export function initialsOf(name = '') {

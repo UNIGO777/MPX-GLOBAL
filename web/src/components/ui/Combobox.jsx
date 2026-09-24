@@ -208,7 +208,10 @@ export function Combobox({
                 // scroll swipe select-and-close (QA, 2026-08-14). A click never
                 // fires when the touch turned into a scroll.
                 onPointerDown={(e) => e.preventDefault()}
-                onClick={() => pick(o)}
+                // A pointer pick is done with the field — let go of focus so it
+                // stops looking active (owner, 2026-09-24). Enter keeps focus for
+                // keyboard users.
+                onClick={() => { pick(o); inputRef.current?.blur(); }}
                 onPointerEnter={() => setHi(i)}
                 className={`flex w-full items-baseline justify-between gap-4 whitespace-normal px-3 py-2 text-left text-sm ${
                   i === hi ? 'bg-primary-50' : ''

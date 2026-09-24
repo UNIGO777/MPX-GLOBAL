@@ -10,6 +10,7 @@ import { can } from '../../auth/roleHome.js';
 import { apiError, formatDate } from '../../lib/format.js';
 import { countryName } from '../../lib/countries.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
+import { InternalNotes } from '../../components/support/InternalNotes.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { CompanyAvatar } from '../../components/chat/CompanyAvatar.jsx';
@@ -27,7 +28,14 @@ import {
   FileIcon,
   ListIcon,
   UsersIcon,
+  BuildingIcon,
+  CalendarIcon,
+  GlobeIcon,
+  InfoIcon,
+  ShieldIcon,
+  TagIcon,
 } from '../../components/ui/icons.jsx';
+import { cp } from '../../lib/consolePath.js';
 
 /**
  * M5 screen 15 — the Organisation detail: a company's whole file.
@@ -67,11 +75,25 @@ function formatAddress(address) {
   return parts.length > 0 ? parts.join(', ') : null;
 }
 
-function Section({ title, children, action = null }) {
+/**
+ * A card of the record. Redesigned 2026-09-24 (owner: "UI too plain"): an icon
+ * badge and a real title instead of a tiny grey uppercase label — eight cards
+ * that all opened with the same grey word read as one undifferentiated form.
+ * `tone="danger"` is for the card about blocking.
+ */
+function Section({ title, icon: Icon, tone = 'default', children, action = null }) {
+  const badge = tone === 'danger' ? 'bg-danger-50 text-danger-700' : 'bg-primary-50 text-primary-700';
   return (
     <section className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
-      <div className="flex items-center justify-between gap-3 border-b border-surface-border px-4 py-3 sm:px-5">
-        <h2 className="text-[13px] font-bold uppercase tracking-wider text-ink-500">{title}</h2>
+      <div className="flex items-center justify-between gap-3 border-b border-surface-border bg-ink-50/40 px-4 py-3 sm:px-5">
+        <h2 className="flex min-w-0 items-center gap-2.5 text-[15px] font-semibold text-ink-900">
+          {Icon && (
+            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${badge}`}>
+              <Icon className="h-4 w-4" aria-hidden="true" />
+            </span>
+          )}
+          <span className="truncate">{title}</span>
+        </h2>
         {action}
       </div>
       <div className="p-4 sm:p-5">{children}</div>
@@ -121,36 +143,41 @@ function Row({ label, children }) {
 }
 
 /**
- * One number in the strip under the header — a PILL, not a card (owner,
- * 2026-08-18).
+ * One number in the stats STRIP under the header (2026-09-24 — was a row of
+ * bordered pills). Still one line: the strip scrolls sideways on phones rather
+ * than stacking, which is what the pills existed to avoid (owner, 2026-08-18) —
+ * but each number now sits over its label with a tinted icon, so the strip
+ * reads as a dashboard line instead of a row of tags.
  *
- * Five bordered tiles was a lot of furniture for five small numbers: on a phone
- * they became a 2-up grid three rows deep, pushing the actual record below the
- * fold. As pills they wrap into one or two lines and read as a summary line,
- * which is what they are.
- *
- * §3 — a count still links to the list it counts wherever one exists; the two
- * with no list behind them render as plain pills rather than links to nowhere.
+ * §3 — a count links to the list it counts wherever one exists. A zero is
+ * muted; a takedown above zero turns red.
  */
-function Pill({ to, value, label, Icon, tone = 'default' }) {
+function Stat({ to, value, label, Icon, tone = 'default' }) {
   const danger = tone === 'danger';
   const body = (
     <>
-      <Icon
-        className={`h-3.5 w-3.5 shrink-0 ${danger ? 'text-danger-500' : 'text-ink-400'}`}
-        aria-hidden="true"
-      />
-      <span className="text-[12px] font-medium text-ink-600">{label}</span>
-      <span className={`text-[15px] font-bold leading-none ${danger ? 'text-danger-700' : 'text-ink-900'}`}>
-        {value}
+      <span
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+          danger ? 'bg-danger-50 text-danger-600' : value ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-400'
+        }`}
+      >
+        <Icon className="h-4 w-4" aria-hidden="true" />
+      </span>
+      <span className="min-w-0">
+        <span
+          className={`block text-lg font-bold leading-tight tabular-nums ${
+            danger ? 'text-danger-700' : value ? 'text-ink-900' : 'text-ink-400'
+          }`}
+        >
+          {value}
+        </span>
+        <span className="block text-[11.5px] font-medium leading-snug text-muted">{label}</span>
       </span>
     </>
   );
-  const shell = `inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 ${
-    danger ? 'border-danger-200 bg-danger-50/60' : 'border-surface-border bg-white'
-  }`;
+  const shell = 'flex min-w-0 flex-1 items-center gap-2.5 bg-white px-3.5 py-3 sm:px-4';
   return to ? (
-    <Link to={to} className={`${shell} transition-colors hover:border-primary-300 hover:bg-primary-50/50`}>
+    <Link to={to} className={`${shell} transition-colors hover:bg-ink-50/80`}>
       {body}
     </Link>
   ) : (
@@ -159,6 +186,22 @@ function Pill({ to, value, label, Icon, tone = 'default' }) {
 }
 
 const SIDE_LABEL = { buyer: 'Buyer', exporter: 'Exporter' };
+
+// Plain-English names for the identity fields nothing collects yet — the list
+// used to print the raw keys ("registrationNumber, taxId") to staff.
+const NOT_CAPTURED_LABEL = {
+  registrationNumber: 'registration number',
+  website: 'website',
+  taxId: 'tax ID',
+  establishedYear: 'year established',
+  authorisedSignatory: 'authorised signatory',
+};
+
+const CLAIM_MATCH = { email: 'matched by email', mobile: 'matched by phone', both: 'matched by email and phone' };
+const CLAIM_PROOF = {
+  own_email: 'their own email was the company’s',
+  org_email_otp: 'confirmed by the company’s email code',
+};
 
 export function OrganisationDetail() {
   const { id } = useParams();
@@ -228,10 +271,50 @@ export function OrganisationDetail() {
   const reviewed = verification.reviewedSides ?? [];
   const unreviewed = ['buyer', 'exporter'].filter((s) => sides[s] && !reviewed.includes(s));
 
+  // The stats strip, as a flat list so the grid can size itself to how many
+  // there are (products and buyer activity only exist for some companies).
+  const stats = [
+    products && (
+      <Stat key="live" to={cp(`/admin/products?seller=${header.id}`)} value={products.active ?? 0} label="Live products" Icon={BoxIcon} />
+    ),
+    products && (
+      <Stat
+        key="down"
+        to={cp(`/admin/products?seller=${header.id}&status=blocked`)}
+        value={products.blocked ?? 0}
+        label="Taken down"
+        Icon={AlertIcon}
+        tone={products.blocked > 0 ? 'danger' : 'default'}
+      />
+    ),
+    products && (
+      <Stat
+        key="alltime"
+        value={products.takedownCount ?? 0}
+        label="Takedowns all time"
+        Icon={AlertIcon}
+        tone={products.takedownCount > 0 ? 'danger' : 'default'}
+      />
+    ),
+    <Stat key="cb" to={cp(`/admin/conversations?orgId=${header.id}&side=buyer`)} value={chats.asBuyer ?? 0} label="Chats as buyer" Icon={ChatIcon} />,
+    <Stat key="ce" to={cp(`/admin/conversations?orgId=${header.id}&side=exporter`)} value={chats.asExporter ?? 0} label="Chats as exporter" Icon={ChatIcon} />,
+    buyerActivity && (
+      <Stat key="enq" to={cp(`/admin/conversations?orgId=${header.id}&side=buyer`)} value={buyerActivity.enquiriesSent ?? 0} label="Enquiries sent" Icon={ChatIcon} />
+    ),
+    buyerActivity && <Stat key="saved" value={buyerActivity.savedItems ?? 0} label="Saved items" Icon={BoxIcon} />,
+    <Stat key="acc" value={users.length} label={users.length === 1 ? 'Account' : 'Accounts'} Icon={UsersIcon} />,
+  ].filter(Boolean);
+  // Never an empty cell (owner, 2026-09-24: "here it leaves empty space" — 5
+  // stats in 3 columns left a grey hole). ≤5 → one row of all of them; more →
+  // two rows, and the LAST stat stretches over whatever the second row lacks.
+  const statCols = stats.length <= 5 ? stats.length : Math.ceil(stats.length / 2);
+  const statGap = statCols * Math.ceil(stats.length / statCols) - stats.length;
+  const oddOnPhone = stats.length % 2 === 1;
+
   return (
     <AdminLayout>
       <Link
-        to="/admin/organisations"
+        to={cp('/admin/organisations')}
         className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-600 hover:text-primary-700"
       >
         <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
@@ -255,52 +338,103 @@ export function OrganisationDetail() {
         </div>
       )}
 
-      <header className="mb-5 flex flex-col gap-4 rounded-2xl border border-surface-border bg-white p-4 shadow-card sm:flex-row sm:items-start sm:gap-5 sm:p-5">
-        {/* 🔴 The mark and the identity are ONE unit and stay on one row at every
-            width — stacking them below `sm` spent a whole row on a 44px tile and
-            pushed the name down the page. The type steps down instead. */}
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <span className="mt-0.5 shrink-0">
-            <CompanyAvatar name={header.name} logo={company.logo} size="md" />
-          </span>
-          <div className="min-w-0 flex-1">
-          {/* 🔴 The name owns its line. The chips used to sit INLINE with it, so
-              a 24px heading and an 11px badge shared a baseline and the row
-              wrapped mid-title on a phone. They are a set — status, blocked,
-              side — so they get a row of their own, at ONE size: they were three
-              different paddings and three different text sizes, which read as
-              three unrelated things rather than one company's state. */}
-          <h1 className="text-[17px] font-bold leading-tight text-ink-900 sm:text-2xl">{header.name}</h1>
-
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <StatusChip status={header.verified ? 'verified' : verification.status} />
-            {blocked && (
-              <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-danger-50 px-3 py-1.5 text-[13px] font-semibold text-danger-700">
-                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-danger-500" />
-                Blocked
-              </span>
-            )}
-            <span className="inline-flex items-center whitespace-nowrap rounded-full bg-ink-100 px-3 py-1.5 text-[13px] font-medium text-ink-700">
-              {sides.both ? 'Buyer + Exporter' : sides.exporter ? 'Exporter' : sides.buyer ? 'Buyer' : 'No side'}
+      {/* Header (2026-09-24 redesign): a BANNER — the company's own storefront
+          cover when it has one, a brand gradient otherwise — with the mark
+          overlapping it. The page used to open on a plain white box that looked
+          like every other card below it. */}
+      <header className="mb-5 overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
+        <div
+          className={`h-20 border-b border-surface-border bg-cover bg-center sm:h-24 ${company.coverImage ? '' : 'org-banner'}`}
+          style={company.coverImage ? { backgroundImage: `url(${company.coverImage})` } : undefined}
+          aria-hidden="true"
+        />
+        {/* `relative`: on phones the Block button sits top-right, level with
+            the mark (2026-09-24) — under the name it hung alone on its own row. */}
+        <div className="relative flex flex-col gap-4 px-4 pb-4 sm:flex-row sm:items-center sm:gap-5 sm:px-6 sm:pb-5">
+          {/* items-START: with items-end a negative top margin cannot lift the
+              mark (the bottom edge is what gets aligned), so it never overlapped.
+              Phones stack the name UNDER the mark so a long name gets the full width. */}
+          <div className="flex min-w-0 flex-1 flex-col items-start gap-3 sm:flex-row sm:gap-4">
+            {/* `block`: a negative margin on an inline span does nothing — the
+                mark sat UNDER the banner instead of overlapping it. */}
+            <span className="-mt-8 block shrink-0 rounded-2xl bg-white p-1 shadow-card sm:-mt-10">
+              <CompanyAvatar name={header.name} logo={company.logo} size="xl" />
             </span>
+            <div className="w-full min-w-0 flex-1 sm:w-auto sm:pt-3">
+              <h1 className="truncate text-xl font-bold leading-tight text-ink-900 sm:text-2xl">{header.name}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <StatusChip status={header.verified ? 'verified' : verification.status} />
+                {blocked && (
+                  <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-danger-600 px-3 py-1 text-[12.5px] font-semibold text-white">
+                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-white" />
+                    Blocked
+                  </span>
+                )}
+                <span className="inline-flex items-center whitespace-nowrap rounded-full bg-ink-100 px-3 py-1 text-[12.5px] font-medium text-ink-700">
+                  {sides.both ? 'Buyer + Exporter' : sides.exporter ? 'Exporter' : sides.buyer ? 'Buyer' : 'No side'}
+                </span>
+              </div>
+            </div>
           </div>
-          <p className="mt-2 text-sm text-muted">
-            {header.slug ? <code className="font-mono text-xs">{header.slug}</code> : 'No slug'}
-            {header.verified && header.verifiedAt ? ` · Verified ${formatDate(header.verifiedAt)}` : ''}
-            {header.createdAt ? ` · Joined ${formatDate(header.createdAt)}` : ''}
-          </p>
-          </div>
+
+          {isSuperadmin && (
+            <Button
+              variant={blocked ? 'primary' : 'danger'}
+              // Its own size on phones too — full width made the one
+              // destructive action the biggest thing on the header.
+              size="sm"
+              className="absolute right-4 top-3 sm:static sm:h-12 sm:px-6 sm:text-base"
+              onClick={() => { setReason(''); setBlockOpen(true); }}
+            >
+              {blocked ? 'Unblock company' : 'Block company'}
+            </Button>
+          )}
         </div>
 
-        {isSuperadmin && (
-          <Button
-            variant={blocked ? 'primary' : 'danger'}
-            className="w-full sm:w-auto"
-            onClick={() => { setReason(''); setBlockOpen(true); }}
-          >
-            {blocked ? 'Unblock company' : 'Block company'}
-          </Button>
-        )}
+        {/* Meta line, each fact with its icon. */}
+        {/* ONE line on phones (owner, 2026-09-24): the slug used to drop onto a
+            row of its own, and a sideways-scrolling line read as a slider. Phones
+            drop the "Joined"/"Verified" words (the icons carry them) and the slug
+            truncates — never a scroll. */}
+        <div className="flex items-center gap-x-2.5 overflow-hidden whitespace-nowrap border-t border-surface-border px-4 py-3 text-[12px] text-ink-600 sm:flex-wrap sm:gap-x-5 sm:gap-y-2 sm:whitespace-normal sm:px-6 sm:text-[13px] [&>*]:shrink-0 [&>a:last-child]:min-w-[3.5rem] [&>a:last-child]:shrink [&>span:last-child]:min-w-[3.5rem] [&>span:last-child]:shrink">
+          {company.country && (
+            <span className="inline-flex items-center gap-1.5">
+              <GlobeIcon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+              {countryName(company.country) ?? company.country}
+            </span>
+          )}
+          {header.createdAt && (
+            <span className="inline-flex items-center gap-1.5" title="Joined">
+              <CalendarIcon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+              <span className="sr-only sm:not-sr-only">Joined </span>{formatDate(header.createdAt)}
+            </span>
+          )}
+          {header.verified && header.verifiedAt && (
+            <span className="inline-flex items-center gap-1.5 text-success-700" title="Verified">
+              <ShieldIcon className="h-4 w-4" aria-hidden="true" />
+              <span className="sr-only sm:not-sr-only">Verified </span>{formatDate(header.verifiedAt)}
+            </span>
+          )}
+          {header.slug && (
+            sides.exporter ? (
+              <a
+                href={`/supplier/${header.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-w-0 items-center gap-1.5 font-medium text-primary-700 hover:underline"
+              >
+                <TagIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="truncate font-mono text-[12px]">{header.slug}</span>
+                <ExternalIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+              </a>
+            ) : (
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <TagIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                <span className="truncate font-mono text-[12px]">{header.slug}</span>
+              </span>
+            )
+          )}
+        </div>
       </header>
 
       {blocked && header.blockReason && (
@@ -317,61 +451,42 @@ export function OrganisationDetail() {
           answer it — not a row inside a section three scrolls down. Every tile
           that has a list behind it links to that list already filtered (§3: a
           count that cannot be clicked through is a dead end). */}
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        {products && (
-          <>
-            <Pill to={`/admin/products?seller=${header.id}`} value={products.active ?? 0} label="Live products" Icon={BoxIcon} />
-            <Pill
-              to={`/admin/products?seller=${header.id}&status=blocked`}
-              value={products.blocked ?? 0}
-              label="Taken down"
-              Icon={AlertIcon}
-              tone={products.blocked > 0 ? 'danger' : 'default'}
-            />
-            <Pill
-              value={products.takedownCount ?? 0}
-              label="Takedowns all time"
-              Icon={AlertIcon}
-              tone={products.takedownCount > 0 ? 'danger' : 'default'}
-            />
-          </>
+      {/* Phones: two columns (2026-09-24) — the old sideways-scrolling line cut
+          the third stat mid-word and hid the rest. sm and up: an even grid. 1px
+          gaps over the border colour draw the dividers, so it reads as one card. */}
+      <div
+        className="mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-surface-border bg-surface-border shadow-card sm:[grid-template-columns:repeat(var(--stat-cols),minmax(0,1fr))]"
+        style={{ '--stat-cols': statCols }}
+      >
+        {stats.map((node, i) =>
+          i === stats.length - 1 && (statGap > 0 || oddOnPhone) ? (
+            <div
+              key={node.key}
+              className={`flex ${oddOnPhone ? 'col-span-2' : ''} ${statGap > 0 ? 'sm:[grid-column:span_var(--last-span)]' : 'sm:col-span-1'}`}
+              style={{ '--last-span': statGap + 1 }}
+            >
+              {node}
+            </div>
+          ) : (
+            node
+          ),
         )}
-        <Pill
-          to={`/admin/conversations?orgId=${header.id}&side=buyer`}
-          value={chats.asBuyer ?? 0}
-          label="Chats as buyer"
-          Icon={ChatIcon}
-        />
-        <Pill
-          to={`/admin/conversations?orgId=${header.id}&side=exporter`}
-          value={chats.asExporter ?? 0}
-          label="Chats as exporter"
-          Icon={ChatIcon}
-        />
-        {buyerActivity && (
-          <>
-            <Pill
-              to={`/admin/conversations?orgId=${header.id}&side=buyer`}
-              value={buyerActivity.enquiriesSent ?? 0}
-              label="Enquiries sent"
-              Icon={ChatIcon}
-            />
-            <Pill value={buyerActivity.savedItems ?? 0} label="Saved items" Icon={BoxIcon} />
-          </>
-        )}
-        <Pill value={users.length} label={users.length === 1 ? 'Account' : 'Accounts'} Icon={UsersIcon} />
       </div>
 
-      <div className="grid items-start gap-5 lg:grid-cols-3">
+      {/* Two columns only from xl (2026-09-24). At lg (1024px with the sidebar
+          open) the rail got ~230px and clipped its values; below xl the rail
+          cards stack under the record instead. */}
+      <div className="grid items-start gap-5 xl:grid-cols-3">
         {/* The record — read top to bottom in the order the questions come:
             is this company trustworthy, who are they, what do they have. */}
-        <div className="grid gap-5 lg:col-span-2">
+        <div className="grid gap-5 xl:col-span-2">
           <Section
             title="Verification"
+            icon={ShieldIcon}
             action={
               can(me, 'kyc:view') && verification.kycDocumentCount > 0 ? (
                 <Link
-                  to={`/admin/verification/${header.id}/kyc`}
+                  to={cp(`/admin/verification/${header.id}/kyc`)}
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:underline"
                 >
                   <FileIcon className="h-4 w-4" aria-hidden="true" />
@@ -430,7 +545,7 @@ export function OrganisationDetail() {
             </dl>
           </Section>
 
-          <Section title="Company">
+          <Section title="Company" icon={BuildingIcon}>
             {/* Two columns of short facts instead of one long ladder — the values
                 are a word each and were costing a full row apiece. */}
             <dl className="grid grid-cols-2 items-start gap-x-6 gap-y-4 sm:grid-cols-3">
@@ -451,7 +566,7 @@ export function OrganisationDetail() {
             )}
             {notCaptured?.length > 0 && (
               <p className="mt-3 text-xs text-muted">
-                Never captured (identity capture is Phase 2): {notCaptured.join(', ')}.
+                Not collected yet: {notCaptured.map((k) => NOT_CAPTURED_LABEL[k] ?? k).join(', ')}.
               </p>
             )}
           </Section>
@@ -459,9 +574,10 @@ export function OrganisationDetail() {
           {products && (
             <Section
               title="Catalogue"
+              icon={BoxIcon}
               action={
                 <div className="flex items-center gap-3">
-                  <Link to={`/admin/products?seller=${header.id}`} className="text-sm font-semibold text-primary-700 hover:underline">
+                  <Link to={cp(`/admin/products?seller=${header.id}`)} className="text-sm font-semibold text-primary-700 hover:underline">
                     Open in monitoring
                   </Link>
                   {header.slug && (
@@ -508,7 +624,7 @@ export function OrganisationDetail() {
             </Section>
           )}
 
-          <Section title={`Accounts (${users.length})`}>
+          <Section title={`Accounts (${users.length})`} icon={UsersIcon}>
             {users.length === 0 ? (
               <p className="text-sm text-muted">No accounts on this company.</p>
             ) : (
@@ -539,25 +655,32 @@ export function OrganisationDetail() {
 
         {/* The rail — reference, not decisions. */}
         <div className="grid gap-5">
-          <Section title="Sides">
+          {/* Step 1c · staff-only notes on this company (page is organisation:read). */}
+          <InternalNotes subjectType="organisation" subjectId={header.id} />
+          <Section title="Sides" icon={TagIcon}>
             <dl>
               <Row label="Buyer">{sides.buyer ? 'Enabled' : <span className="text-ink-400">Not enabled</span>}</Row>
               <Row label="Exporter">{sides.exporter ? 'Enabled' : <span className="text-ink-400">Not enabled</span>}</Row>
               <Row label="Signed up">{sides.signupAt ? formatDate(sides.signupAt) : null}</Row>
               <Row label="Claims">
+                {/* D7 is built — each claim says who joined and HOW (2026-09-24;
+                    the old copy said "claim is not built"). */}
                 {sides.claimHistoryAvailable === false ? (
-                  <span className="text-ink-400">Not recorded — claim is not built</span>
+                  <span className="text-ink-400">Not recorded</span>
                 ) : sides.claimHistory?.length > 0 ? (
                   sides.claimHistory.map((c, i) => (
-                    <span key={i} className="block">
-                      {formatDate(c.at)}
-                      {c.byUserId && (
-                        <code className="ml-2 font-mono text-[11px] text-ink-500">{c.byUserId}</code>
+                    <span key={i} className="block py-0.5">
+                      <span className="font-medium text-ink-900">{formatDate(c.at)}</span>
+                      {c.role && <span> · {SIDE_LABEL[c.role] ?? c.role}</span>}
+                      {(c.matchedOn || c.verifiedVia) && (
+                        <span className="block text-xs text-muted">
+                          {[CLAIM_MATCH[c.matchedOn], CLAIM_PROOF[c.verifiedVia]].filter(Boolean).join(' · ')}
+                        </span>
                       )}
                     </span>
                   ))
                 ) : (
-                  <span className="text-ink-400">No claims recorded</span>
+                  <span className="text-ink-400">Nobody has joined by claim</span>
                 )}
               </Row>
             </dl>
@@ -565,7 +688,7 @@ export function OrganisationDetail() {
 
           {/* §7.1 — what a block ACTUALLY reaches, next to the button that does
               it, so nobody blocks a company and assumes more (or less) happened. */}
-          <Section title="What a block does">
+          <Section title="What a block does" icon={InfoIcon} tone="danger">
             <p className="text-sm leading-relaxed text-ink-700">{blockReach?.note}</p>
             {cascade?.status === 'running' && (
               <p className="mt-2 flex items-center gap-2 text-xs font-medium text-warning-800">
@@ -591,10 +714,11 @@ export function OrganisationDetail() {
 
           <Section
             title="Audit trail"
+            icon={ListIcon}
             action={
               canAudit ? (
                 <Link
-                  to={`/admin/audit?orgId=${header.id}`}
+                  to={cp(`/admin/audit?orgId=${header.id}`)}
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:underline"
                 >
                   <ListIcon className="h-4 w-4" aria-hidden="true" />

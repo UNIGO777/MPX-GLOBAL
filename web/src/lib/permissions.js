@@ -1,6 +1,7 @@
 /**
- * Mirror of the backend permission catalogue (src/config/permissions.js — 14
- * grantable strings). The SERVER is the authority: it validates every grant
+ * Mirror of the backend permission catalogue (src/config/permissions.js — 21
+ * grantable strings since 2026-09-24: support split into four, conversation:warn,
+ * reports:team). The SERVER is the authority: it validates every grant
  * against its own list, so an entry here that drifted would simply be rejected
  * with a 400. This mirror exists only to render labels and grouping.
  *
@@ -40,6 +41,23 @@ export const PERMISSION_GROUPS = [
     items: [
       { value: 'conversation:read', label: 'Read conversations', help: 'Every conversation they open is recorded in the audit log' },
       { value: 'conversation:block', label: 'Block / unblock chats', help: 'Block and unblock a chat' },
+      { value: 'conversation:warn', label: 'Send chat warnings', help: 'Post one of the pre-written platform warnings into a chat' },
+    ],
+  },
+  {
+    // Step 1b (2026-09-24) — the support desk, split into four grants.
+    group: 'Support tickets',
+    items: [
+      { value: 'support:read', label: 'View support tickets', help: 'The queue, every ticket and the ticket log; add internal notes' },
+      { value: 'support:reply', label: 'Reply to tickets', help: 'Answer companies as MPX Global Support; can take an unassigned ticket' },
+      { value: 'support:assign', label: 'Assign tickets', help: 'Give any ticket to anyone who can reply' },
+      { value: 'support:status', label: 'Resolve / re-open tickets', help: 'Mark in progress, resolve, re-open' },
+    ],
+  },
+  {
+    group: 'Supplier requests',
+    items: [
+      { value: 'lead:manage', label: 'Route supplier requests', help: "Work buyers' 'find me a supplier' requests and connect them to a seller's product" },
     ],
   },
   {
@@ -47,6 +65,7 @@ export const PERMISSION_GROUPS = [
     items: [
       { value: 'organisation:read', label: 'View organisations', help: 'Company list and detail (read-only)' },
       { value: 'audit:read', label: 'View audit log', help: 'Includes the record of every KYC document and chat staff have viewed' },
+      { value: 'reports:team', label: "See the whole team's report", help: "Staff report for everyone, not only their own row (e.g. a team lead)" },
     ],
   },
   {
@@ -57,6 +76,32 @@ export const PERMISSION_GROUPS = [
     ],
   },
 ];
+
+/**
+ * An action grant is useless without its read grant (the server requires both
+ * on every action route). Ticking an action ticks its read; clearing the read
+ * clears the actions that depend on it.
+ */
+export const PERMISSION_REQUIRES = {
+  'support:reply': 'support:read',
+  'support:assign': 'support:read',
+  'support:status': 'support:read',
+};
+
+/** Apply PERMISSION_REQUIRES to a toggle: `next` is the set after the click. */
+export function withDependencies(prev, next) {
+  const added = next.filter((p) => !prev.includes(p));
+  const removed = prev.filter((p) => !next.includes(p));
+  let out = [...next];
+  for (const p of added) {
+    const need = PERMISSION_REQUIRES[p];
+    if (need && !out.includes(need)) out.push(need);
+  }
+  for (const p of removed) {
+    out = out.filter((q) => PERMISSION_REQUIRES[q] !== p);
+  }
+  return out;
+}
 
 export const PERMISSION_LABELS = Object.fromEntries(
   PERMISSION_GROUPS.flatMap((g) => g.items.map((i) => [i.value, i.label])),

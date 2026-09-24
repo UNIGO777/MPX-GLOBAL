@@ -45,6 +45,18 @@ const CHANGE_LABELS = {
   'organisation.change_reject': 'Profile change rejected',
   'verification.revoke': 'Verification revoked',
   'kyc.request_documents': 'Documents requested',
+  // Step 1b · support tickets.
+  'ticket.create': 'Ticket raised',
+  'ticket.reply': 'Ticket reply',
+  'ticket.assign': 'Ticket assigned',
+  'ticket.status': 'Ticket status changed',
+  'ticket.reopen': 'Ticket re-opened',
+  // Step 1d · supplier requests.
+  'lead.create': 'Supplier request raised',
+  'lead.assign': 'Supplier request assigned',
+  'lead.status': 'Supplier request status changed',
+  'lead.route': 'Supplier connected',
+  'note.add': 'Internal note added',
 };
 
 /** Turn `product.takedown` into "Product takedown". */

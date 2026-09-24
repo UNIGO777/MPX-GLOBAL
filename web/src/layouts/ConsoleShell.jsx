@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { savedApi, savedKeys } from '../api/saved.js';
+import { supportApi, supportKeys } from '../api/support.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { useUnreadCount } from '../hooks/useUnreadCount.js';
 import { ChevronRightIcon, GridIcon, LogOutIcon } from '../components/ui/icons.jsx';
@@ -37,6 +38,27 @@ import { Logo } from '../components/ui/Logo.jsx';
  *                   gap; the rule makes the grouping explicit)
  * Both non-interactive kinds MUST have a row in docs/UiWebNotes.md.
  */
+/**
+ * Step 1b · tickets with a new support reply the company hasn't opened yet.
+ * Polled gently — a reply also arrives by email, this is the in-portal cue.
+ */
+function SupportReplyBadge() {
+  const count = useQuery({
+    queryKey: supportKeys.myUnread,
+    queryFn: supportApi.myUnread,
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+  const n = count.data ?? 0;
+  if (!count.isSuccess || n === 0) return null;
+  return (
+    <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white">
+      {n > 99 ? '99+' : n}
+      <span className="sr-only"> new support {n === 1 ? 'reply' : 'replies'}</span>
+    </span>
+  );
+}
+
 const NAV_BASE =
   'flex items-center gap-3 whitespace-nowrap rounded-r-lg border-l-4 px-4 py-3 text-[15px] font-medium';
 
@@ -75,7 +97,7 @@ function UnreadCountBadge() {
 }
 
 function NavRows({ nav }) {
-  return nav.map(({ to, label, Icon, soon, disabled, dividerBefore, savedBadge, unreadBadge }) => {
+  return nav.map(({ to, label, Icon, soon, disabled, dividerBefore, savedBadge, unreadBadge, supportBadge }) => {
     const row = (
       <li key={label}>
         {soon || disabled ? (
@@ -107,6 +129,7 @@ function NavRows({ nav }) {
             {label}
             {savedBadge && <SavedCountBadge />}
             {unreadBadge && <UnreadCountBadge />}
+            {supportBadge && <SupportReplyBadge />}
           </NavLink>
         )}
       </li>

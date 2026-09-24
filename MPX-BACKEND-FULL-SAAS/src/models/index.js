@@ -34,6 +34,8 @@ export { PendingSignup } from './PendingSignup.js';
 
 export { Notification } from './Notification.js';
 export { Ticket } from './Ticket.js';
+export { TicketMessage } from './TicketMessage.js';
+export { InternalNote } from './InternalNote.js';
 export { TrustScore } from './TrustScore.js';
 
 export { Lead } from './Lead.js';

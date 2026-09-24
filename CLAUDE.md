@@ -49,8 +49,14 @@ two-step signup) and **§A22** (company profile). A21 is mid-build; read it befo
 signup or login.
 
 - **Four roles:** `buyer` · `exporter` · `employee` · `superadmin`. **No `admin` role.** The
-  `/admin/*` prefix is a **route namespace, not a role** — those routes are guarded
+  **API's** `/admin/*` prefix is a **route namespace, not a role** — those routes are guarded
   per-endpoint, some by `requireRole('superadmin')`, some by a granted employee permission.
+- **Web console URLs are split by role (owner, 2026-09-24):** the super admin works under
+  `/admin/*`, employees under `/staff/*` — ONE route table (`CONSOLE_ROUTES` in `web/src/App.jsx`)
+  mounted under both; `ConsoleArea` moves anyone on the wrong prefix to their own; super-admin-only
+  pages exist only under `/admin` (`/staff/<them>` shows no-access). Console links are written as
+  `/admin/...` and passed through `cp()` (`web/src/lib/consolePath.js`) at render time — never
+  hard-code `/staff/...` and never call `cp()` at module level. The API paths did NOT change.
 - **Buyer and exporter are separate accounts on separate portals**, each with its own login
   page. The same email or mobile may hold one buyer **and** one exporter account — never two
   of the same role. Credentials and OTP locks are independent; do not "fix" that by merging them.

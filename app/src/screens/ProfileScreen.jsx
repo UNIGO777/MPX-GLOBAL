@@ -308,6 +308,16 @@ export function ProfileScreen({ navigation }) {
               </View>
 
               <View style={styles.card}>
+                {/* Step 1a (2026-09-24): the published support contact; tickets join it in 1b. */}
+                {/* Step 1d: buyers can ask MPX Global to find and connect suppliers. */}
+                {role === 'buyer' ? (
+                  <>
+                    <Row icon="people-outline" label="Find a supplier" onPress={() => navigation.navigate('FindSupplier')} />
+                    <Divider />
+                  </>
+                ) : null}
+                <Row icon="help-buoy-outline" label="Help & support" onPress={() => navigation.navigate('HelpSupport')} />
+                <Divider />
                 <Row
                   icon="information-circle-outline"
                   label="About"

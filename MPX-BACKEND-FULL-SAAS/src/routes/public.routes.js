@@ -12,6 +12,7 @@ import * as searchCtrl from '../controllers/search.controller.js';
 import * as SV from '../validators/search.validators.js';
 import * as seoCtrl from '../controllers/seo.controller.js';
 import * as featuredCtrl from '../controllers/featured.controller.js';
+import * as settingsCtrl from '../controllers/settings.controller.js';
 
 export const publicRouter = Router();
 
@@ -51,6 +52,11 @@ publicRouter.get(
 // availability rules as the rest of the public surface, so a taken-down product
 // or a blocked company disappears from here on its own.
 publicRouter.get('/public/featured', publicRoute, generalLimiter, featuredCtrl.landing);
+
+// Step 1a · the published support contact (email + phone ONLY — a whitelist in
+// the service). Read by the help page, portal/app support screens, the privacy
+// page and email footers. No auth: a locked-out user must still find it.
+publicRouter.get('/public/support-contact', publicRoute, generalLimiter, settingsCtrl.getSupportContact);
 
 // M3-B: the one search surface (native $text — §A26). Guests included; login is
 // only ever needed to SAVE. Its own tighter limiter (api-endpoints rule).

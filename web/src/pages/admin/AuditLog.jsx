@@ -15,6 +15,7 @@ import { Pagination } from '../../components/ui/Pagination.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { ListIcon, XIcon } from '../../components/ui/icons.jsx';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
+import { cp } from '../../lib/consolePath.js';
 
 /**
  * M2 web screen 11 — the audit log viewer (`/admin/audit`).
@@ -281,7 +282,7 @@ export function AuditLog() {
             <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-700 ring-1 ring-inset ring-primary-100">
               One company&apos;s record
               <Link
-                to={`/admin/organisations/${orgId}`}
+                to={cp(`/admin/organisations/${orgId}`)}
                 className="font-semibold text-primary-700 hover:underline"
               >
                 open company

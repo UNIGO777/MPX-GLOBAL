@@ -4,6 +4,7 @@ import { logger } from './utils/logger.js';
 import { connectDatabase, closeDatabase } from './config/database.js';
 import './models/index.js'; // register every model with mongoose
 import { schedulePurgeJob } from './jobs/purgeBlockedProducts.js';
+import { scheduleTicketAutoCloseJob } from './jobs/ticketAutoClose.js';
 import { attachSocket, attachRedisAdapter } from './realtime/socket.js';
 import { isCloudinaryConfigured } from './config/cloudinary.js';
 import { describeOtpTransports } from './services/otp.sender.js';
@@ -65,6 +66,7 @@ const app = createApp();
 
 // A8 cleanup job (daily + boot catch-up; no-op in tests).
 schedulePurgeJob();
+scheduleTicketAutoCloseJob();
 
 const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'MPX Global backend listening');

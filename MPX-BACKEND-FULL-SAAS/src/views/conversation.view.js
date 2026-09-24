@@ -195,7 +195,7 @@ export function conversationStaffView(conversation, { product, logos }) {
  * A document carries its cleaned name, type and size so the bubble can say what
  * it is before anyone downloads it; its URL is a forced download.
  */
-function attachmentView(att) {
+export function attachmentView(att) {
   if (!att?.storageKey) return null;
   if (att.kind === 'document') {
     return {

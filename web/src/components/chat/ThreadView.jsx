@@ -218,18 +218,18 @@ export function ThreadView({
                 two logos and nothing was rendering them. */}
             {viewerSide === 'staff' ? (
               (conversation?.buyerOrg || conversation?.exporterOrg) && (
-                <span className="flex shrink-0 -space-x-2" aria-hidden="true">
+                // Side by side with a hairline gap (2026-09-24) — any overlap at
+                // this size hid the first mark's initials ("SC" read as "S(").
+                <span className="flex shrink-0 items-center gap-1" aria-hidden="true">
                   <CompanyAvatar
                     name={conversation?.buyerOrg?.name ?? ''}
                     logo={conversation?.buyerOrg?.logo}
                     size="xs"
-                    className="outline outline-2 outline-white"
                   />
                   <CompanyAvatar
                     name={conversation?.exporterOrg?.name ?? ''}
                     logo={conversation?.exporterOrg?.logo}
                     size="xs"
-                    className="outline outline-2 outline-white"
                   />
                 </span>
               )

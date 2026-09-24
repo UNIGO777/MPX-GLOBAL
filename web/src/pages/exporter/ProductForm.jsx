@@ -523,7 +523,7 @@ export function ProductForm() {
                 type="search"
                 aria-label="Search categories"
                 placeholder="Search categories — e.g. cotton, software, spices…"
-                className={inputClasses(false, 'pl-10 pr-10')}
+                className={inputClasses(false, 'search-own-clear pl-10 pr-10')}
                 value={catQuery}
                 onChange={(e) => setCatQuery(e.target.value)}
               />

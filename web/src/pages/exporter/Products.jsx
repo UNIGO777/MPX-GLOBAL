@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -15,7 +15,7 @@ import { Pagination } from '../../components/ui/Pagination.jsx';
 import { RowMenu } from '../../components/ui/RowMenu.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
-import { BoxIcon, EyeOffIcon, InfoIcon, TrashIcon, UploadIcon } from '../../components/ui/icons.jsx';
+import { BoxIcon, EyeOffIcon, SearchIcon, ShieldIcon, TrashIcon, UploadIcon, XIcon } from '../../components/ui/icons.jsx';
 import { PortalLayout } from '../../layouts/PortalLayout.jsx';
 import { EXPORTER_NAV } from './exporterNav.js';
 import { formatDate } from '../../lib/format.js';
@@ -24,11 +24,13 @@ import { PRODUCT_STATUS_META, PRODUCT_TABS, rowActionsFor } from '../../lib/prod
 /**
  * M2 web screen 5 — the seller's product list (`/exporter/products`).
  *
- * REDESIGNED 2026-08-11 to the M2 redesign language (screen 6 set it): the
- * underline tabs became STAT TILES — count-forward cards that ARE the filter —
- * with the D1/A15 cap bars living inside the Live and Drafts tiles; rows got
- * richer (thumb + name + category stacked, inline Publish/Hide buttons, the
- * takedown reason inline in the row instead of dumped under the table).
+ * REDESIGNED 2026-08-11, and again 2026-09-24 (owner: "enhance it … fully
+ * responsive"): the stat tiles that were both filter AND quota meter are split —
+ * a SEGMENTED filter bar with counts (scrolls sideways on phones) and a separate
+ * "Listing limits" card for the D1/A15 caps; a name SEARCH (`?q=`, server-side,
+ * own products only); Publish = the filled action, Hide = secondary; cards below
+ * lg (phones AND tablets), the table from lg. Rows keep thumb + name + category,
+ * the takedown reason inline.
  *
  * 🔴 THERE IS NO "BLOCKED" TAB. A taken-down product keeps its own status and
  * appears inside that status's tile wearing an extra danger chip — takedown
@@ -70,27 +72,35 @@ function Thumb({ product }) {
   return <NoImagePanel ratio="h-14 w-14" className="shrink-0 rounded-lg" />;
 }
 
-/** Tiny in-tile cap bar (D1/A15). Only ever rendered for unverified sellers. */
-function TileCapBar({ used, limit }) {
+/**
+ * One D1/A15 meter in the "Listing limits" card (2026-09-24 redesign — the cap
+ * bars used to be squeezed inside two of the five filter tiles, which made the
+ * tiles uneven and mixed "filter" with "quota"). Unverified sellers only.
+ */
+function LimitMeter({ label, used, limit }) {
   const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+  const full = used >= limit;
   return (
-    <div className="mt-2">
+    <div className="min-w-0 flex-1">
+      <div className="flex items-baseline justify-between gap-2 text-[13px]">
+        <span className="font-medium text-ink-700">{label}</span>
+        <span className={`tabular-nums ${full ? 'font-semibold text-warning-700' : 'text-muted'}`}>
+          {used} of {limit}
+        </span>
+      </div>
       <div
-        className="h-1 w-full overflow-hidden rounded-full bg-ink-100"
+        className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ink-100"
         role="progressbar"
         aria-valuenow={used}
         aria-valuemin={0}
         aria-valuemax={limit}
-        aria-label={`${used} of ${limit} slots used`}
+        aria-label={`${label}: ${used} of ${limit} used`}
       >
         <div
-          className={`h-full rounded-full ${used >= limit ? 'bg-warning-500' : 'bg-primary-600'}`}
+          className={`h-full rounded-full ${full ? 'bg-warning-500' : 'bg-primary-600'}`}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className="mt-1 text-[11px] text-muted">
-        {used} of {limit} slots
-      </p>
     </div>
   );
 }
@@ -100,14 +110,29 @@ export function Products() {
   const [params, setParams] = useSearchParams();
   const tab = params.get('status') ?? 'all';
   const page = Math.max(1, Number(params.get('page')) || 1);
+  const q = params.get('q') ?? '';
+
+  // The box is local; the URL (and so the query) follows it after a pause.
+  const [draftQ, setDraftQ] = useState(q);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (draftQ.trim() === q) return;
+      const next = new URLSearchParams(params);
+      if (draftQ.trim()) next.set('q', draftQ.trim());
+      else next.delete('q');
+      next.delete('page');
+      setParams(next, { replace: true });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [draftQ, q, params, setParams]);
 
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [banner, setBanner] = useState(null); // { message, isCap } from a refused publish
   const [busyId, setBusyId] = useState(null);
 
   const query = useMemo(
-    () => ({ ...(tab === 'all' ? {} : { status: tab }), page, pageSize: PAGE_SIZE }),
-    [tab, page],
+    () => ({ ...(tab === 'all' ? {} : { status: tab }), ...(q ? { q } : {}), page, pageSize: PAGE_SIZE }),
+    [tab, q, page],
   );
 
   const list = useQuery({
@@ -156,14 +181,17 @@ export function Products() {
   // state in the module: it decides whether a new exporter lists at all.
   const firstRun = counts?.all === 0;
 
-  const go = (next) => setParams(next, { replace: false });
+  // Filter / page changes keep the search.
+  const go = (next) => setParams({ ...next, ...(q ? { q } : {}) }, { replace: false });
 
   return (
     <PortalLayout nav={EXPORTER_NAV} wide>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-ink-900">My products</h1>
-          <p className="mt-1 text-sm text-muted">
+      {/* Phone-first (2026-09-24): title and the Add button share a row down
+          to 360px — the button never drops under a two-line title. */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-ink-900 sm:text-2xl">My products</h1>
+          <p className="mt-1 hidden text-sm text-muted sm:block">
             Your catalogue as buyers can find it — drafts stay private until you publish.
           </p>
         </div>
@@ -171,9 +199,10 @@ export function Products() {
             live rather than disabled — the shared 404 covers any gap. */}
         <Link
           to="/exporter/products/new"
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-primary-600 px-5 text-sm font-semibold text-white hover:bg-primary-700"
+          className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full bg-primary-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 sm:px-5"
         >
-          + Add product
+          <span aria-hidden="true" className="text-base leading-none">+</span>
+          Add product
         </Link>
       </div>
 
@@ -189,50 +218,104 @@ export function Products() {
         </Alert>
       )}
 
-      {/* Stat tiles ARE the filter — no separate tab strip. On phones the five
-          tiles become one swipeable strip instead of a 2-2-1 stack. */}
-      <div className="-mx-1 mt-6 flex gap-3 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5">
-        {PRODUCT_TABS.map((t) => {
-          const active = tab === t.key;
-          const count = counts?.[t.key];
-          return (
-            <button
-              key={t.key}
-              type="button"
-              aria-pressed={active}
-              onClick={() => go(t.key === 'all' ? {} : { status: t.key })}
-              className={`w-[140px] shrink-0 rounded-xl border p-3.5 text-left transition-all sm:w-auto ${
-                active
-                  ? 'border-primary-600 bg-primary-50 shadow-card ring-1 ring-primary-600'
-                  : 'border-surface-border bg-white hover:border-primary-400 hover:shadow-card'
-              }`}
-            >
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted">
-                {t.label}
-              </span>
-              <span className="mt-0.5 block text-2xl font-bold leading-tight text-ink-900">
-                {count ?? '—'}
-              </span>
-              {unverified && t.key === 'active' && (
-                <TileCapBar used={caps.active.used} limit={caps.active.limit} />
-              )}
-              {unverified && t.key === 'draft' && (
-                <TileCapBar used={caps.drafts.used} limit={caps.drafts.limit} />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
+      {/* 🔴 D1/A15 caps — ONLY while unverified (a verified account has no cap
+          and the server sends no numbers). The Live meter reads caps.active.used,
+          which EXCLUDES taken-down rows (§A10), so it can disagree with the Live
+          count in the filter bar — correct and required; do not "fix" it. */}
       {unverified && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
-          <InfoIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          Get verified to publish unlimited products —{' '}
-          <Link to="/exporter/kyc" className="font-semibold text-primary-700 hover:underline">
-            start verification
+        <section
+          aria-label="Listing limits"
+          className="mt-5 flex flex-col gap-4 rounded-2xl border border-surface-border bg-white p-4 shadow-card sm:flex-row sm:items-center sm:gap-6"
+        >
+          <div className="flex items-start gap-3 sm:w-64 sm:shrink-0">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
+              <ShieldIcon className="h-[18px] w-[18px]" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-ink-900">Listing limits</span>
+              <span className="block text-xs text-muted">Verified sellers have no limits.</span>
+            </span>
+          </div>
+          <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:gap-6">
+            <LimitMeter label="Live products" used={caps.active.used} limit={caps.active.limit} />
+            <LimitMeter label="Drafts" used={caps.drafts.used} limit={caps.drafts.limit} />
+          </div>
+          <Link
+            to="/exporter/kyc"
+            className="inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-full border border-primary-600 px-4 text-sm font-semibold text-primary-700 hover:bg-primary-50"
+          >
+            Get verified
           </Link>
-        </p>
+        </section>
       )}
+
+      {/* Filter + search. The filter is a SEGMENTED bar (it used to be five
+          stat tiles that were also the quota meter, uneven and cut off on
+          phones); it scrolls sideways on small screens, never wraps. */}
+      <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div
+          role="tablist"
+          aria-label="Filter products"
+          className="scrollbar-none -mx-1 flex gap-1 overflow-x-auto px-1 lg:mx-0 lg:px-0"
+        >
+          {/* White track with a border (owner, 2026-09-24: "not clearly
+              visible") — a grey fill vanished into the tinted page canvas. */}
+          <div className="flex shrink-0 gap-1 rounded-full border border-ink-200 bg-white p-1 shadow-sm">
+            {PRODUCT_TABS.map((t) => {
+              const active = tab === t.key;
+              const count = counts?.[t.key];
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => go(t.key === 'all' ? {} : { status: t.key })}
+                  className={`inline-flex min-h-[34px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[13px] font-semibold transition-colors ${
+                    active ? 'bg-primary-600 text-white shadow-sm' : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900'
+                  }`}
+                >
+                  {t.label}
+                  <span
+                    className={`rounded-full px-1.5 text-[11px] tabular-nums leading-[18px] ${
+                      active ? 'bg-white/20 text-white' : 'bg-ink-100 text-ink-600'
+                    }`}
+                  >
+                    {count ?? '–'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="relative w-full lg:w-72">
+          <label htmlFor="product-search" className="sr-only">Search your products</label>
+          <SearchIcon
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
+            aria-hidden="true"
+          />
+          <input
+            id="product-search"
+            type="search"
+            value={draftQ}
+            onChange={(e) => setDraftQ(e.target.value)}
+            placeholder="Search by product name"
+            maxLength={80}
+            className="search-own-clear h-11 w-full rounded-full border border-ink-200 bg-white pl-9 pr-9 text-[13px] text-ink-900 shadow-sm transition-colors placeholder:text-ink-500 hover:border-ink-300 focus:border-primary-600 focus:outline-none focus:ring-4 focus:ring-primary-600/10"
+          />
+          {draftQ && (
+            <button
+              type="button"
+              onClick={() => setDraftQ('')}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="mt-5 overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
         {list.isPending && <div className="p-4"><SkeletonRows rows={6} /></div>}
@@ -270,17 +353,29 @@ export function Products() {
 
         {list.isSuccess && !firstRun && total === 0 && (
           <EmptyState
-            icon={BoxIcon}
-            title={`Nothing in ${PRODUCT_TABS.find((t) => t.key === tab)?.label}`}
+            icon={q ? SearchIcon : BoxIcon}
+            title={q ? `No products match “${q}”` : `Nothing in ${PRODUCT_TABS.find((t) => t.key === tab)?.label}`}
           >
-            Try another tile.
+            {q ? (
+              <button
+                type="button"
+                onClick={() => setDraftQ('')}
+                className="font-semibold text-primary-700 hover:underline"
+              >
+                Clear the search
+              </button>
+            ) : (
+              'Try another filter.'
+            )}
           </EmptyState>
         )}
 
         {list.isSuccess && total > 0 && (
           <>
             {/* Phones get CARDS, not a sideways-scrolling 820px table. */}
-            <ul className="divide-y divide-surface-border md:hidden">
+            {/* Cards below lg — phones AND tablets. The 820px table used to
+                start at md, so a tablet scrolled the list sideways. */}
+            <ul className="divide-y divide-surface-border lg:hidden">
               {rows.map((p) => {
                 const meta = PRODUCT_STATUS_META[p.status];
                 const actions = rowActionsFor(p);
@@ -348,7 +443,6 @@ export function Products() {
                       {actions.includes('publish') && (
                         <Button
                           size="sm"
-                          variant="secondary"
                           loading={busyId === p.id && setStatus.isPending}
                           onClick={() => setStatus.mutate({ id: p.id, status: 'active' })}
                         >
@@ -358,7 +452,7 @@ export function Products() {
                       {actions.includes('hide') && (
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="secondary"
                           loading={busyId === p.id && setStatus.isPending}
                           onClick={() => setStatus.mutate({ id: p.id, status: 'inactive' })}
                         >
@@ -371,8 +465,8 @@ export function Products() {
               })}
             </ul>
 
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[820px] border-separate border-spacing-0 text-sm">
+            <div className="hidden lg:block">
+              <table className="w-full border-separate border-spacing-0 text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-muted">
                     <th className="border-b border-surface-border px-4 py-3 font-semibold">Product</th>
@@ -457,7 +551,6 @@ export function Products() {
                             {actions.includes('publish') && (
                               <Button
                                 size="sm"
-                                variant="secondary"
                                 loading={busyId === p.id && setStatus.isPending}
                                 onClick={() => setStatus.mutate({ id: p.id, status: 'active' })}
                               >
@@ -467,7 +560,7 @@ export function Products() {
                             {actions.includes('hide') && (
                               <Button
                                 size="sm"
-                                variant="ghost"
+                                variant="secondary"
                                 loading={busyId === p.id && setStatus.isPending}
                                 onClick={() => setStatus.mutate({ id: p.id, status: 'inactive' })}
                               >
@@ -521,6 +614,10 @@ export function Products() {
           </>
         )}
       </div>
+
+      {/* Below lg the floating chat button sits over the page's bottom-right
+          corner; this lets the last card's Publish/Hide scroll clear of it. */}
+      <div aria-hidden="true" className="h-20 lg:hidden" />
 
       <Modal
         open={Boolean(confirmDelete)}

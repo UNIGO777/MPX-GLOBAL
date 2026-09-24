@@ -10,6 +10,7 @@ import { countryName } from '../../lib/countries.js';
 import { ALL_DOC_TYPES, DOC_TYPE_LABELS, ENTITY_LABELS, docTypesFor } from '../../lib/kycDocTypes.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
+import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
@@ -18,15 +19,22 @@ import { Skeleton } from '../../components/ui/Skeleton.jsx';
 import { inputClasses } from '../../components/ui/Field.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
 import {
+  BuildingIcon,
+  CalendarIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
   DocIcon,
   ExternalIcon,
   FileIcon,
+  GlobeIcon,
+  InfoIcon,
   RefreshIcon,
   ShieldIcon,
+  TrashIcon,
   XIcon,
 } from '../../components/ui/icons.jsx';
+import { CompanyAvatar } from '../../components/chat/CompanyAvatar.jsx';
+import { cp } from '../../lib/consolePath.js';
 
 /**
  * KYC document viewer (`kyc:view`; mockup: admin_kyc_document_viewer_states).
@@ -67,7 +75,11 @@ export function KycViewer() {
   const [expired, setExpired] = useState(false);
 
   const [processing, setProcessing] = useState(false);
+  // Two kinds of note (2026-09-24, web-design "Confirmations disappear"):
+  // what the reviewer JUST did hides itself; a state change someone else
+  // caused (409) stays until the next action.
   const [decidedNote, setDecidedNote] = useState(null);
+  const [staleNote, setStaleNote] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [showSuperseded, setShowSuperseded] = useState(false);
@@ -107,6 +119,13 @@ export function KycViewer() {
 
   const data = query.data?.data ?? null;
   const org = query.data?.org ?? null;
+
+  const orgName = org?.header?.name;
+  useEffect(() => {
+    const previous = document.title;
+    document.title = `${orgName ? `${orgName} · ` : ''}KYC documents — MPX Global`;
+    return () => { document.title = previous; };
+  }, [orgName]);
   const loading = query.isLoading;
   const error = query.error ? apiError(query.error) : null;
   const load = useCallback(async () => {
@@ -130,7 +149,10 @@ export function KycViewer() {
   // Superseded documents are history — hidden behind a toggle (2026-08-19).
   const allDocs = data?.documents ?? [];
   const supersededDocs = allDocs.filter((d) => d.superseded);
-  const docs = showSuperseded ? allDocs : allDocs.filter((d) => !d.superseded);
+  const currentDocs = allDocs.filter((d) => !d.superseded);
+  // Current first, previous AFTER them (2026-09-24) — they used to be mixed into
+  // one list and looked identical, so an old file read as a live one.
+  const docs = showSuperseded ? [...currentDocs, ...supersededDocs] : currentDocs;
   const doc = docs[selected] ?? null;
 
   const decidableSide = data?.exporterSide ? 'exporter' : data?.buyerSide ? 'buyer' : null;
@@ -152,6 +174,7 @@ export function KycViewer() {
 
   const decide = async (action, reasonText) => {
     setActionError(null);
+    setStaleNote(null);
     setProcessing(true);
     try {
       if (reviewMode === 'change') {
@@ -183,7 +206,7 @@ export function KycViewer() {
     } catch (err) {
       const e = apiError(err, 'Could not record the decision.');
       if (e.status === 409) {
-        setDecidedNote('This company is no longer awaiting review — another reviewer decided it.');
+        setStaleNote('This company is no longer awaiting review — another reviewer decided it.');
         setRejectOpen(false);
       } else setActionError(e);
     } finally {
@@ -262,45 +285,55 @@ export function KycViewer() {
 
   return (
     <AdminLayout>
+      <Link
+        to={cp('/admin/verification')}
+        className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-600 hover:text-primary-700"
+      >
+        <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
+        Verification queue
+      </Link>
+
       {/* --- floating action bar (M2 language): the decision is never a
           scroll away. Name / country / submitted come from the org record,
           which needs `organisation:read` — a reviewer holding only `kyc:view`
-          still sees the documents, just with those cells blank. */}
-      <div className="sticky top-0 z-20 mb-5 pt-1">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-border bg-white/95 px-4 py-2.5 shadow-lift backdrop-blur">
-          <div className="min-w-0">
-            <Link
-              to="/admin/verification"
-              className="flex items-center gap-1 text-xs font-medium text-muted hover:text-primary-700"
-            >
-              <ChevronLeftIcon className="h-3.5 w-3.5" /> Verification queue
-            </Link>
-            <div className="mt-0.5 flex flex-wrap items-center gap-2">
-              <h1 className="max-w-[36ch] truncate text-lg font-bold leading-tight text-ink-900">
-                {org?.header?.name ?? 'KYC documents'}
-              </h1>
-              {data && <StatusChip status={data.kycStatus} />}
-            </div>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
-              {[
-                data?.entityType ? ENTITY_LABELS[data.entityType] : null,
-                countryName(org?.company?.country),
-                org?.verification?.submittedAt
-                  ? `Sent ${formatDate(org.verification.submittedAt)}`
-                  : null,
-                `${docs.length} file${docs.length === 1 ? '' : 's'}`,
-              ]
-                .filter(Boolean)
-                .map((part, i) => (
-                  <span key={part} className="flex items-center gap-2">
-                    {i > 0 && <span aria-hidden="true" className="text-ink-300">·</span>}
-                    {part}
+          still sees the documents, just with those cells blank.
+          Redesigned 2026-09-24: the company's mark, facts with icons, and on
+          phones the actions take their own full-width row. */}
+      <div className="z-20 mb-5 pt-1 sm:sticky sm:top-0">
+        <div className="flex flex-col gap-3 rounded-2xl border border-surface-border bg-white/95 p-4 shadow-lift backdrop-blur sm:flex-row sm:items-center sm:px-5">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <CompanyAvatar name={org?.header?.name ?? 'KYC'} logo={org?.company?.logo} size="lg" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="min-w-0 break-words text-lg font-bold leading-tight text-ink-900 sm:truncate">
+                  {org?.header?.name ?? 'KYC documents'}
+                </h1>
+                {data && <StatusChip status={data.kycStatus} />}
+              </div>
+              <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-ink-600">
+                {data?.entityType && ENTITY_LABELS[data.entityType] && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <BuildingIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+                    {ENTITY_LABELS[data.entityType]}
                   </span>
-                ))}
-            </p>
+                )}
+                {countryName(org?.company?.country) && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <GlobeIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+                    {countryName(org.company.country)}
+                  </span>
+                )}
+                {org?.verification?.submittedAt && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+                    Sent {formatDate(org.verification.submittedAt)}
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
           {canDecide && (
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:items-center">
               <Button
                 size="sm"
                 variant="dangerOutline"
@@ -319,8 +352,13 @@ export function KycViewer() {
             </div>
           )}
           {!canDecide && hasReviewPerm && data && (
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="secondary" onClick={() => { setReason(''); setRequestOpen(true); }}>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:items-center">
+              <Button
+                size="sm"
+                variant="secondary"
+                className={canRevoke ? '' : 'col-span-2'}
+                onClick={() => { setReason(''); setRequestOpen(true); }}
+              >
                 Request documents
               </Button>
               {canRevoke && (
@@ -335,49 +373,69 @@ export function KycViewer() {
 
       {/* The old → new diff the change decision is about — beside the docs. */}
       {data?.pendingChanges && (
-        <div className="mb-4 rounded-xl border border-primary-100 bg-primary-50/50 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-700">
-            Requested profile change · {data.pendingChanges.state === 'awaiting_review' ? 'awaiting review' : data.pendingChanges.state.replace('_', ' ')}
-          </p>
-          <dl className="mt-2 space-y-1">
+        <section className="mb-4 overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
+          <h2 className="flex items-center gap-2 border-b border-surface-border bg-primary-50/50 px-4 py-2.5 text-[13px] font-semibold text-primary-800 sm:px-5">
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-primary-500" />
+            Requested profile change
+            <span className="font-medium text-primary-700/80">
+              · {data.pendingChanges.state === 'awaiting_review' ? 'awaiting review' : data.pendingChanges.state.replace('_', ' ')}
+            </span>
+          </h2>
+          <dl className="space-y-1.5 px-4 py-3 sm:px-5">
             {data.pendingChanges.changedFields.map((f) => {
               const fmt = (v) =>
                 f === 'address'
                   ? Object.values(v ?? {}).filter((x) => typeof x === 'string' && x).join(', ') || '—'
-                  : String(v ?? '—');
+                  : f === 'entityType'
+                    ? (ENTITY_LABELS[v] ?? String(v ?? '—'))
+                    : f === 'country'
+                      ? (countryName(v) ?? String(v ?? '—'))
+                      : String(v ?? '—');
               return (
-                <div key={f} className="flex flex-wrap items-baseline gap-2 text-[13px]">
-                  <dt className="font-semibold capitalize text-ink-800">{f === 'entityType' ? 'Entity type' : f}:</dt>
-                  <dd className="text-ink-700">
+                <div key={f} className="grid gap-0.5 text-[13px] sm:grid-cols-[8rem_1fr] sm:gap-3">
+                  <dt className="font-semibold capitalize text-ink-700">{f === 'entityType' ? 'Entity type' : f}</dt>
+                  <dd className="min-w-0 text-ink-600">
                     <span className="line-through decoration-ink-300">{fmt(data.pendingChanges.current?.[f])}</span>
-                    <span aria-hidden="true" className="mx-1 text-ink-400">→</span>
-                    <span className="font-medium text-ink-900">{fmt(data.pendingChanges.requested?.[f])}</span>
+                    <span aria-hidden="true" className="mx-1.5 text-ink-400">→</span>
+                    <span className="font-semibold text-ink-900">{fmt(data.pendingChanges.requested?.[f])}</span>
                   </dd>
                 </div>
               );
             })}
           </dl>
-        </div>
+        </section>
       )}
 
-      {/* Open document requests — what was asked and whether it arrived. */}
+      {/* Open document requests — what was asked and whether it arrived.
+          Document types by NAME (they used to print the raw key, "gst"). */}
       {openRequests.length > 0 && (
-        <div className="mb-4 rounded-xl border border-warning-200 bg-warning-50 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-warning-800">Open document requests</p>
-          <ul className="mt-1.5 space-y-1">
+        <section className="mb-4 rounded-2xl border border-warning-200 bg-warning-50/70 px-4 py-3 sm:px-5">
+          <h2 className="flex items-center gap-2 text-[13px] font-semibold text-warning-800">
+            <InfoIcon className="h-4 w-4" aria-hidden="true" />
+            Waiting on the company
+          </h2>
+          <ul className="mt-2 space-y-2">
             {openRequests.map((r) => (
-              <li key={r.id} className="text-[13px] text-ink-700">
-                <span className="font-semibold">{r.docTypes.join(', ')}</span> — {r.note}
-                <span className="ml-2 text-xs text-muted">({formatDate(r.requestedAt)})</span>
+              <li key={r.id} className="text-[13px] leading-relaxed text-ink-700">
+                <span className="font-semibold text-ink-900">
+                  {r.docTypes.map((t) => DOC_TYPE_LABELS[t] ?? t).join(', ')}
+                </span>
+                <span className="ml-2 text-xs text-muted">requested {formatDate(r.requestedAt)}</span>
+                {r.note && <span className="block text-ink-600">{r.note}</span>}
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
 
       {decidedNote && (
+        <FlashMessage className="mb-4" onDismiss={() => setDecidedNote(null)}>
+          {decidedNote}
+        </FlashMessage>
+      )}
+      {staleNote && (
         <div className="mb-4">
-          <Alert tone="info">{decidedNote}</Alert>
+          <Alert tone="info">{staleNote}</Alert>
         </div>
       )}
       {actionError && (
@@ -392,9 +450,9 @@ export function KycViewer() {
       )}
 
       {loading && (
-        <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
-          <Skeleton className="h-64 rounded-xl" />
-          <Skeleton className="h-96 rounded-xl" />
+        <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
+          <Skeleton className="h-64 rounded-2xl" />
+          <Skeleton className="h-96 rounded-2xl" />
         </div>
       )}
 
@@ -413,162 +471,218 @@ export function KycViewer() {
       )}
 
       {!loading && !error && docs.length > 0 && (
-        <>
-          <div className="grid items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-            {/* Document list */}
-            <div>
-              <h2 className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-muted">
-                Documents ({docs.length})
-                {supersededDocs.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => { setShowSuperseded((v) => !v); setSelected(0); }}
-                    className="font-semibold normal-case tracking-normal text-primary-700 hover:underline"
-                  >
-                    {showSuperseded ? 'Hide previous' : `Show previous (${supersededDocs.length})`}
-                  </button>
-                )}
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-5">
+          {/* `minmax(0,1fr)` on phones too: the sideways file row inside an auto
+              track stretched the grid past the screen and cut the preview off. */}
+          {/* Document list — ONE card with compact rows (2026-09-24; each file
+              used to be its own tall card). Below lg it becomes a sideways row
+              of file chips, so the preview is not pushed a screen down. */}
+          <section className="min-w-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-surface-border lg:bg-white lg:shadow-card">
+            <div className="mb-2 flex items-center justify-between gap-3 lg:mb-0 lg:border-b lg:border-surface-border lg:px-4 lg:py-3">
+              <h2 className="text-[13px] font-semibold text-ink-700">
+                Documents <span className="font-medium text-muted">({currentDocs.length})</span>
               </h2>
-              <ul className="mt-3 space-y-3">
-                {docs.map((d, i) => {
-                  const on = selected === i;
-                  return (
-                    <li key={`${d.docType}-${d.uploadedAt}-${i}`}>
-                      <button
-                        type="button"
-                        onClick={() => setSelected(i)}
-                        aria-current={on || undefined}
-                        className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors ${
-                          on
-                            ? 'border-primary-600 bg-white ring-1 ring-primary-600'
-                            : 'border-surface-border bg-white hover:border-ink-400'
+              {supersededDocs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { setShowSuperseded((v) => !v); setSelected(0); }}
+                  className="text-[12.5px] font-semibold text-primary-700 hover:underline"
+                >
+                  {showSuperseded ? 'Hide previous' : `Show previous (${supersededDocs.length})`}
+                </button>
+              )}
+            </div>
+            <ul className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:block lg:space-y-0 lg:divide-y lg:divide-surface-border lg:overflow-visible lg:p-0">
+              {docs.map((d, i) => {
+                const on = selected === i;
+                const old = Boolean(d.superseded);
+                return (
+                  <li key={`${d.docType}-${d.uploadedAt}-${i}`} className="shrink-0 lg:shrink">
+                    {/* The first previous file opens its own group. */}
+                    {old && i === currentDocs.length && (
+                      <p className="hidden border-y border-surface-border bg-ink-50 px-4 py-2 text-[11.5px] font-semibold text-ink-500 lg:block">
+                        Previous uploads ({supersededDocs.length})
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSelected(i)}
+                      aria-current={on || undefined}
+                      className={`flex w-full items-center gap-3 text-left transition-colors max-lg:rounded-full max-lg:border max-lg:py-1.5 max-lg:pl-1.5 max-lg:pr-4 lg:px-4 lg:py-3 ${
+                        old ? 'max-lg:border-dashed' : ''
+                      } ${
+                        on
+                          ? old
+                            ? 'max-lg:border-ink-400 max-lg:bg-ink-100 lg:bg-ink-100/80 lg:shadow-[inset_3px_0_0_theme(colors.ink.400)]'
+                            : 'max-lg:border-primary-600 max-lg:bg-primary-50 lg:bg-primary-50/70 lg:shadow-[inset_3px_0_0_theme(colors.primary.600)]'
+                          : old
+                            ? 'max-lg:border-ink-300 max-lg:bg-ink-50 lg:bg-ink-50/60 hover:bg-ink-100/70'
+                            : 'max-lg:border-ink-200 max-lg:bg-white hover:bg-ink-50'
+                      }`}
+                    >
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full lg:h-9 lg:w-9 lg:rounded-lg ${
+                          old
+                            ? 'border border-dashed border-ink-300 bg-white text-ink-400'
+                            : on
+                              ? 'bg-primary-600 text-white'
+                              : 'bg-ink-100 text-ink-500'
                         }`}
                       >
+                        <FileIcon className="h-4 w-4" />
+                      </span>
+                      <span className="min-w-0">
                         <span
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                            on ? 'bg-primary-600 text-white' : 'bg-ink-100 text-ink-500'
+                          className={`block truncate text-[13.5px] font-semibold ${
+                            old ? 'text-ink-500' : on ? 'text-primary-800' : 'text-ink-900'
                           }`}
                         >
-                          <FileIcon className="h-5 w-5" />
+                          {DOC_TYPE_LABELS[d.docType] ?? d.docType}
                         </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-[15px] font-bold text-ink-900">
-                            {DOC_TYPE_LABELS[d.docType] ?? d.docType}
-                          </span>
-                          <span className="block text-[13px] text-muted">
-                            Uploaded {formatDate(d.uploadedAt)}
-                          </span>
+                        <span className="flex items-center gap-1.5 whitespace-nowrap text-[11.5px] text-muted">
+                          {old && (
+                            <span className="rounded bg-ink-200/70 px-1 py-px text-[10px] font-bold uppercase tracking-wide text-ink-600">
+                              Replaced
+                            </span>
+                          )}
+                          {formatDate(d.uploadedAt)}
                         </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-2 hidden items-start gap-2 border-t border-surface-border px-4 py-3 text-[12px] leading-relaxed text-muted lg:mt-0 lg:flex">
+              <ShieldIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              Private documents. Your access is recorded for auditing.
+            </p>
+          </section>
 
-              <p className="mt-4 flex items-start gap-2.5 rounded-xl bg-ink-100 p-4 text-[13px] leading-relaxed text-muted">
-                <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0" />
-                These documents are private. Your access to them is recorded for auditing.
-              </p>
+          {/* Preview */}
+          <section className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
+            <div className="flex items-center justify-between gap-2 border-b border-surface-border px-4 py-2.5 sm:px-5">
+              <span className="flex min-w-0 items-center gap-2 text-[14px] font-semibold text-ink-900">
+                <FileIcon className="h-4 w-4 shrink-0 text-ink-500" />
+                <span className="truncate">{doc ? (DOC_TYPE_LABELS[doc.docType] ?? doc.docType) : ''}</span>
+              </span>
+              <span className="flex shrink-0 items-center gap-1.5">
+                {doc && !expired && (
+                  <a
+                    href={doc.signedUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Open in new tab"
+                    className="inline-flex h-9 items-center gap-2 rounded-full border border-ink-200 px-3 text-sm font-semibold text-ink-800 hover:bg-ink-50 sm:px-4"
+                  >
+                    <ExternalIcon className="h-4 w-4" aria-hidden="true" />
+                    <span className="hidden sm:inline">Open</span>
+                  </a>
+                )}
+                {/* Gated on the SIDE review permission, not `canDecide`: a
+                    verified org with nothing pending has no decision to make,
+                    and is exactly where an Aadhaar might still be sitting. */}
+                {doc && hasReviewPerm && (
+                  <button
+                    type="button"
+                    onClick={() => { setReason(''); setRemoveOpen(true); }}
+                    aria-label="Delete document"
+                    className="inline-flex h-9 items-center gap-2 rounded-full px-3 text-sm font-semibold text-danger-700 hover:bg-danger-50"
+                  >
+                    <TrashIcon className="h-4 w-4" aria-hidden="true" />
+                    <span className="hidden sm:inline">Delete</span>
+                  </button>
+                )}
+              </span>
             </div>
 
-            {/* Preview */}
-            <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border px-5 py-3">
-                <span className="flex items-center gap-2 text-[15px] font-semibold text-ink-900">
-                  <FileIcon className="h-4 w-4 text-ink-500" />
-                  {doc ? (DOC_TYPE_LABELS[doc.docType] ?? doc.docType) : ''}
-                </span>
-                <span className="flex items-center gap-2">
-                  {/* Gated on the SIDE review permission, not `canDecide`: a
-                      verified org with nothing pending has no decision to make,
-                      and is exactly where an Aadhaar might still be sitting. */}
-                  {doc && hasReviewPerm && (
-                    <Button variant="dangerOutline" size="sm" onClick={() => { setReason(''); setRemoveOpen(true); }}>
-                      <XIcon className="h-4 w-4" /> Delete document
-                    </Button>
-                  )}
-                  {doc && !expired && (
-                    <a
-                      href={doc.signedUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex h-9 items-center gap-2 rounded-lg border border-surface-border px-4 text-sm font-semibold text-ink-900 hover:bg-ink-50"
-                    >
-                      <ExternalIcon className="h-4 w-4" /> Open in new tab
-                    </a>
-                  )}
+            {doc?.superseded && (
+              <div className="flex items-start gap-2.5 border-b border-surface-border bg-ink-100/70 px-4 py-2.5 text-[13px] text-ink-700 sm:px-5">
+                <InfoIcon className="mt-0.5 h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
+                <span>
+                  <span className="font-semibold text-ink-900">Previous upload.</span> The company has
+                  replaced this file — it is kept for the record and is not part of the current review.
                 </span>
               </div>
+            )}
 
-              {/* 🔴 The reviewer IS the masking control. The upload screen asks
-                  for a masked Aadhaar; nothing in the system can verify that, so
-                  this is where an unmasked one gets caught. Shown only for the
-                  Aadhaar docType so it stays meaningful rather than wallpaper. */}
-              {doc?.docType === 'aadhaar' && (
-                <div className="px-5 pt-4">
-                  <Alert tone="warning" title="Check this is a MASKED Aadhaar">
-                    Only the last 4 digits may be visible — the first 8 should read XXXX. If the full
-                    number is showing, do not verify it: use{' '}
-                    <span className="font-semibold">Delete document</span> above, then ask for a
-                    masked copy. We are not permitted to hold a full Aadhaar number.
-                  </Alert>
+            {/* 🔴 The reviewer IS the masking control. The upload screen asks
+                for a masked Aadhaar; nothing in the system can verify that, so
+                this is where an unmasked one gets caught. Shown only for the
+                Aadhaar docType so it stays meaningful rather than wallpaper. */}
+            {doc?.docType === 'aadhaar' && (
+              <div className="px-4 pt-4 sm:px-5">
+                <Alert tone="warning" title="Check this is a MASKED Aadhaar">
+                  Only the last 4 digits may be visible — the first 8 should read XXXX. If the full
+                  number is showing, do not verify it: use{' '}
+                  <span className="font-semibold">Delete</span> above, then ask for a
+                  masked copy. We are not permitted to hold a full Aadhaar number.
+                </Alert>
+              </div>
+            )}
+
+            <div className="relative min-h-[300px] bg-ink-50 sm:min-h-[420px]">
+              {expired ? (
+                <div className="flex min-h-[300px] flex-col items-center justify-center p-8 text-center sm:min-h-[420px]">
+                  <RefreshIcon className="h-8 w-8 text-ink-400" />
+                  <h3 className="mt-3 text-base font-semibold text-ink-900">
+                    This preview has expired
+                  </h3>
+                  <p className="mt-1 max-w-sm text-sm text-muted">
+                    Document links only live for a couple of minutes. Reload to fetch fresh ones —
+                    the access is recorded again.
+                  </p>
+                  <Button variant="secondary" size="sm" className="mt-4" onClick={load}>
+                    <RefreshIcon className="h-4 w-4" /> Reload document
+                  </Button>
                 </div>
-              )}
-
-              <div className="relative min-h-[420px] bg-ink-50">
-                {expired ? (
-                  <div className="flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
-                    <RefreshIcon className="h-8 w-8 text-ink-400" />
-                    <h3 className="mt-3 text-base font-semibold text-ink-900">
-                      This preview has expired
-                    </h3>
-                    <p className="mt-1 max-w-sm text-sm text-muted">
-                      Document links only live for a couple of minutes. Reload to fetch fresh ones —
-                      the access is recorded again.
-                    </p>
-                    <Button variant="secondary" size="sm" className="mt-4" onClick={load}>
-                      <RefreshIcon className="h-4 w-4" /> Reload document
-                    </Button>
-                  </div>
-                ) : doc && isImage(doc.signedUrl) ? (
-                  <img
-                    src={doc.signedUrl}
-                    alt={`${DOC_TYPE_LABELS[doc.docType] ?? doc.docType} document`}
-                    className="mx-auto max-h-[70vh] w-auto max-w-full p-4"
-                  />
-                ) : doc && isPdf(doc.signedUrl) ? (
-                  <iframe
-                    src={doc.signedUrl}
-                    title={DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
-                    className="h-[70vh] w-full"
-                  />
-                ) : doc ? (
-                  <div className="flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
-                    <FileIcon className="h-8 w-8 text-ink-400" />
-                    <h3 className="mt-3 text-base font-semibold text-ink-900">
-                      This file can&apos;t be previewed here
-                    </h3>
-                    <a
-                      href={doc.signedUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-4 inline-flex h-9 items-center gap-2 rounded-full border border-primary-700 px-4 text-sm font-semibold text-primary-700 hover:bg-primary-50"
-                    >
-                      <ExternalIcon className="h-4 w-4" /> Open in a new tab
-                    </a>
-                  </div>
-                ) : null}
-              </div>
+              ) : doc && isImage(doc.signedUrl) ? (
+                <img
+                  src={doc.signedUrl}
+                  alt={`${DOC_TYPE_LABELS[doc.docType] ?? doc.docType} document`}
+                  className="mx-auto max-h-[70vh] w-auto max-w-full p-4"
+                />
+              ) : doc && isPdf(doc.signedUrl) ? (
+                <iframe
+                  src={doc.signedUrl}
+                  title={DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
+                  className="h-[70vh] w-full"
+                />
+              ) : doc ? (
+                <div className="flex min-h-[300px] flex-col items-center justify-center p-8 text-center sm:min-h-[420px]">
+                  <FileIcon className="h-8 w-8 text-ink-400" />
+                  <h3 className="mt-3 text-base font-semibold text-ink-900">
+                    This file can&apos;t be previewed here
+                  </h3>
+                  <a
+                    href={doc.signedUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 inline-flex h-9 items-center gap-2 rounded-full border border-primary-700 px-4 text-sm font-semibold text-primary-700 hover:bg-primary-50"
+                  >
+                    <ExternalIcon className="h-4 w-4" /> Open in a new tab
+                  </a>
+                </div>
+              ) : null}
             </div>
-          </div>
-
-        </>
+            {/* Phones: the privacy note lives under the preview (the list's
+                footer is hidden there). */}
+            <p className="flex items-start gap-2 border-t border-surface-border px-4 py-2.5 text-[12px] text-muted lg:hidden">
+              <ShieldIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              Private documents. Your access is recorded for auditing.
+            </p>
+          </section>
+        </div>
       )}
 
       <Modal
         open={rejectOpen}
         onClose={() => setRejectOpen(false)}
-        title={`Reject verification for ${org?.header?.name ?? 'this company'}?`}
+        title={
+          reviewMode === 'change'
+            ? `Reject the profile changes for ${org?.header?.name ?? 'this company'}?`
+            : `Reject verification for ${org?.header?.name ?? 'this company'}?`
+        }
         danger
         footer={
           <>
@@ -623,7 +737,7 @@ export function KycViewer() {
         }
       >
         <p className="text-sm font-semibold text-ink-900">Which documents?</p>
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
           {requestableTypes.map((t) => (
             <label key={t} className="flex items-center gap-2 rounded-lg border border-surface-border px-3 py-2 text-sm text-ink-800">
               <input

@@ -270,7 +270,7 @@ export function ErrorLog() {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Paste a support reference (request ID)"
-            className="h-11 w-full rounded-lg border border-surface-border bg-white pl-9 pr-9 font-mono text-sm text-ink-900 placeholder:font-sans placeholder:text-ink-500 focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20"
+            className="search-own-clear h-11 w-full rounded-lg border border-surface-border bg-white pl-9 pr-9 font-mono text-sm text-ink-900 placeholder:font-sans placeholder:text-ink-500 focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20"
           />
           {requestId && (
             <button

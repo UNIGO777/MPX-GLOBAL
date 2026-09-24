@@ -1,7 +1,9 @@
+import { TICKET_AUTO_CLOSE_DAYS } from '../models/enums.js';
 import { User } from '../models/User.js';
 import { logger } from '../utils/logger.js';
 import { isEmailConfigured, sendEmail } from './email.provider.js';
 import { renderEmail } from './emailTemplate.js';
+import { getSupportContact } from './settings.service.js';
 
 /**
  * Transactional email notifications.
@@ -89,6 +91,8 @@ export function notifyVerificationResult({ org, role, approved, reason }) {
           ];
 
       const { text, html } = renderEmail({
+        // Step 1a: the published support contact under the signature (never throws).
+        support: await getSupportContact(),
         heading: approved ? 'You’re verified' : 'We need another look',
         preheader: approved
           ? 'Your MPX Global profile is now verified'
@@ -139,6 +143,8 @@ export function notifyWelcome({ user, org }) {
           ];
 
       const { text, html } = renderEmail({
+        // Step 1a: the published support contact under the signature (never throws).
+        support: await getSupportContact(),
         heading: 'Welcome to MPX Global',
         preheader: isExporter
           ? 'Your exporter profile is live'
@@ -164,6 +170,8 @@ export function notifyPasswordChanged({ user }) {
   return safely(
     (async () => {
       const { text, html } = renderEmail({
+        // Step 1a: the published support contact under the signature (never throws).
+        support: await getSupportContact(),
         heading: 'Your password was changed',
         preheader: 'A security notice from MPX Global',
         paragraphs: [
@@ -203,6 +211,8 @@ export function notifyNewEnquiryEmail({ conversation, buyerOrgName }) {
       if (!owner) return;
 
       const { text, html } = renderEmail({
+        // Step 1a: the published support contact under the signature (never throws).
+        support: await getSupportContact(),
         heading: 'You have a new enquiry',
         preheader: `${buyerOrgName} enquired about ${conversation.productNameSnapshot}`,
         status: { tone: 'info', label: 'New enquiry' },
@@ -241,7 +251,10 @@ export function notifyOrganisationJoined({ org, recipient, joiner }) {
   return safely(
     (async () => {
       const asSeller = joiner?.role === 'exporter';
+      const support = await getSupportContact();
       const { text, html } = renderEmail({
+        // Step 1a: the published support contact under the signature (never throws).
+        support,
         heading: 'Someone joined your company',
         preheader: `A ${asSeller ? 'seller' : 'buyer'} account joined ${org.name}`,
         status: { tone: 'info', label: 'New member' },
@@ -254,8 +267,10 @@ export function notifyOrganisationJoined({ org, recipient, joiner }) {
             ? "From now on the seller account manages the company's name, logo and verification documents. Your own account, password and enquiries are unchanged."
             : 'Your own account, password and enquiries are unchanged.',
         ],
-        footerNote:
-          "If you don't recognise this person, contact MPX Global support straight away so we can remove them.",
+        // Step 1a: the real contact goes into the sentence that asks for it.
+        footerNote: `If you don't recognise this person, contact MPX Global support${
+          support.email ? ` at ${support.email}` : support.phone ? ` on ${support.phone}` : ''
+        } straight away so we can remove them.`,
       });
 
       await sendEmail({
@@ -266,5 +281,66 @@ export function notifyOrganisationJoined({ org, recipient, joiner }) {
       });
     })(),
     'organisation-joined',
+  );
+}
+
+/**
+ * Step 1b · support ticket emails — email events 7 and 8 (owner-approved
+ * 2026-09-24: "staff reply → company, resolved → company"; D5 count 6 → 8).
+ *
+ * Sent to the account that RAISED the ticket. Plain text, no link (the house
+ * rule): the email says where to go — Help & support in their account.
+ * Never names the employee: the company talks to "MPX Global Support".
+ */
+async function ticketRecipient(ticket) {
+  const user = await User.findOne({ _id: ticket.createdBy, isActive: true }).select('name email');
+  return user?.email ? user : null;
+}
+
+export function notifyTicketReply({ ticket }) {
+  if (!isEmailConfigured()) return Promise.resolve();
+  return safely(
+    (async () => {
+      const recipient = await ticketRecipient(ticket);
+      if (!recipient) return;
+      const { text, html } = renderEmail({
+        support: await getSupportContact(),
+        heading: 'We replied to your support ticket',
+        preheader: `MPX Global Support replied to ${ticket.ref}`,
+        status: { tone: 'info', label: `Ticket ${ticket.ref}` },
+        paragraphs: [
+          `Hello ${recipient.name},`,
+          `MPX Global Support has replied to your ticket **${ticket.subject}** (${ticket.ref}).`,
+          'Sign in to MPX Global and open **Help & support** to read the reply and respond.',
+        ],
+      });
+      await sendEmail({ to: recipient.email, subject: `Reply to your ticket ${ticket.ref}`, text, html });
+    })(),
+    'ticket-reply',
+  );
+}
+
+export function notifyTicketResolved({ ticket, auto = false }) {
+  if (!isEmailConfigured()) return Promise.resolve();
+  return safely(
+    (async () => {
+      const recipient = await ticketRecipient(ticket);
+      if (!recipient) return;
+      const { text, html } = renderEmail({
+        support: await getSupportContact(),
+        heading: 'Your support ticket is resolved',
+        preheader: `${ticket.ref} is resolved`,
+        status: { tone: 'success', label: 'Resolved' },
+        paragraphs: [
+          `Hello ${recipient.name},`,
+          auto
+            ? `Your ticket **${ticket.subject}** (${ticket.ref}) was closed because we had no reply for ${TICKET_AUTO_CLOSE_DAYS} days.`
+            : `We've marked your ticket **${ticket.subject}** (${ticket.ref}) as resolved.`,
+          'If you still need help, raise a new ticket from **Help & support** in your account and mention this reference.',
+        ],
+      });
+      await sendEmail({ to: recipient.email, subject: `Ticket ${ticket.ref} resolved`, text, html });
+    })(),
+    'ticket-resolved',
   );
 }

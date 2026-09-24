@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { Children, useRef, useState } from 'react';
 
 import { inputClasses } from '../../components/ui/Field.jsx';
 import { ImageIcon, XIcon } from '../../components/ui/icons.jsx';
@@ -8,6 +8,27 @@ import { ImageIcon, XIcon } from '../../components/ui/icons.jsx';
  * add/edit sub-category), so they read as one family instead of three forms
  * that drifted apart.
  */
+
+/**
+ * The body of every category side panel (2026-09-24): sections separated by a
+ * hairline, so name / type / image / order / keywords read as distinct steps
+ * instead of one run of fields. The first and last sections sit flush.
+ */
+export function FormStack({ children }) {
+  // Each section gets its OWN wrapper: padding put straight on the children
+  // (`[&>*]:py-5`) landed inside boxed sections — the display-order box and
+  // the settings summary card grew lopsided.
+  const sections = Children.toArray(children).filter(Boolean);
+  return (
+    <div className="divide-y divide-surface-border">
+      {sections.map((child, i) => (
+        <div key={child.key ?? i} className="py-5 first:pt-0 last:pb-0">
+          {child}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** Section label with an optional muted "Optional" tag, matching Field. */
 export function PartLabel({ htmlFor, children, optional = false, count }) {
@@ -192,6 +213,8 @@ export function OrderInput({ id, value, onChange, disabled = false }) {
           min={1}
           inputMode="numeric"
           className={inputClasses(false, 'text-center')}
+          // Empty = the server places it last; say so instead of a blank box.
+          placeholder="Last"
           value={value}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}

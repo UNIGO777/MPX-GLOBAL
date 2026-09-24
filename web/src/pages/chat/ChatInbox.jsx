@@ -128,7 +128,7 @@ function ConversationList({ role, activeId, onSelect }) {
             /* Filled, not boxed (2026-09-24): a soft grey field that turns
                white on focus — a bordered box on a white column read as a
                form, not as a filter. */
-            className="h-10 w-full rounded-xl border border-transparent bg-ink-100/80 pl-9 pr-9 text-[13px] text-ink-900 transition-colors placeholder:text-ink-500 hover:bg-ink-100 focus:border-ink-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-ink-900/5"
+            className="search-own-clear h-10 w-full rounded-xl border border-transparent bg-ink-100/80 pl-9 pr-9 text-[13px] text-ink-900 transition-colors placeholder:text-ink-500 hover:bg-ink-100 focus:border-ink-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-ink-900/5"
           />
           {search && (
             <button

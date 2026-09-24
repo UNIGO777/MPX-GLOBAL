@@ -137,3 +137,28 @@ export function uploadChatImage(req, res, next) {
     return next(AppError.badRequest('upload failed', 'Could not read the uploaded image.'));
   });
 }
+
+// Step 1b · ONE optional file on a support ticket message — image OR document,
+// told apart downstream by its magic bytes (the chat checks are reused as-is).
+// Optional: a JSON request (no multipart) passes straight through untouched.
+const parseSupportFile = multer({
+  storage: multer.memoryStorage(),
+  defParamCharset: 'utf8',
+  limits: { fileSize: env.CHAT_ATTACHMENT_MAX_MB * 1024 * 1024, files: 1 },
+}).single('file');
+
+export function uploadSupportFile(req, res, next) {
+  parseSupportFile(req, res, (err) => {
+    if (!err) return next();
+    if (err instanceof multer.MulterError) {
+      const message =
+        err.code === 'LIMIT_FILE_SIZE'
+          ? `File exceeds the ${env.CHAT_ATTACHMENT_MAX_MB} MB limit.`
+          : err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE'
+            ? 'Attach one file in the "file" field.'
+            : 'Could not read the uploaded file.';
+      return next(AppError.badRequest(`upload: ${err.code}`, message));
+    }
+    return next(AppError.badRequest('upload failed', 'Could not read the uploaded file.'));
+  });
+}

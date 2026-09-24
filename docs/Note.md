@@ -68,7 +68,7 @@ show a loud 🔴 RED ALERT, and wait for explicit owner confirmation before writ
   warning labels"; pre-written list only; same permission as Block.
 - **Built:** six fixed warnings (`src/utils/chatWarnings.js` — the ONLY place the words live);
   `GET /admin/conversation-warnings`, `POST /admin/conversations/:id/warn` (`{ warning: key }`,
-  `conversation:block`); posts as the platform, TONED by nature (owner, same day) — systemKind
+  `conversation:warn` — split from `conversation:block` by the owner 2026-09-24); posts as the platform, TONED by nature (owner, same day) — systemKind
   `warning_<tone>`: reminder (slate, "Platform reminder") · caution (amber) · serious (red) · final
   (deep red, "Final warning"); the tone lives on each warning in `chatWarnings.js`, and the admin's
   selection window shows the same colour as the thread notice (`web/.../chat/warningTones.js`); no freeze, no push, frozen thread refused (409); audit `conversation.warn` with the key.
@@ -207,6 +207,11 @@ Do not start the screens without surfacing this alert.
 > their contact details. **Built** (`notifyOrganisationJoined`). **The guard moves again: a SEVENTH
 > event needs a fresh alert.** (The rule-6 `claim_org_email` code is an OTP, not a notification
 > event — it does not count toward this.)
+>
+> ✅ **2026-09-24 — owner approved a SEVENTH and EIGHTH email event (Step 1b support tickets):**
+> "MPX Global Support replied to your ticket" and "your ticket is resolved" → the account that raised
+> it. Plain text, no link (house rule), never names the employee. **Built** (`notifyTicketReply`,
+> `notifyTicketResolved`). **The guard moves again: a NINTH event needs a fresh alert.**
 >
 > 🔴 **Still ON HOLD and still needing an alert:** **WhatsApp**, the `Notification` model / in-app
 > centre, admin per-type enable-disable, and delivery tracking + retry.

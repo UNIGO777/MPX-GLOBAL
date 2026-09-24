@@ -80,10 +80,12 @@ export async function verifyChatImage(buffer) {
  * alone. `overwrite: false` because messages are append-only (M4-13): a second
  * upload must never be able to replace the image a previous message points at.
  */
-export async function uploadChatImage({ buffer, conversationId }) {
+export async function uploadChatImage({ buffer, conversationId, folder }) {
   assertConfigured();
   const { format, mime } = await verifyChatImage(buffer);
-  const publicId = `mpx/chat/${conversationId}/${randomBytes(12).toString('hex')}`;
+  // `folder` (Step 1b): support tickets reuse this exact path — same checks,
+  // same private storage — under their own prefix instead of a chat's.
+  const publicId = `${folder ?? `mpx/chat/${conversationId}`}/${randomBytes(12).toString('hex')}`;
 
   const result = await new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -208,10 +210,10 @@ export async function verifyChatDocument(buffer) {
  * Verification runs BEFORE the configuration check, so a bad file is refused
  * the same way whether or not storage is up.
  */
-export async function uploadChatDocument({ buffer, originalName, conversationId }) {
+export async function uploadChatDocument({ buffer, originalName, conversationId, folder }) {
   const { format, mime } = await verifyChatDocument(buffer);
   assertConfigured();
-  const publicId = `mpx/chat/${conversationId}/${randomBytes(12).toString('hex')}.${format}`;
+  const publicId = `${folder ?? `mpx/chat/${conversationId}`}/${randomBytes(12).toString('hex')}.${format}`;
 
   const result = await new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(

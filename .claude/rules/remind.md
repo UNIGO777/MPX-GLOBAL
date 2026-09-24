@@ -96,7 +96,8 @@ while any close-time security commitment remains unraised.
   2026-09-23 and the owner confirmed. Stored PRIVATE (the KYC pattern), never the public
   product-image pattern. Detail: `docs/Note.md` **D9**.
 - **D11 — Platform warnings in chat.** Red alert raised 2026-09-24, owner confirmed: staff with
-  `conversation:block` pick one of the PRE-WRITTEN warnings (`src/utils/chatWarnings.js`); it posts
+  `conversation:warn` (its own grant since 2026-09-24 — was `conversation:block`) pick one of the
+  PRE-WRITTEN warnings (`src/utils/chatWarnings.js`); it posts
   as the platform, audited. 🔴 **Staff still never write free text into a thread** — any free-text
   or per-person staff message is a new decision and needs its own alert. Detail: `docs/Note.md` **D11**.
 - **D10 — Chat attachments (DOCUMENTS: PDF, .docx, .xlsx ONLY).** Red alert raised 2026-09-24,
@@ -145,8 +146,10 @@ while any close-time security commitment remains unraised.
   ✅ **CARVE-OUT 2026-07-31 — FCM push is APPROVED into month 1** (owner-confirmed), built in M4:
   `firebase-admin` + `DeviceToken` + dead-token cleanup + **two events only** (new enquiry → seller,
   new message → counterparty). **Do not re-alert on that slice.** Everything else in D5 still is.
-  ✅ **Email events approved so far: six** — the sixth is "someone joined your company" (D7 F6,
-  owner 2026-09-23, built). A **seventh** email event needs a fresh alert.
+  ✅ **Email events approved so far: eight** — the sixth is "someone joined your company" (D7 F6,
+  owner 2026-09-23, built); the seventh and eighth are the support-ticket emails "staff replied →
+  the company" and "ticket resolved → the company" (owner 2026-09-24, Step 1b, built). A **ninth**
+  email event needs a fresh alert.
 
 Phase-1 reality: **buyer** has no gate (fully active from signup); **seller** is public with a
 verified tick and a **3-active-listing limit while unverified** (taken-down excluded from the count — §A10; + 10-draft cap §A15) (D1). Verification/approval is status
