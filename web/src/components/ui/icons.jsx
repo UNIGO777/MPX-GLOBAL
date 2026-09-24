@@ -79,6 +79,19 @@ export const ShieldIcon = ({ className = 'h-5 w-5', ...rest }) => (
 export const DocIcon = (p) => (
   <Svg {...p}><path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V8z" /><path d="M14 3v5h5M9 13h6M9 17h6" /></Svg>
 );
+/**
+ * Quotation (Module 4, month 2) — a document with a price tag on it. Distinct
+ * from `DocIcon`, which is "any attached file": the chat's + menu shows both,
+ * and two identical-looking options are how someone attaches a PDF when they
+ * meant to price a deal.
+ */
+export const QuoteIcon = (p) => (
+  <Svg {...p}>
+    <path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V8z" />
+    <path d="M14 3v5h5" />
+    <path d="M12 12v6M14 13.2a2 2 0 00-2-.7c-1.1 0-2 .6-2 1.5s.9 1.5 2 1.5 2 .6 2 1.5-.9 1.5-2 1.5a2 2 0 01-2-.7" />
+  </Svg>
+);
 export const HomeIcon = (p) => (
   <Svg {...p}><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /></Svg>
 );

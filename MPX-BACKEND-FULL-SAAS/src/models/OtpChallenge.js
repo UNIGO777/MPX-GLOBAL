@@ -20,6 +20,21 @@ const otpChallengeSchema = new Schema(
     identifier: { type: String, required: true },
     channel: { type: String, enum: ['mobile', 'email'], required: true },
     purpose: { type: String, enum: OTP_PURPOSE, required: true },
+    /**
+     * What this code is FOR, when the purpose alone is not specific enough.
+     *
+     * 🔴 `requestOtp` keeps ONE live challenge per (subject, purpose), so a
+     * person with two quotations open would otherwise be able to enter the code
+     * emailed about quotation B into quotation A's confirmation and have it
+     * verify — the email names a document the code does not actually bind to.
+     * Set it and `verifyOtp` refuses a code issued for a different subject_ref.
+     *
+     * Optional by design: every auth purpose (login, signup, password reset) has
+     * exactly one meaning per person, and passing nothing keeps their behaviour
+     * unchanged.
+     */
+    subjectRef: { type: Schema.Types.ObjectId },
+
     codeHash: { type: String, required: true, select: false },
     expiresAt: { type: Date, required: true },
     attempts: { type: Number, default: 0 },

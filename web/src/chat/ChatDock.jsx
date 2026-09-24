@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 
 import { useAuth } from '../auth/AuthContext.jsx';
 import { CompanyAvatar } from '../components/chat/CompanyAvatar.jsx';
@@ -14,6 +15,7 @@ import { conversationRowsOf, useConversationList } from '../hooks/useConversatio
 import { useThread } from '../hooks/useThread.js';
 import { useUnreadCount } from '../hooks/useUnreadCount.js';
 import { useChatDock } from './ChatDockContext.jsx';
+import { quotationsApi } from '../api/quotations.js';
 import { useUnreadTitle } from './useUnreadTitle.js';
 
 /**
@@ -86,6 +88,20 @@ export function ChatDock() {
   const navigate = useNavigate();
   const dock = useChatDock();
   const unread = useUnreadCount();
+
+  /**
+   * Module 4 — start a quotation from the docked thread. The draft is created
+   * server-side (it needs the inquiry, the product and both companies), then we
+   * leave for the builder and CLOSE the dock: a floating window over a form the
+   * exporter is filling is in the way, not helpful.
+   */
+  const startQuotation = useMutation({
+    mutationFn: () => quotationsApi.createDraft(dock.activeId),
+    onSuccess: (q) => {
+      dock.close?.();
+      navigate(`/exporter/quotations/${q.id}`);
+    },
+  });
   const [isPhone, setIsPhone] = useState(false);
   const panelRef = useRef(null);
 
@@ -262,6 +278,10 @@ export function ChatDock() {
               connected={dock.connected}
               draft={dock.drafts[dock.activeId] ?? ''}
               onDraftChange={(value) => dock.setDraft(dock.activeId, value)}
+              /* Module 4 — the dock navigates AWAY to the builder, which is a
+                 full page: a quotation form does not fit a floating window, and
+                 half-filling one in a dock that can be closed loses the work. */
+              onMakeQuotation={() => startQuotation.mutate()}
             />
           </div>
         </>

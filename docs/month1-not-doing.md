@@ -24,6 +24,27 @@
 - Quotation status + full history
 - *(`Quotation` model skeleton hai — endpoints month 1 me nahi)*
 
+**Owner ka inner plan (2026-09-24) — build karte waqt yahi flow hai:**
+1. Quotation us PRODUCT ka banta hai jis par chat chal rahi hai (thread = product, M4 §2).
+2. Chat ke **+ menu me "Make quotation"** — sirf EXPORTER ko dikhta hai.
+3. Click par ek **form**: quotation ke liye jo extra detail chahiye woh poochta hai + ek
+   **custom field** additional details ke liye.
+4. **Payment milestones** batane padenge — custom, warna product details se default.
+5. **GPT quotation ka content banata hai.**
+6. Content **MPX quotation template** (React/JSX, A4, print-to-PDF) me bharta hai.
+7. Pehle **EXPORTER ko dikhta hai**; woh AI se bol kar edit kar sakta hai.
+8. Send par buyer ko **PDF** jaata hai.
+
+✅ **Bank details ka hissa BAN CHUKA hai (owner ne override diya, 2026-09-24)** — model
+`ExporterBankAccount`, service, `/me/bank-accounts` CRUD + `/confirm`, 9 tests. Baaki quotation
+flow month 2 me. Ise dobara mat banao; detail `docs/History.md`.
+
+🔴 **Build se pehle ye saat cheezein tay karni hain — detail `docs/History.md` 2026-09-24:**
+bank details (C1 ka seedha takraav), GPT ka commercial/legal text likhna, ~15 aise field jo
+kisi model me nahi hain (GSTIN, IEC, incoterm, ports, contact person), milestones ka koi
+structured source na hona, acceptance/eSign ka Bucket-B me hona, PDF server par banana, aur
+`verifyUrl` ka naya public surface.
+
 ### A2 · Employee panel — employee-specific pieces (Module 6)
 > Shared operational endpoints (approve/verify, product monitoring, chat monitoring, buyer/seller
 > mgmt, category, audit view) month 1 me **ban rahe hain** super admin ke liye. Wo deferred NAHI.

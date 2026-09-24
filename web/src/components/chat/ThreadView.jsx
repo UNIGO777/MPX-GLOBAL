@@ -54,6 +54,7 @@ export function ThreadView({
   variant = 'page',
   connected = true,
   headerAction = null,
+  onMakeQuotation = null,
 }) {
   const { conversation, messages, pending, isLoading, error } = thread;
 
@@ -357,6 +358,9 @@ export function ThreadView({
                     <MessageBubble
                       message={message}
                       viewerSide={viewerSide}
+                      // Only used to resolve a quotation notice written before
+                      // `Message.quotationId` existed — see SystemNotice.
+                      conversationId={conversation.id}
                       // 🔴 The dock is a 352px window: without this the bubbles
                       // and platform notices render at page scale inside it.
                       compact={variant === 'dock'}
@@ -421,6 +425,11 @@ export function ThreadView({
               )}
             </>
           ) : (
+            /* 🔴 The quotation strip that used to sit here is GONE (owner,
+               2026-09-25). Quotations now arrive in the timeline as document
+               cards with their own actions, and a second list above the composer
+               was the same thing said twice — two surfaces showing one
+               quotation's status is how one of them ends up stale. */
             <Composer
               compact={variant === 'dock'}
               value={draft}
@@ -432,6 +441,10 @@ export function ThreadView({
               image={image}
               onPickImage={setImageFromFile}
               onPickDocument={setDocumentFromFile}
+              /* Module 4 — the EXPORTER side only, and never in the admin's
+                 read-only viewer. Passing `null` is what hides the option;
+                 `AttachMenu` renders nothing it has no handler for. */
+              onMakeQuotation={viewerSide === 'exporter' ? onMakeQuotation : null}
               onClearImage={clearImage}
               attachError={attachError}
               onSend={(body) => {

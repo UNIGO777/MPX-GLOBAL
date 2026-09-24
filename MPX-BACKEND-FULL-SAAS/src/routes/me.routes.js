@@ -10,6 +10,8 @@ import * as ctrl from '../controllers/kyc.controller.js';
 import * as V from '../validators/kyc.validators.js';
 import * as DV from '../validators/device.validators.js';
 import * as deviceCtrl from '../controllers/devices.controller.js';
+import * as bankCtrl from '../controllers/bankAccount.controller.js';
+import * as BV from '../validators/bankAccount.validators.js';
 
 export const meRouter = Router();
 
@@ -53,3 +55,55 @@ meRouter.delete('/me/organisation/logo', authenticate, generalLimiter, orgCtrl.r
 // Exporter cover banner — same shape and same guards as the logo above.
 meRouter.post('/me/organisation/cover', authenticate, uploadLimiter, uploadCover, orgCtrl.setCover);
 meRouter.delete('/me/organisation/cover', authenticate, generalLimiter, orgCtrl.removeCover);
+
+/**
+ * Exporter bank details (owner, 2026-09-24 — quotation builder, Bucket A1).
+ *
+ * 🔴 Self-scoped: every handler reads `exporterOrgId` from the TOKEN. There is
+ * no path or body parameter naming an organisation, so one exporter can never
+ * address another's row — a foreign id is a 404.
+ *
+ * The role check lives in the SERVICE (`assertExporter`), not only here, so the
+ * rule holds however the endpoint is reached (web-frontend.md trust boundary:
+ * the client renders, the server decides).
+ *
+ * ⚠️ No REVEAL route is exposed yet. `revealForQuotation()` exists in the
+ * service and is audited, but nothing should load a full account number until
+ * the quotation endpoints that need it are built in month 2 — an endpoint that
+ * hands out bank numbers with no consumer is a surface with no purpose.
+ */
+meRouter.get('/me/bank-accounts', authenticate, generalLimiter, bankCtrl.list);
+
+meRouter.post(
+  '/me/bank-accounts',
+  authenticate,
+  generalLimiter,
+  validate(BV.createBankAccountSchema),
+  bankCtrl.create,
+);
+
+meRouter.patch(
+  '/me/bank-accounts/:id',
+  authenticate,
+  generalLimiter,
+  validate(BV.updateBankAccountSchema),
+  bankCtrl.update,
+);
+
+meRouter.delete(
+  '/me/bank-accounts/:id',
+  authenticate,
+  generalLimiter,
+  validate(BV.bankAccountParams),
+  bankCtrl.remove,
+);
+
+// The exporter answering "yes, use these" on a quotation form — the control
+// that stops tampered details riding along unnoticed.
+meRouter.post(
+  '/me/bank-accounts/:id/confirm',
+  authenticate,
+  generalLimiter,
+  validate(BV.bankAccountParams),
+  bankCtrl.confirm,
+);

@@ -9,6 +9,7 @@ export { ErrorLog } from './ErrorLog.js';
 export { Category } from './Category.js';
 export { CategoryAttribute } from './CategoryAttribute.js';
 export { Product } from './Product.js';
+export { ExporterBankAccount } from './ExporterBankAccount.js';
 export { SavedItem } from './SavedItem.js';
 
 // M4 · Enquiry & Chat

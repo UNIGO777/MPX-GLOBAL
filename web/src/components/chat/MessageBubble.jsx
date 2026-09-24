@@ -2,9 +2,10 @@ import { useState } from 'react';
 
 import { formatTime } from '../../lib/format.js';
 import { Lightbox } from '../ui/Lightbox.jsx';
-import { AlertIcon, CheckIcon, DownloadIcon, ShieldIcon, SlashIcon } from '../ui/icons.jsx';
+import { AlertIcon, CheckIcon, ClockIcon, DownloadIcon, QuoteIcon, ShieldIcon, SlashIcon } from '../ui/icons.jsx';
 import { fileBadge, formatFileSize } from '../../lib/chatFiles.js';
 import { WARNING_TONES } from './warningTones.js';
+import { QuotationChatCard } from './QuotationChatCard.jsx';
 
 /**
  * D10 · a document in a bubble: badge, name, size — and, once sent, a DOWNLOAD
@@ -169,8 +170,49 @@ const NOTICE_DEFAULT = {
   dot: 'text-primary-300',
 };
 
+/**
+ * Module 4 (month 2) — quotation notices. INFORMATION on the ladder above: a
+ * white card with a coloured edge, not a tint. A quotation moving is a fact
+ * about the deal, not a warning about the conversation, and tinting it would
+ * put it on the same footing as "Product under review".
+ *
+ * The notice carries the NUMBER only. The document itself is opened from the
+ * strip above the composer — a price repeated into the timeline is a second
+ * copy that can end up disagreeing with the quotation.
+ */
+const QUOTATION_NOTICE = {
+  label: 'Quotation',
+  Icon: QuoteIcon,
+  bar: 'bg-ink-900',
+  wrap: 'from-white to-white ring-ink-200/80 shadow-[0_1px_2px_rgba(0,5,23,0.04)]',
+  head: 'text-ink-900',
+  dot: 'text-ink-300',
+};
+
 const NOTICE_KINDS = {
   welcome: NOTICE_DEFAULT,
+  quotation_sent: QUOTATION_NOTICE,
+  quotation_accepted: {
+    ...QUOTATION_NOTICE,
+    label: 'Quotation accepted',
+    Icon: CheckIcon,
+    bar: 'bg-success-500',
+    head: 'text-success-700',
+  },
+  // A counter-offer is movement, not a problem — same white card, and the copy
+  // carries the figure (an offer has no document of its own to disagree with).
+  quotation_offer: { ...QUOTATION_NOTICE, label: 'Counter-offer' },
+  // Half-accepted is its own state and has to read as one: neither "sent" nor
+  // "accepted", and waiting on a named party.
+  quotation_accept_pending: {
+    ...QUOTATION_NOTICE,
+    label: 'Acceptance confirmed by one side',
+    Icon: ClockIcon,
+    bar: 'bg-warning-500',
+    head: 'text-warning-700',
+  },
+  quotation_declined: { ...QUOTATION_NOTICE, label: 'Quotation declined', bar: 'bg-danger-500', head: 'text-danger-700' },
+  quotation_withdrawn: { ...QUOTATION_NOTICE, label: 'Quotation withdrawn' },
   // 🔴 The ONE filled notice (owner, 2026-09-24: after the crimson rebrand a
   // pale-maroon "blocked" was indistinguishable from the pale "Final warning").
   // A closed conversation is the strongest thing the platform says, so it is
@@ -243,10 +285,21 @@ const NOTICE_KINDS = {
   },
 };
 
+/**
+ * The number the server wrote into a quotation notice.
+ *
+ * 🔴 This exists for notices posted BEFORE `Message.quotationId` did (2026-09-25).
+ * Messages are append-only (M4-13), so those can never be backfilled — and
+ * without this every quotation sent before that day would keep rendering as a
+ * line of text forever. The number in the copy is the only handle they have.
+ */
+const NUMBER_IN_BODY = /MPX-Q-\d{4}-\d{6}/;
+
 /** The platform's own voice — never a chat bubble that could read as a party. */
-function SystemNotice({ message, compact }) {
+function NoticeBand({ message, compact }) {
   const kind = NOTICE_KINDS[message.systemKind] ?? NOTICE_DEFAULT;
   const { Icon } = kind;
+
   return (
     // 🔴 An ANNOUNCEMENT, not a message — and the shape has to say so before a
     // word is read. Two earlier attempts failed for the same reason: they were
@@ -267,7 +320,7 @@ function SystemNotice({ message, compact }) {
     //
     // No name label: the server copy already says "by MPX Global" (M4-17 — the
     // platform, never a person), so a header would repeat it.
-    <li className="my-5 flex justify-center px-3">
+    <>
       {/* 🔴 Four attempts sit behind this block; the notes are here so the fifth
           person does not repeat them.
             · white card + sender name + time top-right  → read as a MESSAGE
@@ -320,8 +373,58 @@ function SystemNotice({ message, compact }) {
           {message.body}
         </p>
       </div>
-    </li>
+    </>
   );
+}
+
+/**
+ * 🔴 A quotation arrives as a DOCUMENT CARD, not a line of text (owner,
+ * 2026-09-25). It REPLACES the notice rather than sitting under it: two
+ * renderings of the same event is how one of them ends up stale.
+ *
+ * The card resolves the quotation two ways — by `quotationId` on notices written
+ * since 2026-09-25, and by the number in the copy for every notice written
+ * before it (see NUMBER_IN_BODY). If neither resolves, it renders the plain band
+ * instead, so a message can never vanish from a transcript.
+ *
+ * Staff keep the plain band — a quotation is two-party scoped, so a moderator's
+ * fetch would 404, and that is the intended boundary, not a gap.
+ */
+function SystemNotice({ message, compact, viewerSide, conversationId }) {
+  const band = <NoticeBand message={message} compact={compact} />;
+  const isQuotation = message.systemKind === 'quotation_sent' && viewerSide !== 'staff';
+  const number = isQuotation ? (message.body?.match(NUMBER_IN_BODY)?.[0] ?? null) : null;
+
+  /**
+   * 🔴 Aligned like a MESSAGE, not centred like a notice — right for the side
+   * that sent it, left for the side receiving it (owner, 2026-09-25).
+   *
+   * This does not contradict the "signage, not speech" rule the band above is
+   * built on. That rule exists so the PLATFORM never reads as a third sender. A
+   * quotation is not the platform talking: it is a document one company sent the
+   * other, so it belongs on that company's side of the thread exactly as its
+   * messages do.
+   *
+   * The sender is always the EXPORTER — `send()` refuses any other side — so the
+   * viewer's own side is all this needs. The system message itself carries no
+   * sender, by design (M4-17).
+   */
+  if (isQuotation && (message.quotationId || number)) {
+    return (
+      <li className={`my-4 flex px-3 ${viewerSide === 'exporter' ? 'justify-end' : 'justify-start'}`}>
+        <QuotationChatCard
+          quotationId={message.quotationId}
+          quotationNumber={number}
+          conversationId={conversationId}
+          viewerSide={viewerSide}
+          createdAt={message.createdAt}
+          fallback={band}
+        />
+      </li>
+    );
+  }
+
+  return <li className="my-5 flex justify-center px-3">{band}</li>;
 }
 
 function PartyMessage({ message, align, tone, senderName, senderType, pending, failed, onRetry, startsGroup, compact }) {
@@ -501,11 +604,21 @@ export function MessageBubble({
   message,
   viewerSide,
   counterpartyName,
+  conversationId,
   onRetry,
   startsGroup = true,
   compact = false,
 }) {
-  if (message.senderType === 'system') return <SystemNotice message={message} compact={compact} />;
+  if (message.senderType === 'system') {
+    return (
+      <SystemNotice
+        message={message}
+        compact={compact}
+        viewerSide={viewerSide}
+        conversationId={conversationId}
+      />
+    );
+  }
 
   /**
    * 🔴 A MODERATOR is neither party (M4-2), so nothing is painted as "mine" in

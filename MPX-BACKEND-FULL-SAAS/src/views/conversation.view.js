@@ -246,6 +246,10 @@ export function messageView(message) {
      * arrives.
      */
     attachment: attachmentView(message.attachment),
+    // Present only on a quotation notice. The client fetches the quotation with
+    // it and renders the card live; the id alone discloses nothing, since the
+    // quotation itself is two-party scoped on every read.
+    quotationId: message.quotationId ? String(message.quotationId) : null,
     createdAt: message.createdAt,
   };
 }

@@ -128,13 +128,14 @@ export async function sendMessage({ user, conversationId, body, imageBuffer = nu
  * Deliberately NOT subject to the frozen guard: the message explaining WHY a
  * thread just froze has to be written after it is frozen.
  */
-export async function postSystemMessage({ conversationId, body, systemKind }) {
+export async function postSystemMessage({ conversationId, body, systemKind, quotationId }) {
   const sentAt = new Date();
   const message = await Message.create({
     conversationId,
     senderType: 'system',
     body,
     systemKind,
+    quotationId,
   });
 
   // A system notice updates the list ordering and preview, but must not mark

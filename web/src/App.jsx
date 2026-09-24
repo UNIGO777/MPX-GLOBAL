@@ -32,6 +32,8 @@ import { ChatDockProvider } from './chat/ChatDockContext.jsx';
 import { Dashboard as ExporterDashboard } from './pages/exporter/Dashboard.jsx';
 import { VerificationStatus as ExporterVerificationStatus } from './pages/exporter/VerificationStatus.jsx';
 import { KycUpload as ExporterKycUpload } from './pages/exporter/KycUpload.jsx';
+import { QuotationBuilder } from './pages/exporter/QuotationBuilder.jsx';
+import { QuotationView } from './pages/QuotationView.jsx';
 import { Products as ExporterProducts } from './pages/exporter/Products.jsx';
 import { ProductForm } from './pages/exporter/ProductForm.jsx';
 import { CompanyProfile } from './pages/account/CompanyProfile.jsx';
@@ -245,6 +247,14 @@ export function App() {
               </Route>
             </Route>
 
+            {/* Module 4 (month 2) — the quotation DOCUMENT, for both parties.
+                Outside the role blocks on purpose: buyer and supplier read the
+                same page, and the server scopes it by `parties` — two separate
+                pages would be two chances to disagree about a price. */}
+            <Route element={<RequireAuth />}>
+              <Route path="/quotations/:id" element={<QuotationView />} />
+            </Route>
+
             {/* --- Exporter panel --- */}
             <Route element={<RequireAuth />}>
               <Route element={<RequireRole roles={['exporter']} />}>
@@ -256,6 +266,9 @@ export function App() {
                     bookmarks to /exporter/verification still resolve. */}
                 <Route path="/exporter" element={<Navigate to="/exporter/dashboard" replace />} />
                 <Route path="/exporter/kyc" element={<ExporterKycUpload />} />
+                {/* Module 4 (month 2) — the exporter drafts a quotation here after
+                    starting one from a chat thread. */}
+                <Route path="/exporter/quotations/:id" element={<QuotationBuilder />} />
                 <Route path="/exporter/company" element={<CompanyProfile />} />
                 <Route path="/exporter/products" element={<ExporterProducts />} />
                 <Route path="/exporter/products/new" element={<ProductForm />} />

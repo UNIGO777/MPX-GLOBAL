@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useConversationList } from '../../hooks/useConversationList.js';
 import { ConversationRow, ConversationRowSkeleton } from '../../components/chat/ConversationRow.jsx';
 import { ThreadView } from '../../components/chat/ThreadView.jsx';
+import { quotationsApi } from '../../api/quotations.js';
+import { apiError } from '../../lib/format.js';
+import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
@@ -197,10 +201,31 @@ function ConversationList({ role, activeId, onSelect }) {
   );
 }
 
+
+/**
+ * Module 4 — start a quotation from this thread.
+ *
+ * The draft is created SERVER-side (it needs the inquiry, the product and both
+ * companies), then the exporter is taken to the builder. Errors surface as an
+ * alert rather than a silent no-op: a "+" option that appears to do nothing is
+ * worse than one that says why.
+ */
+function useMakeQuotation(conversationId) {
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const start = useMutation({
+    mutationFn: () => quotationsApi.createDraft(conversationId),
+    onSuccess: (q) => navigate(`/exporter/quotations/${q.id}`),
+    onError: (e) => setError(apiError(e, 'Could not start a quotation.').message),
+  });
+  return { start: () => start.mutate(), error, clearError: () => setError(null) };
+}
+
 export function ChatInbox() {
   const { user } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
+  const makeQuotation = useMakeQuotation(id);
   // Drafts live in the DOCK's context, not in this page's state: a message
   // half-typed in the floating window must still be there after "open in full
   // screen", and vice versa. Two stores meant the text silently vanished when
@@ -253,6 +278,11 @@ export function ChatInbox() {
 
         {/* Thread — full width on phones, the right pane on desktop. */}
         <div className={`min-w-0 flex-1 ${id ? 'block' : 'hidden md:block'}`}>
+          {makeQuotation.error && (
+            <Alert tone="danger" className="mb-2" >
+              {makeQuotation.error}
+            </Alert>
+          )}
           {id ? (
             <ThreadView
               thread={thread}
@@ -261,6 +291,7 @@ export function ChatInbox() {
               draft={dock.drafts[id] ?? ''}
               onDraftChange={(value) => dock.setDraft(id, value)}
               onBack={() => navigate(base)}
+              onMakeQuotation={makeQuotation.start}
             />
           ) : (
             <div className="chat-canvas flex h-full items-center justify-center">

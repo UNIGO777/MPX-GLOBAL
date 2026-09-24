@@ -108,6 +108,26 @@ export const otpLimiter = buildLimiter({
   keyGenerator: otpKeyGenerator,
 });
 
+/**
+ * Module 4 · confirming acceptance of a quotation (request a code, then enter it).
+ *
+ * 🔴 Keyed on the AUTHENTICATED USER, not the IP. `otpKeyGenerator` falls back
+ * to the ip when the body carries no identifier — and these routes carry none,
+ * so under it one office behind a NAT would share a single budget and colleagues
+ * would lock each other out of closing their own deals. `authenticate` runs
+ * before this limiter, so the user is always there.
+ *
+ * The budget covers both routes together: sending a code and answering it are
+ * the same activity, and the OTP challenge's own 5-attempt lock (A3) is what
+ * stops guessing — this only stops a mailbox being flooded.
+ */
+export const quotationAcceptLimiter = buildLimiter({
+  prefix: 'rl:q-accept:',
+  windowMs: 10 * MINUTE,
+  limit: 10,
+  keyGenerator: (req) => (req.user?.userId ? `u:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
+});
+
 // D7 rule 6 · the claim code goes to SOMEONE ELSE's inbox — the member already
 // in the company. So the budget is keyed on the SIGNUP TOKEN, not the target
 // address and not only the IP: one signup must not be able to flood a stranger's

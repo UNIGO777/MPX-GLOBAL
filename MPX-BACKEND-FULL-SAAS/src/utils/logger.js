@@ -23,6 +23,15 @@ const REDACT_PATHS = [
   'headers.authorization',
   'bankAccountNumber',
   '*.bankAccountNumber',
+  // 2026-09-24 — `ExporterBankAccount` names these fields plainly, and the
+  // list above only covered `bankAccountNumber`. A quotation's beneficiary
+  // details must never reach a log line.
+  'accountNumber',
+  '*.accountNumber',
+  'swift',
+  '*.swift',
+  'beneficiary',
+  '*.beneficiary',
   'ifsc',
   '*.ifsc',
   'panNumber',

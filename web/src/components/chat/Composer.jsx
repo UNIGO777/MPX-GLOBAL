@@ -48,6 +48,7 @@ export function Composer({
   image = null,
   onPickImage,
   onPickDocument,
+  onMakeQuotation,
   onClearImage,
   attachError = null,
 }) {
@@ -206,7 +207,12 @@ export function Composer({
       {/* items-end: as the text grows, the controls stay on its last line. */}
       <div className={`flex items-end ${compact ? 'p-1' : 'p-1.5'}`}>
         <span className="flex h-10 items-center">
-          <AttachMenu onPickImage={onPickImage} onPickDocument={onPickDocument} disabled={sending} />
+          <AttachMenu
+            onPickImage={onPickImage}
+            onPickDocument={onPickDocument}
+            onMakeQuotation={onMakeQuotation}
+            disabled={sending}
+          />
         </span>
 
         <label htmlFor="chat-composer" className="sr-only">

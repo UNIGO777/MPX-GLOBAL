@@ -41,6 +41,18 @@ export const OTP_PURPOSE = [
   'signup_email',
   'signup_mobile',
   'claim_org_email',
+  /**
+   * Confirming acceptance of a quotation (Module 4, month 2).
+   *
+   * 🔴 This is an ACCEPTANCE RECORD, not a digital signature. Under the IT Act
+   * a digital/electronic signature means a licensed CA's certificate or a
+   * notified technique such as Aadhaar eSign; an email code is neither. What it
+   * genuinely proves — that the person controlling the account's registered
+   * email confirmed, at a time, from an IP — is recorded and is good evidence.
+   * Owner chose this wording deliberately on 2026-09-25. Never label it a
+   * signature in UI copy, the PDF, an email or an audit entry.
+   */
+  'quotation_accept',
 ];
 
 // KYC entity type — drives the KYC document path (business docs vs personal ID).
@@ -254,6 +266,21 @@ export const MESSAGE_SYSTEM_KIND = [
   'warning_caution',
   'warning_serious',
   'warning_final',
+  // Module 4 (month 2) — a quotation moving through the thread. The document
+  // itself is never a chat message: these are NOTICES that carry its number, so
+  // the thread reads as a record of what happened without duplicating prices
+  // that could then disagree with the quotation itself.
+  'quotation_sent',
+  // A counter-offer was made. The figure IS in the notice text here — unlike the
+  // document's own prices, an offer has no other home to disagree with, and a
+  // negotiation nobody can read back is not a record.
+  'quotation_offer',
+  // One side has confirmed and the other has not answered yet. A deal that is
+  // half-accepted must be visible as exactly that.
+  'quotation_accept_pending',
+  'quotation_accepted',
+  'quotation_declined',
+  'quotation_withdrawn',
 ];
 
 // Why messaging is frozen. FIRST REASON WINS and is never overwritten (M4-29).
@@ -272,6 +299,26 @@ export const CONVERSATION_FROZEN_REASON = ['takedown', 'blocked', 'account'];
 // Enquiry lifecycle. Written once at creation and left alone — the flow that
 // drives it is month 2 (m4.md §13). Do not add transitions here.
 export const INQUIRY_STATUS = ['open', 'responded', 'closed'];
+
+/**
+ * Quotation lifecycle (Module 4, month 2).
+ *
+ * 🔴 `accepted` means the BUYER pressed accept on a quotation. It is a status,
+ * not a signature: AI contract generation and eSign are Bucket B, so nothing
+ * here produces a signed instrument. `withdrawn` is the exporter pulling it;
+ * `expired` is `validUntil` passing and is derived on read, never a stored
+ * transition nobody triggered.
+ */
+export const QUOTATION_STATUS = [
+  'draft',
+  'sent',
+  // A counter-offer is on the table. The quotation is still live — negotiating
+  // is not a rejection, and treating it as one would end deals that are working.
+  'negotiating',
+  'accepted',
+  'declined',
+  'withdrawn',
+];
 
 // Device platforms for FCM push registration.
 export const DEVICE_PLATFORM = ['android', 'ios', 'web'];

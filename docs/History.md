@@ -175,6 +175,450 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-25 — The quotation strip above the composer is gone.** Owner: "dont show quote here".
+  It listed every quotation in the thread with its status and an Open link; since quotations arrive
+  in the timeline as document cards carrying their own actions, it was the same thing said twice —
+  and two surfaces showing one quotation's status is how one of them ends up stale. `QuotationStrip.jsx`
+  is DELETED, not left unrendered (no dead code). ⚠️ What it was for is now the card's job: the
+  original note said a buyer should not have to scroll back to the day it was sent to find the
+  document. If that turns out to matter, the answer is a quotations list, not a second strip.
+- **2026-09-25 — The real MPX Global mark on the quotation, in all three places.** Owner: "use
+  original logo of mpx global in quotations". The document printed a TYPED imitation of the wordmark
+  (MP + red X + tracked "G L O B A L"); it now carries `/brand-logo.png`, the owner's own artwork,
+  through the shared `Logo` — one lockup, one source.
+  - **PDF:** pdfmake needs the BYTES, so the file is fetched once per session and cached as a data
+    URI. A URL would leave every issued document depending on our server still serving that path
+    years later; a path means nothing inside a PDF at all.
+  - 🔴 **It can never cost someone their document.** A failed fetch falls back to the typed
+    wordmark, and a PNG PDFKit cannot decode throws from inside the build — so the download RETRIES
+    without the artwork rather than failing. A missing logo is not a reason to hand someone nothing.
+  - **Chat preview + the document page** render `<Logo>`; the page also gained the PDF's masthead
+    rule (navy with a red leading segment) so the screen and the file open the same way.
+  - `Logo` gained an `xs` (18px) height for the preview — its body text is 5–7px, where even `sm`
+    reads as a banner. Note for later: `Logo` sets its height INLINE so the artwork cannot stretch,
+    which also means a className cannot resize it — the size comes from the prop.
+- **2026-09-25 — Sending a quotation now lands the exporter in the chat thread.** Owner: "when quote
+  send also send user to chat page". A quotation is not filed somewhere — it arrives in the chat as a
+  document card, so what the exporter wants next is to see what the buyer now sees and to say
+  something alongside it. It also invalidates that thread's cached messages and the list first: the
+  socket patches an OPEN thread, but one read earlier in the session and left would otherwise be
+  arrived at with the quotation missing. ⚠️ Only when the quotation HAS a conversation — it always
+  does today (a draft starts from a thread), but one created another way would navigate to
+  `/exporter/chat/undefined`, which the inbox reads as a thread id and 404s on; without one the page
+  stays in its read-only sent state.
+
+- **2026-09-25 — Specs come off the product; AI for charges/taxes and the note; Save draft removed.**
+  Owner: "product specifications take from the product details itself, for writing additional details,
+  Charges and taxes also give option for ai and remove save as draft button".
+  - **Item specs now really come from the product.** `ItemPicker` took the first three `attributes`
+    and printed their VALUES alone — "120 · Cotton · White", which says nothing on a quotation — and
+    ignored `customSpecs` entirely, which is exactly where a seller writes the specs the category's
+    fixed fields do not cover. It now builds `Label: value` pairs from **customSpecs first, then
+    attributes**, trimmed to the schema's 400 chars on a separator so the cut never lands mid-pair.
+  - **Two more AI drafters**, same contract as the milestones one: `POST /quotations/:id/ai/:target`
+    where target is `milestones | charges | details` (an ENUM — an unknown target is a 400, not a
+    guess). One `AiBox` component in three places.
+  - 🔴 **Charges are the strictest of the three, because an amount is MONEY on the document.**
+    Non-negative finite numbers only, rates 0–100, ≤20 charges and ≤10 taxes — and **`null` stays
+    "Included" rather than collapsing to 0**, because zero prints as free, which is a different
+    promise.
+  - 🔴 **A details note carrying CONTACT DETAILS is discarded**, not cleaned. An email or a number
+    there routes the buyer around the platform and its record of the deal — the same rule the
+    seller's own written specs follow. The prompt forbids it; a model still writes one sometimes, so
+    it is checked (`containsContactDetails`) rather than trusted. The refusal repeats nothing the
+    model wrote.
+  - 🔴 **Save draft removed — so the form AUTOSAVES** (1.5s debounce, comparing the serialised
+    payload so a re-render or a typed-then-deleted character costs no request). Removing the button
+    without this would have meant the only way to save was to SEND, and a closed tab would take an
+    afternoon's work with it. Saving is now *visible* ("Saving…" / "Saved automatically at 14:31"),
+    because a form that saves silently and one that is not saving look identical until the work is
+    gone — and a **failure keeps a real "Try saving again" button**, since an autosave that quietly
+    gave up would be the worst of both.
+  - Tests: 4 more (27 in the file) — charges keep `null` as Included, a negative amount / a 180% rate
+    / an empty answer are refused, the note is discarded when it carries a phone number, and an
+    unknown AI target is a 400.
+- **2026-09-25 — Quotation builder UI pass.** Owner: "fix all quotation form ui". Real defects, not
+  a restyle:
+  - 🔴 **React keys were the array INDEX on every editable row.** Deleting a row re-pointed each
+    later row's DOM node at its neighbour's values, so focus and half-typed text jumped rows while
+    the object being edited had already moved. Every row now carries a stable `uid`, and
+    `setRow`/`dropRow` address rows by it instead of by position.
+  - 🔴 **The "Additional details" textarea had NO label** — a bare `<textarea>`, nothing for a
+    screen reader to announce. It now goes through the shared `Field`, with a live character count.
+  - **Dangling labels removed.** The row delete buttons and the line Amount used the shared `Field`,
+    which emits a real `<label for=…>`; pointing one at a `<button>` or a `<p>` announces a form
+    control that does not exist. A local `StaticField` mirrors the spacing without the label.
+  - **Delete buttons are 44px** (`web-design.md` minimum) and align via that shared box rather than
+    the hand-tuned `pb-3`, which drifted the moment a field showed a helper or an error.
+  - **Item rows split into two bands** — what it is, then how much. Six equal columns had squeezed HS
+    code, qty and unit into a sixth of the width each, unusable at laptop width beside the 320px rail.
+  - **Send is the primary action; Save draft is secondary** (it was the other way round), and Send is
+    disabled with the reasons LISTED beside it — missing items, missing validity date, milestones not
+    at 100% — instead of the exporter filling a long form and learning from a red box afterwards.
+    The list mirrors the server's `validateForSend`; if that gains a rule, add it here too.
+  - **Empty states** for items, charges/taxes and milestones; a running "x% of 100%" under the
+    schedule; per-tax lines in the totals rail (one merged "tax" line is not what prints); the total
+    repeated in the send confirmation.
+  - **"Saved." and "sent to the buyer" are now `FlashMessage`** (they report something that just
+    happened and go by themselves); the sent-state banner stays a plain `Alert` because it describes
+    a state.
+  - ⚠️ **Found while doing it: there is NO UI anywhere to add bank details.** The backend is complete
+    and the send modal picks from a list that can only ever be empty — it used to tell the exporter to
+    "add them in your company settings", a section that does not exist. The copy is now honest and the
+    gap is logged in `docs/UiWebNotes.md`. It belongs on the exporter's Company profile.
+  - 🔴 **The JSX comment trap bit a FOURTH time** — a `{/* … */}` before an element inside a ternary
+    branch makes two adjacent nodes and the file stops parsing. Noted at the site, in plain JS
+    comment form.
+- **2026-09-25 — AI drafts the quotation's payment schedule.** Owner: "for creating milestones in
+  the quotation builder give ai option where i just tell and milestone will create by ai". Planned
+  first (CLAUDE.md: payments-adjacent), and the owner chose both open questions: **milestones only**,
+  and **the model sees no money and no party names**.
+  - `POST /quotations/:id/ai/milestones` → `quotationAi.service.js`. **Exporter-side, DRAFT-only, and
+    it writes NOTHING** — the rows land in the form and are saved by the ordinary PATCH after the
+    exporter has read them. An LLM does not set the payment terms on a document two companies
+    transact against.
+  - 🔴 **The model's answer is validated as hostile input.** Shape, count (≤10), label length,
+    positive numbers, and the schedule must add to **exactly 100**. Anything else is REFUSED, not
+    repaired — silently fixing a bad schedule is how a plausible but wrong one reaches a buyer. The
+    error says nothing the model said.
+  - 🔴 **What leaves the server: the exporter's sentence, the incoterm and the lead time.** No
+    prices, totals, buyer or supplier names, or bank details. A milestone is a percentage — the
+    model does not need the deal's value, and the incoterm/lead time are read off the DRAFT rather
+    than the request body, so nothing in the body can widen what reaches OpenAI. The instruction is
+    capped at 300 chars, which is the prompt-injection surface as much as a cost control.
+  - **Cost:** `aiLimiter` for bursts + the existing per-org **daily** quota (`consumeAiQuota`) for
+    spend — api-endpoints B7. No key configured degrades to a plain "add them by hand", never a 500.
+  - 🔴 **GPT still never writes the legal clauses** — those are `termsVersion`, a fixed versioned
+    set (Quotation.js). The prompt says so explicitly and forbids warranties, penalties, interest,
+    governing law and anything about a bank account.
+  - Tests: 4 new (23 in the file) — it writes nothing to the draft, it refuses a schedule summing to
+    80, it refuses junk / empty / non-numeric / 11 rows, and it is 404 for the buyer and 409 once
+    sent.
+- **2026-09-25 — The chat quotation card now opens with a PREVIEW OF THE PAGE.** Owner supplied a
+  WhatsApp document card as the reference: "in the chats we need to show quotation pdfs like this".
+  - **Drawn in HTML, not rasterised.** Showing the real first page means either pdf.js (a new
+    dependency) or building the document with pdfmake — **~1 MB of library and fonts for every card
+    in every thread, just for a thumbnail**. `QuotationPaperPreview` draws the same page from the
+    same frozen snapshot at no cost, and Download still produces the real text PDF.
+  - 🔴 **It must not drift from the file.** The shipping strip is built by `quotationPdf.js`'s own
+    `shippingStrip` (exported for this), so "which terms appear and in what order" has ONE
+    definition. A preview that quietly differs from the document is worse than none — it shows
+    someone a page they will not receive.
+  - **New `paper-*` Tailwind tokens** — the DOCUMENT's palette (navy `#0B1F3A`, red `#B3122B`, ivory
+    rules), not the UI's. 🔴 Never for ordinary UI: a button in `paper-accent` is a second red that
+    drifts from `primary` the first time the brand moves. (Verified in the compiled CSS, since
+    Tailwind emits `rgb(11 31 58)` and grepping for the hex "passes" while the colour ships.)
+  - **The file band is INK, not the reference's green.** Green means VERIFIED across this product
+    (`web-design.md`); a green chrome on every quotation would spend that signal on a file.
+  - **The card is ALIGNED like a message** (owner): right for the exporter who sent it, left for the
+    buyer. That does not contradict the band's "signage, not speech" rule — that rule exists so the
+    PLATFORM never reads as a third sender, and a quotation is a document one company sent the
+    other, not the platform talking. The other quotation notices (offer, accepted, declined) stay
+    centred, because those ARE the platform reporting an event. The sender is always the exporter
+    (`send()` refuses any other side), so the viewer's own side is all the alignment needs — the
+    system message itself carries no sender, by design (M4-17).
+  - 🔴 **Quotations sent BEFORE this change still showed the plain text notice** — the owner caught
+    it in the exporter panel. Their notice has no `Message.quotationId`, and messages are
+    append-only (M4-13), so it can never be backfilled: every quotation sent before 2026-09-25 would
+    have rendered as a line of text forever. The card now resolves those by the NUMBER the server
+    wrote into the copy, looked up in the thread's own (two-party scoped) quotation list. If neither
+    the id nor the number resolves, the plain band renders — **a message must never disappear from a
+    transcript because a card could not be built.**
+  - ⚠️ **Not shown: "1 page · 23 KB"** from the reference. Both need the PDF actually built to be
+    true, and inventing a size on a commercial document is not worth a nicer line. It reads
+    "N items · PDF · time" instead.
+- **2026-09-25 — Accept / Negotiate on a quotation, confirmed by BOTH parties with an emailed code.**
+  Owner: "there will be two option generated first is accept and second one is negotiate like olx …
+  when someone buyer or seller accept the quotation then other party also need to confirm that quote
+  with otp verification".
+  - 🔴 **The owner asked for it to "work as digital signature"; it is recorded as a CONFIRMED
+    ACCEPTANCE instead, and they chose that wording** ("sach bolo"). Under the IT Act §3/3A a
+    digital or electronic signature means a licensed CA's certificate or a notified technique such as
+    Aadhaar eSign — an emailed code is neither, and eSign is Bucket B. **The mechanism is exactly
+    what was asked for; only the label changed.** The word *signature* must never appear in UI copy,
+    the PDF, an email or an audit entry — noted at every site that could drift (`OTP_PURPOSE`,
+    `Quotation.js`, `QuotationActions.jsx`).
+  - **Backend:** `Quotation.offers[]` (append-only counter-offers) + a single `acceptance`
+    subdocument (`initiated` / `confirmed` / `agreedTotalMinor`); new statuses `negotiating`;
+    `POST /quotations/:id/negotiate`, `/accept/request-code`, `/accept/confirm` (both `otpLimiter`),
+    OTP purpose `quotation_accept`, and its own email that names the quotation, the counterparty and
+    the figure — a code with nothing to check it against is a blind commitment.
+  - 🔴 **The single-shot `POST /quotations/:id/accept` was DELETED, not left beside the new flow.** A
+    route that flips the status without a code makes every OTP screen theatre. A test asserts the
+    route is a 404 and the quotation is still `sent`.
+  - 🔴 **A counter-offer WIPES a half-finished acceptance.** If one side has confirmed and the price
+    then moves, that confirmation was for a figure nobody is offering any more — carrying it forward
+    would let the second confirmation close the deal at a number the first party never saw. **Its
+    test caught a real bug:** neither `q.acceptance = undefined` nor `q.set('acceptance', undefined)`
+    clears a Mongoose subdocument — both silently keep it. It is an explicit `$unset`, and the
+    response is read back from the database rather than rendered from the in-memory document.
+  - **What is accepted is the LAST OFFER, not the printed total** (`currentFigureMinor`), and
+    `agreedTotalMinor` is stored explicitly. After a negotiation the document's own total is history;
+    leaving the agreed figure implied is how two companies each believe a different number.
+  - **Rules:** nobody may offer twice in a row (an offer is an answer), the supplier cannot counter
+    their own document (it IS their opening offer), and the same side cannot stand in for the other
+    at confirmation. 🔴 **The BUYER accepts first; the supplier only confirms** (owner, later the
+    same day: "dont show that accept button, when the buyer accepted only then exporter can
+    confirm"). Accepting your own offer decides nothing, and letting the supplier go first would
+    park a half-done acceptance on a buyer who has never answered. Server-enforced in
+    `assertMayInitiate` — hiding the button is not access control (CLAUDE.md #2/#5) — and the
+    supplier's card says "Waiting for the buyer to accept." rather than going blank.
+    ⚠️ **Known awkwardness, owner's call:** after the buyer makes the last counter-offer, the
+    supplier still cannot "accept" it — the buyer has to press accept on their own figure first, and
+    the supplier then confirms. Simple and consistent; say the word if the supplier should be able
+    to close on a buyer's standing offer. Every state check runs BEFORE `verifyOtp`, so a refused request never burns a
+    single-use code.
+  - **Web:** the quotation now arrives in the thread as a **document card** (PDF glyph, number,
+    figure on the table, status, download) carrying Accept / Negotiate — replacing the text notice,
+    not sitting under it. It renders the quotation LIVE off a new `Message.quotationId` reference, so
+    a card scrolled back to never shows buttons for a deal that closed yesterday. `QuotationView`
+    gained the negotiation history and lost its own accept button.
+  - **App:** reads the new notices with proper labels but has **no quotation UI at all** — no
+    document, no counter-offer, no confirmation. Gap stated, not papered over; the notice copy
+    carries the figures so an app user still knows what happened.
+  - 🔴 **`OtpChallenge.subjectRef` — a code now verifies only the thing it was issued for.** Found
+    while reviewing the new flow: `requestOtp` keeps ONE live challenge per (subject, purpose), so a
+    person with two quotations open could enter the code emailed about quotation B into quotation A's
+    confirmation and it would verify — the email names a document the code was never bound to. The
+    field is optional and every auth purpose passes nothing, so login, signup and password reset are
+    unchanged; `verifyOtp` refuses a mismatch with the same generic "Invalid or expired code."
+  - Tests: 11 new (`tests/quotations.test.js`, 18 total) — the wipe, the missing bypass route, the
+    last-offer figure, one-sided confirmation, a wrong code, offer ordering, and that the confirming
+    party's email and ip never reach the counterparty, and a code bound to another quotation.
+- **2026-09-25 — The quotation PDF now carries the supplied DESIGN, not a bare table.** Owner: "we
+  are not getting any type of design in the pdf".
+  - **They were right, and the reason is worth recording:** I had built the PDF as a plain pdfmake
+    table while the design they supplied is a real document — navy masthead with a red leading
+    segment, a ruled meta box, parties side by side, an ivory shipping strip, a navy-filled total,
+    ruled payment/delivery boxes. What shipped was structurally correct and visually nothing.
+  - The PDF now follows that design: the **document's own palette** (navy `#0B1F3A`, red `#B3122B`,
+    ivory rules), not the app's UI colours — it is printed and leaves the platform, so it carries the
+    brand rather than the interface. **No block relies on colour to mean anything**; every one is
+    labelled, so a mono print loses nothing.
+  - **Amount in words** is back (`Rupees Twenty-Four Lakh Eighty-Five Thousand Only`). On a priced
+    document that is not decoration — it is the long-standing guard against a digit being altered on
+    a printed copy. **Indian grouping for INR** (lakh, crore), international otherwise: the two
+    systems say different things about the same number.
+  - **Total is labelled with the terms** — "Total (CIF Jebel Ali)" rather than a bare "Total", which
+    is the question an export buyer asks next.
+  - 🔴 **Verified by running it, not by reading it.** `amountInWords` checked across eight cases
+    (crore grouping, paise fraction, USD switching to millions) — `₹24,85,000` reproduces the
+    design's own sample exactly. `buildDoc` executed against a full quotation (12 content blocks, no
+    throw) **and against an almost-empty one (6 blocks, no crash)** — a draft with no bank details
+    and no delivery rows must still produce a document.
+  - ⚠️ **Three attempts to render the PDF headlessly failed** and the reason is worth knowing: in
+    pdfmake **0.3** `createPdf` is promise-based (`bufferPromise`), `getBuffer`/`getBlob` callbacks
+    never fire under node, and the node-side `PdfPrinter` needs a URL resolver the browser build
+    supplies. So the document DEFINITION is verified; the rendered file is not. That is the one
+    thing left to check by pressing the button.
+- **2026-09-24 — Download PDF now builds and downloads a real PDF.** Owner chose `pdfmake` after
+  being shown the trade-off; it is the **first new web dependency this session** (CLAUDE.md requires
+  asking, so it was asked).
+  - **Why not a screenshot PDF** (`html2canvas` + `jsPDF`, the other option): it produces an IMAGE.
+    The buyer could not copy an account number out of it, could not search it, and it prints soft at
+    1–3 MB. On a document someone pays against, that is worse than a layout that differs slightly.
+  - **Why the second layout is acceptable:** `lib/quotationPdf.js` lays the document out in
+    pdfmake's model, but every figure, both companies and the bank details come from the **same
+    frozen server snapshot** the on-screen page renders. The two can differ in appearance; they
+    cannot differ in what they SAY.
+  - **Loaded dynamically** — verified in the build output: `pdfmake` (1.0 MB) and `vfs_fonts`
+    (855 KB) land in their own chunks, so nobody who never presses Download pays for them on first
+    paint. The main bundle is unchanged.
+  - 🔴 **A silent-failure trap, caught by checking the installed package rather than copying a
+    recipe:** pdfmake **0.3** changed font registration. The 0.2 form (`pdfMake.vfs =
+    fonts.pdfMake.vfs`) leaves `vfs` undefined and the download simply never happens — no error, no
+    file. In 0.3 the fonts module exports the file map directly and registration goes through
+    `addVirtualFileSystem`. Confirmed against `node_modules`: `addVirtualFileSystem` is a function
+    and the fonts module's keys are `Roboto-Medium.ttf` etc., with no `.vfs` wrapper. The code
+    handles both and prefers the 0.3 path.
+  - The **"Before you pay"** warning is carried INTO the PDF. The document leaves the platform, and
+    that is exactly where an altered copy does its damage — the warning has to travel with it.
+  - Every page carries the quotation number and "page x of y": a loose page of a priced document has
+    to be identifiable on its own.
+  - A failed build surfaces an error offering the browser's own print-to-PDF, rather than a Download
+    button that appears to do nothing.
+  - ⚠️ **Not verified in a browser.** The module shapes were checked against the installed package
+    and the chunking against the build, but the actual download has not been exercised.
+- **2026-09-24 — The quotation is now VISIBLE, to both sides.** Owner: "I can't see any preview …
+  and it's not showing in the importer chat — need it in both."
+  - **What was missing:** sending posted a one-line system notice and nothing else. The exporter had
+    no way back to the document and the buyer had no way TO it, so a quotation could be sent and
+    then effectively disappear.
+  - **`QuotationStrip`** sits above the composer for BOTH parties, listing this thread's quotations
+    with number, total, status and Open. It is a strip rather than a card in the timeline for one
+    reason: a buyer must be able to find the quotation without scrolling back to the day it was
+    sent. The notice records WHEN; the strip is where you go to READ.
+  - **`QuotationView`** at `/quotations/:id` — the document, and **the same page for both roles**.
+    Two renderers would be two chances to disagree about a price; the only difference is the
+    actions, and the server scopes the route by `parties`. The buyer gets Accept / Decline (with an
+    optional reason shown to the supplier); the supplier can only watch.
+  - Everything rendered comes from the server's **frozen snapshot** — totals, both companies, the
+    bank details as issued. Nothing is recomputed in the browser, so what the buyer reads is what
+    was sent.
+  - The **"Before you pay"** warning from the design is included, and it is not decoration: altered
+    bank details on a genuine-looking document is the most common way a buyer loses money on a deal
+    like this.
+  - **PDF is `window.print()`.** No server-side renderer — that means headless Chrome for a page the
+    browser already prints correctly.
+  - Quotation system notices got their own styling on the existing severity ladder: **information**
+    (white card, coloured edge), not a tint. A quotation moving is a fact about the deal, not a
+    warning about the conversation. They carry the NUMBER only — a price repeated into the timeline
+    is a second copy that can end up disagreeing with the document.
+  - **"Add item" now opens a picker** of the exporter's own active listings, pre-filling name, HS
+    code, MOQ, unit and rate — plus "Add a custom line", because a quotation routinely prices things
+    that are not listed products (the design's own sample has two). Two bugs found doing it: the
+    list parameter is `pageSize`, not `limit` (so it was silently loading 20), and a seller past the
+    100-row cap now sees that the list is partial instead of concluding a product does not exist.
+  - Build + lint pass. ⚠️ Not seen in a browser. **Still missing: the GPT drafting call** — the form
+    and the document are both real, but nothing writes the prose yet.
+- **2026-09-24 — Quotation UI: the chat entry point and the exporter's builder.** Module 4, month 2.
+  - **"Make quotation" is now in the chat + menu**, for the **exporter side only**. It follows
+    `AttachMenu`'s own rule — *omit the handler and the option does not render* — so `ThreadView`
+    passes `null` for buyers and for the admin's read-only viewer, and nothing needs a second role
+    check. It sits under a divider with its own icon: attaching a file and pricing a deal are not the
+    same kind of action, and a menu that lists them identically is how someone sends a PDF when they
+    meant to quote.
+  - **`QuotationBuilder`** at `/exporter/quotations/:id` — validity and shipping, items, charges and
+    taxes, the payment schedule, and the free-text additional details. A sticky live total sits
+    beside it and says plainly that it is a preview and the server recalculates, because it does.
+  - 🔴 **Money converts at ONE edge.** New `lib/money.js`: the user types major units, `toMinor`
+    rounds to integer minor units on the way out, and nothing between the input and the request holds
+    a decimal. `Math.round`, not truncation — `4.505 × 100` is `450.4999…` in binary floating point,
+    and truncating quietly loses a paisa on a figure the user typed exactly.
+  - 🔴 **A blank charge amount stays `null`, never 0.** `null` prints as "Included"; zero prints as
+    free. Two different promises about money.
+  - **Send saves first, then sends.** `validateForSend` judges the SERVER's copy, so sending an
+    unsaved edit would be validated against stale data — passing wrongly or failing for a reason the
+    exporter cannot see on screen.
+  - **The bank step is a CONFIRMATION, not a pre-fill.** The modal shows the details that will be
+    printed, masked, and states that changing the saved account later will not change this document.
+    Silent auto-fill is the whole mechanism by which tampered details reach a buyer unnoticed.
+  - The dock **closes** before navigating: a floating window over the form is in the way. Failures
+    surface as an alert rather than a "+" option that appears to do nothing.
+  - `QuoteIcon` added — deliberately distinct from `DocIcon`, which means "any attached file".
+  - Build + lint pass. ⚠️ **Not seen in a browser**, and two pieces are still missing before this is
+    usable end to end: the **GPT drafting call** and the **buyer's `/q/:token` view** with
+    accept/decline. The backend for both already exists.
+- **2026-09-24 — Module 4 quotations: BACKEND built (month 2, owner: "it's month 2 running, make it
+  now").** Model, authoritative arithmetic, seven endpoints, 17 tests. No UI yet.
+  - **The six open questions, decided.** Each is written into the code where it binds:
+    1. **Bank details** — saved per exporter, snapshotted at send (done earlier today).
+    2. **GPT writes PROSE only.** Numbers come from `computeTotals`; legal clauses come from a
+       fixed `termsVersion`, never free text. An LLM inventing "±5% on GSM" or a jurisdiction on a
+       document two companies transact against is a liability, not a feature.
+    3. **The ~15 homeless fields are collected PER QUOTATION**, not added to `Organisation`.
+       Incoterm, ports and the signing contact genuinely differ deal to deal; if GSTIN/IEC later
+       become org-profile fields the snapshot still stands alone.
+    4. **Milestones are always entered by the exporter.** `Product.terms` is one free-text line, and
+       parsing money splits out of prose with GPT is right most of the time — not good enough for a
+       payment schedule.
+    5. **Acceptance is a STATUS, not a signature.** No signature fields, no eSign; that stays Bucket B.
+    6. **No PDF rendering and no public page.** The buyer gets an unguessable `accessToken` link to a
+       hosted document and prints it. Server-side PDF means headless Chrome (a heavy dependency), and
+       a public slug would have created a new public surface carrying prices and bank details.
+  - 🔴 **`send()` is where everything freezes** — bank details, both companies and the totals are
+    COPIED onto the row. Test-pinned: send, then change the saved bank account, then read the
+    quotation back — it still shows the account it was sent with. Render live instead and editing
+    that account rewrites every document already in a buyer's hands.
+  - 🔴 **Money is integer minor units end to end.** The server recomputes from the line items on
+    every save; a total in a request body is not accepted by any schema. The LAST milestone absorbs
+    the rounding remainder, so the schedule sums to the total exactly — tested against awkward splits
+    (33.33/33.33/33.34, sevenths). Arithmetic reproduces the design's worked example (₹24,85,000).
+  - **A real bug my own test found:** the buyer PATCHing a supplier's DRAFT got **403**, which tells
+    them a draft exists and is being written — the one fact a draft hides. `getOne` already answered
+    404; `updateDraft` and `send` did not, so the three disagreed. All three now 404.
+  - The thread gets a system **NOTICE** carrying the quotation number, never the amount: a second
+    copy of the money in chat is a figure that can end up disagreeing with the quotation itself. New
+    system kinds: `quotation_sent` / `accepted` / `declined` / `withdrawn`.
+  - Endpoints (two-party scoped, other pairs 404): create draft · list per conversation · get · patch
+    · send · accept · decline. Exporter writes, buyer answers — enforced in the SERVICE, not only on
+    the route. Backend restarted: **137 routes**, access-control check passed.
+  - Tests: `quotation-totals.test.js` (9) + `quotations.test.js` (8). Full suite **1228 pass**; the
+    one red is the session's usual parallel-load flake (24/24 in isolation).
+  - ⚠️ **Still to build:** the chat "+ Make quotation" entry, the form, the GPT drafting call, the
+    template render, the buyer's `/q/:token` page, and the exporter's AI-edit step. Also still open:
+    **C6** (alert the previous email when bank details change) needs its own decision — the codebase
+    has five email events and a sixth is guarded.
+- **2026-09-24 — `ExporterBankAccount` built: an exporter's saved bank details for the quotation
+  builder.** Owner gave the explicit Bucket-A1 override after the risk was laid out.
+  - **First, a correction I owe from the previous entry.** I called this a "direct conflict with C1".
+    It is not. `payments-escrow.md` states the rule in full: *"Bank numbers in our database are
+    display-only and can never redirect a payment."* C1 forbids **authoritative** details — ones our
+    code could hand to a payment API. A quotation's are display-only and the platform never moves
+    that money, so this is inside the rule, not against it. The tampering risk is real and separate.
+  - **The design decision that actually defeats the attack:** `last4` is **stored**, and
+    `accountNumber` is `select: false`. Every list, picker and audit row runs on `last4`, so the full
+    number is never loaded in order to be masked — the safest mask is one that never reads the
+    secret. Loading it needs an explicit `.select('+accountNumber')` in one audited service call.
+  - 🔴 **The rule written into the model, for whoever builds the quotation endpoints:** a quotation
+    must **SNAPSHOT** these values, never reference the row. Render live from here and editing the
+    saved account silently rewrites every quotation ever issued — a buyer opens last month's PDF and
+    sees a new account. That is the whole attack this is meant to survive, and it is the one thing a
+    future session is most likely to get wrong.
+  - `/confirm` + `lastConfirmedAt` exist because the owner's "show it and ask — same or change?" is
+    itself a control, not a nicety. Silent auto-fill is how tampered details reach a buyer unnoticed.
+  - Scoped `SCOPE.EXPORTER_ORG`; another exporter's row is a **404, never 403**. Audit on create,
+    update, remove, confirm and reveal — every entry carrying `last4`, never the number. Removal is
+    soft, so an audit trail still resolves the row it points at.
+  - `logger.js` redaction extended: it covered `bankAccountNumber` and `ifsc`, but this model names
+    its fields `accountNumber`, `swift` and `beneficiary` — all three added.
+  - Validation is `.strict()`: an unknown key is **rejected**, not stripped. A typo'd field on a
+    payment document must fail loudly rather than vanish and leave the exporter believing they saved
+    it. The account number is checked for SHAPE only (4–34, IBAN's maximum) — guessing a country's
+    format would reject valid accounts, and we are not the party verifying it.
+  - Tests: `tests/bank-accounts.test.js`, **9 pass**. Full suite **1226 pass**; the two reds are the
+    session's usual parallel-load flakes (both pass in isolation).
+  - ⚠️ **Two controls deliberately NOT built, and both matter:**
+    - **C6 out-of-band alert on change** — notify the PREVIOUS email, not the new one. The codebase
+      has exactly **five** email events and the standing guard is that a sixth needs its own alert.
+      Raise it before the quotation flow ships; without it a hijacked exporter account can swap the
+      account silently.
+    - **C7 name verification (penny-drop)** — belongs with a real payout path, which Phase 1 has not
+      got. Noted in the model so nobody assumes the account was verified.
+    - No **reveal route** is exposed either: the service method exists and is audited, but an
+      endpoint that hands out bank numbers with no consumer is a surface with no purpose.
+- **2026-09-24 — Owner described the quotation builder's inner flow. Recorded in
+  `month1-not-doing.md` A1. NOT built — it is Bucket A1 (month 2).**
+  - Flow: chat's **+ menu gains "Make quotation"** (exporter only) → a form for the extra details
+    plus a custom field → payment milestones (custom, else defaulted from the product) → **GPT writes
+    the content** → it fills the supplied **MPX quotation template** (React/JSX, A4, print-to-PDF) →
+    **exporter reviews and can edit by talking to the AI** → sends the buyer a **PDF**.
+  - **Seven things to settle before any of it is built**, checked against what exists today:
+    1. 🔴 **Bank details are the serious one.** The template prints beneficiary, account number,
+       SWIFT and IFSC — and `Organisation` holds none of those, by design. `security-baseline.md`
+       **C1** says bank details are never authoritative in our database. If we start storing them to
+       reprint on every quotation, an altered record silently redirects every future payment. That is
+       the BEC attack the template's own "Before you pay" box warns about, and we would be the
+       vector. Decide: never persist (typed per quote, rendered, discarded), or leave bank details
+       out of the document entirely.
+    2. 🔴 **GPT writing commercial and legal text.** The template's `terms` carry governing law,
+       force majeure, quality tolerances and a claims window; the body carries prices. This is a
+       payments-adjacent platform and an LLM inventing "±5% on GSM" or a jurisdiction is a liability,
+       not a convenience. Likely answer: GPT drafts the *prose*, never the numbers or the clauses —
+       clauses come from a fixed, versioned set the exporter picks from.
+    3. **About fifteen fields have no home.** `Organisation` has no GSTIN, no IEC, no bank block, no
+       contact person; its address is private (only country is public). `Product` has no incoterm,
+       no port of loading or discharge. `hsCode` does exist. So the "small form" is not small, or
+       these become org-profile fields first.
+    4. **"Milestones default from product details" has nothing to default from.** `Product.terms` is
+       a single free-text string ("30% advance, 70% against shipping documents"). Parsing money
+       splits out of free text with GPT is the kind of thing that is right 95% of the time, which is
+       not good enough for a payment schedule. Either the exporter always enters them, or `Product`
+       gains structured milestones.
+    5. **Acceptance and signatures drift into Phase 2.** The template has signature blocks, an
+       "accept it online" line and eSign-shaped `signatures` — and **AI contract generation & eSign is
+       Bucket B**. A quotation whose status moves to accepted is fine; a signed document is not.
+    6. **PDF generation.** The template downloads via `window.print()`, which is the browser's own
+       dialog. "Send the buyer a PDF" means either rendering server-side (a heavy new dependency —
+       headless Chrome) or sending a link to the hosted quotation. Cheaper and safer: send the link,
+       let the buyer print.
+    7. **`verifyUrl` + QR is a NEW public surface.** Anyone with the link would see supplier, buyer,
+       prices and terms. It needs its own projection rule, the same way `m3-public-projection.md`
+       governs products.
+  - ✅ **Two things the plan already gets right:** money is handled in minor units throughout
+    (`toMinor`), which is what keeps Phase-2 escrow clean; and the template never converts currency,
+    matching **§A27.1**. The backend must run `computeTotals` the same way before saving — the
+    template's own comment says so, and it is correct.
 - **2026-09-24 — Black given a JOB, so the product page and the search cards speak one vocabulary.**
   Owner: *"do with some black colour, maintaining consistency of the colours"*.
   - The rule is now complete and the same on both surfaces:

@@ -29,12 +29,18 @@ const PURPOSE_COPY = {
   login: 'sign in to MPX Global',
   signup: 'create your MPX Global account',
   forgot_password: 'reset your MPX Global password',
+  quotation_accept: 'confirm your acceptance of a quotation on MPX Global',
 };
 
 /**
  * Rendered FROM the server's own OTP settings, so a message can never claim an
  * expiry the server does not honour.
  */
+const EMAIL_SUBJECT = {
+  claim_org_email: 'Someone is trying to join your company on MPX Global',
+  quotation_accept: 'Confirm your acceptance of a quotation',
+};
+
 function expiryMinutes() {
   return Math.max(1, Math.round(env.OTP_TTL_SECONDS / 60));
 }
@@ -76,8 +82,43 @@ function claimEmailBody({ code, context }) {
   });
 }
 
+/**
+ * Confirming a quotation.
+ *
+ * 🔴 The email states WHAT is being confirmed — the quotation number, the other
+ * company and the agreed figure. A bare "here is your code" would have someone
+ * confirm a commercial commitment without ever seeing the number they are
+ * agreeing to, which is the whole reason a second factor is here at all.
+ *
+ * 🔴 Never the word "sign" or "signature" (owner, 2026-09-25). This is an
+ * acceptance record, not a digital signature under the IT Act — see the
+ * `quotation_accept` note in models/enums.js.
+ */
+function quotationAcceptEmailBody({ code, context }) {
+  const number = context?.number ?? 'a quotation';
+  const counterparty = context?.counterpartyName;
+  const amount = context?.amountText;
+  return renderEmail({
+    heading: 'Confirm your acceptance',
+    preheader: `Your code to confirm quotation ${number}`,
+    status: { tone: 'info', label: 'Quotation' },
+    code,
+    expiryMinutes: expiryMinutes(),
+    paragraphs: [
+      counterparty
+        ? `You are confirming your acceptance of quotation **${number}** with **${counterparty}**.`
+        : `You are confirming your acceptance of quotation **${number}**.`,
+      ...(amount ? [`Agreed total: **${amount}**.`] : []),
+      'Entering this code records your acceptance on both sides of the conversation. Do not enter it if any of the above is not what you agreed.',
+    ],
+    footerNote:
+      'If you did not request this, ignore this email — without the code nothing is confirmed. MPX Global will never ask you for this code.',
+  });
+}
+
 function emailBody({ code, purpose, context }) {
   if (purpose === 'claim_org_email') return claimEmailBody({ code, context });
+  if (purpose === 'quotation_accept') return quotationAcceptEmailBody({ code, context });
   return renderEmail({
     heading: 'Verify your email',
     preheader: 'Your MPX Global verification code',
@@ -176,10 +217,7 @@ export async function sendOtp({ channel, identifier, code, purpose, fallbackEmai
     const { text, html } = emailBody({ code, purpose, context });
     const { messageId } = await sendEmail({
       to: emailAddress,
-      subject:
-        purpose === 'claim_org_email'
-          ? 'Someone is trying to join your company on MPX Global'
-          : 'Your MPX Global verification code',
+      subject: EMAIL_SUBJECT[purpose] ?? 'Your MPX Global verification code',
       text,
       html,
     });

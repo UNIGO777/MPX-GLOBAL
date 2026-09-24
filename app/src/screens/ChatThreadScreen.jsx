@@ -516,6 +516,23 @@ const NOTICE_KINDS = {
   warning_serious: { label: 'Platform warning', icon: 'warning-outline', bar: colors.primary[600], bg: colors.primary[50], fg: colors.primary[700] },
   warning_final: { label: 'Final warning', icon: 'alert-circle', bar: colors.danger[700], bg: colors.danger[100], fg: colors.danger[800] },
   warning: { label: 'Platform warning', icon: 'warning-outline', bar: colors.warning, bg: '#FEF0DC', fg: '#93370D' },
+  /**
+   * Module 4 (month 2) — quotation notices. INFORMATION on the ladder: a white
+   * card with a coloured edge, as on the web.
+   *
+   * ⚠️ The app READS these; it cannot act on them yet. The document, the
+   * counter-offer and the confirmed acceptance are web-only for now, so the
+   * notice copy has to carry the figures — which it does, on purpose (the
+   * server writes the amount into the body of an offer and an acceptance).
+   * Nothing dead is rendered here — there is simply no control yet, which is
+   * the honest state. Recorded in `docs/History.md` (2026-09-25).
+   */
+  quotation_sent: { label: 'Quotation', icon: 'document-text-outline', bar: colors.ink[900], bg: colors.white, fg: colors.ink[900], line: true },
+  quotation_offer: { label: 'Counter-offer', icon: 'swap-horizontal-outline', bar: colors.ink[900], bg: colors.white, fg: colors.ink[900], line: true },
+  quotation_accept_pending: { label: 'Confirmed by one side', icon: 'time-outline', bar: colors.warning, bg: '#FEF0DC', fg: '#93370D' },
+  quotation_accepted: { label: 'Quotation accepted', icon: 'checkmark-circle-outline', bar: colors.success, bg: colors.white, fg: '#05603A', line: true },
+  quotation_declined: { label: 'Quotation declined', icon: 'close-circle-outline', bar: colors.danger[700], bg: colors.white, fg: colors.danger[800], line: true },
+  quotation_withdrawn: { label: 'Quotation withdrawn', icon: 'document-text-outline', bar: colors.ink[300], bg: colors.ink[100], fg: colors.ink[600] },
 };
 
 function SystemNotice({ message }) {

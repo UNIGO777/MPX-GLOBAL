@@ -156,6 +156,16 @@ export function useConversationSocket() {
       // here would put a number in the chrome that the server never said. It is
       // a tiny response, and it is the one thing that must not be invented.
       queryClient.invalidateQueries({ queryKey: conversationKeys.unread() });
+
+      /**
+       * A quotation notice means the quotation itself just MOVED — sent,
+       * countered, half-confirmed or accepted. The card in the thread renders
+       * live from that query, so without this it keeps showing the other party
+       * buttons for a state that has already changed.
+       */
+      if (message.quotationId) {
+        queryClient.invalidateQueries({ queryKey: ['quotations'] });
+      }
     };
 
     // Emitted alongside `message:new` for the same event, so by the time this

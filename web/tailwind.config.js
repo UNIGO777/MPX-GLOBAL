@@ -55,6 +55,30 @@ export default {
           900: '#66020C',
           DEFAULT: '#CE061A',
         },
+        /**
+         * 🔴 The QUOTATION DOCUMENT's palette — not the app's UI palette.
+         *
+         * These are the exact values `lib/quotationPdf.js` prints with (navy ink,
+         * one red accent, ivory rules). They exist as tokens for ONE purpose: the
+         * paper preview shown in chat has to look like the file the buyer
+         * downloads, and a preview drifting from the document is worse than no
+         * preview — it shows someone a page that is not what they will receive.
+         *
+         * 🔴 Never use these for ordinary UI. The document is printed and leaves
+         * the platform, so it carries the brand; the interface carries `primary`
+         * and `ink`. A button in `paper-accent` is a second red that will drift
+         * from `primary` the first time the brand moves.
+         */
+        paper: {
+          DEFAULT: '#FFFFFF',
+          ink: '#0B1F3A',
+          accent: '#B3122B',
+          body: '#3E4859',
+          muted: '#5B6577',
+          line: '#D9D4C7',
+          rule: '#E6E2D8',
+          ivory: '#F4F2EC',
+        },
         // Neutral ink — text (ink-900 = #000517, the mockups' "mpx-text")
         ink: {
           50: '#F7F8FB',

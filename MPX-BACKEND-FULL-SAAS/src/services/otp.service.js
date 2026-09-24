@@ -95,6 +95,9 @@ export async function requestOtp({
   channel = 'mobile',
   recipient,
   context,
+  // What the code is for, when the purpose alone is not specific enough — see
+  // the field's note on the OtpChallenge model.
+  subjectRef,
 }) {
   const owner = subjectFilter({ user, pendingSignup });
   if (purpose === 'claim_org_email' && !recipient) {
@@ -128,6 +131,7 @@ export async function requestOtp({
     identifier,
     channel,
     purpose,
+    subjectRef,
     codeHash: await argon2.hash(code, { type: argon2.argon2id }),
     expiresAt: new Date(Date.now() + env.OTP_TTL_SECONDS * 1000),
     maxAttempts: env.OTP_MAX_ATTEMPTS,
@@ -156,7 +160,7 @@ export async function requestOtp({
 // Verify the latest live challenge. Wrong code counts an attempt; hitting the
 // max locks the challenge for the configured window. Same generic message for
 // every failure path.
-export async function verifyOtp({ userId, pendingSignupId, purpose, code }) {
+export async function verifyOtp({ userId, pendingSignupId, purpose, code, subjectRef }) {
   // Same reasoning as `subjectFilter` above: never let an absent subject collapse
   // into "any subject". Built explicitly so `{ userId: undefined }` cannot happen.
   const owner = userId ? { userId } : { pendingSignupId };
@@ -170,6 +174,15 @@ export async function verifyOtp({ userId, pendingSignupId, purpose, code }) {
 
   const fail = () => AppError.unauthorized('otp check failed', 'Invalid or expired code.');
   if (!challenge) throw fail();
+
+  /**
+   * 🔴 A code only verifies the thing it was issued for. Without this a person
+   * holding two live confirmations could enter the code emailed about one into
+   * the other — the email names a document the code would not be bound to. Same
+   * generic failure as every other path: it says nothing about what the live
+   * challenge is actually for.
+   */
+  if (subjectRef && String(challenge.subjectRef ?? '') !== String(subjectRef)) throw fail();
 
   const now = Date.now();
   if (challenge.lockedUntil && challenge.lockedUntil.getTime() > now) {

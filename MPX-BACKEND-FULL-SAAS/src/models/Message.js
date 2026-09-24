@@ -80,6 +80,18 @@ const messageSchema = new Schema(
     // 2026-08-18 — older notices predate the field and cannot be backfilled
     // (M4-13: append-only). Absent means "render it neutrally", not "invalid".
     systemKind: { type: String, enum: MESSAGE_SYSTEM_KIND },
+
+    /**
+     * Module 4 (month 2) — which quotation a `quotation_*` notice is about.
+     *
+     * A REFERENCE, deliberately, and the one place this file points at live data
+     * instead of freezing it: the card in the thread has to show what the
+     * quotation is NOW (sent → negotiating → accepted), and a notice that froze
+     * the status would leave the buyer looking at buttons for a deal that closed
+     * yesterday. The document's own contents stay snapshotted on the Quotation
+     * itself — nothing about prices is duplicated here.
+     */
+    quotationId: { type: Schema.Types.ObjectId, ref: 'Quotation' },
   },
   // updatedAt is meaningless on a record that can never be edited.
   { ...baseSchemaOptions, timestamps: { createdAt: true, updatedAt: false } },

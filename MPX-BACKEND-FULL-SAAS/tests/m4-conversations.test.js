@@ -166,7 +166,7 @@ describe('M4-C · projections leak nothing (G1 / G2)', () => {
       // otherwise only a short-lived signed URL + width/height — never the
       // storage key, never a person.
       expect(Object.keys(m).sort()).toEqual(
-        ['attachment', 'body', 'createdAt', 'id', 'senderType', 'systemKind'].sort(),
+        ['attachment', 'body', 'createdAt', 'id', 'quotationId', 'senderType', 'systemKind'].sort(),
       );
       // It describes the PLATFORM's own notices and nothing else: a party
       // message must never carry one.

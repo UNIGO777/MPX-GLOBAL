@@ -31,6 +31,9 @@
 const ASPECT = 1200 / 597;
 
 const HEIGHTS = {
+  // The quotation's paper preview in chat — a miniature page whose body text is
+  // 5–7px, where even `sm` reads as a banner across the top.
+  xs: 18,
   sm: 24, // dense bars (portal top bar, 56px tall)
   md: 32, // default — landing header, exporter signup bar
   lg: 40, // admin sidebar / 88px headers
