@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { quotationsApi, quotationKeys } from '../../api/quotations.js';
-import { apiError } from '../../lib/format.js';
+import { apiError, fieldErrorMap } from '../../lib/format.js';
 import { formatMinor, toMinor } from '../../lib/money.js';
 import { Alert } from '../ui/Alert.jsx';
 import { Button } from '../ui/Button.jsx';
@@ -21,17 +21,25 @@ import { OtpInput } from '../ui/OtpInput.jsx';
  * agreed to what — calling it a signature would be a claim the platform cannot
  * back. Do not reword any string in this file to say signed, signature or eSign.
  *
- * 🔴 **Both parties confirm, and the BUYER goes first** (owner, 2026-09-25). The
- * buyer's acceptance only INITIATES; the quotation is accepted when the supplier
- * has confirmed it too, each with a code sent to their own registered email. The
- * supplier has no accept action until then — the document is their own offer, so
- * accepting it decides nothing. The server enforces all of it; this component
- * only renders what it is told.
+ * 🔴 **Both parties confirm, and you can only accept THE OTHER SIDE'S offer**
+ * (owner, 2026-09-25). Accepting only INITIATES; the quotation is accepted when
+ * the other party has confirmed too, each with a code sent to their own
+ * registered email. With no counter-offers the document is the supplier's own
+ * offer, so only the buyer can accept it; once the buyer counters, the supplier
+ * can accept that. The server enforces all of it; this component only renders
+ * what it is told.
  *
  * 🔴 **The figure shown is the last offer, not the printed total.** After a
  * counter-offer the document's own total is history, and confirming against it
  * would show a person a number nobody last agreed to.
  */
+/**
+ * The server's ceiling (`quotation.validators.js` MAX_MINOR), mirrored so the
+ * form can say it BEFORE a round trip. The server stays the authority — this is
+ * only so a typo does not cost a request to find out about.
+ */
+const MAX_MINOR = 1_000_000_000_000;
+
 export function QuotationActions({ quotation, viewerSide, size = 'md', onChanged }) {
   const queryClient = useQueryClient();
   const [negotiating, setNegotiating] = useState(false);
@@ -41,6 +49,8 @@ export function QuotationActions({ quotation, viewerSide, size = 'md', onChanged
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [error, setError] = useState(null);
+  // The server's per-field messages, shown ON the input that caused them.
+  const [priceError, setPriceError] = useState(null);
 
   const id = quotation.id;
   const figure = quotation.currentFigureMinor ?? quotation.totalMinor;
@@ -52,15 +62,45 @@ export function QuotationActions({ quotation, viewerSide, size = 'md', onChanged
   const iInitiated = acceptance?.initiatedBy === viewerSide;
   const theyInitiated = Boolean(acceptance?.initiatedBy) && !iInitiated;
   /**
-   * 🔴 The BUYER accepts first; the supplier only confirms (owner, 2026-09-25).
-   * The document is the supplier's own offer, so "accept" means nothing on their
-   * side until the buyer has put an acceptance on the table. The server refuses
-   * it either way — this only stops showing a button that would be rejected.
+   * 🔴 You may accept an offer THE OTHER SIDE put on the table — never your own
+   * (owner, 2026-09-25, after hitting the first version of this rule).
+   *
+   * With no counter-offers the document IS the supplier's offer, so only the
+   * buyer can accept it. Once the buyer counters, that figure is the buyer's
+   * offer and the SUPPLIER can accept it. The server enforces both — this only
+   * stops showing a button that would be rejected.
+   *
+   * It is the same test as `myTurnToOffer` on purpose: whichever side is due to
+   * ANSWER can answer with a yes or with a number.
    */
-  const mayAccept = viewerSide === 'buyer' || theyInitiated;
-  // An offer is an ANSWER: nobody may offer twice in a row, and the document is
-  // itself the supplier's opening offer, so the first counter is the buyer's.
-  const myTurnToOffer = lastOffer ? lastOffer.by !== viewerSide : viewerSide === 'buyer';
+  const figureIsTheirs = lastOffer ? lastOffer.by !== viewerSide : viewerSide === 'buyer';
+  const mayAccept = theyInitiated || figureIsTheirs;
+  /**
+   * An offer is an ANSWER: nobody may offer twice in a row, and the document is
+   * itself the supplier's opening offer, so the first counter is the buyer's.
+   *
+   * 🔴 And a side that has ACCEPTED does not get to counter (owner, 2026-09-25:
+   * "when from any side quotation will accepted remove their side negotiation
+   * button"). Saying "I accept ₹2" and then offering ₹3 is two positions at
+   * once. Their move now is to wait — or to decline, if they are the buyer.
+   */
+  const myTurnToOffer = figureIsTheirs && !iInitiated;
+
+  /**
+   * Checked as they type, so an impossible figure never costs a round trip. The
+   * server re-checks all of it — this is UX, not the control.
+   */
+  const offerMinor = price === '' ? null : toMinor(price);
+  const localPriceError =
+    offerMinor === null
+      ? null
+      : offerMinor <= 0
+        ? 'Enter an amount greater than zero.'
+        : offerMinor > MAX_MINOR
+          ? 'That amount is too large. Check the figure.'
+          : offerMinor === figure
+            ? 'That is the figure already on the table — accept it instead.'
+            : null;
 
   const done = (updated) => {
     queryClient.setQueryData(quotationKeys.one(id), updated);
@@ -77,7 +117,18 @@ export function QuotationActions({ quotation, viewerSide, size = 'md', onChanged
       setPrice('');
       setNote('');
     },
-    onError: (e) => setError(apiError(e, 'Could not send your offer.').message),
+    /**
+     * 🔴 The server sends `fields: [{field, message}]`, and this used to throw
+     * all of it away and show the envelope's generic `message` — so an amount
+     * the server rejected for a stated reason reached the owner as "Invalid
+     * request." next to a perfectly innocent-looking box.
+     */
+    onError: (e) => {
+      const err = apiError(e, 'Could not send your offer.');
+      const onField = fieldErrorMap(err.fields).totalMinor;
+      setPriceError(onField ?? null);
+      setError(onField ? null : err.message);
+    },
   });
 
   const sendCode = useMutation({
@@ -124,12 +175,15 @@ export function QuotationActions({ quotation, viewerSide, size = 'md', onChanged
             {theyInitiated ? 'Confirm acceptance' : 'Accept'}
           </Button>
         ) : (
-          // Said, not left blank: the supplier has to know the ball is with the
-          // buyer rather than wonder where their button went.
-          <p className="text-[12.5px] font-medium text-muted">Waiting for the buyer to accept.</p>
+          // Said, not left blank: a party whose own figure is on the table has
+          // to know the ball is with the other side rather than wonder where
+          // their button went.
+          <p className="text-[12.5px] font-medium text-muted">
+            {lastOffer ? 'Your offer is with them.' : 'Waiting for the buyer to accept.'}
+          </p>
         )}
 
-        {myTurnToOffer ? (
+        {myTurnToOffer && (
           <Button
             size={size}
             variant="secondary"
@@ -140,10 +194,6 @@ export function QuotationActions({ quotation, viewerSide, size = 'md', onChanged
           >
             Negotiate
           </Button>
-        ) : (
-          !iInitiated && (
-            <p className="text-[12.5px] text-muted">Your offer is with them.</p>
-          )
         )}
       </div>
 
@@ -157,9 +207,10 @@ export function QuotationActions({ quotation, viewerSide, size = 'md', onChanged
             <Button variant="ghost" onClick={() => setNegotiating(false)}>Cancel</Button>
             <Button
               loading={offer.isPending}
-              disabled={!price || toMinor(price) <= 0 || toMinor(price) === figure}
+              disabled={!price || Boolean(localPriceError) || toMinor(price) === figure}
               onClick={() => {
                 setError(null);
+                setPriceError(null);
                 offer.mutate();
               }}
             >
@@ -178,10 +229,15 @@ export function QuotationActions({ quotation, viewerSide, size = 'md', onChanged
             label={`Your offer (${quotation.currency})`}
             type="number"
             min="0"
+            max={MAX_MINOR / 100}
             step="0.01"
             inputMode="decimal"
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            onChange={(e) => {
+              setPrice(e.target.value);
+              setPriceError(null);
+            }}
+            error={priceError ?? localPriceError ?? undefined}
             helper="The whole deal's total, not a per-unit rate."
           />
           <Input
@@ -256,8 +312,8 @@ export function QuotationActions({ quotation, viewerSide, size = 'md', onChanged
             and the copy must never imply one. */}
         <p className="mt-4 text-xs text-muted">
           {theyInitiated
-            ? 'The buyer has accepted. Your confirmation closes the quotation at this amount.'
-            : 'Both companies confirm. Yours is recorded now; the quotation is accepted once the supplier confirms it too.'}{' '}
+            ? 'The other party has accepted. Your confirmation closes the quotation at this amount.'
+            : 'Both companies confirm. Yours is recorded now; the quotation is accepted once the other party confirms it too.'}{' '}
           This is a confirmed acceptance recorded on MPX Global, not a digital signature.
         </p>
       </Modal>

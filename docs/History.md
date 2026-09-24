@@ -175,6 +175,113 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-25 — Landing hero: the six category tiles are gone on phones.** Owner: "remove categoris
+  in hero center section in mobile version". Below `sm` that grid is a single column, so six
+  full-width tiles pushed the signup card — the only CTA a guest sees above the fold — and everything
+  after it a screen and a half down; the hero read as a category list. Nothing is lost: the page's own
+  categories section is one scroll away with twelve, two across, and the browse bar sits above the
+  hero. Kept from `sm` up, where it is two or three columns beside the copy.
+
+- **2026-09-25 — FIX: the quotation PDF's masthead ran the logo into "QUOTATION".** Owner hit it on a
+  download. Two bugs, both in the `columns`:
+  - **`width: 'auto'` on the name column.** With the logo at a fixed width and no `*` column, pdfmake
+    had nothing to absorb the leftover space, so "QUOTATION" was laid out immediately after the
+    artwork instead of at the right margin — which is why the swoosh collided with the Q. The name
+    column is now `*`.
+  - **`width` on the image instead of `fit`.** `width` scales by the long edge, and the artwork is
+    1200×597 — at 108pt wide it came out ~54pt tall, twice the height of the typed wordmark it
+    replaced. `fit: [104, 30]` bounds BOTH edges and keeps the ratio, so the mark sits at about the
+    height of the 22pt "QUOTATION" opposite it and can never tower over the line.
+  - 🔴 **Verified by RENDERING it**, not by reading the code: built the masthead through pdfmake in
+    Node with the real artwork, wrote the PDF, converted it with `sips` and looked at the page. The
+    two previous pdfmake mistakes in this file were also things that only a render would have caught.
+- **2026-09-25 — The side that has accepted no longer sees Negotiate.** Owner: "when frm any side
+  quotation will accepted remove there side negotiation button" — the card said "You confirmed INR 2
+  — waiting for the other party" and still offered Negotiate. Saying "I accept ₹2" and then offering
+  ₹3 is two positions at once.
+  - ⚠️ **Deliberately a UI rule, not a server refusal, and the reason matters.** I wrote the server
+    guard first and it broke the "a counter-offer WIPES a half-finished acceptance" test — which
+    turned out to be the point, not a bad test. Strict turn-taking means the only party who CAN
+    counter once an acceptance is open is the one who accepted (the other made the last offer, and
+    nobody may offer twice in a row). Refusing them too would make the wipe **unreachable** and leave
+    the initiator with no move at all while the other side ignored them.
+  - So countering here IS the withdrawal, and it still wipes the acceptance — the button is simply
+    gone so nobody does it by accident. 🔴 If a proper "withdraw my acceptance" action is ever built,
+    close off the service path at the same time (noted in `negotiate()`).
+- **2026-09-25 — "On the table" moves to the newest offer notice, and leaves the card.** Owner:
+  "make this on the table in last offer also and remove it frm quotation when the second offer come
+  frm any side".
+  - Extracted `QuotationFigure` — one renderer, shown in exactly ONE place at a time. Before any
+    counter-offer it sits on the document card, because the card IS the offer; from the first
+    counter-offer on it sits on the newest offer notice and disappears from the card.
+  - 🔴 **The reason it moves rather than repeats:** the live figure changes with every offer, so a
+    copy of it left on the card would be a stale number sitting in the transcript — which is exactly
+    how two companies end up quoting each other different totals.
+  - ⚠️ **The BUTTONS deliberately stay on the card** even while negotiating. A long conversation can
+    push the newest offer notice out of the loaded page, and leaving no way to answer anywhere is a
+    worse failure than two identical buttons. Both modals state the amount before anything is
+    committed, so neither is a blind action.
+- **2026-09-25 — Accept / Negotiate now also sit on the newest counter-offer notice.** Owner: "make
+  accept and negotiate button in the last offer also". After a round of offers the document card is
+  scrolled far above, and the thing a person is actually looking at — "the supplier offered
+  ₹5,00,00,00,000" — had nothing to press. The answer belongs next to the offer.
+  - 🔴 **Only the LATEST notice, and only the kinds that leave something to do** (`quotation_offer`,
+    `quotation_accept_pending`). Buttons on every historical offer would be four ways to answer one
+    question, three of them about a figure nobody is offering any more.
+  - 🔴 **The same `QuotationActions` and the same query key as the card**, so the two can never
+    disagree about whose turn it is or what the figure is — and the second mount costs no request,
+    since the card has already cached it. It renders nothing until the quotation has loaded: briefly
+    showing the wrong buttons would defeat the point of putting them there.
+  - `ThreadView` computes the index of that newest actionable notice over the loaded rows (the newest
+    page loads first and older pages prepend, so the last match is the last one overall).
+- **2026-09-25 — FIX: "Invalid request." on a counter-offer.** Owner typed 5e33 into the amount and
+  got a bare "Invalid request." — true, useless, and indistinguishable from a broken form.
+  - **Two bugs, one symptom.** (1) The money schemas had NO ceiling, so an absurd figure tripped
+    zod's `.int()` — which means a SAFE integer — and the complaint came back as if the number had
+    decimals. (2) The server was already sending `fields: [{field, message}]`, and the client threw
+    it away and showed the envelope's generic message instead.
+  - **Ceiling:** `MAX_MINOR = 1e12` minor units — ten billion in major units (₹1,000 crore). No single
+    quotation is that, and it keeps every derived figure (line amounts, taxes, milestone splits) far
+    inside `Number.MAX_SAFE_INTEGER`, where the arithmetic is still exact.
+  - 🔴 **`.max()` is checked BEFORE `.int()`.** Ordered the other way, a too-large number still trips
+    the int check first and answers "Enter a whole amount." — a decimals complaint about a number
+    whose real problem is its size. The order is the difference between a message that matches the
+    mistake and one that misdirects.
+  - **Client:** the counter-offer modal now shows the server's field message ON the amount input, and
+    checks the ceiling, zero and "same as the current figure" as you type, so a typo never costs a
+    round trip. The builder's save/send errors name the field and reason too — the same trap was
+    waiting there with thirty inputs on screen.
+  - Test: an absurd amount is a 400 whose FIELD message says "too large", and no offer is recorded.
+- **2026-09-25 — FIX: the supplier can now accept the buyer's counter-offer.** Owner hit it in the
+  browser ("cant see the accept button on buyer's offer") — with the buyer's ₹150 on the table the
+  supplier's card said "Waiting for the buyer to accept." and offered only Negotiate.
+  - **My earlier rule was too blunt.** "The buyer accepts first" (owner, same day) was implemented as
+    *only the buyer may ever open an acceptance*, which left a supplier looking at a buyer's price
+    with no way to say yes: the deal could close only if the buyer first accepted their own number.
+    I flagged that awkwardness when building it; it turned out to be a blocker, not an awkwardness.
+  - **The rule is now: you may accept an offer THE OTHER SIDE put on the table, never your own.**
+    No counter-offers → the document is the supplier's offer, so only the buyer can accept it. The
+    buyer counters → that figure is the buyer's offer, so the supplier can accept it and the buyer
+    then confirms. Both ends of the owner's two instructions are the same sentence read from
+    opposite sides.
+  - It is the SAME test as "whose turn is it to counter" — whichever side is due to answer can
+    answer with a yes or with a number — so the UI derives the Accept and Negotiate buttons from one
+    expression instead of two that could disagree.
+  - Server-enforced in `assertMayInitiate` (a hidden button is not access control). Tests: 2 new —
+    the supplier accepts the buyer's counter and the buyer confirms; nobody can accept their own
+    offer, from either side — and 2 existing ones re-pointed to the new rule. 29/29.
+- **2026-09-25 — Product page: the seller card no longer sits on top of the quote rail.** Owner
+  reported it ("seller card going wrong"), with a screenshot of the card painted over "…they arrive
+  in your enquiries list."
+  - **Cause:** the left column pinned from `lg` (`lg:sticky`), but at `lg` the quote rail is
+    `col-span-12` — a full-width card on the NEXT ROW. A sticky grid item is *positioned*, so it
+    paints above that card and can slide down through the row gap into it. At `xl` the three columns are side by side and the rail has its own `xl:sticky`, which is why it only broke in the `lg`
+    band (1024–1279px).
+  - **Fix:** the left column pins where the rail pins — `xl:sticky`. Below xl nothing in that grid is
+    positioned, so nothing can overlap.
+  - Gotcha worth keeping: pinning one grid item while a later item spans the full width puts a
+    positioned box over a static one. Sticky belongs on items that are columns for the whole
+    breakpoint range it is applied at.
 - **2026-09-25 — The quotation strip above the composer is gone.** Owner: "dont show quote here".
   It listed every quotation in the thread with its status and an Open link; since quotations arrive
   in the timeline as document cards carrying their own actions, it was the same thing said twice —

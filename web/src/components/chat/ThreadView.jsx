@@ -151,6 +151,21 @@ export function ThreadView({
   const rows = [...messages, ...pending];
 
   /**
+   * The newest quotation notice that still leaves something to do — it is the
+   * one that carries Accept / Negotiate (owner, 2026-09-25).
+   *
+   * Computed over the LOADED rows, which is the right answer in practice: the
+   * newest page loads first and older pages prepend, so the last match is the
+   * last one overall. `findLastIndex` is not used — it is ES2023 and this file
+   * ships to browsers older than the rest of the app assumes.
+   */
+  let lastQuotationNoticeIndex = -1;
+  for (let i = 0; i < rows.length; i += 1) {
+    const kind = rows[i]?.systemKind;
+    if (kind === 'quotation_offer' || kind === 'quotation_accept_pending') lastQuotationNoticeIndex = i;
+  }
+
+  /**
    * The header's headline.
    *
    * A party sees WHO they are talking to. Staff see BOTH companies — composed
@@ -351,6 +366,9 @@ export function ThreadView({
             <ul>
               {rows.map((message, i) => {
                 const previous = rows[i - 1];
+                // Only the NEWEST notice that still leaves something to do
+                // carries the Accept / Negotiate buttons — see SystemNotice.
+                const latestQuotationNotice = i === lastQuotationNoticeIndex;
                 const newDay = i === 0 || !sameDay(previous.createdAt, message.createdAt);
                 return (
                   <Fragment key={message.id}>
@@ -361,6 +379,7 @@ export function ThreadView({
                       // Only used to resolve a quotation notice written before
                       // `Message.quotationId` existed — see SystemNotice.
                       conversationId={conversation.id}
+                      latestQuotationNotice={latestQuotationNotice}
                       // 🔴 The dock is a 352px window: without this the bubbles
                       // and platform notices render at page scale inside it.
                       compact={variant === 'dock'}

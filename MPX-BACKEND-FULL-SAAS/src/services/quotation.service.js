@@ -20,9 +20,10 @@ import { requestOtp, verifyOtp } from './otp.service.js';
  *
  * 🔴 Only the EXPORTER side writes the document; only the BUYER side declines.
  * Since 2026-09-25 either side may counter-offer, and acceptance is two-sided:
- * the BUYER accepts first and the supplier then CONFIRMS — a deal is closed only
- * when both have, each with a code sent to their own registered email. The
- * supplier can never open an acceptance, because the document is their own offer.
+ * whoever accepts an offer THE OTHER SIDE made only opens it, and the other
+ * party then CONFIRMS — a deal is closed only when both have, each with a code
+ * sent to their own registered email. Nobody can accept their own figure, which
+ * is why the supplier cannot open an acceptance on the document itself.
  * Every one of those checks is here, in the service, not only on the route.
  *
  * 🔴 Nothing a sent quotation shows is read live. `send()` SNAPSHOTS the bank
@@ -379,6 +380,18 @@ export async function negotiate({ user, id, totalMinor, note, actor, meta }) {
   if (last && last.by === side) {
     throw AppError.conflict('already offered', 'Your offer is on the table. Wait for the other side to respond.');
   }
+  /**
+   * ⚠️ A party who has already accepted is NOT refused here, and that is
+   * deliberate (2026-09-25). The owner asked for their Negotiate BUTTON to go,
+   * and it has — but refusing the call as well would make counter-offers
+   * impossible once any acceptance is open: strict turn-taking means the only
+   * party who could counter at that point is the one who accepted, so the
+   * "a counter-offer wipes a half-finished acceptance" safety net would become
+   * unreachable and the initiator would be left with no move at all while the
+   * other side ignored them. Countering here IS the withdrawal, and it wipes the
+   * acceptance below. If a proper "withdraw my acceptance" action is ever built,
+   * close this off at the same time.
+   */
   if (totalMinor === currentFigureMinor(q)) {
     throw AppError.badRequest('same figure', 'That is the figure already on the table — accept it instead.');
   }
@@ -429,23 +442,40 @@ export async function negotiate({ user, id, totalMinor, note, actor, meta }) {
 }
 
 /**
- * 🔴 THE BUYER ACCEPTS FIRST; the supplier only confirms (owner, 2026-09-25).
+ * 🔴 YOU MAY ONLY ACCEPT AN OFFER THE OTHER SIDE PUT ON THE TABLE.
  *
- * The quotation is the supplier's own offer — them "accepting" it is accepting
- * their own price, which decides nothing, and it would let a supplier park a
- * half-done acceptance on a buyer who has never answered. So the supplier has no
- * accept action at all until the buyer has put one on the table.
+ * Owner, 2026-09-25: first "don't show the accept button, when the buyer
+ * accepted only then exporter can confirm" — then, on hitting it, "can't see
+ * the accept button on buyer's offer". Both are the same rule stated from two
+ * ends, and this is it:
+ *
+ *   · no counter-offers yet → the document IS the supplier's offer, so only the
+ *     BUYER can accept it. A supplier accepting their own price decides nothing
+ *     and would park a half-done acceptance on a buyer who never answered.
+ *   · the buyer has countered → that figure is the BUYER's offer, so the
+ *     SUPPLIER can accept it, and the buyer then confirms.
+ *
+ * The first version only implemented the first bullet, which left a supplier
+ * looking at a buyer's price with no way to say yes — the deal could only close
+ * if the buyer accepted their own number first. That is the bug this replaces.
  *
  * Enforced here, not by hiding a button: a hidden button is not access control
  * (CLAUDE.md #2 and #5).
  */
 function assertMayInitiate({ q, side }) {
-  if (!q.acceptance?.initiated && side !== 'buyer') {
-    throw AppError.conflict(
-      'buyer accepts first',
-      'The buyer accepts first. You will be asked to confirm once they have.',
-    );
-  }
+  if (q.acceptance?.initiated) return; // answering someone else's acceptance
+
+  const offers = q.offers ?? [];
+  const last = offers.length ? offers[offers.length - 1] : null;
+  const figureIsTheirs = last ? last.by !== side : side === 'buyer';
+  if (figureIsTheirs) return;
+
+  throw AppError.conflict(
+    'cannot accept own offer',
+    last
+      ? 'Your own offer is on the table. The other side answers it.'
+      : 'The buyer accepts first. You will be asked to confirm once they have.',
+  );
 }
 
 /**

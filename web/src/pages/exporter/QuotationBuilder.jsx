@@ -45,6 +45,13 @@ const uid = () => {
   return `r${rowSeq}`;
 };
 
+/**
+ * The server's money ceiling (`quotation.validators.js` MAX_MINOR), in MAJOR
+ * units for the inputs. Mirrored so a typo is caught in the box rather than
+ * coming back as a rejected save; the server stays the authority.
+ */
+const MAX_MAJOR = 1_000_000_000_000 / 100;
+
 /** Client-side preview only — `quotationTotals.js` on the server is the truth. */
 function previewTotals(items, charges, taxes, milestones) {
   const lines = items.map((i) => ({ ...i, amountMinor: Math.round((Number(i.qty) || 0) * toMinor(i.rate)) }));
@@ -278,6 +285,22 @@ export function QuotationBuilder() {
     ...(form.additionalDetails.trim() ? { additionalDetails: form.additionalDetails.trim() } : {}),
   }), [form]);
 
+  /**
+   * 🔴 A validation failure must say WHICH field and WHY. The server sends
+   * `fields: [{field, message}]`; showing only the envelope's generic message
+   * turned "that amount is too large" into "Invalid request." next to a form
+   * with thirty inputs. Same trap the counter-offer modal hit (2026-09-25).
+   */
+  const saveFailure = (e, fallback) => {
+    const err = apiError(e, fallback);
+    const first = err.fields?.[0];
+    if (!first) return err.message;
+    // `body.items.3.rateMinor` → "Items · row 4: …" is more than this page can
+    // honestly resolve, so it names the path the server named and the reason.
+    const where = String(first.field ?? '').replace(/^body\./, '');
+    return `${first.message} (${where})`;
+  };
+
   const save = useMutation({
     mutationFn: () => quotationsApi.update(id, payload()),
     onSuccess: (updated) => {
@@ -285,7 +308,7 @@ export function QuotationBuilder() {
       setSaveError(null);
       setSavedAt(new Date());
     },
-    onError: (e) => setSaveError(apiError(e, 'Could not save.').message),
+    onError: (e) => setSaveError(saveFailure(e, 'Could not save.')),
   });
 
   /**
@@ -418,7 +441,7 @@ export function QuotationBuilder() {
       }
       setSentNotice(`${sent.number} sent to the buyer.`);
     },
-    onError: (e) => setSaveError(apiError(e, 'Could not send.').message),
+    onError: (e) => setSaveError(saveFailure(e, 'Could not send.')),
   });
 
   if (q.isError) return <PortalLayout nav={EXPORTER_NAV} wide><ErrorState onRetry={q.refetch} /></PortalLayout>;
@@ -530,7 +553,7 @@ export function QuotationBuilder() {
                       <Input label="HS code" value={item.hsCode} onChange={(e) => setRow('items', item.uid, { hsCode: e.target.value })} disabled={sent} optional />
                       <Input label="Qty" type="number" min="0" inputMode="decimal" value={item.qty} onChange={(e) => setRow('items', item.uid, { qty: e.target.value })} disabled={sent} />
                       <Input label="Unit" value={item.unit} onChange={(e) => setRow('items', item.uid, { unit: e.target.value })} disabled={sent} optional placeholder="MT" />
-                      <Input label={`Rate (${currency})`} type="number" min="0" step="0.01" inputMode="decimal" value={item.rate} onChange={(e) => setRow('items', item.uid, { rate: e.target.value })} disabled={sent} />
+                      <Input label={`Rate (${currency})`} type="number" min="0" max={MAX_MAJOR} step="0.01" inputMode="decimal" value={item.rate} onChange={(e) => setRow('items', item.uid, { rate: e.target.value })} disabled={sent} />
                       {/* Labelled like every other cell — it is a figure on the
                           document, not a decoration beside the inputs. */}
                       <StaticField label="Amount">
@@ -576,7 +599,7 @@ export function QuotationBuilder() {
                 {form.charges.map((c) => (
                   <div key={c.uid} className="grid grid-cols-[minmax(0,1fr)_130px_auto] gap-2 sm:gap-3">
                     <Input label="Charge" value={c.label} onChange={(e) => setRow('charges', c.uid, { label: e.target.value })} disabled={sent} placeholder="Freight" />
-                    <Input label={`Amount (${currency})`} type="number" min="0" step="0.01" inputMode="decimal" value={c.amount} onChange={(e) => setRow('charges', c.uid, { amount: e.target.value })} disabled={sent} optional placeholder="Included" />
+                    <Input label={`Amount (${currency})`} type="number" min="0" max={MAX_MAJOR} step="0.01" inputMode="decimal" value={c.amount} onChange={(e) => setRow('charges', c.uid, { amount: e.target.value })} disabled={sent} optional placeholder="Included" />
                     {!sent && <RemoveButton label={`Remove ${c.label || 'charge'}`} onClick={() => dropRow('charges', c.uid)} />}
                   </div>
                 ))}

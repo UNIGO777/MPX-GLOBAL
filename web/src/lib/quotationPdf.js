@@ -203,9 +203,11 @@ export function amountInWords(minor, currency) {
  * missing logo is not a reason to hand someone nothing.
  */
 const LOGO_SRC = '/brand-logo.png';
-// Measured from the artwork (1200×597); at 108pt wide the mark sits about the
-// same height as the "QUOTATION" opposite it.
-const LOGO_W = 108;
+// The box the mark is fitted INTO (see the masthead). 1200×597 fitted to
+// 104×30 lands ~60×30 — about the height of the 22pt "QUOTATION" opposite it,
+// which is what a masthead wants.
+const LOGO_W = 104;
+const LOGO_H = 30;
 let logoPromise = null;
 
 async function loadLogo() {
@@ -286,11 +288,25 @@ function buildDoc(q, logo) {
       // validity stated next to it rather than buried in the meta row.
       {
         columns: [
+          /**
+           * 🔴 The logo column is FIXED and the name column is `*`.
+           *
+           * With the logo at a fixed width and the name at `auto`, pdfmake had
+           * nothing to absorb the leftover space: "QUOTATION" was laid out
+           * immediately after the artwork instead of at the right margin, and
+           * the logo's swoosh ran into the Q. The owner hit it on a download.
+           *
+           * 🔴 `fit`, not `width`, for the image. `width` scales by the long
+           * edge, and this artwork is 1200×597 — at 108pt wide it comes out
+           * ~54pt tall, twice the height of the typed wordmark it replaced and
+           * far too heavy for a masthead. `fit` bounds BOTH edges and keeps the
+           * ratio, so the mark can never stretch or tower over the line.
+           */
           logo
-            ? { image: logo, width: LOGO_W, margin: [0, 2, 0, 0] }
-            : wordmark(),
+            ? { width: LOGO_W, image: logo, fit: [LOGO_W, LOGO_H], margin: [0, 2, 0, 0] }
+            : { width: 'auto', ...wordmark() },
           {
-            width: 'auto',
+            width: '*',
             stack: [
               { text: 'QUOTATION', fontSize: 22, bold: true, alignment: 'right', characterSpacing: 2.5 },
               {

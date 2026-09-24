@@ -14,7 +14,27 @@ import { CURRENCIES } from '../models/enums.js';
  * 🔴 `.strict()`: unknown keys are REJECTED, not stripped. A mistyped field on a
  * commercial document must fail loudly rather than vanish.
  */
-const minor = z.number().int().min(0);
+/**
+ * 🔴 Money has a CEILING, and the message says so.
+ *
+ * Owner hit this: typing 5e33 into a counter-offer answered "Invalid request."
+ * — zod's `.int()` means a SAFE integer, so an absurd figure was refused with
+ * nothing a person could act on. A stated maximum is both a real guard and a
+ * sentence someone can read.
+ *
+ * 1e12 minor units = ten billion in major units (₹1,000 crore). No single
+ * quotation is that, and it keeps every derived figure — line amounts, taxes,
+ * milestone splits — far inside `Number.MAX_SAFE_INTEGER` (9.007e15), where the
+ * arithmetic is still exact.
+ */
+export const MAX_MINOR = 1_000_000_000_000;
+const TOO_LARGE = 'That amount is too large. Check the figure.';
+
+// 🔴 `.max()` FIRST. Zod's `.int()` means a SAFE integer, so an absurd figure
+// trips the int check and answers "Enter a whole amount." — which reads as a
+// decimals complaint about a number whose real problem is its size. Checking the
+// ceiling first means the message always matches what is actually wrong.
+const minor = z.number().max(MAX_MINOR, TOO_LARGE).int('Enter a whole amount in the smallest unit.').min(0);
 
 const item = z
   .object({
@@ -94,8 +114,13 @@ export const negotiateSchema = {
   body: z
     .object({
       // Minor units, like every other amount here. `positive` not `min(0)`: an
-      // offer of zero is not a negotiation.
-      totalMinor: z.number().int().positive(),
+      // offer of zero is not a negotiation. Same ceiling as every other money
+      // field, and it says why rather than answering "Invalid request."
+      totalMinor: z
+        .number()
+        .max(MAX_MINOR, TOO_LARGE) // before `.int()` — see the note on `minor`
+        .int('Enter a whole amount.')
+        .positive('Enter an amount greater than zero.'),
       note: zString({ min: 1, max: 300 }).optional(),
     })
     .strict(),

@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 
 import { quotationsApi, quotationKeys } from '../../api/quotations.js';
 import { formatTime } from '../../lib/format.js';
-import { formatMinor } from '../../lib/money.js';
 import { downloadQuotationPdf } from '../../lib/quotationPdf.js';
 import { QuotationActions } from '../quotation/QuotationActions.jsx';
+import { QuotationFigure } from '../quotation/QuotationFigure.jsx';
 import { QuotationPaperPreview } from '../quotation/QuotationPaperPreview.jsx';
 import { Skeleton } from '../ui/Skeleton.jsx';
 import { DownloadIcon } from '../ui/icons.jsx';
@@ -25,22 +25,15 @@ import { DownloadIcon } from '../ui/icons.jsx';
  * QuotationPaperPreview. The real PDF is built on demand by the same builder the
  * document page uses (lib/quotationPdf.js).
  *
- * 🔴 The card states the figure ONCE, under the preview. The document is one
- * place, and a second rendering of the money is a number that can end up
- * disagreeing with it.
+ * 🔴 The figure sits here ONLY until the first counter-offer (owner,
+ * 2026-09-25). After that it lives on the newest offer notice instead, because
+ * it changes with every offer — and a copy of it left up here would be a stale
+ * number sitting in the transcript, which is how two companies end up quoting
+ * each other different totals. See QuotationFigure.
  *
  * ⚠️ Parties only. Staff monitoring a thread see the plain notice: quotations are
  * two-party scoped on the server, so a moderator's fetch is a 404 by design.
  */
-const STATUS = {
-  sent: { label: 'Awaiting an answer', className: 'bg-ink-100 text-ink-700' },
-  negotiating: { label: 'Negotiating', className: 'bg-warning-50 text-warning-700 ring-1 ring-warning-200' },
-  accepted: { label: 'Accepted', className: 'bg-success-50 text-success-700 ring-1 ring-success-200' },
-  declined: { label: 'Declined', className: 'bg-danger-50 text-danger-700 ring-1 ring-danger-200' },
-  expired: { label: 'Expired', className: 'bg-ink-100 text-ink-600' },
-  withdrawn: { label: 'Withdrawn', className: 'bg-ink-100 text-ink-600' },
-};
-
 export function QuotationChatCard({
   quotationId,
   quotationNumber,
@@ -85,9 +78,9 @@ export function QuotationChatCard({
   if (!id || q.isError || !q.data) return fallback;
 
   const d = q.data;
-  const status = STATUS[d.status] ?? STATUS.sent;
-  const figure = d.currentFigureMinor ?? d.totalMinor;
-  const negotiated = d.offers?.length > 0 && figure !== d.totalMinor;
+  // From the first counter-offer on, the live figure belongs to the newest offer
+  // notice and nowhere else.
+  const negotiating = (d.offers?.length ?? 0) > 0;
 
   const save = async () => {
     setFailed(false);
@@ -149,24 +142,12 @@ export function QuotationChatCard({
         </p>
       )}
 
-      {/* The figure and where it stands. Colour is never the only signal — the
-          status is spelled out beside it. */}
-      <div className="flex items-end justify-between gap-3 border-t border-surface-border bg-surface-subtle px-3 py-2.5">
-        <span>
-          <span className="block text-[10px] font-semibold uppercase tracking-widest text-muted">
-            {negotiated ? 'On the table' : 'Total'}
-          </span>
-          <span className="block font-serif text-lg leading-tight text-ink-900">
-            {formatMinor(figure, d.currency)}
-          </span>
-          {negotiated && (
-            <span className="block text-[11px] text-muted">Quoted {formatMinor(d.totalMinor, d.currency)}</span>
-          )}
-        </span>
-        <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.className}`}>
-          {status.label}
-        </span>
-      </div>
+      {!negotiating && (
+        <QuotationFigure
+          quotation={d}
+          className="border-t border-surface-border bg-surface-subtle px-3 py-2.5"
+        />
+      )}
 
       <div className="flex flex-wrap items-center gap-2 border-t border-surface-border px-3 py-2.5">
         <Link
@@ -176,6 +157,12 @@ export function QuotationChatCard({
           Open document
         </Link>
         <span className="flex-1" />
+        {/* The buttons STAY here even while negotiating, unlike the figure.
+            The newest offer notice can be pushed out of the loaded page by a
+            long conversation, and leaving no way to answer anywhere would be a
+            worse failure than showing two identical buttons. Both modals state
+            the amount before anything is committed, so neither is a blind
+            action. */}
         <QuotationActions quotation={d} viewerSide={viewerSide} size="sm" />
       </div>
     </div>

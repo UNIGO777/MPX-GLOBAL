@@ -464,8 +464,17 @@ export function ProductDetail() {
                   than being squeezed — a 320px card and a product summary do
                   not both fit at 1024px. */}
               <div className="grid gap-5 lg:grid-cols-12">
-                {/* ───────── LEFT · gallery + who is selling ───────── */}
-                <div className="space-y-4 lg:col-span-5 lg:sticky lg:top-24 lg:self-start xl:col-span-4">
+                {/* ───────── LEFT · gallery + who is selling ─────────
+                    🔴 Pinned only at XL, where this really is a column beside
+                    two others. It used to pin from `lg`, and at `lg` the quote
+                    rail is `col-span-12` — a full-width card on the NEXT ROW.
+                    A sticky grid item is positioned, so it paints ABOVE that
+                    card and slides down through the row gap into it: the seller
+                    card ended up sitting on top of the rail's text. Pinning
+                    where the rail itself pins (`xl:sticky`) keeps the two in
+                    step, and below xl nothing is positioned, so nothing can
+                    overlap. */}
+                <div className="space-y-4 lg:col-span-5 xl:col-span-4 xl:sticky xl:top-24 xl:self-start">
                   <div className="overflow-hidden rounded-2xl border border-surface-border bg-white p-3">
                     <Gallery images={p.images} name={p.name} productId={p.id} />
                   </div>

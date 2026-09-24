@@ -244,6 +244,25 @@ describe('quotations · negotiation and confirmed acceptance', () => {
     expect(res.body.quotation.offers[0].by).toBe('buyer');
   });
 
+  /**
+   * 🔴 The owner typed 5e33 into a counter-offer and got "Invalid request." —
+   * true, useless, and it left them unable to tell a typo from a broken form.
+   * A stated ceiling is both the guard and a sentence a person can act on.
+   */
+  it('refuses an absurd amount, and SAYS why rather than "Invalid request."', async () => {
+    const { t, id } = await sentQuotation();
+    const res = await request(app)
+      .post(`/quotations/${id}/negotiate`)
+      .set(bearer(t.buyer.token))
+      .send({ totalMinor: 5e35 });
+
+    expect(res.status).toBe(400);
+    // The field-level message is what the form shows next to the input.
+    expect(res.body.error.fields?.[0]?.field).toBe('body.totalMinor');
+    expect(res.body.error.fields?.[0]?.message).toMatch(/too large/i);
+    expect((await Quotation.findById(id)).offers).toHaveLength(0);
+  });
+
   it('nobody may offer twice in a row, and the supplier cannot counter their own quotation', async () => {
     const { t, id } = await sentQuotation();
 
@@ -290,11 +309,53 @@ describe('quotations · negotiation and confirmed acceptance', () => {
   });
 
   /**
+   * 🔴 The rule the owner hit in the browser: with the buyer's counter-offer on
+   * the table, the SUPPLIER must be able to accept it. The first version let
+   * only the buyer ever open an acceptance, so a supplier looking at a buyer's
+   * price had no way to say yes — the deal could close only if the buyer
+   * accepted their own number.
+   */
+  it('the supplier CAN accept the buyer’s counter-offer, and the buyer then confirms', async () => {
+    const { t, id } = await sentQuotation();
+    await request(app).post(`/quotations/${id}/negotiate`).set(bearer(t.buyer.token)).send({ totalMinor: 15000 });
+
+    const opened = await confirm(id, t.exporter);
+    expect(opened.status).toBe(200);
+    expect(opened.body.quotation.acceptance.initiatedBy).toBe('exporter');
+    expect(opened.body.quotation.status).toBe('negotiating'); // not closed yet
+
+    const closed = await confirm(id, t.buyer);
+    expect(closed.body.quotation.status).toBe('accepted');
+    expect(closed.body.quotation.acceptance.agreedTotalMinor).toBe(15000);
+  });
+
+  it('nobody can accept their OWN offer — it is the other side that answers it', async () => {
+    const { t, id } = await sentQuotation();
+    await request(app).post(`/quotations/${id}/negotiate`).set(bearer(t.buyer.token)).send({ totalMinor: 15000 });
+
+    // The buyer's own figure is on the table, so the buyer cannot accept it.
+    const own = await request(app)
+      .post(`/quotations/${id}/accept/request-code`)
+      .set(bearer(t.buyer.token))
+      .send({});
+    expect(own.status).toBe(409);
+
+    // The supplier answers with their own — now it is the buyer's turn to accept.
+    await request(app).post(`/quotations/${id}/negotiate`).set(bearer(t.exporter.token)).send({ totalMinor: 20000 });
+    expect(
+      (await request(app).post(`/quotations/${id}/accept/request-code`).set(bearer(t.exporter.token)).send({})).status,
+    ).toBe(409);
+    expect(
+      (await request(app).post(`/quotations/${id}/accept/request-code`).set(bearer(t.buyer.token)).send({})).status,
+    ).toBe(200);
+  });
+
+  /**
    * 🔴 The document is the supplier's own offer, so accepting it decides nothing
    * — and letting them go first would park a half-done acceptance on a buyer who
    * has never answered. Enforced on the server, not by hiding a button.
    */
-  it('the supplier cannot open an acceptance — the buyer accepts first', async () => {
+  it('the supplier cannot open an acceptance on the document itself — the buyer accepts first', async () => {
     const { t, id } = await sentQuotation();
 
     const early = await request(app)
@@ -343,12 +404,12 @@ describe('quotations · negotiation and confirmed acceptance', () => {
     const { t, id } = await sentQuotation();
     await request(app).post(`/quotations/${id}/negotiate`).set(bearer(t.buyer.token)).send({ totalMinor: 800000 });
 
-    // The buyer accepts their own standing figure…
-    await confirm(id, t.buyer);
-    expect((await Quotation.findById(id)).acceptance.initiated.side).toBe('buyer');
+    // The supplier accepts the buyer's figure…
+    await confirm(id, t.exporter);
+    expect((await Quotation.findById(id)).acceptance.initiated.side).toBe('exporter');
 
-    // …then the supplier moves the price instead of confirming. That acceptance
-    // is now worthless and must be gone.
+    // …then moves the price instead of waiting to be confirmed. Their own
+    // acceptance is now for a figure nobody is offering, and must be gone.
     await request(app).post(`/quotations/${id}/negotiate`).set(bearer(t.exporter.token)).send({ totalMinor: 900000 });
     expect((await Quotation.findById(id)).acceptance).toBeUndefined();
 
@@ -362,8 +423,9 @@ describe('quotations · negotiation and confirmed acceptance', () => {
     const printed = (await request(app).get(`/quotations/${id}`).set(bearer(t.buyer.token))).body.quotation.totalMinor;
 
     await request(app).post(`/quotations/${id}/negotiate`).set(bearer(t.buyer.token)).send({ totalMinor: 123456 });
-    await confirm(id, t.buyer);
-    const done = await confirm(id, t.exporter);
+    // The buyer's offer, so the SUPPLIER accepts it and the buyer confirms.
+    await confirm(id, t.exporter);
+    const done = await confirm(id, t.buyer);
 
     expect(done.body.quotation.status).toBe('accepted');
     expect(done.body.quotation.acceptance.agreedTotalMinor).toBe(123456);

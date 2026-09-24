@@ -6,6 +6,7 @@ import { AlertIcon, CheckIcon, ClockIcon, DownloadIcon, QuoteIcon, ShieldIcon, S
 import { fileBadge, formatFileSize } from '../../lib/chatFiles.js';
 import { WARNING_TONES } from './warningTones.js';
 import { QuotationChatCard } from './QuotationChatCard.jsx';
+import { QuotationNoticeActions } from './QuotationNoticeActions.jsx';
 
 /**
  * D10 · a document in a bubble: badge, name, size — and, once sent, a DOWNLOAD
@@ -306,7 +307,7 @@ const NOTICE_KINDS = {
 const NUMBER_IN_BODY = /MPX-Q-\d{4}-\d{6}/;
 
 /** The platform's own voice — never a chat bubble that could read as a party. */
-function NoticeBand({ message, compact }) {
+function NoticeBand({ message, compact, children }) {
   const kind = NOTICE_KINDS[message.systemKind] ?? NOTICE_DEFAULT;
   const { Icon } = kind;
 
@@ -382,6 +383,8 @@ function NoticeBand({ message, compact }) {
         >
           {message.body}
         </p>
+
+        {children}
       </div>
     </>
   );
@@ -400,8 +403,32 @@ function NoticeBand({ message, compact }) {
  * Staff keep the plain band — a quotation is two-party scoped, so a moderator's
  * fetch would 404, and that is the intended boundary, not a gap.
  */
-function SystemNotice({ message, compact, viewerSide, conversationId }) {
-  const band = <NoticeBand message={message} compact={compact} />;
+const ACTIONABLE_QUOTATION_KINDS = ['quotation_offer', 'quotation_accept_pending'];
+
+function SystemNotice({ message, compact, viewerSide, conversationId, latestQuotationNotice }) {
+  /**
+   * 🔴 The buttons repeat on the LATEST counter-offer notice (owner,
+   * 2026-09-25). The card carries them, but after a round of offers the card is
+   * scrolled far above and the thing a person is looking at — "they offered
+   * ₹5,00,000" — had nothing to press. The answer belongs next to the offer.
+   *
+   * Only the LATEST one, and only the kinds that leave something to do. Buttons
+   * on every historical offer would be four ways to answer one question, three
+   * of them about a figure nobody is offering any more.
+   */
+  const actionable =
+    latestQuotationNotice &&
+    viewerSide !== 'staff' &&
+    message.quotationId &&
+    ACTIONABLE_QUOTATION_KINDS.includes(message.systemKind);
+
+  const band = (
+    <NoticeBand message={message} compact={compact}>
+      {actionable && (
+        <QuotationNoticeActions quotationId={message.quotationId} viewerSide={viewerSide} />
+      )}
+    </NoticeBand>
+  );
   const isQuotation = message.systemKind === 'quotation_sent' && viewerSide !== 'staff';
   const number = isQuotation ? (message.body?.match(NUMBER_IN_BODY)?.[0] ?? null) : null;
 
@@ -615,6 +642,7 @@ export function MessageBubble({
   viewerSide,
   counterpartyName,
   conversationId,
+  latestQuotationNotice = false,
   onRetry,
   startsGroup = true,
   compact = false,
@@ -626,6 +654,7 @@ export function MessageBubble({
         compact={compact}
         viewerSide={viewerSide}
         conversationId={conversationId}
+        latestQuotationNotice={latestQuotationNotice}
       />
     );
   }

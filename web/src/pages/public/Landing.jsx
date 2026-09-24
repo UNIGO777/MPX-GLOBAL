@@ -398,9 +398,16 @@ export function Landing() {
               </div>
 
               {/* Six real categories, straight into the catalogue. Hidden until
-                  there are six to show, rather than rendering a grid with gaps. */}
+                  there are six to show, rather than rendering a grid with gaps.
+
+                  🔴 NOT ON A PHONE (owner, 2026-09-25). Below `sm` the grid is a
+                  single column, so six full-width tiles pushed the signup card
+                  and everything after it a screen and a half down — the hero
+                  became a category list. Nothing is lost: the page's own
+                  categories section is one scroll away and shows twelve, two
+                  across, and the browse bar sits above the hero. */}
               {topCategories.length >= HERO_TILES && (
-                <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <ul className="mt-8 hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
                   {topCategories.slice(0, HERO_TILES).map((c) => {
                     const subs = c.subs?.length ?? 0;
                     return (
