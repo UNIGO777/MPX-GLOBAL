@@ -31,7 +31,6 @@ import {
   BuildingIcon,
   CalendarIcon,
   GlobeIcon,
-  InfoIcon,
   ShieldIcon,
   TagIcon,
 } from '../../components/ui/icons.jsx';
@@ -437,11 +436,35 @@ export function OrganisationDetail() {
         </div>
       </header>
 
-      {blocked && header.blockReason && (
+      {/* Block status lives with the block (owner, 2026-09-24): the reason, and
+          the cascade's progress / result. What a block REACHES is explained in
+          the Block / Unblock dialog, where the decision is made — the old rail
+          card repeated it and made the column long. */}
+      {(blocked || cascade?.status === 'running') && (
         <div className="mb-5 max-w-3xl">
-          <Alert tone="danger">
-            <span className="font-semibold">Blocked{header.blockedAt ? ` ${formatDate(header.blockedAt)}` : ''}:</span>{' '}
-            {header.blockReason}
+          <Alert tone={blocked ? 'danger' : 'warning'}>
+            {blocked && (
+              <>
+                <span className="font-semibold">Blocked{header.blockedAt ? ` ${formatDate(header.blockedAt)}` : ''}</span>
+                {header.blockReason ? <>: {header.blockReason}</> : '.'}
+              </>
+            )}
+            {cascade?.status === 'running' && (
+              <span className="mt-1 flex items-center gap-2 text-xs font-medium">
+                <span className="relative flex h-2 w-2" aria-hidden="true">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning-400 opacity-75 motion-reduce:hidden" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-warning-500" />
+                </span>
+                Cascade running — taking listings down and freezing conversations…
+              </span>
+            )}
+            {blocked && cascade?.completedAt && !cascade.failed && (
+              <span className="mt-1 block text-xs opacity-80">
+                Cascade completed {formatDate(cascade.completedAt)}
+                {cascade.products != null ? ` · ${cascade.products} product${cascade.products === 1 ? '' : 's'} taken down` : ''}
+                {cascade.conversations != null ? ` · ${cascade.conversations} conversation${cascade.conversations === 1 ? '' : 's'} frozen` : ''}
+              </span>
+            )}
           </Alert>
         </div>
       )}
@@ -686,31 +709,6 @@ export function OrganisationDetail() {
             </dl>
           </Section>
 
-          {/* §7.1 — what a block ACTUALLY reaches, next to the button that does
-              it, so nobody blocks a company and assumes more (or less) happened. */}
-          <Section title="What a block does" icon={InfoIcon} tone="danger">
-            <p className="text-sm leading-relaxed text-ink-700">{blockReach?.note}</p>
-            {cascade?.status === 'running' && (
-              <p className="mt-2 flex items-center gap-2 text-xs font-medium text-warning-800">
-                <span className="relative flex h-2 w-2" aria-hidden="true">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning-400 opacity-75 motion-reduce:hidden" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-warning-500" />
-                </span>
-                Cascade running — taking listings down and freezing conversations…
-              </p>
-            )}
-            {cascade?.completedAt && !cascade.failed && (
-              <p className="mt-2 text-xs text-muted">
-                Last cascade completed {formatDate(cascade.completedAt)}
-                {cascade.products != null
-                  ? ` · ${cascade.products} product${cascade.products === 1 ? '' : 's'}`
-                  : ''}
-                {cascade.conversations != null
-                  ? ` · ${cascade.conversations} conversation${cascade.conversations === 1 ? '' : 's'}`
-                  : ''}
-              </p>
-            )}
-          </Section>
 
           <Section
             title="Audit trail"

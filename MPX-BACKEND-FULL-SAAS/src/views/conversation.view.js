@@ -12,6 +12,7 @@
  * party. Widening this file is how they would leak.
  */
 
+import { presentBody } from '../utils/messageText.js';
 import { signedChatDocumentUrl, signedChatImageUrl } from '../services/chatAttachment.storage.service.js';
 import { FREEZE_NOTICES } from '../services/conversationFreeze.service.js';
 
@@ -133,7 +134,7 @@ export function conversationPartyView(conversation, { viewerSide, product, logos
     },
     participants: participants(conversation),
     lastMessageAt: conversation.lastMessageAt ?? null,
-    lastMessagePreview: conversation.lastMessagePreview ?? null,
+    lastMessagePreview: presentBody(conversation.lastMessagePreview ?? null),
     unread: isUnread(conversation, viewerSide),
     frozen: Boolean(conversation.frozen),
     frozenLabel: freezeLabel(conversation, productExists),
@@ -169,7 +170,7 @@ export function conversationStaffView(conversation, { product, logos }) {
     },
     participants: participants(conversation),
     lastMessageAt: conversation.lastMessageAt ?? null,
-    lastMessagePreview: conversation.lastMessagePreview ?? null,
+    lastMessagePreview: presentBody(conversation.lastMessagePreview ?? null),
     // m5-features #10 — THE PARTIES' unread, not the admin's. Staff have no
     // read-tracking of their own and reading a thread as admin must never mark
     // it read for anyone; these are derived from the two stored timestamps, the
@@ -232,7 +233,11 @@ export function messageView(message) {
     // messages are append-only (M4-13), so those can never be backfilled.
     systemKind:
       message.senderType === 'system' ? (message.systemKind ?? legacySystemKind(message.body)) : null,
-    body: message.body,
+    // Presentation rules for append-only text (routed-notice wording, country
+    // names) — see utils/messageText.js.
+    body: presentBody(message.body, {
+      systemKind: message.senderType === 'system' ? (message.systemKind ?? legacySystemKind(message.body)) : null,
+    }),
     /**
      * D9 · the image, as a SHORT-LIVED SIGNED URL minted per read.
      *

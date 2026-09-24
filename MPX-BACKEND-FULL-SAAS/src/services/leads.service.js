@@ -1,3 +1,4 @@
+import { ROUTED_NOTICE } from '../utils/messageText.js';
 import { randomBytes } from 'node:crypto';
 
 import { AuditLog } from '../models/AuditLog.js';
@@ -27,8 +28,7 @@ import { createInquiry } from './inquiry.service.js';
 const REF_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const newRef = () => `R-${Array.from(randomBytes(6), (b) => REF_ALPHABET[b % REF_ALPHABET.length]).join('')}`;
 
-const ROUTED_NOTICE =
-  'MPX Global connected you with this supplier at your request. Continue the conversation here as usual.';
+// The notice wording lives in utils/messageText.js (neutral for both parties).
 
 function actorOf(user) {
   return { userId: user.userId, role: user.role };

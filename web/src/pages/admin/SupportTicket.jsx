@@ -221,8 +221,8 @@ export function SupportTicket() {
                   <span>
                     {resolved ? (
                       <>
-                        <b className="font-semibold text-ink-900">{closedBy(t)}</b> The company can&apos;t reply; a reply
-                        here moves it back to In progress.
+                        <b className="font-semibold text-ink-900">{closedBy(t)}</b> The company can&apos;t reply
+                        {canStatus ? '; a reply here moves it back to In progress.' : '.'}
                       </>
                     ) : (
                       <>
@@ -234,7 +234,14 @@ export function SupportTicket() {
                 </div>
               )}
               <div className="sticky bottom-0 z-10 shrink-0 overflow-hidden rounded-b-2xl border-t border-surface-border bg-white shadow-[0_-6px_16px_-10px_rgba(0,5,23,0.25)] sm:static sm:rounded-none sm:shadow-none">
-                {canReply ? (
+                {canReply && resolved && !canStatus ? (
+                  // Replying here would re-open the ticket — that needs the re-open grant.
+                  <p className="flex items-center gap-2 px-4 py-3.5 text-[13px] text-muted sm:px-6">
+                    <LockIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                    This ticket is closed. Replying would re-open it — ask someone with the
+                    &ldquo;Resolve / re-open tickets&rdquo; permission.
+                  </p>
+                ) : canReply ? (
                   <ReplyBox
                     embedded
                     sending={reply.isPending}

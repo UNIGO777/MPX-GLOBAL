@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { supportApi, supportKeys } from '../../api/support.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
+import { can } from '../../auth/roleHome.js';
 import { actionLabel } from '../../lib/auditFormat.js';
 import { apiError, formatDate, formatListTime, formatTime } from '../../lib/format.js';
 import { CATEGORY_LABEL, TICKET_CATEGORIES, autoCloseDate } from '../../lib/support.js';
@@ -400,7 +401,9 @@ export function logIcon(r) {
 
 function TicketLog() {
   const { user } = useAuth();
-  const isSuperadmin = user?.role === 'superadmin';
+  // The whole team's log: a superadmin, or an employee granted `reports:team`
+  // (the server enforces it; this only shows the "Who" filter).
+  const isSuperadmin = user?.role === 'superadmin' || can(user, 'reports:team');
   const navigate = useNavigate();
   const [actorId, setActorId] = useState('');
   const [action, setAction] = useState('');

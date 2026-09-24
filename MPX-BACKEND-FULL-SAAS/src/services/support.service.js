@@ -311,6 +311,15 @@ export async function getTicket({ id }) {
  */
 export async function replyTicket({ actor, id, body, file, meta }) {
   const ticket = await findAny(id);
+  // A staff reply on a CLOSED ticket re-opens it, so it needs the re-open grant
+  // too (owner, 2026-09-24). Checked before any file is stored.
+  if (
+    ticket.status === 'resolved' &&
+    actor.role !== 'superadmin' &&
+    !(actor.permissions ?? []).includes(PERMISSIONS.SUPPORT_STATUS)
+  ) {
+    throw AppError.forbidden('reply would re-open', 'This ticket is closed. Replying would re-open it, which needs the "Resolve / re-open tickets" permission.');
+  }
   requireContent(body, file);
   const attachment = await storeFile(file, ticket._id);
 
@@ -512,13 +521,16 @@ export async function ticketTimeline({ id }) {
 }
 
 /**
- * The cross-ticket log ("who resolved what"). 🔴 A superadmin sees the whole
- * team; anyone else sees ONLY their own actions — the actor filter is forced
- * from the token, whatever the request asked for.
+ * The cross-ticket log ("who resolved what"). 🔴 A superadmin — or an employee
+ * holding `reports:team` — sees the whole team; anyone else sees ONLY their own
+ * actions: the actor filter is forced from the token, whatever the request asked.
  */
 export async function ticketLog({ actor, actorId, action, from, to, page = 1, pageSize = 50 }) {
   const filter = { entityType: 'ticket', action: action ? action : { $in: LOG_ACTIONS } };
-  if (actor.role !== 'superadmin') filter.actorId = actor.userId;
+  // The whole team: a superadmin, or an employee granted `reports:team`
+  // (owner, 2026-09-24). Anyone else sees only their own actions.
+  const seesTeam = actor.role === 'superadmin' || (actor.permissions ?? []).includes(PERMISSIONS.REPORTS_TEAM);
+  if (!seesTeam) filter.actorId = actor.userId;
   else if (actorId) filter.actorId = actorId;
   if (from || to) {
     filter.occurredAt = {};

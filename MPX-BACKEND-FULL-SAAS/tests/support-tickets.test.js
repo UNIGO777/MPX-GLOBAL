@@ -410,4 +410,30 @@ describe('Closing, follow-ups, badges and auto-close (owner, 2026-09-24)', () =>
     expect((await request(app).patch(`/admin/support/tickets/${t.id}/status`).set(bearer(closer.token)).send({ status: 'resolved' })).status).toBe(200);
     expect((await request(app).post(`/admin/support/tickets/${t.id}/messages`).set(bearer(closer.token)).send({ body: 'x' })).status).toBe(403);
   });
+
+  it('🔴 replying to a CLOSED ticket needs support:status too (it would re-open it)', async () => {
+    const replier = await makeUser('employee', { permissions: ['support:read', 'support:reply'] });
+    const t = await raise(buyerA);
+    await request(app).patch(`/admin/support/tickets/${t.id}/status`).set(bearer(agent.token)).send({ status: 'resolved' });
+    const before = await TicketMessage.countDocuments({ ticketId: t.id });
+    const res = await request(app).post(`/admin/support/tickets/${t.id}/messages`).set(bearer(replier.token)).send({ body: 'One more thing' });
+    expect(res.status).toBe(403);
+    expect(await TicketMessage.countDocuments({ ticketId: t.id })).toBe(before);
+    expect((await Ticket.findById(t.id)).status).toBe('resolved');
+    // …while on an OPEN ticket the same person replies normally.
+    const open = await raise(buyerA);
+    expect((await request(app).post(`/admin/support/tickets/${open.id}/messages`).set(bearer(replier.token)).send({ body: 'On it' })).status).toBe(201);
+  });
+
+  it('reports:team widens the ticket log to the whole team; without it, own actions only', async () => {
+    const lead = await makeUser('employee', { permissions: ['support:read', 'reports:team'] });
+    const plain = await makeUser('employee', { permissions: ['support:read'] });
+    const t = await raise(buyerA);
+    await request(app).post(`/admin/support/tickets/${t.id}/messages`).set(bearer(agent.token)).send({ body: 'Logged by agent' });
+    const team = await request(app).get('/admin/support/log').set(bearer(lead.token));
+    expect(team.status).toBe(200);
+    expect(team.body.rows.some((r) => r.actor.id === String(agent.user._id))).toBe(true);
+    const own = await request(app).get('/admin/support/log').set(bearer(plain.token));
+    expect(own.body.rows.every((r) => r.actor.id === String(plain.user._id))).toBe(true);
+  });
 });
