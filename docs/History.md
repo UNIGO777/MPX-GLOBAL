@@ -175,6 +175,22 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-25 — Release APK built against the LIVE API.** `NODE_ENV=production ./gradlew
+  assembleRelease` in `app/android`; Expo loads `.env.production` for that variant, so no file
+  swapping. Output: `app/android/app/build/outputs/apk/release/app-release.apk` (79 MB,
+  `com.mpxglobal.app` 1.0.0, minSdk 24 / targetSdk 36), copied to `~/Desktop/mpx-global-release.apk`.
+  - 🔴 **Verified by unpacking the APK, not by trusting the build log**: `index.android.bundle`
+    carries `https://api.mpx.nxtgendigitals.com` and contains **no** ngrok/dev URL — worth checking
+    every time, because Metro loads `.env.production` AND `.env`, and a release pointed at a
+    developer's tunnel is the kind of thing nobody notices until the client opens it. The new
+    quotation strings ("Confirm your acceptance", "not a digital signature") are in the bundle too.
+  - ⚠️ **DEBUG-SIGNED** (`CN=Android Debug`) — Expo's scaffold sets `signingConfig
+    signingConfigs.debug` on the release build type and no release keystore exists. Owner confirmed
+    that is fine for now. **Fine for sideloading and client testing; NOT for the Play Store**: the
+    debug key is public, and an app published with it can never be updated by a properly-signed
+    build. A real keystore is needed before any store upload — and once it exists it must be backed
+    up, since losing it ends the ability to update that listing under any account.
+  - `android/local.properties` (sdk.dir) was created for the build and is gitignored.
 - **2026-09-25 — The APP can now answer a quotation: Accept and Negotiate, same rules as the web.**
   Owner: "in app also this quotation and negotiation make same as web". Closes the gap flagged when
   the feature shipped web-only.
