@@ -6,6 +6,7 @@ import { Product } from '../models/Product.js';
 import { Organisation } from '../models/Organisation.js';
 import { AppError } from '../utils/AppError.js';
 import { isObjectIdLike } from '../utils/idOrSlug.js';
+import { clearChatNotice } from './chatNotifications.service.js';
 import {
   searchClause,
   isNameSearch,
@@ -194,5 +195,7 @@ export async function markRead({ user, id }) {
   const field = side === 'buyer' ? 'buyerLastReadAt' : 'exporterLastReadAt';
   const readAt = new Date();
   await Conversation.updateOne({ _id: conversation._id }, { $set: { [field]: readAt } });
+  // Reading the thread clears its notification-centre row too (B8).
+  clearChatNotice({ userId: user.userId, conversationId: conversation._id });
   return { readAt };
 }

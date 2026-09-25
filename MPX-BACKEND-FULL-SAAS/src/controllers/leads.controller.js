@@ -1,4 +1,5 @@
 import * as svc from '../services/leads.service.js';
+import { markReadByRef } from '../services/notification.service.js';
 
 /** Step 1d · enquiry routing. Thin: rules live in leads.service.js. */
 function clientMeta(req) {
@@ -18,7 +19,10 @@ export async function list(req, res) {
   res.json(await svc.listLeads({ actor: req.user, ...req.validated.query }));
 }
 export async function get(req, res) {
-  res.json({ lead: await svc.getLead({ id: req.validated.params.id }) });
+  const lead = await svc.getLead({ id: req.validated.params.id });
+  // Opening the request clears this staff member's own "assigned to you" notice.
+  markReadByRef({ userId: req.user.userId, refKey: `lead-assigned:${req.validated.params.id}` });
+  res.json({ lead });
 }
 export async function assign(req, res) {
   res.json({ lead: await svc.assignLead({ actor: req.user, id: req.validated.params.id, assigneeId: req.validated.body.assigneeId, meta: clientMeta(req) }) });

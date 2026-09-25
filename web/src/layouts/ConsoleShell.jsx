@@ -9,6 +9,7 @@ import { useAuth } from '../auth/AuthContext.jsx';
 import { useUnreadCount } from '../hooks/useUnreadCount.js';
 import { ChevronRightIcon, GridIcon, LogOutIcon } from '../components/ui/icons.jsx';
 import { Logo } from '../components/ui/Logo.jsx';
+import { NotificationBell } from '../components/notifications/NotificationBell.jsx';
 
 /**
  * THE dashboard shell — one design, used by the buyer, exporter AND admin
@@ -39,10 +40,29 @@ import { Logo } from '../components/ui/Logo.jsx';
  * Both non-interactive kinds MUST have a row in docs/UiWebNotes.md.
  */
 /**
+ * The count pill every nav badge draws. `strip` is the phone/tablet tab row
+ * (2026-09-25 fix: that row showed "Chat" with no count at all, because only the
+ * desktop sidebar rendered the badges). There it is a solid white pill so it
+ * reads on the red bar next to a short label.
+ */
+function CountPill({ n, variant = 'sidebar', srText }) {
+  const cls =
+    variant === 'strip'
+      ? 'ml-1.5 min-w-[1.25rem] rounded-full bg-white px-1.5 py-px text-center text-[11px] font-bold leading-4 text-primary-700'
+      : 'ml-auto rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white';
+  return (
+    <span className={cls}>
+      {n > 99 ? '99+' : n}
+      {srText && <span className="sr-only"> {srText}</span>}
+    </span>
+  );
+}
+
+/**
  * Step 1b · tickets with a new support reply the company hasn't opened yet.
  * Polled gently — a reply also arrives by email, this is the in-portal cue.
  */
-function SupportReplyBadge() {
+function SupportReplyBadge({ variant }) {
   const count = useQuery({
     queryKey: supportKeys.myUnread,
     queryFn: supportApi.myUnread,
@@ -51,12 +71,7 @@ function SupportReplyBadge() {
   });
   const n = count.data ?? 0;
   if (!count.isSuccess || n === 0) return null;
-  return (
-    <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white">
-      {n > 99 ? '99+' : n}
-      <span className="sr-only"> new support {n === 1 ? 'reply' : 'replies'}</span>
-    </span>
-  );
+  return <CountPill n={n} variant={variant} srText={`new support ${n === 1 ? 'reply' : 'replies'}`} />;
 }
 
 const NAV_BASE =
@@ -65,7 +80,7 @@ const NAV_BASE =
 /** Live saved-count badge (M3 Phase 5, owner's 🧱 call — recommended IN).
  *  Buyer-only by construction: only BUYER_NAV sets `savedBadge`, and the
  *  /saved endpoint is buyer-only anyway, so no other role ever fetches it. */
-function SavedCountBadge() {
+function SavedCountBadge({ variant }) {
   const count = useQuery({
     queryKey: savedKeys.list({ page: 1, pageSize: 1 }),
     queryFn: () => savedApi.list({ page: 1, pageSize: 1 }),
@@ -73,11 +88,7 @@ function SavedCountBadge() {
   });
   const total = count.data?.total ?? 0;
   if (!count.isSuccess || total === 0) return null;
-  return (
-    <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white">
-      {total > 99 ? '99+' : total}
-    </span>
-  );
+  return <CountPill n={total} variant={variant} srText="saved" />;
 }
 
 /**
@@ -85,19 +96,26 @@ function SavedCountBadge() {
  * message count, so this badge counts conversations with something unread and
  * a "3 new messages" number could only ever be invented.
  */
-function UnreadCountBadge() {
+function UnreadCountBadge({ variant }) {
   const count = useUnreadCount();
   if (count === 0) return null;
+  return <CountPill n={count} variant={variant} srText="unread conversations" />;
+}
+
+/** The badges a nav item asks for — one list, so the sidebar and the strip can't drift. */
+function NavBadges({ item, variant }) {
   return (
-    <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white">
-      {count > 99 ? '99+' : count}
-      <span className="sr-only"> unread conversations</span>
-    </span>
+    <>
+      {item.savedBadge && <SavedCountBadge variant={variant} />}
+      {item.unreadBadge && <UnreadCountBadge variant={variant} />}
+      {item.supportBadge && <SupportReplyBadge variant={variant} />}
+    </>
   );
 }
 
 function NavRows({ nav }) {
-  return nav.map(({ to, label, Icon, soon, disabled, dividerBefore, savedBadge, unreadBadge, supportBadge }) => {
+  return nav.map((item) => {
+    const { to, label, Icon, soon, disabled, dividerBefore } = item;
     const row = (
       <li key={label}>
         {soon || disabled ? (
@@ -127,9 +145,7 @@ function NavRows({ nav }) {
           >
             {Icon && <Icon className="h-5 w-5 shrink-0" />}
             {label}
-            {savedBadge && <SavedCountBadge />}
-            {unreadBadge && <UnreadCountBadge />}
-            {supportBadge && <SupportReplyBadge />}
+            <NavBadges item={item} />
           </NavLink>
         )}
       </li>
@@ -283,6 +299,8 @@ export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', child
             <Logo size="sm" variant="white" />
           </span>
           <div className="flex items-center gap-3">
+            {/* B8 · the notification bell — every signed-in role, every width. */}
+            <NotificationBell />
             {/* Explore — the way back out to the public catalogue from inside a
                 console. It fills the space the identity block left at lg+
                 (owner, 2026-08-17); below lg the bar already carries the
@@ -321,7 +339,9 @@ export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', child
         <div className="relative shrink-0 lg:hidden">
           <nav ref={stripRef} aria-label="Main" className="scrollbar-none overflow-x-auto px-2 pb-2">
           <ul className="flex gap-1">
-            {nav.map(({ to, label, soon, disabled }) => (
+            {nav.map((item) => {
+              const { to, label, soon, disabled } = item;
+              return (
               <li key={label} className="shrink-0">
                 {soon || disabled ? (
                   <span
@@ -346,10 +366,12 @@ export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', child
                     }
                   >
                     {label}
+                    <NavBadges item={item} variant="strip" />
                   </NavLink>
                 )}
               </li>
-            ))}
+              );
+            })}
           </ul>
           </nav>
           <span

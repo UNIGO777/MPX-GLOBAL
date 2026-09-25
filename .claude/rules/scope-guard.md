@@ -73,8 +73,13 @@ RED-ALERT **before** writing, editing, enabling, scaffolding, or stubbing anythi
   `PremiumApplication`) — **do not touch, extend, wire, or delete.** They are placeholders.
 - ✅ **Ticket/query handling, internal notes, enquiry routing, per-employee dashboard/reports
   (Bucket A2)** — approved by the owner and **BUILT 2026-09-24** (roadmap Step 1). Do not alert on them.
-- ⏸ **In-app notifications (roadmap Step 2, Module 8)** — owner put it **on hold** 2026-09-24
-  (`docs/Pending-Work.md` B8). Still guarded: alert before building any of it.
+- ✅ **In-app notifications — WEB centre (roadmap Step 2, Module 8)** — the 2026-09-24 hold was
+  overridden by the owner on **2026-09-25** after a red alert ("Yes, build it for web"), and it is
+  **BUILT**: bell + panel + page for buyers, exporters and staff, four event groups (company
+  verification · company support + requests · company enquiries + chat · staff work assigned).
+  🔴 **Still guarded — alert first:** the in-app centre in the **mobile app** (owner: "no app touch"),
+  any NEW event type beyond those four groups, admin per-type on/off, delivery tracking/retry,
+  WhatsApp, and any 9th email event.
 - Building month-1 in-scope work (Modules 2, 3, 5, shared employee-ops, auth) needs **no** alert
   — that's the confirmed first-draft scope. Only the triggers above require the alert. This
   includes **`modules-in-detailed/m4` (Enquiry & Chat)** — see the numbering table above.

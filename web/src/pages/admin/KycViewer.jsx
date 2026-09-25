@@ -712,9 +712,9 @@ export function KycViewer() {
           placeholder="Say exactly what was wrong and what to send instead."
           className={inputClasses(false, 'mt-2 h-auto py-2')}
         />
-        <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
+        <div className="mt-1.5 flex items-start justify-between gap-3 text-xs text-muted">
           <span>This is shown to the applicant — explain what they should fix.</span>
-          <span>{reason.trim().length} / 500</span>
+          <span className="shrink-0 whitespace-nowrap tabular-nums">{reason.trim().length} / 500</span>
         </div>
       </Modal>
 
@@ -764,9 +764,9 @@ export function KycViewer() {
           placeholder="e.g. The GST certificate on file is blurry — please upload a readable copy."
           className={inputClasses(false, 'mt-2 h-auto py-2')}
         />
-        <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
+        <div className="mt-1.5 flex items-start justify-between gap-3 text-xs text-muted">
           <span>This note is shown to the company on its verification page.</span>
-          <span>{reason.trim().length} / 500</span>
+          <span className="shrink-0 whitespace-nowrap tabular-nums">{reason.trim().length} / 500</span>
         </div>
       </Modal>
 
@@ -808,9 +808,9 @@ export function KycViewer() {
           placeholder="Why is this being deleted? e.g. Aadhaar uploaded in the PAN slot — not accepted."
           className={inputClasses(false, 'mt-2 h-auto py-2')}
         />
-        <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
+        <div className="mt-1.5 flex items-start justify-between gap-3 text-xs text-muted">
           <span>Kept permanently in the audit log — the record outlives the file.</span>
-          <span>{reason.trim().length} / 500</span>
+          <span className="shrink-0 whitespace-nowrap tabular-nums">{reason.trim().length} / 500</span>
         </div>
       </Modal>
 
@@ -846,9 +846,9 @@ export function KycViewer() {
           placeholder="Say what changed — the company reads this."
           className={inputClasses(false, 'mt-2 h-auto py-2')}
         />
-        <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
+        <div className="mt-1.5 flex items-start justify-between gap-3 text-xs text-muted">
           <span>Shown to the company, never public. Recorded in the audit log.</span>
-          <span>{reason.trim().length} / 500</span>
+          <span className="shrink-0 whitespace-nowrap tabular-nums">{reason.trim().length} / 500</span>
         </div>
       </Modal>
     </AdminLayout>

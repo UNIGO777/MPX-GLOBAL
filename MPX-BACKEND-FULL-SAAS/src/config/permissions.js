@@ -75,7 +75,12 @@ export const PERMISSIONS = Object.freeze({
   // so an action grant without read does nothing. Reaches only tickets — never
   // KYC documents, conversations or anyone's access.
   // View the queue, tickets, the ticket log; add internal notes on a ticket.
+  // Open the support area. On its own: ONLY the tickets assigned to you
+  // (owner, 2026-09-25). The whole queue needs SUPPORT_VIEW_ALL.
   SUPPORT_READ: 'support:read',
+  // See EVERY ticket — assigned or unassigned — and who each is assigned to
+  // (owner, 2026-09-25). Without it, staff see only their own tickets.
+  SUPPORT_VIEW_ALL: 'support:view_all',
   // Reply to the company as "MPX Global Support" (a first reply takes an
   // unassigned ticket). Only holders appear in the "Assigned to" list.
   SUPPORT_REPLY: 'support:reply',
@@ -102,6 +107,20 @@ export const PERMISSIONS = Object.freeze({
  * or an employee granted `reports:team`. ONE rule, used everywhere team scope
  * is decided, so the report and the log can never disagree.
  */
+/**
+ * Which tickets a staff member may see at all (owner, 2026-09-25). A superadmin
+ * or a `support:view_all` holder sees the whole queue; everyone else ONLY the
+ * tickets assigned to them. ONE rule, applied to every staff ticket path — the
+ * list, opening one, its timeline, replying, status, assigning, notes and the
+ * counts — so no path can show more than the list does.
+ */
+export function canSeeAllTickets(actor) {
+  return actor?.role === 'superadmin' || (actor?.permissions ?? []).includes(PERMISSIONS.SUPPORT_VIEW_ALL);
+}
+export function ticketScope(actor) {
+  return canSeeAllTickets(actor) ? {} : { assignedTo: actor?.userId ?? null };
+}
+
 export function hasTeamScope(actor) {
   return actor?.role === 'superadmin' || (actor?.permissions ?? []).includes(PERMISSIONS.REPORTS_TEAM);
 }

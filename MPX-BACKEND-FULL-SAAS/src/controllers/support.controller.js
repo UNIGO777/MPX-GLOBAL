@@ -1,4 +1,5 @@
 import * as svc from '../services/support.service.js';
+import { markReadByRef } from '../services/notification.service.js';
 
 /**
  * Step 1b · support tickets. Thin: zod validates at the route, the rules live in
@@ -38,7 +39,12 @@ export async function list(req, res) {
   res.json(await svc.listTickets({ actor: req.user, ...req.validated.query }));
 }
 export async function get(req, res) {
-  res.json(await svc.getTicket({ id: req.validated.params.id }));
+  const out = await svc.getTicket({ id: req.validated.params.id, actor: req.user });
+  // Opening the ticket clears this staff member's own notices about it —
+  // "new reply" and "assigned to you" alike.
+  markReadByRef({ userId: req.user.userId, refKey: `staff-ticket:${req.validated.params.id}` });
+  markReadByRef({ userId: req.user.userId, refKey: `staff-ticket-assigned:${req.validated.params.id}` });
+  res.json(out);
 }
 export async function reply(req, res) {
   res.status(201).json(
@@ -55,10 +61,10 @@ export async function assignees(_req, res) {
   res.json({ staff: await svc.assignableStaff() });
 }
 export async function timeline(req, res) {
-  res.json({ events: await svc.ticketTimeline({ id: req.validated.params.id }) });
+  res.json({ events: await svc.ticketTimeline({ id: req.validated.params.id, actor: req.user }) });
 }
-export async function overview(_req, res) {
-  res.json(await svc.supportOverview());
+export async function overview(req, res) {
+  res.json(await svc.supportOverview({ actor: req.user }));
 }
 export async function log(req, res) {
   res.json(await svc.ticketLog({ actor: req.user, ...req.validated.query }));

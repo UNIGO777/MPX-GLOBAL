@@ -4,6 +4,7 @@ import { AppError } from '../utils/AppError.js';
 import { kycDocsFor, KYC_DOC_TYPE_REQUESTABLE } from '../models/enums.js';
 import { recordAudit } from './audit.service.js';
 import { notifyVerificationResult } from './emailNotifications.service.js';
+import { companyUserIds, notify } from './notification.service.js';
 import { deleteKycFile } from './kyc.storage.service.js';
 
 // Platform-staff operation: an employee (or the superadmin) reviews organisations
@@ -87,8 +88,31 @@ async function reviewOrg({ orgId, sideFlag, toStatus, reason, actor, action, met
     approved: toStatus === 'verified',
     reason,
   });
+  notifyCompany({
+    orgId: org._id,
+    sideFlag,
+    type: toStatus === 'verified' ? 'verification.approved' : 'verification.rejected',
+    title: toStatus === 'verified' ? 'Your company is verified' : 'Your verification needs changes',
+    body:
+      toStatus === 'verified'
+        ? 'The verified tick now shows on your company.'
+        : 'Our team could not verify your company yet. Your verification page says what to fix.',
+  });
 
   return org;
+}
+
+/**
+ * B8 in-app notice to the company's account on the reviewed side. Fire-and-
+ * forget AFTER the decision and its audit are committed — never awaited, never
+ * throws. Names what happened and where to look; the reason text stays on the
+ * company's own verification page, not in the notification.
+ */
+function notifyCompany({ orgId, sideFlag, type, title, body, page = 'verification' }) {
+  const role = sideFlag === 'exporterSide' ? 'exporter' : 'buyer';
+  companyUserIds(orgId, role)
+    .then((ids) => notify(ids, { type, title, body, link: `/${role}/${page}`, orgId }))
+    .catch(() => {});
 }
 
 // Phase 1: approval ONLY flips kycStatus (status/tick). It does NOT gate buyer
@@ -159,6 +183,13 @@ export async function requestDocuments({ orgId, sideFlag, docTypes, note, actor,
     meta,
   });
 
+  notifyCompany({
+    orgId: org._id,
+    sideFlag,
+    type: 'verification.documents_requested',
+    title: 'More documents requested',
+    body: 'Our team asked for more documents to verify your company.',
+  });
   return { docTypes, note };
 }
 
@@ -303,6 +334,14 @@ export async function approveChange({ orgId, sideFlag, actor, meta }) {
     meta,
   });
 
+  notifyCompany({
+    orgId: org._id,
+    sideFlag,
+    type: 'profile_change.approved',
+    title: 'Your company details were updated',
+    body: 'Our team approved the change you asked for.',
+    page: 'company',
+  });
   return org;
 }
 
@@ -331,6 +370,14 @@ export async function rejectChange({ orgId, sideFlag, reason, actor, meta }) {
     meta,
   });
 
+  notifyCompany({
+    orgId: org._id,
+    sideFlag,
+    type: 'profile_change.rejected',
+    title: 'Your requested change was not approved',
+    body: 'Your company profile explains why and what to send.',
+    page: 'company',
+  });
   return org;
 }
 
@@ -397,5 +444,12 @@ export async function revokeVerification({ orgId, sideFlag, reason, actor, meta 
     meta,
   });
 
+  notifyCompany({
+    orgId: org._id,
+    sideFlag,
+    type: 'verification.revoked',
+    title: 'Your verified tick was removed',
+    body: 'Your verification page explains why and what to do next.',
+  });
   return org;
 }

@@ -12,7 +12,7 @@ import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { CountrySelect } from '../../components/ui/CountrySelect.jsx';
 import { CreatableCombobox } from '../../components/ui/CreatableCombobox.jsx';
-import { Drawer } from '../../components/ui/Drawer.jsx';
+import { Drawer, DrawerActions } from '../../components/ui/Drawer.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Field, inputClasses } from '../../components/ui/Field.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
@@ -192,10 +192,7 @@ function RequestDrawer({ open, onClose, saving, error, onSubmit }) {
       title="Find me a supplier"
       subtitle="Tell us what you need. Our team finds exporters who make it and connects you in chat."
       footer={
-        <>
-          <span className="mr-auto self-center text-[12.5px] font-medium text-muted" aria-live="polite">
-            {missing ?? 'Ready to send'}
-          </span>
+        <DrawerActions hint={missing ?? 'Ready to send'}>
           <Button variant="secondary" onClick={close} disabled={saving}>Cancel</Button>
           <Button
             className="whitespace-nowrap"
@@ -213,7 +210,7 @@ function RequestDrawer({ open, onClose, saving, error, onSubmit }) {
           >
             Send request
           </Button>
-        </>
+        </DrawerActions>
       }
     >
       <div className="space-y-7">

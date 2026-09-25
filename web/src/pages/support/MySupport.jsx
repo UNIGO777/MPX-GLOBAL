@@ -17,7 +17,7 @@ import { TOPIC_META, TopicIcon } from '../../components/support/TopicIcon.jsx';
 import { useSupportContact } from '../../hooks/useSupportContact.js';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
-import { Drawer } from '../../components/ui/Drawer.jsx';
+import { Drawer, DrawerActions } from '../../components/ui/Drawer.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { inputClasses } from '../../components/ui/Field.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
@@ -252,15 +252,12 @@ function NewTicketDrawer({ open, onClose, followUp, saving, error, onSubmit }) {
       title="New support ticket"
       subtitle="A person on our team reads it. We reply here and email you."
       footer={
-        <>
-          <span className="mr-auto self-center text-[12.5px] font-medium text-muted" aria-live="polite">
-            {missing ? `${missing} to send` : 'Ready to send'}
-          </span>
+        <DrawerActions hint={missing ? `${missing} to send` : 'Ready to send'}>
           <Button variant="secondary" onClick={close} disabled={saving}>Cancel</Button>
           <Button loading={saving} disabled={Boolean(missing)} onClick={() => onSubmit({ subject: subject.trim(), category, body: body.trim(), file })}>
             Send ticket
           </Button>
-        </>
+        </DrawerActions>
       }
     >
       <div className="space-y-7">

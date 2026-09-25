@@ -181,7 +181,17 @@ Do not start the screens without surfacing this alert.
   or opt-in. *(Mandatory locks a superadmin out permanently if they lose both the authenticator
   and the backup codes — opt-in until the owner has enrolled is the safer first step.)*
 
-## D5 · Notifications (all types, incl. WhatsApp)  ⏸ ON HOLD — **except FCM push + EMAIL (carved out)**
+## D5 · Notifications (all types, incl. WhatsApp)  ⏸ ON HOLD — **except FCM push + EMAIL + the WEB in-app centre (carved out)**
+
+> ✅ **2026-09-25 — WEB in-app notification centre BUILT** (owner overrode the B8 hold after a red
+> alert: "Yes, build it for web"; "no app touch"). Events, all four groups the owner picked:
+> company verification (verified / needs changes / documents requested / revoked / profile change
+> approved or rejected) · company support + requests (staff reply, resolved, re-opened, auto-closed;
+> supplier request in progress / connected / closed) · company enquiries + chat (new enquiry, new
+> messages — grouped per thread, never the text — platform warning) · staff work assigned (ticket or
+> request assigned to you, company replied on your ticket, new documents to review for your side).
+> Still ON HOLD: the app's in-app centre, admin per-type on/off, delivery tracking/retry, WhatsApp,
+> and any other event type.
 > ✅ **2026-07-31 — owner explicitly approved FCM push into month 1**, built inside M4. Schedule
 > change only (Module 8 is already Phase 1), **not** a scope change. Approved slice: `firebase-admin`,
 > `DeviceToken` register/unregister, dead-token cleanup, and sends on **two M4 events only** —

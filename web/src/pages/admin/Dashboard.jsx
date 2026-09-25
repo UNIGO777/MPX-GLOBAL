@@ -16,7 +16,6 @@ import { apiError, formatListTime } from '../../lib/format.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { CompanyAvatar } from '../../components/chat/CompanyAvatar.jsx';
 import { FreezeChip } from '../../components/chat/FreezeChip.jsx';
-import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { SkeletonRows } from '../../components/ui/Skeleton.jsx';
 import { StatusChip } from '../../components/ui/StatusChip.jsx';
@@ -33,12 +32,12 @@ import {
   ClockIcon,
   HandshakeIcon,
   HelpIcon,
-  HomeIcon,
   ListIcon,
   RefreshIcon,
   UsersIcon,
 } from '../../components/ui/icons.jsx';
 import { cp } from '../../lib/consolePath.js';
+import { Alert } from '../../components/ui/Alert.jsx';
 
 /**
  * M5 screen 12 — the dashboard as an OPERATIONS CONSOLE (owner-directed
@@ -307,13 +306,25 @@ function LiveDot() {
 
 /** A row of clickable counts — each opens its page already filtered. `warn`
  * tints a non-zero count (something needs someone). */
+/**
+ * A panel's row of counts. Sized to the counts it actually has (2026-09-25):
+ * a fixed four columns left a grey hole whenever a permission removed one
+ * (e.g. "Unassigned" for someone who only sees their own tickets). From sm the
+ * row divides evenly by the count; on phones (two per row) an odd last cell
+ * spans the row.
+ */
 function CountStrip({ items, last = false }) {
+  const odd = items.length % 2 === 1;
   return (
-    <div className={`grid grid-cols-2 gap-px bg-surface-border sm:grid-cols-4 ${last ? '' : 'border-b border-surface-border'}`}>
-      {items.map((c) => {
+    <div
+      className={`grid grid-cols-2 gap-px bg-surface-border sm:[grid-template-columns:repeat(var(--count-cols),minmax(0,1fr))] ${last ? '' : 'border-b border-surface-border'}`}
+      style={{ '--count-cols': Math.max(items.length, 1) }}
+    >
+      {items.map((c, i) => {
         const hot = c.warn && c.value > 0;
+        const spanRow = odd && i === items.length - 1 ? 'col-span-2 sm:col-span-1' : '';
         return (
-          <Link key={c.label} to={c.to} className="group bg-white px-5 py-3 transition-colors hover:bg-ink-50">
+          <Link key={c.label} to={c.to} className={`group bg-white px-5 py-3 transition-colors hover:bg-ink-50 ${spanRow}`}>
             <p className={`text-xl font-bold tabular-nums ${hot ? 'text-warning-800' : c.value ? 'text-ink-900' : 'text-ink-400'}`}>{c.value ?? 0}</p>
             <p className="text-[12px] font-medium text-muted group-hover:text-primary-700">{c.label}</p>
           </Link>
@@ -436,7 +447,17 @@ export function Dashboard() {
     (tiles.pendingExporterVerifications?.count ?? 0) +
     pendingChangeReviews;
   const hasVerifyTiles = Boolean(tiles.pendingBuyerVerifications || tiles.pendingExporterVerifications);
-  const nothingAtAll = ACTIONS.length === 0 && !turnaround && Object.keys(totals).length === 0;
+  // 🔴 "No access" means NO PERMISSIONS AT ALL — not "none of the platform
+  // numbers apply to you". It used to be computed from the platform tiles
+  // alone, so an employee with only support or supplier-request access was told
+  // they had no access and their own Support / Requests / My work panels were
+  // hidden (owner, 2026-09-25).
+  //
+  // And it no longer REPLACES the dashboard: every employee always gets their
+  // own "My work" panel (owner, 2026-09-25 — "even if no permission there
+  // should be my work"); "no access" is a notice above it.
+  const heldPerms = me?.permissions ?? [];
+  const nothingAtAll = me?.role !== 'superadmin' && heldPerms.length === 0;
 
   const firstName = (me?.name ?? '').trim().split(/\s+/)[0] || 'there';
   const dateLine = new Intl.DateTimeFormat(config.locale.dates, {
@@ -644,7 +665,9 @@ export function Dashboard() {
                   { label: 'Unassigned', value: support.data.counts.unassigned, warn: true, to: cp('/admin/support?view=unassigned') },
                   { label: 'Waiting on company', value: support.data.counts.waiting, to: cp('/admin/support?view=waiting') },
                   { label: 'Resolved · 7 days', value: support.data.counts.resolved7d, to: cp('/admin/support?view=resolved') },
-                ]}
+                  // Without "See all tickets" these are the caller's OWN tickets, and
+                  // the unassigned queue isn't theirs to see (owner, 2026-09-25).
+                ].filter((i) => support.data.scope !== 'mine' || i.label !== 'Unassigned')}
               />
               {support.data.openTickets.length === 0 ? (
                 <p className="px-5 py-4 text-sm text-muted">No open tickets — all caught up.</p>
@@ -771,13 +794,14 @@ export function Dashboard() {
         </div>
       </header>
 
-      {nothingAtAll ? (
-        <EmptyState icon={HomeIcon} title="You don't have any access yet">
-          Your account has no permissions, so there is nothing to work on here. Ask a super admin to
-          grant you access on the Staff page — it takes effect immediately, no need to sign in again.
-        </EmptyState>
-      ) : (
+      {(
         <div className="grid gap-5">
+          {nothingAtAll && (
+            <Alert tone="info" title="You don't have any access yet">
+              Ask a super admin to grant you access on the Staff page — it takes effect immediately, no
+              need to sign in again. Anything assigned to you will still show in My work below.
+            </Alert>
+          )}
           {!isSuper && workPanels}
 
           {/* ── The stat bar — one connected panel, hairline-divided ──────── */}

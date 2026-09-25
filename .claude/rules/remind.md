@@ -148,6 +148,9 @@ while any close-time security commitment remains unraised.
   `.strict()`, so adding a field there without a server change is refused, not ignored. Detail:
   `docs/Note.md` **D8**.
 - **D5** — Notifications (email, **WhatsApp**, in-app centre, admin controls, non-M4 events).
+  ✅ **CARVE-OUT 2026-09-25 — the WEB in-app notification centre is BUILT** (owner override of B8,
+  red alert raised; web only, four event groups — see scope-guard). Do not re-alert on it. The APP
+  centre, new event types, admin controls, tracking/retry and WhatsApp remain guarded.
   ✅ **CARVE-OUT 2026-07-31 — FCM push is APPROVED into month 1** (owner-confirmed), built in M4:
   `firebase-admin` + `DeviceToken` + dead-token cleanup + **two events only** (new enquiry → seller,
   new message → counterparty). **Do not re-alert on that slice.** Everything else in D5 still is.

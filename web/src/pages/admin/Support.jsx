@@ -72,6 +72,11 @@ const VIEWS = {
 };
 
 export function Support() {
+  const { user } = useAuth();
+  // Without "See all tickets" the server returns ONLY the caller's own tickets
+  // (owner, 2026-09-25); the screen drops the controls that only make sense for
+  // the whole queue — the Unassigned card and the Assignee filter.
+  const seeAll = can(user, 'support:view_all');
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') === 'log' ? 'log' : 'queue';
   // Queue filters live here so a stat card can set them. `?view=` (from the
@@ -98,7 +103,7 @@ export function Support() {
     { key: 'unassigned', label: 'Unassigned', hint: 'Nobody has picked it up', value: c?.unassigned, Icon: UserIcon, tone: 'text-warning-800 bg-warning-50', go: { status: 'active', assignee: 'unassigned' } },
     { key: 'waiting', label: 'Waiting on company', hint: `Closes itself after ${overview.data?.autoCloseDays ?? LEGACY_AUTO_CLOSE_DAYS} days`, value: c?.waiting, Icon: ClockIcon, tone: 'text-sky-700 bg-sky-50', go: { status: 'waiting' } },
     { key: 'resolved', label: 'Resolved', hint: 'In the last 7 days', value: c?.resolved7d, Icon: CheckCircleIcon, tone: 'text-success-700 bg-success-50', go: { status: 'resolved' } },
-  ];
+  ].filter((k) => seeAll || k.key !== 'unassigned');
   const activeCard = tab === 'queue'
     ? cards.find((k) => k.go.status === status && (k.go.assignee ?? '') === assignee)?.key
     : null;
@@ -109,7 +114,9 @@ export function Support() {
         <div className="min-w-0">
           <h1 className="text-xl font-bold leading-tight text-ink-900 sm:text-2xl">Support</h1>
           <p className="mt-1 hidden text-sm text-muted sm:block">
-            Tickets from buyers and exporters. Replies go out as MPX Global Support.
+            {seeAll
+              ? 'Tickets from buyers and exporters. Replies go out as MPX Global Support.'
+              : 'The tickets assigned to you. Replies go out as MPX Global Support.'}
           </p>
         </div>
         <div role="tablist" aria-label="Support" className="inline-flex self-start rounded-full border border-ink-200 bg-white p-1 shadow-sm sm:self-auto">
@@ -137,16 +144,18 @@ export function Support() {
         </div>
       </header>
 
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {cards.map((k) => {
+      <div className={`mb-5 grid grid-cols-2 gap-3 ${cards.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+        {cards.map((k, i) => {
           const on = activeCard === k.key;
+          // Three cards on a phone's two-per-row grid: the last one takes the row.
+          const spanRow = cards.length % 2 === 1 && i === cards.length - 1 ? 'col-span-2 lg:col-span-1' : '';
           return (
             <button
               key={k.key}
               type="button"
               onClick={() => openQueue(k.go)}
               aria-pressed={on}
-              className={`group flex items-center gap-3 rounded-2xl border bg-white p-3.5 text-left shadow-card transition-all sm:p-4 ${
+              className={`group flex items-center gap-3 rounded-2xl border bg-white p-3.5 text-left shadow-card transition-all sm:p-4 ${spanRow} ${
                 on ? 'border-primary-600 ring-1 ring-primary-600' : 'border-surface-border hover:-translate-y-px hover:border-primary-300 motion-reduce:transform-none'
               }`}
             >
@@ -166,7 +175,7 @@ export function Support() {
       </div>
 
       {tab === 'queue' ? (
-        <Queue status={status} setStatus={setStatus} assignee={assignee} setAssignee={setAssignee} />
+        <Queue status={status} setStatus={setStatus} assignee={seeAll ? assignee : ''} setAssignee={setAssignee} seeAll={seeAll} />
       ) : (
         <TicketLog />
       )}
@@ -174,7 +183,7 @@ export function Support() {
   );
 }
 
-function Queue({ status, setStatus, assignee, setAssignee }) {
+function Queue({ status, setStatus, assignee, setAssignee, seeAll }) {
   const navigate = useNavigate();
   const [draft, setDraft] = useState('');
   const [q, setQ] = useState('');
@@ -188,7 +197,7 @@ function Queue({ status, setStatus, assignee, setAssignee }) {
     return () => clearTimeout(t);
   }, [draft]);
 
-  const staff = useQuery({ queryKey: supportKeys.assignees, queryFn: supportApi.assignees });
+  const staff = useQuery({ queryKey: supportKeys.assignees, queryFn: supportApi.assignees, enabled: seeAll });
   const query = {
     ...(status ? { status } : {}),
     ...(category ? { category } : {}),
@@ -218,7 +227,7 @@ function Queue({ status, setStatus, assignee, setAssignee }) {
         </div>
         <div className="scrollbar-none -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5">
           <FilterChip label="Status" value={status} options={STATUS_OPTIONS} onChange={reset(setStatus)} />
-          <FilterChip label="Assignee" value={assignee} options={assigneeOptions} onChange={reset(setAssignee)} />
+          {seeAll && <FilterChip label="Assignee" value={assignee} options={assigneeOptions} onChange={reset(setAssignee)} />}
           <FilterChip label="Topic" value={category} options={[{ value: '', label: 'Any' }, ...TICKET_CATEGORIES]} onChange={reset(setCategory)} />
           <FilterChip label="From" value={side} options={SIDE_OPTIONS} onChange={reset(setSide)} />
         </div>

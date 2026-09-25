@@ -5,6 +5,8 @@ import { ERROR_CODES } from '../utils/errorCodes.js';
 import { recordAudit } from './audit.service.js';
 import { uploadKycDocument, signedKycUrl } from './kyc.storage.service.js';
 import { assertControlsCompanyProfile } from './profileControl.service.js';
+import { PERMISSIONS } from '../config/permissions.js';
+import { markReadByRef, notify, staffUserIds } from './notification.service.js';
 
 // Hard cap on stored KYC documents per organisation (owner decision 2026-07-30):
 // without it a hostile account can push unlimited 10-MB files to Cloudinary
@@ -170,6 +172,22 @@ export async function submitKycDocument({ user, entityType, docType, buffer, met
     meta,
   });
 
+  // B8 · tell the reviewers for this side (and super admins) there is
+  // something to look at. One unread row per company per reviewer — a company
+  // uploading four files is one notice, not four. Fire-and-forget.
+  const reviewerPerm = user.role === 'exporter' ? PERMISSIONS.EXPORTER_VERIFY : PERMISSIONS.BUYER_APPROVE;
+  staffUserIds([reviewerPerm])
+    .then((ids) =>
+      notify(ids, {
+        type: 'verification.submitted',
+        title: `${org.name} sent documents for review`,
+        body: user.role === 'exporter' ? 'Exporter verification' : 'Buyer verification',
+        link: `/admin/verification/${org._id}/kyc`,
+        refKey: `kyc-review:${org._id}`,
+      }),
+    )
+    .catch(() => {});
+
   return { kycStatus: after.kycStatus, entityType: resolved, docType };
 }
 
@@ -216,6 +234,8 @@ export async function getMyVerification({ user }) {
 export async function getOrgKycDocuments({ orgId, actor, meta }) {
   const org = await Organisation.findOne({ _id: orgId }).select('+kycDocuments');
   if (!org) throw AppError.notFound('org not found', 'Not found.');
+  // Opening the company's documents clears this reviewer's own "sent documents" notice.
+  if (actor?.userId) markReadByRef({ userId: actor.userId, refKey: `kyc-review:${org._id}` });
 
   const documents = (org.kycDocuments ?? []).map((d) => {
     const { url, expiresAt } = signedKycUrl({ storageKey: d.storageKey, format: d.format });

@@ -495,9 +495,9 @@ export function VerificationQueue() {
           placeholder="Say exactly what was wrong and what to send instead."
           className={inputClasses(false, 'mt-2 h-auto py-2')}
         />
-        <div className="mt-1.5 flex items-center justify-between text-xs text-muted">
+        <div className="mt-1.5 flex items-start justify-between gap-3 text-xs text-muted">
           <span>This is shown to the applicant — explain what they should fix.</span>
-          <span>
+          <span className="shrink-0 whitespace-nowrap tabular-nums">
             {reason.trim().length} / {REASON_MAX}
           </span>
         </div>

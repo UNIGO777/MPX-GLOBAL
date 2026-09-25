@@ -68,7 +68,7 @@ beforeAll(async () => {
   buyer = await makeUser('buyer', { orgId: buyerOrg._id });
   otherBuyer = await makeUser('buyer', { orgId: otherOrg._id });
   router = await makeUser('employee', { permissions: ['lead:manage'] });
-  plain = await makeUser('employee', { permissions: ['support:read'] });
+  plain = await makeUser('employee', { permissions: ['support:read', 'support:view_all'] });
   superadmin = await makeUser('superadmin');
 });
 
