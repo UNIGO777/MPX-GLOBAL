@@ -175,6 +175,34 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-25 — `Logo` now measures each artwork separately.** The navy-and-red `brand-logo.png`
+  was replaced (998×407, ratio 2.452) while `brand-logo-white.png` is still the older 1200×597
+  (2.010), and `Logo` had ONE shared `ASPECT` constant. It reserved a box ~20% too wide for the red
+  mark; `object-contain` letterboxed it silently — no distortion, just a gap that reads as bad
+  spacing. 🔴 Re-measure here whenever a PNG is swapped: `object-contain` hides a wrong ratio
+  instead of breaking, which is why it goes unnoticed. The quotation PDF is unaffected — it uses
+  pdfmake's `fit`, which bounds both edges and keeps whatever ratio the file has.
+- **2026-09-25 — PRODUCTION: every email OTP failing with SMTP `554`, and the logs could not say
+  why.** Owner reported `/auth/resend-otp` 500s on the live server.
+  - **Diagnosis:** `code: EMESSAGE, responseCode: 554` — the server connected and AUTHENTICATED
+    (no `EAUTH`), then refused the message. It failed for `gmail.com` and `pcba.com.au` alike, so it
+    is not recipient-specific: the provider is refusing the SENDER. Almost always `SMTP_FROM` not
+    being an address that `SMTP_USER` may send as (unverified sender, unauthenticated domain, or a
+    trial/sandbox account limited to verified recipients). Outside the code — it is a mail-provider
+    configuration.
+  - 🔴 **The log was missing the one field that would have answered it.** The SMTP reply text
+    ("Sender address rejected", "domain not verified") was being thrown away with the error. Now
+    logged, along with the failing `command` (MAIL FROM / RCPT TO / DATA) — **with every email
+    address replaced by `<address>`**, because a 554 reply routinely quotes the envelope and that is
+    a real person's address (security-baseline #4). Redaction verified against three real reply
+    shapes, not assumed.
+  - 🔴 **`verifyEmailTransport()` existed, said "used by the startup self-check", and was called by
+    NOTHING.** So a server with broken SMTP booted quietly while the boot log reported email as
+    configured — "configured" and "working" are different facts and only the first was checked. Now
+    wired into `server.js`, fire-and-forget so a slow mail host cannot hold up the listener.
+    ⚠️ Stated at the call site: `verify()` proves host, port, TLS and credentials — it CANNOT catch
+    this particular failure, which happens later at message time. The send path's `response` is the
+    diagnosis for that.
 - **2026-09-25 — Bank details for quotations now have a screen.** Owner: "in the quotation there is
   no option of bank account details filling". The backend shipped 2026-09-24 and nothing could reach
   it, so the picker in the send step could only ever be empty — logged as Pending in

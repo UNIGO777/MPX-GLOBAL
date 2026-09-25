@@ -50,6 +50,28 @@ function domainOf(address) {
 }
 
 /**
+ * The SMTP server's own reply, with every email address removed.
+ *
+ * 🔴 Added 2026-09-25 after a production incident that could not be diagnosed
+ * from the logs. A `554` was failing every OTP email; the code and responseCode
+ * alone say "the server rejected the message" and nothing about WHY — the
+ * reason ("Sender address rejected", "not owned by user", "domain not
+ * verified") lives in this text, and we were throwing it away.
+ *
+ * Addresses are stripped because the reply routinely quotes the envelope, which
+ * carries the recipient — a real person's address (security-baseline #4). What
+ * is left is the provider's diagnosis, which is exactly what a debugger needs
+ * and nobody's personal data. Truncated, because some servers reply with an
+ * essay and a log line is not the place for it.
+ */
+const EMAIL_IN_TEXT = /[^\s<>@"]+@[^\s<>@",;]+/g;
+
+function safeSmtpResponse(response) {
+  if (typeof response !== 'string' || !response) return null;
+  return response.replace(EMAIL_IN_TEXT, '<address>').slice(0, 300);
+}
+
+/**
  * Sends one transactional email.
  *
  * @param {{ to: string, subject: string, text: string, html?: string }} message
@@ -73,6 +95,10 @@ export async function sendEmail({ to, subject, text, html }) {
       {
         code: cause?.code ?? null,
         responseCode: cause?.responseCode ?? null,
+        // The SMTP command that failed (MAIL FROM / RCPT TO / DATA) — it alone
+        // separates "sender not allowed" from "recipient refused".
+        command: cause?.command ?? null,
+        response: safeSmtpResponse(cause?.response),
         recipientDomain: domainOf(to),
       },
       'smtp: send failed',
@@ -82,14 +108,33 @@ export async function sendEmail({ to, subject, text, html }) {
   }
 }
 
-/** Verifies credentials without sending. Used by the startup self-check. */
+/**
+ * Connects and authenticates WITHOUT sending, at boot.
+ *
+ * 🔴 It was written for "the startup self-check" and then never called by
+ * anything — found on 2026-09-25, while a production SMTP failure was breaking
+ * every OTP email and the boot log happily reported email as configured.
+ * "Configured" and "working" are different facts and the log only had the first.
+ *
+ * ⚠️ Honest about its limit: `verify()` proves host, port, TLS and credentials.
+ * It CANNOT catch a rejection that happens later, at message time — a provider
+ * refusing the sender address (554) passes this check and still fails on every
+ * send. For that, the send path's own `response` field is the diagnosis.
+ */
 export async function verifyEmailTransport() {
   if (!isEmailConfigured()) return false;
   try {
     await getTransporter().verify();
     return true;
   } catch (cause) {
-    logger.error({ code: cause?.code ?? null }, 'smtp: transport verification failed');
+    logger.error(
+      {
+        code: cause?.code ?? null,
+        responseCode: cause?.responseCode ?? null,
+        response: safeSmtpResponse(cause?.response),
+      },
+      'smtp: transport verification failed — email OTP and notifications will not send',
+    );
     return false;
   }
 }
