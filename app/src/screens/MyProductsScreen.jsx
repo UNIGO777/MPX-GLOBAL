@@ -426,6 +426,9 @@ export function MyProductsScreen({ navigation }) {
                         Removed by the MPX team{formatDate(sheetProduct.takedown.at)}
                         {sheetProduct.takedown.reason ? ` — "${sheetProduct.takedown.reason}"` : ''}. It can&apos;t
                         be published or hidden until it&apos;s restored.
+                        {sheetProduct.takedown.unblockRequest?.status === 'pending'
+                          ? ' You have asked for it to be unblocked.'
+                          : ' Open Edit to ask for it to be unblocked.'}
                       </Text>
                     </View>
                   ) : null}
@@ -545,6 +548,11 @@ function ProductRow({ product, categoryName, onPress, onMore }) {
           {product.takedown ? (
             <View style={[styles.chip, styles.blockedChip]}>
               <Text style={[styles.chipText, { color: colors.danger.DEFAULT }]}>Taken down</Text>
+            </View>
+          ) : null}
+          {product.takedown?.unblockRequest?.status === 'pending' ? (
+            <View style={[styles.chip, styles.requestChip]}>
+              <Text style={[styles.chipText, styles.requestChipText]}>Unblock requested</Text>
             </View>
           ) : null}
           <Text style={styles.rowDate}>{formatDate(product.createdAt)}</Text>
@@ -670,6 +678,8 @@ const styles = StyleSheet.create({
   rowMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], marginTop: spacing[1] },
   chip: { borderRadius: radii.full, paddingHorizontal: spacing[2], paddingVertical: 2 },
   chipText: { ...typography.tiny, fontWeight: '600' },
+  requestChip: { backgroundColor: '#FEF0DC' },
+  requestChipText: { color: '#93370D' },
   blockedChip: { backgroundColor: colors.danger[50] },
   rowDate: { ...typography.tiny, color: colors.ink[400] },
   moreButton: { width: 32, alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },

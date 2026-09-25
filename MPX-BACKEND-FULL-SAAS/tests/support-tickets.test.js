@@ -516,3 +516,25 @@ describe('🔴 ticket visibility — "See all tickets" (owner, 2026-09-25)', () 
     expect((await request(app).get('/admin/support/overview').set(bearer(all.token))).body.scope).toBe('all');
   });
 });
+
+
+describe('reassignment and the staff-name list (owner, 2026-09-25)', () => {
+  it("the staff-name list needs support:view_all", async () => {
+    const own = await makeUser('employee', { permissions: ['support:read', 'support:reply'] });
+    expect((await request(app).get('/admin/support/assignees').set(bearer(own.token))).status).toBe(403);
+    expect((await request(app).get('/admin/support/assignees').set(bearer(agent.token))).status).toBe(200);
+  });
+
+  it("moving a ticket away clears the previous owner's notices about it", async () => {
+    const { Notification } = await import('../src/models/Notification.js');
+    const t = await raise(buyerA, { subject: 'Reassign me' });
+    await request(app).patch(`/admin/support/tickets/${t.id}/assign`).set(bearer(agent.token)).send({ assigneeId: String(agent2.user._id) }).expect(200);
+    const before = async () => Notification.findOne({ userId: agent2.user._id, refKey: `staff-ticket-assigned:${t.id}` }).lean();
+    for (let i = 0; i < 40 && !(await before()); i += 1) await new Promise((r) => setTimeout(r, 50));
+    expect((await before()).readAt).toBeNull();
+    await request(app).patch(`/admin/support/tickets/${t.id}/assign`).set(bearer(agent.token)).send({ assigneeId: String(agent.user._id) }).expect(200);
+    let cleared = null;
+    for (let i = 0; i < 40 && !cleared; i += 1) { cleared = (await before()).readAt; if (!cleared) await new Promise((r) => setTimeout(r, 50)); }
+    expect(cleared).toBeTruthy();
+  });
+});

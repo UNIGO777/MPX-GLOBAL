@@ -12,7 +12,7 @@ import { PERMISSIONS, canSeeAllTickets, hasTeamScope, ticketScope } from '../con
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 import { uploadChatDocument, uploadChatImage } from './chatAttachment.storage.service.js';
-import { notifyTicketReply, notifyTicketResolved } from './emailNotifications.service.js';
+import { notifyTicketReopened, notifyTicketReply, notifyTicketResolved } from './emailNotifications.service.js';
 import { effectiveTicketAutoCloseDays } from './settings.service.js';
 import { markReadByRef, notify } from './notification.service.js';
 
@@ -419,6 +419,7 @@ export async function setTicketStatus({ actor, id, status, meta }) {
   await audit(actor, 'ticket.status', ticket, { before: { status: before }, after: { status }, meta });
   if (resolving) notifyTicketResolved({ ticket });
   if (resolving) notifyTicketCompany(ticket, { type: 'ticket.resolved', title: `Ticket ${ticket.ref} is resolved` });
+  if (reopening) notifyTicketReopened({ ticket });
   if (reopening) notifyTicketCompany(ticket, { type: 'ticket.reopened', title: `Ticket ${ticket.ref} was re-opened` });
   return getTicket({ id });
 }
@@ -504,6 +505,11 @@ export async function assignTicket({ actor, id, assigneeId, meta }) {
   if (before === next) return getTicket({ id });
   await Ticket.updateOne({ _id: ticket._id }, { $set: { assignedTo: next } });
   await audit(actor, 'ticket.assign', ticket, { before: { assignedTo: before }, after: { assignedTo: next }, meta });
+  // It is no longer theirs: the previous owner's notices would now open a 404.
+  if (before) {
+    markReadByRef({ userId: before, refKey: `staff-ticket:${ticket._id}` });
+    markReadByRef({ userId: before, refKey: `staff-ticket-assigned:${ticket._id}` });
+  }
   // Tell the new owner — unless they assigned it to themselves.
   if (next && next !== String(actor.userId)) {
     notify([next], {

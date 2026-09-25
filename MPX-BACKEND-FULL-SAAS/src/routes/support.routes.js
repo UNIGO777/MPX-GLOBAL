@@ -56,7 +56,8 @@ const canReply = [authenticate, requirePermissions(PERMISSIONS.SUPPORT_READ, PER
 const canStatus = [authenticate, requirePermissions(PERMISSIONS.SUPPORT_READ, PERMISSIONS.SUPPORT_STATUS)];
 
 supportRouter.get('/admin/support/overview', ...staff, generalLimiter, ctrl.overview);
-supportRouter.get('/admin/support/assignees', ...staff, generalLimiter, ctrl.assignees);
+// The list of staff names — only for someone who sees the whole queue (owner, 2026-09-25).
+supportRouter.get('/admin/support/assignees', authenticate, requirePermissions(PERMISSIONS.SUPPORT_READ, PERMISSIONS.SUPPORT_VIEW_ALL), generalLimiter, ctrl.assignees);
 supportRouter.get('/admin/support/log', ...staff, generalLimiter, validate(V.ticketLog), ctrl.log);
 supportRouter.get('/admin/support/tickets', ...staff, generalLimiter, validate(V.listTickets), ctrl.list);
 supportRouter.get('/admin/support/tickets/:id', ...staff, generalLimiter, validate(V.ticketIdParam), ctrl.get);

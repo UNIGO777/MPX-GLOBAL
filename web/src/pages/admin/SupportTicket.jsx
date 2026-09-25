@@ -53,7 +53,8 @@ export function SupportTicket() {
 
   const q = useQuery({ queryKey: supportKeys.ticket(id), queryFn: () => supportApi.ticket(id), refetchInterval: 30_000 });
   const timeline = useQuery({ queryKey: supportKeys.timeline(id), queryFn: () => supportApi.timeline(id) });
-  const staff = useQuery({ queryKey: supportKeys.assignees, queryFn: supportApi.assignees });
+  // The staff list is only for whole-queue viewers (server-enforced, 2026-09-25).
+  const staff = useQuery({ queryKey: supportKeys.assignees, queryFn: supportApi.assignees, enabled: can(user, 'support:view_all') });
   const t = q.data?.ticket;
   const messages = q.data?.messages ?? [];
 

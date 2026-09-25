@@ -1,5 +1,5 @@
 /**
- * Mirror of the backend permission catalogue (src/config/permissions.js — 22
+ * Mirror of the backend permission catalogue (src/config/permissions.js — 24
  * grantable strings since 2026-09-24: support split into four, conversation:warn,
  * reports:team). The SERVER is the authority: it validates every grant
  * against its own list, so an entry here that drifted would simply be rejected
@@ -58,7 +58,9 @@ export const PERMISSION_GROUPS = [
   {
     group: 'Supplier requests',
     items: [
-      { value: 'lead:manage', label: 'Route supplier requests', help: "Work buyers' 'find me a supplier' requests and connect them to a seller's product" },
+      { value: 'lead:manage', label: 'Route supplier requests', help: "Work the requests assigned to you: connect them to a seller's product" },
+      { value: 'lead:view_all', label: 'See all supplier requests', help: 'Every request, assigned or not, and who has each; take an unassigned one' },
+      { value: 'lead:assign', label: 'Assign supplier requests', help: 'Give any request to anyone who can route requests' },
     ],
   },
   {
@@ -89,6 +91,13 @@ export const PERMISSION_REQUIRES = {
   // You can't hand out tickets you can't see (owner, 2026-09-25).
   'support:assign': 'support:view_all',
   'support:status': 'support:read',
+  'lead:view_all': 'lead:manage',
+  'lead:assign': 'lead:view_all',
+  // The verification queue and the KYC screen both load the company record
+  // (owner, 2026-09-25). The server enforces all of these when saving too.
+  'buyer:approve': 'organisation:read',
+  'exporter:verify': 'organisation:read',
+  'kyc:view': 'organisation:read',
 };
 
 /** Apply PERMISSION_REQUIRES to a toggle: `next` is the set after the click. */

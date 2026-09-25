@@ -155,7 +155,11 @@ Do not start the screens without surfacing this alert.
   buyer is fully active from signup. Do **not** add this gate without an explicit override
   (red-alert first).
 
-## D4 · Super Admin TOTP 2FA  ⏸ SCHEDULED FOR MONTH 2 (still a close-time commitment)
+## D4 · Super Admin TOTP 2FA  ❌ DROPPED (owner, 2026-09-25: "no need of 2fa")
+> The Super Admin keeps password + OTP (two factors). Not built, not a close-time item. The
+> security tracker's **A4** row should say *waived by owner*, with this date. Everything below is
+> the earlier history, superseded.
+
 - **Committed control (auth-sessions A4):** TOTP required for the Super Admin at login.
 - **On hold (heavy):** TOTP enrollment endpoint, superadmin seeding, backup-code login,
   and re-enabling TOTP-for-staff at login.
@@ -223,6 +227,11 @@ Do not start the screens without surfacing this alert.
 > it. Plain text, no link (house rule), never names the employee. **Built** (`notifyTicketReply`,
 > `notifyTicketResolved`). **The guard moves again: a NINTH event needs a fresh alert.**
 >
+> ✅ **2026-09-25 — owner approved a NINTH email event (red alert raised, "yes"):** "your ticket was
+> re-opened" → the account that raised it, sent only when STAFF re-open a resolved ticket (a company
+> re-opening its own does not email itself). Same rules as 7 and 8. **Built** (`notifyTicketReopened`).
+> **A TENTH event needs a fresh alert.**
+>
 > 🔴 **Still ON HOLD and still needing an alert:** **WhatsApp**, the `Notification` model / in-app
 > centre, admin per-type enable-disable, and delivery tracking + retry.
 - **WhatsApp** additionally depends on external template approval (outside the build). Build later.
@@ -234,7 +243,16 @@ Do not start the screens without surfacing this alert.
   affordance — **remove it once delivery is proven in staging** (OTP must never be logged in
   production — auth-sessions A3).
 
-## D6 · Seller "request unblock" for a taken-down product  ⏸ ON HOLD (build ~1 month later)
+## D6 · Seller "request unblock" for a taken-down product  ✅ BUILT 2026-09-25 (web + app)
+> **Owner decisions (2026-09-25):** (1) a PENDING request **pauses the 180-day purge** until staff decide;
+> (2) **web notices both ways** — staff with `product:takedown` on a new request, the seller on
+> approve/decline (two new notice types; no email; the app shows status on the product only);
+> (3) after a decline the seller may ask again after **7 days**. Built as `takedown.appeal` on the
+> Product (no new model); approve = the existing restore; decline needs a reason, shown to the seller;
+> who decided is never shown (A9). Raise/decline audited (`product.unblock_request` /
+> `product.unblock_reject`); restore audits `unblockRequestApproved`. Tests:
+> `tests/d6-unblock-request.test.js` (11). App: `UnblockRequestBox` (not device-tested).
+> The original notes follow.
 - **What the owner asked for (recorded 2026-07-28):** jab admin ek product **takedown** kar de,
   seller us product ke **unblock ki request** bhej sake — abhi seller sirf `takedown.reason` +
   date dekh sakta hai (Part A §A9), koi appeal/reinstatement path nahi hai.
@@ -401,7 +419,7 @@ undefined there, so anything elaborate is scope creep rather than delivery.
 ---
 
 ## 🔒 Project-close checklist (raise these BEFORE final handover)
-- **D4** — restore Super Admin TOTP 2FA (currently OTP-only). Owner scheduled it for **month 2** on 2026-08-23; if month 2 ends without it, this checklist is what catches it.
+- ~~**D4** — restore Super Admin TOTP 2FA~~ ❌ dropped by the owner 2026-09-25. Nothing to do at close; record A4 as waived.
 - 🔴 **ROTATE THE FIREBASE SERVICE ACCOUNT before production (2026-08-01).** The key currently in
   `.env` (`mpx-global`, `firebase-adminsdk-fbsvc@mpx-global.iam.gserviceaccount.com`) was
   downloaded into the repo directory and its contents passed through a chat transcript, so by

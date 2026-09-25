@@ -1,5 +1,14 @@
 # MPX Global — Phase 1 · Month 1 me **KYA NAHI** (baad me)
 
+> 🟢 **SUPERSEDED IN PART — owner, 2026-09-25: "no month 1 or 2 barrier, whole project is in
+> wrapping state."** The month-1 / month-2 split is GONE. **Bucket A is no longer deferred.** It is
+> normal Phase-1 work, built or being finished now, with no red alert needed for being "month 2".
+> **Quotation & negotiation (A1) is BUILT** (web + app: accept/negotiate, AI drafting, PDF, bank
+> details; see `docs/History.md` 2026-09-24/25). 🔴 **Still guarded, unchanged:** all of **Bucket B /
+> Phase 2** (escrow, payouts, contracts/eSign, orders…), the `docs/Note.md` 🔴 D-items (D3, D2), and
+> the owner's own standing notification limits (app notification centre, new event types, WhatsApp,
+> a 10th email event). Those are the owner's specific decisions, not month-1 deferrals.
+
 > Ye wo sab hai jo **month 1 / first draft** me **nahi** ban raha. Do bucket:
 > **(A)** Phase 1 hi hai par month-1-ke-baad · **(B)** Phase 2 (is phase me hai hi nahi).
 > "Deferred" ka matlab **"kabhi nahi" NAHI** — bas is mahine / first draft me nahi.
@@ -79,6 +88,7 @@ structured source na hona, acceptance/eSign ka Bucket-B me hona, PDF server par 
 - *(Month 1 me sirf OTP flows)* — see `docs/Note.md` **D5**.
 
 ### A5 · Seller "request unblock" for a taken-down product (Module 2 moderation)
+> ✅ **BUILT 2026-09-25 (D6, owner: "build and test no.3 also build for app").** See `docs/Note.md` D6.
 - Admin ne product **takedown** kiya → seller **unblock request** bhej sake (appeal path).
 - Admin approve/reject kare; approve = existing `POST /admin/products/:id/restore`.
 - **Month 1 me nahi** — owner ne **~2026-08-28** (1 month baad) ke liye kaha (recorded 2026-07-28).

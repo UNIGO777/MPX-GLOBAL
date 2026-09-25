@@ -8,11 +8,11 @@ import { Message } from '../models/Message.js';
 import { Organisation } from '../models/Organisation.js';
 import { Product } from '../models/Product.js';
 import { User } from '../models/User.js';
-import { PERMISSIONS } from '../config/permissions.js';
+import { PERMISSIONS, canSeeAllLeads, leadScope } from '../config/permissions.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 import { createInquiry } from './inquiry.service.js';
-import { notify } from './notification.service.js';
+import { markReadByRef, notify } from './notification.service.js';
 
 /*
  * B8 in-app notices for supplier requests (owner override 2026-09-25). The
@@ -188,14 +188,21 @@ export async function getMyLead({ user, id }) {
 
 // ──────────────────────────────── staff side ────────────────────────────────
 
-async function findAny(id) {
-  const lead = await Lead.findOne({ _id: id });
+/**
+ * A staff member's view of one request, SCOPED (owner, 2026-09-25): without
+ * `lead:view_all`, only a request assigned to them exists — anything else is
+ * the same 404 as a missing id.
+ */
+async function findForStaff(actor, id) {
+  const lead = await Lead.findOne({ _id: id, ...leadScope(actor) });
   if (!lead) throw AppError.notFound('lead not found', 'Request not found.');
   return lead;
 }
 
 export async function listLeads({ actor, status, assignee, q, page = 1, pageSize = 20 }) {
-  const filter = {};
+  // Scoped first; the assignee filter can only NARROW a whole-list view.
+  const seeAll = canSeeAllLeads(actor);
+  const filter = { ...leadScope(actor) };
   // Search the request's reference or what the buyer asked for.
   if (q) {
     const rx = new RegExp(String(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
@@ -203,9 +210,11 @@ export async function listLeads({ actor, status, assignee, q, page = 1, pageSize
   }
   if (status === 'active') filter.status = { $in: ['new', 'in_progress'] };
   else if (status) filter.status = status;
-  if (assignee === 'me') filter.assignedTo = actor.userId;
-  else if (assignee === 'unassigned') filter.assignedTo = null;
-  else if (assignee) filter.assignedTo = assignee;
+  if (seeAll) {
+    if (assignee === 'me') filter.assignedTo = actor.userId;
+    else if (assignee === 'unassigned') filter.assignedTo = null;
+    else if (assignee) filter.assignedTo = assignee;
+  }
 
   const [rows, total] = await Promise.all([
     Lead.find(filter).sort({ createdAt: -1 }).skip((page - 1) * pageSize).limit(pageSize),
@@ -222,8 +231,8 @@ export async function listLeads({ actor, status, assignee, q, page = 1, pageSize
   };
 }
 
-export async function getLead({ id }) {
-  return staffView(await findAny(id));
+export async function getLead({ id, actor }) {
+  return staffView(await findForStaff(actor, id));
 }
 
 /** Staff a request can go to: active superadmins + employees holding `lead:manage`. */
@@ -247,7 +256,16 @@ export async function assignableStaff() {
 }
 
 export async function assignLead({ actor, id, assigneeId, meta }) {
-  const lead = await findAny(id);
+  const lead = await findForStaff(actor, id);
+  // Without `lead:assign`, staff may only TAKE an unassigned request for
+  // themselves (which they can only see with `lead:view_all`) — never hand one
+  // to someone else, never take over another's. Same rule as tickets.
+  if (actor.role !== 'superadmin' && !(actor.permissions ?? []).includes(PERMISSIONS.LEAD_ASSIGN)) {
+    const self = String(assigneeId) === String(actor.userId);
+    if (!self || lead.assignedTo) {
+      throw AppError.forbidden('no lead:assign', 'You can take an unassigned request, but not assign requests to others.');
+    }
+  }
   if (assigneeId && !(await canTake(assigneeId))) {
     throw AppError.badRequest('bad assignee', 'That person cannot take supplier requests.');
   }
@@ -258,6 +276,8 @@ export async function assignLead({ actor, id, assigneeId, meta }) {
     if (lead.status === 'new' && next) lead.status = 'in_progress';
     await lead.save();
     await audit(actor, 'lead.assign', lead, { before: { assignedTo: before }, after: { assignedTo: next }, meta });
+    // It is no longer theirs: the previous owner's notice would now open a 404.
+    if (before) markReadByRef({ userId: before, refKey: `lead-assigned:${lead._id}` });
     if (next && next !== String(actor.userId)) {
       notify([next], {
         type: 'lead.assigned',
@@ -272,7 +292,7 @@ export async function assignLead({ actor, id, assigneeId, meta }) {
 }
 
 export async function setLeadStatus({ actor, id, status, meta }) {
-  const lead = await findAny(id);
+  const lead = await findForStaff(actor, id);
   if (lead.status === status) return staffView(lead);
   if (status === 'routed' && lead.routedTo.length === 0) {
     throw AppError.badRequest('not routed', 'Connect at least one supplier first.');
@@ -294,7 +314,7 @@ export async function setLeadStatus({ actor, id, status, meta }) {
  * new-enquiry push/email; no new notification event.
  */
 export async function routeLead({ actor, id, productId, meta }) {
-  const lead = await findAny(id);
+  const lead = await findForStaff(actor, id);
   if (lead.status === 'closed') throw AppError.badRequest('closed', 'This request is closed.');
   if (lead.routedTo.some((r) => String(r.productId) === String(productId))) {
     throw AppError.conflict('already routed', 'This product is already connected to the request.');
@@ -364,8 +384,8 @@ export async function routeLead({ actor, id, productId, meta }) {
 }
 
 /** Every action on one request, oldest first. */
-export async function leadTimeline({ id }) {
-  const lead = await findAny(id);
+export async function leadTimeline({ id, actor }) {
+  const lead = await findForStaff(actor, id);
   const rows = await AuditLog.find({ entityType: 'lead', entityId: lead._id }).sort({ occurredAt: 1, _id: 1 }).lean();
   const people = await names(rows.flatMap((r) => [r.actorId, r.before?.assignedTo, r.after?.assignedTo]));
   const nameOf = (v) => (v ? people.get(String(v))?.name ?? '—' : null);
@@ -380,13 +400,16 @@ export async function leadTimeline({ id }) {
   }));
 }
 
-export async function leadOverview() {
+export async function leadOverview({ actor }) {
+  // Same scope as the list: own requests only without `lead:view_all`.
+  const scope = leadScope(actor);
+  const seeAll = canSeeAllLeads(actor);
   const [fresh, inProgress, unassigned, routed7d, routed] = await Promise.all([
-    Lead.countDocuments({ status: 'new' }),
-    Lead.countDocuments({ status: 'in_progress' }),
-    Lead.countDocuments({ status: { $in: ['new', 'in_progress'] }, assignedTo: null }),
-    Lead.countDocuments({ status: 'routed', updatedAt: { $gte: new Date(Date.now() - 7 * 86400e3) } }),
-    Lead.countDocuments({ status: 'routed' }),
+    Lead.countDocuments({ ...scope, status: 'new' }),
+    Lead.countDocuments({ ...scope, status: 'in_progress' }),
+    seeAll ? Lead.countDocuments({ status: { $in: ['new', 'in_progress'] }, assignedTo: null }) : 0,
+    Lead.countDocuments({ ...scope, status: 'routed', updatedAt: { $gte: new Date(Date.now() - 7 * 86400e3) } }),
+    Lead.countDocuments({ ...scope, status: 'routed' }),
   ]);
-  return { counts: { new: fresh, inProgress, unassigned, routed7d, routed } };
+  return { counts: { new: fresh, inProgress, unassigned, routed7d, routed }, scope: seeAll ? 'all' : 'mine' };
 }

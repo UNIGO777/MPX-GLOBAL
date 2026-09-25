@@ -6,7 +6,7 @@ import { Product } from '../models/Product.js';
 import { Organisation } from '../models/Organisation.js';
 import { AuditLog } from '../models/AuditLog.js';
 import { deletePublicImage } from '../services/image.storage.service.js';
-import { PURGE_AFTER_DAYS } from '../services/adminProducts.service.js';
+import { PURGE_AFTER_DAYS, PURGE_NOT_PAUSED } from '../services/adminProducts.service.js';
 import { removeSavedForProduct } from '../services/saved.service.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -34,6 +34,8 @@ export async function purgeBlockedProducts({ now = new Date() } = {}) {
     'takedown.isDown': true,
     'takedown.at': { $lte: cutoff },
     status: { $ne: 'archived' },
+    // D6: a pending unblock request pauses the purge until staff decide.
+    ...PURGE_NOT_PAUSED,
   });
 
   let purged = 0;

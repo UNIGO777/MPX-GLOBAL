@@ -36,7 +36,11 @@ async function emailFooter() {
  * already in it** (D7 claim, F6 — owner, 2026-09-23). See
  * `notifyOrganisationJoined` below.
  *
- * 🔴 **A SEVENTH event still needs a fresh alert** — the guard stays, only its
+ * Events 7–9 (support tickets: staff reply, resolved, staff re-open) are
+ * approved and BUILT (owner 2026-09-24 and 2026-09-25) — see below.
+ *
+ * 🔴 **A TENTH event still needs a fresh alert** (this line once said
+ * "seventh"; the threshold moves with each approval) — the guard stays, only its
  * threshold moved. In particular the quote's "employee email alert on new
  * quotation" belongs to Quotation (Bucket A1) and is still deferred.
  *
@@ -354,5 +358,34 @@ export function notifyTicketResolved({ ticket, auto = false, afterDays = TICKET_
       await sendEmail({ to: recipient.email, subject: `Ticket ${ticket.ref} resolved`, text, html });
     })(),
     'ticket-resolved',
+  );
+}
+
+/**
+ * Email event 9 — staff re-opened a resolved ticket → the raiser (owner,
+ * 2026-09-25, after a red alert: D5 count 8 → 9). Only a STAFF re-open sends
+ * it; a company re-opening its own ticket already knows. Same house rules as
+ * events 7 and 8: no link, no message text, never names the employee.
+ */
+export function notifyTicketReopened({ ticket }) {
+  if (!isEmailConfigured()) return Promise.resolve();
+  return safely(
+    (async () => {
+      const recipient = await ticketRecipient(ticket);
+      if (!recipient) return;
+      const { text, html } = renderEmail({
+        support: await emailFooter(),
+        heading: 'Your support ticket was re-opened',
+        preheader: `${ticket.ref} was re-opened`,
+        status: { tone: 'info', label: `Ticket ${ticket.ref}` },
+        paragraphs: [
+          `Hello ${recipient.name},`,
+          `MPX Global Support has re-opened your ticket **${ticket.subject}** (${ticket.ref}).`,
+          'Sign in to MPX Global and open **Help & support** to see the latest and respond.',
+        ],
+      });
+      await sendEmail({ to: recipient.email, subject: `Ticket ${ticket.ref} re-opened`, text, html });
+    })(),
+    'ticket-reopened',
   );
 }

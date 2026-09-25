@@ -134,6 +134,19 @@ const productSchema = new Schema(
       reason: { type: String, trim: true },
       byUserId: { type: Schema.Types.ObjectId, ref: 'User' },
       at: { type: Date },
+      // D6 · the seller's "request unblock" (owner, 2026-09-25). One live request
+      // per takedown: `pending` pauses the 180-day purge; `rejected` holds the
+      // staff reason and starts a 7-day wait before asking again. Approval is the
+      // ordinary restore, which resets this whole object. Who decided is NOT
+      // stored here (A9: the seller must never see the acting admin); the
+      // AuditLog holds that.
+      appeal: {
+        status: { type: String, enum: ['pending', 'rejected'] },
+        message: { type: String, trim: true, maxlength: 1000 },
+        at: { type: Date },
+        decidedAt: { type: Date },
+        rejectReason: { type: String, trim: true, maxlength: 500 },
+      },
     },
 
     // §A23 denorm — INTERNAL-ONLY (never in PUBLIC_FIELDS).

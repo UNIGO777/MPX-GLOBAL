@@ -48,7 +48,7 @@ import { cp } from '../../lib/consolePath.js';
  * row drawer and must never reach anything the seller sees — their own listing
  * shows reason + date only (§A9).
  */
-function PurgeCountdown({ purgeAt }) {
+function PurgeCountdown({ purgeAt, paused = false }) {
   /**
    * `Date.now()` used to be read straight in the render body, which makes the
    * component impure: two renders of the same row can disagree, and under
@@ -60,6 +60,8 @@ function PurgeCountdown({ purgeAt }) {
    */
   const [now] = useState(() => Date.now());
   if (!purgeAt) return null;
+  // D6: a pending unblock request holds the purge until someone decides.
+  if (paused) return <span className="block text-xs font-semibold text-primary-700">Deletion paused · request waiting</span>;
   const days = Math.ceil((new Date(purgeAt) - now) / 86_400_000);
   if (days < 0) return null;
   // §A8 is the one place the 180-day purge is user-visible. Under 30 days it
@@ -103,11 +105,14 @@ function ProductStatus({ p }) {
   if (!p.takedown?.isDown) return <StatusChip label={meta?.label} tone={meta?.tone} />;
   return (
     <div className="min-w-0">
-      <StatusChip label="Taken down" tone="danger" />
+      <span className="flex flex-wrap gap-1">
+        <StatusChip label="Taken down" tone="danger" />
+        {p.takedown.appeal?.status === 'pending' && <StatusChip label="Unblock requested" tone="warning" />}
+      </span>
       <span className="mt-1 block whitespace-nowrap text-[11.5px] text-muted">
         Was {meta?.label?.toLowerCase()} · down {formatDate(p.takedown.at)}
       </span>
-      <PurgeCountdown purgeAt={p.purgeAt} />
+      <PurgeCountdown purgeAt={p.purgeAt} paused={p.purgePaused} />
     </div>
   );
 }
@@ -121,6 +126,7 @@ export function ProductMonitoring() {
 
   const [takedown, setTakedown] = useState(null);
   const [restore, setRestore] = useState(null);
+  const [decline, setDecline] = useState(null);
   const [detail, setDetail] = useState(null);
   const [reason, setReason] = useState('');
   const [error, setError] = useState(null);
@@ -175,6 +181,13 @@ export function ProductMonitoring() {
     mutationFn: () => adminCatalogueApi.restore(restore.id),
     onMutate: () => setError(null),
     onSuccess: () => { setRestore(null); refresh(); },
+    onError,
+  });
+  // D6 · decline a seller's unblock request (approving it is Restore).
+  const doDecline = useMutation({
+    mutationFn: () => adminCatalogueApi.declineUnblock(decline.id, reason),
+    onMutate: () => setError(null),
+    onSuccess: () => { setDecline(null); setReason(''); refresh(); },
     onError,
   });
 
@@ -258,6 +271,12 @@ export function ProductMonitoring() {
         onSelect: () => { setReason(''); setTakedown(p); },
       },
       canModerate && blocked && { label: 'Restore', Icon: ShieldIcon, onSelect: () => setRestore(p) },
+      canModerate && p.takedown?.appeal?.status === 'pending' && {
+        label: 'Decline unblock request',
+        Icon: XIcon,
+        danger: true,
+        onSelect: () => { setReason(''); setDecline(p); },
+      },
     ].filter(Boolean);
   };
 
@@ -332,6 +351,7 @@ export function ProductMonitoring() {
               { value: 'active', label: 'Active' },
               { value: 'inactive', label: 'Inactive' },
               { value: 'blocked', label: 'Blocked' },
+              { value: 'requests', label: 'Unblock requested' },
             ]}
             onChange={(v) => setFilter({ status: v })}
           />
@@ -564,6 +584,62 @@ export function ProductMonitoring() {
       >
         The product returns to exactly the state the seller left it in (live products go live
         again). The seller&apos;s takedown count is not reduced.
+        {restore?.takedown?.appeal?.status === 'pending' && (
+          <span className="mt-3 block">This approves the seller&apos;s unblock request, and they get a notice.</span>
+        )}
+      </Modal>
+
+      {/* --- D6 · decline an unblock request --- */}
+      <Modal
+        open={Boolean(decline)}
+        onClose={() => setDecline(null)}
+        centered
+        danger
+        icon={XIcon}
+        title={`Decline the unblock request for ${decline?.name}?`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setDecline(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              loading={doDecline.isPending}
+              disabled={reason.trim().length < 3}
+              onClick={() => doDecline.mutate()}
+            >
+              Decline
+            </Button>
+          </>
+        }
+      >
+        <div className="text-left">
+          {decline?.takedown?.appeal?.message && (
+            <blockquote className="mb-4 rounded-lg border border-surface-border bg-surface-subtle px-3 py-2.5 text-sm text-ink-800">
+              <span className="mb-1 block text-xs font-semibold text-muted">The seller wrote</span>
+              {decline.takedown.appeal.message}
+            </blockquote>
+          )}
+          <Field
+            label="Reason"
+            helper="Shown to the seller: say what still needs fixing."
+            trailing={<span className="text-xs text-muted">{reason.length}/500</span>}
+          >
+            {(id) => (
+              <textarea
+                id={id}
+                rows={4}
+                maxLength={500}
+                className={inputClasses(false, 'h-auto py-3')}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            )}
+          </Field>
+          <p className="mt-4 text-sm text-muted">
+            The product stays down and the seller can ask again after 7 days. Deletion is no longer
+            paused: it still counts 180 days from the takedown date, so a product already past that
+            is deleted on the next nightly run.
+          </p>
+        </div>
       </Modal>
 
       {/* --- Row detail: the ONLY place the acting admin is named ---
@@ -586,11 +662,21 @@ export function ProductMonitoring() {
                 <ChatIcon className="h-4 w-4" aria-hidden="true" />
                 View chats
               </Button>
+              {canModerate && detail.takedown?.appeal?.status === 'pending' && (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => { const d = detail; setDetail(null); setReason(''); setDecline(d); }}
+                >
+                  <XIcon className="h-4 w-4" aria-hidden="true" />
+                  Decline request
+                </Button>
+              )}
               {canModerate &&
                 (detail.takedown?.isDown ? (
                   <Button size="sm" onClick={() => { const d = detail; setDetail(null); setRestore(d); }}>
                     <ShieldIcon className="h-4 w-4" aria-hidden="true" />
-                    Restore
+                    {detail.takedown?.appeal?.status === 'pending' ? 'Approve & restore' : 'Restore'}
                   </Button>
                 ) : (
                   <Button
@@ -640,7 +726,29 @@ export function ProductMonitoring() {
                   By {detail.takedown.byName ?? 'a removed user'} · the exporter had it{' '}
                   {PRODUCT_STATUS_META[detail.status]?.label?.toLowerCase()}
                 </p>
-                <PurgeCountdown purgeAt={detail.purgeAt} />
+                <PurgeCountdown purgeAt={detail.purgeAt} paused={detail.purgePaused} />
+              </section>
+            )}
+
+            {/* D6 · the seller's unblock request, if any. */}
+            {detail.takedown?.appeal?.status && (
+              <section
+                className={`rounded-xl border p-4 ${
+                  detail.takedown.appeal.status === 'pending' ? 'border-warning-200 bg-warning-50/70' : 'border-surface-border bg-surface-subtle'
+                }`}
+              >
+                <h3 className="flex items-center gap-2 text-[13px] font-semibold text-ink-900">
+                  <ClockIcon className="h-4 w-4" aria-hidden="true" />
+                  {detail.takedown.appeal.status === 'pending'
+                    ? `Unblock requested ${formatDate(detail.takedown.appeal.at)}`
+                    : `Unblock request declined ${formatDate(detail.takedown.appeal.decidedAt)}`}
+                </h3>
+                {detail.takedown.appeal.message && (
+                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-800">{detail.takedown.appeal.message}</p>
+                )}
+                {detail.takedown.appeal.status === 'rejected' && detail.takedown.appeal.rejectReason && (
+                  <p className="mt-2 text-xs text-muted">Declined because: {detail.takedown.appeal.rejectReason}</p>
+                )}
               </section>
             )}
 

@@ -27,7 +27,8 @@ const NAV = [
     to: '/admin/verification',
     label: 'Verification',
     Icon: ShieldIcon,
-    perms: ['organisation:read', 'buyer:approve', 'exporter:verify', 'kyc:view'],
+    // Same gate as the page: the queue needs the company list (2026-09-25).
+    perms: ['organisation:read'],
   },
   {
     to: '/admin/categories',

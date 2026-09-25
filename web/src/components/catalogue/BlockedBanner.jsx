@@ -1,5 +1,6 @@
 import { formatDate } from '../../lib/format.js';
 import { AlertIcon } from '../ui/icons.jsx';
+import { UnblockRequest } from './UnblockRequest.jsx';
 
 /**
  * What the SELLER sees on their own taken-down listing (screens 5 and 7).
@@ -10,15 +11,15 @@ import { AlertIcon } from '../ui/icons.jsx';
  *     (screen 10's row detail), which is why the two views are built separately:
  *     the seller's projection (`/products/mine`) carries only `reason` + `at`,
  *     and the admin aggregation resolves `byName`. Never pass one into the other.
- *  2. **No appeal or "request review" action.** The seller unblock-request flow
- *     is D6 (~2026-08-28) and is not built. A button here would promise a path
- *     that does not exist.
+ *  2. **Never who decided an unblock request.** D6 (built 2026-09-25): the
+ *     seller can ask for an unblock (`UnblockRequest`); the decision carries a
+ *     reason, never a name.
  *
  * The reason is the admin's own words, shown verbatim — the takedown dialog tells
  * them it will be ("say what's wrong and what would fix it"), so it is written to
  * be read by the seller.
  */
-export function BlockedBanner({ takedown, className = '' }) {
+export function BlockedBanner({ takedown, productId, className = '' }) {
   if (!takedown) return null;
   const when = formatDate(takedown.at);
 
@@ -38,6 +39,7 @@ export function BlockedBanner({ takedown, className = '' }) {
         <p className="mt-2 text-xs text-muted">
           It can&apos;t be published or hidden until it&apos;s restored. You can still edit it.
         </p>
+        {productId && <UnblockRequest productId={productId} request={takedown.unblockRequest} />}
       </div>
     </div>
   );

@@ -57,6 +57,7 @@ const {
   notifyNewEnquiryEmail,
   notifyTicketReply,
   notifyTicketResolved,
+  notifyTicketReopened,
 } = await import('../src/services/emailNotifications.service.js');
 
 const OWNER = { name: 'Asha', email: 'asha@exportco.in' };
@@ -295,8 +296,26 @@ describe('support tickets (Step 1b — email events 7 + 8)', () => {
     expect(mail.text).toMatch(/new ticket/);
   });
 
+  it('staff re-opened (event 9) → the raiser, names the ticket, never an employee, no link', async () => {
+    await notifyTicketReopened({ ticket: TICKET });
+    const mail = lastMail();
+    expect(mail.to).toBe(OWNER.email);
+    expect(mail.subject).toBe('Ticket T-ABC234 re-opened');
+    expect(mail.text).toContain('Cannot upload GST');
+    expect(mail.text).toContain('MPX Global Support');
+    expect(mail.text).toContain('Help & support');
+    expect(mail.html).not.toMatch(/<a\s/i);
+  });
+
+  it('re-opened: a send failure is swallowed, never thrown', async () => {
+    email.send.mockRejectedValueOnce(new Error('smtp down'));
+    await expect(notifyTicketReopened({ ticket: TICKET })).resolves.toBeUndefined();
+    expect(log.warn).toHaveBeenCalled();
+  });
+
   it('skips a deactivated or missing raiser silently', async () => {
     users.owner = null;
+    await notifyTicketReopened({ ticket: TICKET });
     await notifyTicketReply({ ticket: TICKET });
     expect(email.send).not.toHaveBeenCalled();
   });

@@ -715,7 +715,7 @@ export function Dashboard() {
                 { label: 'Finding suppliers', value: leads.data.counts.inProgress, to: cp('/admin/leads?view=finding') },
                 { label: 'Unassigned', value: leads.data.counts.unassigned, warn: true, to: cp('/admin/leads?view=unassigned') },
                 { label: 'Connected · 7 days', value: leads.data.counts.routed7d, to: cp('/admin/leads?view=routed') },
-              ]}
+              ].filter((i) => leads.data.scope !== 'mine' || i.label !== 'Unassigned')}
               last
             />
           )}

@@ -42,6 +42,10 @@ export const sellerProductsApi = {
    *  checks, goods moq+unit — surface its message, never pre-judge. */
   setStatus: (id, status) => apiClient.patch(`/products/${id}/status`, { status }).then((r) => r.data.product),
 
+  /** D6 · ask for a taken-down product to be unblocked (staff decide). */
+  requestUnblock: (id, message) =>
+    apiClient.post(`/products/${id}/unblock-request`, { message }).then((r) => r.data.product),
+
   /** Archive — terminal (no restore; re-list as new). Never called "delete"
    *  in UI copy without saying it archives. */
   archive: (id) => apiClient.delete(`/products/${id}`).then((r) => r.data),

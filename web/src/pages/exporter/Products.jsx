@@ -438,6 +438,7 @@ export function Products() {
                       <div className="flex flex-wrap items-center gap-1.5">
                         <StatusChip label={meta?.label} tone={meta?.tone} />
                         {p.takedown && <StatusChip label="Taken down" tone="danger" />}
+                        {p.takedown?.unblockRequest?.status === 'pending' && <StatusChip label="Unblock requested" tone="warning" />}
                         <span className="text-xs text-muted">{formatDate(p.createdAt)}</span>
                       </div>
                       {actions.includes('publish') && (
@@ -538,6 +539,7 @@ export function Products() {
                             <StatusChip label={meta?.label} tone={meta?.tone} />
                             {/* Overlay, never a fifth status. */}
                             {p.takedown && <StatusChip label="Taken down" tone="danger" />}
+                        {p.takedown?.unblockRequest?.status === 'pending' && <StatusChip label="Unblock requested" tone="warning" />}
                           </div>
                         </td>
                         <td className="border-b border-surface-border px-4 py-3 text-ink-600">

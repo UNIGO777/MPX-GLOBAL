@@ -25,6 +25,7 @@ import { CountryPicker } from '../components/CountryPicker.jsx';
 import { ErrorState, Spinner } from '../components/Feedback.jsx';
 import { HsCodePicker } from '../components/HsCodePicker.jsx';
 import { Input } from '../components/Input.jsx';
+import { UnblockRequestBox } from '../components/UnblockRequestBox.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { findCountry } from '../constants/countries.js';
 import { CURRENCIES } from '../constants/currencies.js';
@@ -507,11 +508,18 @@ export function ProductFormScreen({ navigation, route }) {
               {original.takedown ? (
                 <View style={styles.blockedBanner}>
                   <Ionicons name="alert-circle" size={18} color={colors.danger.DEFAULT} accessible={false} />
-                  <Text style={styles.blockedText}>
-                    Removed by the MPX team{original.takedown.at ? ` on ${formatDate(original.takedown.at)}` : ''}
-                    {original.takedown.reason ? ` — “${original.takedown.reason}”` : ''}. You can still edit; it
-                    can’t be published or hidden until it’s restored.
-                  </Text>
+                  <View style={styles.flex}>
+                    <Text style={styles.blockedText}>
+                      Removed by the MPX team{original.takedown.at ? ` on ${formatDate(original.takedown.at)}` : ''}
+                      {original.takedown.reason ? ` — “${original.takedown.reason}”` : ''}. You can still edit; it
+                      can’t be published or hidden until it’s restored.
+                    </Text>
+                    <UnblockRequestBox
+                      productId={original.id}
+                      request={original.takedown.unblockRequest}
+                      onUpdated={setOriginal}
+                    />
+                  </View>
                 </View>
               ) : (
                 <View style={styles.statusStrip}>

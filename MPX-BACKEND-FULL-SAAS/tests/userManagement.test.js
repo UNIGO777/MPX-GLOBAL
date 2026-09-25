@@ -342,16 +342,18 @@ describe('employee permission assignment (M1-F)', () => {
 
     const res = await setPerms(sa.token, emp.user._id, ['user:read', 'buyer:approve']);
     expect(res.status).toBe(200);
-    expect(res.body.user.permissions.sort()).toEqual(['buyer:approve', 'user:read']);
+    // "Approve buyers" stands on "View organisations" (owner, 2026-09-25) — the
+    // server adds the prerequisite rather than store a grant that can't work.
+    expect(res.body.user.permissions.sort()).toEqual(['buyer:approve', 'organisation:read', 'user:read']);
 
     const fresh = await User.findById(emp.user._id);
-    expect(fresh.permissions.sort()).toEqual(['buyer:approve', 'user:read']);
+    expect(fresh.permissions.sort()).toEqual(['buyer:approve', 'organisation:read', 'user:read']);
 
     const audit = await AuditLog.findOne({ action: 'employee.permissions.update' });
     expect(audit).toBeTruthy();
     expect(String(audit.actorId)).toBe(String(sa.user._id));
     expect(audit.before.permissions).toEqual([]);
-    expect(audit.after.permissions.sort()).toEqual(['buyer:approve', 'user:read']);
+    expect(audit.after.permissions.sort()).toEqual(['buyer:approve', 'organisation:read', 'user:read']);
   });
 
   it('a new permission is LIVE on the next request without re-login (no tokenVersion bump)', async () => {
@@ -407,16 +409,37 @@ describe('employee permission assignment (M1-F)', () => {
 
     const dup = await setPerms(sa.token, emp.user._id, ['buyer:approve', 'buyer:approve']);
     expect(dup.status).toBe(200);
-    expect(dup.body.user.permissions).toEqual(['buyer:approve']);
+    expect(dup.body.user.permissions.sort()).toEqual(['buyer:approve', 'organisation:read']);
 
     // Audit captures the PRIOR non-empty set as a plain, independent snapshot.
     const audit = await AuditLog.findOne({ action: 'employee.permissions.update' });
     expect(audit.before.permissions).toEqual(['user:read']);
-    expect(audit.after.permissions).toEqual(['buyer:approve']);
+    expect(audit.after.permissions.sort()).toEqual(['buyer:approve', 'organisation:read']);
 
     const revoke = await setPerms(sa.token, emp.user._id, []);
     expect(revoke.status).toBe(200);
     expect(revoke.body.user.permissions).toEqual([]);
+  });
+});
+
+describe('permission prerequisites are enforced on the server (owner, 2026-09-25)', () => {
+  const setPerms = (token, id, permissions) =>
+    request(app).patch(`/admin/employees/${id}/permissions`).set(bearer(token)).send({ permissions });
+
+  it('a grant brings everything it stands on — chains included', async () => {
+    const sa = await makeUser('superadmin');
+    const emp = await makeUser('employee');
+    const cases = [
+      [['exporter:verify'], ['exporter:verify', 'organisation:read']],
+      [['kyc:view'], ['kyc:view', 'organisation:read']],
+      [['support:assign'], ['support:assign', 'support:read', 'support:view_all']],
+      [['lead:assign'], ['lead:assign', 'lead:manage', 'lead:view_all']],
+    ];
+    for (const [sent, stored] of cases) {
+      const res = await setPerms(sa.token, emp.user._id, sent);
+      expect(res.status).toBe(200);
+      expect(res.body.user.permissions.sort()).toEqual([...stored].sort());
+    }
   });
 });
 
