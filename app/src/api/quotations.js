@@ -17,6 +17,21 @@ import { apiClient } from './client.js';
  * CONFIRMED ACCEPTANCE, not a digital signature; no copy anywhere may call it
  * one (see `OTP_PURPOSE` in the backend's enums.js).
  */
+/**
+ * The exporter's saved bank details — what a quotation PRINTS.
+ *
+ * 🔴 DISPLAY-ONLY (C1): these are shown on a document the buyer pays against
+ * directly. No payout path may ever read them, and the platform never touches
+ * that money. The server stores the number ENCRYPTED and never returns it —
+ * every response carries `masked` (`••••4444`) only.
+ */
+export const bankAccountsApi = {
+  list: () => apiClient.get('/me/bank-accounts').then((r) => r.data.bankAccounts),
+  create: (body) => apiClient.post('/me/bank-accounts', body).then((r) => r.data.bankAccount),
+  update: (id, patch) => apiClient.patch(`/me/bank-accounts/${id}`, patch).then((r) => r.data.bankAccount),
+  remove: (id) => apiClient.delete(`/me/bank-accounts/${id}`).then((r) => r.data),
+};
+
 export const quotationsApi = {
   get: (id) => apiClient.get(`/quotations/${id}`).then((r) => r.data.quotation),
 

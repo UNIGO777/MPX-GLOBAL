@@ -10,6 +10,7 @@ import { postSystemMessage } from './message.service.js';
 import { computeTotals, validateForSend } from './quotationTotals.js';
 import { suggestCharges, suggestDetails, suggestMilestones } from './quotationAi.service.js';
 import { requestOtp, verifyOtp } from './otp.service.js';
+import { decryptField } from '../utils/fieldCrypto.js';
 
 /**
  * Module 4 — quotations, month 2 (Bucket A1, owner override 2026-09-24).
@@ -152,7 +153,13 @@ export function quotationDocumentView(q) {
           bankName: q.bankSnapshot.bankName,
           branch: q.bankSnapshot.branch ?? null,
           masked: q.bankSnapshot.last4 ? `••••${q.bankSnapshot.last4}` : null,
-          accountNumber: q.bankSnapshot.accountNumber, // present only when selected
+          /**
+           * Present only when the caller selected it (the document render), and
+           * stored ENCRYPTED since 2026-09-25 — the snapshot carries the same
+           * ciphertext the saved account did, so it is decrypted here, at the
+           * one point it is actually printed.
+           */
+          accountNumber: decryptField(q.bankSnapshot.accountNumber),
           swift: q.bankSnapshot.swift ?? null,
           ifsc: q.bankSnapshot.ifsc ?? null,
         }
@@ -304,6 +311,8 @@ export async function send({ user, id, bankAccountId, actor, meta }) {
       beneficiary: account.beneficiary,
       bankName: account.bankName,
       branch: account.branch,
+      // Copied as-is — it is already ciphertext, and re-encrypting a value that
+      // is about to be frozen buys nothing. `quotationDocumentView` decrypts it.
       accountNumber: account.accountNumber,
       last4: account.last4,
       swift: account.swift,

@@ -6,6 +6,7 @@ import { conversationKeys } from '../../api/conversations.js';
 import { bankAccountsApi, quotationsApi, quotationKeys } from '../../api/quotations.js';
 import { apiError } from '../../lib/format.js';
 import { formatMinor, minorToInput, toMinor } from '../../lib/money.js';
+import { AddBankAccountInline } from '../../components/account/AddBankAccountInline.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { ErrorState } from '../../components/ui/ErrorState.jsx';
@@ -848,21 +849,28 @@ export function QuotationBuilder() {
             ))}
           </ul>
         ) : (
-          /* The screen this points at now EXISTS (2026-09-25) — it said "not
-             built yet" for a day, which was honest at the time.
-
-             The comment is a plain JS one, NOT a `{…}` JSX comment: inside a
+          /* The comment is a plain JS one, NOT a `{…}` JSX comment: inside a
              ternary branch that makes two adjacent nodes and the file stops
              parsing. That trap has now cost four separate sessions. */
           <Alert tone="warning" className="mt-2">
-            No saved bank details, so this quotation will print without payment details. Add them on
-            your{' '}
+            No saved bank details yet, so this quotation would print without payment details. Add
+            them below, or on your{' '}
             <Link to="/exporter/company" className="font-semibold underline">
               company profile
-            </Link>{' '}
-            — you can still send without them.
+            </Link>
+            .
           </Alert>
         )}
+
+        {/* 🔴 Add one WITHOUT leaving the send step (owner, 2026-09-25). Before
+            this, an exporter with no saved account had to abandon the dialog,
+            go to their profile and come back — the draft survived (it
+            autosaves) but the send did not. It saves a real account through the
+            same endpoint the profile uses, so it is reusable next time; there is
+            deliberately no "use once without saving" path, because an account
+            that exists on only one document can never be corrected or
+            re-confirmed. */}
+        <AddBankAccountInline onAdded={(id) => id && setPickedBank(id)} />
       </Modal>
     </PortalLayout>
   );

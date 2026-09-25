@@ -65,7 +65,13 @@ export default ({ config }) => ({
     // production, since the current key passed through a chat transcript.
     googleServicesFile: './google-services.json',
     adaptiveIcon: {
-      backgroundColor: '#EAEEFF',
+      /**
+       * 🔴 Was `#EAEEFF` — a pale BLUE left over from the old brand, so the
+       * home-screen icon sat on a blue plate months after the product went red
+       * (2026-09-25). White, because the mark is navy and red and needs neither
+       * fighting it.
+       */
+      backgroundColor: '#FFFFFF',
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
@@ -82,6 +88,9 @@ export default ({ config }) => ({
   },
 
   plugins: [
+    // Sign RELEASE builds with the upload key rather than the debug key. It is a
+    // plugin because `android/` is gitignored and regenerated — see the file.
+    './plugins/withReleaseSigning.js',
     'expo-secure-store',
     [
       'expo-build-properties',
