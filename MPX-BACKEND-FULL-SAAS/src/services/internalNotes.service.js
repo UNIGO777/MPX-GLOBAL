@@ -4,7 +4,7 @@ import { Lead } from '../models/Lead.js';
 import { Organisation } from '../models/Organisation.js';
 import { Ticket } from '../models/Ticket.js';
 import { User } from '../models/User.js';
-import { PERMISSIONS, ticketScope } from '../config/permissions.js';
+import { PERMISSIONS, leadScope, ticketScope } from '../config/permissions.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 
@@ -44,7 +44,8 @@ async function loadSubject(subject, subjectId, actor) {
   // same way the moderation screens read (explicit filter, never findById).
   // A ticket follows the ticket scope (owner, 2026-09-25): without
   // `support:view_all`, only a ticket assigned to you — else the same 404.
-  const scope = subject.model === Ticket ? ticketScope(actor) : {};
+  // …and a supplier request follows the request scope the same way.
+  const scope = subject.model === Ticket ? ticketScope(actor) : subject.model === Lead ? leadScope(actor) : {};
   const doc = await subject.model.findOne({ _id: subjectId, ...scope }).select('_id orgId buyerOrgId').lean();
   if (!doc) throw AppError.notFound('subject not found', 'Not found.');
   return doc;

@@ -94,7 +94,15 @@ export const PERMISSIONS = Object.freeze({
   // "find me a supplier" requests and connect them to a seller's product —
   // which opens a normal enquiry in the BUYER's name. Reaches no documents and
   // no conversation contents.
+  // On its own (owner, 2026-09-25): work the requests ASSIGNED TO YOU — route,
+  // status, notes. The whole list needs LEAD_VIEW_ALL; giving one to someone
+  // else needs LEAD_ASSIGN. Mirrors the support split.
   LEAD_MANAGE: 'lead:manage',
+  // See EVERY supplier request, assigned or not, and who has each; take an
+  // unassigned one for yourself.
+  LEAD_VIEW_ALL: 'lead:view_all',
+  // Assign / re-assign a request to anyone who can manage requests.
+  LEAD_ASSIGN: 'lead:assign',
 
   // --- Step 1e · Reports (owner, 2026-09-24). Lets a chosen employee (a team
   // lead) see the WHOLE team's staff report instead of only their own row.
@@ -119,6 +127,42 @@ export function canSeeAllTickets(actor) {
 }
 export function ticketScope(actor) {
   return canSeeAllTickets(actor) ? {} : { assignedTo: actor?.userId ?? null };
+}
+
+/** Same rule for supplier requests (owner, 2026-09-25). */
+export function canSeeAllLeads(actor) {
+  return actor?.role === 'superadmin' || (actor?.permissions ?? []).includes(PERMISSIONS.LEAD_VIEW_ALL);
+}
+export function leadScope(actor) {
+  return canSeeAllLeads(actor) ? {} : { assignedTo: actor?.userId ?? null };
+}
+
+/**
+ * What each permission stands on (owner, 2026-09-25). Enforced HERE, when an
+ * employee is created or their permissions are saved — not only on the Staff
+ * page — so a grant that could never work (e.g. "Verify exporters" without the
+ * company record the review screen loads) cannot be stored at all.
+ */
+export const PERMISSION_REQUIRES = Object.freeze({
+  [PERMISSIONS.SUPPORT_VIEW_ALL]: PERMISSIONS.SUPPORT_READ,
+  [PERMISSIONS.SUPPORT_REPLY]: PERMISSIONS.SUPPORT_READ,
+  [PERMISSIONS.SUPPORT_STATUS]: PERMISSIONS.SUPPORT_READ,
+  [PERMISSIONS.SUPPORT_ASSIGN]: PERMISSIONS.SUPPORT_VIEW_ALL,
+  [PERMISSIONS.LEAD_VIEW_ALL]: PERMISSIONS.LEAD_MANAGE,
+  [PERMISSIONS.LEAD_ASSIGN]: PERMISSIONS.LEAD_VIEW_ALL,
+  // The verification queue and the KYC screen both load the company record.
+  [PERMISSIONS.BUYER_APPROVE]: PERMISSIONS.ORGANISATION_READ,
+  [PERMISSIONS.EXPORTER_VERIFY]: PERMISSIONS.ORGANISATION_READ,
+  [PERMISSIONS.KYC_VIEW]: PERMISSIONS.ORGANISATION_READ,
+});
+
+/** A permission list plus everything it stands on (transitively), de-duplicated. */
+export function withPrerequisites(permissions) {
+  const out = new Set(permissions ?? []);
+  for (const p of [...out]) {
+    for (let need = PERMISSION_REQUIRES[p]; need; need = PERMISSION_REQUIRES[need]) out.add(need);
+  }
+  return [...out];
 }
 
 export function hasTeamScope(actor) {

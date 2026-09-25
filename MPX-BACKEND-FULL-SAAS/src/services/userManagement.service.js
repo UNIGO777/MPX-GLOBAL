@@ -2,6 +2,7 @@ import { User } from '../models/User.js';
 import { Organisation } from '../models/Organisation.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
+import { withPrerequisites } from '../config/permissions.js';
 
 // Platform-staff operation (M1-E). The superadmin (and employees granted
 // user:read) manage users across tenants, so access is governed by RBAC (route
@@ -182,7 +183,8 @@ export async function setEmployeePermissions({ id, permissions, actor, meta }) {
     throw AppError.notFound('employee not found', 'Not found.');
   }
 
-  const unique = [...new Set(permissions)];
+  // Prerequisites are added, never assumed (config/permissions.js).
+  const unique = withPrerequisites(permissions);
   // Snapshot a PLAIN copy (not the live MongooseArray) so the append-only audit
   // record can never be affected by later mutation of the document.
   const before = { permissions: [...(user.permissions ?? [])] };

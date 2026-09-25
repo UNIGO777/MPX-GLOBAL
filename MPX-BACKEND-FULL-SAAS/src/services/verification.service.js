@@ -3,7 +3,7 @@ import { Product } from '../models/Product.js';
 import { AppError } from '../utils/AppError.js';
 import { kycDocsFor, KYC_DOC_TYPE_REQUESTABLE } from '../models/enums.js';
 import { recordAudit } from './audit.service.js';
-import { notifyVerificationResult } from './emailNotifications.service.js';
+import { notifyDocumentsRequested, notifyVerificationResult } from './emailNotifications.service.js';
 import { companyUserIds, notify } from './notification.service.js';
 import { deleteKycFile } from './kyc.storage.service.js';
 
@@ -190,6 +190,8 @@ export async function requestDocuments({ orgId, sideFlag, docTypes, note, actor,
     title: 'More documents requested',
     body: 'Our team asked for more documents to verify your company.',
   });
+  // Email event 5 (B2). Fire-and-forget, like every notification.
+  notifyDocumentsRequested({ org, role: sideFlag === 'exporterSide' ? 'exporter' : 'buyer', docTypes, note });
   return { docTypes, note };
 }
 

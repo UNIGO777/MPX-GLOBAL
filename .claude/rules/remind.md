@@ -47,9 +47,13 @@ This applies even if the owner's current request seems to ask for it — surface
 ## At project close / final handover
 
 Before the project is closed or handed over, proactively surface every item in the
-**"Project-close checklist"** of `docs/Note.md` (e.g. **D4** — restore Super Admin
-TOTP 2FA) with the 🔴 alert. Do NOT treat the project as done, or agree that it is done,
+**"Project-close checklist"** of `docs/Note.md` with the 🔴 alert (D4 TOTP is no longer on it —
+dropped by the owner 2026-09-25). Do NOT treat the project as done, or agree that it is done,
 while any close-time security commitment remains unraised.
+
+> 🟢 **2026-09-25 — owner: "no month 1 or 2 barrier, whole project is in wrapping state."** Nothing
+> is parked for "month 2" any more. Items previously scheduled there are now **due
+> before handover**, not deferred (except D4 TOTP, which the owner dropped). The 🔴 never-build items (D3, D2) and Bucket B are unchanged.
 
 ## Currently guarded (mirror of docs/Note.md)
 
@@ -109,7 +113,9 @@ while any close-time security commitment remains unraised.
   own alert.** App sends and shows both (2026-09-24, not yet device-tested). Detail: `docs/Note.md` **D10**.
 
 ⏸ **On hold (build later):**
-- **D4** — Super Admin TOTP 2FA. Staff use OTP now (still two-factor). **Restore before close** (A4).
+- ~~**D4** — Super Admin TOTP 2FA.~~ ❌ **DROPPED by the owner 2026-09-25 ("no need of 2fa")**. Password + OTP stays the
+  Super Admin login. **Do NOT build it, and do NOT raise it at project close.** Tracker A4 = waived
+  by owner. (Earlier history kept below for the record; it is superseded.)
   ✅ **2026-08-23 — owner SCHEDULED IT FOR MONTH 2** ("ye chodna h isse after 1 month me dalo").
   It is now a **scheduled Bucket-A item**, not an open question: **do NOT alert or re-raise it
   during month 1**, including when touching auth.
@@ -130,7 +136,8 @@ while any close-time security commitment remains unraised.
   that turns it into a company-membership oracle and then a way to join an arbitrary company.
   Seat changes (a colleague, a departed holder — F3/F4) are **support-mediated**, not a feature.
   Tests: `d7-organisation-claim.test.js`, `d7-profile-control.test.js`.
-  🔴 **The APP claim screen is still a stub** — raise it when app signup work comes up.
+  ✅ **The APP claim screen is BUILT too** (commit `a6b4116`, 2026-09-24 — all §A21 rules). An older line
+  here called it a stub; that was stale (corrected 2026-09-25). Not device-tested.
 - ✅ **D8 — Platform settings page (§3.5). BUILT 2026-09-22. Do NOT alert on it again.** The hold
   (owner, 2026-08-21) was surfaced as a red alert and the owner explicitly confirmed the override.
   Shipped at `/admin/settings`, **superadmin-only**, with the exact decided contents: the AI guest
@@ -154,10 +161,11 @@ while any close-time security commitment remains unraised.
   ✅ **CARVE-OUT 2026-07-31 — FCM push is APPROVED into month 1** (owner-confirmed), built in M4:
   `firebase-admin` + `DeviceToken` + dead-token cleanup + **two events only** (new enquiry → seller,
   new message → counterparty). **Do not re-alert on that slice.** Everything else in D5 still is.
-  ✅ **Email events approved so far: eight** — the sixth is "someone joined your company" (D7 F6,
+  ✅ **Email events approved so far: nine** — the sixth is "someone joined your company" (D7 F6,
   owner 2026-09-23, built); the seventh and eighth are the support-ticket emails "staff replied →
-  the company" and "ticket resolved → the company" (owner 2026-09-24, Step 1b, built). A **ninth**
-  email event needs a fresh alert.
+  the company" and "ticket resolved → the company" (owner 2026-09-24, Step 1b, built); the ninth is
+  "staff re-opened your ticket → the company" (owner 2026-09-25, built). A **tenth** email event
+  needs a fresh alert.
 
 Phase-1 reality: **buyer** has no gate (fully active from signup); **seller** is public with a
 verified tick and a **3-active-listing limit while unverified** (taken-down excluded from the count — §A10; + 10-draft cap §A15) (D1). Verification/approval is status

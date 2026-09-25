@@ -194,6 +194,15 @@ export const ticketLimiter = buildLimiter({
   keyGenerator: (req) => (req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
 });
 
+// D6 · seller unblock requests, per user. The one-pending + 7-day rules already
+// stop repeats on one product; this caps spraying across a whole catalogue.
+export const unblockLimiter = buildLimiter({
+  prefix: 'rl:unblock:',
+  windowMs: 24 * 60 * MINUTE,
+  limit: 20,
+  keyGenerator: (req) => (req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req.ip)}`),
+});
+
 export const enquiryLimiter = buildLimiter({
   prefix: 'rl:enquiry:',
   windowMs: 60 * MINUTE,

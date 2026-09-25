@@ -193,7 +193,8 @@ export const publicIdOrSlugParam = {
 export const listAdminProducts = {
   query: z.object({
     category: idOrSlug.optional(),
-    status: z.enum(['active', 'inactive', 'blocked']).optional(),
+    // 'requests' = taken down with an unblock request waiting (D6).
+    status: z.enum(['active', 'inactive', 'blocked', 'requests']).optional(),
     // §5 — lets the dashboard's "nearing purge" tile link to a list that
     // reproduces its own count, instead of to every blocked product.
     nearingPurge: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
@@ -208,4 +209,15 @@ export const listAdminProducts = {
 export const takedownBody = {
   params: z.object({ id: zObjectId() }),
   body: z.object({ reason: zString({ min: 3, max: 500 }) }),
+};
+
+// D6 · the seller explains what they fixed; staff give a reason when declining.
+export const unblockRequestBody = {
+  params: z.object({ id: zObjectId() }),
+  body: z.object({ message: zString({ min: 10, max: 1000 }) }).strict(),
+};
+
+export const unblockRejectBody = {
+  params: z.object({ id: zObjectId() }),
+  body: z.object({ reason: zString({ min: 3, max: 500 }) }).strict(),
 };

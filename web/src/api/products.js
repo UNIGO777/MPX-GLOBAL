@@ -29,6 +29,10 @@ export const productsApi = {
   setStatus: (id, status) =>
     apiClient.patch(`/products/${id}/status`, { status }).then((r) => r.data.product),
 
+  /** D6 · ask for a taken-down product to be unblocked (staff decide). */
+  requestUnblock: (id, message) =>
+    apiClient.post(`/products/${id}/unblock-request`, { message }).then((r) => r.data.product),
+
   /** Soft-delete: the server sets `status: 'archived'` and frees the slug (§A5/§A6). */
   archive: (id) => apiClient.delete(`/products/${id}`).then((r) => r.data.product),
 

@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { LEAD_STATUS, leadsApi, leadsKeys } from '../../api/support.js';
+import { useAuth } from '../../auth/AuthContext.jsx';
+import { can } from '../../auth/roleHome.js';
 import { apiError, formatListTime } from '../../lib/format.js';
 import { countryName } from '../../lib/countries.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
@@ -39,6 +41,10 @@ const VIEWS = {
 
 export function Leads() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  // Without "See all supplier requests" the server returns ONLY the caller's
+  // own requests (owner, 2026-09-25): no Unassigned card, no Assignee filter.
+  const seeAll = can(user, 'lead:view_all');
   // `?view=` (from the dashboard's counts) opens the page on that card's filter.
   const [params] = useSearchParams();
   const [status, setStatus] = useState(() => VIEWS[params.get('view')]?.status ?? 'active');
@@ -60,8 +66,8 @@ export function Leads() {
 
   const overview = useQuery({ queryKey: leadsKeys.overview, queryFn: leadsApi.overview, refetchInterval: 60_000 });
   const c = overview.data?.counts;
-  const staff = useQuery({ queryKey: leadsKeys.assignees, queryFn: leadsApi.assignees });
-  const query = { ...(status ? { status } : {}), ...(assignee ? { assignee } : {}), ...(q ? { q } : {}), page, pageSize: 20 };
+  const staff = useQuery({ queryKey: leadsKeys.assignees, queryFn: leadsApi.assignees, enabled: seeAll });
+  const query = { ...(status ? { status } : {}), ...(seeAll && assignee ? { assignee } : {}), ...(q ? { q } : {}), page, pageSize: 20 };
   const list = useQuery({ queryKey: leadsKeys.queue(query), queryFn: () => leadsApi.queue(query), placeholderData: (p) => p });
   const rows = list.data?.rows ?? [];
   const open = (l) => navigate(cp(`/admin/leads/${l.id}`));
@@ -71,7 +77,7 @@ export function Leads() {
     { key: 'finding', label: 'Finding suppliers', hint: 'Being worked on', value: c?.inProgress, Icon: SearchIcon, tone: 'text-primary-700 bg-primary-50', go: { status: 'in_progress', assignee: '' } },
     { key: 'unassigned', label: 'Unassigned', hint: 'Open, nobody holds it', value: c?.unassigned, Icon: UserIcon, tone: 'text-sky-700 bg-sky-50', go: { status: 'active', assignee: 'unassigned' } },
     { key: 'routed', label: 'Connected', hint: `${c?.routed7d ?? 0} in the last 7 days`, value: c?.routed, Icon: CheckCircleIcon, tone: 'text-success-700 bg-success-50', go: { status: 'routed', assignee: '' } },
-  ];
+  ].filter((k) => seeAll || k.key !== 'unassigned');
   const activeCard = cards.find((k) => k.go.status === status && k.go.assignee === assignee)?.key;
   const applyCard = (k) => { setStatus(k.go.status); setAssignee(k.go.assignee); setPage(1); };
 
@@ -116,7 +122,7 @@ export function Leads() {
         </div>
         <div className="scrollbar-none -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5">
           <FilterChip label="Status" value={status} options={STATUS_OPTIONS} onChange={(v) => { setStatus(v); setPage(1); }} />
-          <FilterChip
+          {seeAll && (<FilterChip
             label="Assignee"
             value={assignee}
             options={[
@@ -126,7 +132,7 @@ export function Leads() {
               ...(staff.data ?? []).map((s) => ({ value: s.id, label: s.name })),
             ]}
             onChange={(v) => { setAssignee(v); setPage(1); }}
-          />
+          />)}
         </div>
       </div>
 

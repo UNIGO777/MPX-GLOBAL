@@ -112,7 +112,7 @@ describe('M5-A · the two new permission strings are in the catalogue', () => {
   // completion). The same day the owner split support into read / reply /
   // assign / status, split `conversation:warn` from `conversation:block`, and
   // added `reports:team` — 21 strings. A 22nd still needs its own decision.
-  it('the catalogue is exactly the twenty-two decided strings — another needs an owner decision first', () => {
+  it('the catalogue is exactly the twenty-four decided strings — another needs an owner decision first', () => {
     expect(Object.values(PERMISSIONS).sort()).toEqual(
       [
         'buyer:approve', 'exporter:verify', 'user:read', 'kyc:view',
@@ -121,7 +121,7 @@ describe('M5-A · the two new permission strings are in the catalogue', () => {
         'organisation:read', 'audit:read',
         'errorlog:read', 'featured:manage',
         'support:read', 'support:view_all', 'support:reply', 'support:assign', 'support:status',
-        'lead:manage', 'reports:team',
+        'lead:manage', 'lead:view_all', 'lead:assign', 'reports:team',
       ].sort(),
     );
   });

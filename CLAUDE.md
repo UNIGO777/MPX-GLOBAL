@@ -177,8 +177,9 @@ when you work on matching files.
 
 **Always loaded — read them as part of these instructions:**
 
-- `scope-guard.md` — 🔴 highest priority. Phase-1 scope + month-1 deferrals; stop and
-  red-alert before building anything out of scope or in a deferred bucket
+- `scope-guard.md` — 🔴 highest priority. Phase-1 scope; stop and red-alert before building
+  anything out of scope, in Bucket B (Phase 2), or a 🔴 D-item. **No month-1/month-2 split any more
+  (owner, 2026-09-25): Bucket A is normal wrap-up work, and Quotation is built.**
 - `remind.md` — 🔴 the deferred-work / D-item guard (companion to `scope-guard.md`)
 - `security-baseline.md` — the five controls that matter most
 - `secrets-and-hygiene.md` — credentials, `.env`, dev shortcuts

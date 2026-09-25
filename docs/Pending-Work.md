@@ -1,6 +1,6 @@
 # MPX Global — Pending work (live list)
 
-**Verified against the tree on 2026-09-22** (commit `c46f472`, working tree clean).
+**Verified against the tree on 2026-09-22** (commit `c46f472`); **refreshed 2026-09-25** (after `26a6375`, with today's staff-permission work uncommitted).
 This file is the **single live pending list**. `project-status.md` and `BUILD-STATUS.md` are
 point-in-time reports and go stale; this one gets updated.
 
@@ -14,20 +14,22 @@ note was wrong, the correction is recorded in §7 so the same wrong claim does n
 | # | Item | Where | Status |
 |---|---|---|---|
 | ~~B1~~ | ~~**Platform settings screen** (D8)~~ | `web/src/pages/admin/Settings.jsx` | ✅ **BUILT 2026-09-22** at `/admin/settings` — AI guest daily ceiling + support contact, superadmin-only, audited on every save, with `AI_GUEST_DAILY_MAX` as the boot-time floor. Red-alerted as a D8 hold first; owner confirmed. **This was the last `ComingSoon` route in the console.** Detail: `docs/History.md` 2026-09-22. **Unverified signed-in** — needs a superadmin session. |
-| B2 | **"Request more information" email → seller** | `MPX-BACKEND-FULL-SAAS/src/services/emailNotifications.service.js` | Not built; **owner-approved 2026-08-21 — build it without alerting.** Four events exist. Driver: agreement §3.7. Staff UI and company-side UI are both already built, so this is the last piece of an otherwise complete KYC loop. |
+| ~~B2~~ | ~~**"Request more information" email → seller**~~ | `emailNotifications.service.js` · `notifyDocumentsRequested` | ✅ **BUILT 2026-09-25** (owner: "build it with the note included"). When staff request documents, the company's account on that side gets an email that names each document and includes the staff note. No link; the employee is never named. Tests: `email-notifications.test.js` (+3) and a wiring check in `kyc-rounds-requests.test.js`. **The KYC loop is now complete.** |
 | ~~B3~~ | ~~**Exporter dashboard**~~ | `web/src/pages/exporter/Dashboard.jsx` | ✅ **BUILT 2026-09-22** at `/exporter/dashboard`; `/exporter` redirects to it and the nav row is real. 🔴 **The "scheduled month 2" claim in this row was wrong** — no document ever scheduled it, and no seller dashboard appears in `docs/scope-of-work.md`. It was red-alerted as out-of-quote and the owner confirmed on app parity. Detail: `docs/History.md` 2026-09-22. **Still unverified in a browser** — needs an exporter login. |
 | ~~B4~~ | ~~**Portal settings screens** (buyer / exporter)~~ | — | ❌ **THIS ROW WAS WRONG — struck 2026-09-22.** There is nothing to build: `docs/UiWebNotes.md` rows 29 and 34 record that the design's "Settings" row **became** Company profile on 2026-08-10 and shipped (`/buyer/company`, `/exporter/company`, each carrying the change-password entry). I read an empty nav slot as a missing feature instead of checking the ledger — the same mistake as the exporter-dashboard "month 2" claim. Building one would duplicate Company profile. |
-| ~~B5~~ | ~~**Organisation claim at signup** (D7)~~ | `signup.service.js` · `POST /auth/signup/organisation` | ✅ **BUILT 2026-09-23** — red-alerted as a D7 hold, owner reaffirmed. One company is now one Organisation: a claim attaches the new account to the org already holding its verified identity. The tick does not travel over unreviewed details (an exporter claiming a buyer-verified org returns it to `submitted`). Rebuilt the same day to the owner's seven-rule model (build-prompt §A21): picker, company-email code, `claimChoice`, seat re-check, exporter controls the profile. 42 tests. Detail: `docs/History.md` 2026-09-23. **Unverified signed-in** — the claim card has not been seen in a browser. 🔴 **The APP claim screen is still a stub** (UiWebNotes row 57) — every app signup still creates a duplicate org. |
+| ~~B5~~ | ~~**Organisation claim at signup** (D7)~~ | `signup.service.js` · `POST /auth/signup/organisation` | ✅ **BUILT 2026-09-23** — red-alerted as a D7 hold, owner reaffirmed. One company is now one Organisation: a claim attaches the new account to the org already holding its verified identity. The tick does not travel over unreviewed details (an exporter claiming a buyer-verified org returns it to `submitted`). Rebuilt the same day to the owner's seven-rule model (build-prompt §A21): picker, company-email code, `claimChoice`, seat re-check, exporter controls the profile. 42 tests. Detail: `docs/History.md` 2026-09-23. **Unverified signed-in** — the claim card has not been seen in a browser. ✅ **The APP claim screen is built too** (commit `a6b4116`, 2026-09-24; UiWebNotes row 57). Not device-tested. |
 | B7 | **App: chat attachments + emoji** (D9 images + D10 documents) | `app/src/components/chat/` · `ChatThreadScreen.jsx` | ✅ **BUILT 2026-09-24** — same composer as web (+ Photo/Document menu · message · emoji · send), photo bubbles with a full-screen viewer, document cards — a PDF OPENS on tap (inline `viewUrl`), a separate button downloads; Word/Excel download. Files can be sent with no text (2026-09-24). 🔴 **Not run on a device** — `app/` has no `node_modules` on this machine; checked by esbuild parse + an ESLint no-undef/unused pass only. ⚠️ A document downloads through the phone's browser under Cloudinary's generic name ("file.pdf") — naming it properly needs `expo-file-system` + `expo-sharing` (new dependencies, not added). |
 | B8 | **In-app notifications — roadmap Step 2 (quote Module 8)** | `Notification.js` · `notification.service.js` · `components/notifications/*` | ✅ **WEB centre BUILT 2026-09-25** (owner override of the hold; web only). Bell + panel + page for buyers, exporters, staff; four event groups; live for companies (socket), 60 s poll for staff. **Still open (guarded):** the APP centre, admin per-type on/off, delivery tracking/retry, WhatsApp. B2 (request-more-info email) unchanged. |
 | B9 | **Real support email + phone** | `/admin/settings` | Dev DB holds DUMMY values (`support@example.com`, `+91 98765 43210`, owner 2026-09-24). The client's real contact goes in through Settings before launch — no code change needed. |
-| B10 | **"Ticket re-opened" email → company** | `emailNotifications.service.js` | Not built on purpose (2026-09-24). A staff re-open now lights the company's "Update" badge; an EMAIL would be the **9th email event** — needs its own 🔴 alert + owner OK (D5). Alternative: fold it into Step 2 (in-app notifications). |
+| ~~B10~~ | ~~**"Ticket re-opened" email → company**~~ | `emailNotifications.service.js` | ✅ **BUILT 2026-09-25** — the 9th email event (red alert raised, owner confirmed). Sent to the account that raised the ticket, only on a STAFF re-open; no link, no message text. |
 | B11 | **Device-test the app support screens** | `app/src/screens/support/*` | Ticket list, new ticket (+ follow-up), ticket thread, Mark as solved, closed bar, Find a supplier — parse + lint only so far. |
-| B6 | **Security tracker evidence pass** | `docs/security-tracker.xlsx` | 0 of 58 controls recorded as done; ~25 Phase-1 controls are built and test-pinned. See §3. |
+| ~~B12~~ | ~~**Staff permissions: own-queue vs whole-queue**~~ | `config/permissions.js` | ✅ **BUILT 2026-09-25.** `support:view_all` "See all tickets"; supplier requests split into `lead:manage` (own only) / `lead:view_all` / `lead:assign`; prerequisites added automatically (reviewers get "View organisations"); staff-name lists locked; reassigning clears the old holder's notice. Existing dev staff backfilled once (owner). Prod starts on a fresh DB, so no backfill there. 24 permissions. |
+| B13 | **Mobile app leftovers** | `app/` | The organisation-claim screen is BUILT (`a6b4116`) but not device-tested. Biometric unlock (tracker G2) is not built. The logo, icon and splash are still the old blue artwork (§5). Chat attachments (B7) and support screens (B11) are not device-tested. |
+| ~~B6~~ | ~~**Security tracker evidence pass**~~ | `docs/security-tracker.xlsx` | ✅ **DONE 2026-09-25**: all 58 rows filled, each with evidence (file + test). **20 Done · 23 N/A** (Phase 2, plus A4 2FA waived by the owner) **· 7 In progress · 8 Not started.** What's still open is deploy/handover work (TLS, DB roles, backups, staging, log retention, handover rotation), plus three real items: **E1** (the bank account number is stored unencrypted; **owner decided 2026-09-25 not to encrypt it**), **E6** (a dev-only `.env` is in git history; production has its own, so **no rotation needed** (owner, 2026-09-25); the history purge is prepared for the owner to force-push, and a secret scan is still due before handover) and **G2** (the app biometric unlock isn't built). Dependency highs fixed the same day. |
 
 ### KYC / verification — what is already complete
 
-Checked in code and **owed nothing** except B2 above:
+Checked in code and **owed nothing** (B2 built 2026-09-25):
 
 - Buyer KYC upload (`/buyer/kyc`) · exporter KYC upload (`/exporter/kyc`)
 - Both verification status screens, incl. company-side visibility of open document requests
@@ -49,7 +51,7 @@ Checked in code and **owed nothing** except B2 above:
 | # | Item | Why it cannot wait |
 |---|---|---|
 | ~~C1~~ | ~~🔴 **Aadhaar** — we accept and store Aadhaar images~~ | ✅ **DECIDED AND DONE 2026-09-23 — option (b), MASKED ONLY.** The policy moved three times that day; this is where it landed. Aadhaar is accepted for individuals but only UIDAI's **masked** copy (first 8 digits shown as X), so the Aadhaar *number* — what the restriction is actually about — is never in the file. `other` stays REMOVED for individuals: a named docType keeps an unmasked copy findable by query, a catch-all would not. 🔴 **The "(masked only)" label is a deterrent, not a control** — nothing can detect an unmasked upload. Two things carry it instead, both built the same day: the **reviewer warning** on the KYC viewer, and **per-document delete** (`removeDocument`) so an unmasked one can be destroyed rather than marked. **Remove either and this becomes a promise nobody keeps.** Pinned by `tests/kyc-aadhaar-masked.test.js` (7) + `tests/kyc-document-remove.test.js` (5). The 5 pre-existing Aadhaar documents are dev test data (owner) — no action. Detail: `docs/History.md` 2026-09-23. |
-| C2 | 🔴 **Consent capture at signup** | No `consent`/`termsAccepted` field on any model. The screen states consent and links to the live `/terms` + `/privacy` but stores nothing — deliberately (`docs/UiWebNotes.md:56`): a checkbox would imply an agreement we do not hold. **Anyone who signs up before this exists can never be asked retroactively.** |
+| ~~C2~~ | ~~**Consent capture at signup**~~ | ✅ **DECIDED 2026-09-25 (owner): keep the sentence, no checkbox.** A checkbox was built on web + app and reverted the same day at the owner's request ("we already showing By creating an account, you agree…"). Nothing to do unless the owner reopens it. Original note: no `consent`/`termsAccepted` field on any model. The screen states consent and links to the live `/terms` + `/privacy` but stores nothing — deliberately (`docs/UiWebNotes.md:56`): a checkbox would imply an agreement we do not hold. **Anyone who signs up before this exists can never be asked retroactively.** |
 | ~~C3~~ | ~~**Brand colour**~~ | ✅ **DECIDED AND DONE 2026-09-22 — red, web-wide.** `primary` is the landing's crimson ramp; `danger` moved to a deep maroon (forced — the old danger was 1.19:1 from the new brand); `surface.subtle` went warm; the new navy-and-red logo is wired with a real favicon; a `navy` token was added because the dashboard chart's series pairing broke. Landing page and the mobile app untouched by instruction. Detail + what was NOT verified: `docs/History.md` 2026-09-22. **Still open from it:** the app is now blue while the web is red (§5), the four signed-in consoles have not been seen in a browser, and `ConversationRow`'s frozen dot needs a shape difference rather than a colour one. |
 | ~~C4~~ | ~~**Support tickets**~~ | ✅ **BUILT 2026-09-24** (Step 1b — web, app, staff queue, dashboard section, ticket log, 2 emails). Was: not built; `Ticket.js` was a skeleton. Part of quote **Module 6** (Employee panel) with enquiry routing and internal notes — a contracted module partially unbuilt by choice. Minimal version in month 1, or Bucket A2. |
 | C5 | **Copy for the remaining email events** | Needed before B2 and anything after it. |
@@ -150,8 +152,7 @@ Tracked elsewhere on purpose — **do not read their absence here as "done"**:
   home-screen icon and a blue splash. The trimmed navy-and-red artwork already exists at
   `web/public/brand-logo.png` / `brand-logo-white.png`; these need generating from it at the
   Expo icon sizes. Visible to anyone who installs the APK.
-- **Testing** — backend suite is green (76 files / 1159 tests, 2026-09-23). Web has **no test
-  script and no tests at all**.
+- **Testing** — backend 1394 tests, which also pass with no `.env`. Web **79 tests / 16 files** (`npm test` in `web/`), covering: logic, the permission catalogue, KYC documents and the email's document names checked against the server, chat file rules, quotation amount-in-words, route guards, sign-in, buyer signup, ticket/request/product permission gating, D6 on both sides, notifications. App **16 tests** (`npm test` in `app/`, logic only): release builds refuse http (G5), log redaction (G3), money, masking, validation. **CI** runs all three plus lint, build and a high-severity audit. Still untested: the web product form, the KYC upload page, the chat thread and the quotation builder screens; app screens need a device.
 - **Deploy / environment** — `NODE_ENV` (no default; the backend will not boot without it),
   `AI_GUEST_DAILY_MAX` (required in production), `npm run indexes:sync` (production comes up with
   no indexes beyond `_id`, and one of them is the 90-day error-log TTL), `TRUST_PROXY`, the nginx
@@ -160,17 +161,18 @@ Tracked elsewhere on purpose — **do not read their absence here as "done"**:
 
 ---
 
-## 6 · Month 2 — decided, not pending
+## 6 · ~~Month 2~~ — the barrier is gone (owner, 2026-09-25)
 
-D4 TOTP 2FA · D8 platform settings (see B1 — a month-one commitment that slipped) ·
-Quotation & negotiation (quote Module 4) · the rest of Module 6's employee-only pieces
-(tickets, enquiry routing, internal notes, per-employee dashboards) · the rest of the
-notification layer (WhatsApp, in-app centre, admin per-type controls, delivery tracking) ·
-D7 organisation claim · D6 seller unblock request.
+Owner: *"no month 1 or 2 barrier, whole project is in wrapping state."* Everything that was "month 2"
+is either built or due now:
 
-⚠️ **"Exporter dashboard" used to be listed here and should not have been** — nothing scheduled it; a dimmed nav row did. Built 2026-09-22 (§1 B3).
-
----
+- ✅ **Quotation & negotiation (quote Module 4)** — BUILT (web + app; teammate's work, commits
+  `cab5d89` → `aca59e2`). The earlier "confirm the teammate's code is intended" question is closed.
+- ✅ Module 6 employee pieces, D7 org claim (web + app), D8 settings, the WEB notification centre — built.
+- ❌ **D4 Super Admin TOTP 2FA** — **dropped by the owner 2026-09-25** ("no need of 2fa"). Password + OTP stays. Tracker A4 → waived.
+- ✅ **D6 seller unblock request** — BUILT 2026-09-25 (web + app; app not device-tested).
+- 🔴 Still guarded by the owner's own decisions (not by month): app notification centre, new
+  notification event types, admin per-type controls, delivery tracking/retry, WhatsApp, a 10th email.
 
 ## 7 · Corrections — claims that were wrong, so they do not come back
 

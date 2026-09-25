@@ -21,7 +21,7 @@ export const REPORT_COLUMNS = [
   { key: 'verifications', label: 'Verifications decided', actions: ['exporter.verify', 'exporter.reject', 'buyer.approve', 'buyer.reject', 'organisation.change_approve', 'organisation.change_reject', 'verification.revoke'] },
   { key: 'documents', label: 'Documents requested / removed', actions: ['kyc.request_documents', 'kyc.document_remove'] },
   { key: 'kycViews', label: 'KYC documents viewed', actions: ['kyc.view'] },
-  { key: 'takedowns', label: 'Products taken down / restored', actions: ['product.takedown', 'product.restore'] },
+  { key: 'takedowns', label: 'Products taken down / restored', actions: ['product.takedown', 'product.restore', 'product.unblock_reject'] },
   { key: 'chatModeration', label: 'Chats blocked / warned', actions: ['conversation.block', 'conversation.unblock', 'conversation.warn'] },
   { key: 'chatReads', label: 'Conversations read', actions: ['conversation.read'] },
   { key: 'ticketReplies', label: 'Ticket replies', actions: ['ticket.reply'] },

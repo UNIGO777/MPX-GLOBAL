@@ -735,7 +735,7 @@ export function ProductForm() {
 
       {/* Blocked banner up top; the FIELDS BELOW STAY EDITABLE so the seller can
           fix what was wrong. Only the lifecycle actions are gone (rail). */}
-      {blocked && <BlockedBanner takedown={product.takedown} className="mb-5" />}
+      {blocked && <BlockedBanner takedown={product.takedown} productId={product.id} className="mb-5" />}
       {error && <Alert tone="danger" className="mb-5">{error}</Alert>}
       {errorCount > 0 && (
         <Alert tone="danger" className="mb-5">

@@ -1,5 +1,6 @@
 import * as svc from '../services/product.service.js';
 import { searchHsCodes } from '../utils/hsCodes.js';
+import { reaskAt } from '../services/unblockRequest.service.js';
 
 /** The HS code picker (2026-09-24) — static reference data, no DB. */
 export function hsCodes(req, res) {
@@ -14,7 +15,7 @@ function meta(req) {
 // The seller's own view of their product. Full own data — but A9: the takedown
 // block shows reason + date and NEVER byUserId (which admin acted stays
 // internal). Curated by construction, not by toJSON.
-function ownView(p) {
+export function ownView(p) {
   return {
     id: String(p._id),
     name: p.name,
@@ -49,9 +50,25 @@ function ownView(p) {
     timeline: p.timeline ?? null,
     attributes: (p.attributes ?? []).map((a) => ({ key: a.key, value: a.value })),
     customSpecs: (p.customSpecs ?? []).map((c) => ({ label: c.label, value: c.value })),
-    takedown: p.takedown?.isDown ? { reason: p.takedown.reason ?? null, at: p.takedown.at ?? null } : null,
+    takedown: p.takedown?.isDown
+      ? { reason: p.takedown.reason ?? null, at: p.takedown.at ?? null, unblockRequest: unblockView(p.takedown.appeal) }
+      : null,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
+  };
+}
+
+// D6 · the seller's own unblock request. Status, their message, the staff
+// reason on a decline and when they may ask again — never who decided (A9).
+function unblockView(appeal) {
+  if (!appeal?.status) return null;
+  return {
+    status: appeal.status,
+    message: appeal.message ?? null,
+    at: appeal.at ?? null,
+    decidedAt: appeal.decidedAt ?? null,
+    rejectReason: appeal.status === 'rejected' ? (appeal.rejectReason ?? null) : null,
+    canAskAgainAt: reaskAt(appeal),
   };
 }
 

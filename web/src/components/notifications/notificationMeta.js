@@ -18,6 +18,8 @@ const GROUPS = {
   lead: { Icon: HandshakeIcon, tint: 'bg-amber-50 text-amber-700' },
   enquiry: { Icon: EnquiryIcon, tint: 'bg-violet-50 text-violet-700' },
   chat: { Icon: ChatIcon, tint: 'bg-violet-50 text-violet-700' },
+  // D6 · unblock requests on taken-down products.
+  product: { Icon: ShieldIcon, tint: 'bg-rose-50 text-rose-700' },
 };
 
 export function metaFor(type) {

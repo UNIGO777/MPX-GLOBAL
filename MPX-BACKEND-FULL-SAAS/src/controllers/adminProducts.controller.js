@@ -6,7 +6,7 @@ function meta(req) {
 
 // Moderation response — staff view (curated; A9 hides byUserId from the SELLER
 // only, so it is present here).
-function moderationView(p) {
+export function moderationView(p) {
   return {
     id: String(p._id),
     name: p.name,
@@ -18,6 +18,15 @@ function moderationView(p) {
           reason: p.takedown.reason ?? null,
           byUserId: p.takedown.byUserId ? String(p.takedown.byUserId) : null,
           at: p.takedown.at ?? null,
+          appeal: p.takedown.appeal?.status
+            ? {
+                status: p.takedown.appeal.status,
+                message: p.takedown.appeal.message ?? null,
+                at: p.takedown.appeal.at ?? null,
+                decidedAt: p.takedown.appeal.decidedAt ?? null,
+                rejectReason: p.takedown.appeal.rejectReason ?? null,
+              }
+            : null,
         }
       : null,
   };

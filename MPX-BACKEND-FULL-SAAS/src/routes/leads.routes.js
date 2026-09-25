@@ -21,7 +21,8 @@ leadsRouter.get('/leads/:id', authenticate, requireRole('buyer'), generalLimiter
 // ── Staff side — `lead:manage` (grantable; superadmin passes). Fixed paths first.
 const staff = [authenticate, requirePermissions(PERMISSIONS.LEAD_MANAGE)];
 leadsRouter.get('/admin/leads/overview', ...staff, generalLimiter, ctrl.overview);
-leadsRouter.get('/admin/leads/assignees', ...staff, generalLimiter, ctrl.assignees);
+// The list of staff names — only for someone who sees the whole list (owner, 2026-09-25).
+leadsRouter.get('/admin/leads/assignees', authenticate, requirePermissions(PERMISSIONS.LEAD_MANAGE, PERMISSIONS.LEAD_VIEW_ALL), generalLimiter, ctrl.assignees);
 leadsRouter.get('/admin/leads', ...staff, generalLimiter, validate(V.listLeads), ctrl.list);
 leadsRouter.get('/admin/leads/:id', ...staff, generalLimiter, validate(V.leadIdParam), ctrl.get);
 leadsRouter.get('/admin/leads/:id/timeline', ...staff, generalLimiter, validate(V.leadIdParam), ctrl.timeline);

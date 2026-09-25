@@ -23,6 +23,7 @@ import { notifyPasswordChanged } from './emailNotifications.service.js';
 import { maskEmail, maskMobile } from '../utils/mask.js';
 import { logger } from '../utils/logger.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
+import { withPrerequisites } from '../config/permissions.js';
 
 // --- helpers ------------------------------------------------------------------
 
@@ -179,7 +180,8 @@ export async function createEmployee({ actor, name, email, mobile, password, per
       passwordHash: await hashPassword(password),
       role: 'employee',
       orgId: actor.orgId,
-      permissions,
+      // Prerequisites added, never assumed (config/permissions.js).
+      permissions: withPrerequisites(permissions),
       isActive: true,
       mustChangePassword: true,
       createdBy: actor.userId,

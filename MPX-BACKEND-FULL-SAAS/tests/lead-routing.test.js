@@ -67,7 +67,7 @@ beforeAll(async () => {
   made.products.push(goodsProduct._id, serviceProduct._id);
   buyer = await makeUser('buyer', { orgId: buyerOrg._id });
   otherBuyer = await makeUser('buyer', { orgId: otherOrg._id });
-  router = await makeUser('employee', { permissions: ['lead:manage'] });
+  router = await makeUser('employee', { permissions: ['lead:manage', 'lead:view_all', 'lead:assign'] });
   plain = await makeUser('employee', { permissions: ['support:read', 'support:view_all'] });
   superadmin = await makeUser('superadmin');
 });
@@ -177,5 +177,43 @@ describe('staff side', () => {
     expect(ok.body.lead.status).toBe('in_progress');
     const actions = (await AuditLog.find({ entityType: 'lead', entityId: body.lead.id }).sort({ occurredAt: 1, _id: 1 })).map((r) => r.action);
     expect(actions).toEqual(['lead.create', 'lead.assign']);
+  });
+});
+
+
+const LEAD_BODY = { what: 'Organic cotton fabric, 180 gsm', quantity: 5000, unit: 'metres', destinationCountry: 'AU' };
+
+describe('🔴 supplier-request visibility — "See all requests" (owner, 2026-09-25)', () => {
+  it('without lead:view_all, staff see and act on ONLY requests assigned to them', async () => {
+    const own = await makeUser('employee', { permissions: ['lead:manage'] });
+    const boss = await makeUser('employee', { permissions: ['lead:manage', 'lead:view_all', 'lead:assign'] });
+    const mine = (await request(app).post('/leads').set(bearer(buyer.token)).send(LEAD_BODY)).body.lead;
+    const other = (await request(app).post('/leads').set(bearer(buyer.token)).send(LEAD_BODY)).body.lead;
+    await request(app).patch(`/admin/leads/${mine.id}/assign`).set(bearer(boss.token)).send({ assigneeId: String(own.user._id) }).expect(200);
+
+    const list = await request(app).get('/admin/leads?pageSize=50').set(bearer(own.token));
+    const ids = list.body.rows.map((r) => r.id);
+    expect(ids).toContain(mine.id);
+    expect(ids).not.toContain(other.id);
+    for (const path of [`/admin/leads/${other.id}`, `/admin/leads/${other.id}/timeline`]) {
+      expect((await request(app).get(path).set(bearer(own.token))).status).toBe(404);
+    }
+    expect((await request(app).patch(`/admin/leads/${other.id}/status`).set(bearer(own.token)).send({ status: 'closed' })).status).toBe(404);
+    expect((await request(app).patch(`/admin/leads/${other.id}/assign`).set(bearer(own.token)).send({ assigneeId: String(own.user._id) })).status).toBe(404);
+    expect((await request(app).get(`/admin/notes?subjectType=lead&subjectId=${other.id}`).set(bearer(own.token))).status).toBe(404);
+    expect((await request(app).get(`/admin/leads/${mine.id}`).set(bearer(own.token))).status).toBe(200);
+    const ov = await request(app).get('/admin/leads/overview').set(bearer(own.token));
+    expect(ov.body.scope).toBe('mine');
+    expect(ov.body.counts.unassigned).toBe(0);
+    // The list of staff names is for whole-list viewers only.
+    expect((await request(app).get('/admin/leads/assignees').set(bearer(own.token))).status).toBe(403);
+  });
+
+  it('with view_all but no assign: can take an unassigned request, not give one away', async () => {
+    const taker = await makeUser('employee', { permissions: ['lead:manage', 'lead:view_all'] });
+    const someone = await makeUser('employee', { permissions: ['lead:manage'] });
+    const l = (await request(app).post('/leads').set(bearer(buyer.token)).send(LEAD_BODY)).body.lead;
+    expect((await request(app).patch(`/admin/leads/${l.id}/assign`).set(bearer(taker.token)).send({ assigneeId: String(someone.user._id) })).status).toBe(403);
+    expect((await request(app).patch(`/admin/leads/${l.id}/assign`).set(bearer(taker.token)).send({ assigneeId: String(taker.user._id) })).status).toBe(200);
   });
 });

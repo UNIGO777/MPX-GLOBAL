@@ -11,7 +11,11 @@ project. Complements (does not replace) `security-baseline.md`.
   and don't echo it back in output.
 
 ## 🔴 Before committing/pushing `.env` — ALWAYS alert first
-`.env` is currently **tracked in git at the owner's request** — the present values are
+⚠️ **Corrected 2026-09-25:** `.env` is **no longer tracked** (removed in `77f7208`,
+2026-07-31; `.gitignore` covers every `.env`). But it **is in git history** (`a486611`), but it only ever held
+the developer's DEV values. Production has its own, never-committed `.env` (owner, 2026-09-25), so no
+rotation is needed for launch. A secret scan over history is still due before handover (tracker E6). If it is ever
+re-tracked, the rules below apply. The values were
 **test-only** (a throwaway Atlas cluster used for DEV only — production is a **self-hosted
 MongoDB on the VPS**, §A26 — plus dev JWT secrets and a dev superadmin password). Because
 it is tracked:
@@ -47,5 +51,5 @@ it is tracked:
 
 ## Before production / handover — hygiene pass
 - Rotate every seeded/dev credential; remove dev affordances (OTP print); wire real OTP
-  delivery; restore Super Admin TOTP (`docs/Note.md` D4); run a secret-scan (gitleaks /
+  delivery; (Super Admin TOTP was dropped by the owner 2026-09-25 — `docs/Note.md` D4); run a secret-scan (gitleaks /
   trufflehog) over git history (tracker E6) once the repo has history.

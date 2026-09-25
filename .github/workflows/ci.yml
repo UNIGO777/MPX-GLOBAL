@@ -1,0 +1,77 @@
+# CI (security tracker B9, 2026-09-25): tests, lint, build and a dependency
+# audit on every push and pull request. The audit fails the build on HIGH or
+# CRITICAL production advisories.
+#
+# No secrets are needed: the backend tests set their own throwaway JWT
+# secrets (tests/setup.js) and run against the MongoDB + Redis services below.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: MPX-BACKEND-FULL-SAAS
+    services:
+      mongo:
+        image: mongo:7
+        ports: ['27017:27017']
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: MPX-BACKEND-FULL-SAAS/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npx vitest run
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      # The web tests compare the permission list against the backend's
+      # config/permissions.js, which the checkout above already provides.
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+
+  app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      # Plain-JS logic only (config, logging, money, masking, validation);
+      # screens need a device.
+      - run: npm test

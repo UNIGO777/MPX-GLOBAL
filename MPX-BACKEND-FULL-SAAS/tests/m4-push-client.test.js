@@ -24,22 +24,24 @@ async function loadClient({ credential = CREDENTIAL, messaging = null, initThrow
   }));
 
   const calls = { initialiseCount: 0, sent: [] };
-  vi.doMock('firebase-admin', () => ({
-    default: {
-      apps: [],
-      initializeApp: () => {
-        calls.initialiseCount += 1;
-        if (initThrows) throw new Error('invalid service account');
-        return {};
-      },
-      credential: { cert: () => ({}) },
-      messaging: () => ({
-        sendEachForMulticast: async (message) => {
-          calls.sent.push(message);
-          return messaging(message);
-        },
-      }),
+  // firebase-admin 14's modular entry points (the namespaced API is gone).
+  vi.doMock('firebase-admin/app', () => ({
+    getApps: () => [],
+    getApp: () => ({}),
+    cert: () => ({}),
+    initializeApp: () => {
+      calls.initialiseCount += 1;
+      if (initThrows) throw new Error('invalid service account');
+      return {};
     },
+  }));
+  vi.doMock('firebase-admin/messaging', () => ({
+    getMessaging: () => ({
+      sendEachForMulticast: async (message) => {
+        calls.sent.push(message);
+        return messaging(message);
+      },
+    }),
   }));
 
   const mod = await import('../src/services/push.client.js');

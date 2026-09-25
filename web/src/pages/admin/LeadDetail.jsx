@@ -66,7 +66,9 @@ export function LeadDetail() {
 
   const lead = useQuery({ queryKey: leadsKeys.one(id), queryFn: () => leadsApi.get(id) });
   const timeline = useQuery({ queryKey: leadsKeys.timeline(id), queryFn: () => leadsApi.timeline(id) });
-  const staff = useQuery({ queryKey: leadsKeys.assignees, queryFn: leadsApi.assignees });
+  // The staff list is only for someone who can hand requests out (2026-09-25).
+  const canAssign = can(user, 'lead:assign');
+  const staff = useQuery({ queryKey: leadsKeys.assignees, queryFn: leadsApi.assignees, enabled: canAssign });
 
   const apply = (data) => {
     qc.setQueryData(leadsKeys.one(id), data);
@@ -100,6 +102,7 @@ export function LeadDetail() {
       timeline={timeline}
       onAssign={(v) => v && assign.mutate(v)}
       canOrg={canOrg}
+      canAssign={canAssign}
     />
   );
   const actions = (
@@ -372,10 +375,10 @@ function ConnectSupplier({ l, route }) {
 }
 
 /** Details column (xl) — three cards; below xl the same content in a tabbed drawer. */
-function LeadSide({ where, l, id, user, staff, timeline, onAssign, canOrg }) {
+function LeadSide({ where, l, id, user, staff, timeline, onAssign, canOrg, canAssign }) {
   const [tab, setTab] = useState('details');
   const notesCount = useQuery({ queryKey: notesKeys.list('lead', id), queryFn: () => notesApi.list('lead', id) }).data?.length ?? 0;
-  const details = <DetailsBody where={where} l={l} user={user} staff={staff} onAssign={onAssign} canOrg={canOrg} />;
+  const details = <DetailsBody where={where} l={l} user={user} staff={staff} onAssign={onAssign} canOrg={canOrg} canAssign={canAssign} />;
   const events = <TimelineList timeline={timeline} />;
 
   if (where === 'drawer') {
@@ -437,19 +440,38 @@ function LeadSide({ where, l, id, user, staff, timeline, onAssign, canOrg }) {
   );
 }
 
-function DetailsBody({ where, l, user, staff, onAssign, canOrg }) {
+function DetailsBody({ where, l, user, staff, onAssign, canOrg, canAssign }) {
   return (
     <>
       {/* Only people in the list — same rule as tickets: once assigned, a request
           moves to someone else, never back to nobody (server enforces it). */}
       <label htmlFor={`lead-assignee-${where}`} className="mb-1.5 block text-[12px] font-semibold text-ink-500">Assigned to</label>
-      <Combobox
-        id={`lead-assignee-${where}`}
-        value={l.assignedTo?.id ?? ''}
-        placeholder="Unassigned"
-        options={staff.map((s) => ({ value: s.id, label: s.id === user?.id ? `${s.name} (you)` : s.name, hint: s.role === 'superadmin' ? 'Super admin' : 'Employee' }))}
-        onChange={onAssign}
-      />
+      {canAssign ? (
+        <Combobox
+          id={`lead-assignee-${where}`}
+          value={l.assignedTo?.id ?? ''}
+          placeholder="Unassigned"
+          options={staff.map((s) => ({ value: s.id, label: s.id === user?.id ? `${s.name} (you)` : s.name, hint: s.role === 'superadmin' ? 'Super admin' : 'Employee' }))}
+          onChange={onAssign}
+        />
+      ) : (
+        // No `lead:assign`: read-only, plus "Take this request" when it is
+        // unassigned (only reachable with "See all supplier requests").
+        <div id={`lead-assignee-${where}`} className="flex items-center justify-between gap-2 rounded-lg border border-surface-border bg-surface-subtle px-3 py-2.5">
+          <span className={`text-[13.5px] font-semibold ${l.assignedTo ? 'text-ink-900' : 'text-warning-800'}`}>
+            {l.assignedTo ? (l.assignedTo.id === user?.id ? `${l.assignedTo.name} (you)` : l.assignedTo.name) : 'Unassigned'}
+          </span>
+          {!l.assignedTo && l.status !== 'closed' && (
+            <button
+              type="button"
+              onClick={() => onAssign(user?.id)}
+              className="inline-flex h-8 shrink-0 items-center rounded-lg bg-primary-600 px-3 text-[12.5px] font-semibold text-white hover:bg-primary-700"
+            >
+              Take this request
+            </button>
+          )}
+        </div>
+      )}
       <dl className="mt-3 divide-y divide-surface-border text-[13px]">
         <Row label="Reference"><span className="font-mono">{l.ref}</span></Row>
         <Row label="Quantity">{l.quantity ? `${l.quantity.toLocaleString()} ${l.unit ?? ''}` : '—'}</Row>

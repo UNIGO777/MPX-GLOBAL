@@ -1,4 +1,4 @@
-import { TICKET_AUTO_CLOSE_DAYS } from '../models/enums.js';
+import { KYC_DOC_LABELS, TICKET_AUTO_CLOSE_DAYS } from '../models/enums.js';
 import { User } from '../models/User.js';
 import { logger } from '../utils/logger.js';
 import { isEmailConfigured, sendEmail } from './email.provider.js';
@@ -25,9 +25,9 @@ async function emailFooter() {
  * exporter verified/rejected, welcome on signup, password changed, and new
  * enquiry → exporter.
  *
- * A **FIFTH is approved and still to be built: "request more information" →
- * seller** (owner, 2026-08-21). Build it here without raising an alert — the
- * alert was already raised and answered. Driver: agreement §3.7 requires the
+ * A **FIFTH is approved and BUILT (2026-09-25): "request more information" →
+ * the company** (owner, 2026-08-21), staff note included — see
+ * `notifyDocumentsRequested` below. Driver: agreement §3.7 requires the
  * seller to see what is needed when more information is requested, and email is
  * what makes a resubmission prompt rather than dependent on the seller happening
  * to open the portal. It belongs to the request-more-info / `in_review` work.
@@ -36,7 +36,11 @@ async function emailFooter() {
  * already in it** (D7 claim, F6 — owner, 2026-09-23). See
  * `notifyOrganisationJoined` below.
  *
- * 🔴 **A SEVENTH event still needs a fresh alert** — the guard stays, only its
+ * Events 7–9 (support tickets: staff reply, resolved, staff re-open) are
+ * approved and BUILT (owner 2026-09-24 and 2026-09-25) — see below.
+ *
+ * 🔴 **A TENTH event still needs a fresh alert** (this line once said
+ * "seventh"; the threshold moves with each approval) — the guard stays, only its
  * threshold moved. In particular the quote's "employee email alert on new
  * quotation" belongs to Quotation (Bucket A1) and is still deferred.
  *
@@ -354,5 +358,65 @@ export function notifyTicketResolved({ ticket, auto = false, afterDays = TICKET_
       await sendEmail({ to: recipient.email, subject: `Ticket ${ticket.ref} resolved`, text, html });
     })(),
     'ticket-resolved',
+  );
+}
+
+/**
+ * Email event 9 — staff re-opened a resolved ticket → the raiser (owner,
+ * 2026-09-25, after a red alert: D5 count 8 → 9). Only a STAFF re-open sends
+ * it; a company re-opening its own ticket already knows. Same house rules as
+ * events 7 and 8: no link, no message text, never names the employee.
+ */
+export function notifyTicketReopened({ ticket }) {
+  if (!isEmailConfigured()) return Promise.resolve();
+  return safely(
+    (async () => {
+      const recipient = await ticketRecipient(ticket);
+      if (!recipient) return;
+      const { text, html } = renderEmail({
+        support: await emailFooter(),
+        heading: 'Your support ticket was re-opened',
+        preheader: `${ticket.ref} was re-opened`,
+        status: { tone: 'info', label: `Ticket ${ticket.ref}` },
+        paragraphs: [
+          `Hello ${recipient.name},`,
+          `MPX Global Support has re-opened your ticket **${ticket.subject}** (${ticket.ref}).`,
+          'Sign in to MPX Global and open **Help & support** to see the latest and respond.',
+        ],
+      });
+      await sendEmail({ to: recipient.email, subject: `Ticket ${ticket.ref} re-opened`, text, html });
+    })(),
+    'ticket-reopened',
+  );
+}
+
+/**
+ * Email event 5 — staff asked a company for more documents → the company's
+ * account on the reviewed side (approved 2026-08-21, agreement §3.7; built
+ * 2026-09-25 with the staff note INCLUDED, owner's choice). No link (house
+ * rule): it says where to go. Never names the employee who asked.
+ */
+export function notifyDocumentsRequested({ org, role, docTypes, note }) {
+  if (!isEmailConfigured()) return Promise.resolve();
+  return safely(
+    (async () => {
+      const owner = await ownerOf(org._id, role);
+      if (!owner) return;
+      const { text, html } = renderEmail({
+        support: await emailFooter(),
+        heading: 'More documents needed',
+        preheader: `More documents needed to verify ${org.name}`,
+        status: { tone: 'warning', label: 'In review' },
+        paragraphs: [
+          `Hello ${owner.name},`,
+          `Our team is reviewing **${org.name}** and needs a little more from you:`,
+          ...(docTypes ?? []).map((t) => `• ${KYC_DOC_LABELS[t] ?? t}`),
+          ...(note ? [`Note from the team: ${note}`] : []),
+          'Sign in to MPX Global and open **Verification** to upload them.',
+        ],
+      });
+      await sendEmail({ to: owner.email, subject: 'More documents needed for your MPX Global verification', text, html });
+    })(),
+    'documents-requested',
   );
 }

@@ -7,6 +7,7 @@ import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 import { freezeThreadsForProduct, unfreezeThreadsForProduct } from './conversationFreeze.service.js';
+import { notifyUnblockApproved } from './unblockNotifications.service.js';
 
 // A8/A18: a product blocked continuously for 180 days is purged. The countdown
 // the monitoring list shows derives from this.
@@ -31,8 +32,16 @@ export function nearingPurgeFilter(now = new Date()) {
     'takedown.isDown': true,
     'takedown.at': { $lte: new Date(now.getTime() - NEARING_PURGE_DAYS * DAY_MS) },
     status: { $ne: 'archived' },
+    ...PURGE_NOT_PAUSED,
   };
 }
+
+/**
+ * D6 (owner, 2026-09-25): a PENDING unblock request pauses the purge until staff
+ * decide. Nothing is deleted while a person is still deciding. Shared by the
+ * job and the nearing-purge filter so the two can't drift.
+ */
+export const PURGE_NOT_PAUSED = Object.freeze({ 'takedown.appeal.status': { $ne: 'pending' } });
 
 function escapeRegex(input) {
   return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -67,6 +76,8 @@ export async function listAdminProducts({ category, status, seller, q, nearingPu
   if (q) match.name = new RegExp(escapeRegex(q), 'i');
   if (status === 'active' || status === 'inactive') match.status = status;
   if (status === 'blocked') match['takedown.isDown'] = true;
+  // D6 — the staff "Unblock requests" view: taken down with a request waiting.
+  if (status === 'requests') Object.assign(match, { 'takedown.isDown': true, 'takedown.appeal.status': 'pending' });
 
   // §5 — the dashboard's "nearing purge" tile links HERE, so the list has to be
   // able to reproduce that exact count. Without it the tile pointed at
@@ -147,6 +158,8 @@ export async function listAdminProducts({ category, status, seller, q, nearingPu
     // Purge countdown is load-bearing (m5 §4) — without it the 180-day purge is
     // silent and the admin only notices when the row is gone.
     purgeAt: r.takedown?.isDown && r.takedown?.at ? new Date(r.takedown.at.getTime() + PURGE_AFTER_DAYS * DAY_MS) : null,
+    // D6 — a pending unblock request holds the purge (PURGE_NOT_PAUSED).
+    purgePaused: r.takedown?.appeal?.status === 'pending',
   }));
   return { rows, total: result.total[0]?.count ?? 0, page, pageSize };
 }
@@ -225,6 +238,8 @@ export async function restoreProduct({ id, actor, meta }) {
   }
 
   const before = { reason: product.takedown.reason ?? null };
+  // D6: restoring a product with a pending unblock request IS the approval.
+  const approvedRequest = product.takedown.appeal?.status === 'pending';
   // The AuditLog rows are the history; the live object resets cleanly.
   product.takedown = { isDown: false, reason: undefined, byUserId: undefined, at: undefined };
   await product.save();
@@ -242,8 +257,9 @@ export async function restoreProduct({ id, actor, meta }) {
     entityId: product._id,
     orgId: product.exporterOrgId,
     before,
-    after: { restored: true, conversationsReopened: reopened },
+    after: { restored: true, conversationsReopened: reopened, ...(approvedRequest ? { unblockRequestApproved: true } : {}) },
     meta,
   });
+  if (approvedRequest) notifyUnblockApproved(product);
   return product;
 }

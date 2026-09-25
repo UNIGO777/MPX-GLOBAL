@@ -57,6 +57,8 @@ const {
   notifyNewEnquiryEmail,
   notifyTicketReply,
   notifyTicketResolved,
+  notifyTicketReopened,
+  notifyDocumentsRequested,
 } = await import('../src/services/emailNotifications.service.js');
 
 const OWNER = { name: 'Asha', email: 'asha@exportco.in' };
@@ -295,9 +297,59 @@ describe('support tickets (Step 1b — email events 7 + 8)', () => {
     expect(mail.text).toMatch(/new ticket/);
   });
 
+  it('staff re-opened (event 9) → the raiser, names the ticket, never an employee, no link', async () => {
+    await notifyTicketReopened({ ticket: TICKET });
+    const mail = lastMail();
+    expect(mail.to).toBe(OWNER.email);
+    expect(mail.subject).toBe('Ticket T-ABC234 re-opened');
+    expect(mail.text).toContain('Cannot upload GST');
+    expect(mail.text).toContain('MPX Global Support');
+    expect(mail.text).toContain('Help & support');
+    expect(mail.html).not.toMatch(/<a\s/i);
+  });
+
+  it('re-opened: a send failure is swallowed, never thrown', async () => {
+    email.send.mockRejectedValueOnce(new Error('smtp down'));
+    await expect(notifyTicketReopened({ ticket: TICKET })).resolves.toBeUndefined();
+    expect(log.warn).toHaveBeenCalled();
+  });
+
   it('skips a deactivated or missing raiser silently', async () => {
     users.owner = null;
+    await notifyTicketReopened({ ticket: TICKET });
     await notifyTicketReply({ ticket: TICKET });
     expect(email.send).not.toHaveBeenCalled();
+  });
+});
+
+describe('documents requested (email event 5 — B2)', () => {
+  it('lists the documents by name, includes the staff note, no link, no employee', async () => {
+    await notifyDocumentsRequested({ org: ORG, role: 'exporter', docTypes: ['gst', 'iec'], note: 'The GST copy is blurred.' });
+    const mail = lastMail();
+    expect(mail.to).toBe(OWNER.email);
+    expect(mail.subject).toBe('More documents needed for your MPX Global verification');
+    expect(mail.text).toContain('Export Co');
+    expect(mail.text).toContain('• GST certificate');
+    expect(mail.text).toContain('• Import Export Code (IEC)');
+    expect(mail.text).toContain('Note from the team: The GST copy is blurred.');
+    expect(mail.text).toContain('Verification');
+    expect(mail.html).not.toMatch(/<a\s/i);
+  });
+
+  it('escapes a note that carries markup', async () => {
+    await notifyDocumentsRequested({ org: ORG, role: 'buyer', docTypes: ['pan'], note: '<img src=x onerror=alert(1)>' });
+    const mail = lastMail();
+    // (The template has its own logo <img>, so look for the injected tag itself.)
+    expect(mail.html).not.toContain('<img src=x');
+    expect(mail.html).not.toContain('onerror=alert(1)>');
+    expect(mail.html).toContain('&lt;img src=x');
+  });
+
+  it('works without a note, and a send failure is swallowed', async () => {
+    email.send.mockRejectedValueOnce(new Error('smtp down'));
+    await expect(notifyDocumentsRequested({ org: ORG, role: 'buyer', docTypes: ['pan'] })).resolves.toBeUndefined();
+    expect(log.warn).toHaveBeenCalled();
+    await notifyDocumentsRequested({ org: ORG, role: 'buyer', docTypes: ['pan'] });
+    expect(lastMail().text).not.toContain('Note from the team');
   });
 });

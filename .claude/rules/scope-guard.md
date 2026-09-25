@@ -5,6 +5,16 @@ request. It exists so nothing gets built that is **out of scope** or **parked fo
 the owner consciously deciding it. It works **alongside** `.claude/rules/remind.md` (D-item guard)
 — together, not in conflict.
 
+## 🟢 2026-09-25 — the month-1 / month-2 barrier is GONE (owner)
+
+Owner: *"no month 1 or 2 barrier, whole project is in wrapping state."* **Bucket A is no longer a
+trigger.** Quotation & negotiation is **BUILT** (web + app). Every Phase-1 item is being finished
+now. **Do not red-alert anything for being "month 2" or "Bucket A".** The triggers that STILL apply:
+**out of `docs/scope-of-work.md`**, **Bucket B / Phase 2**, the 🔴 **D-items** (D3, D2), and the
+owner's standing notification limits (app centre, new event types, admin per-type controls,
+tracking/retry, WhatsApp, a 10th email event). Where the text below says Bucket A or "month 1",
+read it through this section.
+
 ## The three authoritative sources
 
 1. **`docs/scope-of-work.md`** — the Phase-1 scope (the quote's 8 modules). Anything **not**
@@ -40,7 +50,7 @@ RED-ALERT **before** writing, editing, enabling, scaffolding, or stubbing anythi
 > | `m3` | search / discovery | Module 3 (search half) | ✅ built |
 > | **`m4`** | **Enquiry & Chat** | **Module 3 (chat half)** | ✅ **IN SCOPE — do NOT alert** |
 > | `m5` | super admin | Module 5 | ✅ |
-> | — | Quotation & negotiation | **Module 4** | ❌ Bucket A1 |
+> | — | Quotation & negotiation | **Module 4** | ✅ **BUILT** (was Bucket A1; barrier removed 2026-09-25) |
 >
 > **`modules-in-detailed/m4` is Enquiry & Chat and is month-1 in-scope** — confirmed by
 > `month1-not-doing.md` line 91 ("Module 3 (chat + AI search)" is being built) and by A2's
@@ -78,8 +88,9 @@ RED-ALERT **before** writing, editing, enabling, scaffolding, or stubbing anythi
   **BUILT**: bell + panel + page for buyers, exporters and staff, four event groups (company
   verification · company support + requests · company enquiries + chat · staff work assigned).
   🔴 **Still guarded — alert first:** the in-app centre in the **mobile app** (owner: "no app touch"),
-  any NEW event type beyond those four groups, admin per-type on/off, delivery tracking/retry,
-  WhatsApp, and any 9th email event.
+  any NEW event type beyond those four groups (plus the D6 unblock-request notices, owner-approved
+  2026-09-25), admin per-type on/off, delivery tracking/retry,
+  WhatsApp, and any 10th email event (the 9th — staff re-opened a ticket — was approved and built 2026-09-25).
 - Building month-1 in-scope work (Modules 2, 3, 5, shared employee-ops, auth) needs **no** alert
   — that's the confirmed first-draft scope. Only the triggers above require the alert. This
   includes **`modules-in-detailed/m4` (Enquiry & Chat)** — see the numbering table above.

@@ -84,7 +84,9 @@ and must not be "simplified":
 
 ## Super Admin 2FA (A4)
 
-TOTP required for the Super Admin at login. Backup codes stored hashed, single use.
+~~TOTP required for the Super Admin at login.~~ **DROPPED by the owner 2026-09-25 ("no need of 2fa")**. The Super Admin logs in with password +
+OTP (still two factors), like all staff. Do not build TOTP or re-raise it at close. The security
+tracker's A4 row should record it as waived by the owner, not as done.
 (There is no separate "Admin" role — see the role list in `CLAUDE.md`.)
 
 ## RBAC (A5)

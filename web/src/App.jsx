@@ -147,7 +147,9 @@ const CONSOLE_ROUTES = [
   { path: '/categories', element: <CategoryManager />, perms: ['category:read', 'category:manage'] },
   { path: '/categories/:id/attributes', element: <AttributeManager />, perms: ['category:read', 'category:manage'] },
   { path: '/products', element: <ProductMonitoring />, perms: ['product:read', 'product:takedown'] },
-  { path: '/verification', element: <VerificationQueue />, perms: ['organisation:read', 'buyer:approve', 'exporter:verify', 'kyc:view'] },
+  // The queue lists companies, which needs `organisation:read` on the server;
+  // every review permission now carries it (owner, 2026-09-25).
+  { path: '/verification', element: <VerificationQueue />, perms: ['organisation:read'] },
   { path: '/verification/:orgId/kyc', element: <KycViewer />, perms: ['kyc:view'] },
   { path: '/conversations', element: <Conversations />, perms: ['conversation:read'] },
   { path: '/conversations/:id', element: <ConversationViewer />, perms: ['conversation:read'] },

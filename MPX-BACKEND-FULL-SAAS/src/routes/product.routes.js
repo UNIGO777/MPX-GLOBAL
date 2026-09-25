@@ -3,11 +3,12 @@ import { Router } from 'express';
 import { validate } from '../middleware/validate.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole, requirePermissions } from '../middleware/authorize.js';
-import { generalLimiter, uploadLimiter } from '../middleware/rateLimit.js';
+import { generalLimiter, unblockLimiter, uploadLimiter } from '../middleware/rateLimit.js';
 import { uploadProductImages } from '../middleware/uploadImages.js';
 import { PERMISSIONS } from '../config/permissions.js';
 import * as ctrl from '../controllers/products.controller.js';
 import * as adminCtrl from '../controllers/adminProducts.controller.js';
+import * as unblockCtrl from '../controllers/unblockRequest.controller.js';
 import * as V from '../validators/product.validators.js';
 
 export const productRouter = Router();
@@ -77,6 +78,17 @@ productRouter.delete(
   ctrl.archive,
 );
 
+// D6 · the seller asks for a taken-down product to be unblocked. Only asks —
+// approval is the staff restore below.
+productRouter.post(
+  '/products/:id/unblock-request',
+  authenticate,
+  requireRole('exporter'),
+  unblockLimiter,
+  validate(V.unblockRequestBody),
+  unblockCtrl.request,
+);
+
 // --- Admin moderation (§A25: read = product:read, takedown/restore =
 // product:takedown — both grantable; governance stays elsewhere) ---------------
 
@@ -100,4 +112,14 @@ productRouter.post(
   requirePermissions(PERMISSIONS.PRODUCT_TAKEDOWN),
   validate(V.productIdParam),
   adminCtrl.restore,
+);
+
+// D6 · decline an unblock request (reason shown to the seller). Approving is
+// `/restore`, under the same permission.
+productRouter.post(
+  '/admin/products/:id/unblock-request/reject',
+  authenticate,
+  requirePermissions(PERMISSIONS.PRODUCT_TAKEDOWN),
+  validate(V.unblockRejectBody),
+  unblockCtrl.reject,
 );

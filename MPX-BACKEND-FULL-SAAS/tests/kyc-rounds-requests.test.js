@@ -19,6 +19,15 @@ vi.mock('../src/services/kyc.storage.service.js', () => ({
   })),
 }));
 
+// B2 (2026-09-25): the request also emails the company. Recorded, not sent.
+const docEmails = vi.hoisted(() => []);
+vi.mock('../src/services/emailNotifications.service.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  notifyDocumentsRequested: async (args) => {
+    docEmails.push(args);
+  },
+}));
+
 const { createApp } = await import('../src/app.js');
 await import('../src/models/index.js');
 const { User } = await import('../src/models/User.js');
@@ -155,6 +164,10 @@ describe('staff document requests — creation', () => {
     expect(mine.body.verification.documentRequests).toHaveLength(1);
     expect(mine.body.verification.documentRequests[0].note).toMatch(/blurry/);
     expect(mine.body.verification.documentRequests[0].fulfilledAt).toBeNull();
+
+    // B2: the company is emailed with the documents and the staff note.
+    const sent = docEmails.find((e) => String(e.org._id) === String(ex.org._id));
+    expect(sent).toMatchObject({ role: 'exporter', docTypes: ['certificate'], note: expect.stringMatching(/blurry/) });
   });
 });
 

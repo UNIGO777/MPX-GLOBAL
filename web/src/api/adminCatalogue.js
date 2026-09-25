@@ -70,6 +70,9 @@ export const adminCatalogueApi = {
   takedown: (id, reason) =>
     apiClient.post(`/admin/products/${id}/takedown`, { reason }).then((r) => r.data),
   restore: (id) => apiClient.post(`/admin/products/${id}/restore`).then((r) => r.data),
+  /** D6 · decline a seller's unblock request; approving it is `restore`. */
+  declineUnblock: (id, reason) =>
+    apiClient.post(`/admin/products/${id}/unblock-request/reject`, { reason }).then((r) => r.data),
 
   // --- audit (audit:read) ----------------------------------------------------
 

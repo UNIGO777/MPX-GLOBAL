@@ -45,6 +45,17 @@ process.env.OTP_DEV_PRINT = 'false';
 // depending on whose machine ran them. Pinned OFF; the cases that need it on
 // mock `config/env.js` directly rather than touching this.
 process.env.OTP_DEV_FIXED_CODE = 'false';
+
+// 🔴 Same trap again, found 2026-09-25 by running the suite with NO .env (as CI
+// does): 12 tests silently depended on the developer's .env. The web-client
+// cookie tests send `Origin: http://localhost:5173`, which CORS refuses unless
+// it is listed, and the email-template test expects the logo <img>, which only
+// renders when a logo URL is set. Pinned to test values here so the suite means
+// the same thing on every machine. A test needing another value sets its own
+// (e.g. a2-vercel-proxy-topology.test.js).
+process.env.CORS_ORIGINS = 'http://localhost:5173';
+process.env.EMAIL_LOGO_URL = 'https://res.cloudinary.com/demo/image/upload/mpx-logo-test.png';
+process.env.EMAIL_LOGO_WHITE_URL = 'https://res.cloudinary.com/demo/image/upload/mpx-logo-white-test.png';
 process.env.JWT_ACCESS_SECRET =
   process.env.JWT_ACCESS_SECRET || 'test_access_secret_at_least_32_chars_long_000';
 process.env.JWT_REFRESH_SECRET =

@@ -19,7 +19,7 @@ export async function list(req, res) {
   res.json(await svc.listLeads({ actor: req.user, ...req.validated.query }));
 }
 export async function get(req, res) {
-  const lead = await svc.getLead({ id: req.validated.params.id });
+  const lead = await svc.getLead({ id: req.validated.params.id, actor: req.user });
   // Opening the request clears this staff member's own "assigned to you" notice.
   markReadByRef({ userId: req.user.userId, refKey: `lead-assigned:${req.validated.params.id}` });
   res.json({ lead });
@@ -34,11 +34,11 @@ export async function route(req, res) {
   res.status(201).json({ lead: await svc.routeLead({ actor: req.user, id: req.validated.params.id, productId: req.validated.body.productId, meta: clientMeta(req) }) });
 }
 export async function timeline(req, res) {
-  res.json({ events: await svc.leadTimeline({ id: req.validated.params.id }) });
+  res.json({ events: await svc.leadTimeline({ id: req.validated.params.id, actor: req.user }) });
 }
 export async function assignees(_req, res) {
   res.json({ staff: await svc.assignableStaff() });
 }
-export async function overview(_req, res) {
-  res.json(await svc.leadOverview());
+export async function overview(req, res) {
+  res.json(await svc.leadOverview({ actor: req.user }));
 }
