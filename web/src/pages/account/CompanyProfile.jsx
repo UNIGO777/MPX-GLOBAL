@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { organisationApi, organisationKeys } from '../../api/organisation.js';
+import { BankAccounts } from '../../components/account/BankAccounts.jsx';
 import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { FlashMessage } from '../../components/ui/FlashMessage.jsx';
@@ -18,6 +19,7 @@ import { StatusChip } from '../../components/ui/StatusChip.jsx';
 import { VerifiedTick } from '../../components/ui/VerifiedTick.jsx';
 import {
   BuildingIcon,
+  CreditCardIcon,
   ExternalIcon,
   GlobeIcon,
   KeyIcon,
@@ -830,6 +832,19 @@ export function CompanyProfile() {
               <div className="min-w-0 space-y-5">
                 {registeredCard}
                 {storefrontCard}
+
+                {/* 🔴 Exporter-only, and the server agrees: `/me/bank-accounts`
+                    refuses any other role outright. These are the details a
+                    QUOTATION prints — display-only, never authoritative, and no
+                    payout path may ever read them (C1). Until this shipped the
+                    send step's picker could only ever be empty. */}
+                <SectionCard
+                  icon={CreditCardIcon}
+                  title="Bank details for quotations"
+                  desc="Printed on the quotations you send. MPX Global never holds or moves your money."
+                >
+                  <BankAccounts />
+                </SectionCard>
               </div>
 
               <aside className="space-y-4 lg:sticky lg:top-[84px]">

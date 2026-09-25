@@ -175,6 +175,23 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-25 — Bank details for quotations now have a screen.** Owner: "in the quotation there is
+  no option of bank account details filling". The backend shipped 2026-09-24 and nothing could reach
+  it, so the picker in the send step could only ever be empty — logged as Pending in
+  `docs/UiWebNotes.md`, now Done.
+  - `components/account/BankAccounts.jsx`, mounted on the EXPORTER's Company profile: list (masked),
+    add, edit, remove, set default. Exporter-only, and the server agrees — `/me/bank-accounts`
+    refuses any other role outright.
+  - 🔴 **DISPLAY-ONLY, which is what keeps it inside C1.** `security-baseline.md` forbids bank
+    details that are AUTHORITATIVE — ones our code could send to a payment API. These are printed on
+    a document the buyer pays against directly; no payout path may ever read them. Said on the screen
+    too: "MPX Global never holds or moves your money."
+  - 🔴 **The full number never comes back** (`accountNumber` is `select: false`; the API returns
+    `••••4444`). So an edit cannot pre-fill it: the exporter re-types it, or leaves it blank to keep
+    the stored one. Deliberate friction, and the field says so.
+  - The modal also states that a quotation COPIES these at send, so editing here never alters a
+    document a buyer already has — the question an exporter fixing a typo will actually ask.
+  - The send step's warning now links to the section instead of naming one that did not exist.
 - **2026-09-25 — Release APK built against the LIVE API.** `NODE_ENV=production ./gradlew
   assembleRelease` in `app/android`; Expo loads `.env.production` for that variant, so no file
   swapping. Output: `app/android/app/build/outputs/apk/release/app-release.apk` (79 MB,

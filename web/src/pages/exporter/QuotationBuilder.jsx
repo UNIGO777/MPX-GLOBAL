@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { conversationKeys } from '../../api/conversations.js';
@@ -848,19 +848,19 @@ export function QuotationBuilder() {
             ))}
           </ul>
         ) : (
-          /* 🔴 Honest, because the screen it used to point at does not exist:
-             this said "add them in your company settings", and there is no such
-             section anywhere in the web app yet (logged in docs/UiWebNotes.md).
-             Sending someone to look for a thing that is not there is worse than
-             telling them it is coming.
+          /* The screen this points at now EXISTS (2026-09-25) — it said "not
+             built yet" for a day, which was honest at the time.
 
              The comment is a plain JS one, NOT a `{…}` JSX comment: inside a
              ternary branch that makes two adjacent nodes and the file stops
              parsing. That trap has now cost four separate sessions. */
           <Alert tone="warning" className="mt-2">
-            No saved bank details, so this quotation will print without payment details. Adding them
-            from the app is not built yet — you can still send, and the buyer can be given the
-            details in the chat.
+            No saved bank details, so this quotation will print without payment details. Add them on
+            your{' '}
+            <Link to="/exporter/company" className="font-semibold underline">
+              company profile
+            </Link>{' '}
+            — you can still send without them.
           </Alert>
         )}
       </Modal>
