@@ -175,6 +175,11 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-25 — Boot warns when `FIELD_ENCRYPTION_KEY` is missing.** Same failure shape as the SMTP
+  one found hours earlier: without the key the FIRST attempt to save a bank account 500s, and nothing
+  before that moment hints at why. A **warning, not a refusal to boot** — everything else works
+  without the key, and taking the whole API down over one feature would be worse than the failure it
+  prevents. The message names the generate command and the backup consequence.
 - **2026-09-25 — Bank account numbers are ENCRYPTED at rest, and an account can be added without
   leaving the send step.** Owner: "waha add karne ki field daal do or wahi se save karna … or account
   encryption bhi karna h".

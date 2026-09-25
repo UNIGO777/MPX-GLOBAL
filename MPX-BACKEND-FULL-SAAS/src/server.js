@@ -9,6 +9,7 @@ import { attachSocket, attachRedisAdapter } from './realtime/socket.js';
 import { isCloudinaryConfigured } from './config/cloudinary.js';
 import { describeOtpTransports } from './services/otp.sender.js';
 import { verifyEmailTransport } from './services/email.provider.js';
+import { isFieldCryptoConfigured } from './utils/fieldCrypto.js';
 
 // Connect to MongoDB before accepting traffic — a payments-adjacent service must
 // not serve requests without its database.
@@ -92,6 +93,22 @@ const server = app.listen(env.PORT, () => {
       if (ok) logger.info('smtp: transport verified');
     })
     .catch(() => {}); // it already logged; never let the check itself crash boot
+
+  /**
+   * 🔴 Bank account numbers are encrypted at rest (2026-09-25). Without the key
+   * the FIRST attempt to save one fails with a 500 and nothing before that
+   * moment hints at why — exactly the shape of the SMTP failure found the same
+   * day, where "configured" was never checked against "working".
+   *
+   * A warning, not a refusal to boot: everything else on the platform works
+   * without this key, and taking the whole API down over one feature would be a
+   * worse failure than the one it prevents.
+   */
+  if (!isFieldCryptoConfigured()) {
+    logger.warn(
+      'FIELD_ENCRYPTION_KEY is not set (or is not 32 bytes). Saving or reading a bank account will fail. Generate one with `openssl rand -base64 32` and back it up with the database password — losing it makes every stored account number unreadable.',
+    );
+  }
 });
 
 // M4-G — live delivery rides on the same HTTP server. §7.1: only new messages
