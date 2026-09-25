@@ -20,6 +20,7 @@ import { postSystemMessage } from './message.service.js';
 import { recomputeFreeze, FREEZE_NOTICES } from './conversationFreeze.service.js';
 import { emitFreeze, emitUnfreeze } from '../realtime/socket.js';
 import { CHAT_WARNINGS } from '../utils/chatWarnings.js';
+import { notifyWarningInApp } from './chatNotifications.service.js';
 
 /**
  * M4-E — staff moderation of conversations.
@@ -301,6 +302,7 @@ export async function warnConversation({ id, warning, actor, meta }) {
     after: { warning },
     meta,
   });
+  notifyWarningInApp({ conversation });
 
   return reloadWithProduct(conversation._id);
 }

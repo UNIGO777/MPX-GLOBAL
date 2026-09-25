@@ -8,12 +8,31 @@ import { Organisation } from '../models/Organisation.js';
 import { Ticket } from '../models/Ticket.js';
 import { TicketMessage } from '../models/TicketMessage.js';
 import { User } from '../models/User.js';
-import { PERMISSIONS, hasTeamScope } from '../config/permissions.js';
+import { PERMISSIONS, canSeeAllTickets, hasTeamScope, ticketScope } from '../config/permissions.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 import { uploadChatDocument, uploadChatImage } from './chatAttachment.storage.service.js';
 import { notifyTicketReply, notifyTicketResolved } from './emailNotifications.service.js';
 import { effectiveTicketAutoCloseDays } from './settings.service.js';
+import { markReadByRef, notify } from './notification.service.js';
+
+/*
+ * B8 in-app notices for tickets (owner override 2026-09-25). All fire-and-
+ * forget, after the change is saved. One UNREAD row per ticket per person
+ * (`refKey`), so a back-and-forth doesn't stack a line per message.
+ */
+const companyTicketLink = (t) => `/${t.side}/support/${t._id}`;
+const staffTicketLink = (t) => `/admin/support/${t._id}`;
+function notifyTicketCompany(ticket, { type, title }) {
+  notify([ticket.createdBy], {
+    type,
+    title,
+    body: ticket.subject,
+    link: companyTicketLink(ticket),
+    orgId: ticket.orgId,
+    refKey: `ticket:${ticket._id}`,
+  });
+}
 import {
   companyMessageView,
   companyTicketView,
@@ -188,6 +207,7 @@ export async function getMyTicket({ user, id }) {
     await Ticket.updateOne({ _id: ticket._id, orgId: user.orgId }, { $set: { 'unread.company': false } });
     ticket.unread.company = false;
   }
+  markReadByRef({ userId: user.userId, refKey: `ticket:${ticket._id}` });
   return { ticket: companyTicketView(ticket), messages: messages.map(companyMessageView) };
 }
 
@@ -222,6 +242,15 @@ export async function replyMyTicket({ user, id, body, file, meta }) {
   );
 
   await audit(user, 'ticket.reply', ticket, { after: { by: 'company' }, meta });
+  if (ticket.assignedTo) {
+    notify([ticket.assignedTo], {
+      type: 'ticket.company_reply',
+      title: `New reply on ${ticket.ref}`,
+      body: ticket.subject,
+      link: staffTicketLink(ticket),
+      refKey: `staff-ticket:${ticket._id}`,
+    });
+  }
   return getMyTicket({ user, id });
 }
 
@@ -250,16 +279,30 @@ export async function myUnreadCount({ user }) {
 
 // ──────────────────────────────── staff side ────────────────────────────────
 
-async function findAny(id) {
-  // Staff surface: permission-gated at the route, reads across companies by id —
-  // the same shape the moderation screens use (never `findById`, per the A6 lint).
+/**
+ * A staff member's view of one ticket. Permission-gated at the route, then
+ * SCOPED here: without `support:view_all`, only a ticket assigned to them
+ * exists — anything else is the same 404 as a missing id (never 403, which
+ * would confirm it exists). Never `findById` (A6 lint).
+ */
+async function findForStaff(actor, id) {
+  const ticket = await Ticket.findOne({ _id: id, ...ticketScope(actor) });
+  if (!ticket) throw AppError.notFound('ticket not found', 'Ticket not found.');
+  return ticket;
+}
+
+// Loads a ticket the caller has ALREADY been authorised for (the return value
+// of an action they just performed). Never reachable with a raw request id.
+async function findAuthorised(id) {
   const ticket = await Ticket.findOne({ _id: id });
   if (!ticket) throw AppError.notFound('ticket not found', 'Ticket not found.');
   return ticket;
 }
 
 export async function listTickets({ actor, status, category, side, assignee, q, page = 1, pageSize = 20 }) {
-  const filter = {};
+  // Scoped first; the assignee filter can only NARROW a whole-queue view.
+  const seeAll = canSeeAllTickets(actor);
+  const filter = { ...ticketScope(actor) };
   // Virtual views (the stat cards): 'active' = not resolved; 'needs_reply' = the
   // company wrote last and staff have not read it; 'waiting' = staff wrote last
   // and the auto-close clock is running.
@@ -269,9 +312,11 @@ export async function listTickets({ actor, status, category, side, assignee, q, 
   else if (status) filter.status = status;
   if (category) filter.category = category;
   if (side) filter.side = side;
-  if (assignee === 'me') filter.assignedTo = actor.userId;
-  else if (assignee === 'unassigned') filter.assignedTo = null;
-  else if (assignee) filter.assignedTo = assignee;
+  if (seeAll) {
+    if (assignee === 'me') filter.assignedTo = actor.userId;
+    else if (assignee === 'unassigned') filter.assignedTo = null;
+    else if (assignee) filter.assignedTo = assignee;
+  }
   if (q) {
     const term = String(q).trim();
     // A ref ("T-4F9K2Q") matches exactly; anything else is a subject prefix.
@@ -290,8 +335,10 @@ export async function listTickets({ actor, status, category, side, assignee, q, 
   return { rows: rows.map((t) => staffTicketView(t, { names, orgs, autoCloseDays })), total, page, pageSize };
 }
 
-export async function getTicket({ id }) {
-  const ticket = await findAny(id);
+export async function getTicket({ id, actor = null }) {
+  // `actor` = a staff request (scoped); none = the result of an action the
+  // caller was already authorised for.
+  const ticket = actor ? await findForStaff(actor, id) : await findAuthorised(id);
   const messages = await TicketMessage.find({ ticketId: ticket._id, orgId: ticket.orgId }).sort({ createdAt: 1 }).lean();
   const names = await loadNames([...messages.map((m) => m.authorId), ticket.createdBy, ticket.assignedTo]);
   if (ticket.unread?.staff) {
@@ -314,7 +361,7 @@ export async function getTicket({ id }) {
  * replier — each written to the log as its own action, so the trail says so.
  */
 export async function replyTicket({ actor, id, body, file, meta }) {
-  const ticket = await findAny(id);
+  const ticket = await findForStaff(actor, id);
   // A staff reply on a CLOSED ticket re-opens it, so it needs the re-open grant
   // too (owner, 2026-09-24). Checked before any file is stored.
   if (
@@ -352,11 +399,12 @@ export async function replyTicket({ actor, id, body, file, meta }) {
   if (advanced) await audit(actor, 'ticket.status', ticket, { before: { status: ticket.status }, after: { status: 'in_progress' }, meta });
 
   notifyTicketReply({ ticket });
+  notifyTicketCompany(ticket, { type: 'ticket.reply', title: `MPX Global Support replied on ${ticket.ref}` });
   return getTicket({ id });
 }
 
 export async function setTicketStatus({ actor, id, status, meta }) {
-  const ticket = await findAny(id);
+  const ticket = await findForStaff(actor, id);
   if (ticket.status === status) return getTicket({ id });
   const before = ticket.status;
   const resolving = status === 'resolved';
@@ -370,6 +418,8 @@ export async function setTicketStatus({ actor, id, status, meta }) {
   await Ticket.updateOne({ _id: ticket._id }, { $set: set });
   await audit(actor, 'ticket.status', ticket, { before: { status: before }, after: { status }, meta });
   if (resolving) notifyTicketResolved({ ticket });
+  if (resolving) notifyTicketCompany(ticket, { type: 'ticket.resolved', title: `Ticket ${ticket.ref} is resolved` });
+  if (reopening) notifyTicketCompany(ticket, { type: 'ticket.reopened', title: `Ticket ${ticket.ref} was re-opened` });
   return getTicket({ id });
 }
 
@@ -409,6 +459,7 @@ export async function autoCloseStaleTickets({ now = new Date() } = {}) {
       occurredAt: now,
     });
     notifyTicketResolved({ ticket, auto: true, afterDays: days });
+    notifyTicketCompany(ticket, { type: 'ticket.auto_closed', title: `Ticket ${ticket.ref} closed — no reply for ${days} days` });
     closed += 1;
   }
   return { closed };
@@ -427,7 +478,7 @@ export async function assignableStaff() {
 }
 
 export async function assignTicket({ actor, id, assigneeId, meta }) {
-  const ticket = await findAny(id);
+  const ticket = await findForStaff(actor, id);
   // Without `support:assign`, staff may only TAKE an unassigned ticket for
   // themselves — never hand one to someone else, never take over another's.
   if (actor.role !== 'superadmin' && !(actor.permissions ?? []).includes(PERMISSIONS.SUPPORT_ASSIGN)) {
@@ -453,22 +504,37 @@ export async function assignTicket({ actor, id, assigneeId, meta }) {
   if (before === next) return getTicket({ id });
   await Ticket.updateOne({ _id: ticket._id }, { $set: { assignedTo: next } });
   await audit(actor, 'ticket.assign', ticket, { before: { assignedTo: before }, after: { assignedTo: next }, meta });
+  // Tell the new owner — unless they assigned it to themselves.
+  if (next && next !== String(actor.userId)) {
+    notify([next], {
+      type: 'ticket.assigned',
+      title: `Ticket ${ticket.ref} was assigned to you`,
+      body: ticket.subject,
+      link: staffTicketLink(ticket),
+      // Its own key (not merged with "new reply"), cleared when they open it.
+      refKey: `staff-ticket-assigned:${ticket._id}`,
+    });
+  }
   return getTicket({ id });
 }
 
 // ─────────────────────────── dashboard + ticket log ──────────────────────────
 
 /** The super admin dashboard's Support section. */
-export async function supportOverview() {
+export async function supportOverview({ actor }) {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // The counts follow the same scope as the list: without `support:view_all`
+  // they count the caller's OWN tickets, and "unassigned" is not theirs to see.
+  const scope = ticketScope(actor);
+  const seeAll = canSeeAllTickets(actor);
   const [open, inProgress, unassigned, needsReply, waiting, resolved7d, openRows] = await Promise.all([
-    Ticket.countDocuments({ status: 'open' }),
-    Ticket.countDocuments({ status: 'in_progress' }),
-    Ticket.countDocuments({ status: { $ne: 'resolved' }, assignedTo: null }),
-    Ticket.countDocuments({ status: { $ne: 'resolved' }, 'unread.staff': true }),
-    Ticket.countDocuments({ status: { $ne: 'resolved' }, awaitingCompanySince: { $ne: null } }),
-    Ticket.countDocuments({ status: 'resolved', resolvedAt: { $gte: since } }),
-    Ticket.find({ status: { $ne: 'resolved' } }).sort({ lastMessageAt: -1 }).limit(10).lean(),
+    Ticket.countDocuments({ ...scope, status: 'open' }),
+    Ticket.countDocuments({ ...scope, status: 'in_progress' }),
+    seeAll ? Ticket.countDocuments({ status: { $ne: 'resolved' }, assignedTo: null }) : 0,
+    Ticket.countDocuments({ ...scope, status: { $ne: 'resolved' }, 'unread.staff': true }),
+    Ticket.countDocuments({ ...scope, status: { $ne: 'resolved' }, awaitingCompanySince: { $ne: null } }),
+    Ticket.countDocuments({ ...scope, status: 'resolved', resolvedAt: { $gte: since } }),
+    Ticket.find({ ...scope, status: { $ne: 'resolved' } }).sort({ lastMessageAt: -1 }).limit(10).lean(),
   ]);
   const [names, orgs, autoCloseDays] = await Promise.all([
     loadNames(openRows.flatMap((t) => [t.createdBy, t.assignedTo])),
@@ -477,6 +543,8 @@ export async function supportOverview() {
   ]);
   return {
     counts: { open, inProgress, unassigned, needsReply, waiting, resolved7d },
+    // Tells the screen which view this is — own tickets or the whole queue.
+    scope: seeAll ? 'all' : 'mine',
     // For the "Waiting on company — closes itself after N days" hint.
     autoCloseDays,
     openTickets: openRows.map((t) => staffTicketView(t, { names, orgs, autoCloseDays })),
@@ -529,8 +597,8 @@ async function logRows(filter, page, pageSize) {
 }
 
 /** One ticket's timeline — every action on it, oldest first. */
-export async function ticketTimeline({ id }) {
-  const ticket = await findAny(id);
+export async function ticketTimeline({ id, actor }) {
+  const ticket = await findForStaff(actor, id);
   const res = await logRows({ entityType: 'ticket', entityId: ticket._id, action: { $in: LOG_ACTIONS } }, 1, 500);
   return res.rows.reverse();
 }

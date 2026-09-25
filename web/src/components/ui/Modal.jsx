@@ -78,8 +78,11 @@ export function Modal({ open, onClose, title, children, footer, danger = false, 
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : undefined}
         tabIndex={-1}
-        className={`relative w-full bg-white shadow-card outline-none ${
-          centered ? 'max-w-[480px] rounded-2xl p-8 text-center' : `${wide ? 'max-w-4xl' : 'max-w-md'} rounded-lg p-6`
+        // 🔴 Height-capped and scrollable (2026-09-25 phone pass): with the page
+        // behind locked, a tall dialog on a phone used to run off the bottom of
+        // the screen with its buttons out of reach.
+        className={`relative max-h-[calc(100dvh-2rem)] w-full overflow-y-auto overscroll-contain bg-white shadow-card outline-none ${
+          centered ? 'max-w-[480px] rounded-2xl p-6 text-center sm:p-8' : `${wide ? 'max-w-4xl' : 'max-w-md'} rounded-lg p-5 sm:p-6`
         }`}
       >
         {centered ? (
@@ -96,7 +99,9 @@ export function Modal({ open, onClose, title, children, footer, danger = false, 
             )}
             {title && <h2 className="text-xl font-bold text-ink-900">{title}</h2>}
             <div className="mt-3 text-[15px] leading-relaxed text-muted">{children}</div>
-            {footer && <div className="mt-8 flex justify-center gap-3">{footer}</div>}
+            {/* Buttons never break a label across lines; on phones they wrap
+                to a new row when needed and grow to fill it. */}
+            {footer && <div className="mt-8 flex flex-wrap justify-center gap-2 sm:gap-3 [&>a]:whitespace-nowrap [&>button]:whitespace-nowrap max-sm:[&>a]:grow max-sm:[&>button]:grow">{footer}</div>}
           </>
         ) : (
           <>
@@ -114,7 +119,7 @@ export function Modal({ open, onClose, title, children, footer, danger = false, 
               </button>
             </div>
             <div className="mt-3">{children}</div>
-            {footer && <div className="mt-6 flex justify-end gap-3">{footer}</div>}
+            {footer && <div className="mt-6 flex flex-wrap justify-end gap-2 sm:gap-3 [&>a]:whitespace-nowrap [&>button]:whitespace-nowrap max-sm:[&>a]:grow max-sm:[&>button]:grow">{footer}</div>}
           </>
         )}
       </div>

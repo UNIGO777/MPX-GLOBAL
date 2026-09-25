@@ -37,6 +37,10 @@ const ROOM = (conversationId) => `conversation:${conversationId}`;
  * hardest — a seller keeps the app open waiting for enquiries.
  */
 const VIEW_ROOM = (conversationId) => `viewing:${conversationId}`;
+// One room per signed-in person — every tab/device they have open. Used ONLY to
+// say "your notifications changed"; the payload carries no content, the client
+// refetches its own list through the authenticated REST route (2026-09-25).
+const USER_ROOM = (userId) => `user:${userId}`;
 
 // G9 — a reconnecting client asks for what it missed. Bounded: a user offline
 // for a week must not be handed thousands of messages down a socket. Past the
@@ -161,6 +165,8 @@ export function attachSocket(httpServer) {
      * The join is kicked off here and awaited by any handler that broadcasts, so
      * the sender is reliably in the room by the time their own message goes out.
      */
+    if (user?.userId) socket.join(USER_ROOM(user.userId));
+
     const filter = partyFilter(user);
     socket.data.roomsReady = filter
       ? Conversation.find(filter)
@@ -374,4 +380,13 @@ export function emitFreeze(conversationId, reason) {
 
 export function emitUnfreeze(conversationId) {
   io?.to(ROOM(conversationId)).emit('conversation:unfrozen', { conversationId: String(conversationId) });
+}
+
+/**
+ * Nudge a person's open tabs to refresh their notifications. Content-free on
+ * purpose (see USER_ROOM). No-op without a socket server (tests, REST-only).
+ */
+export function emitNotificationsChanged(userIds) {
+  if (!io) return;
+  for (const id of new Set(userIds.map(String))) io.to(USER_ROOM(id)).emit('notifications:changed');
 }

@@ -44,8 +44,8 @@ let buyer, agent, other, superadmin, ticketId;
 beforeAll(async () => {
   await mongoose.connect(process.env.MONGODB_URI);
   buyer = await makeUser('buyer');
-  agent = await makeUser('employee', { permissions: ['support:read', 'support:reply', 'support:assign', 'support:status'] });
-  other = await makeUser('employee', { permissions: ['support:read', 'support:reply', 'support:assign', 'support:status'] });
+  agent = await makeUser('employee', { permissions: ['support:read', 'support:view_all', 'support:reply', 'support:assign', 'support:status'] });
+  other = await makeUser('employee', { permissions: ['support:read', 'support:view_all', 'support:reply', 'support:assign', 'support:status'] });
   superadmin = await makeUser('superadmin');
   const t = await request(app).post('/support/tickets').set(bearer(buyer.token)).send({ subject: 'Report test ticket', category: 'other', body: 'hi' });
   ticketId = t.body.ticket.id;
@@ -125,7 +125,7 @@ describe('reports:team (owner, 2026-09-24)', () => {
   });
 
   it('"My work" stays personal even with reports:team', async () => {
-    const lead = await makeUser('employee', { permissions: ['reports:team', 'support:read'] });
+    const lead = await makeUser('employee', { permissions: ['reports:team', 'support:read', 'support:view_all'] });
     const res = await request(app).get('/admin/my-work').set(bearer(lead.token));
     expect(res.status).toBe(200);
     expect(res.body.last30.id).toBe(String(lead.user._id));

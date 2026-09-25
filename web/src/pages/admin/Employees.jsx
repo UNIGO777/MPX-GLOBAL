@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { adminApi } from '../../api/admin.js';
 import { config } from '../../config.js';
-import { apiError } from '../../lib/format.js';
+import { apiError, formatMobile } from '../../lib/format.js';
 import { PERMISSION_GROUPS, PERMISSION_LIST, PERMISSION_REQUIRES, withDependencies } from '../../lib/permissions.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
@@ -594,7 +594,7 @@ export function Employees() {
                       <div className="min-w-0 flex-1">
                         <PersonName row={row} />
                         <p className="truncate text-xs text-muted">
-                          {[row.email, row.mobile].filter(Boolean).join(' · ')}
+                          {[row.email, formatMobile(row.mobile)].filter(Boolean).join(' · ')}
                         </p>
                       </div>
                       <RowAction row={row} onEdit={() => openEdit(row)} />
@@ -635,7 +635,7 @@ export function Employees() {
                             <div className="min-w-0">
                               <PersonName row={row} />
                               <p className="truncate text-xs text-muted">
-                                {[row.email, row.mobile].filter(Boolean).join(' · ')}
+                                {[row.email, formatMobile(row.mobile)].filter(Boolean).join(' · ')}
                               </p>
                             </div>
                           </div>

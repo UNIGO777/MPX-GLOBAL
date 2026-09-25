@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { authApi } from '../../api/auth.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { cp } from '../../lib/consolePath.js';
-import { apiError, formatDate, formatTime } from '../../lib/format.js';
+import { apiError, formatDate, formatMobile, formatTime } from '../../lib/format.js';
 import { PERMISSION_GROUPS } from '../../lib/permissions.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { initialsOf } from '../../components/chat/CompanyAvatar.jsx';
@@ -33,13 +33,6 @@ import { CheckIcon, ClockIcon, KeyIcon, LockIcon, MailIcon, PhoneIcon, ShieldIco
  *
  * 2026-09-25 redesign (owner: "fix my account screen for admin and staff").
  */
-
-/** Display-only phone formatting: groups an Indian number, leaves others as stored. */
-function formatMobile(e164) {
-  if (!e164) return null;
-  const m = /^\+91(\d{5})(\d{5})$/.exec(e164);
-  return m ? `+91 ${m[1]} ${m[2]}` : e164;
-}
 
 export function Account() {
   const { user } = useAuth();

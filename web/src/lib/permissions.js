@@ -1,5 +1,5 @@
 /**
- * Mirror of the backend permission catalogue (src/config/permissions.js — 21
+ * Mirror of the backend permission catalogue (src/config/permissions.js — 22
  * grantable strings since 2026-09-24: support split into four, conversation:warn,
  * reports:team). The SERVER is the authority: it validates every grant
  * against its own list, so an entry here that drifted would simply be rejected
@@ -48,8 +48,9 @@ export const PERMISSION_GROUPS = [
     // Step 1b (2026-09-24) — the support desk, split into four grants.
     group: 'Support tickets',
     items: [
-      { value: 'support:read', label: 'View support tickets', help: 'The queue, every ticket and the ticket log; add internal notes' },
-      { value: 'support:reply', label: 'Reply to tickets', help: 'Answer companies as MPX Global Support; can take an unassigned ticket' },
+      { value: 'support:read', label: 'View support tickets', help: 'Tickets assigned to you, and their internal notes' },
+      { value: 'support:view_all', label: 'See all tickets', help: 'Every ticket, assigned or not, and who has each one' },
+      { value: 'support:reply', label: 'Reply to tickets', help: 'Answer companies as MPX Global Support (with See all tickets: take an unassigned one)' },
       { value: 'support:assign', label: 'Assign tickets', help: 'Give any ticket to anyone who can reply' },
       { value: 'support:status', label: 'Resolve / re-open tickets', help: 'Mark in progress, resolve, re-open' },
     ],
@@ -83,8 +84,10 @@ export const PERMISSION_GROUPS = [
  * clears the actions that depend on it.
  */
 export const PERMISSION_REQUIRES = {
+  'support:view_all': 'support:read',
   'support:reply': 'support:read',
-  'support:assign': 'support:read',
+  // You can't hand out tickets you can't see (owner, 2026-09-25).
+  'support:assign': 'support:view_all',
   'support:status': 'support:read',
 };
 
@@ -93,12 +96,23 @@ export function withDependencies(prev, next) {
   const added = next.filter((p) => !prev.includes(p));
   const removed = prev.filter((p) => !next.includes(p));
   let out = [...next];
+  // Follow chains both ways (assign → see all → view): adding pulls in every
+  // prerequisite, removing drops everything that stands on it.
   for (const p of added) {
-    const need = PERMISSION_REQUIRES[p];
-    if (need && !out.includes(need)) out.push(need);
+    for (let need = PERMISSION_REQUIRES[p]; need; need = PERMISSION_REQUIRES[need]) {
+      if (!out.includes(need)) out.push(need);
+    }
   }
-  for (const p of removed) {
-    out = out.filter((q) => PERMISSION_REQUIRES[q] !== p);
+  const gone = new Set(removed);
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (const q of out) {
+      if (gone.has(PERMISSION_REQUIRES[q])) {
+        out = out.filter((x) => x !== q);
+        gone.add(q);
+        changed = true;
+      }
+    }
   }
   return out;
 }

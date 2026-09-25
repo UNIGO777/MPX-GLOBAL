@@ -4,6 +4,7 @@ import { uploadChatDocument, uploadChatImage } from './chatAttachment.storage.se
 import { AppError } from '../utils/AppError.js';
 import { loadPartyConversation, viewerSideFor } from './conversation.service.js';
 import { notifyNewMessage } from './push.service.js';
+import { notifyMessageInApp } from './chatNotifications.service.js';
 import { emitNewMessage } from '../realtime/socket.js';
 
 /**
@@ -115,6 +116,7 @@ export async function sendMessage({ user, conversationId, body, imageBuffer = nu
   // M4-H — fire-and-forget, deliberately NOT awaited. A message being saved and
   // delivered must never depend on Firebase being reachable.
   notifyNewMessage({ conversation, senderSide: side, senderUserId: user.userId });
+  notifyMessageInApp({ conversation, senderSide: side, senderUserId: user.userId });
 
   return { message, conversation };
 }

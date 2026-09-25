@@ -12,6 +12,16 @@ import { PERMISSIONS } from '../config/permissions.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 import { createInquiry } from './inquiry.service.js';
+import { notify } from './notification.service.js';
+
+/*
+ * B8 in-app notices for supplier requests (owner override 2026-09-25). The
+ * buyer hears about progress; staff hear about work handed to them. All
+ * fire-and-forget, after the change is saved.
+ */
+function notifyBuyer(lead, { type, title, link = '/buyer/find-supplier' }) {
+  notify([lead.createdBy], { type, title, body: lead.what, link, orgId: lead.buyerOrgId, refKey: `lead:${lead._id}` });
+}
 
 /**
  * Step 1d · Enquiry routing — "help me find a supplier" (quote Module 6).
@@ -248,6 +258,15 @@ export async function assignLead({ actor, id, assigneeId, meta }) {
     if (lead.status === 'new' && next) lead.status = 'in_progress';
     await lead.save();
     await audit(actor, 'lead.assign', lead, { before: { assignedTo: before }, after: { assignedTo: next }, meta });
+    if (next && next !== String(actor.userId)) {
+      notify([next], {
+        type: 'lead.assigned',
+        title: `Supplier request ${lead.ref} was assigned to you`,
+        body: lead.what,
+        link: `/admin/leads/${lead._id}`,
+        refKey: `lead-assigned:${lead._id}`,
+      });
+    }
   }
   return staffView(lead);
 }
@@ -263,6 +282,8 @@ export async function setLeadStatus({ actor, id, status, meta }) {
   lead.closedAt = status === 'closed' ? new Date() : null;
   await lead.save();
   await audit(actor, 'lead.status', lead, { before: { status: before }, after: { status }, meta });
+  if (status === 'in_progress') notifyBuyer(lead, { type: 'lead.in_progress', title: "We're finding suppliers for your request" });
+  if (status === 'closed') notifyBuyer(lead, { type: 'lead.closed', title: 'Your supplier request was closed' });
   return staffView(lead);
 }
 
@@ -334,6 +355,11 @@ export async function routeLead({ actor, id, productId, meta }) {
   if (before !== 'routed') {
     await audit(actor, 'lead.status', lead, { before: { status: before }, after: { status: 'routed' }, meta });
   }
+  notifyBuyer(lead, {
+    type: 'lead.connected',
+    title: 'We connected you with a supplier',
+    link: `/buyer/chat/${conversation._id}`,
+  });
   return staffView(lead);
 }
 

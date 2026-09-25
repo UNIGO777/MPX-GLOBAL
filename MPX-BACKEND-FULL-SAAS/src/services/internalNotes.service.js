@@ -4,7 +4,7 @@ import { Lead } from '../models/Lead.js';
 import { Organisation } from '../models/Organisation.js';
 import { Ticket } from '../models/Ticket.js';
 import { User } from '../models/User.js';
-import { PERMISSIONS } from '../config/permissions.js';
+import { PERMISSIONS, ticketScope } from '../config/permissions.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 
@@ -39,10 +39,13 @@ function gate(actor, subjectType) {
   return subject;
 }
 
-async function loadSubject(subject, subjectId) {
+async function loadSubject(subject, subjectId, actor) {
   // Staff surface, permission-gated above; the subject is looked up by id the
   // same way the moderation screens read (explicit filter, never findById).
-  const doc = await subject.model.findOne({ _id: subjectId }).select('_id orgId buyerOrgId').lean();
+  // A ticket follows the ticket scope (owner, 2026-09-25): without
+  // `support:view_all`, only a ticket assigned to you — else the same 404.
+  const scope = subject.model === Ticket ? ticketScope(actor) : {};
+  const doc = await subject.model.findOne({ _id: subjectId, ...scope }).select('_id orgId buyerOrgId').lean();
   if (!doc) throw AppError.notFound('subject not found', 'Not found.');
   return doc;
 }
@@ -58,7 +61,7 @@ function view(n, names) {
 
 export async function listNotes({ actor, subjectType, subjectId }) {
   const subject = gate(actor, subjectType);
-  await loadSubject(subject, subjectId);
+  await loadSubject(subject, subjectId, actor);
   const notes = await InternalNote.find({ subjectType, subjectId }).sort({ createdAt: -1, _id: -1 }).limit(200).lean();
   const authors = await User.find({ _id: { $in: [...new Set(notes.map((n) => String(n.authorId)))] } }).select('name').lean();
   const names = new Map(authors.map((u) => [String(u._id), u.name]));
@@ -67,7 +70,7 @@ export async function listNotes({ actor, subjectType, subjectId }) {
 
 export async function addNote({ actor, subjectType, subjectId, body, meta }) {
   const subject = gate(actor, subjectType);
-  const doc = await loadSubject(subject, subjectId);
+  const doc = await loadSubject(subject, subjectId, actor);
   const note = await InternalNote.create({ subjectType, subjectId, body, authorId: actor.userId });
   await recordAudit({
     actor: { userId: actor.userId, role: actor.role },

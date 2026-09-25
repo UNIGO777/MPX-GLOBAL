@@ -50,7 +50,7 @@ beforeAll(async () => {
   made.orgs.push(org._id);
   buyer = await makeUser('buyer', { orgId: org._id });
   orgReader = await makeUser('employee', { permissions: ['organisation:read'] });
-  supportAgent = await makeUser('employee', { permissions: ['support:read'] });
+  supportAgent = await makeUser('employee', { permissions: ['support:read', 'support:view_all'] });
   noPerms = await makeUser('employee', { permissions: ['user:read'] });
   superadmin = await makeUser('superadmin');
   const res = await request(app).post('/support/tickets').set(bearer(buyer.token))

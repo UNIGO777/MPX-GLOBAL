@@ -123,6 +123,9 @@ const NoAccess = lazy(() =>
 );
 
 const Account = lazy(() => import('./pages/admin/Account.jsx').then((m) => ({ default: m.Account })));
+const Notifications = lazy(() =>
+  import('./pages/notifications/Notifications.jsx').then((m) => ({ default: m.Notifications })),
+);
 
 /**
  * The console's pages, written once. Each is mounted under BOTH `/admin` (the
@@ -157,6 +160,7 @@ const CONSOLE_ROUTES = [
   { path: '/errors', element: <ErrorLog />, perms: ['errorlog:read'] },
   { path: '/featured', element: <Featured />, perms: ['featured:manage'] },
   { path: '/account', element: <Account /> },
+  { path: '/notifications', element: <Notifications /> },
   { path: '/no-access', element: <NoAccess /> },
   { path: '/staff', element: <Employees />, superadminOnly: true },
   // Was /admin/employees until 2026-08-18 — kept as a redirect for bookmarks.
@@ -335,6 +339,7 @@ export function App() {
                 <Route path="/buyer/support" element={<MySupport />} />
                 <Route path="/buyer/support/:id" element={<MyTicket />} />
                 <Route path="/buyer/find-supplier" element={<FindSupplier />} />
+                <Route path="/buyer/notifications" element={<Suspense fallback={<ChunkFallback />}><Notifications /></Suspense>} />
               </Route>
             </Route>
 
@@ -357,6 +362,7 @@ export function App() {
                     bookmarks to /exporter/verification still resolve. */}
                 <Route path="/exporter" element={<Navigate to="/exporter/dashboard" replace />} />
                 <Route path="/exporter/kyc" element={<ExporterKycUpload />} />
+                <Route path="/exporter/notifications" element={<Suspense fallback={<ChunkFallback />}><Notifications /></Suspense>} />
                 {/* Module 4 (month 2) — the exporter drafts a quotation here after
                     starting one from a chat thread. */}
                 <Route path="/exporter/quotations/:id" element={<QuotationBuilder />} />

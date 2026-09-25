@@ -58,8 +58,8 @@ beforeAll(async () => {
   exporterA = await makeUser('exporter', { orgId: orgA }); // same company, other side
   buyerB = await makeUser('buyer');
   superadmin = await makeUser('superadmin');
-  agent = await makeUser('employee', { permissions: ['support:read', 'support:reply', 'support:assign', 'support:status'] });
-  agent2 = await makeUser('employee', { permissions: ['support:read', 'support:reply', 'support:assign', 'support:status'] });
+  agent = await makeUser('employee', { permissions: ['support:read', 'support:view_all', 'support:reply', 'support:assign', 'support:status'] });
+  agent2 = await makeUser('employee', { permissions: ['support:read', 'support:view_all', 'support:reply', 'support:assign', 'support:status'] });
   plainEmployee = await makeUser('employee', { permissions: ['user:read'] });
 });
 
@@ -402,7 +402,7 @@ describe('Closing, follow-ups, badges and auto-close (owner, 2026-09-24)', () =>
   });
 
   it('🔴 split permissions: read-only can look but not reply, change status or assign', async () => {
-    const reader = await makeUser('employee', { permissions: ['support:read'] });
+    const reader = await makeUser('employee', { permissions: ['support:read', 'support:view_all'] });
     const t = await raise(buyerA);
     expect((await request(app).get(`/admin/support/tickets/${t.id}`).set(bearer(reader.token))).status).toBe(200);
     expect((await request(app).post(`/admin/support/tickets/${t.id}/messages`).set(bearer(reader.token)).send({ body: 'x' })).status).toBe(403);
@@ -421,7 +421,7 @@ describe('Closing, follow-ups, badges and auto-close (owner, 2026-09-24)', () =>
   });
 
   it('without support:assign: may take an unassigned ticket for yourself — not give it away, not take over', async () => {
-    const replier = await makeUser('employee', { permissions: ['support:read', 'support:reply'] });
+    const replier = await makeUser('employee', { permissions: ['support:read', 'support:view_all', 'support:reply'] });
     const t = await raise(buyerA);
     const toOther = await request(app).patch(`/admin/support/tickets/${t.id}/assign`).set(bearer(replier.token)).send({ assigneeId: String(agent.user._id) });
     expect(toOther.status).toBe(403);
@@ -435,14 +435,14 @@ describe('Closing, follow-ups, badges and auto-close (owner, 2026-09-24)', () =>
   });
 
   it('support:status alone (with read) can resolve but cannot reply', async () => {
-    const closer = await makeUser('employee', { permissions: ['support:read', 'support:status'] });
+    const closer = await makeUser('employee', { permissions: ['support:read', 'support:view_all', 'support:status'] });
     const t = await raise(buyerA);
     expect((await request(app).patch(`/admin/support/tickets/${t.id}/status`).set(bearer(closer.token)).send({ status: 'resolved' })).status).toBe(200);
     expect((await request(app).post(`/admin/support/tickets/${t.id}/messages`).set(bearer(closer.token)).send({ body: 'x' })).status).toBe(403);
   });
 
   it('🔴 replying to a CLOSED ticket needs support:status too (it would re-open it)', async () => {
-    const replier = await makeUser('employee', { permissions: ['support:read', 'support:reply'] });
+    const replier = await makeUser('employee', { permissions: ['support:read', 'support:view_all', 'support:reply'] });
     const t = await raise(buyerA);
     await request(app).patch(`/admin/support/tickets/${t.id}/status`).set(bearer(agent.token)).send({ status: 'resolved' });
     const before = await TicketMessage.countDocuments({ ticketId: t.id });
@@ -456,8 +456,8 @@ describe('Closing, follow-ups, badges and auto-close (owner, 2026-09-24)', () =>
   });
 
   it('reports:team widens the ticket log to the whole team; without it, own actions only', async () => {
-    const lead = await makeUser('employee', { permissions: ['support:read', 'reports:team'] });
-    const plain = await makeUser('employee', { permissions: ['support:read'] });
+    const lead = await makeUser('employee', { permissions: ['support:read', 'support:view_all', 'reports:team'] });
+    const plain = await makeUser('employee', { permissions: ['support:read', 'support:view_all'] });
     const t = await raise(buyerA);
     await request(app).post(`/admin/support/tickets/${t.id}/messages`).set(bearer(agent.token)).send({ body: 'Logged by agent' });
     const team = await request(app).get('/admin/support/log').set(bearer(lead.token));
@@ -465,5 +465,54 @@ describe('Closing, follow-ups, badges and auto-close (owner, 2026-09-24)', () =>
     expect(team.body.rows.some((r) => r.actor.id === String(agent.user._id))).toBe(true);
     const own = await request(app).get('/admin/support/log').set(bearer(plain.token));
     expect(own.body.rows.every((r) => r.actor.id === String(plain.user._id))).toBe(true);
+  });
+});
+
+describe('🔴 ticket visibility — "See all tickets" (owner, 2026-09-25)', () => {
+  it('without support:view_all, staff see ONLY tickets assigned to them — everywhere', async () => {
+    const own = await makeUser('employee', { permissions: ['support:read', 'support:reply', 'support:status'] });
+    const mineT = await raise(buyerA, { subject: 'Assigned to own' });
+    const otherT = await raise(buyerA, { subject: 'Somebody else' });
+    const unassignedT = await raise(buyerA, { subject: 'Nobody yet' });
+    await request(app).patch(`/admin/support/tickets/${mineT.id}/assign`).set(bearer(agent.token)).send({ assigneeId: String(own.user._id) }).expect(200);
+    await request(app).patch(`/admin/support/tickets/${otherT.id}/assign`).set(bearer(agent.token)).send({ assigneeId: String(agent2.user._id) }).expect(200);
+
+    // The list: only their own, and the assignee filter cannot widen it.
+    const list = await request(app).get('/admin/support/tickets?pageSize=50').set(bearer(own.token));
+    const ids = list.body.rows.map((r) => r.id);
+    expect(ids).toContain(mineT.id);
+    expect(ids).not.toContain(otherT.id);
+    expect(ids).not.toContain(unassignedT.id);
+    const widened = await request(app).get('/admin/support/tickets?assignee=unassigned&pageSize=50').set(bearer(own.token));
+    expect(widened.body.rows.map((r) => r.id)).not.toContain(unassignedT.id);
+
+    // Every other path: someone else's (or an unassigned) ticket is a 404.
+    for (const t of [otherT, unassignedT]) {
+      expect((await request(app).get(`/admin/support/tickets/${t.id}`).set(bearer(own.token))).status).toBe(404);
+      expect((await request(app).get(`/admin/support/tickets/${t.id}/timeline`).set(bearer(own.token))).status).toBe(404);
+      expect((await request(app).post(`/admin/support/tickets/${t.id}/messages`).set(bearer(own.token)).send({ body: 'x' })).status).toBe(404);
+      expect((await request(app).patch(`/admin/support/tickets/${t.id}/status`).set(bearer(own.token)).send({ status: 'resolved' })).status).toBe(404);
+      expect((await request(app).patch(`/admin/support/tickets/${t.id}/assign`).set(bearer(own.token)).send({ assigneeId: String(own.user._id) })).status).toBe(404);
+      expect((await request(app).get(`/admin/notes?subjectType=ticket&subjectId=${t.id}`).set(bearer(own.token))).status).toBe(404);
+    }
+
+    // Their own ticket works normally.
+    expect((await request(app).get(`/admin/support/tickets/${mineT.id}`).set(bearer(own.token))).status).toBe(200);
+    expect((await request(app).post(`/admin/support/tickets/${mineT.id}/messages`).set(bearer(own.token)).send({ body: 'On it' })).status).toBe(201);
+
+    // The counts follow the same scope — no "unassigned" number for them.
+    const ov = await request(app).get('/admin/support/overview').set(bearer(own.token));
+    expect(ov.body.scope).toBe('mine');
+    expect(ov.body.counts.unassigned).toBe(0);
+    expect(ov.body.openTickets.every((t) => t.assignedTo?.id === String(own.user._id))).toBe(true);
+  });
+
+  it('with support:view_all, the whole queue — assigned or not — and who has each', async () => {
+    const all = await makeUser('employee', { permissions: ['support:read', 'support:view_all'] });
+    const t = await raise(buyerA, { subject: 'Visible to all-viewer' });
+    const list = await request(app).get('/admin/support/tickets?assignee=unassigned&pageSize=50').set(bearer(all.token));
+    expect(list.body.rows.map((r) => r.id)).toContain(t.id);
+    expect((await request(app).get(`/admin/support/tickets/${t.id}`).set(bearer(all.token))).status).toBe(200);
+    expect((await request(app).get('/admin/support/overview').set(bearer(all.token))).body.scope).toBe('all');
   });
 });

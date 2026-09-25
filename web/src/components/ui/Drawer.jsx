@@ -80,10 +80,35 @@ export function Drawer({ open, onClose, title, subtitle, icon: Icon, children, f
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
         {footer && (
-          <div className="flex justify-end gap-3 border-t border-surface-border px-6 py-4">{footer}</div>
+          // Same phone rules as Modal's footer: labels never wrap; buttons wrap
+          // to a new row when needed and grow to fill it.
+          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-surface-border px-4 py-3 sm:gap-3 sm:px-6 sm:py-4 [&>a]:whitespace-nowrap [&>button]:whitespace-nowrap max-sm:[&>a]:grow max-sm:[&>button]:grow">
+            {footer}
+          </div>
         )}
       </div>
     </div>,
     document.body,
+  );
+}
+
+/**
+ * A drawer footer with a status hint and its buttons (owner, 2026-09-25: on a
+ * phone the hint, Cancel and the primary button were squeezed into one row and
+ * "Send ticket" broke onto two lines).
+ *
+ * Phones: the hint gets its own line, then the buttons side by side at equal
+ * width. From `sm`: one row — hint left, buttons right. Labels never wrap.
+ */
+export function DrawerActions({ hint, children }) {
+  return (
+    <div className="flex w-full flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
+      {hint && (
+        <p className="text-[12.5px] font-medium text-muted sm:mr-auto" aria-live="polite">
+          {hint}
+        </p>
+      )}
+      <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:flex sm:gap-3 [&>*]:whitespace-nowrap">{children}</div>
+    </div>
   );
 }

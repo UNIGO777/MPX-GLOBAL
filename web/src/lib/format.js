@@ -159,3 +159,14 @@ export function formatBytes(bytes) {
   if (kb < 1024) return `${Math.round(kb)} KB`;
   return `${(kb / 1024).toFixed(1)} MB`;
 }
+
+/**
+ * Display-only phone formatting for a stored E.164 number: Indian numbers are
+ * grouped (+91 70000 00001); anything else is shown as stored. Never used for
+ * `tel:` links — those keep the raw E.164.
+ */
+export function formatMobile(e164) {
+  if (!e164) return null;
+  const m = /^\+91(\d{5})(\d{5})$/.exec(e164);
+  return m ? `+91 ${m[1]} ${m[2]}` : e164;
+}

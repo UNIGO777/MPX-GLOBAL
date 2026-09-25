@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/admin.js';
 import { config } from '../../config.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
-import { apiError, formatDate, KYC_STATUS_META } from '../../lib/format.js';
+import { apiError, formatDate, formatMobile, KYC_STATUS_META } from '../../lib/format.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { Alert } from '../../components/ui/Alert.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -177,7 +177,7 @@ function UserName({ row, onOpen }) {
  * were the widest thing in the old table and mostly repeated the filter.
  */
 function UserMeta({ row }) {
-  const contact = [row.email, row.mobile].filter(Boolean).join(' · ');
+  const contact = [row.email, formatMobile(row.mobile)].filter(Boolean).join(' · ');
   return (
     <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
       <span className="inline-flex shrink-0 items-center rounded-full bg-ink-100 px-2 py-px text-[11px] font-medium text-ink-600">
@@ -244,7 +244,7 @@ function UserDetail({ row, data, canOpenCompany }) {
         </DetailRow>
         <DetailRow Icon={PhoneIcon} label="Mobile">
           {data.mobile ? (
-            <a href={`tel:${data.mobile}`} className="tabular-nums hover:text-primary-700 hover:underline">{data.mobile}</a>
+            <a href={`tel:${data.mobile}`} className="tabular-nums hover:text-primary-700 hover:underline">{formatMobile(data.mobile)}</a>
           ) : (
             <span className="text-muted">Not given</span>
           )}
