@@ -10,6 +10,7 @@ const { AuditLog } = await import('../src/models/AuditLog.js');
 const { ExporterBankAccount } = await import('../src/models/ExporterBankAccount.js');
 const { signAccessToken } = await import('../src/services/token.service.js');
 const { hashPassword } = await import('../src/services/password.service.js');
+const { decryptField, encryptField } = await import('../src/utils/fieldCrypto.js');
 
 /**
  * Exporter bank details (2026-09-24) — saved so the quotation builder does not
@@ -201,5 +202,89 @@ describe('exporter bank accounts', () => {
       .set(bearer(ex.token))
       .send({});
     expect(res.status).toBe(400);
+  });
+});
+
+/**
+ * Encryption at rest (owner, 2026-09-25 — reversing the "don't encrypt"
+ * decision taken earlier the same day).
+ *
+ * 🔴 These read the RAW column on purpose. A test that only checked the
+ * decrypted value would pass identically against a plaintext database, which
+ * makes it useless as a guard — the assertion that matters is that the stored
+ * bytes are NOT the number.
+ */
+describe('bank accounts · the number is encrypted at rest', () => {
+  it('stores ciphertext, not the account number — and last4 still comes from the PLAINTEXT', async () => {
+    const ex = await makeUser('exporter');
+    const res = await create(ex.token);
+    expect(res.status).toBe(201);
+
+    const row = await ExporterBankAccount.findById(res.body.bankAccount.id).select('+accountNumber');
+    expect(row.accountNumber).not.toBe(VALID.accountNumber);
+    expect(row.accountNumber.startsWith('v1:')).toBe(true);
+    expect(decryptField(row.accountNumber)).toBe(VALID.accountNumber);
+
+    // 🔴 The order inside the model hook: derive last4, THEN encrypt. Compute it
+    // the other way round and the mask is four characters of base64, shown to a
+    // person as confirmation that they typed the right account.
+    expect(row.last4).toBe('3456');
+    expect(res.body.bankAccount.masked).toBe('••••3456');
+  });
+
+  it('re-encrypts on edit, and never double-encrypts an unchanged number', async () => {
+    const ex = await makeUser('exporter');
+    const created = await create(ex.token);
+    const id = created.body.bankAccount.id;
+    const before = (await ExporterBankAccount.findById(id).select('+accountNumber')).accountNumber;
+
+    // An edit that does NOT touch the number must leave the ciphertext alone —
+    // encrypting it again would make `decryptField` return ciphertext.
+    await request(app).patch(`/me/bank-accounts/${id}`).set(bearer(ex.token)).send({ label: 'Renamed' });
+    const untouched = (await ExporterBankAccount.findById(id).select('+accountNumber')).accountNumber;
+    expect(untouched).toBe(before);
+    expect(decryptField(untouched)).toBe(VALID.accountNumber);
+
+    // A real change re-encrypts, and moves last4 with it.
+    await request(app)
+      .patch(`/me/bank-accounts/${id}`)
+      .set(bearer(ex.token))
+      .send({ accountNumber: '9999 8888 7777 6666' });
+    const changed = await ExporterBankAccount.findById(id).select('+accountNumber');
+    expect(decryptField(changed.accountNumber)).toBe('9999 8888 7777 6666');
+    expect(changed.last4).toBe('6666');
+  });
+
+  it('a fresh IV every time — identical numbers must not produce identical ciphertext', () => {
+    const a = encryptField('1234 5678 9012 3456');
+    const b = encryptField('1234 5678 9012 3456');
+    expect(a).not.toBe(b);
+    expect(decryptField(a)).toBe(decryptField(b));
+  });
+
+  it('refuses TAMPERED ciphertext instead of returning rubbish', () => {
+    const good = encryptField('1234 5678 9012 3456');
+    const [v, iv, tag, data] = good.split(':');
+    // Flip a byte of the payload — GCM's auth tag must catch it.
+    const flipped = Buffer.from(data, 'base64');
+    flipped[0] ^= 0xff;
+    expect(() => decryptField([v, iv, tag, flipped.toString('base64')].join(':'))).toThrow();
+  });
+
+  it('reads a row written BEFORE encryption existed, without rewriting it as plaintext', async () => {
+    const ex = await makeUser('exporter');
+    const created = await create(ex.token);
+    const id = created.body.bankAccount.id;
+
+    // A legacy plaintext row, as the database held them until today.
+    await ExporterBankAccount.updateOne({ _id: id }, { $set: { accountNumber: '1111 2222 3333 4444' } });
+    const legacy = await ExporterBankAccount.findById(id).select('+accountNumber');
+    expect(decryptField(legacy.accountNumber)).toBe('1111 2222 3333 4444');
+
+    // And saving it converts it — the tolerance is one-way.
+    legacy.accountNumber = '1111 2222 3333 4444';
+    await legacy.save();
+    const after = await ExporterBankAccount.findById(id).select('+accountNumber');
+    expect(after.accountNumber.startsWith('v1:')).toBe(true);
   });
 });

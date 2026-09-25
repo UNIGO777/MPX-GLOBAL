@@ -46,6 +46,11 @@ process.env.OTP_DEV_PRINT = 'false';
 // mock `config/env.js` directly rather than touching this.
 process.env.OTP_DEV_FIXED_CODE = 'false';
 
+// Bank account numbers are encrypted at rest (2026-09-25). A fixed test key so
+// the suite exercises the real encrypt/decrypt path rather than a bypass — 32
+// bytes, and obviously not a production value.
+process.env.FIELD_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString('base64');
+
 // 🔴 Same trap again, found 2026-09-25 by running the suite with NO .env (as CI
 // does): 12 tests silently depended on the developer's .env. The web-client
 // cookie tests send `Origin: http://localhost:5173`, which CORS refuses unless

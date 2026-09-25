@@ -175,6 +175,54 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-25 — Bank account numbers are ENCRYPTED at rest, and an account can be added without
+  leaving the send step.** Owner: "waha add karne ki field daal do or wahi se save karna … or account
+  encryption bhi karna h".
+  - 🔴 **This REVERSES the "do not encrypt" decision taken earlier the same day** (tracker E1).
+    `docs/Pending-Work.md` has been corrected in the same pass — a stale line there would have had the
+    next session acting on the old answer.
+  - `utils/fieldCrypto.js`: AES-256-**GCM**, fresh random IV per value, key from
+    `FIELD_ENCRYPTION_KEY` (base64 or hex, exactly 32 bytes or it refuses). GCM not CBC so tampered
+    ciphertext fails loudly instead of decrypting to garbled digits on a payment document.
+  - ⚠️ **What it does and does not do, stated in the module:** it protects a database that LEAVES the
+    server — stolen backup, loose Mongo permission, retired disk. It does NOT protect anyone holding
+    the app's `.env`, because the server must decrypt to print the number on a quotation. Hashing is
+    not an option for the same reason. **Lose the key and every stored number is unreadable.**
+  - **Encryption lives in the MODEL's write hook, not the services** — a service that forgets to
+    encrypt stores plaintext and nothing complains. Order is load-bearing: derive `last4` from the
+    PLAINTEXT, then encrypt; the other way round the mask is four characters of base64 shown to a
+    person as confirmation they typed the right account.
+  - 🔴 **A test caught a real hole in the migration:** the hook first keyed on `isModified`, so a row
+    written before today only converted if somebody EDITED the number — renaming its label left
+    plaintext indefinitely. It now keys on "is this value plaintext?", so ANY save converts it, which
+    is what makes `decryptField`'s plaintext tolerance temporary rather than permanent.
+  - Also removed `maxlength: 34` from the model column: that bound describes the PLAINTEXT (the IBAN
+    maximum) and every save failed once the stored value became ~73 characters. The plaintext bound
+    is enforced at the route boundary, where the plaintext actually arrives.
+  - **Web:** `AddBankAccountInline` in the send dialog — expands in place rather than opening a second
+    modal (a dialog on a dialog traps focus in the wrong layer and Esc closes the wrong thing). It
+    saves a REAL account through the same endpoint the profile uses; there is deliberately no "use
+    once without saving" path, because an account that exists on one document can never be corrected,
+    audited or re-confirmed.
+  - Tests: 5 new in `bank-accounts.test.js` (ciphertext at rest with `last4` still from the
+    plaintext, no double-encryption on an unrelated edit, a fresh IV each time, tampered ciphertext
+    throws, a legacy plaintext row reads and then converts) and the quotation snapshot test now pins
+    BOTH the freeze and the encryption — 44/44.
+- **2026-09-25 — `docs/Client-Requests.md` rewritten against what is actually true.** Owner asked for
+  the list of what we need from the client. The existing file had gone stale in a way that would have
+  embarrassed us: it still asked the client to decide on support tickets, the duplicate-company fix,
+  the settings screen, quotations and super-admin 2FA — **all five of which are now built or dropped.**
+  Asking a client to decide something you have already shipped is worse than not asking.
+  - **New top item: email delivery is broken in production** (the `554` sender rejection). It is the
+    client's mail-provider configuration, not ours, and it stops every email sign-in today — so it
+    leads the document, with what still works (Indian mobile numbers, by SMS) said plainly.
+  - **New section: what the app stores need** — developer accounts, listing content, the privacy
+    policy URL (which makes the Terms a store blocker too), **the app's old blue icon and splash**,
+    and the signing-key decision with its consequence stated: lose that key and the app can never be
+    updated again.
+  - Also new: KYC retention has no instruction from anyone, and the security actions only the client
+    can authorise (super-admin password, the Firebase key that counts as exposed, the server pass).
+  - §6 lists what is now CLOSED, so the client can see the questions that no longer need answering.
 - **2026-09-25 — `Logo` now measures each artwork separately.** The navy-and-red `brand-logo.png`
   was replaced (998×407, ratio 2.452) while `brand-logo-white.png` is still the older 1200×597
   (2.010), and `Logo` had ONE shared `ASPECT` constant. It reserved a box ~20% too wide for the red

@@ -38,6 +38,7 @@ const { Conversation } = await import('../src/models/Conversation.js');
 const { Message } = await import('../src/models/Message.js');
 const { Quotation } = await import('../src/models/Quotation.js');
 const { signAccessToken } = await import('../src/services/token.service.js');
+const { decryptField } = await import('../src/utils/fieldCrypto.js');
 const { hashPassword } = await import('../src/services/password.service.js');
 
 /**
@@ -509,8 +510,16 @@ describe('quotations · sending freezes the document', () => {
 
     const after = await request(app).get(`/quotations/${id}`).set(bearer(t.buyer.token));
     expect(after.body.quotation.bank.masked).toBe('••••4444'); // NOT 6666
+    /**
+     * 🔴 Two things at once since 2026-09-25: the snapshot is FROZEN, and it is
+     * stored ENCRYPTED. Asserting the raw column is not the plaintext is what
+     * would catch the encryption being silently dropped — a test that only read
+     * the decrypted value would pass just as happily on a plaintext database.
+     */
     const stored = await Quotation.findById(id).select('+bankSnapshot.accountNumber');
-    expect(stored.bankSnapshot.accountNumber).toBe('1111 2222 3333 4444');
+    expect(stored.bankSnapshot.accountNumber).not.toBe('1111 2222 3333 4444');
+    expect(stored.bankSnapshot.accountNumber.startsWith('v1:')).toBe(true);
+    expect(decryptField(stored.bankSnapshot.accountNumber)).toBe('1111 2222 3333 4444');
   });
 
   it('freezes the totals, and recomputes them from items rather than trusting the caller', async () => {

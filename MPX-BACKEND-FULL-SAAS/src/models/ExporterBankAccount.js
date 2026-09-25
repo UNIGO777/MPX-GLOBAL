@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 import { baseSchemaOptions } from './baseSchema.js';
 import { declareScope, SCOPE } from './scoping.js';
+import { encryptField, isEncrypted } from '../utils/fieldCrypto.js';
 
 const { Schema } = mongoose;
 
@@ -15,6 +16,13 @@ const { Schema } = mongoose;
  * pays against directly; the platform never touches that money and no payout
  * path may ever read this model. If a payout feature is built in Phase 2 it uses
  * the provider's beneficiary token, never this.
+ *
+ * 🔴 `accountNumber` is ENCRYPTED AT REST (AES-256-GCM, `utils/fieldCrypto.js`)
+ * since 2026-09-25, at the owner's instruction. That protects a database that
+ * leaves the server — a stolen backup, a loose Mongo permission, a retired disk.
+ * It does NOT protect against anyone holding the app's own `.env`, because the
+ * server has to decrypt the number to print it on a quotation. Hashing is not an
+ * option for the same reason.
  *
  * 🔴 `last4` is STORED, and `accountNumber` is `select: false`. Every list, every
  * picker and every audit entry uses `last4`, so the full number is never loaded
@@ -45,7 +53,15 @@ const exporterBankAccountSchema = new Schema(
     bankName: { type: String, required: true, trim: true, maxlength: 140 },
     branch: { type: String, trim: true, maxlength: 140 },
 
-    accountNumber: { type: String, required: true, trim: true, maxlength: 34, select: false },
+    /**
+     * 🔴 No `maxlength` here, deliberately. It was 34 (the IBAN maximum) and
+     * that limit describes the PLAINTEXT — once the value is encrypted it is
+     * ~73 characters and every save failed validation. The plaintext bound is
+     * enforced where the plaintext actually arrives: `bankAccount.validators.js`
+     * at the route boundary. A length rule on a ciphertext column constrains
+     * nothing real and breaks the moment the format changes.
+     */
+    accountNumber: { type: String, required: true, trim: true, select: false },
     // Derived below. The ONLY part of the number any list or log may hold.
     last4: { type: String, maxlength: 4 },
 
@@ -69,12 +85,39 @@ const exporterBankAccountSchema = new Schema(
   baseSchemaOptions,
 );
 
-// Keep `last4` in step with the number, on create and on every change — a stale
-// mask is worse than none, because it reads as confirmation.
-exporterBankAccountSchema.pre('validate', function syncLast4() {
-  if (this.isModified('accountNumber') && this.accountNumber) {
-    this.last4 = this.accountNumber.replace(/\s+/g, '').slice(-4);
-  }
+/**
+ * Derive `last4`, then ENCRYPT the number — in that order, on every write.
+ *
+ * 🔴 It lives in a model hook rather than at the call sites (owner asked for
+ * encryption 2026-09-25) precisely so no future write path can forget. A
+ * service that forgets to encrypt stores a plaintext account number and nothing
+ * complains; a model that always encrypts cannot be bypassed by new code.
+ *
+ * 🔴 The ORDER is load-bearing: `last4` must come off the plaintext. Compute it
+ * after encrypting and the mask becomes four characters of base64 — a
+ * meaningless string shown to a person as confirmation that they typed the
+ * right account.
+ *
+ * The `isEncrypted` guard makes this idempotent: `save()` on a document whose
+ * number has not changed must not encrypt the ciphertext a second time.
+ */
+exporterBankAccountSchema.pre('validate', function protectAccountNumber() {
+  /**
+   * 🔴 The condition is "is it plaintext?", NOT "did it change?".
+   *
+   * It was `isModified(...)` first, and its test caught the hole: a row written
+   * before encryption existed would only convert if somebody EDITED the number.
+   * Saving it for any other reason — renaming the label, flipping the default —
+   * left the plaintext sitting there indefinitely. Keying on the value's own
+   * shape means every save of a legacy row converts it, which is what makes the
+   * plaintext tolerance in `decryptField` temporary rather than permanent.
+   *
+   * Absent (`select: false` on most reads) or already encrypted → nothing to do.
+   */
+  if (!this.accountNumber || isEncrypted(this.accountNumber)) return;
+
+  this.last4 = this.accountNumber.replace(/\s+/g, '').slice(-4);
+  this.accountNumber = encryptField(this.accountNumber);
 });
 
 // One default per exporter; the partial index lets every non-default row exist.

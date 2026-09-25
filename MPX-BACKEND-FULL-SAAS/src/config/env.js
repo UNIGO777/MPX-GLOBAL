@@ -209,6 +209,21 @@ const envSchema = z.object({
   EMAIL_LOGO_WHITE_URL: z.string().url().optional(),
 
   PAYMENT_API_BASE_URL: z.string().url().optional(),
+  /**
+   * 🔴 AES-256 key for encrypting stored bank account numbers (owner,
+   * 2026-09-25, reversing the earlier "don't encrypt" decision). Base64 or hex,
+   * decoding to exactly 32 bytes — `openssl rand -base64 32`.
+   *
+   * ⚠️ LOSE THIS AND EVERY STORED ACCOUNT NUMBER IS UNREADABLE. It belongs in
+   * the same backup discipline as the database password. Rotating it requires a
+   * re-encryption pass; there is no automatic migration.
+   *
+   * Optional here so a dev box without it still boots — the failure is raised
+   * where it matters, when something tries to store or read a number, rather
+   * than blocking a developer who is nowhere near that code.
+   */
+  FIELD_ENCRYPTION_KEY: z.string().optional(),
+
   PAYMENT_API_KEY: z.string().optional(),
   PAYMENT_API_SECRET: z.string().optional(),
   PAYMENT_WEBHOOK_SECRET: z.string().optional(),

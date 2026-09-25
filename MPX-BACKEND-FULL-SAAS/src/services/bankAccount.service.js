@@ -1,6 +1,7 @@
 import { ExporterBankAccount, bankAccountView } from '../models/ExporterBankAccount.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
+import { decryptField } from '../utils/fieldCrypto.js';
 
 /**
  * An exporter's saved bank details (owner, 2026-09-24 — quotation builder).
@@ -203,6 +204,7 @@ export async function revealForQuotation({ user, id, actor, meta }) {
 
   return {
     ...bankAccountView(row),
-    accountNumber: row.accountNumber,
+    // Stored encrypted; decrypted only here, for the one caller that prints it.
+    accountNumber: decryptField(row.accountNumber),
   };
 }
