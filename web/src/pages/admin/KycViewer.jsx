@@ -313,19 +313,19 @@ export function KycViewer() {
               <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-ink-600">
                 {data?.entityType && ENTITY_LABELS[data.entityType] && (
                   <span className="inline-flex items-center gap-1.5">
-                    <BuildingIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+                    <BuildingIcon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
                     {ENTITY_LABELS[data.entityType]}
                   </span>
                 )}
                 {countryName(org?.company?.country) && (
                   <span className="inline-flex items-center gap-1.5">
-                    <GlobeIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+                    <GlobeIcon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
                     {countryName(org.company.country)}
                   </span>
                 )}
                 {org?.verification?.submittedAt && (
                   <span className="inline-flex items-center gap-1.5">
-                    <CalendarIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+                    <CalendarIcon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
                     Sent {formatDate(org.verification.submittedAt)}
                   </span>
                 )}
@@ -396,7 +396,7 @@ export function KycViewer() {
                   <dt className="font-semibold capitalize text-ink-700">{f === 'entityType' ? 'Entity type' : f}</dt>
                   <dd className="min-w-0 text-ink-600">
                     <span className="line-through decoration-ink-300">{fmt(data.pendingChanges.current?.[f])}</span>
-                    <span aria-hidden="true" className="mx-1.5 text-ink-400">→</span>
+                    <span aria-hidden="true" className="mx-1.5 text-ink-500">→</span>
                     <span className="font-semibold text-ink-900">{fmt(data.pendingChanges.requested?.[f])}</span>
                   </dd>
                 </div>
@@ -523,7 +523,7 @@ export function KycViewer() {
                       <span
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full lg:h-9 lg:w-9 lg:rounded-lg ${
                           old
-                            ? 'border border-dashed border-ink-300 bg-white text-ink-400'
+                            ? 'border border-dashed border-ink-300 bg-white text-ink-500'
                             : on
                               ? 'bg-primary-600 text-white'
                               : 'bg-ink-100 text-ink-500'
@@ -624,7 +624,7 @@ export function KycViewer() {
             <div className="relative min-h-[300px] bg-ink-50 sm:min-h-[420px]">
               {expired ? (
                 <div className="flex min-h-[300px] flex-col items-center justify-center p-8 text-center sm:min-h-[420px]">
-                  <RefreshIcon className="h-8 w-8 text-ink-400" />
+                  <RefreshIcon className="h-8 w-8 text-ink-500" />
                   <h3 className="mt-3 text-base font-semibold text-ink-900">
                     This preview has expired
                   </h3>
@@ -650,7 +650,7 @@ export function KycViewer() {
                 />
               ) : doc ? (
                 <div className="flex min-h-[300px] flex-col items-center justify-center p-8 text-center sm:min-h-[420px]">
-                  <FileIcon className="h-8 w-8 text-ink-400" />
+                  <FileIcon className="h-8 w-8 text-ink-500" />
                   <h3 className="mt-3 text-base font-semibold text-ink-900">
                     This file can&apos;t be previewed here
                   </h3>

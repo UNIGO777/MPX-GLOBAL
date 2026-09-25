@@ -106,7 +106,7 @@ function CompanyMeta({ org }) {
 function Activity({ products, takedowns }) {
   return (
     <div className="text-[13px] leading-snug">
-      <span className={products ? 'font-semibold text-ink-900' : 'text-ink-400'}>
+      <span className={products ? 'font-semibold text-ink-900' : 'text-ink-500'}>
         {products || 0} {products === 1 ? 'product' : 'products'}
       </span>
       {takedowns > 0 && (
@@ -336,7 +336,7 @@ export function Organisations() {
                     <div className="min-w-0 flex-1">
                       <Link
                         to={cp(`/admin/organisations/${org.id}`)}
-                        className="block truncate font-semibold text-ink-900 hover:text-primary-700 hover:underline"
+                        className="-my-2.5 block truncate py-2.5 font-semibold text-ink-900 hover:text-primary-700 hover:underline"
                       >
                         {org.name}
                       </Link>
@@ -391,7 +391,7 @@ export function Organisations() {
                           <div className="min-w-0">
                             <Link
                               to={cp(`/admin/organisations/${org.id}`)}
-                              className="block truncate font-semibold text-ink-900 hover:text-primary-700 hover:underline"
+                              className="-my-2.5 block truncate py-2.5 font-semibold text-ink-900 hover:text-primary-700 hover:underline"
                             >
                               {org.name}
                             </Link>

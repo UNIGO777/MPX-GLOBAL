@@ -178,7 +178,7 @@ function ContactPanel() {
       {/* Published in Settings since 2026-09-25 — shown only when set. */}
       {!isLoading && hasAny && hours && (
         <p className="mt-3 flex items-center gap-2 text-[13px] text-ink-600">
-          <ClockIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+          <ClockIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
           <span><span className="font-semibold text-ink-800">Support hours:</span> {hours}</span>
         </p>
       )}

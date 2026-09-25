@@ -410,19 +410,19 @@ function SupportContactSetting({ form, data, set, problems }) {
           <ul className="mt-2 space-y-1.5 text-[14px] text-ink-900">
             {email && (
               <li className="flex items-center gap-2">
-                <MailIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                <MailIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
                 <span className="min-w-0 break-all font-semibold text-primary-700">{email.toLowerCase()}</span>
               </li>
             )}
             {phone && (
               <li className="flex items-center gap-2">
-                <PhoneIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                <PhoneIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
                 <span className="font-semibold">{phone}</span>
               </li>
             )}
             {hours && (
               <li className="flex items-center gap-2 text-[13px] text-ink-600">
-                <ClockIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                <ClockIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
                 <span>Support hours: {hours}</span>
               </li>
             )}

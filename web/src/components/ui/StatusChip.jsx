@@ -11,7 +11,7 @@ import { CheckCircleIcon } from './icons.jsx';
 const TONES = {
   muted: 'bg-ink-100 text-ink-500',
   warning: 'bg-warning-50 text-warning',
-  success: 'bg-success-50 text-success',
+  success: 'bg-success-50 text-success-700',
   danger: 'bg-danger-50 text-danger',
 };
 

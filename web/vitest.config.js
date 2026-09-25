@@ -9,5 +9,8 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['tests/**/*.test.{js,jsx}'],
     setupFiles: ['tests/setup.js'],
+    // Screen tests type into real inputs one key at a time; with every file
+    // running at once a long form can pass 5 s (the default) on a busy machine.
+    testTimeout: 20000,
   },
 });

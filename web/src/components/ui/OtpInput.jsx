@@ -63,7 +63,10 @@ export function OtpInput({
           // The code box is the only thing to do on this screen — land in it.
           autoFocus={autoFocus && i === 0}
           autoComplete={i === 0 ? 'one-time-code' : 'off'}
-          maxLength={length} // room for a full paste into any box
+          // Room for a full paste into any box, INCLUDING separators: a code
+          // copied as "654 321" or "654-321" is cut by the browser at maxLength
+          // BEFORE the digits are pulled out, so `length` alone lost digits.
+          maxLength={length * 2}
           value={digit}
           disabled={disabled}
           aria-label={`Digit ${i + 1}`}

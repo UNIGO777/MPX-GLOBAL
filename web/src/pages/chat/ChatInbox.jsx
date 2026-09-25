@@ -108,7 +108,7 @@ function ConversationList({ role, activeId, onSelect }) {
               {unreadRows} new
             </span>
           )}
-          <span className="ml-auto text-[11px] font-medium text-ink-400">
+          <span className="ml-auto text-[11px] font-medium text-ink-500">
             {rows.length > 0 && `${rows.length} ${rows.length === 1 ? 'thread' : 'threads'}`}
           </span>
         </div>
@@ -120,7 +120,7 @@ function ConversationList({ role, activeId, onSelect }) {
         <form onSubmit={submit} className="relative">
           <label htmlFor="chat-search" className="sr-only">Search conversations</label>
           <SearchIcon
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500"
             aria-hidden="true"
           />
           <input
@@ -139,7 +139,7 @@ function ConversationList({ role, activeId, onSelect }) {
               type="button"
               onClick={clear}
               aria-label="Clear search"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-500 hover:bg-ink-100 hover:text-ink-700"
             >
               <XIcon className="h-4 w-4" />
             </button>
@@ -190,7 +190,7 @@ function ConversationList({ role, activeId, onSelect }) {
                  tall blank field below it, which reads as content that failed to
                  arrive rather than a list that ended. Only shown once the server
                  says there is no next page — never over a list still loading. */
-              <p className="px-3 pb-4 pt-3 text-center text-[11px] font-medium text-ink-400">
+              <p className="px-3 pb-4 pt-3 text-center text-[11px] font-medium text-ink-500">
                 {rows.length === 1 ? 'One conversation' : `All ${rows.length} conversations`}
               </p>
             )}

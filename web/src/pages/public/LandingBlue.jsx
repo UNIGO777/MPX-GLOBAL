@@ -234,7 +234,7 @@ export function LandingBlue() {
       <label className="sr-only" htmlFor="landing-q">
         Search products, services or suppliers
       </label>
-      <SearchIcon className="ml-3 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+      <SearchIcon className="ml-3 h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
       <input
         id="landing-q"
         type="search"
@@ -315,7 +315,7 @@ export function LandingBlue() {
                         className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 font-medium text-ink-900 hover:bg-primary-50 hover:text-primary-800"
                       >
                         <span className="truncate">{c.name}</span>
-                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
                       </Link>
                     </li>
                   ))}
@@ -331,7 +331,7 @@ export function LandingBlue() {
             {/* Banner. One h1 on the page, and it lives here. */}
             <div className="rounded-2xl bg-primary-800 px-6 py-10 sm:px-10 sm:py-14 lg:px-12 lg:py-16">
               <div className="max-w-xl">
-                <p className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-primary-100">
+                <p className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-white">
                   <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
                   Every tick checked by a person
                 </p>
@@ -582,7 +582,7 @@ export function LandingBlue() {
               <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl lg:text-3xl">
                 Describe what you need. We&apos;ll find it.
               </h2>
-              <p className="mt-2 max-w-2xl text-sm text-primary-100 sm:text-base">
+              <p className="mt-2 max-w-2xl text-sm text-white sm:text-base">
                 Skip the filters — write it the way you&apos;d say it to a colleague, and the
                 platform extracts the category, quantity and budget for you.
               </p>
@@ -618,9 +618,8 @@ export function LandingBlue() {
                 {feed.isPending
                   ? Array.from({ length: FEED_PAGE_SIZE }).map((_, i) => <li key={i}><CardSkeleton /></li>)
                   : products.map((p) => (
-                      <li key={p.id}>
-                        <ProductCard product={p} to={`/product/${p.slug ?? p.id}`} />
-                      </li>
+                      // ProductCard is itself the <li> (as on Landing and Search).
+                      <ProductCard key={p.id} product={p} to={`/product/${p.slug ?? p.id}`} />
                     ))}
               </ul>
 
@@ -637,7 +636,7 @@ export function LandingBlue() {
                       {feed.isFetchingNextPage ? 'Loading…' : 'Load more'}
                     </button>
                   )}
-                  <p className="text-xs text-ink-400">
+                  <p className="text-xs text-ink-500">
                     {feed.hasNextPage
                       ? `Showing ${products.length} of ${productTotal}`
                       : "You've seen everything listed so far"}

@@ -76,7 +76,9 @@ export function OtpInput({
         textContentType="oneTimeCode"
         autoComplete="sms-otp"
         importantForAutofill="yes"
-        maxLength={length}
+        // Room for separators: a pasted "654 321" is cut at maxLength BEFORE the
+        // digits are pulled out (web had the same bug, fixed 2026-09-25).
+        maxLength={length * 2}
         caretHidden
         style={styles.hiddenInput}
       />

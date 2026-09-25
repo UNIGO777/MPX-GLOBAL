@@ -149,7 +149,7 @@ export function FilterSidebar({
       {!panel && appliedChips.length > 0 && (
         <div className={panel ? 'border-b border-surface-border px-4 py-3.5' : 'mb-5'}>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className={panel ? 'text-[13px] font-bold uppercase tracking-wide text-ink-400' : 'text-lg font-bold text-primary-700'}>
+            <h2 className={panel ? 'text-[13px] font-bold uppercase tracking-wide text-ink-500' : 'text-lg font-bold text-primary-700'}>
               Applied
             </h2>
             {/* The panel's own header owns "Clear all" — a second one here
@@ -340,7 +340,7 @@ export function FilterSidebar({
           className="flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left text-sm font-semibold text-ink-900 transition-colors hover:text-primary-700"
         >
           {moreOpen ? 'Hide filters' : 'More filters'}
-          <ChevronDownIcon className={`h-4 w-4 shrink-0 text-ink-400 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon className={`h-4 w-4 shrink-0 text-ink-500 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
         </button>
         {moreOpen && <div className="border-t border-surface-border">{moreSections}</div>}
           </>
@@ -446,7 +446,7 @@ function FilterSection({ title, children, flat = false, collapsible = true }) {
         <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between gap-2 text-left">
           <span className={headingCls}>{title}</span>
           <ChevronDownIcon
-            className={`shrink-0 transition-transform ${flat ? 'h-4 w-4 text-ink-400' : 'h-5 w-5 text-muted'} ${open ? 'rotate-180' : ''}`}
+            className={`shrink-0 transition-transform ${flat ? 'h-4 w-4 text-ink-500' : 'h-5 w-5 text-muted'} ${open ? 'rotate-180' : ''}`}
           />
         </button>
       ) : (

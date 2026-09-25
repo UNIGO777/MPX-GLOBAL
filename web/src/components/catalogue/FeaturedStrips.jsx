@@ -79,7 +79,7 @@ const SLIDE = {
   phone: { img: 'h-full w-full object-cover', band: 'p-4 pt-12', title: 'text-base', sub: 'text-[13px]' },
 };
 
-export function BannerSlide({ banner, size = 'responsive' }) {
+export function BannerSlide({ banner, size = 'responsive', clearArrows = false }) {
   const c = SLIDE[size];
   return (
     <>
@@ -96,7 +96,11 @@ export function BannerSlide({ banner, size = 'responsive' }) {
         height={400}
       />
       {(banner.title || banner.subtitle) && (
-        <span className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-900/80 via-ink-900/35 to-transparent ${c.band}`}>
+        <span className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-900/80 via-ink-900/35 to-transparent ${c.band} ${
+          // The prev/next arrows (sm+, 40px at 12px from each edge) sat over the
+          // headline; keep the text clear of them when they are shown.
+          clearArrows ? 'sm:px-16' : ''
+        }`}>
           {banner.title && <span className={`block font-extrabold leading-tight text-white ${c.title}`}>{banner.title}</span>}
           {banner.subtitle && <span className={`mt-1 block max-w-2xl text-white/85 ${c.sub}`}>{banner.subtitle}</span>}
         </span>
@@ -137,11 +141,14 @@ export function BannerStrip({ banners }) {
       aria-roledescription="carousel"
       aria-label="Featured"
     >
+      {/* Its own positioned box, so the arrows centre on the IMAGE — not on
+          image + dots row, which pushed them down into the headline. */}
+      <div className="relative">
       <BannerShell
         linkUrl={banner.linkUrl}
         className="group relative block overflow-hidden rounded-2xl bg-ink-100 shadow-card"
       >
-        <BannerSlide banner={banner} />
+        <BannerSlide banner={banner} clearArrows={many} />
       </BannerShell>
 
       {many && (
@@ -162,7 +169,14 @@ export function BannerStrip({ banners }) {
           >
             <ChevronRightIcon className="h-5 w-5" />
           </button>
-          <div className="mt-3 flex justify-center gap-2" role="tablist" aria-label="Choose a banner">
+        </>
+      )}
+      </div>
+
+      {many && (
+        <>
+          {/* The dot is 8px; the button around it is the 40px tap target. */}
+          <div className="mt-1 flex justify-center" role="tablist" aria-label="Choose a banner">
             {banners.map((b, i) => (
               <button
                 key={b.id}
@@ -171,10 +185,15 @@ export function BannerStrip({ banners }) {
                 aria-selected={i === current}
                 aria-label={`Banner ${i + 1} of ${banners.length}`}
                 onClick={() => setIndex(i)}
-                className={`h-2 rounded-full transition-all motion-reduce:transition-none ${
-                  i === current ? 'w-6 bg-primary-600' : 'w-2 bg-ink-200 hover:bg-ink-300'
-                }`}
-              />
+                className="group flex h-10 min-w-[28px] items-center justify-center px-1"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`block h-2 rounded-full transition-all motion-reduce:transition-none ${
+                    i === current ? 'w-6 bg-primary-600' : 'w-2 bg-ink-200 group-hover:bg-ink-300'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </>

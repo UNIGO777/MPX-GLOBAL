@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+
 import { BuildingIcon, DownloadIcon, ExternalIcon, ShieldIcon } from '../ui/icons.jsx';
 import { fileBadge, formatFileSize } from '../../lib/chatFiles.js';
 import { formatDate, formatTime } from '../../lib/format.js';
@@ -42,7 +45,7 @@ export function TicketThread({ messages, viewer, companyName }) {
               }`}
               >
                 {who}
-                <span className="font-normal text-ink-400">· {formatDate(m.createdAt)} {formatTime(m.createdAt)}</span>
+                <span className="font-normal text-ink-500">· {formatDate(m.createdAt)} {formatTime(m.createdAt)}</span>
               </p>
               <div
                 className={`inline-block rounded-2xl px-4 py-3 text-left text-[14px] leading-relaxed ${
@@ -62,14 +65,54 @@ export function TicketThread({ messages, viewer, companyName }) {
   );
 }
 
-function Attachment({ att, onDark, spaced }) {
-  if (att.kind === 'image') {
+/**
+ * The link is a short-lived signed one, so a thread left open long enough
+ * shows a broken image. Say so and fetch the thread again (new links) instead
+ * of leaving a broken-image glyph. Width/height reserve the space so the
+ * thread does not jump as images load.
+ */
+function AttachedImage({ att, onDark, spaced }) {
+  const qc = useQueryClient();
+  const [failed, setFailed] = useState(false);
+  const ratio = att.width && att.height ? { aspectRatio: `${att.width} / ${att.height}` } : undefined;
+
+  if (failed) {
     return (
-      <a href={att.url} target="_blank" rel="noreferrer" className={`block ${spaced ? 'mt-2' : ''}`}>
-        <img src={att.url} alt="Attached image" className="max-h-64 rounded-xl object-contain" />
-      </a>
+      <div className={`flex items-center gap-3 rounded-xl p-2.5 text-[13px] ${spaced ? 'mt-2' : ''} ${onDark ? 'bg-white/15' : 'bg-ink-50 text-ink-700'}`}>
+        <span className="flex-1">Image unavailable — the link may have expired.</span>
+        <button
+          type="button"
+          onClick={() => {
+            setFailed(false);
+            // Both the company's and the staff view of a ticket; either may be on screen.
+            qc.invalidateQueries({ queryKey: ['support', 'ticket'] });
+            qc.invalidateQueries({ queryKey: ['admin', 'support', 'ticket'] });
+          }}
+          className="min-h-[36px] rounded-full px-3 font-semibold underline underline-offset-2 hover:bg-black/10"
+        >
+          Reload
+        </button>
+      </div>
     );
   }
+  return (
+    <a href={att.url} target="_blank" rel="noreferrer" className={`block ${spaced ? 'mt-2' : ''}`}>
+      <img
+        src={att.url}
+        alt="Attached image"
+        width={att.width ?? undefined}
+        height={att.height ?? undefined}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        style={ratio}
+        className="h-auto max-h-64 w-auto max-w-full rounded-xl object-contain"
+      />
+    </a>
+  );
+}
+
+function Attachment({ att, onDark, spaced }) {
+  if (att.kind === 'image') return <AttachedImage att={att} onDark={onDark} spaced={spaced} />;
   return (
     <div
       className={`flex items-center gap-3 rounded-xl p-2.5 ${spaced ? 'mt-2' : ''} ${

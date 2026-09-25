@@ -118,7 +118,7 @@ function RemoveButton({ label, onClick }) {
         type="button"
         aria-label={label}
         onClick={onClick}
-        className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-400 transition-colors hover:bg-danger-50 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
+        className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition-colors hover:bg-danger-50 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
       >
         <TrashIcon className="h-4 w-4" />
       </button>

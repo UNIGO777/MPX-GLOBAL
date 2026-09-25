@@ -42,35 +42,35 @@ export function AuthLayout({
             <ul className="mt-8 space-y-3">
               {bullets.map((line) => (
                 <li key={line} className="flex items-start gap-3 text-[15px]">
-                  <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+                  <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-success-400" />
                   {line}
                 </li>
               ))}
             </ul>
           )}
 
-          {/* Supplier teaser card — mockup .teaser-card: SOLID primary-700 with a
-              hairline white border and a 2° tilt, not a translucent blur panel. */}
-          <div className="mt-12 inline-flex rotate-2 flex-col gap-4 rounded-xl border border-white/10 bg-primary-700 p-6 shadow-2xl">
-            <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/10">
-                <BuildingIcon className="h-5 w-5 text-white/40" />
-              </div>
-              <div>
-                <p className="text-[15px] font-semibold">Tirupur Knitwear Exports</p>
-                <p className="text-[13px] text-white/60">Tirupur, India</p>
-              </div>
+          {/* Trust note — mockup .teaser-card shape (solid primary-700, hairline
+              border, 2° tilt). It used to show a named "verified" supplier that
+              does not exist on the platform; a made-up company presented as
+              verified is exactly the kind of claim this marketplace must not
+              make, so it now says what the tick means instead. */}
+          <div className="mt-12 inline-flex max-w-sm rotate-2 items-start gap-4 rounded-xl border border-white/10 bg-primary-700 p-6 shadow-2xl">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/10">
+              <BuildingIcon className="h-5 w-5 text-white/80" aria-hidden="true" />
             </div>
-            <div className="flex items-center">
-              <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium">
-                <CheckCircleIcon className="h-4 w-4 text-success" />
-                Verified
-              </span>
+            <div>
+              <p className="flex items-center gap-1.5 text-[15px] font-semibold">
+                <CheckCircleIcon className="h-4 w-4 text-success-400" aria-hidden="true" />
+                Verified suppliers
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-white/80">
+                The tick means our team has checked the company against its registration documents.
+              </p>
             </div>
           </div>
         </div>
 
-        <p className="relative z-10 text-[13px] font-medium text-white/60">{footNote}</p>
+        <p className="relative z-10 text-[13px] font-medium text-white/80">{footNote}</p>
       </aside>
 
       {/* Form pane — the ONLY scroller, so the narrative panel stays pinned on

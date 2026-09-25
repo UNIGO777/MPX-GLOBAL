@@ -46,7 +46,7 @@ function UnreadFlags({ unread, placeholder = false }) {
     ['Exporter', unread?.exporter],
   ].filter(([, value]) => value);
 
-  if (flags.length === 0) return placeholder ? <span className="text-xs text-ink-400">—</span> : null;
+  if (flags.length === 0) return placeholder ? <span className="text-xs text-ink-500">—</span> : null;
 
   return (
     <span className="flex flex-wrap gap-1">
@@ -361,11 +361,11 @@ export function Conversations() {
                             {/* Two lines before it truncates: the pair of company
                                 names IS the row's identity (2026-09-24). */}
                             <p className="line-clamp-2 break-words font-semibold leading-snug text-ink-900">
-                              {c.buyerOrg?.name} <span className="text-ink-400">×</span>{' '}
+                              {c.buyerOrg?.name} <span className="text-ink-500">×</span>{' '}
                               {c.exporterOrg?.name}
                             </p>
                             <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-ink-500">
-                              <BoxIcon className="h-3.5 w-3.5 shrink-0 text-ink-400" aria-hidden="true" />
+                              <BoxIcon className="h-3.5 w-3.5 shrink-0 text-ink-500" aria-hidden="true" />
                               <span className="truncate">{c.product?.name}</span>
                             </p>
                             <p className="mt-1 truncate text-xs text-muted">
@@ -447,16 +447,16 @@ export function Conversations() {
                       <div className="flex items-baseline gap-2">
                         {/* M4-17 — companies and the product, never a person. */}
                         <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink-900">
-                          {c.buyerOrg?.name} <span className="text-ink-400">×</span>{' '}
+                          {c.buyerOrg?.name} <span className="text-ink-500">×</span>{' '}
                           {c.exporterOrg?.name}
                         </p>
-                        <span className="shrink-0 text-[11px] text-ink-400">
+                        <span className="shrink-0 text-[11px] text-ink-500">
                           {formatListTime(c.lastMessageAt)}
                         </span>
                       </div>
 
                       <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-ink-500">
-                        <BoxIcon className="h-3.5 w-3.5 shrink-0 text-ink-400" aria-hidden="true" />
+                        <BoxIcon className="h-3.5 w-3.5 shrink-0 text-ink-500" aria-hidden="true" />
                         <span className="truncate">{c.product?.name}</span>
                       </p>
 

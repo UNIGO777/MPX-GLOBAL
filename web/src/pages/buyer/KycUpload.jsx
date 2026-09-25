@@ -266,7 +266,7 @@ export function KycUpload() {
   if (verification?.kycStatus === 'verified' && !pendingChange && openRequests.length === 0) {
     return shell(
       <div className="max-w-[860px] rounded-xl border border-surface-border bg-white p-8 text-center shadow-sm">
-        <CheckCircleIcon className="mx-auto h-10 w-10 text-success" />
+        <CheckCircleIcon className="mx-auto h-10 w-10 text-success-700" />
         <h1 className="mt-3 text-xl font-bold text-ink-900">You&apos;re verified</h1>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted">
           Your documents were approved on {formatDate(verification.verifiedAt)} and your verified
@@ -282,7 +282,7 @@ export function KycUpload() {
   if (finished) {
     return shell(
       <div className="max-w-[860px] rounded-xl border border-surface-border bg-white p-8 text-center shadow-sm">
-        <CheckCircleIcon className="mx-auto h-10 w-10 text-success" />
+        <CheckCircleIcon className="mx-auto h-10 w-10 text-success-700" />
         <h1 className="mt-3 text-xl font-bold text-ink-900">Documents sent</h1>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted">
           Your documents are with our team. Reviews usually take two to three working days — you can

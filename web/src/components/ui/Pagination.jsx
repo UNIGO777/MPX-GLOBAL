@@ -69,13 +69,13 @@ export function Pagination({ page, pageSize, total, onPage, onPageSize, compact 
             onClick={() => onPage(page - 1)}
             disabled={page <= 1}
             aria-label="Previous page"
-            className="rounded-md p-1.5 text-ink-600 hover:bg-ink-100 disabled:cursor-not-allowed disabled:text-ink-300"
+            className="flex h-10 w-10 items-center justify-center rounded-md text-ink-600 hover:bg-ink-100 disabled:cursor-not-allowed disabled:text-ink-300 sm:h-8 sm:w-8"
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
           {pageList(page, pages).map((n, i) =>
             n === '…' ? (
-              <span key={`gap-${i}`} className="px-1 text-ink-400">
+              <span key={`gap-${i}`} className="px-1 text-ink-500">
                 …
               </span>
             ) : (
@@ -85,7 +85,7 @@ export function Pagination({ page, pageSize, total, onPage, onPageSize, compact 
                 onClick={() => onPage(n)}
                 aria-current={n === page ? 'page' : undefined}
                 aria-label={`Page ${n}`}
-                className={`h-8 min-w-8 rounded-md px-2 text-sm font-medium ${
+                className={`h-10 min-w-10 rounded-md px-2 text-sm font-medium sm:h-8 sm:min-w-8 ${
                   n === page ? 'bg-primary-600 text-white' : 'text-ink-800 hover:bg-ink-100'
                 }`}
               >
@@ -98,7 +98,7 @@ export function Pagination({ page, pageSize, total, onPage, onPageSize, compact 
             onClick={() => onPage(page + 1)}
             disabled={page >= pages}
             aria-label="Next page"
-            className="rounded-md p-1.5 text-ink-600 hover:bg-ink-100 disabled:cursor-not-allowed disabled:text-ink-300"
+            className="flex h-10 w-10 items-center justify-center rounded-md text-ink-600 hover:bg-ink-100 disabled:cursor-not-allowed disabled:text-ink-300 sm:h-8 sm:w-8"
           >
             <ChevronRightIcon className="h-4 w-4" />
           </button>

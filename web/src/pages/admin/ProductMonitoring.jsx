@@ -87,7 +87,7 @@ function ProductThumb({ p }) {
 function SellerLine({ p }) {
   return (
     <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted">
-      <BuildingIcon className="h-3.5 w-3.5 shrink-0 text-ink-400" aria-hidden="true" />
+      <BuildingIcon className="h-3.5 w-3.5 shrink-0 text-ink-500" aria-hidden="true" />
       <span className="truncate">{p.seller?.name ?? '—'}</span>
       {p.seller?.takedownCount > 0 && (
         <span className="shrink-0 rounded-full bg-danger-50 px-1.5 py-px text-[11px] font-semibold text-danger">

@@ -175,6 +175,60 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-25 — UI audit fixes (owner: "fix all of them"). Web only, plus one backend response change.**
+  - **Contrast:**
+    - `text-ink-400` → `ink-500` everywhere (placeholders untouched).
+    - Green status text → `success-700`. The verified tick keeps its brand `text-success`.
+    - Success buttons and Resolve → `success-700`.
+    - Footer, auth panel and exporter-dashboard text on dark → `white/60`–`/80`.
+    - Landing hero chip and AI-search blurb → white.
+    - Inactive categories: grey thumbnail plus `ink-500` name, instead of fading the whole row.
+  - **Bugs:**
+    - The chat button is hidden on the quotation and product-form pages.
+    - Product-card MOQ values wrap instead of truncating.
+    - Ticket and chat images reserve their space and show an "Image unavailable — Reload" fallback. Reload refetches the thread, because signed links expire.
+    - `Switch` `aria-checked` is always a boolean.
+    - Reports period buttons use nowrap.
+    - The 404 page has an h1.
+    - The banner arrows no longer cover the headline: the text is padded clear of them, and the arrows centre on the image, not image plus dots.
+  - **Accessibility:**
+    - Names on file inputs and on the AI-search link (phones).
+    - Duplicate image links (categories, supplier tiles) are hidden from AT.
+    - Logo and cover drop zones are no longer role=button with buttons nested inside.
+    - Account facts use valid dl markup.
+    - Reports: `aria-expanded` moved from the row to a button.
+    - Chat, timeline and notes scroll areas are focusable.
+    - ≥40px hit areas for pagination, breadcrumbs, banner dots, list names and dashboard Copy/Refresh.
+  - **Gaps:**
+    - Console nav strip: fades only on the side with more to scroll. The active tab is centred with scrollLeft (not scrollIntoView, which scrolled the page).
+    - Staff report hides areas an employee has no grant for. It keeps any area with numbers; the team view shows all.
+    - The fictional "Tirupur Knitwear Exports — Verified" auth card is replaced by a note on what the tick means.
+    - The category picker wraps names.
+  - **Auth (client only):** `src/auth/sessionHint.js` stores '1'/'0' in localStorage (never a token) so a known signed-out browser skips `POST /auth/refresh` on load.
+    - A missing hint still tries, so no existing session is lost.
+    - Only a 4xx refresh or an explicit sign-out sets '0'; a network error doesn't.
+    - Tests: `tests/lib/sessionHint.test.js`.
+  - **Backend:** `GET /conversations/by-product/:id` now returns 200 `{conversationId:null}` when there is no thread (was a 404 in the console on every product page). It is still caller-scoped. Test updated. The web client still accepts a 404 from an older server.
+  - **NOT done — conflicts with a recorded rule:** hiding suppliers with 0 live listings from supplier search. `tests/m3-search.test.js` pins "sellers with ZERO live listings still appear (B7 — profiles are public from signup)". The change was reverted; this needs the owner's decision.
+  - **Verified:**
+    - Web: lint clean, build ok, 258/258 tests.
+    - Backend: m3/m4/d7 suites green.
+    - axe WCAG A/AA re-sweep on guest pages (390/834/1440) and all four panels (390/1440): 0 violations, no sideways scroll, no failed API calls.
+- **2026-09-25 — Web test suite completed (owner: "make all remaining tests… for web"): 254 tests in 34 files, all green.**
+  - **Replay harness.** `tests/support/fakeApi.js` replaces `src/api/client.js` in every test. GETs are answered from `tests/fixtures/recorded.json`: real responses recorded per role (guest, buyer, exporter, employee, superadmin) by driving the running app on the local TEST database. Signed Cloudinary URLs are replaced with placeholders; there are no tokens, passwords or codes. Writes are recorded so a test asserts what a screen SENT.
+    - `tests/setup.js` also fakes `socket.io-client` and polyfills matchMedia, IntersectionObserver, ResizeObserver and scroll.
+    - `tests/support/renderPage.jsx` renders a page as a role at a route (with `loadPage`, `writes`, `settle`).
+  - **`all-pages.test.jsx`:** every one of the 65 pages (80 role/route cases, including /staff as Asha) must render with no throw, no "We couldn't load this", no React console error, and no request the recording can't answer.
+  - **Behaviour tests** cover every form and action. See the Pending-Work testing line.
+  - **Bugs found and fixed by the tests:**
+    - (1) `/landing-blue` nested `<li>` inside `<li>`: ProductCard is already the li. Invalid HTML.
+    - (2) The OTP boxes (web AND app) lost digits when a code was pasted with a space or dash ("654 321"), because `maxLength` cut the input before the digits were extracted. Now `length * 2`.
+    - (3) Earlier today, the UnblockRequest crash on server refusal.
+  - **Gotchas:**
+    - FilterChip options put their click on an inner `<button>`.
+    - vitest's `vi.fn` rejecting spies surface as unhandled, so throwing fakes are plain functions.
+    - Web `testTimeout` is now 20 s (typing-heavy tests under full load).
+  - Test data: one draft quotation (`MPX-Q-2026-000001`) was created in the LOCAL test DB to record the quotation pages.
 - **2026-09-25 — More tests: web 79, app 16 (new); CI covers the app.**
   - **Web +25:**
     - KYC documents per country **checked against the server's `kycDocsFor`**, including the staff-requestable set, and document names checked against the email's;

@@ -622,9 +622,10 @@ describe('ATTACK · M4-C', () => {
 });
 
 describe('M4-C · by-product lookup drives the button (G8)', () => {
-  it('404 before a thread exists, the id after — and the public product page is untouched', async () => {
+  it('null before a thread exists, the id after — and the public product page is untouched', async () => {
     const before = await request(app).get(`/conversations/by-product/${product._id}`).set(bearer(buyer.token));
-    expect(before.status).toBe(404);
+    expect(before.status).toBe(200);
+    expect(before.body.conversationId).toBeNull();
 
     const id = await openThread();
     const after = await request(app).get(`/conversations/by-product/${product._id}`).set(bearer(buyer.token));
@@ -639,6 +640,7 @@ describe('M4-C · by-product lookup drives the button (G8)', () => {
   it('another buyer does not see this buyer\'s thread through it', async () => {
     await openThread(buyer);
     const res = await request(app).get(`/conversations/by-product/${product._id}`).set(bearer(otherBuyer.token));
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(200);
+    expect(res.body.conversationId).toBeNull();
   });
 });

@@ -187,7 +187,7 @@ export function LeadDetail() {
 
               {closed ? (
                 <p className="flex items-center gap-2 rounded-2xl border border-surface-border bg-white px-5 py-4 text-[13.5px] text-ink-700 shadow-card">
-                  <LockIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                  <LockIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
                   This request is closed. Re-open it to connect more suppliers.
                 </p>
               ) : (
@@ -210,7 +210,7 @@ export function LeadDetail() {
 function Fact({ Icon, title, className = 'inline-flex', children }) {
   return (
     <span className={`items-center gap-1.5 ${className}`} title={title}>
-      <Icon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+      <Icon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
       {children}
     </span>
   );
@@ -253,7 +253,7 @@ function ConnectedSuppliers({ l, canChat }) {
       </h2>
       {l.routedTo.length === 0 ? (
         <div className="px-5 py-8 text-center">
-          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-ink-50 text-ink-400" aria-hidden="true">
+          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-ink-50 text-ink-500" aria-hidden="true">
             <HandshakeIcon className="h-5 w-5" />
           </span>
           <p className="mt-2 text-[13.5px] font-semibold text-ink-800">No suppliers connected yet</p>
@@ -434,7 +434,7 @@ function LeadSide({ where, l, id, user, staff, timeline, onAssign, canOrg, canAs
           Timeline
           {(timeline.data?.length ?? 0) > 0 && <span className="text-[11.5px] font-medium text-muted">{timeline.data.length} events</span>}
         </h2>
-        <ScrollToEnd dep={timeline.data?.length} className="max-h-72 overflow-y-auto px-4 py-3">{events}</ScrollToEnd>
+        <ScrollToEnd dep={timeline.data?.length} label="Timeline" className="max-h-72 overflow-y-auto px-4 py-3">{events}</ScrollToEnd>
       </section>
     </div>
   );
@@ -485,7 +485,7 @@ function DetailsBody({ where, l, user, staff, onAssign, canOrg, canAssign }) {
       </dl>
       {l.buyer.email && (
         <a href={`mailto:${l.buyer.email}`} className="mt-3 flex items-center gap-2 rounded-xl bg-surface-subtle px-3 py-2 text-[12.5px] text-ink-700 hover:text-primary-700">
-          <MailIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+          <MailIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
           <span className="truncate">{l.buyer.email}</span>
         </a>
       )}
@@ -534,13 +534,14 @@ function TimelineList({ timeline }) {
   );
 }
 
-function ScrollToEnd({ dep, className, children }) {
+function ScrollToEnd({ dep, className, label, children }) {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [dep]);
-  return <div ref={ref} className={className}>{children}</div>;
+  // Focusable so a keyboard user can scroll it.
+  return <div ref={ref} tabIndex={0} role="region" aria-label={label} className={`${className} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-600/40`}>{children}</div>;
 }
 
 function Row({ label, children }) {

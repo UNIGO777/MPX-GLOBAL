@@ -221,7 +221,7 @@ function PersonMark({ row }) {
     <span
       aria-hidden="true"
       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ring-1 ring-inset ${
-        row.isActive ? monogramTone(row.name) : 'bg-ink-100 text-ink-400 ring-ink-200'
+        row.isActive ? monogramTone(row.name) : 'bg-ink-100 text-ink-500 ring-ink-200'
       }`}
     >
       {initials(row.name)}
@@ -695,7 +695,7 @@ export function Employees() {
             const meta = PERMISSION_LIST.find((x) => x.value === pm);
             return (
               <li key={pm} className="flex items-start gap-3">
-                <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-success-700" />
                 <span>
                   <span className="block text-[15px] font-semibold text-ink-900">
                     {meta?.label ?? pm}

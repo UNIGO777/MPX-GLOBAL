@@ -64,7 +64,7 @@ export function Forgot() {
     >
       {sent ? (
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-success">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-success-700">
             <CheckCircleIcon className="h-6 w-6" />
           </div>
           <h2 className="text-[28px] font-bold text-ink-900">Check your messages</h2>

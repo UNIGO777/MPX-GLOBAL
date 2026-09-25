@@ -196,11 +196,11 @@ function CurationFields({ collapsible = false, ...props }) {
     <details className={`group rounded-xl border ${bad ? 'border-danger-300' : 'border-surface-border'}`} open={set || bad}>
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-[13.5px] font-semibold text-ink-800 [&::-webkit-details-marker]:hidden">
         <span className="inline-flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+          <CalendarIcon className="h-4 w-4 text-ink-500" aria-hidden="true" />
           Position &amp; schedule
           <span className="font-normal text-muted">{set ? '· set' : '· optional'}</span>
         </span>
-        <span aria-hidden="true" className="text-ink-400 transition-transform group-open:rotate-180 motion-reduce:transition-none">▾</span>
+        <span aria-hidden="true" className="text-ink-500 transition-transform group-open:rotate-180 motion-reduce:transition-none">▾</span>
       </summary>
       <div className="border-t border-surface-border"><CurationBody {...props} bare /></div>
     </details>
@@ -464,7 +464,7 @@ function AddTargetModal({ kind, existing, onClose, onDone }) {
                 form stops it from submitting anything. */}
             <form onSubmit={(e) => e.preventDefault()} className="relative" role="search">
               <label htmlFor="feat-pick" className="sr-only">Search {noun === 'category' ? 'categories' : `${noun}s`}</label>
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" aria-hidden="true" />
               <input
                 id="feat-pick"
                 type="search"
@@ -632,7 +632,7 @@ function FeaturedRow({ row, position, now, overLimit, patching, replacing, onPat
   return (
     <li className="flex items-start gap-3 px-4 py-3.5 sm:items-center sm:gap-4 sm:px-5">
       <span
-        className="mt-3 w-6 shrink-0 text-center text-[12px] font-bold tabular-nums text-ink-400 sm:mt-0"
+        className="mt-3 w-6 shrink-0 text-center text-[12px] font-bold tabular-nums text-ink-500 sm:mt-0"
         title={`Position value ${row.order}`}
       >
         {position}

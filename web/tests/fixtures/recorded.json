@@ -1,0 +1,8461 @@
+{
+"recordedAt": "2026-09-25",
+"byRole": {
+"buyer": {
+"GET /support/tickets/unread-count": {
+"status": 200,
+"body": {
+"count": 0
+}
+},
+"GET /saved?page=1&pageSize=1": {
+"status": 200,
+"body": {
+"items": [],
+"total": 0,
+"page": 1,
+"pageSize": 1
+}
+},
+"GET /me/organisation": {
+"status": 200,
+"body": {
+"organisation": {
+"name": "Delta Knits 192532",
+"slug": null,
+"country": "IN",
+"address": {
+"line1": "",
+"line2": "",
+"city": "",
+"state": "",
+"postalCode": ""
+},
+"entityType": null,
+"buyerSide": true,
+"exporterSide": false,
+"logo": null,
+"coverImage": null,
+"description": "",
+"establishedYear": null,
+"kycStatus": "pending",
+"verifiedAt": null,
+"pendingChanges": null,
+"canEdit": true
+}
+}
+},
+"GET /conversations/unread-count": {
+"status": 200,
+"body": {
+"unread": 0
+}
+},
+"GET /me/verification": {
+"status": 200,
+"body": {
+"verification": {
+"kycStatus": "pending",
+"profileComplete": false,
+"canManage": true,
+"entityType": null,
+"country": "IN",
+"verifiedAt": null,
+"kycRejectionReason": null,
+"kycSubmittedAt": null,
+"documents": [],
+"pendingChanges": null,
+"documentRequests": [],
+"revocation": null
+}
+}
+},
+"GET /notifications/unread-count": {
+"status": 200,
+"body": {
+"unread": 0
+}
+},
+"GET /saved?page=1&pageSize=12": {
+"status": 200,
+"body": {
+"items": [],
+"total": 0,
+"page": 1,
+"pageSize": 12
+}
+},
+"GET /conversations?limit=20": {
+"status": 200,
+"body": {
+"conversations": [
+{
+"id": "6ab4ff1a86dc6e9cb2c8b417",
+"title": "Organic Cotton Twill \u00d7 Beta Traders 873388",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"counterparty": {
+"name": "Beta Traders 873388",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "Delta Knits 192532"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-25T08:12:58.952Z",
+"lastMessagePreview": "This product is available again. You can continue the conversation.",
+"unread": false,
+"frozen": false,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"createdAt": "2026-09-24T10:44:42.261Z"
+},
+{
+"id": "6ab519d0be860d97970cdb3b",
+"title": "Own Cotton Roll 839031 \u00d7 S2 Traders 839031",
+"product": {
+"id": "6ab3fa09dc3f97f934a0565d",
+"slug": "own-cotton-roll-839031",
+"name": "Own Cotton Roll 839031"
+},
+"counterparty": {
+"name": "S2 Traders 839031",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "Delta Knits 192532"
+},
+{
+"type": "exporter",
+"name": "S2 Traders 839031"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-24T12:38:40.435Z",
+"lastMessagePreview": "Quantity: 20000\nUnit: kg\nBasmati rice, 1121 sella, 25 kg bags",
+"unread": false,
+"frozen": false,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"createdAt": "2026-09-24T12:38:40.436Z"
+}
+],
+"nextCursor": null
+}
+},
+"GET /conversations/6ab4ff1a86dc6e9cb2c8b417/messages?limit=30": {
+"status": 200,
+"body": {
+"messages": [
+{
+"id": "6ab4ff1a86dc6e9cb2c8b418",
+"senderType": "buyer",
+"systemKind": null,
+"body": "Quantity: 3000\nUnit: metre\nDelivery to: Australia\nOrganic cotton twill fabric, 200 gsm, natural",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T10:44:42.279Z"
+},
+{
+"id": "6ab4ff1a86dc6e9cb2c8b419",
+"senderType": "system",
+"systemKind": "welcome",
+"body": "MPX Global is part of this conversation. Please keep all discussion and documents here \u2014 it is how we can support you if anything goes wrong.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T10:44:42.293Z"
+},
+{
+"id": "6ab4ff1a86dc6e9cb2c8b41a",
+"senderType": "system",
+"systemKind": "routed",
+"body": "MPX Global connected this buyer and supplier. Continue the conversation here as usual.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T10:44:42.296Z"
+},
+{
+"id": "6ab58f70c937a0441bd30c0b",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Badge test 1790283632192",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T21:00:32.425Z"
+},
+{
+"id": "6ab59057c937a0441bd30c18",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Badge test 2",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T21:04:23.127Z"
+},
+{
+"id": "6ab5906cc937a0441bd30c1d",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Badge test 3",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T21:04:44.515Z"
+},
+{
+"id": "6ab5984fc937a0441bd30c68",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Live badge check",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T21:38:23.661Z"
+},
+{
+"id": "6ab5e4891a28a0fb812c0dce",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Notification centre test",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T03:03:37.668Z"
+},
+{
+"id": "6ab611fb1a28a0fb812c0de1",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Hello \u2014 the cotton twill samples are ready to ship.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T06:17:31.165Z"
+},
+{
+"id": "6ab612101a28a0fb812c0de3",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Shall I send the invoice too?",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T06:17:52.330Z"
+},
+{
+"id": "6ab612911a28a0fb812c0de9",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Third message to test grouping",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T06:20:01.725Z"
+},
+{
+"id": "6ab62cac6c8ff75a2511a010",
+"senderType": "system",
+"systemKind": "product_takedown",
+"body": "This product is under review by MPX Global, so messaging is paused here. You may want to explore other suppliers in the meantime.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T08:11:24.408Z"
+},
+{
+"id": "6ab62d0a6c8ff75a2511a01b",
+"senderType": "system",
+"systemKind": "product_restored",
+"body": "This product is available again. You can continue the conversation.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T08:12:58.953Z"
+}
+],
+"nextBefore": null
+}
+},
+"GET /conversations/6ab4ff1a86dc6e9cb2c8b417": {
+"status": 200,
+"body": {
+"conversation": {
+"id": "6ab4ff1a86dc6e9cb2c8b417",
+"title": "Organic Cotton Twill \u00d7 Beta Traders 873388",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"counterparty": {
+"name": "Beta Traders 873388",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "Delta Knits 192532"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-25T08:12:58.952Z",
+"lastMessagePreview": "This product is available again. You can continue the conversation.",
+"unread": false,
+"frozen": false,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"createdAt": "2026-09-24T10:44:42.261Z"
+}
+}
+},
+"GET /public/support-contact": {
+"status": 200,
+"body": {
+"support": {
+"email": "support@example.com",
+"phone": "+91 98765 43210",
+"hours": "Mon\u2013Sat, 10:00\u201318:00 IST"
+},
+"company": {
+"name": "MPX Global Private Limited",
+"address": "Office 12, Trade Centre\nMumbai 400001, India",
+"linkedinUrl": "https://www.linkedin.com/company/mpx-global"
+}
+}
+},
+"GET /support/tickets?pageSize=50": {
+"status": 200,
+"body": {
+"rows": [
+{
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"category": "verification",
+"status": "in_progress",
+"unread": false,
+"lastMessageAt": "2026-09-25T06:22:49.609Z",
+"createdAt": "2026-09-24T11:54:11.069Z",
+"resolvedAt": null,
+"closedBy": null,
+"autoClosedAfterDays": null,
+"followUpOf": {
+"id": "6ab4ef328bd8b4e3136d61ab",
+"ref": "T-RNBV7M"
+}
+},
+{
+"id": "6ab4ef328bd8b4e3136d61ab",
+"ref": "T-RNBV7M",
+"subject": "Cannot upload my GST certificate",
+"category": "verification",
+"status": "resolved",
+"unread": false,
+"lastMessageAt": "2026-09-24T11:41:59.007Z",
+"createdAt": "2026-09-24T09:36:50.428Z",
+"resolvedAt": "2026-09-24T11:54:06.918Z",
+"closedBy": "company",
+"autoClosedAfterDays": null,
+"followUpOf": null
+},
+{
+"id": "6ab4ef328bd8b4e3136d61b3",
+"ref": "T-5ZT5WU",
+"subject": "How do I change my registered email?",
+"category": "account",
+"status": "resolved",
+"unread": false,
+"lastMessageAt": "2026-09-24T09:36:50.481Z",
+"createdAt": "2026-09-24T09:36:50.481Z",
+"resolvedAt": "2026-09-24T11:40:35.122Z",
+"closedBy": null,
+"autoClosedAfterDays": null,
+"followUpOf": null
+}
+],
+"total": 3,
+"page": 1,
+"pageSize": 50
+}
+},
+"GET /support/tickets/6ab4ef328bd8b4e3136d61ab": {
+"status": 200,
+"body": {
+"ticket": {
+"id": "6ab4ef328bd8b4e3136d61ab",
+"ref": "T-RNBV7M",
+"subject": "Cannot upload my GST certificate",
+"category": "verification",
+"status": "resolved",
+"unread": false,
+"lastMessageAt": "2026-09-24T11:41:59.007Z",
+"createdAt": "2026-09-24T09:36:50.428Z",
+"resolvedAt": "2026-09-24T11:54:06.918Z",
+"closedBy": "company",
+"autoClosedAfterDays": null,
+"followUpOf": null
+},
+"messages": [
+{
+"id": "6ab4ef328bd8b4e3136d61ad",
+"authorType": "company",
+"body": "The upload keeps failing at 90%. I tried a PDF and a JPG.",
+"attachment": null,
+"createdAt": "2026-09-24T09:36:50.437Z"
+},
+{
+"id": "6ab4ef328bd8b4e3136d61b7",
+"authorType": "staff",
+"body": "Thanks \u2014 could you try once more with a file under 8 MB? If it still fails, send us a screenshot of the error.",
+"attachment": null,
+"createdAt": "2026-09-24T09:36:50.492Z"
+},
+{
+"id": "6ab50c86031d6eba17b88591",
+"authorType": "company",
+"body": "",
+"attachment": {
+"kind": "image",
+"url": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"width": 3360,
+"height": 1874
+},
+"createdAt": "2026-09-24T11:41:58.862Z"
+}
+]
+}
+},
+"GET /leads": {
+"status": 200,
+"body": {
+"leads": [
+{
+"id": "6ab517c1a8bed8a938315ab8",
+"ref": "R-TMHGD2",
+"what": "Basmati rice, 1121 sella, 25 kg bags",
+"quantity": 20000,
+"unit": "kg",
+"destinationCountry": null,
+"note": "Need APEDA registered exporters. Delivery to Dubai port.",
+"status": "routed",
+"createdAt": "2026-09-24T12:29:53.530Z",
+"suppliers": [
+{
+"exporter": "Beta Traders 873388",
+"product": "Organic Cotton Twill",
+"conversationId": "6ab4ff1a86dc6e9cb2c8b417",
+"at": "2026-09-24T12:38:35.105Z"
+},
+{
+"exporter": "S2 Traders 839031",
+"product": "Own Cotton Roll 839031",
+"conversationId": "6ab519d0be860d97970cdb3b",
+"at": "2026-09-24T12:38:40.476Z"
+}
+]
+},
+{
+"id": "6ab4ff0686dc6e9cb2c8b412",
+"ref": "R-QDRNVH",
+"what": "Organic cotton twill fabric, 200 gsm, natural",
+"quantity": 3000,
+"unit": "metre",
+"destinationCountry": "AU",
+"note": "Need GOTS certification. Target delivery in 6 weeks.",
+"status": "routed",
+"createdAt": "2026-09-24T10:44:22.464Z",
+"suppliers": [
+{
+"exporter": "Beta Traders 873388",
+"product": "Organic Cotton Twill",
+"conversationId": "6ab4ff1a86dc6e9cb2c8b417",
+"at": "2026-09-24T10:44:42.302Z"
+}
+]
+}
+]
+}
+},
+"GET /notifications": {
+"status": 200,
+"body": {
+"items": [
+{
+"id": "6ab612102a7ed071a85d7da9",
+"type": "chat.message",
+"title": "New message from Beta Traders 873388",
+"body": "Organic Cotton Twill",
+"link": "/buyer/chat/6ab4ff1a86dc6e9cb2c8b417",
+"count": 2,
+"at": "2026-09-25T06:20:01.738Z",
+"read": true
+},
+{
+"id": "6ab612232a7ed071a85d7daa",
+"type": "ticket.reply",
+"title": "MPX Global Support replied on T-XKMBDQ",
+"body": "GST upload failing again",
+"link": "/buyer/support/6ab50f6301c1ac72fe8b3902",
+"count": 1,
+"at": "2026-09-25T06:18:11.896Z",
+"read": true
+},
+{
+"id": "6ab611fb2a7ed071a85d7da8",
+"type": "chat.message",
+"title": "New message from Beta Traders 873388",
+"body": "Organic Cotton Twill",
+"link": "/buyer/chat/6ab4ff1a86dc6e9cb2c8b417",
+"count": 1,
+"at": "2026-09-25T06:17:31.295Z",
+"read": true
+},
+{
+"id": "6ab5e4912a7ed071a85d7ac3",
+"type": "ticket.reply",
+"title": "MPX Global Support replied on T-XKMBDQ",
+"body": "GST upload failing again",
+"link": "/buyer/support/6ab50f6301c1ac72fe8b3902",
+"count": 1,
+"at": "2026-09-25T03:03:45.804Z",
+"read": true
+},
+{
+"id": "6ab5e4892a7ed071a85d7ac2",
+"type": "chat.message",
+"title": "New message from Beta Traders 873388",
+"body": "Organic Cotton Twill",
+"link": "/buyer/chat/6ab4ff1a86dc6e9cb2c8b417",
+"count": 1,
+"at": "2026-09-25T03:03:37.776Z",
+"read": true
+}
+],
+"nextBefore": null
+}
+},
+"GET /categories": {
+"status": 200,
+"body": {
+"categories": [
+{
+"name": "Tex 779280",
+"slug": "tex-779280",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9ceea23c9777a40ec3b",
+"subs": [
+{
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+}
+]
+},
+{
+"name": "Tex 796964",
+"slug": "tex-796964",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9df3e0b93f2167120de",
+"subs": [
+{
+"name": "Cotton 796964",
+"slug": "cotton-796964",
+"image": null,
+"parentId": "6ab3f9df3e0b93f2167120de",
+"type": "goods",
+"id": "6ab3f9df3e0b93f2167120df"
+}
+]
+},
+{
+"name": "Tex 817231",
+"slug": "tex-817231",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9f86a5f52453e8d56f7",
+"subs": [
+{
+"name": "Cotton 817231",
+"slug": "cotton-817231",
+"image": null,
+"parentId": "6ab3f9f86a5f52453e8d56f7",
+"type": "goods",
+"id": "6ab3f9f86a5f52453e8d56f8"
+}
+]
+},
+{
+"name": "Tex 839031",
+"slug": "tex-839031",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3fa09dc3f97f934a0565b",
+"subs": [
+{
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"image": null,
+"parentId": "6ab3fa09dc3f97f934a0565b",
+"type": "goods",
+"id": "6ab3fa09dc3f97f934a0565c"
+}
+]
+}
+]
+}
+},
+"GET /public/products/organic-cotton-twill": {
+"status": 200,
+"body": {
+"product": {
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+}
+},
+"GET /saved?pageSize=100": {
+"status": 200,
+"body": {
+"items": [],
+"total": 0,
+"page": 1,
+"pageSize": 100
+}
+},
+"GET /conversations/by-product/6ab4122cda7bcd5fad8b2b9e": {
+"status": 200,
+"body": {
+"conversationId": "6ab4ff1a86dc6e9cb2c8b417"
+}
+},
+"GET /public/products?category=cotton-779280&page=1&pageSize=5": {
+"status": 200,
+"body": {
+"products": [
+{
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 5
+}
+},
+"GET /categories/cotton-779280/attributes": {
+"status": 200,
+"body": {
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"attributes": []
+}
+},
+"GET /categories/6ab3f9ceea23c9777a40ec3b": {
+"status": 200,
+"body": {
+"category": {
+"name": "Tex 779280",
+"slug": "tex-779280",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9ceea23c9777a40ec3b"
+}
+}
+},
+"GET /public/products?category=6ab3f9ceea23c9777a40ec3b&page=1&pageSize=5": {
+"status": 200,
+"body": {
+"products": [
+{
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 5
+}
+}
+},
+"employee": {
+"GET /notifications/unread-count": {
+"status": 200,
+"body": {
+"unread": 1
+}
+},
+"GET /admin/support/overview": {
+"status": 200,
+"body": {
+"counts": {
+"open": 0,
+"inProgress": 1,
+"unassigned": 0,
+"needsReply": 0,
+"waiting": 0,
+"resolved7d": 0
+},
+"scope": "mine",
+"autoCloseDays": 14,
+"openTickets": [
+{
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"category": "verification",
+"status": "in_progress",
+"side": "buyer",
+"org": {
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532"
+},
+"createdBy": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"email": "ucm_192532@example.com"
+},
+"assignedTo": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"unread": false,
+"lastMessageAt": "2026-09-25T06:22:49.609Z",
+"createdAt": "2026-09-24T11:54:11.069Z",
+"resolvedAt": null,
+"closedBy": null,
+"awaitingCompanySince": null,
+"autoCloseAt": null,
+"autoClosedAfterDays": null,
+"followUpOf": {
+"id": "6ab4ef328bd8b4e3136d61ab",
+"ref": "T-RNBV7M"
+}
+}
+]
+}
+},
+"GET /admin/my-work": {
+"status": 200,
+"body": {
+"canTickets": true,
+"canLeads": false,
+"tickets": [
+{
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"status": "in_progress",
+"unread": false,
+"org": "Delta Knits 192532",
+"lastMessageAt": "2026-09-25T06:22:49.609Z"
+}
+],
+"leads": [],
+"last30": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"email": "walk.staff.025633@example.com",
+"role": "employee",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 0,
+"takedowns": 0,
+"chatModeration": 0,
+"chatReads": 0,
+"ticketReplies": 0,
+"ticketsResolved": 0,
+"suppliersConnected": 0,
+"catalogue": 0,
+"notes": 0
+},
+"total": 0
+},
+"columns": [
+{
+"key": "verifications",
+"label": "Verifications decided"
+},
+{
+"key": "documents",
+"label": "Documents requested / removed"
+},
+{
+"key": "kycViews",
+"label": "KYC documents viewed"
+},
+{
+"key": "takedowns",
+"label": "Products taken down / restored"
+},
+{
+"key": "chatModeration",
+"label": "Chats blocked / warned"
+},
+{
+"key": "chatReads",
+"label": "Conversations read"
+},
+{
+"key": "ticketReplies",
+"label": "Ticket replies"
+},
+{
+"key": "ticketsResolved",
+"label": "Tickets resolved"
+},
+{
+"key": "suppliersConnected",
+"label": "Suppliers connected"
+},
+{
+"key": "catalogue",
+"label": "Catalogue changes"
+},
+{
+"key": "notes",
+"label": "Internal notes added"
+}
+]
+}
+},
+"GET /admin/dashboard?days=14": {
+"status": 200,
+"body": {
+"tiles": {},
+"health": {},
+"totals": {},
+"series": null
+}
+},
+"GET /admin/support/tickets?page=1&pageSize=20&status=active": {
+"status": 200,
+"body": {
+"rows": [
+{
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"category": "verification",
+"status": "in_progress",
+"side": "buyer",
+"org": {
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532"
+},
+"createdBy": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"email": "ucm_192532@example.com"
+},
+"assignedTo": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"unread": false,
+"lastMessageAt": "2026-09-25T06:22:49.609Z",
+"createdAt": "2026-09-24T11:54:11.069Z",
+"resolvedAt": null,
+"closedBy": null,
+"awaitingCompanySince": null,
+"autoCloseAt": null,
+"autoClosedAfterDays": null,
+"followUpOf": {
+"id": "6ab4ef328bd8b4e3136d61ab",
+"ref": "T-RNBV7M"
+}
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 20
+}
+},
+"GET /admin/support/tickets/6ab50f6301c1ac72fe8b3902/timeline": {
+"status": 200,
+"body": {
+"events": [
+{
+"id": "6ab50f6301c1ac72fe8b3905",
+"at": "2026-09-24T11:54:11.078Z",
+"action": "ticket.create",
+"actor": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"role": "buyer"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": null,
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516a65f9510a6085a707e",
+"at": "2026-09-24T12:25:10.278Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516a95f9510a6085a707f",
+"at": "2026-09-24T12:25:13.686Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": null,
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516ab5f9510a6085a7080",
+"at": "2026-09-24T12:25:15.997Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516b15f9510a6085a7081",
+"at": "2026-09-24T12:25:21.251Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": "Local Admin",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516b55f9510a6085a7082",
+"at": "2026-09-24T12:25:25.732Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Local Admin",
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516ba5f9510a6085a7083",
+"at": "2026-09-24T12:25:30.742Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": null,
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516cd5f9510a6085a7084",
+"at": "2026-09-24T12:25:49.795Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": "Local Admin",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516d05f9510a6085a7085",
+"at": "2026-09-24T12:25:52.502Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Local Admin",
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab51701a8bed8a938315aa8",
+"at": "2026-09-24T12:26:41.175Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": "Local Admin",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab51702a8bed8a938315aa9",
+"at": "2026-09-24T12:26:42.698Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Local Admin",
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab5171fa8bed8a938315aab",
+"at": "2026-09-24T12:27:11.128Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": "Local Admin",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab51720a8bed8a938315aac",
+"at": "2026-09-24T12:27:12.990Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Local Admin",
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab5e4911a28a0fb812c0dd1",
+"at": "2026-09-25T03:03:45.800Z",
+"action": "ticket.reply",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": null,
+"by": "staff",
+"afterDays": null
+},
+{
+"id": "6ab5e4911a28a0fb812c0dd2",
+"at": "2026-09-25T03:03:45.803Z",
+"action": "ticket.status",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "open",
+"to": "in_progress",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab612231a28a0fb812c0de6",
+"at": "2026-09-25T06:18:11.893Z",
+"action": "ticket.reply",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": null,
+"by": "staff",
+"afterDays": null
+},
+{
+"id": "6ab6130bbc25e621570661e9",
+"at": "2026-09-25T06:22:03.366Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": "Asha Menon",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab61339bc25e621570661ee",
+"at": "2026-09-25T06:22:49.612Z",
+"action": "ticket.reply",
+"actor": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"role": "buyer"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": null,
+"by": "company",
+"afterDays": null
+}
+]
+}
+},
+"GET /admin/support/tickets/6ab50f6301c1ac72fe8b3902": {
+"status": 200,
+"body": {
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"category": "verification",
+"status": "in_progress",
+"side": "buyer",
+"org": {
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532"
+},
+"createdBy": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"email": "ucm_192532@example.com"
+},
+"assignedTo": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"unread": false,
+"lastMessageAt": "2026-09-25T06:22:49.609Z",
+"createdAt": "2026-09-24T11:54:11.069Z",
+"resolvedAt": null,
+"closedBy": null,
+"awaitingCompanySince": null,
+"autoCloseAt": null,
+"autoClosedAfterDays": null,
+"followUpOf": {
+"id": "6ab4ef328bd8b4e3136d61ab",
+"ref": "T-RNBV7M"
+}
+},
+"messages": [
+{
+"id": "6ab50f6301c1ac72fe8b3904",
+"authorType": "company",
+"author": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532"
+},
+"body": "Same problem as before, it came back today.",
+"attachment": null,
+"createdAt": "2026-09-24T11:54:11.076Z"
+},
+{
+"id": "6ab5e4911a28a0fb812c0dd0",
+"authorType": "staff",
+"author": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin"
+},
+"body": "We are checking your GST upload now.",
+"attachment": null,
+"createdAt": "2026-09-25T03:03:45.791Z"
+},
+{
+"id": "6ab612231a28a0fb812c0de5",
+"authorType": "staff",
+"author": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin"
+},
+"body": "Thanks \u2014 please try the upload again, we fixed a size limit.",
+"attachment": null,
+"createdAt": "2026-09-25T06:18:11.871Z"
+},
+{
+"id": "6ab61339bc25e621570661ed",
+"authorType": "company",
+"author": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532"
+},
+"body": "Tried again \u2014 it uploaded this time, thank you!",
+"attachment": null,
+"createdAt": "2026-09-25T06:22:49.606Z"
+}
+]
+}
+},
+"GET /admin/notes?subjectId=6ab50f6301c1ac72fe8b3902&subjectType=ticket": {
+"status": 200,
+"body": {
+"notes": [
+{
+"id": "6ab515145f9510a6085a706b",
+"body": "note 2",
+"author": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin"
+},
+"createdAt": "2026-09-24T12:18:28.321Z"
+},
+{
+"id": "6ab514845f9510a6085a7064",
+"body": "note 1",
+"author": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin"
+},
+"createdAt": "2026-09-24T12:16:04.644Z"
+}
+]
+}
+},
+"GET /admin/reports/staff?days=30": {
+"status": 200,
+"body": {
+"days": 30,
+"since": "2026-08-26T10:45:37.149Z",
+"scope": "self",
+"columns": [
+{
+"key": "verifications",
+"label": "Verifications decided"
+},
+{
+"key": "documents",
+"label": "Documents requested / removed"
+},
+{
+"key": "kycViews",
+"label": "KYC documents viewed"
+},
+{
+"key": "takedowns",
+"label": "Products taken down / restored"
+},
+{
+"key": "chatModeration",
+"label": "Chats blocked / warned"
+},
+{
+"key": "chatReads",
+"label": "Conversations read"
+},
+{
+"key": "ticketReplies",
+"label": "Ticket replies"
+},
+{
+"key": "ticketsResolved",
+"label": "Tickets resolved"
+},
+{
+"key": "suppliersConnected",
+"label": "Suppliers connected"
+},
+{
+"key": "catalogue",
+"label": "Catalogue changes"
+},
+{
+"key": "notes",
+"label": "Internal notes added"
+}
+],
+"rows": [
+{
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"email": "walk.staff.025633@example.com",
+"role": "employee",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 0,
+"takedowns": 0,
+"chatModeration": 0,
+"chatReads": 0,
+"ticketReplies": 0,
+"ticketsResolved": 0,
+"suppliersConnected": 0,
+"catalogue": 0,
+"notes": 0
+},
+"total": 0
+}
+]
+}
+},
+"GET /notifications": {
+"status": 200,
+"body": {
+"items": [
+{
+"id": "6ab613392a7ed071a85d7db1",
+"type": "ticket.company_reply",
+"title": "New reply on T-XKMBDQ",
+"body": "GST upload failing again",
+"link": "/admin/support/6ab50f6301c1ac72fe8b3902",
+"count": 1,
+"at": "2026-09-25T06:22:49.618Z",
+"read": true
+},
+{
+"id": "6ab6130bbc25e621570661ea",
+"type": "ticket.assigned",
+"title": "Ticket T-XKMBDQ was assigned to you",
+"body": "GST upload failing again",
+"link": "/admin/support/6ab50f6301c1ac72fe8b3902",
+"count": 1,
+"at": "2026-09-25T06:22:03.372Z",
+"read": false
+}
+],
+"nextBefore": null
+}
+}
+},
+"guest": {
+"GET /public/support-contact": {
+"status": 200,
+"body": {
+"support": {
+"email": "support@example.com",
+"phone": "+91 98765 43210",
+"hours": "Mon\u2013Sat, 10:00\u201318:00 IST"
+},
+"company": {
+"name": "MPX Global Private Limited",
+"address": "Office 12, Trade Centre\nMumbai 400001, India",
+"linkedinUrl": "https://www.linkedin.com/company/mpx-global"
+}
+}
+},
+"GET /categories": {
+"status": 200,
+"body": {
+"categories": [
+{
+"name": "Tex 779280",
+"slug": "tex-779280",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9ceea23c9777a40ec3b",
+"subs": [
+{
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+}
+]
+},
+{
+"name": "Tex 796964",
+"slug": "tex-796964",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9df3e0b93f2167120de",
+"subs": [
+{
+"name": "Cotton 796964",
+"slug": "cotton-796964",
+"image": null,
+"parentId": "6ab3f9df3e0b93f2167120de",
+"type": "goods",
+"id": "6ab3f9df3e0b93f2167120df"
+}
+]
+},
+{
+"name": "Tex 817231",
+"slug": "tex-817231",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9f86a5f52453e8d56f7",
+"subs": [
+{
+"name": "Cotton 817231",
+"slug": "cotton-817231",
+"image": null,
+"parentId": "6ab3f9f86a5f52453e8d56f7",
+"type": "goods",
+"id": "6ab3f9f86a5f52453e8d56f8"
+}
+]
+},
+{
+"name": "Tex 839031",
+"slug": "tex-839031",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3fa09dc3f97f934a0565b",
+"subs": [
+{
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"image": null,
+"parentId": "6ab3fa09dc3f97f934a0565b",
+"type": "goods",
+"id": "6ab3fa09dc3f97f934a0565c"
+}
+]
+}
+]
+}
+},
+"GET /public/featured": {
+"status": 200,
+"body": {
+"banners": [
+{
+"id": "6ab5676efef040360ca83d9c",
+"image": "https://res.cloudinary.com/deewydlyh/image/upload/v1790276298/mpx/banners/57deee207661572e.png",
+"title": "Cotton season is here",
+"subtitle": "Verified mills, direct from India",
+"linkUrl": "/search?q=cotton",
+"order": 0
+},
+{
+"id": "6ab56d17fef040360ca83dba",
+"image": "https://res.cloudinary.com/deewydlyh/image/upload/v1790274839/mpx/banners/b422362442be3755.png",
+"title": "Denim week",
+"subtitle": "Mills with verified documents",
+"linkUrl": null,
+"order": 2
+},
+{
+"id": "6ab56d13fef040360ca83db7",
+"image": "https://res.cloudinary.com/deewydlyh/image/upload/v1790274835/mpx/banners/f76ea10a1b8619b2.png",
+"title": "Software & IT services from India",
+"subtitle": "Scoped per engagement, direct with the team",
+"linkUrl": "/categories?type=service",
+"order": 5
+}
+],
+"products": [
+{
+"id": "6ab567b6fef040360ca83da1",
+"order": 0,
+"product": {
+"name": "Own Cotton Roll 839031",
+"slug": "own-cotton-roll-839031",
+"description": null,
+"moq": null,
+"unit": null,
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab3fa09dc3f97f934a0565d",
+"price": {
+"mode": "on_request",
+"min": null,
+"max": null,
+"currency": null
+},
+"images": [],
+"attributes": [],
+"customSpecs": [],
+"listedSince": "2026-09-23T16:10:49.467Z",
+"category": {
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"image": null,
+"parentId": "6ab3fa09dc3f97f934a0565b",
+"type": "goods",
+"id": "6ab3fa09dc3f97f934a0565c"
+},
+"seller": {
+"name": "S2 Traders 839031",
+"slug": "s2-traders-839031",
+"country": "IN",
+"description": "We make cotton.",
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3f9ff61a10d563d5cd860",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+},
+{
+"id": "6ab567b1fef040360ca83d9f",
+"order": 0,
+"product": {
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+}
+],
+"categories": [
+{
+"id": "6ab56ca9fef040360ca83db2",
+"order": 0,
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+}
+}
+],
+"suppliers": [
+{
+"id": "6ab56c8dfef040360ca83daf",
+"order": 0,
+"supplier": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026,
+"productCount": 1
+}
+}
+]
+}
+},
+"GET /public/search?page=1&pageSize=10&sort=newest&type=product": {
+"status": 200,
+"body": {
+"type": "product",
+"products": [
+{
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+},
+{
+"name": "Own Cotton Roll 839031",
+"slug": "own-cotton-roll-839031",
+"description": null,
+"moq": null,
+"unit": null,
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab3fa09dc3f97f934a0565d",
+"price": {
+"mode": "on_request",
+"min": null,
+"max": null,
+"currency": null
+},
+"images": [],
+"attributes": [],
+"customSpecs": [],
+"listedSince": "2026-09-23T16:10:49.467Z",
+"category": {
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"image": null,
+"parentId": "6ab3fa09dc3f97f934a0565b",
+"type": "goods",
+"id": "6ab3fa09dc3f97f934a0565c"
+},
+"seller": {
+"name": "S2 Traders 839031",
+"slug": "s2-traders-839031",
+"country": "IN",
+"description": "We make cotton.",
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3f9ff61a10d563d5cd860",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+],
+"total": 2,
+"page": 1,
+"pageSize": 10,
+"didYouMean": null
+}
+},
+"GET /categories/tex-779280": {
+"status": 200,
+"body": {
+"category": {
+"name": "Tex 779280",
+"slug": "tex-779280",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9ceea23c9777a40ec3b"
+}
+}
+},
+"GET /public/search?category=tex-779280&page=1&pageSize=12&sort=newest": {
+"status": 200,
+"body": {
+"type": "product",
+"products": [
+{
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 12,
+"didYouMean": null
+}
+},
+"GET /public/facets?category=tex-779280": {
+"status": 200,
+"body": {
+"type": "product",
+"facets": {
+"category": [
+{
+"id": "6ab3f9ceea23c9777a40ec3c",
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"count": 1
+}
+],
+"subCategory": [
+{
+"id": "6ab3f9ceea23c9777a40ec3c",
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"count": 1
+},
+{
+"id": "6ab3fa09dc3f97f934a0565c",
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"count": 1
+}
+],
+"country": [
+{
+"value": "IN",
+"count": 1
+}
+],
+"goodsOrService": [
+{
+"value": "goods",
+"count": 1
+}
+],
+"verified": [
+{
+"value": false,
+"count": 1
+}
+],
+"price": {
+"min": 250,
+"max": 250,
+"currency": "INR"
+},
+"moq": {
+"min": 500,
+"max": 500
+},
+"attributes": []
+}
+}
+},
+"GET /categories/cotton-779280": {
+"status": 200,
+"body": {
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+}
+}
+},
+"GET /public/search?category=cotton-779280&page=1&pageSize=12&sort=newest": {
+"status": 200,
+"body": {
+"type": "product",
+"products": [
+{
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 12,
+"didYouMean": null
+}
+},
+"GET /public/facets?category=cotton-779280": {
+"status": 200,
+"body": {
+"type": "product",
+"facets": {
+"category": [
+{
+"id": "6ab3f9ceea23c9777a40ec3c",
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"count": 1
+}
+],
+"subCategory": [
+{
+"id": "6ab3f9ceea23c9777a40ec3c",
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"count": 1
+},
+{
+"id": "6ab3fa09dc3f97f934a0565c",
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"count": 1
+}
+],
+"country": [
+{
+"value": "IN",
+"count": 1
+}
+],
+"goodsOrService": [
+{
+"value": "goods",
+"count": 1
+}
+],
+"verified": [
+{
+"value": false,
+"count": 1
+}
+],
+"price": {
+"min": 250,
+"max": 250,
+"currency": "INR"
+},
+"moq": {
+"min": 500,
+"max": 500
+},
+"attributes": []
+}
+}
+},
+"GET /public/products/organic-cotton-twill": {
+"status": 200,
+"body": {
+"product": {
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+}
+},
+"GET /categories/cotton-779280/attributes": {
+"status": 200,
+"body": {
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"attributes": []
+}
+},
+"GET /public/products?category=cotton-779280&page=1&pageSize=5": {
+"status": 200,
+"body": {
+"products": [
+{
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 5
+}
+},
+"GET /categories/6ab3f9ceea23c9777a40ec3b": {
+"status": 200,
+"body": {
+"category": {
+"name": "Tex 779280",
+"slug": "tex-779280",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9ceea23c9777a40ec3b"
+}
+}
+},
+"GET /public/products?category=6ab3f9ceea23c9777a40ec3b&page=1&pageSize=5": {
+"status": 200,
+"body": {
+"products": [
+{
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 5
+}
+},
+"GET /exporters/beta-traders-873388": {
+"status": 200,
+"body": {
+"exporter": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026,
+"productCount": 1
+}
+}
+},
+"GET /public/products?page=1&pageSize=12&seller=beta-traders-873388": {
+"status": 200,
+"body": {
+"products": [
+{
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 12
+}
+},
+"GET /public/search?page=1&pageSize=12&q=cotton&sort=relevance&type=product": {
+"status": 200,
+"body": {
+"type": "product",
+"products": [
+{
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"listedSince": "2026-09-23T17:53:48.846Z",
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"seller": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+},
+{
+"name": "Own Cotton Roll 839031",
+"slug": "own-cotton-roll-839031",
+"description": null,
+"moq": null,
+"unit": null,
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"id": "6ab3fa09dc3f97f934a0565d",
+"price": {
+"mode": "on_request",
+"min": null,
+"max": null,
+"currency": null
+},
+"images": [],
+"attributes": [],
+"customSpecs": [],
+"listedSince": "2026-09-23T16:10:49.467Z",
+"category": {
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"image": null,
+"parentId": "6ab3fa09dc3f97f934a0565b",
+"type": "goods",
+"id": "6ab3fa09dc3f97f934a0565c"
+},
+"seller": {
+"name": "S2 Traders 839031",
+"slug": "s2-traders-839031",
+"country": "IN",
+"description": "We make cotton.",
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3f9ff61a10d563d5cd860",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026
+}
+}
+],
+"total": 2,
+"page": 1,
+"pageSize": 12,
+"didYouMean": null
+}
+},
+"GET /public/facets?q=cotton&type=product": {
+"status": 200,
+"body": {
+"type": "product",
+"facets": {
+"category": [
+{
+"id": "6ab3f9ceea23c9777a40ec3b",
+"name": "Tex 779280",
+"slug": "tex-779280",
+"count": 1
+}
+],
+"subCategory": [
+{
+"id": "6ab3f9ceea23c9777a40ec3c",
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"count": 1
+},
+{
+"id": "6ab3fa09dc3f97f934a0565c",
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"count": 1
+}
+],
+"country": [
+{
+"value": "IN",
+"count": 2
+}
+],
+"goodsOrService": [
+{
+"value": "goods",
+"count": 1
+}
+],
+"verified": [
+{
+"value": false,
+"count": 1
+}
+],
+"price": {
+"min": 250,
+"max": 250,
+"currency": "INR"
+},
+"moq": {
+"min": 500,
+"max": 500
+},
+"attributes": []
+}
+}
+}
+},
+"superadmin": {
+"GET /admin/orgs?pageSize=5&verification=submitted": {
+"status": 200,
+"body": {
+"organisations": [],
+"total": 0,
+"page": 1,
+"pageSize": 5
+}
+},
+"GET /notifications/unread-count": {
+"status": 200,
+"body": {
+"unread": 0
+}
+},
+"GET /admin/leads/overview": {
+"status": 200,
+"body": {
+"counts": {
+"new": 0,
+"inProgress": 0,
+"unassigned": 0,
+"routed7d": 2,
+"routed": 2
+},
+"scope": "all"
+}
+},
+"GET /admin/conversations?limit=5": {
+"status": 200,
+"body": {
+"conversations": [
+{
+"id": "6ab4ff1a86dc6e9cb2c8b417",
+"title": "Delta Knits 192532 \u00d7 Beta Traders 873388 \u00d7 Organic Cotton Twill",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"buyerOrg": {
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532",
+"logo": null
+},
+"exporterOrg": {
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "Delta Knits 192532"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-25T08:12:58.952Z",
+"lastMessagePreview": "This product is available again. You can continue the conversation.",
+"unread": {
+"buyer": false,
+"exporter": false
+},
+"frozen": false,
+"frozenReason": null,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"blockedBy": null,
+"blockedAt": null,
+"createdAt": "2026-09-24T10:44:42.261Z"
+},
+{
+"id": "6ab519d0be860d97970cdb3b",
+"title": "Delta Knits 192532 \u00d7 S2 Traders 839031 \u00d7 Own Cotton Roll 839031",
+"product": {
+"id": "6ab3fa09dc3f97f934a0565d",
+"slug": "own-cotton-roll-839031",
+"name": "Own Cotton Roll 839031"
+},
+"buyerOrg": {
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532",
+"logo": null
+},
+"exporterOrg": {
+"id": "6ab3f9ff61a10d563d5cd860",
+"name": "S2 Traders 839031",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "Delta Knits 192532"
+},
+{
+"type": "exporter",
+"name": "S2 Traders 839031"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-24T12:38:40.435Z",
+"lastMessagePreview": "Quantity: 20000\nUnit: kg\nBasmati rice, 1121 sella, 25 kg bags",
+"unread": {
+"buyer": false,
+"exporter": true
+},
+"frozen": false,
+"frozenReason": null,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"blockedBy": null,
+"blockedAt": null,
+"createdAt": "2026-09-24T12:38:40.436Z"
+},
+{
+"id": "6ab43d78456260536b8364c3",
+"title": "S1 Co 750420 \u00d7 S2 Traders 839031 \u00d7 Own Cotton Roll 839031",
+"product": {
+"id": "6ab3fa09dc3f97f934a0565d",
+"slug": "own-cotton-roll-839031",
+"name": "Own Cotton Roll 839031"
+},
+"buyerOrg": {
+"id": "6ab3f9a661a10d563d5cd5d5",
+"name": "S1 Co 750420",
+"logo": null
+},
+"exporterOrg": {
+"id": "6ab3f9ff61a10d563d5cd860",
+"name": "S2 Traders 839031",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "S1 Co 750420"
+},
+{
+"type": "exporter",
+"name": "S2 Traders 839031"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-23T22:14:44.035Z",
+"lastMessagePreview": "no",
+"unread": {
+"buyer": true,
+"exporter": false
+},
+"frozen": false,
+"frozenReason": null,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"blockedBy": null,
+"blockedAt": null,
+"createdAt": "2026-09-23T20:58:32.267Z"
+},
+{
+"id": "6ab41c41fb0608c385b05ed3",
+"title": "S1 Co 750420 \u00d7 Beta Traders 873388 \u00d7 Organic Cotton Twill",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"buyerOrg": {
+"id": "6ab3f9a661a10d563d5cd5d5",
+"name": "S1 Co 750420",
+"logo": null
+},
+"exporterOrg": {
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "S1 Co 750420"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-23T20:58:00.857Z",
+"lastMessagePreview": "This conversation has been restricted by MPX Global. Reason: List colour check",
+"unread": {
+"buyer": false,
+"exporter": false
+},
+"frozen": true,
+"frozenReason": "blocked",
+"frozenLabel": {
+"tone": "red",
+"text": "Conversation blocked by MPX Global"
+},
+"blockedReason": "List colour check",
+"blockedBy": "6ab3ffe150e06958c7da53f0",
+"blockedAt": "2026-09-23T20:58:00.855Z",
+"createdAt": "2026-09-23T18:36:49.314Z"
+}
+],
+"nextCursor": null
+}
+},
+"GET /admin/support/overview": {
+"status": 200,
+"body": {
+"counts": {
+"open": 1,
+"inProgress": 1,
+"unassigned": 1,
+"needsReply": 0,
+"waiting": 0,
+"resolved7d": 2
+},
+"scope": "all",
+"autoCloseDays": 14,
+"openTickets": [
+{
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"category": "verification",
+"status": "in_progress",
+"side": "buyer",
+"org": {
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532"
+},
+"createdBy": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"email": "ucm_192532@example.com"
+},
+"assignedTo": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"unread": false,
+"lastMessageAt": "2026-09-25T06:22:49.609Z",
+"createdAt": "2026-09-24T11:54:11.069Z",
+"resolvedAt": null,
+"closedBy": null,
+"awaitingCompanySince": null,
+"autoCloseAt": null,
+"autoClosedAfterDays": null,
+"followUpOf": {
+"id": "6ab4ef328bd8b4e3136d61ab",
+"ref": "T-RNBV7M"
+}
+},
+{
+"id": "6ab4ef328bd8b4e3136d61af",
+"ref": "T-BRMWYW",
+"subject": "Product still hidden after edit",
+"category": "products",
+"status": "open",
+"side": "exporter",
+"org": {
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388"
+},
+"createdBy": {
+"id": "6ab3fc4753c66bbe08c8781c",
+"name": "Priya Picker",
+"email": "uia_873388@example.com"
+},
+"assignedTo": null,
+"unread": false,
+"lastMessageAt": "2026-09-24T09:36:50.471Z",
+"createdAt": "2026-09-24T09:36:50.472Z",
+"resolvedAt": null,
+"closedBy": null,
+"awaitingCompanySince": null,
+"autoCloseAt": null,
+"autoClosedAfterDays": null,
+"followUpOf": null
+}
+]
+}
+},
+"GET /admin/my-work": {
+"status": 200,
+"body": {
+"canTickets": true,
+"canLeads": true,
+"tickets": [],
+"leads": [],
+"last30": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"email": "localadmin@example.com",
+"role": "superadmin",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 5,
+"takedowns": 3,
+"chatModeration": 15,
+"chatReads": 122,
+"ticketReplies": 3,
+"ticketsResolved": 2,
+"suppliersConnected": 3,
+"catalogue": 5,
+"notes": 5
+},
+"total": 163
+},
+"columns": [
+{
+"key": "verifications",
+"label": "Verifications decided"
+},
+{
+"key": "documents",
+"label": "Documents requested / removed"
+},
+{
+"key": "kycViews",
+"label": "KYC documents viewed"
+},
+{
+"key": "takedowns",
+"label": "Products taken down / restored"
+},
+{
+"key": "chatModeration",
+"label": "Chats blocked / warned"
+},
+{
+"key": "chatReads",
+"label": "Conversations read"
+},
+{
+"key": "ticketReplies",
+"label": "Ticket replies"
+},
+{
+"key": "ticketsResolved",
+"label": "Tickets resolved"
+},
+{
+"key": "suppliersConnected",
+"label": "Suppliers connected"
+},
+{
+"key": "catalogue",
+"label": "Catalogue changes"
+},
+{
+"key": "notes",
+"label": "Internal notes added"
+}
+]
+}
+},
+"GET /admin/audit?pageSize=20": {
+"status": 200,
+"body": {
+"entries": [
+{
+"id": "6ab64f0ff8c4aabfa62c9cd6",
+"occurredAt": "2026-09-25T10:38:07.252Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "conversation.read",
+"target": {
+"type": "Conversation",
+"id": "6ab41c41fb0608c385b05ed3",
+"name": null
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64f0ff8c4aabfa62c9cd5",
+"occurredAt": "2026-09-25T10:38:07.240Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "conversation.read",
+"target": {
+"type": "Conversation",
+"id": "6ab41c41fb0608c385b05ed3",
+"name": null
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64f0cf8c4aabfa62c9cd4",
+"occurredAt": "2026-09-25T10:38:04.174Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "kyc.view",
+"target": {
+"type": "Organisation",
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388"
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64d05f8c4aabfa62c9cc2",
+"occurredAt": "2026-09-25T10:29:25.876Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "conversation.read",
+"target": {
+"type": "Conversation",
+"id": "6ab41c41fb0608c385b05ed3",
+"name": null
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64d05f8c4aabfa62c9cc1",
+"occurredAt": "2026-09-25T10:29:25.874Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "conversation.read",
+"target": {
+"type": "Conversation",
+"id": "6ab41c41fb0608c385b05ed3",
+"name": null
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64d01f8c4aabfa62c9cbe",
+"occurredAt": "2026-09-25T10:29:21.318Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "kyc.view",
+"target": {
+"type": "Organisation",
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388"
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64a246c8ff75a2511a029",
+"occurredAt": "2026-09-25T10:17:08.414Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab64a246c8ff75a2511a028",
+"occurredAt": "2026-09-25T10:17:08.014Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab64a236c8ff75a2511a027",
+"occurredAt": "2026-09-25T10:17:07.814Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab64a206c8ff75a2511a026",
+"occurredAt": "2026-09-25T10:17:04.430Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab62d0a6c8ff75a2511a01c",
+"occurredAt": "2026-09-25T08:12:58.959Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "product.restore",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": "Photos show another brand logo. Replace them and ask again.",
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab62cf26c8ff75a2511a016",
+"occurredAt": "2026-09-25T08:12:34.667Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "product.unblock_reject",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": "The second photo still shows the brand tag.",
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab62cb16c8ff75a2511a013",
+"occurredAt": "2026-09-25T08:11:29.467Z",
+"actor": {
+"id": "6ab3fc4753c66bbe08c8781c",
+"name": "Priya Picker",
+"role": "exporter"
+},
+"action": "product.unblock_request",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab62cac6c8ff75a2511a011",
+"occurredAt": "2026-09-25T08:11:24.424Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "product.takedown",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": "Photos show another brand logo. Replace them and ask again.",
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab625f9daa4f2cf9261e714",
+"occurredAt": "2026-09-25T07:42:49.235Z",
+"actor": {
+"id": null,
+"name": "System",
+"role": "system"
+},
+"action": "employee.permissions.backfill",
+"target": {
+"type": "User",
+"id": "6ab4000c53c66bbe08c87840",
+"name": "Ravi Kumar"
+},
+"reason": null,
+"orgId": "6ab3f9b17da71ed9549f529a"
+},
+{
+"id": "6ab62311b93b4ddc371666a4",
+"occurredAt": "2026-09-25T07:30:25.530Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab62311b93b4ddc371666a3",
+"occurredAt": "2026-09-25T07:30:25.480Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab62311b93b4ddc371666a2",
+"occurredAt": "2026-09-25T07:30:25.380Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab6230cb93b4ddc371666a1",
+"occurredAt": "2026-09-25T07:30:20.201Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab61ec2b93b4ddc371666a0",
+"occurredAt": "2026-09-25T07:12:02.720Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+}
+],
+"total": 522,
+"page": 1,
+"pageSize": 20
+}
+},
+"GET /admin/dashboard?days=14": {
+"status": 200,
+"body": {
+"tiles": {
+"pendingBuyerVerifications": {
+"count": 0,
+"link": {
+"path": "/admin/orgs",
+"query": {
+"side": "buyer",
+"verification": "submitted"
+}
+}
+},
+"pendingExporterVerifications": {
+"count": 0,
+"link": {
+"path": "/admin/orgs",
+"query": {
+"side": "exporter",
+"verification": "submitted"
+}
+}
+},
+"pendingChangeReviews": {
+"count": 0,
+"link": {
+"path": "/admin/orgs",
+"query": {
+"verification": "change_pending"
+}
+}
+},
+"bothSidesPending": {
+"count": 0,
+"note": "Counted in both verification tiles. Reviewing either side verifies the whole company."
+},
+"rejectedAwaitingResubmit": {
+"count": 0,
+"link": {
+"path": "/admin/orgs",
+"query": {
+"verification": "rejected"
+}
+}
+},
+"blockedProducts": {
+"count": 0,
+"link": {
+"path": "/admin/products",
+"query": {
+"status": "blocked"
+}
+}
+},
+"nearingPurge": {
+"count": 0,
+"afterDays": 180,
+"warnFromDays": 150,
+"link": {
+"path": "/admin/products",
+"query": {
+"nearingPurge": "true"
+}
+}
+}
+},
+"health": {
+"verification": {
+"averageDaysToVerify": null,
+"sample": 0
+}
+},
+"totals": {
+"organisations": {
+"buyerOnly": 32,
+"exporterOnly": 10,
+"both": 22
+},
+"users": 94,
+"activeProducts": 3,
+"conversations": 4
+},
+"series": {
+"days": [
+"2026-09-12",
+"2026-09-13",
+"2026-09-14",
+"2026-09-15",
+"2026-09-16",
+"2026-09-17",
+"2026-09-18",
+"2026-09-19",
+"2026-09-20",
+"2026-09-21",
+"2026-09-22",
+"2026-09-23",
+"2026-09-24",
+"2026-09-25"
+],
+"organisations": [
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+64,
+0,
+0
+],
+"enquiries": [
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+2,
+2,
+0
+]
+}
+}
+},
+"GET /admin/orgs?page=1&pageSize=20": {
+"status": 200,
+"body": {
+"organisations": [
+{
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 1,
+"takedowns": 1,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": true,
+"both": true
+}
+},
+{
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532",
+"slug": "delta-knits-192532",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+},
+{
+"id": "6ab3fa2261a10d563d5cd90b",
+"name": "Gamma Mills 873388",
+"slug": "gamma-mills-873388",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": true,
+"both": true
+}
+},
+{
+"id": "6ab3fa2161a10d563d5cd8fb",
+"name": "Alpha Textiles 873388",
+"slug": "alpha-textiles-873388",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+},
+{
+"id": "6ab3fa0761a10d563d5cd8e3",
+"name": "S11 Co 839031",
+"slug": "s11-co-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+},
+{
+"id": "6ab3fa0661a10d563d5cd8d0",
+"name": "S9 Target 839031",
+"slug": "s9-target-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+},
+{
+"id": "6ab3fa0561a10d563d5cd8c8",
+"name": "S8 New 839031",
+"slug": "s8-new-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": false,
+"exporter": true,
+"both": false
+}
+},
+{
+"id": "6ab3fa0561a10d563d5cd8c0",
+"name": "S8 Left 839031",
+"slug": "s8-left-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+},
+{
+"id": "6ab3fa0461a10d563d5cd8b4",
+"name": "S7 Blocked 839031",
+"slug": "s7-blocked-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": true,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+},
+{
+"id": "6ab3fa0461a10d563d5cd8ac",
+"name": "S6 Own Co 839031",
+"slug": "s6-own-co-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": false,
+"exporter": true,
+"both": false
+}
+},
+{
+"id": "6ab3fa0361a10d563d5cd89a",
+"name": "S6 Mills 839031",
+"slug": "s6-mills-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": true,
+"both": true
+}
+},
+{
+"id": "6ab3fa0261a10d563d5cd88a",
+"name": "S5 Company D 839031",
+"slug": "s5-company-d-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+},
+{
+"id": "6ab3fa0161a10d563d5cd882",
+"name": "S5 Company C 839031",
+"slug": "s5-company-c-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": true,
+"both": true
+}
+},
+{
+"id": "6ab3fa0061a10d563d5cd870",
+"name": "S4 Exports 839031",
+"slug": "s4-exports-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": true,
+"both": true
+}
+},
+{
+"id": "6ab3f9ff61a10d563d5cd860",
+"name": "S2 Traders 839031",
+"slug": "s2-traders-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 1,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": true,
+"both": true
+}
+},
+{
+"id": "6ab3f9ff61a10d563d5cd858",
+"name": "S1 Co 839031",
+"slug": "s1-co-839031",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+},
+{
+"id": "6ab3f9f661a10d563d5cd843",
+"name": "S11 Co 817231",
+"slug": "s11-co-817231",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+},
+{
+"id": "6ab3f9f561a10d563d5cd830",
+"name": "S9 Target 817231",
+"slug": "s9-target-817231",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+},
+{
+"id": "6ab3f9f461a10d563d5cd828",
+"name": "S8 New 817231",
+"slug": "s8-new-817231",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": false,
+"exporter": true,
+"both": false
+}
+},
+{
+"id": "6ab3f9f461a10d563d5cd820",
+"name": "S8 Left 817231",
+"slug": "s8-left-817231",
+"country": "IN",
+"logo": null,
+"verification": "pending",
+"changePending": false,
+"changeSubmittedAt": null,
+"products": 0,
+"takedowns": 0,
+"blocked": false,
+"sides": {
+"buyer": true,
+"exporter": false,
+"both": false
+}
+}
+],
+"total": 64,
+"page": 1,
+"pageSize": 20
+}
+},
+"GET /admin/audit?orgId=6ab3fa2261a10d563d5cd903&pageSize=6": {
+"status": 200,
+"body": {
+"entries": [
+{
+"id": "6ab64d05f8c4aabfa62c9cc2",
+"occurredAt": "2026-09-25T10:29:25.876Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "conversation.read",
+"target": {
+"type": "Conversation",
+"id": "6ab41c41fb0608c385b05ed3",
+"name": null
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64d05f8c4aabfa62c9cc1",
+"occurredAt": "2026-09-25T10:29:25.874Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "conversation.read",
+"target": {
+"type": "Conversation",
+"id": "6ab41c41fb0608c385b05ed3",
+"name": null
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64d01f8c4aabfa62c9cbe",
+"occurredAt": "2026-09-25T10:29:21.318Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "kyc.view",
+"target": {
+"type": "Organisation",
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388"
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab62d0a6c8ff75a2511a01c",
+"occurredAt": "2026-09-25T08:12:58.959Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "product.restore",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": "Photos show another brand logo. Replace them and ask again.",
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab62cf26c8ff75a2511a016",
+"occurredAt": "2026-09-25T08:12:34.667Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "product.unblock_reject",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": "The second photo still shows the brand tag.",
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab62cb16c8ff75a2511a013",
+"occurredAt": "2026-09-25T08:11:29.467Z",
+"actor": {
+"id": "6ab3fc4753c66bbe08c8781c",
+"name": "Priya Picker",
+"role": "exporter"
+},
+"action": "product.unblock_request",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+}
+],
+"total": 121,
+"page": 1,
+"pageSize": 6
+}
+},
+"GET /admin/orgs/6ab3fa2261a10d563d5cd903": {
+"status": 200,
+"body": {
+"organisation": {
+"header": {
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"sides": {
+"buyer": true,
+"exporter": true,
+"both": true
+},
+"verified": false,
+"verifiedAt": null,
+"blocked": false,
+"blockReason": null,
+"blockedAt": null,
+"createdAt": "2026-09-23T16:11:14.216Z"
+},
+"company": {
+"country": "IN",
+"address": {
+"line1": "12 Ring Road",
+"city": "Surat",
+"postalCode": "395003"
+},
+"entityType": "business",
+"logo": null,
+"coverImage": null,
+"description": null
+},
+"notCaptured": [
+"registrationNumber",
+"website",
+"taxId",
+"establishedYear",
+"authorisedSignatory"
+],
+"verification": {
+"status": "pending",
+"verifiedBy": null,
+"verifiedAt": null,
+"rejectionReason": null,
+"submittedAt": null,
+"reviewedSides": [],
+"reviewedAt": null,
+"resubmitCount": 0,
+"kycDocumentCount": 0
+},
+"pendingChanges": null,
+"documentRequests": [],
+"kycRevocation": null,
+"sides": {
+"buyer": true,
+"exporter": true,
+"both": true,
+"signupAt": "2026-09-23T16:11:14.219Z",
+"claimHistory": [
+{
+"at": "2026-09-23T16:20:23.342Z",
+"byUserId": "6ab3fc4753c66bbe08c8781c",
+"role": "exporter",
+"matchedOn": "mobile",
+"verifiedVia": "org_email_otp"
+}
+],
+"claimHistoryAvailable": true
+},
+"users": [
+{
+"id": "6ab3fa2261a10d563d5cd904",
+"name": "buyer uib_873388",
+"email": "uib_873388@example.com",
+"role": "buyer",
+"isActive": true,
+"lastLoginAt": null
+},
+{
+"id": "6ab3fc4753c66bbe08c8781c",
+"name": "Priya Picker",
+"email": "uia_873388@example.com",
+"role": "exporter",
+"isActive": true,
+"lastLoginAt": "2026-09-23T17:51:34.411Z"
+}
+],
+"chats": {
+"asBuyer": 0,
+"asExporter": 2
+},
+"products": {
+"active": 1,
+"inactive": 0,
+"draft": 0,
+"archived": 0,
+"blocked": 0,
+"archivedIsCountOnly": true,
+"takedownCount": 1
+},
+"buyerActivity": {
+"enquiriesSent": 0,
+"savedItems": 0
+},
+"blockReach": {
+"organisation": true,
+"users": true,
+"products": true,
+"conversations": true,
+"note": "A block disables the company and its users, takes its live products down, and freezes its conversations. Drafts and archived products are untouched.",
+"cascade": null
+}
+}
+}
+},
+"GET /admin/notes?subjectId=6ab3fa2261a10d563d5cd903&subjectType=organisation": {
+"status": 200,
+"body": {
+"notes": [
+{
+"id": "6ab4fedf971bfa9170d245ab",
+"body": "this is test note",
+"author": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin"
+},
+"createdAt": "2026-09-24T10:43:43.868Z"
+}
+]
+}
+},
+"GET /admin/users?page=1&pageSize=20&role=buyer,exporter": {
+"status": 200,
+"body": {
+"rows": [
+{
+"name": "buyer ucm_192532",
+"email": "ucm_192532@example.com",
+"role": "buyer",
+"orgId": "6ab3ff4853c66bbe08c87832",
+"isActive": true,
+"createdAt": "2026-09-23T16:33:12.930Z",
+"id": "6ab3ff4853c66bbe08c87833",
+"mobile": "+917192532444",
+"orgName": "Delta Knits 192532",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "Priya Picker",
+"email": "uia_873388@example.com",
+"role": "exporter",
+"orgId": "6ab3fa2261a10d563d5cd903",
+"isActive": true,
+"createdAt": "2026-09-23T16:20:23.333Z",
+"id": "6ab3fc4753c66bbe08c8781c",
+"mobile": "+918873388222",
+"orgName": "Beta Traders 873388",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "exporter uic_873388",
+"email": "uic_873388@example.com",
+"role": "exporter",
+"orgId": "6ab3fa2261a10d563d5cd90b",
+"isActive": true,
+"createdAt": "2026-09-23T16:11:15.101Z",
+"id": "6ab3fa2361a10d563d5cd913",
+"mobile": "+918873388333",
+"orgName": "Gamma Mills 873388",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer uic_873388",
+"email": "uic_873388@example.com",
+"role": "buyer",
+"orgId": "6ab3fa2261a10d563d5cd90b",
+"isActive": true,
+"createdAt": "2026-09-23T16:11:14.707Z",
+"id": "6ab3fa2261a10d563d5cd90c",
+"mobile": "+918873388333",
+"orgName": "Gamma Mills 873388",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer uib_873388",
+"email": "uib_873388@example.com",
+"role": "buyer",
+"orgId": "6ab3fa2261a10d563d5cd903",
+"isActive": true,
+"createdAt": "2026-09-23T16:11:14.217Z",
+"id": "6ab3fa2261a10d563d5cd904",
+"mobile": "+918873388222",
+"orgName": "Beta Traders 873388",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer uia_873388",
+"email": "uia_873388@example.com",
+"role": "buyer",
+"orgId": "6ab3fa2161a10d563d5cd8fb",
+"isActive": true,
+"createdAt": "2026-09-23T16:11:13.845Z",
+"id": "6ab3fa2161a10d563d5cd8fc",
+"mobile": "+918873388111",
+"orgName": "Alpha Textiles 873388",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer s11_839031_14",
+"email": "s11_839031_14@example.com",
+"role": "buyer",
+"orgId": "6ab3fa0761a10d563d5cd8e3",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:47.446Z",
+"id": "6ab3fa0761a10d563d5cd8e4",
+"mobile": "+919839031014",
+"orgName": "S11 Co 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer s9_839031_12",
+"email": "s9_839031_12@example.com",
+"role": "buyer",
+"orgId": "6ab3fa0661a10d563d5cd8d0",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:46.034Z",
+"id": "6ab3fa0661a10d563d5cd8d1",
+"mobile": "+919839031012",
+"orgName": "S9 Target 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "exporter s8_839031_11",
+"email": "s8_839031_11@example.com",
+"role": "exporter",
+"orgId": "6ab3fa0561a10d563d5cd8c8",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:45.684Z",
+"id": "6ab3fa0561a10d563d5cd8c9",
+"mobile": "+919839031011",
+"orgName": "S8 New 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer s8_839031_11",
+"email": "s8_839031_11@example.com",
+"role": "buyer",
+"orgId": "6ab3fa0561a10d563d5cd8c0",
+"isActive": false,
+"createdAt": "2026-09-23T16:10:45.316Z",
+"id": "6ab3fa0561a10d563d5cd8c1",
+"mobile": "+919839031011",
+"orgName": "S8 Left 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer s7_839031_10",
+"email": "s7_839031_10@example.com",
+"role": "buyer",
+"orgId": "6ab3fa0461a10d563d5cd8b4",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:44.605Z",
+"id": "6ab3fa0461a10d563d5cd8b5",
+"mobile": "+919839031010",
+"orgName": "S7 Blocked 839031",
+"orgIsActive": false,
+"kycStatus": "pending"
+},
+{
+"name": "exporter s6_839031_7",
+"email": "s6_839031_7@example.com",
+"role": "exporter",
+"orgId": "6ab3fa0461a10d563d5cd8ac",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:44.213Z",
+"id": "6ab3fa0461a10d563d5cd8ad",
+"mobile": "+919839031008",
+"orgName": "S6 Own Co 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "exporter s6p2_839031_9",
+"email": "s6p2_839031_9@example.com",
+"role": "exporter",
+"orgId": "6ab3fa0361a10d563d5cd89a",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:44.136Z",
+"id": "6ab3fa0461a10d563d5cd8a8",
+"mobile": "+919839031007",
+"orgName": "S6 Mills 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer s6_839031_7",
+"email": "s6_839031_7@example.com",
+"role": "buyer",
+"orgId": "6ab3fa0361a10d563d5cd89a",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:43.049Z",
+"id": "6ab3fa0361a10d563d5cd89b",
+"mobile": "+919839031007",
+"orgName": "S6 Mills 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "exporter s5c_839031_5",
+"email": "s5c_839031_5@example.com",
+"role": "exporter",
+"orgId": "6ab3fa0161a10d563d5cd882",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:42.523Z",
+"id": "6ab3fa0261a10d563d5cd892",
+"mobile": "+919839031006",
+"orgName": "S5 Company C 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer s5d_839031_6",
+"email": "s5d_839031_6@example.com",
+"role": "buyer",
+"orgId": "6ab3fa0261a10d563d5cd88a",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:42.109Z",
+"id": "6ab3fa0261a10d563d5cd88b",
+"mobile": "+919839031006",
+"orgName": "S5 Company D 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer s5c_839031_5",
+"email": "s5c_839031_5@example.com",
+"role": "buyer",
+"orgId": "6ab3fa0161a10d563d5cd882",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:41.755Z",
+"id": "6ab3fa0161a10d563d5cd883",
+"mobile": "+919839031005",
+"orgName": "S5 Company C 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "exporter s4j_839031_4",
+"email": "s4j_839031_4@example.com",
+"role": "exporter",
+"orgId": "6ab3fa0061a10d563d5cd870",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:41.405Z",
+"id": "6ab3fa0161a10d563d5cd87a",
+"mobile": "+919839031003",
+"orgName": "S4 Exports 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "buyer s4m_839031_3",
+"email": "s4m_839031_3@example.com",
+"role": "buyer",
+"orgId": "6ab3fa0061a10d563d5cd870",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:40.716Z",
+"id": "6ab3fa0061a10d563d5cd871",
+"mobile": "+919839031003",
+"orgName": "S4 Exports 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+},
+{
+"name": "exporter s2_839031_2",
+"email": "s2_839031_2@example.com",
+"role": "exporter",
+"orgId": "6ab3f9ff61a10d563d5cd860",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:40.324Z",
+"id": "6ab3fa0061a10d563d5cd868",
+"mobile": "+919839031002",
+"orgName": "S2 Traders 839031",
+"orgIsActive": true,
+"kycStatus": "pending"
+}
+],
+"total": 86,
+"page": 1,
+"pageSize": 20
+}
+},
+"GET /admin/categories": {
+"status": 200,
+"body": {
+"categories": [
+{
+"id": "6ab3f9b17da71ed9549f529c",
+"name": "Tex 750420",
+"slug": "tex-750420",
+"parentId": null,
+"type": null,
+"prevActive": null,
+"image": null,
+"synonyms": [],
+"createdAt": "2026-09-23T16:09:21.579Z",
+"subs": [
+{
+"id": "6ab3f9b17da71ed9549f529d",
+"name": "Cotton 750420",
+"slug": "cotton-750420",
+"parentId": "6ab3f9b17da71ed9549f529c",
+"type": "goods",
+"active": false,
+"prevActive": null,
+"order": 0,
+"image": null,
+"synonyms": [],
+"attributeCount": 0,
+"createdAt": "2026-09-23T16:09:21.580Z"
+},
+{
+"id": "6ab419cbfb0608c385b05eca",
+"name": "Board Games",
+"slug": "board-games",
+"parentId": "6ab3f9b17da71ed9549f529c",
+"type": "goods",
+"active": true,
+"prevActive": null,
+"order": 2,
+"image": null,
+"synonyms": [
+"chess",
+"carrom"
+],
+"attributeCount": 0,
+"createdAt": "2026-09-23T18:26:19.648Z"
+}
+]
+},
+{
+"id": "6ab3f9ceea23c9777a40ec3b",
+"name": "Tex 779280",
+"slug": "tex-779280",
+"parentId": null,
+"type": null,
+"active": true,
+"prevActive": null,
+"image": null,
+"synonyms": [],
+"createdAt": "2026-09-23T16:09:50.172Z",
+"subs": [
+{
+"id": "6ab3f9ceea23c9777a40ec3c",
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"active": true,
+"prevActive": null,
+"image": null,
+"synonyms": [],
+"attributeCount": 0,
+"createdAt": "2026-09-23T16:09:50.173Z"
+}
+]
+},
+{
+"id": "6ab3f9df3e0b93f2167120de",
+"name": "Tex 796964",
+"slug": "tex-796964",
+"parentId": null,
+"type": null,
+"active": true,
+"prevActive": null,
+"image": null,
+"synonyms": [],
+"createdAt": "2026-09-23T16:10:07.997Z",
+"subs": [
+{
+"id": "6ab3f9df3e0b93f2167120df",
+"name": "Cotton 796964",
+"slug": "cotton-796964",
+"parentId": "6ab3f9df3e0b93f2167120de",
+"type": "goods",
+"active": true,
+"prevActive": null,
+"image": null,
+"synonyms": [],
+"attributeCount": 0,
+"createdAt": "2026-09-23T16:10:07.998Z"
+}
+]
+},
+{
+"id": "6ab3f9f86a5f52453e8d56f7",
+"name": "Tex 817231",
+"slug": "tex-817231",
+"parentId": null,
+"type": null,
+"active": true,
+"prevActive": null,
+"image": null,
+"synonyms": [],
+"createdAt": "2026-09-23T16:10:32.126Z",
+"subs": [
+{
+"id": "6ab3f9f86a5f52453e8d56f8",
+"name": "Cotton 817231",
+"slug": "cotton-817231",
+"parentId": "6ab3f9f86a5f52453e8d56f7",
+"type": "goods",
+"active": true,
+"prevActive": null,
+"image": null,
+"synonyms": [],
+"attributeCount": 0,
+"createdAt": "2026-09-23T16:10:32.127Z"
+}
+]
+},
+{
+"id": "6ab3fa09dc3f97f934a0565b",
+"name": "Tex 839031",
+"slug": "tex-839031",
+"parentId": null,
+"type": null,
+"active": true,
+"prevActive": null,
+"image": null,
+"synonyms": [],
+"createdAt": "2026-09-23T16:10:49.465Z",
+"subs": [
+{
+"id": "6ab3fa09dc3f97f934a0565c",
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"parentId": "6ab3fa09dc3f97f934a0565b",
+"type": "goods",
+"active": true,
+"prevActive": null,
+"image": null,
+"synonyms": [],
+"attributeCount": 0,
+"createdAt": "2026-09-23T16:10:49.466Z"
+}
+]
+},
+{
+"id": "6ab4176bfb0608c385b05ec6",
+"name": "Toys & Games",
+"slug": "toys-games",
+"parentId": null,
+"type": null,
+"active": false,
+"prevActive": null,
+"order": 6,
+"image": null,
+"synonyms": [
+"toys",
+"games",
+"puzzles"
+],
+"createdAt": "2026-09-23T18:16:11.059Z",
+"subs": []
+}
+]
+}
+},
+"GET /admin/categories/6ab3f9ceea23c9777a40ec3b/attributes": {
+"status": 400,
+"body": {
+"error": {
+"message": "Top categories have no fields.",
+"requestId": "d990f197-a43b-4c9b-97ce-8573f595de1c"
+}
+}
+},
+"GET /categories": {
+"status": 200,
+"body": {
+"categories": [
+{
+"name": "Tex 779280",
+"slug": "tex-779280",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9ceea23c9777a40ec3b",
+"subs": [
+{
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+}
+]
+},
+{
+"name": "Tex 796964",
+"slug": "tex-796964",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9df3e0b93f2167120de",
+"subs": [
+{
+"name": "Cotton 796964",
+"slug": "cotton-796964",
+"image": null,
+"parentId": "6ab3f9df3e0b93f2167120de",
+"type": "goods",
+"id": "6ab3f9df3e0b93f2167120df"
+}
+]
+},
+{
+"name": "Tex 817231",
+"slug": "tex-817231",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9f86a5f52453e8d56f7",
+"subs": [
+{
+"name": "Cotton 817231",
+"slug": "cotton-817231",
+"image": null,
+"parentId": "6ab3f9f86a5f52453e8d56f7",
+"type": "goods",
+"id": "6ab3f9f86a5f52453e8d56f8"
+}
+]
+},
+{
+"name": "Tex 839031",
+"slug": "tex-839031",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3fa09dc3f97f934a0565b",
+"subs": [
+{
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"image": null,
+"parentId": "6ab3fa09dc3f97f934a0565b",
+"type": "goods",
+"id": "6ab3fa09dc3f97f934a0565c"
+}
+]
+}
+]
+}
+},
+"GET /admin/products?page=1&pageSize=20": {
+"status": 200,
+"body": {
+"rows": [
+{
+"name": "Organic Cotton Twill",
+"status": "active",
+"takedown": {
+"isDown": false
+},
+"slug": "organic-cotton-twill",
+"createdAt": "2026-09-23T17:53:48.846Z",
+"category": {
+"id": "6ab3f9ceea23c9777a40ec3c",
+"name": "Cotton 779280",
+"slug": "cotton-779280"
+},
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"seller": {
+"orgId": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"takedownCount": 1
+},
+"purgeAt": null,
+"purgePaused": false
+},
+{
+"name": "Own Cotton Roll 839031",
+"slug": "own-cotton-roll-839031",
+"status": "active",
+"takedown": {
+"isDown": false
+},
+"createdAt": "2026-09-23T16:10:49.467Z",
+"category": {
+"id": "6ab3fa09dc3f97f934a0565c",
+"name": "Cotton 839031",
+"slug": "cotton-839031"
+},
+"id": "6ab3fa09dc3f97f934a0565d",
+"image": null,
+"seller": {
+"orgId": "6ab3f9ff61a10d563d5cd860",
+"name": "S2 Traders 839031",
+"slug": "s2-traders-839031",
+"takedownCount": 0
+},
+"purgeAt": null,
+"purgePaused": false
+},
+{
+"name": "Own Cotton Roll 750420",
+"status": "active",
+"takedown": {
+"isDown": false
+},
+"createdAt": "2026-09-23T16:09:21.580Z",
+"category": {
+"id": "6ab3f9b17da71ed9549f529d",
+"name": "Cotton 750420",
+"slug": "cotton-750420"
+},
+"id": "6ab3f9b17da71ed9549f529e",
+"image": null,
+"seller": {
+"orgId": "6ab3f9a761a10d563d5cd5dd",
+"name": "S2 Traders 750420",
+"slug": "s2-traders-750420",
+"takedownCount": 0
+},
+"purgeAt": null,
+"purgePaused": false
+}
+],
+"total": 3,
+"page": 1,
+"pageSize": 20
+}
+},
+"GET /admin/orgs?pageSize=50&side=exporter&verification=submitted": {
+"status": 200,
+"body": {
+"organisations": [],
+"total": 0,
+"page": 1,
+"pageSize": 50
+}
+},
+"GET /admin/orgs?pageSize=50&side=buyer&verification=submitted": {
+"status": 200,
+"body": {
+"organisations": [],
+"total": 0,
+"page": 1,
+"pageSize": 50
+}
+},
+"GET /admin/orgs?pageSize=50&side=exporter&verification=change_pending": {
+"status": 200,
+"body": {
+"organisations": [],
+"total": 0,
+"page": 1,
+"pageSize": 50
+}
+},
+"GET /admin/orgs?pageSize=50&side=buyer&verification=change_pending": {
+"status": 200,
+"body": {
+"organisations": [],
+"total": 0,
+"page": 1,
+"pageSize": 50
+}
+},
+"GET /employee/orgs/6ab3fa2261a10d563d5cd903/kyc/documents": {
+"status": 200,
+"body": {
+"orgId": "6ab3fa2261a10d563d5cd903",
+"buyerSide": true,
+"exporterSide": true,
+"kycStatus": "pending",
+"entityType": "business",
+"country": "IN",
+"documents": [],
+"pendingChanges": null,
+"documentRequests": [],
+"kycRevocation": null
+}
+},
+"GET /admin/conversations?limit=20": {
+"status": 200,
+"body": {
+"conversations": [
+{
+"id": "6ab4ff1a86dc6e9cb2c8b417",
+"title": "Delta Knits 192532 \u00d7 Beta Traders 873388 \u00d7 Organic Cotton Twill",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"buyerOrg": {
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532",
+"logo": null
+},
+"exporterOrg": {
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "Delta Knits 192532"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-25T08:12:58.952Z",
+"lastMessagePreview": "This product is available again. You can continue the conversation.",
+"unread": {
+"buyer": false,
+"exporter": false
+},
+"frozen": false,
+"frozenReason": null,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"blockedBy": null,
+"blockedAt": null,
+"createdAt": "2026-09-24T10:44:42.261Z"
+},
+{
+"id": "6ab519d0be860d97970cdb3b",
+"title": "Delta Knits 192532 \u00d7 S2 Traders 839031 \u00d7 Own Cotton Roll 839031",
+"product": {
+"id": "6ab3fa09dc3f97f934a0565d",
+"slug": "own-cotton-roll-839031",
+"name": "Own Cotton Roll 839031"
+},
+"buyerOrg": {
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532",
+"logo": null
+},
+"exporterOrg": {
+"id": "6ab3f9ff61a10d563d5cd860",
+"name": "S2 Traders 839031",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "Delta Knits 192532"
+},
+{
+"type": "exporter",
+"name": "S2 Traders 839031"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-24T12:38:40.435Z",
+"lastMessagePreview": "Quantity: 20000\nUnit: kg\nBasmati rice, 1121 sella, 25 kg bags",
+"unread": {
+"buyer": false,
+"exporter": true
+},
+"frozen": false,
+"frozenReason": null,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"blockedBy": null,
+"blockedAt": null,
+"createdAt": "2026-09-24T12:38:40.436Z"
+},
+{
+"id": "6ab43d78456260536b8364c3",
+"title": "S1 Co 750420 \u00d7 S2 Traders 839031 \u00d7 Own Cotton Roll 839031",
+"product": {
+"id": "6ab3fa09dc3f97f934a0565d",
+"slug": "own-cotton-roll-839031",
+"name": "Own Cotton Roll 839031"
+},
+"buyerOrg": {
+"id": "6ab3f9a661a10d563d5cd5d5",
+"name": "S1 Co 750420",
+"logo": null
+},
+"exporterOrg": {
+"id": "6ab3f9ff61a10d563d5cd860",
+"name": "S2 Traders 839031",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "S1 Co 750420"
+},
+{
+"type": "exporter",
+"name": "S2 Traders 839031"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-23T22:14:44.035Z",
+"lastMessagePreview": "no",
+"unread": {
+"buyer": true,
+"exporter": false
+},
+"frozen": false,
+"frozenReason": null,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"blockedBy": null,
+"blockedAt": null,
+"createdAt": "2026-09-23T20:58:32.267Z"
+},
+{
+"id": "6ab41c41fb0608c385b05ed3",
+"title": "S1 Co 750420 \u00d7 Beta Traders 873388 \u00d7 Organic Cotton Twill",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"buyerOrg": {
+"id": "6ab3f9a661a10d563d5cd5d5",
+"name": "S1 Co 750420",
+"logo": null
+},
+"exporterOrg": {
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "S1 Co 750420"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-23T20:58:00.857Z",
+"lastMessagePreview": "This conversation has been restricted by MPX Global. Reason: List colour check",
+"unread": {
+"buyer": false,
+"exporter": false
+},
+"frozen": true,
+"frozenReason": "blocked",
+"frozenLabel": {
+"tone": "red",
+"text": "Conversation blocked by MPX Global"
+},
+"blockedReason": "List colour check",
+"blockedBy": "6ab3ffe150e06958c7da53f0",
+"blockedAt": "2026-09-23T20:58:00.855Z",
+"createdAt": "2026-09-23T18:36:49.314Z"
+}
+],
+"nextCursor": null
+}
+},
+"GET /admin/conversations/6ab41c41fb0608c385b05ed3": {
+"status": 200,
+"body": {
+"conversation": {
+"id": "6ab41c41fb0608c385b05ed3",
+"title": "S1 Co 750420 \u00d7 Beta Traders 873388 \u00d7 Organic Cotton Twill",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"buyerOrg": {
+"id": "6ab3f9a661a10d563d5cd5d5",
+"name": "S1 Co 750420",
+"logo": null
+},
+"exporterOrg": {
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "S1 Co 750420"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-23T20:58:00.857Z",
+"lastMessagePreview": "This conversation has been restricted by MPX Global. Reason: List colour check",
+"unread": {
+"buyer": false,
+"exporter": false
+},
+"frozen": true,
+"frozenReason": "blocked",
+"frozenLabel": {
+"tone": "red",
+"text": "Conversation blocked by MPX Global"
+},
+"blockedReason": "List colour check",
+"blockedBy": "6ab3ffe150e06958c7da53f0",
+"blockedAt": "2026-09-23T20:58:00.855Z",
+"createdAt": "2026-09-23T18:36:49.314Z"
+}
+}
+},
+"GET /admin/conversations/6ab41c41fb0608c385b05ed3/messages?limit=30": {
+"status": 200,
+"body": {
+"messages": [
+{
+"id": "6ab41c41fb0608c385b05ed4",
+"senderType": "buyer",
+"systemKind": null,
+"body": "Hello, can you share samples of this twill?",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T18:36:49.326Z"
+},
+{
+"id": "6ab41c41fb0608c385b05ed5",
+"senderType": "system",
+"systemKind": "welcome",
+"body": "MPX Global is part of this conversation. Please keep all discussion and documents here \u2014 it is how we can support you if anything goes wrong.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T18:36:49.354Z"
+},
+{
+"id": "6ab41e906ceed3d207a816f1",
+"senderType": "buyer",
+"systemKind": null,
+"body": "Here is our price list",
+"attachment": {
+"kind": "document",
+"url": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"viewUrl": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"name": "Price-List.pdf",
+"format": "pdf",
+"bytes": 61
+},
+"quotationId": null,
+"createdAt": "2026-09-23T18:46:40.394Z"
+},
+{
+"id": "6ab4301122f5e864e7c6c758",
+"senderType": "buyer",
+"systemKind": null,
+"body": "",
+"attachment": {
+"kind": "document",
+"url": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"viewUrl": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"name": "Catalogue.pdf",
+"format": "pdf",
+"bytes": 15
+},
+"quotationId": null,
+"createdAt": "2026-09-23T20:01:21.524Z"
+},
+{
+"id": "6ab4302622f5e864e7c6c759",
+"senderType": "buyer",
+"systemKind": null,
+"body": "",
+"attachment": {
+"kind": "image",
+"url": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"width": 40,
+"height": 40
+},
+"quotationId": null,
+"createdAt": "2026-09-23T20:01:42.686Z"
+},
+{
+"id": "6ab43713d260ae5aca12bb35",
+"senderType": "system",
+"systemKind": "warning",
+"body": "For your safety, never pay a supplier through a link or account shared in chat. Confirm all terms in the enquiry first.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:31:15.788Z"
+},
+{
+"id": "6ab437eb0a08cac7e44d1ee4",
+"senderType": "system",
+"systemKind": "warning_reminder",
+"body": "Please keep all communication, contact details and payments within MPX Global. Deals taken off the platform are not protected.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:34:51.222Z"
+},
+{
+"id": "6ab437ec0a08cac7e44d1eea",
+"senderType": "system",
+"systemKind": "warning_caution",
+"body": "Please keep this conversation professional and respectful. Continued abusive language may lead to this conversation being blocked.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:34:52.257Z"
+},
+{
+"id": "6ab437ed0a08cac7e44d1ef0",
+"senderType": "system",
+"systemKind": "warning_serious",
+"body": "We've noticed activity in this conversation that may break our policies. Please review MPX Global's terms before continuing.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:34:53.207Z"
+},
+{
+"id": "6ab437ee0a08cac7e44d1ef6",
+"senderType": "system",
+"systemKind": "warning_final",
+"body": "This is a final warning. Further policy violations will result in this conversation being blocked.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:34:54.151Z"
+},
+{
+"id": "6ab438cf0a08cac7e44d1f01",
+"senderType": "system",
+"systemKind": "warning_reminder",
+"body": "For your safety, never pay a supplier through a link or account shared in chat. Confirm all terms in the enquiry first.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:38:39.148Z"
+},
+{
+"id": "6ab438d60a08cac7e44d1f07",
+"senderType": "system",
+"systemKind": "warning_reminder",
+"body": "Please keep all communication, contact details and payments within MPX Global. Deals taken off the platform are not protected.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:38:46.189Z"
+},
+{
+"id": "6ab4397d0a08cac7e44d1f0d",
+"senderType": "system",
+"systemKind": "blocked",
+"body": "This conversation has been restricted by MPX Global. Reason: test",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:41:33.733Z"
+},
+{
+"id": "6ab4398b0a08cac7e44d1f13",
+"senderType": "system",
+"systemKind": "unblocked",
+"body": "This conversation has been reopened by MPX Global.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:41:47.556Z"
+},
+{
+"id": "6ab43a370a08cac7e44d1f1c",
+"senderType": "system",
+"systemKind": "warning_final",
+"body": "This is a final warning. Further policy violations will result in this conversation being blocked.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:44:39.379Z"
+},
+{
+"id": "6ab43a370a08cac7e44d1f22",
+"senderType": "system",
+"systemKind": "blocked",
+"body": "This conversation has been restricted by MPX Global. Reason: Test block to compare colours",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:44:39.594Z"
+},
+{
+"id": "6ab43b6c456260536b83649c",
+"senderType": "system",
+"systemKind": "unblocked",
+"body": "This conversation has been reopened by MPX Global.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:49:48.747Z"
+},
+{
+"id": "6ab43c2a456260536b8364a5",
+"senderType": "system",
+"systemKind": "blocked",
+"body": "This conversation has been restricted by MPX Global. Reason: Chip colour check",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:52:58.847Z"
+},
+{
+"id": "6ab43c7d456260536b8364af",
+"senderType": "system",
+"systemKind": "unblocked",
+"body": "This conversation has been reopened by MPX Global.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:54:21.076Z"
+},
+{
+"id": "6ab43d58456260536b8364b8",
+"senderType": "system",
+"systemKind": "blocked",
+"body": "This conversation has been restricted by MPX Global. Reason: List colour check",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:58:00.857Z"
+}
+],
+"nextBefore": null
+}
+},
+"GET /admin/notes?subjectId=6ab41c41fb0608c385b05ed3&subjectType=conversation": {
+"status": 200,
+"body": {
+"notes": []
+}
+},
+"GET /admin/support/assignees": {
+"status": 200,
+"body": {
+"staff": [
+{
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+{
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+{
+"id": "6ab3f9b17da71ed9549f529b",
+"name": "Staff Tester",
+"role": "employee"
+}
+]
+}
+},
+"GET /admin/support/tickets?page=1&pageSize=20&status=active": {
+"status": 200,
+"body": {
+"rows": [
+{
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"category": "verification",
+"status": "in_progress",
+"side": "buyer",
+"org": {
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532"
+},
+"createdBy": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"email": "ucm_192532@example.com"
+},
+"assignedTo": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"unread": false,
+"lastMessageAt": "2026-09-25T06:22:49.609Z",
+"createdAt": "2026-09-24T11:54:11.069Z",
+"resolvedAt": null,
+"closedBy": null,
+"awaitingCompanySince": null,
+"autoCloseAt": null,
+"autoClosedAfterDays": null,
+"followUpOf": {
+"id": "6ab4ef328bd8b4e3136d61ab",
+"ref": "T-RNBV7M"
+}
+},
+{
+"id": "6ab4ef328bd8b4e3136d61af",
+"ref": "T-BRMWYW",
+"subject": "Product still hidden after edit",
+"category": "products",
+"status": "open",
+"side": "exporter",
+"org": {
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388"
+},
+"createdBy": {
+"id": "6ab3fc4753c66bbe08c8781c",
+"name": "Priya Picker",
+"email": "uia_873388@example.com"
+},
+"assignedTo": null,
+"unread": false,
+"lastMessageAt": "2026-09-24T09:36:50.471Z",
+"createdAt": "2026-09-24T09:36:50.472Z",
+"resolvedAt": null,
+"closedBy": null,
+"awaitingCompanySince": null,
+"autoCloseAt": null,
+"autoClosedAfterDays": null,
+"followUpOf": null
+}
+],
+"total": 2,
+"page": 1,
+"pageSize": 20
+}
+},
+"GET /admin/support/tickets/6ab50f6301c1ac72fe8b3902/timeline": {
+"status": 200,
+"body": {
+"events": [
+{
+"id": "6ab50f6301c1ac72fe8b3905",
+"at": "2026-09-24T11:54:11.078Z",
+"action": "ticket.create",
+"actor": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"role": "buyer"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": null,
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516a65f9510a6085a707e",
+"at": "2026-09-24T12:25:10.278Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516a95f9510a6085a707f",
+"at": "2026-09-24T12:25:13.686Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": null,
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516ab5f9510a6085a7080",
+"at": "2026-09-24T12:25:15.997Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516b15f9510a6085a7081",
+"at": "2026-09-24T12:25:21.251Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": "Local Admin",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516b55f9510a6085a7082",
+"at": "2026-09-24T12:25:25.732Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Local Admin",
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516ba5f9510a6085a7083",
+"at": "2026-09-24T12:25:30.742Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": null,
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516cd5f9510a6085a7084",
+"at": "2026-09-24T12:25:49.795Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": "Local Admin",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab516d05f9510a6085a7085",
+"at": "2026-09-24T12:25:52.502Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Local Admin",
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab51701a8bed8a938315aa8",
+"at": "2026-09-24T12:26:41.175Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": "Local Admin",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab51702a8bed8a938315aa9",
+"at": "2026-09-24T12:26:42.698Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Local Admin",
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab5171fa8bed8a938315aab",
+"at": "2026-09-24T12:27:11.128Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": "Local Admin",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab51720a8bed8a938315aac",
+"at": "2026-09-24T12:27:12.990Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Local Admin",
+"to": "Ravi Kumar",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab5e4911a28a0fb812c0dd1",
+"at": "2026-09-25T03:03:45.800Z",
+"action": "ticket.reply",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": null,
+"by": "staff",
+"afterDays": null
+},
+{
+"id": "6ab5e4911a28a0fb812c0dd2",
+"at": "2026-09-25T03:03:45.803Z",
+"action": "ticket.status",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "open",
+"to": "in_progress",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab612231a28a0fb812c0de6",
+"at": "2026-09-25T06:18:11.893Z",
+"action": "ticket.reply",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": null,
+"by": "staff",
+"afterDays": null
+},
+{
+"id": "6ab6130bbc25e621570661e9",
+"at": "2026-09-25T06:22:03.366Z",
+"action": "ticket.assign",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": "Ravi Kumar",
+"to": "Asha Menon",
+"by": null,
+"afterDays": null
+},
+{
+"id": "6ab61339bc25e621570661ee",
+"at": "2026-09-25T06:22:49.612Z",
+"action": "ticket.reply",
+"actor": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"role": "buyer"
+},
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"org": "Delta Knits 192532"
+},
+"from": null,
+"to": null,
+"by": "company",
+"afterDays": null
+}
+]
+}
+},
+"GET /admin/support/tickets/6ab50f6301c1ac72fe8b3902": {
+"status": 200,
+"body": {
+"ticket": {
+"id": "6ab50f6301c1ac72fe8b3902",
+"ref": "T-XKMBDQ",
+"subject": "GST upload failing again",
+"category": "verification",
+"status": "in_progress",
+"side": "buyer",
+"org": {
+"id": "6ab3ff4853c66bbe08c87832",
+"name": "Delta Knits 192532"
+},
+"createdBy": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"email": "ucm_192532@example.com"
+},
+"assignedTo": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"unread": false,
+"lastMessageAt": "2026-09-25T06:22:49.609Z",
+"createdAt": "2026-09-24T11:54:11.069Z",
+"resolvedAt": null,
+"closedBy": null,
+"awaitingCompanySince": null,
+"autoCloseAt": null,
+"autoClosedAfterDays": null,
+"followUpOf": {
+"id": "6ab4ef328bd8b4e3136d61ab",
+"ref": "T-RNBV7M"
+}
+},
+"messages": [
+{
+"id": "6ab50f6301c1ac72fe8b3904",
+"authorType": "company",
+"author": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532"
+},
+"body": "Same problem as before, it came back today.",
+"attachment": null,
+"createdAt": "2026-09-24T11:54:11.076Z"
+},
+{
+"id": "6ab5e4911a28a0fb812c0dd0",
+"authorType": "staff",
+"author": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin"
+},
+"body": "We are checking your GST upload now.",
+"attachment": null,
+"createdAt": "2026-09-25T03:03:45.791Z"
+},
+{
+"id": "6ab612231a28a0fb812c0de5",
+"authorType": "staff",
+"author": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin"
+},
+"body": "Thanks \u2014 please try the upload again, we fixed a size limit.",
+"attachment": null,
+"createdAt": "2026-09-25T06:18:11.871Z"
+},
+{
+"id": "6ab61339bc25e621570661ed",
+"authorType": "company",
+"author": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532"
+},
+"body": "Tried again \u2014 it uploaded this time, thank you!",
+"attachment": null,
+"createdAt": "2026-09-25T06:22:49.606Z"
+}
+]
+}
+},
+"GET /admin/notes?subjectId=6ab50f6301c1ac72fe8b3902&subjectType=ticket": {
+"status": 200,
+"body": {
+"notes": [
+{
+"id": "6ab515145f9510a6085a706b",
+"body": "note 2",
+"author": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin"
+},
+"createdAt": "2026-09-24T12:18:28.321Z"
+},
+{
+"id": "6ab514845f9510a6085a7064",
+"body": "note 1",
+"author": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin"
+},
+"createdAt": "2026-09-24T12:16:04.644Z"
+}
+]
+}
+},
+"GET /admin/leads/assignees": {
+"status": 200,
+"body": {
+"staff": [
+{
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+{
+"id": "6ab3f9b17da71ed9549f529b",
+"name": "Staff Tester",
+"role": "employee"
+}
+]
+}
+},
+"GET /admin/leads?page=1&pageSize=20&status=active": {
+"status": 200,
+"body": {
+"rows": [],
+"total": 0,
+"page": 1,
+"pageSize": 20
+}
+},
+"GET /admin/leads/6ab4ff0686dc6e9cb2c8b412/timeline": {
+"status": 200,
+"body": {
+"events": [
+{
+"id": "6ab4ff0686dc6e9cb2c8b413",
+"at": "2026-09-24T10:44:22.470Z",
+"action": "lead.create",
+"actor": {
+"id": "6ab3ff4853c66bbe08c87833",
+"name": "buyer ucm_192532",
+"role": "buyer"
+},
+"from": null,
+"to": null,
+"created": null
+},
+{
+"id": "6ab4ff1a86dc6e9cb2c8b41b",
+"at": "2026-09-24T10:44:42.307Z",
+"action": "lead.route",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"from": null,
+"to": null,
+"created": true
+},
+{
+"id": "6ab4ff1a86dc6e9cb2c8b41c",
+"at": "2026-09-24T10:44:42.309Z",
+"action": "lead.status",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"from": "new",
+"to": "routed",
+"created": null
+}
+]
+}
+},
+"GET /admin/leads/6ab4ff0686dc6e9cb2c8b412": {
+"status": 200,
+"body": {
+"lead": {
+"id": "6ab4ff0686dc6e9cb2c8b412",
+"ref": "R-QDRNVH",
+"what": "Organic cotton twill fabric, 200 gsm, natural",
+"quantity": 3000,
+"unit": "metre",
+"destinationCountry": "AU",
+"note": "Need GOTS certification. Target delivery in 6 weeks.",
+"status": "routed",
+"buyer": {
+"orgId": "6ab3ff4853c66bbe08c87832",
+"org": "Delta Knits 192532",
+"name": "buyer ucm_192532",
+"email": "ucm_192532@example.com"
+},
+"assignedTo": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin"
+},
+"routedTo": [
+{
+"exporterOrgId": "6ab3fa2261a10d563d5cd903",
+"exporter": "Beta Traders 873388",
+"productId": "6ab4122cda7bcd5fad8b2b9e",
+"product": "Organic Cotton Twill",
+"conversationId": "6ab4ff1a86dc6e9cb2c8b417",
+"created": true,
+"by": "Local Admin",
+"at": "2026-09-24T10:44:42.302Z"
+}
+],
+"createdAt": "2026-09-24T10:44:22.464Z",
+"closedAt": null
+}
+}
+},
+"GET /admin/notes?subjectId=6ab4ff0686dc6e9cb2c8b412&subjectType=lead": {
+"status": 200,
+"body": {
+"notes": []
+}
+},
+"GET /admin/reports/staff?days=30": {
+"status": 200,
+"body": {
+"days": 30,
+"since": "2026-08-26T10:38:16.439Z",
+"scope": "team",
+"columns": [
+{
+"key": "verifications",
+"label": "Verifications decided"
+},
+{
+"key": "documents",
+"label": "Documents requested / removed"
+},
+{
+"key": "kycViews",
+"label": "KYC documents viewed"
+},
+{
+"key": "takedowns",
+"label": "Products taken down / restored"
+},
+{
+"key": "chatModeration",
+"label": "Chats blocked / warned"
+},
+{
+"key": "chatReads",
+"label": "Conversations read"
+},
+{
+"key": "ticketReplies",
+"label": "Ticket replies"
+},
+{
+"key": "ticketsResolved",
+"label": "Tickets resolved"
+},
+{
+"key": "suppliersConnected",
+"label": "Suppliers connected"
+},
+{
+"key": "catalogue",
+"label": "Catalogue changes"
+},
+{
+"key": "notes",
+"label": "Internal notes added"
+}
+],
+"rows": [
+{
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"email": "localadmin@example.com",
+"role": "superadmin",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 5,
+"takedowns": 3,
+"chatModeration": 15,
+"chatReads": 122,
+"ticketReplies": 3,
+"ticketsResolved": 2,
+"suppliersConnected": 3,
+"catalogue": 5,
+"notes": 5
+},
+"total": 163
+},
+{
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"email": "walk.staff.025633@example.com",
+"role": "employee",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 0,
+"takedowns": 0,
+"chatModeration": 0,
+"chatReads": 0,
+"ticketReplies": 0,
+"ticketsResolved": 0,
+"suppliersConnected": 0,
+"catalogue": 0,
+"notes": 0
+},
+"total": 0
+},
+{
+"id": "6ab4000c53c66bbe08c87840",
+"name": "Ravi Kumar",
+"email": "ravi.staff@example.com",
+"role": "employee",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 0,
+"takedowns": 0,
+"chatModeration": 0,
+"chatReads": 0,
+"ticketReplies": 0,
+"ticketsResolved": 0,
+"suppliersConnected": 0,
+"catalogue": 0,
+"notes": 0
+},
+"total": 0
+},
+{
+"id": "6ab3f9b17da71ed9549f529b",
+"name": "Staff Tester",
+"email": "s15_750420_15@example.com",
+"role": "employee",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 0,
+"takedowns": 0,
+"chatModeration": 0,
+"chatReads": 0,
+"ticketReplies": 0,
+"ticketsResolved": 0,
+"suppliersConnected": 0,
+"catalogue": 0,
+"notes": 0
+},
+"total": 0
+},
+{
+"id": "6ab3f9cdea23c9777a40ec3a",
+"name": "Staff Tester",
+"email": "s15_779280_15@example.com",
+"role": "employee",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 0,
+"takedowns": 0,
+"chatModeration": 0,
+"chatReads": 0,
+"ticketReplies": 0,
+"ticketsResolved": 0,
+"suppliersConnected": 0,
+"catalogue": 0,
+"notes": 0
+},
+"total": 0
+},
+{
+"id": "6ab3f9df3e0b93f2167120dd",
+"name": "Staff Tester",
+"email": "s15_796964_15@example.com",
+"role": "employee",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 0,
+"takedowns": 0,
+"chatModeration": 0,
+"chatReads": 0,
+"ticketReplies": 0,
+"ticketsResolved": 0,
+"suppliersConnected": 0,
+"catalogue": 0,
+"notes": 0
+},
+"total": 0
+},
+{
+"id": "6ab3f9f76a5f52453e8d56f6",
+"name": "Staff Tester",
+"email": "s15_817231_15@example.com",
+"role": "employee",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 0,
+"takedowns": 0,
+"chatModeration": 0,
+"chatReads": 0,
+"ticketReplies": 0,
+"ticketsResolved": 0,
+"suppliersConnected": 0,
+"catalogue": 0,
+"notes": 0
+},
+"total": 0
+},
+{
+"id": "6ab3fa09dc3f97f934a0565a",
+"name": "Staff Tester",
+"email": "s15_839031_15@example.com",
+"role": "employee",
+"counts": {
+"verifications": 0,
+"documents": 0,
+"kycViews": 0,
+"takedowns": 0,
+"chatModeration": 0,
+"chatReads": 0,
+"ticketReplies": 0,
+"ticketsResolved": 0,
+"suppliersConnected": 0,
+"catalogue": 0,
+"notes": 0
+},
+"total": 0
+}
+]
+}
+},
+"GET /admin/audit/facets": {
+"status": 200,
+"body": {
+"actions": [
+"auth.login",
+"auth.password_change",
+"auth.password_reset",
+"auth.refresh.reuse",
+"auth.signup",
+"auth.signup.start",
+"category.create",
+"category.toggle",
+"conversation.block",
+"conversation.read",
+"conversation.unblock",
+"conversation.warn",
+"employee.create",
+"employee.permissions.backfill",
+"employee.permissions.update",
+"featured.create",
+"featured.delete",
+"featured.image.upload",
+"featured.update",
+"kyc.view",
+"lead.create",
+"lead.route",
+"lead.status",
+"note.add",
+"organisation.claim",
+"organisation.claim_attempt",
+"organisation.self_update",
+"product.create",
+"product.restore",
+"product.takedown",
+"product.unblock_reject",
+"product.unblock_request",
+"settings.update",
+"ticket.assign",
+"ticket.create",
+"ticket.reply",
+"ticket.status"
+],
+"entityTypes": [
+"Category",
+"Conversation",
+"FeaturedItem",
+"lead",
+"organisation",
+"Organisation",
+"PendingSignup",
+"Product",
+"Settings",
+"ticket",
+"User"
+]
+}
+},
+"GET /admin/users?pageSize=100&role=employee,superadmin": {
+"status": 200,
+"body": {
+"rows": [
+{
+"name": "Asha Menon",
+"email": "walk.staff.025633@example.com",
+"role": "employee",
+"orgId": "6ab3f9b17da71ed9549f529a",
+"isActive": true,
+"createdAt": "2026-09-24T13:53:46.632Z",
+"id": "6ab52b6afd4c934becfe1a35",
+"mobile": "+919802563311",
+"orgName": "Platform 750420",
+"orgIsActive": true,
+"permissions": [
+"support:reply",
+"support:read",
+"support:status"
+]
+},
+{
+"name": "Ravi Kumar",
+"email": "ravi.staff@example.com",
+"role": "employee",
+"orgId": "6ab3f9b17da71ed9549f529a",
+"isActive": true,
+"createdAt": "2026-09-23T16:36:28.033Z",
+"id": "6ab4000c53c66bbe08c87840",
+"mobile": "+917000000099",
+"orgName": "Platform 750420",
+"orgIsActive": true,
+"permissions": [
+"buyer:approve",
+"exporter:verify",
+"kyc:view",
+"category:read",
+"category:manage",
+"product:read",
+"product:takedown",
+"user:read",
+"organisation:read"
+]
+},
+{
+"name": "Local Admin",
+"email": "localadmin@example.com",
+"role": "superadmin",
+"orgId": "6ab3f9b17da71ed9549f529a",
+"isActive": true,
+"createdAt": "2026-09-23T16:35:45.750Z",
+"id": "6ab3ffe150e06958c7da53f0",
+"mobile": "+917000000001",
+"orgName": "Platform 750420",
+"orgIsActive": true
+},
+{
+"name": "Staff Tester",
+"email": "s15_839031_15@example.com",
+"role": "employee",
+"orgId": "6ab3fa09dc3f97f934a05659",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:49.207Z",
+"id": "6ab3fa09dc3f97f934a0565a",
+"mobile": "+919839031015",
+"orgName": "Platform 839031",
+"orgIsActive": true,
+"permissions": []
+},
+{
+"name": "Staff Tester",
+"email": "s15_817231_15@example.com",
+"role": "employee",
+"orgId": "6ab3f9f76a5f52453e8d56f5",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:31.882Z",
+"id": "6ab3f9f76a5f52453e8d56f6",
+"mobile": "+919817231015",
+"orgName": "Platform 817231",
+"orgIsActive": true,
+"permissions": []
+},
+{
+"name": "Staff Tester",
+"email": "s15_796964_15@example.com",
+"role": "employee",
+"orgId": "6ab3f9df3e0b93f2167120dc",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:07.733Z",
+"id": "6ab3f9df3e0b93f2167120dd",
+"mobile": "+919796964015",
+"orgName": "Platform 796964",
+"orgIsActive": true,
+"permissions": []
+},
+{
+"name": "Staff Tester",
+"email": "s15_779280_15@example.com",
+"role": "employee",
+"orgId": "6ab3f9cdea23c9777a40ec39",
+"isActive": true,
+"createdAt": "2026-09-23T16:09:49.915Z",
+"id": "6ab3f9cdea23c9777a40ec3a",
+"mobile": "+919779280015",
+"orgName": "Platform 779280",
+"orgIsActive": true,
+"permissions": []
+},
+{
+"name": "Staff Tester",
+"email": "s15_750420_15@example.com",
+"role": "employee",
+"orgId": "6ab3f9b17da71ed9549f529a",
+"isActive": true,
+"createdAt": "2026-09-23T16:09:21.273Z",
+"id": "6ab3f9b17da71ed9549f529b",
+"mobile": "+919750420015",
+"orgName": "Platform 750420",
+"orgIsActive": true,
+"permissions": [
+"support:reply",
+"support:read",
+"support:status",
+"lead:manage",
+"conversation:read"
+]
+}
+],
+"total": 8,
+"page": 1,
+"pageSize": 100
+}
+},
+"GET /admin/audit?page=1&pageSize=20": {
+"status": 200,
+"body": {
+"entries": [
+{
+"id": "6ab64f0ff8c4aabfa62c9cd6",
+"occurredAt": "2026-09-25T10:38:07.252Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "conversation.read",
+"target": {
+"type": "Conversation",
+"id": "6ab41c41fb0608c385b05ed3",
+"name": null
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64f0ff8c4aabfa62c9cd5",
+"occurredAt": "2026-09-25T10:38:07.240Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "conversation.read",
+"target": {
+"type": "Conversation",
+"id": "6ab41c41fb0608c385b05ed3",
+"name": null
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64f0cf8c4aabfa62c9cd4",
+"occurredAt": "2026-09-25T10:38:04.174Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "kyc.view",
+"target": {
+"type": "Organisation",
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388"
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64d05f8c4aabfa62c9cc2",
+"occurredAt": "2026-09-25T10:29:25.876Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "conversation.read",
+"target": {
+"type": "Conversation",
+"id": "6ab41c41fb0608c385b05ed3",
+"name": null
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64d05f8c4aabfa62c9cc1",
+"occurredAt": "2026-09-25T10:29:25.874Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "conversation.read",
+"target": {
+"type": "Conversation",
+"id": "6ab41c41fb0608c385b05ed3",
+"name": null
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64d01f8c4aabfa62c9cbe",
+"occurredAt": "2026-09-25T10:29:21.318Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "kyc.view",
+"target": {
+"type": "Organisation",
+"id": "6ab3fa2261a10d563d5cd903",
+"name": "Beta Traders 873388"
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab64a246c8ff75a2511a029",
+"occurredAt": "2026-09-25T10:17:08.414Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab64a246c8ff75a2511a028",
+"occurredAt": "2026-09-25T10:17:08.014Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab64a236c8ff75a2511a027",
+"occurredAt": "2026-09-25T10:17:07.814Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab64a206c8ff75a2511a026",
+"occurredAt": "2026-09-25T10:17:04.430Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab62d0a6c8ff75a2511a01c",
+"occurredAt": "2026-09-25T08:12:58.959Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "product.restore",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": "Photos show another brand logo. Replace them and ask again.",
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab62cf26c8ff75a2511a016",
+"occurredAt": "2026-09-25T08:12:34.667Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "product.unblock_reject",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": "The second photo still shows the brand tag.",
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab62cb16c8ff75a2511a013",
+"occurredAt": "2026-09-25T08:11:29.467Z",
+"actor": {
+"id": "6ab3fc4753c66bbe08c8781c",
+"name": "Priya Picker",
+"role": "exporter"
+},
+"action": "product.unblock_request",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": null,
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab62cac6c8ff75a2511a011",
+"occurredAt": "2026-09-25T08:11:24.424Z",
+"actor": {
+"id": "6ab3ffe150e06958c7da53f0",
+"name": "Local Admin",
+"role": "superadmin"
+},
+"action": "product.takedown",
+"target": {
+"type": "Product",
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill"
+},
+"reason": "Photos show another brand logo. Replace them and ask again.",
+"orgId": "6ab3fa2261a10d563d5cd903"
+},
+{
+"id": "6ab625f9daa4f2cf9261e714",
+"occurredAt": "2026-09-25T07:42:49.235Z",
+"actor": {
+"id": null,
+"name": "System",
+"role": "system"
+},
+"action": "employee.permissions.backfill",
+"target": {
+"type": "User",
+"id": "6ab4000c53c66bbe08c87840",
+"name": "Ravi Kumar"
+},
+"reason": null,
+"orgId": "6ab3f9b17da71ed9549f529a"
+},
+{
+"id": "6ab62311b93b4ddc371666a4",
+"occurredAt": "2026-09-25T07:30:25.530Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab62311b93b4ddc371666a3",
+"occurredAt": "2026-09-25T07:30:25.480Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab62311b93b4ddc371666a2",
+"occurredAt": "2026-09-25T07:30:25.380Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab6230cb93b4ddc371666a1",
+"occurredAt": "2026-09-25T07:30:20.201Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+},
+{
+"id": "6ab61ec2b93b4ddc371666a0",
+"occurredAt": "2026-09-25T07:12:02.720Z",
+"actor": {
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon",
+"role": "employee"
+},
+"action": "auth.refresh.reuse",
+"target": {
+"type": "User",
+"id": "6ab52b6afd4c934becfe1a35",
+"name": "Asha Menon"
+},
+"reason": null,
+"orgId": null
+}
+],
+"total": 522,
+"page": 1,
+"pageSize": 20
+}
+},
+"GET /admin/errors/summary": {
+"status": 200,
+"body": {
+"last24h": 0,
+"last7d": 1,
+"total": 1,
+"topRoutes": [
+{
+"route": "/auth/signup/organisation",
+"count": 1
+}
+]
+}
+},
+"GET /admin/errors?page=1&pageSize=20": {
+"status": 200,
+"body": {
+"entries": [
+{
+"id": "6ab3fa4e61a10d563d5cd91b",
+"occurredAt": "2026-09-23T16:11:58.131Z",
+"statusCode": 500,
+"method": "POST",
+"route": "/auth/signup/organisation",
+"requestId": "f20cc1bd-5893-4ca3-9374-869a772106b1",
+"message": "No matching document found for id \"6ab3fa3761a10d563d5cd917\" version 0 modifiedPaths \"claimCandidates\"",
+"user": null,
+"orgId": null
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 20
+}
+},
+"GET /admin/featured": {
+"status": 200,
+"body": {
+"items": [
+{
+"id": "6ab56ca9fef040360ca83db2",
+"kind": "category",
+"targetId": "6ab3f9ceea23c9777a40ec3c",
+"image": null,
+"title": null,
+"subtitle": null,
+"linkUrl": null,
+"order": 0,
+"active": true,
+"startsAt": null,
+"endsAt": null,
+"createdAt": "2026-09-24T18:32:09.228Z",
+"target": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"context": "In Tex 779280",
+"image": null
+},
+"targetLive": true
+},
+{
+"id": "6ab56c8dfef040360ca83daf",
+"kind": "supplier",
+"targetId": "6ab3fa2261a10d563d5cd903",
+"image": null,
+"title": null,
+"subtitle": null,
+"linkUrl": null,
+"order": 0,
+"active": true,
+"startsAt": null,
+"endsAt": null,
+"createdAt": "2026-09-24T18:31:41.786Z",
+"target": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"context": "IN",
+"image": null
+},
+"targetLive": true
+},
+{
+"id": "6ab567b6fef040360ca83da1",
+"kind": "product",
+"targetId": "6ab3fa09dc3f97f934a0565d",
+"image": null,
+"title": null,
+"subtitle": null,
+"linkUrl": null,
+"order": 0,
+"active": true,
+"startsAt": null,
+"endsAt": null,
+"createdAt": "2026-09-24T18:11:02.213Z",
+"target": {
+"name": "Own Cotton Roll 839031",
+"slug": "own-cotton-roll-839031",
+"context": "S2 Traders 839031 \u00b7 Cotton 839031",
+"image": null
+},
+"targetLive": true
+},
+{
+"id": "6ab567b1fef040360ca83d9f",
+"kind": "product",
+"targetId": "6ab4122cda7bcd5fad8b2b9e",
+"image": null,
+"title": null,
+"subtitle": null,
+"linkUrl": null,
+"order": 0,
+"active": true,
+"startsAt": null,
+"endsAt": null,
+"createdAt": "2026-09-24T18:10:57.255Z",
+"target": {
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"context": "Beta Traders 873388 \u00b7 Cotton 779280",
+"image": null
+},
+"targetLive": true
+},
+{
+"id": "6ab5676efef040360ca83d9c",
+"kind": "banner",
+"targetId": null,
+"image": "https://res.cloudinary.com/deewydlyh/image/upload/v1790276298/mpx/banners/57deee207661572e.png",
+"title": "Cotton season is here",
+"subtitle": "Verified mills, direct from India",
+"linkUrl": "/search?q=cotton",
+"order": 0,
+"active": true,
+"startsAt": null,
+"endsAt": null,
+"createdAt": "2026-09-24T18:09:50.752Z",
+"target": null,
+"targetLive": true
+},
+{
+"id": "6ab56d17fef040360ca83dba",
+"kind": "banner",
+"targetId": null,
+"image": "https://res.cloudinary.com/deewydlyh/image/upload/v1790274839/mpx/banners/b422362442be3755.png",
+"title": "Denim week",
+"subtitle": "Mills with verified documents",
+"linkUrl": null,
+"order": 2,
+"active": true,
+"startsAt": null,
+"endsAt": null,
+"createdAt": "2026-09-24T18:33:59.356Z",
+"target": null,
+"targetLive": true
+},
+{
+"id": "6ab56d13fef040360ca83db7",
+"kind": "banner",
+"targetId": null,
+"image": "https://res.cloudinary.com/deewydlyh/image/upload/v1790274835/mpx/banners/f76ea10a1b8619b2.png",
+"title": "Software & IT services from India",
+"subtitle": "Scoped per engagement, direct with the team",
+"linkUrl": "/categories?type=service",
+"order": 5,
+"active": true,
+"startsAt": null,
+"endsAt": null,
+"createdAt": "2026-09-24T18:33:55.652Z",
+"target": null,
+"targetLive": true
+}
+]
+}
+},
+"GET /notifications": {
+"status": 200,
+"body": {
+"items": [
+{
+"id": "6ab62cb12a7ed071a85d843d",
+"type": "product.unblock_requested",
+"title": "Unblock request: Organic Cotton Twill",
+"body": "Beta Traders 873388",
+"link": "/admin/products?status=requests",
+"count": 1,
+"at": "2026-09-25T08:11:29.481Z",
+"read": true
+}
+],
+"nextBefore": null
+}
+},
+"GET /admin/users?page=1&pageSize=20&role=employee,superadmin": {
+"status": 200,
+"body": {
+"rows": [
+{
+"name": "Asha Menon",
+"email": "walk.staff.025633@example.com",
+"role": "employee",
+"orgId": "6ab3f9b17da71ed9549f529a",
+"isActive": true,
+"createdAt": "2026-09-24T13:53:46.632Z",
+"id": "6ab52b6afd4c934becfe1a35",
+"mobile": "+919802563311",
+"orgName": "Platform 750420",
+"orgIsActive": true,
+"permissions": [
+"support:reply",
+"support:read",
+"support:status"
+]
+},
+{
+"name": "Ravi Kumar",
+"email": "ravi.staff@example.com",
+"role": "employee",
+"orgId": "6ab3f9b17da71ed9549f529a",
+"isActive": true,
+"createdAt": "2026-09-23T16:36:28.033Z",
+"id": "6ab4000c53c66bbe08c87840",
+"mobile": "+917000000099",
+"orgName": "Platform 750420",
+"orgIsActive": true,
+"permissions": [
+"buyer:approve",
+"exporter:verify",
+"kyc:view",
+"category:read",
+"category:manage",
+"product:read",
+"product:takedown",
+"user:read",
+"organisation:read"
+]
+},
+{
+"name": "Local Admin",
+"email": "localadmin@example.com",
+"role": "superadmin",
+"orgId": "6ab3f9b17da71ed9549f529a",
+"isActive": true,
+"createdAt": "2026-09-23T16:35:45.750Z",
+"id": "6ab3ffe150e06958c7da53f0",
+"mobile": "+917000000001",
+"orgName": "Platform 750420",
+"orgIsActive": true
+},
+{
+"name": "Staff Tester",
+"email": "s15_839031_15@example.com",
+"role": "employee",
+"orgId": "6ab3fa09dc3f97f934a05659",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:49.207Z",
+"id": "6ab3fa09dc3f97f934a0565a",
+"mobile": "+919839031015",
+"orgName": "Platform 839031",
+"orgIsActive": true,
+"permissions": []
+},
+{
+"name": "Staff Tester",
+"email": "s15_817231_15@example.com",
+"role": "employee",
+"orgId": "6ab3f9f76a5f52453e8d56f5",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:31.882Z",
+"id": "6ab3f9f76a5f52453e8d56f6",
+"mobile": "+919817231015",
+"orgName": "Platform 817231",
+"orgIsActive": true,
+"permissions": []
+},
+{
+"name": "Staff Tester",
+"email": "s15_796964_15@example.com",
+"role": "employee",
+"orgId": "6ab3f9df3e0b93f2167120dc",
+"isActive": true,
+"createdAt": "2026-09-23T16:10:07.733Z",
+"id": "6ab3f9df3e0b93f2167120dd",
+"mobile": "+919796964015",
+"orgName": "Platform 796964",
+"orgIsActive": true,
+"permissions": []
+},
+{
+"name": "Staff Tester",
+"email": "s15_779280_15@example.com",
+"role": "employee",
+"orgId": "6ab3f9cdea23c9777a40ec39",
+"isActive": true,
+"createdAt": "2026-09-23T16:09:49.915Z",
+"id": "6ab3f9cdea23c9777a40ec3a",
+"mobile": "+919779280015",
+"orgName": "Platform 779280",
+"orgIsActive": true,
+"permissions": []
+},
+{
+"name": "Staff Tester",
+"email": "s15_750420_15@example.com",
+"role": "employee",
+"orgId": "6ab3f9b17da71ed9549f529a",
+"isActive": true,
+"createdAt": "2026-09-23T16:09:21.273Z",
+"id": "6ab3f9b17da71ed9549f529b",
+"mobile": "+919750420015",
+"orgName": "Platform 750420",
+"orgIsActive": true,
+"permissions": [
+"support:reply",
+"support:read",
+"support:status",
+"lead:manage",
+"conversation:read"
+]
+}
+],
+"total": 8,
+"page": 1,
+"pageSize": 20
+}
+},
+"GET /admin/settings": {
+"status": 200,
+"body": {
+"settings": {
+"aiGuestDailyMax": null,
+"envAiGuestDailyMax": null,
+"supportEmail": "support@example.com",
+"supportPhone": "+91 98765 43210",
+"supportHours": "Mon\u2013Sat, 10:00\u201318:00 IST",
+"ticketAutoCloseDays": null,
+"defaultTicketAutoCloseDays": 14,
+"companyLegalName": "MPX Global Private Limited",
+"companyAddress": "Office 12, Trade Centre\nMumbai 400001, India",
+"companyLinkedinUrl": "https://www.linkedin.com/company/mpx-global",
+"updatedAt": "2026-09-24T19:21:12.146Z",
+"updatedBy": "6ab3ffe150e06958c7da53f0"
+}
+}
+},
+"GET /admin/categories/6ab3f9ceea23c9777a40ec3c/attributes": {
+"status": 200,
+"body": {
+"category": {
+"id": "6ab3f9ceea23c9777a40ec3c",
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"active": true,
+"prevActive": null,
+"image": null,
+"synonyms": [],
+"createdAt": "2026-09-23T16:09:50.173Z"
+},
+"attributes": []
+}
+}
+},
+"exporter": {
+"GET /support/tickets/unread-count": {
+"status": 200,
+"body": {
+"count": 0
+}
+},
+"GET /conversations/unread-count": {
+"status": 200,
+"body": {
+"unread": 0
+}
+},
+"GET /me/organisation": {
+"status": 200,
+"body": {
+"organisation": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"address": {
+"line1": "12 Ring Road",
+"line2": "",
+"city": "Surat",
+"state": "",
+"postalCode": "395003"
+},
+"entityType": "business",
+"buyerSide": true,
+"exporterSide": true,
+"logo": null,
+"coverImage": null,
+"description": "",
+"establishedYear": null,
+"kycStatus": "pending",
+"verifiedAt": null,
+"pendingChanges": null,
+"canEdit": true
+}
+}
+},
+"GET /me/verification": {
+"status": 200,
+"body": {
+"verification": {
+"kycStatus": "pending",
+"profileComplete": true,
+"canManage": true,
+"entityType": "business",
+"country": "IN",
+"verifiedAt": null,
+"kycRejectionReason": null,
+"kycSubmittedAt": null,
+"documents": [],
+"pendingChanges": null,
+"documentRequests": [],
+"revocation": null
+}
+}
+},
+"GET /notifications/unread-count": {
+"status": 200,
+"body": {
+"unread": 1
+}
+},
+"GET /products/mine?pageSize=5": {
+"status": 200,
+"body": {
+"products": [
+{
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"categoryId": "6ab3f9ceea23c9777a40ec3c",
+"status": "active",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"takedown": null,
+"createdAt": "2026-09-23T17:53:48.846Z",
+"updatedAt": "2026-09-25T08:12:58.933Z"
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 5,
+"counts": {
+"all": 1,
+"draft": 0,
+"active": 1,
+"inactive": 0,
+"archived": 0
+},
+"caps": {
+"verified": false,
+"active": {
+"used": 1,
+"limit": 3
+},
+"drafts": {
+"used": 0,
+"limit": 10
+}
+}
+}
+},
+"GET /exporters/6ab3fa2261a10d563d5cd903": {
+"status": 200,
+"body": {
+"exporter": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026,
+"productCount": 1
+}
+}
+},
+"GET /exporters/beta-traders-873388": {
+"status": 200,
+"body": {
+"exporter": {
+"name": "Beta Traders 873388",
+"slug": "beta-traders-873388",
+"country": "IN",
+"description": null,
+"logo": null,
+"coverImage": null,
+"entityType": "business",
+"establishedYear": null,
+"id": "6ab3fa2261a10d563d5cd903",
+"verified": false,
+"verifiedAt": null,
+"memberSince": 2026,
+"productCount": 1
+}
+}
+},
+"GET /me/bank-accounts": {
+"status": 200,
+"body": {
+"bankAccounts": []
+}
+},
+"GET /categories": {
+"status": 200,
+"body": {
+"categories": [
+{
+"name": "Tex 779280",
+"slug": "tex-779280",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9ceea23c9777a40ec3b",
+"subs": [
+{
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+}
+]
+},
+{
+"name": "Tex 796964",
+"slug": "tex-796964",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9df3e0b93f2167120de",
+"subs": [
+{
+"name": "Cotton 796964",
+"slug": "cotton-796964",
+"image": null,
+"parentId": "6ab3f9df3e0b93f2167120de",
+"type": "goods",
+"id": "6ab3f9df3e0b93f2167120df"
+}
+]
+},
+{
+"name": "Tex 817231",
+"slug": "tex-817231",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3f9f86a5f52453e8d56f7",
+"subs": [
+{
+"name": "Cotton 817231",
+"slug": "cotton-817231",
+"image": null,
+"parentId": "6ab3f9f86a5f52453e8d56f7",
+"type": "goods",
+"id": "6ab3f9f86a5f52453e8d56f8"
+}
+]
+},
+{
+"name": "Tex 839031",
+"slug": "tex-839031",
+"image": null,
+"parentId": null,
+"type": null,
+"id": "6ab3fa09dc3f97f934a0565b",
+"subs": [
+{
+"name": "Cotton 839031",
+"slug": "cotton-839031",
+"image": null,
+"parentId": "6ab3fa09dc3f97f934a0565b",
+"type": "goods",
+"id": "6ab3fa09dc3f97f934a0565c"
+}
+]
+}
+]
+}
+},
+"GET /products/mine?page=1&pageSize=20": {
+"status": 200,
+"body": {
+"products": [
+{
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"categoryId": "6ab3f9ceea23c9777a40ec3c",
+"status": "active",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"takedown": null,
+"createdAt": "2026-09-23T17:53:48.846Z",
+"updatedAt": "2026-09-25T08:12:58.933Z"
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 20,
+"counts": {
+"all": 1,
+"draft": 0,
+"active": 1,
+"inactive": 0,
+"archived": 0
+},
+"caps": {
+"verified": false,
+"active": {
+"used": 1,
+"limit": 3
+},
+"drafts": {
+"used": 0,
+"limit": 10
+}
+}
+}
+},
+"GET /products/mine?page=1&pageSize=1": {
+"status": 200,
+"body": {
+"products": [
+{
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"categoryId": "6ab3f9ceea23c9777a40ec3c",
+"status": "active",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"takedown": null,
+"createdAt": "2026-09-23T17:53:48.846Z",
+"updatedAt": "2026-09-25T08:12:58.933Z"
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 1,
+"counts": {
+"all": 1,
+"draft": 0,
+"active": 1,
+"inactive": 0,
+"archived": 0
+},
+"caps": {
+"verified": false,
+"active": {
+"used": 1,
+"limit": 3
+},
+"drafts": {
+"used": 0,
+"limit": 10
+}
+}
+}
+},
+"GET /products/6ab4122cda7bcd5fad8b2b9e": {
+"status": 200,
+"body": {
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"name": "Organic Cotton Twill",
+"slug": "organic-cotton-twill",
+"description": null,
+"categoryId": "6ab3f9ceea23c9777a40ec3c",
+"status": "active",
+"price": {
+"mode": "fixed",
+"min": 250,
+"max": null,
+"currency": "INR"
+},
+"images": [],
+"moq": 500,
+"unit": "meters",
+"hsCode": null,
+"countryOfOrigin": null,
+"supplyAbility": null,
+"leadTime": null,
+"packaging": null,
+"terms": null,
+"engagementType": null,
+"deliveryModel": null,
+"teamSize": null,
+"pricingModel": null,
+"timeline": null,
+"attributes": [],
+"customSpecs": [
+{
+"label": "Weave",
+"value": "Twill 2/1"
+},
+{
+"label": "Orders",
+"value": "Custom widths on request"
+}
+],
+"takedown": null,
+"createdAt": "2026-09-23T17:53:48.846Z",
+"updatedAt": "2026-09-25T08:12:58.933Z"
+}
+}
+},
+"GET /categories/cotton-779280/attributes": {
+"status": 200,
+"body": {
+"category": {
+"name": "Cotton 779280",
+"slug": "cotton-779280",
+"image": null,
+"parentId": "6ab3f9ceea23c9777a40ec3b",
+"type": "goods",
+"id": "6ab3f9ceea23c9777a40ec3c"
+},
+"attributes": []
+}
+},
+"GET /conversations?limit=20": {
+"status": 200,
+"body": {
+"conversations": [
+{
+"id": "6ab4ff1a86dc6e9cb2c8b417",
+"title": "Organic Cotton Twill \u00d7 Delta Knits 192532",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"counterparty": {
+"name": "Delta Knits 192532",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "Delta Knits 192532"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-25T08:12:58.952Z",
+"lastMessagePreview": "This product is available again. You can continue the conversation.",
+"unread": false,
+"frozen": false,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"createdAt": "2026-09-24T10:44:42.261Z"
+},
+{
+"id": "6ab41c41fb0608c385b05ed3",
+"title": "Organic Cotton Twill \u00d7 S1 Co 750420",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"counterparty": {
+"name": "S1 Co 750420",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "S1 Co 750420"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-23T20:58:00.857Z",
+"lastMessagePreview": "This conversation has been restricted by MPX Global. Reason: List colour check",
+"unread": false,
+"frozen": true,
+"frozenLabel": {
+"tone": "red",
+"text": "Conversation blocked by MPX Global"
+},
+"blockedReason": "List colour check",
+"createdAt": "2026-09-23T18:36:49.314Z"
+}
+],
+"nextCursor": null
+}
+},
+"GET /conversations/6ab41c41fb0608c385b05ed3/messages?limit=30": {
+"status": 200,
+"body": {
+"messages": [
+{
+"id": "6ab41c41fb0608c385b05ed4",
+"senderType": "buyer",
+"systemKind": null,
+"body": "Hello, can you share samples of this twill?",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T18:36:49.326Z"
+},
+{
+"id": "6ab41c41fb0608c385b05ed5",
+"senderType": "system",
+"systemKind": "welcome",
+"body": "MPX Global is part of this conversation. Please keep all discussion and documents here \u2014 it is how we can support you if anything goes wrong.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T18:36:49.354Z"
+},
+{
+"id": "6ab41e906ceed3d207a816f1",
+"senderType": "buyer",
+"systemKind": null,
+"body": "Here is our price list",
+"attachment": {
+"kind": "document",
+"url": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"viewUrl": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"name": "Price-List.pdf",
+"format": "pdf",
+"bytes": 61
+},
+"quotationId": null,
+"createdAt": "2026-09-23T18:46:40.394Z"
+},
+{
+"id": "6ab4301122f5e864e7c6c758",
+"senderType": "buyer",
+"systemKind": null,
+"body": "",
+"attachment": {
+"kind": "document",
+"url": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"viewUrl": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"name": "Catalogue.pdf",
+"format": "pdf",
+"bytes": 15
+},
+"quotationId": null,
+"createdAt": "2026-09-23T20:01:21.524Z"
+},
+{
+"id": "6ab4302622f5e864e7c6c759",
+"senderType": "buyer",
+"systemKind": null,
+"body": "",
+"attachment": {
+"kind": "image",
+"url": "https://res.cloudinary.com/demo/image/private/fixture-signed-url",
+"width": 40,
+"height": 40
+},
+"quotationId": null,
+"createdAt": "2026-09-23T20:01:42.686Z"
+},
+{
+"id": "6ab43713d260ae5aca12bb35",
+"senderType": "system",
+"systemKind": "warning",
+"body": "For your safety, never pay a supplier through a link or account shared in chat. Confirm all terms in the enquiry first.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:31:15.788Z"
+},
+{
+"id": "6ab437eb0a08cac7e44d1ee4",
+"senderType": "system",
+"systemKind": "warning_reminder",
+"body": "Please keep all communication, contact details and payments within MPX Global. Deals taken off the platform are not protected.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:34:51.222Z"
+},
+{
+"id": "6ab437ec0a08cac7e44d1eea",
+"senderType": "system",
+"systemKind": "warning_caution",
+"body": "Please keep this conversation professional and respectful. Continued abusive language may lead to this conversation being blocked.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:34:52.257Z"
+},
+{
+"id": "6ab437ed0a08cac7e44d1ef0",
+"senderType": "system",
+"systemKind": "warning_serious",
+"body": "We've noticed activity in this conversation that may break our policies. Please review MPX Global's terms before continuing.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:34:53.207Z"
+},
+{
+"id": "6ab437ee0a08cac7e44d1ef6",
+"senderType": "system",
+"systemKind": "warning_final",
+"body": "This is a final warning. Further policy violations will result in this conversation being blocked.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:34:54.151Z"
+},
+{
+"id": "6ab438cf0a08cac7e44d1f01",
+"senderType": "system",
+"systemKind": "warning_reminder",
+"body": "For your safety, never pay a supplier through a link or account shared in chat. Confirm all terms in the enquiry first.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:38:39.148Z"
+},
+{
+"id": "6ab438d60a08cac7e44d1f07",
+"senderType": "system",
+"systemKind": "warning_reminder",
+"body": "Please keep all communication, contact details and payments within MPX Global. Deals taken off the platform are not protected.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:38:46.189Z"
+},
+{
+"id": "6ab4397d0a08cac7e44d1f0d",
+"senderType": "system",
+"systemKind": "blocked",
+"body": "This conversation has been restricted by MPX Global. Reason: test",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:41:33.733Z"
+},
+{
+"id": "6ab4398b0a08cac7e44d1f13",
+"senderType": "system",
+"systemKind": "unblocked",
+"body": "This conversation has been reopened by MPX Global.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:41:47.556Z"
+},
+{
+"id": "6ab43a370a08cac7e44d1f1c",
+"senderType": "system",
+"systemKind": "warning_final",
+"body": "This is a final warning. Further policy violations will result in this conversation being blocked.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:44:39.379Z"
+},
+{
+"id": "6ab43a370a08cac7e44d1f22",
+"senderType": "system",
+"systemKind": "blocked",
+"body": "This conversation has been restricted by MPX Global. Reason: Test block to compare colours",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:44:39.594Z"
+},
+{
+"id": "6ab43b6c456260536b83649c",
+"senderType": "system",
+"systemKind": "unblocked",
+"body": "This conversation has been reopened by MPX Global.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:49:48.747Z"
+},
+{
+"id": "6ab43c2a456260536b8364a5",
+"senderType": "system",
+"systemKind": "blocked",
+"body": "This conversation has been restricted by MPX Global. Reason: Chip colour check",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:52:58.847Z"
+},
+{
+"id": "6ab43c7d456260536b8364af",
+"senderType": "system",
+"systemKind": "unblocked",
+"body": "This conversation has been reopened by MPX Global.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:54:21.076Z"
+},
+{
+"id": "6ab43d58456260536b8364b8",
+"senderType": "system",
+"systemKind": "blocked",
+"body": "This conversation has been restricted by MPX Global. Reason: List colour check",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-23T20:58:00.857Z"
+}
+],
+"nextBefore": null
+}
+},
+"GET /conversations/6ab41c41fb0608c385b05ed3": {
+"status": 200,
+"body": {
+"conversation": {
+"id": "6ab41c41fb0608c385b05ed3",
+"title": "Organic Cotton Twill \u00d7 S1 Co 750420",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"counterparty": {
+"name": "S1 Co 750420",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "S1 Co 750420"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-23T20:58:00.857Z",
+"lastMessagePreview": "This conversation has been restricted by MPX Global. Reason: List colour check",
+"unread": false,
+"frozen": true,
+"frozenLabel": {
+"tone": "red",
+"text": "Conversation blocked by MPX Global"
+},
+"blockedReason": "List colour check",
+"createdAt": "2026-09-23T18:36:49.314Z"
+}
+}
+},
+"GET /public/support-contact": {
+"status": 200,
+"body": {
+"support": {
+"email": "support@example.com",
+"phone": "+91 98765 43210",
+"hours": "Mon\u2013Sat, 10:00\u201318:00 IST"
+},
+"company": {
+"name": "MPX Global Private Limited",
+"address": "Office 12, Trade Centre\nMumbai 400001, India",
+"linkedinUrl": "https://www.linkedin.com/company/mpx-global"
+}
+}
+},
+"GET /support/tickets?pageSize=50": {
+"status": 200,
+"body": {
+"rows": [
+{
+"id": "6ab4ef328bd8b4e3136d61af",
+"ref": "T-BRMWYW",
+"subject": "Product still hidden after edit",
+"category": "products",
+"status": "open",
+"unread": false,
+"lastMessageAt": "2026-09-24T09:36:50.471Z",
+"createdAt": "2026-09-24T09:36:50.472Z",
+"resolvedAt": null,
+"closedBy": null,
+"autoClosedAfterDays": null,
+"followUpOf": null
+}
+],
+"total": 1,
+"page": 1,
+"pageSize": 50
+}
+},
+"GET /notifications": {
+"status": 200,
+"body": {
+"items": [
+{
+"id": "6ab62cf26c8ff75a2511a017",
+"type": "product.unblock_rejected",
+"title": "Unblock request declined: Organic Cotton Twill",
+"body": "Open the product to see why.",
+"link": "/exporter/products/6ab4122cda7bcd5fad8b2b9e/edit",
+"count": 1,
+"at": "2026-09-25T08:12:34.694Z",
+"read": false
+}
+],
+"nextBefore": null
+}
+},
+"GET /quotations/6ab650b4f8c4aabfa62c9cdb": {
+"status": 200,
+"body": {
+"quotation": {
+"id": "6ab650b4f8c4aabfa62c9cdb",
+"number": "MPX-Q-2026-000001",
+"revision": 1,
+"status": "draft",
+"currency": "INR",
+"issueDate": null,
+"validUntil": null,
+"totalMinor": null,
+"productId": "6ab4122cda7bcd5fad8b2b9e",
+"conversationId": "6ab4ff1a86dc6e9cb2c8b417",
+"currentFigureMinor": null,
+"offers": [],
+"acceptance": null,
+"sentAt": null,
+"acceptedAt": null,
+"declinedAt": null,
+"incoterm": null,
+"portOfLoading": null,
+"portOfDischarge": null,
+"leadTime": null,
+"items": [
+{
+"name": "Organic Cotton Twill",
+"qty": 500,
+"unit": "meters",
+"rateMinor": 25000
+}
+],
+"charges": [],
+"taxes": [],
+"taxNote": null,
+"payment": {
+"milestones": []
+},
+"delivery": {
+"rows": []
+},
+"termsVersion": "v1",
+"additionalDetails": null,
+"totals": {
+"lines": [
+{
+"__parentArray": [
+{
+"name": "Organic Cotton Twill",
+"qty": 500,
+"unit": "meters",
+"rateMinor": 25000
+}
+],
+"__index": 0,
+"$__parent": {
+"payment": {
+"milestones": []
+},
+"delivery": {
+"rows": []
+},
+"_id": "6ab650b4f8c4aabfa62c9cdb",
+"inquiryId": "6ab4ff1a86dc6e9cb2c8b416",
+"conversationId": "6ab4ff1a86dc6e9cb2c8b417",
+"productId": "6ab4122cda7bcd5fad8b2b9e",
+"createdBy": "6ab3fc4753c66bbe08c8781c",
+"number": "MPX-Q-2026-000001",
+"revision": 1,
+"status": "draft",
+"currency": "INR",
+"items": [
+{
+"name": "Organic Cotton Twill",
+"qty": 500,
+"unit": "meters",
+"rateMinor": 25000
+}
+],
+"termsVersion": "v1",
+"supplier": {
+"name": "Beta Traders 873388",
+"country": "IN",
+"verified": false
+},
+"buyer": {
+"name": "Delta Knits 192532",
+"country": "IN",
+"verified": false
+},
+"buyerOrgId": "6ab3ff4853c66bbe08c87832",
+"exporterOrgId": "6ab3fa2261a10d563d5cd903",
+"parties": [
+"6ab3ff4853c66bbe08c87832",
+"6ab3fa2261a10d563d5cd903"
+],
+"isActive": true,
+"charges": [],
+"taxes": [],
+"offers": [],
+"createdAt": "2026-09-25T10:45:08.613Z",
+"updatedAt": "2026-09-25T10:45:08.613Z",
+"id": "6ab650b4f8c4aabfa62c9cdb"
+},
+"$__": {
+"activePaths": {
+"paths": {
+"rateMinor": "init",
+"qty": "init",
+"name": "init",
+"unit": "init"
+},
+"states": {
+"require": {},
+"init": {
+"name": true,
+"qty": true,
+"unit": true,
+"rateMinor": true
+}
+}
+}
+},
+"_doc": {
+"name": "Organic Cotton Twill",
+"qty": 500,
+"unit": "meters",
+"rateMinor": 25000
+},
+"$isNew": false,
+"qty": 500,
+"rateMinor": 25000,
+"amountMinor": 12500000
+}
+],
+"subtotalMinor": 12500000,
+"charges": [],
+"taxableMinor": 12500000,
+"taxes": [],
+"totalMinor": 12500000,
+"payments": [],
+"percentTotal": 0
+},
+"supplier": {
+"name": "Beta Traders 873388",
+"country": "IN",
+"verified": false
+},
+"buyer": {
+"name": "Delta Knits 192532",
+"country": "IN",
+"verified": false
+},
+"bank": null,
+"declineReason": null
+}
+}
+},
+"GET /conversations/6ab4ff1a86dc6e9cb2c8b417": {
+"status": 200,
+"body": {
+"conversation": {
+"id": "6ab4ff1a86dc6e9cb2c8b417",
+"title": "Organic Cotton Twill \u00d7 Delta Knits 192532",
+"product": {
+"id": "6ab4122cda7bcd5fad8b2b9e",
+"slug": "organic-cotton-twill",
+"name": "Organic Cotton Twill"
+},
+"counterparty": {
+"name": "Delta Knits 192532",
+"logo": null
+},
+"participants": [
+{
+"type": "buyer",
+"name": "Delta Knits 192532"
+},
+{
+"type": "exporter",
+"name": "Beta Traders 873388"
+},
+{
+"type": "platform",
+"name": "MPX Global"
+}
+],
+"lastMessageAt": "2026-09-25T08:12:58.952Z",
+"lastMessagePreview": "This product is available again. You can continue the conversation.",
+"unread": false,
+"frozen": false,
+"frozenLabel": {
+"tone": "none",
+"text": null
+},
+"blockedReason": null,
+"createdAt": "2026-09-24T10:44:42.261Z"
+}
+}
+},
+"GET /conversations/6ab4ff1a86dc6e9cb2c8b417/messages?limit=30": {
+"status": 200,
+"body": {
+"messages": [
+{
+"id": "6ab4ff1a86dc6e9cb2c8b418",
+"senderType": "buyer",
+"systemKind": null,
+"body": "Quantity: 3000\nUnit: metre\nDelivery to: Australia\nOrganic cotton twill fabric, 200 gsm, natural",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T10:44:42.279Z"
+},
+{
+"id": "6ab4ff1a86dc6e9cb2c8b419",
+"senderType": "system",
+"systemKind": "welcome",
+"body": "MPX Global is part of this conversation. Please keep all discussion and documents here \u2014 it is how we can support you if anything goes wrong.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T10:44:42.293Z"
+},
+{
+"id": "6ab4ff1a86dc6e9cb2c8b41a",
+"senderType": "system",
+"systemKind": "routed",
+"body": "MPX Global connected this buyer and supplier. Continue the conversation here as usual.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T10:44:42.296Z"
+},
+{
+"id": "6ab58f70c937a0441bd30c0b",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Badge test 1790283632192",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T21:00:32.425Z"
+},
+{
+"id": "6ab59057c937a0441bd30c18",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Badge test 2",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T21:04:23.127Z"
+},
+{
+"id": "6ab5906cc937a0441bd30c1d",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Badge test 3",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T21:04:44.515Z"
+},
+{
+"id": "6ab5984fc937a0441bd30c68",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Live badge check",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-24T21:38:23.661Z"
+},
+{
+"id": "6ab5e4891a28a0fb812c0dce",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Notification centre test",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T03:03:37.668Z"
+},
+{
+"id": "6ab611fb1a28a0fb812c0de1",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Hello \u2014 the cotton twill samples are ready to ship.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T06:17:31.165Z"
+},
+{
+"id": "6ab612101a28a0fb812c0de3",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Shall I send the invoice too?",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T06:17:52.330Z"
+},
+{
+"id": "6ab612911a28a0fb812c0de9",
+"senderType": "exporter",
+"systemKind": null,
+"body": "Third message to test grouping",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T06:20:01.725Z"
+},
+{
+"id": "6ab62cac6c8ff75a2511a010",
+"senderType": "system",
+"systemKind": "product_takedown",
+"body": "This product is under review by MPX Global, so messaging is paused here. You may want to explore other suppliers in the meantime.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T08:11:24.408Z"
+},
+{
+"id": "6ab62d0a6c8ff75a2511a01b",
+"senderType": "system",
+"systemKind": "product_restored",
+"body": "This product is available again. You can continue the conversation.",
+"attachment": null,
+"quotationId": null,
+"createdAt": "2026-09-25T08:12:58.953Z"
+}
+],
+"nextBefore": null
+}
+}
+}
+}
+}

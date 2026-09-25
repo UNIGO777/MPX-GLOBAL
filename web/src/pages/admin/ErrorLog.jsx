@@ -99,7 +99,7 @@ const STATUS_WORD = { 500: 'Internal error', 502: 'Bad gateway', 503: 'Unavailab
 /** A value with a copy affordance — what staff paste into chat or a ticket. */
 function Copyable({ value, label = 'Copy', mono = true }) {
   const [copied, setCopied] = useState(false);
-  if (!value) return <span className="text-ink-400">—</span>;
+  if (!value) return <span className="text-ink-500">—</span>;
   return (
     <button
       type="button"
@@ -279,7 +279,7 @@ export function ErrorLog() {
           role="search"
         >
           <label htmlFor="err-request" className="sr-only">Support reference (request ID)</label>
-          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
+          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" aria-hidden="true" />
           <input
             id="err-request"
             type="search"
@@ -293,7 +293,7 @@ export function ErrorLog() {
               type="button"
               onClick={() => { setDraft(''); setFilter({ requestId: '' }); }}
               aria-label="Clear the reference"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-500 hover:bg-ink-100 hover:text-ink-700"
             >
               <XIcon className="h-4 w-4" />
             </button>

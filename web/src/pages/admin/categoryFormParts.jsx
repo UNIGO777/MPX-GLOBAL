@@ -82,7 +82,7 @@ export function ImageTile({ file, current, onPick, disabled = false }) {
           {src ? (
             <img src={src} alt="" className="h-full w-full object-cover" />
           ) : (
-            <ImageIcon className="h-7 w-7 text-ink-400 group-hover:text-primary-600" />
+            <ImageIcon className="h-7 w-7 text-ink-500 group-hover:text-primary-600" />
           )}
         </button>
         <div className="min-w-0 text-xs text-muted">

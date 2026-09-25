@@ -212,7 +212,7 @@ export function BuyerSignup() {
             The old copy's "enterprise-grade security" claim is gone with them:
             it was marketing on a consent line, and it is not a thing we can
             point at and evidence. */}
-        <p className="text-center text-xs leading-relaxed text-ink-400">
+        <p className="text-center text-xs leading-relaxed text-ink-500">
           By creating an account, you agree to our{' '}
           <Link to="/terms" className="font-semibold text-ink-600 underline hover:text-primary-700">
             Terms of Service

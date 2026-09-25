@@ -52,7 +52,7 @@ export function PublicFooter() {
               <span className="sr-only">(opens in a new tab)</span>
             </a>
           )}
-          <p className="mt-6 text-xs text-white/40">© {new Date().getFullYear()} {company.name || 'MPX Global'}. All rights reserved.</p>
+          <p className="mt-6 text-xs text-white/60">© {new Date().getFullYear()} {company.name || 'MPX Global'}. All rights reserved.</p>
         </div>
         <div className="grid flex-1 grid-cols-2 gap-8 md:grid-cols-4">
           <div>
@@ -81,7 +81,7 @@ export function PublicFooter() {
               {phone && (
                 <li><a href={`tel:${phone.replace(/\s+/g, '')}`} className="inline-block py-1.5 hover:text-white">{phone}</a></li>
               )}
-              {hours && (email || phone) && <li className="py-1.5 text-white/45">{hours}</li>}
+              {hours && (email || phone) && <li className="py-1.5 text-white/60">{hours}</li>}
             </ul>
           </div>
           <div>

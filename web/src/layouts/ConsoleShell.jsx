@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 import { useQuery } from '@tanstack/react-query';
@@ -233,10 +233,32 @@ export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', child
   // (Staff, Settings) sat off-screen to the right with no hint they were there.
   const stripRef = useRef(null);
   const { pathname } = useLocation();
+  // Edge fades show only where there is more to scroll to — a fade on the
+  // side that has nothing hidden read as a clipped tab.
+  const [edges, setEdges] = useState({ left: false, right: false });
+  const measureStrip = useCallback(() => {
+    const el = stripRef.current;
+    if (!el) return;
+    const left = el.scrollLeft > 4;
+    const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+    setEdges((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));
+  }, []);
   useEffect(() => {
-    const active = stripRef.current?.querySelector('[aria-current="page"]');
-    active?.scrollIntoView({ block: 'nearest', inline: 'center' });
-  }, [pathname]);
+    const el = stripRef.current;
+    const active = el?.querySelector('[aria-current="page"]');
+    // scrollLeft, not scrollIntoView: that also scrolls every ancestor, which
+    // could jump the page itself on a phone.
+    if (el && active) {
+      const box = el.getBoundingClientRect();
+      const tab = active.getBoundingClientRect();
+      el.scrollLeft += tab.left - box.left - (box.width - tab.width) / 2;
+    }
+    measureStrip();
+  }, [pathname, measureStrip]);
+  useEffect(() => {
+    window.addEventListener('resize', measureStrip);
+    return () => window.removeEventListener('resize', measureStrip);
+  }, [measureStrip]);
 
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -337,7 +359,7 @@ export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', child
             this way" cue instead, and the current page's tab is scrolled into
             view so it is never off-screen. */}
         <div className="relative shrink-0 lg:hidden">
-          <nav ref={stripRef} aria-label="Main" className="scrollbar-none overflow-x-auto px-2 pb-2">
+          <nav ref={stripRef} onScroll={measureStrip} aria-label="Main" className="scrollbar-none overflow-x-auto px-2 pb-2">
           <ul className="flex gap-1">
             {nav.map((item) => {
               const { to, label, soon, disabled } = item;
@@ -374,10 +396,18 @@ export function ConsoleShell({ nav, identity, logo, signOutTo = '/signin', child
             })}
           </ul>
           </nav>
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-primary-800 to-transparent"
-          />
+          {edges.left && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-primary-800 to-transparent"
+            />
+          )}
+          {edges.right && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-primary-800 to-transparent"
+            />
+          )}
         </div>
 
         {/* Canvas — the curved top-left edge is the shell's signature */}

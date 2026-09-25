@@ -16,7 +16,7 @@ function Requirement({ met, started, children }) {
   return (
     <li className="flex items-center gap-2 text-[13px]">
       {met ? (
-        <CheckCircleIcon className="h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+        <CheckCircleIcon className="h-4 w-4 shrink-0 text-success-700" aria-hidden="true" />
       ) : (
         <span
           aria-hidden="true"

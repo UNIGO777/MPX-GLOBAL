@@ -262,11 +262,11 @@ function PublicLink({ slug }) {
 
   return (
     <div className="flex min-w-0 items-center gap-1.5">
-      <span className="truncate font-mono text-[11.5px] text-white/45">{path}</span>
+      <span className="truncate font-mono text-[11.5px] text-white/60">{path}</span>
       <button
         type="button"
         onClick={copy}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold text-white/75 transition-colors hover:bg-white/10"
+        className="inline-flex shrink-0 items-center gap-1.5 -my-2.5 min-h-[40px] rounded-full px-2.5 py-1 text-[12px] font-semibold text-white/75 transition-colors hover:bg-white/10"
       >
         {copied ? (
           <CheckIcon className="h-3.5 w-3.5 text-success-300" aria-hidden="true" />
@@ -325,7 +325,7 @@ function StatCell({ Icon, label, value, hint, href, accent }) {
   const body = (
     <>
       <span className="flex items-center gap-1.5">
-        <Icon className={`h-3.5 w-3.5 shrink-0 ${accent?.icon ?? 'text-ink-400'}`} aria-hidden="true" />
+        <Icon className={`h-3.5 w-3.5 shrink-0 ${accent?.icon ?? 'text-ink-500'}`} aria-hidden="true" />
         <span className={`truncate text-[10.5px] font-semibold uppercase tracking-wider ${accent?.label ?? 'text-ink-500'}`}>
           {label}
         </span>
@@ -691,14 +691,14 @@ export function Dashboard() {
 
         <div className="relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-white/10 px-5 py-2.5 sm:px-7">
           <div className="flex items-center gap-1">
-            <p className="text-[12px] text-white/55">
+            <p className="text-[12px] text-white/60">
               {updatedAt ? `Updated ${agoLabel(Math.max(0, now - updatedAt))}` : 'Loading…'}
             </p>
             <button
               type="button"
               onClick={refreshAll}
               disabled={anyFetching}
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold text-white/75 transition-colors hover:bg-white/10 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 -my-2.5 min-h-[40px] rounded-full px-2.5 py-1 text-[12px] font-semibold text-white/75 transition-colors hover:bg-white/10 disabled:opacity-60"
             >
               <RefreshIcon
                 className={`h-3.5 w-3.5 ${anyFetching ? 'animate-spin motion-reduce:animate-none' : ''}`}
@@ -728,7 +728,7 @@ export function Dashboard() {
           value={counts?.draft ?? 0}
           hint="not published yet"
           href="/exporter/products?status=draft"
-          accent={{ icon: 'text-ink-400', label: 'text-ink-600' }}
+          accent={{ icon: 'text-ink-500', label: 'text-ink-600' }}
         />
         <StatCell
           Icon={EyeOffIcon}

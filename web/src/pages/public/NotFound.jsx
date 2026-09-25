@@ -27,6 +27,8 @@ export function NotFound() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface-subtle px-4">
       <div className="w-full max-w-lg rounded-2xl border border-surface-border bg-white p-8 shadow-card">
+        {/* The page needs one h1; the card's title is an h3 inside EmptyState. */}
+        <h1 className="sr-only">Page not found</h1>
         <EmptyState icon={SearchIcon} title="We couldn't find that page">
           The link may be out of date, or the listing may no longer be available.
         </EmptyState>

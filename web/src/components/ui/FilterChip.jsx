@@ -119,7 +119,7 @@ export function FilterChip({ label, value, options, onChange }) {
         </span>
         {active && selected && <span className="font-medium">{selected.label}</span>}
         <ChevronDownIcon
-          className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''} ${active ? 'text-primary-600' : 'text-ink-400'}`}
+          className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''} ${active ? 'text-primary-600' : 'text-ink-500'}`}
           aria-hidden="true"
         />
       </button>

@@ -65,7 +65,7 @@ function PartyRow({ label, org }) {
           ) : (
             <span className="block truncate font-semibold">{org?.name}</span>
           )}
-          <code className="block truncate font-mono text-[11px] text-ink-400">{org?.id}</code>
+          <code className="block truncate font-mono text-[11px] text-ink-500">{org?.id}</code>
         </span>
       </span>
     </RailRow>
@@ -165,7 +165,7 @@ export function ConversationViewer() {
           "warning button vanished") — an empty spot read as a bug. */}
       {mayWarn && conversation?.frozen && (
         <p className="flex items-start gap-2 rounded-lg bg-ink-50 px-3 py-2 text-[12px] leading-snug text-ink-600">
-          <InfoIcon className="mt-px h-3.5 w-3.5 shrink-0 text-ink-400" aria-hidden="true" />
+          <InfoIcon className="mt-px h-3.5 w-3.5 shrink-0 text-ink-500" aria-hidden="true" />
           Warnings are off while this conversation is frozen — nobody can reply to one.
         </p>
       )}

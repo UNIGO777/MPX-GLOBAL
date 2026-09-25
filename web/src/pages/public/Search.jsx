@@ -183,7 +183,7 @@ function SortMenu({ value, onChange }) {
       >
         <span className="font-normal text-muted">Sort:</span>
         {current.label}
-        <ChevronDownIcon className={`h-4 w-4 text-ink-400 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+        <ChevronDownIcon className={`h-4 w-4 text-ink-500 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
       {open && (
         <ul role="listbox" aria-label="Sort results" className="absolute right-0 z-40 mt-1 w-52 rounded-xl border border-surface-border bg-white py-1.5 shadow-lift">
@@ -673,7 +673,7 @@ export function Search() {
         }}
         className={`flex min-w-0 flex-1 items-center overflow-hidden rounded-full border border-surface-border bg-white shadow-card focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-600/20 ${heightClass}`}
       >
-        <SearchIcon className="ml-3 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+        <SearchIcon className="ml-3 h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
         <input
           ref={withRef ? searchInputRef : undefined}
           type="search"
@@ -702,6 +702,8 @@ export function Search() {
           on hover. */}
       <Link
         to="/ai-search"
+        // On phones the label is hidden, so the link needs its own name.
+        aria-label="AI Search"
         className={`group flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-primary-800 via-primary-500 to-primary-800 bg-[length:200%_200%] px-3.5 text-sm font-semibold text-white shadow-card transition-shadow animate-ai-sheen hover:shadow-lift motion-reduce:animate-none sm:px-4 ${heightClass}`}
       >
         <SparkleIcon className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:scale-110" aria-hidden="true" />
@@ -746,7 +748,7 @@ export function Search() {
               <div className="mt-5 flex flex-col gap-2.5">
                 {recent.length > 0 && (
                   <div className="flex flex-wrap items-center justify-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wide text-ink-400">Recent</span>
+                    <span className="text-xs font-bold uppercase tracking-wide text-ink-500">Recent</span>
                     {recent.map((term) => (
                       <span
                         key={term}
@@ -757,7 +759,7 @@ export function Search() {
                           onClick={() => submitQuery(term)}
                           className="inline-flex items-center gap-1.5 py-1.5 pl-3 text-xs font-medium text-ink-600 transition-colors hover:text-primary-700"
                         >
-                          <ClockIcon className="h-3.5 w-3.5 shrink-0 text-ink-400" aria-hidden="true" />
+                          <ClockIcon className="h-3.5 w-3.5 shrink-0 text-ink-500" aria-hidden="true" />
                           {term}
                         </button>
                         <button
@@ -780,7 +782,7 @@ export function Search() {
                   </div>
                 )}
                 <div className="flex flex-wrap items-center justify-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wide text-ink-400">Suggestions</span>
+                  <span className="text-xs font-bold uppercase tracking-wide text-ink-500">Suggestions</span>
                   {SUGGESTED_SEARCHES.map((term) => (
                     <button
                       key={term}
@@ -788,7 +790,7 @@ export function Search() {
                       onClick={() => submitQuery(term)}
                       className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-white px-3 py-1.5 text-xs font-medium text-ink-600 transition-colors hover:border-primary-600 hover:text-primary-700"
                     >
-                      <SearchIcon className="h-3.5 w-3.5 shrink-0 text-ink-400" aria-hidden="true" />
+                      <SearchIcon className="h-3.5 w-3.5 shrink-0 text-ink-500" aria-hidden="true" />
                       {term}
                     </button>
                   ))}
@@ -952,7 +954,7 @@ export function Search() {
               behaviour as the rail — tapping sets/clears `category`. --- */}
           {searchMode && type === 'product' && (facets.data?.facets?.subCategory?.length ?? 0) > 0 && (
             <div className="-mx-4 mb-4 lg:hidden">
-              <h2 className="mb-2 px-4 text-xs font-bold uppercase tracking-wide text-ink-400">
+              <h2 className="mb-2 px-4 text-xs font-bold uppercase tracking-wide text-ink-500">
                 Related categories
               </h2>
               <div className="flex gap-2 overflow-x-auto px-4 pb-1">

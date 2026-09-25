@@ -87,7 +87,7 @@ function SupplierCatalogueCard({ product, to }) {
   return (
     <li className="h-full">
       <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card transition-all hover:border-primary-600 hover:shadow-lift">
-        <Link to={to} className="group" tabIndex={-1}>
+        <Link to={to} className="group" tabIndex={-1} aria-hidden="true">
           {cover ? (
             <img
               src={cover}
@@ -307,7 +307,7 @@ export function SupplierProfile() {
                         key={label}
                         className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-medium text-ink-700"
                       >
-                        <Icon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+                        <Icon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
                         {label}
                       </span>
                     ))}

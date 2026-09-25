@@ -113,14 +113,14 @@ export function AttributeManager() {
   return (
     <AdminLayout>
       <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1.5 text-sm text-muted">
-        <Link to={cp('/admin/categories')} className="hover:text-primary-700">Categories</Link>
-        <ChevronRightIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+        <Link to={cp('/admin/categories')} className="-my-3 inline-block py-3 hover:text-primary-700">Categories</Link>
+        <ChevronRightIcon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
         {parent && (
           <>
-            <Link to={cp(`/admin/categories?top=${parent.id}`)} className="hover:text-primary-700">
+            <Link to={cp(`/admin/categories?top=${parent.id}`)} className="-my-3 inline-block py-3 hover:text-primary-700">
               {parent.name}
             </Link>
-            <ChevronRightIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+            <ChevronRightIcon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
           </>
         )}
         <span className="font-medium text-ink-800">{category?.name ?? '…'}</span>
@@ -304,7 +304,7 @@ function FieldType({ a }) {
 
 /** Required / Filterable as labelled chips — words, never a bare ✓. */
 function FieldRules({ a, empty = false }) {
-  if (!a.required && !a.filterable) return empty ? <span className="text-[12px] text-ink-400">Optional</span> : null;
+  if (!a.required && !a.filterable) return empty ? <span className="text-[12px] text-ink-500">Optional</span> : null;
   return (
     <>
       {a.required && (

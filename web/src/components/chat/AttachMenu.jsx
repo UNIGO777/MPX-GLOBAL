@@ -52,6 +52,7 @@ export function AttachMenu({ onPickImage, onPickDocument, onMakeQuotation, disab
       id={id}
       type="file"
       accept={accept}
+      aria-label={id.includes('image') ? 'Choose an image to send' : 'Choose a document to send'}
       className="sr-only"
       tabIndex={-1}
       onChange={(e) => {

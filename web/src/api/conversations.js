@@ -8,7 +8,7 @@ import { apiClient } from './client.js';
  * Party shapes (backend `views/conversation.view.js`):
  *   GET  /conversations?q&cursor&limit    → { conversations[], nextCursor }
  *   GET  /conversations/unread-count      → { unread }              ← THREADS, not messages
- *   GET  /conversations/by-product/:id    → { conversationId }      ← 404 = no thread yet
+ *   GET  /conversations/by-product/:id    → { conversationId }      ← null = no thread yet
  *   GET  /conversations/:id               → { conversation }
  *   GET  /conversations/:id/messages      → { messages[], nextBefore }   oldest-first
  *   POST /conversations/:id/messages      → { message }             ← 60/min
@@ -80,14 +80,15 @@ export const conversationsApi = {
   /**
    * The product page's button state ("Create enquiry" vs "Open chat").
    *
-   * A 404 is the ANSWER, not an error — it means this buyer has no thread on
-   * this product yet. Resolved to `null` here so callers never have to inspect a
-   * status code, and so a real failure (500, offline) still throws.
+   * `null` means this buyer has no thread on this product yet. The server
+   * answers that with 200 + `conversationId: null` (2026-09-25; it used to be
+   * a 404, which filled the console). A 404 is still read as `null` so an older
+   * server keeps working; a real failure (500, offline) still throws.
    */
   findByProduct: async (productId) => {
     try {
       const { data } = await apiClient.get(`/conversations/by-product/${productId}`);
-      return data.conversationId;
+      return data.conversationId ?? null;
     } catch (err) {
       if (err?.response?.status === 404) return null;
       throw err;

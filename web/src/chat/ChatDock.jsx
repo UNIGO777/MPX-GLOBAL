@@ -43,6 +43,8 @@ import { useUnreadTitle } from './useUnreadTitle.js';
 const HIDDEN_ON = [
   /^\/signin/, /^\/signup/, /^\/otp/, /^\/forgot/, /^\/reset/, /^\/change-password/,
   /^\/(buyer|exporter)\/support\/[^/]+/,
+  // The floating button sat over the send/save bar on phones.
+  /^\/exporter\/quotations\//, /^\/exporter\/products\/(new|[^/]+\/edit)/,
 ];
 
 function DockList({ role, onSelect }) {

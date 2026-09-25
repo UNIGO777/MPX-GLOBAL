@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import { authApi } from '../api/auth.js';
 import { refreshSession } from '../api/client.js';
+import { markSignedIn, markSignedOut, shouldTryRestore } from './sessionHint.js';
 import { clearQueryCache } from '../lib/queryClient.js';
 import { tokenStore } from './tokenStore.js';
 
@@ -35,17 +36,27 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // Signed out last time on this browser: nothing to restore, so do not
+      // fire a refresh that can only fail (see sessionHint.js).
+      if (!shouldTryRestore()) {
+        setRestoring(false);
+        return;
+      }
       try {
         await refreshSession(); // cookie-only; no token needed in memory
         const me = await authApi.me(); // curated identity + permissions
+        markSignedIn();
         if (!cancelled) {
           setUser({ ...me, permissions: me.permissions ?? [], mustChangePassword: Boolean(me.mustChangePassword) });
         }
-      } catch {
+      } catch (err) {
         // No cookie, expired cookie, or a logged-out visitor: this is the
         // NORMAL anonymous path, not an error. Stay signed out silently —
         // never surface a message, never leave the app spinning.
         tokenStore.clear();
+        // Only a server REFUSAL means "no session". A network failure has no
+        // response — the cookie may be fine, so keep trying next load.
+        if (err?.response?.status >= 400 && err.response.status < 500) markSignedOut();
       } finally {
         if (!cancelled) setRestoring(false);
       }
@@ -60,6 +71,7 @@ export function AuthProvider({ children }) {
   const [sessionNote, setSessionNote] = useState(null);
   useEffect(() => {
     tokenStore.setOnSessionEnd(() => {
+      markSignedOut();
       setUser(null);
       setSessionNote('Your session ended. Please sign in again.');
     });
@@ -71,6 +83,7 @@ export function AuthProvider({ children }) {
     // No refreshToken here on purpose — for a browser the server returns none
     // and sets the httpOnly cookie instead (A2).
     tokenStore.setTokens({ accessToken });
+    markSignedIn();
     let permissions = [];
     let mustChangePassword = Boolean(identity.mustChangePassword);
     try {
@@ -94,6 +107,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    markSignedOut();
     tokenStore.clear();
     setUser(null);
     // Every cached server response dies with the session — otherwise the next

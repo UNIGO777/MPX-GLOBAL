@@ -10,7 +10,7 @@ export function Switch({ checked, onChange, disabled = false, busy = false, labe
     <button
       type="button"
       role="switch"
-      aria-checked={checked}
+      aria-checked={Boolean(checked)}
       aria-label={label}
       disabled={disabled || busy}
       onClick={onChange}

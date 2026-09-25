@@ -169,11 +169,11 @@ export function SupportTicket() {
             {/* The facts, each with its icon. Wraps on phones — never a sideways scroll. */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-surface-border bg-surface-subtle/50 px-4 py-2.5 text-[12.5px] text-ink-600 sm:gap-x-5 sm:px-6 sm:py-3 sm:text-[13px]">
               <span className="inline-flex items-center gap-1.5" title="Reference">
-                <TagIcon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+                <TagIcon className="h-4 w-4 text-ink-500" aria-hidden="true" />
                 <span className="font-mono font-semibold text-ink-800">{t.ref}</span>
               </span>
               <span className="hidden items-center gap-1.5 sm:inline-flex" title="Opened">
-                <CalendarIcon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+                <CalendarIcon className="h-4 w-4 text-ink-500" aria-hidden="true" />
                 Opened {formatDate(t.createdAt)}
               </span>
               <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -185,11 +185,11 @@ export function SupportTicket() {
                 )}
               </span>
               <span className="hidden items-center gap-1.5 sm:inline-flex" title="Raised by">
-                <UserIcon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+                <UserIcon className="h-4 w-4 text-ink-500" aria-hidden="true" />
                 {t.createdBy.name}
               </span>
               <span className="inline-flex items-center gap-1.5" title="Assigned to">
-                <UsersIcon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+                <UsersIcon className="h-4 w-4 text-ink-500" aria-hidden="true" />
                 {t.assignedTo ? (
                   <span className="font-semibold text-ink-800">{t.assignedTo.name}</span>
                 ) : (
@@ -238,7 +238,7 @@ export function SupportTicket() {
                 {canReply && resolved && !canStatus ? (
                   // Replying here would re-open the ticket — that needs the re-open grant.
                   <p className="flex items-center gap-2 px-4 py-3.5 text-[13px] text-muted sm:px-6">
-                    <LockIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                    <LockIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
                     This ticket is closed. Replying would re-open it — ask someone with the
                     &ldquo;Resolve / re-open tickets&rdquo; permission.
                   </p>
@@ -252,7 +252,7 @@ export function SupportTicket() {
                   />
                 ) : (
                   <p className="flex items-center gap-2 px-4 py-3.5 text-[13px] text-muted sm:px-6">
-                    <LockIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                    <LockIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
                     You can view this ticket. Replying needs the &ldquo;Reply to tickets&rdquo; permission.
                   </p>
                 )}
@@ -309,7 +309,7 @@ function StatusActions({ t, pending, onStatus }) {
           Mark in progress
         </button>
       )}
-      <button type="button" disabled={pending} onClick={() => onStatus('resolved')} className={`${pill} bg-success-600 text-white hover:bg-success-700`}>
+      <button type="button" disabled={pending} onClick={() => onStatus('resolved')} className={`${pill} bg-success-700 text-white hover:bg-success-800`}>
         <CheckCircleIcon className="h-4 w-4" aria-hidden="true" /> Resolve
       </button>
     </>
@@ -389,7 +389,7 @@ function TicketSide({ where, t, id, user, staff, timeline, onAssign, canOrg, can
         </h2>
         {/* Fixed height — a long-running ticket's history used to stretch the
             column (owner, 2026-09-24). Opens scrolled to the newest event. */}
-        <ScrollToEnd dep={timeline.data?.length} className="max-h-72 overflow-y-auto px-4 py-3">{events}</ScrollToEnd>
+        <ScrollToEnd dep={timeline.data?.length} label="Timeline" className="max-h-72 overflow-y-auto px-4 py-3">{events}</ScrollToEnd>
       </section>
     </div>
   );
@@ -445,7 +445,7 @@ function DetailsBody({ where, t, user, staff, onAssign, canOrg, canAssign, canRe
           href={`mailto:${t.createdBy.email}`}
           className="mt-3 flex items-center gap-2 rounded-xl bg-surface-subtle px-3 py-2 text-[12.5px] text-ink-700 hover:text-primary-700"
         >
-          <MailIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+          <MailIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
           <span className="truncate">{t.createdBy.email}</span>
         </a>
       )}
@@ -478,13 +478,14 @@ function TimelineList({ timeline }) {
   );
 }
 
-function ScrollToEnd({ dep, className, children }) {
+function ScrollToEnd({ dep, className, label, children }) {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [dep]);
-  return <div ref={ref} className={className}>{children}</div>;
+  // Focusable so a keyboard user can scroll it.
+  return <div ref={ref} tabIndex={0} role="region" aria-label={label} className={`${className} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-600/40`}>{children}</div>;
 }
 
 function Row({ label, children }) {

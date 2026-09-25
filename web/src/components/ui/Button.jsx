@@ -19,7 +19,7 @@ const VARIANTS = {
   // Approve/Verify — the design paints the affirmative decision green, so it
   // can never be mistaken for the neutral primary action next to Reject.
   success:
-    'bg-success-600 text-white shadow-lg shadow-success-600/20 hover:bg-success-700 disabled:bg-ink-300 disabled:text-ink-500 disabled:shadow-none',
+    'bg-success-700 text-white shadow-lg shadow-success-700/20 hover:bg-success-800 disabled:bg-ink-300 disabled:text-ink-500 disabled:shadow-none',
   danger:
     'bg-danger text-white shadow-lg shadow-danger/20 hover:bg-danger-700 disabled:bg-ink-300 disabled:text-ink-500 disabled:shadow-none',
   dangerOutline:

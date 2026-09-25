@@ -24,7 +24,7 @@ export function NotificationItem({ item, onOpen, compact = false }) {
           {item.count > 1 && <span className="ml-1 font-normal text-muted">({item.count})</span>}
         </span>
         {item.body && <span className="mt-0.5 block truncate text-[12.5px] text-muted">{item.body}</span>}
-        <span className="mt-1 block text-[11.5px] text-ink-400">{formatListTime(item.at)}</span>
+        <span className="mt-1 block text-[11.5px] text-ink-500">{formatListTime(item.at)}</span>
       </span>
       {!item.read && (
         <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary-600">

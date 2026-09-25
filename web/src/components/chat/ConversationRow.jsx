@@ -115,7 +115,7 @@ export function ConversationRow({ conversation, active = false, onSelect, compac
             <time
               dateTime={lastMessageAt ?? undefined}
               className={`shrink-0 text-[11px] tabular-nums ${
-                unread ? 'font-semibold text-primary-700' : 'font-medium text-ink-400'
+                unread ? 'font-semibold text-primary-700' : 'font-medium text-ink-500'
               }`}
             >
               {formatListTime(lastMessageAt)}
@@ -130,7 +130,7 @@ export function ConversationRow({ conversation, active = false, onSelect, compac
               {/* A quiet line, not a chip (2026-09-24) — a filled tag on every
                   row was the busiest thing in the list. */}
               <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-[12px] font-medium leading-[18px] text-ink-500">
-                <BoxIcon className="h-3 w-3 shrink-0 text-ink-400" aria-hidden="true" />
+                <BoxIcon className="h-3 w-3 shrink-0 text-ink-500" aria-hidden="true" />
                 <span className="truncate">{product.name}</span>
               </span>
             </span>

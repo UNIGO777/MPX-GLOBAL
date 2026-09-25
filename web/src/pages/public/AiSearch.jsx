@@ -383,7 +383,7 @@ export function AiSearch() {
                     </p>
                   )}
 
-                  <div className="mt-7 text-center text-xs font-bold uppercase tracking-wide text-ink-400">
+                  <div className="mt-7 text-center text-xs font-bold uppercase tracking-wide text-ink-500">
                     Try asking
                   </div>
                   <div className="mt-2.5 flex flex-wrap justify-center gap-2.5">
@@ -399,7 +399,7 @@ export function AiSearch() {
                         className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-surface-border bg-white px-4 text-sm text-ink-700 shadow-card transition-colors hover:border-primary-600 hover:text-primary-700 disabled:opacity-50"
                       >
                         {prompt}
-                        <ArrowRightIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                        <ArrowRightIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
                       </button>
                     ))}
                   </div>
@@ -452,7 +452,7 @@ export function AiSearch() {
               <SparkleIcon className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold uppercase tracking-wide text-ink-400">
+              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">
                 You asked
                 <span className="ml-2 normal-case tracking-normal text-ink-600 font-medium">“{session.question}”</span>
               </p>

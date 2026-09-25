@@ -278,7 +278,7 @@ function RequestDrawer({ open, onClose, saving, error, onSubmit }) {
           <StepTitle n={3} done={Boolean(note.trim())} optional>Anything else?</StepTitle>
           <div className="mb-1.5 flex items-baseline justify-between">
             <label htmlFor="lead-note" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-900">
-              <LockIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+              <LockIcon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
               Note for our team
             </label>
             <span className="text-xs tabular-nums text-muted">{note.length}/500</span>

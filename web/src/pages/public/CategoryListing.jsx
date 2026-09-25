@@ -181,7 +181,7 @@ function SortMenu({ value, onChange }) {
         <span className="font-normal text-muted">Sort:</span>
         {current.label}
         <ChevronDownIcon
-          className={`h-4 w-4 text-ink-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 text-ink-500 transition-transform ${open ? 'rotate-180' : ''}`}
           aria-hidden="true"
         />
       </button>
@@ -272,7 +272,7 @@ function SpecialisationSheetBody({ top, currentId, onClose, onPick }) {
           </button>
         </div>
         <div className="relative border-b border-ink-100 px-4 py-2.5">
-          <SearchIcon className="pointer-events-none absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+          <SearchIcon className="pointer-events-none absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" />
           <input
             ref={inputRef}
             type="search"
@@ -368,11 +368,11 @@ function Crumb({ to, children, last }) {
   return (
     <>
       {to && !last ? (
-        <Link to={to} className="hover:text-primary-700">{children}</Link>
+        <Link to={to} className="-my-3 inline-block py-3 hover:text-primary-700">{children}</Link>
       ) : (
         <span className={last ? 'font-medium text-ink-800' : undefined}>{children}</span>
       )}
-      {!last && <ChevronRightIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />}
+      {!last && <ChevronRightIcon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />}
     </>
   );
 }

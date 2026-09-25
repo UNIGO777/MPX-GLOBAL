@@ -20,7 +20,7 @@ export function ToolbarSearch({ id, label, value, onChange, onSubmit, onClear, p
     >
       <label htmlFor={id} className="sr-only">{label}</label>
       <SearchIcon
-        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
+        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500"
         aria-hidden="true"
       />
       <input
@@ -37,7 +37,7 @@ export function ToolbarSearch({ id, label, value, onChange, onSubmit, onClear, p
           type="button"
           onClick={onClear}
           aria-label="Clear search"
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-500 hover:bg-ink-100 hover:text-ink-700"
         >
           <XIcon className="h-4 w-4" />
         </button>

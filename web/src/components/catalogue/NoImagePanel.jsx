@@ -26,9 +26,9 @@ export function NoImagePanel({ label = '', monogram = false, ratio = 'aspect-vid
       className={`flex items-center justify-center border border-ink-200/60 bg-ink-100 ${ratio} ${className}`}
     >
       {monogram ? (
-        <span className="text-xl font-bold tracking-tight text-ink-400">{initials(label)}</span>
+        <span className="text-xl font-bold tracking-tight text-ink-500">{initials(label)}</span>
       ) : (
-        <Icon className="h-6 w-6 text-ink-400" />
+        <Icon className="h-6 w-6 text-ink-500" />
       )}
     </div>
   );

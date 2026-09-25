@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { reportsApi, reportsKeys } from '../../api/support.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
+import { can } from '../../auth/roleHome.js';
 import { apiError, formatDate } from '../../lib/format.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { initialsOf } from '../../components/chat/CompanyAvatar.jsx';
@@ -23,11 +24,11 @@ import { BoxIcon, ChatIcon, ChevronDownIcon, DownloadIcon, HandshakeIcon, HelpIc
 const WINDOWS = [7, 30, 90];
 
 const AREAS = [
-  { key: 'verification', label: 'Verification', Icon: ShieldIcon, tone: 'bg-emerald-50 text-emerald-700', cols: ['verifications', 'documents', 'kycViews'] },
-  { key: 'catalogue', label: 'Catalogue', Icon: BoxIcon, tone: 'bg-amber-50 text-amber-700', cols: ['takedowns', 'catalogue'] },
-  { key: 'chat', label: 'Chat moderation', Icon: ChatIcon, tone: 'bg-violet-50 text-violet-700', cols: ['chatModeration', 'chatReads'] },
-  { key: 'support', label: 'Support & notes', Icon: HelpIcon, tone: 'bg-sky-50 text-sky-700', cols: ['ticketReplies', 'ticketsResolved', 'notes'] },
-  { key: 'leads', label: 'Supplier requests', Icon: HandshakeIcon, tone: 'bg-primary-50 text-primary-700', cols: ['suppliersConnected'] },
+  { key: 'verification', label: 'Verification', Icon: ShieldIcon, tone: 'bg-emerald-50 text-emerald-700', cols: ['verifications', 'documents', 'kycViews'], perms: ['buyer:approve', 'exporter:verify', 'kyc:view'] },
+  { key: 'catalogue', label: 'Catalogue', Icon: BoxIcon, tone: 'bg-amber-50 text-amber-700', cols: ['takedowns', 'catalogue'], perms: ['product:takedown', 'category:manage'] },
+  { key: 'chat', label: 'Chat moderation', Icon: ChatIcon, tone: 'bg-violet-50 text-violet-700', cols: ['chatModeration', 'chatReads'], perms: ['conversation:read', 'conversation:block', 'conversation:warn'] },
+  { key: 'support', label: 'Support & notes', Icon: HelpIcon, tone: 'bg-sky-50 text-sky-700', cols: ['ticketReplies', 'ticketsResolved', 'notes'], perms: ['support:read'] },
+  { key: 'leads', label: 'Supplier requests', Icon: HandshakeIcon, tone: 'bg-primary-50 text-primary-700', cols: ['suppliersConnected'], perms: ['lead:manage'] },
 ];
 
 /** Short words for the breakdown lines under each number — [one, many]. */
@@ -97,6 +98,12 @@ export function Reports() {
     : {};
   const teamTotal = rows.reduce((n, x) => n + x.total, 0);
   const shown = showIdle ? [...active, ...idle] : active;
+  // An employee's own report shows the areas they can work in — five cards of
+  // "Nothing in this period" for work they were never given read as missing
+  // effort. An area they have numbers in stays (a grant removed later must not
+  // hide what they did). The team view always shows every area. Display only:
+  // the server decides what is counted.
+  const areas = team ? AREAS : AREAS.filter((a) => can(user, ...a.perms) || areaTotal(teamCounts, a) > 0);
 
   return (
     <AdminLayout>
@@ -116,7 +123,7 @@ export function Reports() {
                 type="button"
                 aria-pressed={days === d}
                 onClick={() => setDays(d)}
-                className={`h-9 rounded-md px-3.5 text-[13px] font-semibold transition-colors ${days === d ? 'bg-primary-600 text-white' : 'text-ink-600 hover:bg-ink-50'}`}
+                className={`h-9 whitespace-nowrap rounded-md px-3.5 text-[13px] font-semibold transition-colors ${days === d ? 'bg-primary-600 text-white' : 'text-ink-600 hover:bg-ink-50'}`}
               >
                 {d} days
               </button>
@@ -140,7 +147,7 @@ export function Reports() {
         <>
           {/* Area totals — the team's, or just yours. */}
           <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-            {AREAS.map((a) => {
+            {areas.map((a) => {
               const n = areaTotal(teamCounts, a);
               const detail = breakdown(teamCounts, a);
               return (
@@ -151,7 +158,7 @@ export function Reports() {
                     </span>
                     <span className="text-[12.5px] font-semibold text-ink-700">{a.label}</span>
                   </div>
-                  <p className={`mt-2.5 text-2xl font-bold tabular-nums ${n ? 'text-ink-900' : 'text-ink-300'}`}>{n.toLocaleString()}</p>
+                  <p className={`mt-2.5 text-2xl font-bold tabular-nums ${n ? 'text-ink-900' : 'text-ink-500'}`}>{n.toLocaleString()}</p>
                   <p className="mt-0.5 min-h-[1rem] text-[11.5px] leading-snug text-muted">{detail || 'Nothing in this period'}</p>
                 </div>
               );
@@ -178,7 +185,7 @@ export function Reports() {
                 <thead>
                   <tr className="border-b border-surface-border bg-ink-50/60 text-[11px] font-semibold uppercase tracking-wide text-ink-500">
                     <th scope="col" className="w-[21%] px-5 py-2.5">Staff</th>
-                    {AREAS.map((a) => (
+                    {areas.map((a) => (
                       <th key={a.key} scope="col" className="px-3 py-2.5">{a.label}</th>
                     ))}
                     <th scope="col" className="w-[14%] px-5 py-2.5">Total</th>
@@ -190,23 +197,27 @@ export function Reports() {
                     return (
                       <Fragment key={row.id}>
                         <tr
+                          // The whole row is a mouse target; the keyboard and
+                          // screen-reader toggle is the button in the first cell
+                          // (aria-expanded is not valid on a row).
                           onClick={() => setOpen(isOpen ? null : row.id)}
-                          // Keyboard: the row is the toggle (Enter / Space), and says so.
-                          tabIndex={0}
-                          aria-expanded={isOpen}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(isOpen ? null : row.id); }
-                          }}
-                          className={`cursor-pointer align-top transition-colors hover:bg-ink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-600/40 ${row.id === user?.id ? 'bg-primary-50/30' : ''}`}
+                          className={`cursor-pointer align-top transition-colors hover:bg-ink-50 ${row.id === user?.id ? 'bg-primary-50/30' : ''}`}
                         >
                           <td className="px-5 py-3.5">
-                            <Person row={row} you={row.id === user?.id} open={isOpen} />
+                            <button
+                              type="button"
+                              aria-expanded={isOpen}
+                              onClick={(e) => { e.stopPropagation(); setOpen(isOpen ? null : row.id); }}
+                              className="w-full rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600/40"
+                            >
+                              <Person row={row} you={row.id === user?.id} open={isOpen} />
+                            </button>
                           </td>
-                          {AREAS.map((a) => {
+                          {areas.map((a) => {
                             const n = areaTotal(row.counts, a);
                             return (
                               <td key={a.key} className="px-3 py-3.5">
-                                <p className={`text-[15px] font-bold tabular-nums ${n ? 'text-ink-900' : 'text-ink-300'}`}>{n.toLocaleString()}</p>
+                                <p className={`text-[15px] tabular-nums ${n ? 'font-bold text-ink-900' : 'font-medium text-ink-500'}`}>{n.toLocaleString()}</p>
                                 {n > 0 && <p className="mt-0.5 text-[11.5px] leading-snug text-muted">{breakdown(row.counts, a)}</p>}
                               </td>
                             );
@@ -218,7 +229,7 @@ export function Reports() {
                         </tr>
                         {isOpen && (
                           <tr className="bg-surface-subtle/60">
-                            <td colSpan={AREAS.length + 2} className="px-5 py-4">
+                            <td colSpan={areas.length + 2} className="px-5 py-4">
                               <FullBreakdown row={row} columns={r.columns} />
                             </td>
                           </tr>
@@ -299,7 +310,7 @@ function Person({ row, you, open }) {
         <span className="flex items-center gap-1.5">
           <span className="break-words text-[13.5px] font-semibold leading-tight text-ink-900">{row.name}</span>
           {you && <span className="shrink-0 text-[11px] font-semibold text-primary-700">(you)</span>}
-          <ChevronDownIcon className={`h-3.5 w-3.5 shrink-0 text-ink-400 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+          <ChevronDownIcon className={`h-3.5 w-3.5 shrink-0 text-ink-500 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
         </span>
         <span className="block text-[11.5px] text-muted">{row.role === 'superadmin' ? 'Super admin' : 'Employee'}</span>
       </span>
@@ -330,7 +341,7 @@ function FullBreakdown({ row, columns }) {
             {a.cols.map((k) => (
               <div key={k} className="flex items-baseline justify-between gap-3 text-[12.5px]">
                 <dt className="text-ink-600">{label[k] ?? k}</dt>
-                <dd className={`font-semibold tabular-nums ${row.counts[k] ? 'text-ink-900' : 'text-ink-300'}`}>{row.counts[k]}</dd>
+                <dd className={`font-semibold tabular-nums ${row.counts[k] ? 'text-ink-900' : 'text-ink-500'}`}>{row.counts[k]}</dd>
               </div>
             ))}
           </dl>

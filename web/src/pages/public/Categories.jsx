@@ -76,8 +76,12 @@ function CategoryCard({ category }) {
     <li className="h-full">
       <div className="flex h-full flex-col overflow-hidden rounded-xl border border-surface-border bg-white shadow-card transition-shadow hover:shadow-lift">
         <div className="flex items-center gap-3 p-4 sm:p-5">
+          {/* Same destination as the name beside it — a mouse target only, so a
+              screen reader does not hear an unnamed duplicate link. */}
           <Link
             to={`/category/${category.slug}`}
+            tabIndex={-1}
+            aria-hidden="true"
             className="shrink-0 overflow-hidden rounded-lg ring-1 ring-surface-border"
           >
             <CategoryThumb category={category} className="h-11 w-11 sm:h-12 sm:w-12" />
@@ -98,7 +102,7 @@ function CategoryCard({ category }) {
                   to={`/category/${s.slug}`}
                   className="flex items-center gap-1.5 rounded-md px-1.5 py-1.5 text-sm text-primary-700 hover:bg-surface-subtle hover:text-primary-600"
                 >
-                  <ChevronRightIcon className="h-3.5 w-3.5 shrink-0 text-ink-400" />
+                  <ChevronRightIcon className="h-3.5 w-3.5 shrink-0 text-ink-500" />
                   <span className="truncate">{s.name}</span>
                 </Link>
               </li>
@@ -238,7 +242,7 @@ export function Categories() {
             {/* Local navigation over the loaded cards (name + sub-category
                 matching) — not Module-3's server-side search. */}
             <div className="relative mt-6 w-full sm:max-w-md">
-              <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+              <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" />
               <input
                 type="search"
                 aria-label="Find a category"
@@ -252,7 +256,7 @@ export function Categories() {
                   type="button"
                   aria-label="Clear"
                   onClick={() => setQ('')}
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-500 hover:bg-ink-100 hover:text-ink-700"
                 >
                   <XIcon className="h-4 w-4" />
                 </button>

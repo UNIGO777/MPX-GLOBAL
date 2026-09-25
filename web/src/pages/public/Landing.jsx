@@ -209,7 +209,7 @@ export function Landing() {
       <label className="sr-only" htmlFor="landing-q">
         Search products, services or suppliers
       </label>
-      <SearchIcon className="ml-3 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+      <SearchIcon className="ml-3 h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
       <input
         id="landing-q"
         type="search"
@@ -440,7 +440,7 @@ export function Landing() {
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-bold text-white">{c.name}</span>
                             {subs > 0 && (
-                              <span className="block text-xs text-ink-400">
+                              <span className="block text-xs text-ink-500">
                                 {subs} {subs === 1 ? 'subcategory' : 'subcategories'}
                               </span>
                             )}
@@ -488,7 +488,7 @@ export function Landing() {
                   {/* Its own card now, as the mockup draws it — the exporter
                       pitch was buried under a rule inside the buyer card. */}
                   <div className="rounded-2xl bg-white p-6 shadow-card">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-ink-400">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
                       For exporters
                     </p>
                     <p className="mt-1 text-base font-extrabold">Sell to global buyers</p>
@@ -783,7 +783,7 @@ export function Landing() {
                       {feed.isFetchingNextPage ? 'Loading…' : 'Load more'}
                     </button>
                   )}
-                  <p className="text-xs text-ink-400">
+                  <p className="text-xs text-ink-500">
                     {feed.hasNextPage
                       ? `Showing ${products.length} of ${productTotal}`
                       : "You've seen everything listed so far"}

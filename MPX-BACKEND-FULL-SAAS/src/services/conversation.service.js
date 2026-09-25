@@ -152,8 +152,11 @@ export async function getConversation({ user, id }) {
  */
 export async function findByProduct({ user, productId }) {
   const conversation = await Conversation.findOne({ productId, ...scopeFilter(user) }).select('_id').lean();
-  if (!conversation) throw AppError.notFound('no thread for product', 'Not found.');
-  return { conversationId: String(conversation._id) };
+  // "You have no thread here yet" is an ordinary answer, not an error: it was a
+  // 404, which put a red failed request in the console on every product page a
+  // buyer opened. It still says nothing about anyone else's threads — the query
+  // is scoped to the caller, so another buyer's thread also reads as null.
+  return { conversationId: conversation ? String(conversation._id) : null };
 }
 
 /**

@@ -165,7 +165,7 @@ function UserName({ row, onOpen }) {
     <button
       type="button"
       onClick={onOpen}
-      className="block max-w-full truncate text-left font-semibold text-ink-900 hover:text-primary-700 hover:underline"
+      className="-my-2.5 block max-w-full truncate py-2.5 text-left font-semibold text-ink-900 hover:text-primary-700 hover:underline"
     >
       {row.name}
     </button>

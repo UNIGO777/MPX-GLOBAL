@@ -128,7 +128,7 @@ function PendingDiff({ field, live, values }) {
   return (
     <>
       <span className="line-through decoration-ink-300">{fmt(field === 'address' ? live.address : live[field])}</span>
-      <span aria-hidden="true" className="mx-1 text-ink-400">→</span>
+      <span aria-hidden="true" className="mx-1 text-ink-500">→</span>
       <span className="font-medium text-ink-900">{fmt(field === 'address' ? values.address : values[field])}</span>
     </>
   );
@@ -509,15 +509,13 @@ export function CompanyProfile() {
    * it is not public at all: it appears in their own portal and as the
    * counterparty avatar inside conversations they are already party to.
    */
-  // The whole zone is a dropzone AND a click target — same interaction as the
-  // product image manager, one file.
+  // The whole zone is a dropzone AND a mouse click target — same interaction as
+  // the product image manager, one file. It is NOT a button for assistive tech:
+  // it holds the real Upload/Replace/Remove buttons, and a button inside a
+  // button is invalid (screen readers flatten it). Keyboard users use those.
   const logoDropzone = (
       <div
-        role="button"
-        tabIndex={0}
-        aria-label={org.data?.logo ? 'Replace logo' : 'Upload logo'}
         onClick={() => logoRef.current?.click()}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && logoRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDraggingLogo(true); }}
         onDragLeave={() => setDraggingLogo(false)}
         onDrop={(e) => {
@@ -565,6 +563,7 @@ export function CompanyProfile() {
           <input
             ref={logoRef}
             type="file"
+            aria-label="Choose company logo"
             accept="image/jpeg,image/png,image/webp"
             className="sr-only"
             onClick={(e) => e.stopPropagation()}
@@ -588,12 +587,9 @@ export function CompanyProfile() {
           previously impossible to set: the field shipped with the profile
           redesign but had no upload path, so every real exporter fell back to
           the gradient. Same dropzone interaction as the logo below. */}
+      {/* Mouse/drop target only — its own buttons carry the keyboard (see the logo zone). */}
       <div
-        role="button"
-        tabIndex={0}
-        aria-label={org.data?.coverImage ? 'Replace cover image' : 'Upload cover image'}
         onClick={() => coverRef.current?.click()}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && coverRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDraggingCover(true); }}
         onDragLeave={() => setDraggingCover(false)}
         onDrop={(e) => {
@@ -647,6 +643,7 @@ export function CompanyProfile() {
           <input
             ref={coverRef}
             type="file"
+            aria-label="Choose cover image"
             accept="image/jpeg,image/png,image/webp"
             className="sr-only"
             onClick={(e) => e.stopPropagation()}

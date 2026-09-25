@@ -219,7 +219,7 @@ export function SignupCompany() {
         sub="This is what buyers see, and what our team checks when you apply for the verified tick."
       >
         <div className="text-center">
-          <span className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-success-50 text-success">
+          <span className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-success-50 text-success-700">
             <CheckIcon className="h-8 w-8" />
           </span>
           <h2 className="text-[28px] font-bold text-ink-900">

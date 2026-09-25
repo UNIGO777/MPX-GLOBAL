@@ -192,7 +192,7 @@ export function BankAccounts() {
                   type="button"
                   aria-label={`Remove ${b.label}`}
                   onClick={() => setConfirmRemove(b)}
-                  className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-400 transition-colors hover:bg-danger-50 hover:text-danger"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition-colors hover:bg-danger-50 hover:text-danger"
                 >
                   <TrashIcon className="h-4 w-4" />
                 </button>

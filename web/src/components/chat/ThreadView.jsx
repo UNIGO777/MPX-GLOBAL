@@ -273,7 +273,7 @@ export function ThreadView({
               <div className="mt-0.5 flex flex-nowrap items-center gap-x-2.5 text-[12px]">
                 {viewerSide === 'staff' ? (
                   <span className="flex shrink-0 items-center gap-1.5 text-ink-500">
-                    <EyeIcon className="h-3.5 w-3.5 shrink-0 text-ink-400" aria-hidden="true" />
+                    <EyeIcon className="h-3.5 w-3.5 shrink-0 text-ink-500" aria-hidden="true" />
                     {/* The full sentence needs the room of a wide screen; on a
                         phone "Read-only" alone still answers the question the
                         line exists for — where is the composer. */}
@@ -288,7 +288,7 @@ export function ThreadView({
                     three-row header ate a fifth of a phone's transcript. */}
                 {product?.name && (
                   <span className="flex min-w-0 items-center gap-1.5 sm:hidden">
-                    <BoxIcon className="h-3.5 w-3.5 shrink-0 text-ink-400" aria-hidden="true" />
+                    <BoxIcon className="h-3.5 w-3.5 shrink-0 text-ink-500" aria-hidden="true" />
                     {productLive ? (
                       <Link
                         to={`/product/${product.slug}`}
@@ -341,7 +341,11 @@ export function ThreadView({
           const el = e.currentTarget;
           setAwayFromBottom(el.scrollHeight - el.scrollTop - el.clientHeight > 240);
         }}
-        className="chat-canvas absolute inset-0 overflow-y-auto overscroll-contain py-2"
+        className="chat-canvas absolute inset-0 overflow-y-auto overscroll-contain py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-600/40"
+        // Focusable so the history can be scrolled from the keyboard.
+        tabIndex={0}
+        role="log"
+        aria-label="Messages"
         aria-live="polite"
         aria-relevant="additions"
       >

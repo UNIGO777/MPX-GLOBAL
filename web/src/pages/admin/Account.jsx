@@ -112,15 +112,17 @@ export function Account() {
 }
 
 function Fact({ Icon, label, children }) {
+  // A <div> inside a <dl> may hold only <dt>/<dd>, so the icon lives inside the
+  // <dt> and is pinned into the left gutter.
   return (
-    <div className="flex min-w-0 items-start gap-3">
-      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink-50 text-ink-500">
-        <Icon className="h-4 w-4" aria-hidden="true" />
-      </span>
-      <div className="min-w-0">
-        <dt className="text-[11.5px] font-semibold uppercase tracking-wide text-muted">{label}</dt>
-        <dd className="mt-0.5 text-[14px] font-semibold text-ink-900">{children}</dd>
-      </div>
+    <div className="relative min-w-0 pl-11">
+      <dt className="text-[11.5px] font-semibold uppercase tracking-wide text-muted">
+        <span className="absolute left-0 top-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-ink-50 text-ink-500">
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
+        {label}
+      </dt>
+      <dd className="mt-0.5 text-[14px] font-semibold text-ink-900">{children}</dd>
     </div>
   );
 }

@@ -373,7 +373,7 @@ export function VerificationQueue() {
                         {facts.map(({ k, Icon, v }) => (
                           <div key={k} className="flex min-w-0 items-center gap-1.5">
                             <dt className="shrink-0">
-                              <Icon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+                              <Icon className="h-4 w-4 text-ink-500" aria-hidden="true" />
                               <span className="sr-only">{k}</span>
                             </dt>
                             <dd className="truncate">{v}</dd>
@@ -443,7 +443,7 @@ export function VerificationQueue() {
                           </dt>
                           <dd className="min-w-0 text-ink-600">
                             <span className="line-through decoration-ink-300">{fmt(d.data.pendingChanges.current[f])}</span>
-                            <span aria-hidden="true" className="mx-1.5 text-ink-400">→</span>
+                            <span aria-hidden="true" className="mx-1.5 text-ink-500">→</span>
                             <span className="font-semibold text-ink-900">{fmt(d.data.pendingChanges.requested[f])}</span>
                           </dd>
                         </div>

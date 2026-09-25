@@ -144,7 +144,7 @@ export function ProductCard({ product, showSeller = true, to }) {
                 <dt className="truncate text-[9px] font-medium uppercase tracking-wide text-muted">
                   {label}
                 </dt>
-                <dd className="truncate text-[11px] font-semibold text-ink-900">{value}</dd>
+                <dd className="break-words text-[11px] font-semibold leading-tight text-ink-900">{value}</dd>
               </div>
             ))}
           </dl>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { formatTime } from '../../lib/format.js';
 import { Lightbox } from '../ui/Lightbox.jsx';
@@ -466,6 +467,8 @@ function SystemNotice({ message, compact, viewerSide, conversationId, latestQuot
 
 function PartyMessage({ message, align, tone, senderName, senderType, pending, failed, onRetry, startsGroup, compact }) {
   const [zoomed, setZoomed] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+  const qc = useQueryClient();
   // D10 · a sent document, or one still uploading (the File rides on the
   // pending bubble; an image has a previewUrl, a document does not).
   const doc =
@@ -552,7 +555,26 @@ function PartyMessage({ message, align, tone, senderName, senderType, pending, f
               loads. */}
           {doc && <DocumentCard doc={doc} own={own} compact={compact} />}
 
-          {!doc && (message.previewUrl || message.attachment?.url) && (
+          {!doc && (message.previewUrl || message.attachment?.url) && imageFailed && (
+            // The signed link expired (a thread left open) — refetch for fresh
+            // links rather than leave a broken-image glyph. Party and staff
+            // views use different keys; refresh whichever is on screen.
+            <p className="mb-1.5 flex items-center gap-2 rounded-xl bg-black/5 px-3 py-2 text-[13px]">
+              <span className="flex-1">Image unavailable — the link may have expired.</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setImageFailed(false);
+                  qc.invalidateQueries({ queryKey: ['conversations', 'messages'] });
+                  qc.invalidateQueries({ queryKey: ['admin-conversations', 'messages'] });
+                }}
+                className="min-h-[32px] rounded-full px-2 font-semibold underline underline-offset-2"
+              >
+                Reload
+              </button>
+            </p>
+          )}
+          {!doc && (message.previewUrl || message.attachment?.url) && !imageFailed && (
             <>
               {/* 🔴 A modal, not `target="_blank"` (owner, 2026-09-23). A new tab
                   was also the wrong place for THIS image specifically: the
@@ -575,7 +597,9 @@ function PartyMessage({ message, align, tone, senderName, senderType, pending, f
                   width={message.attachment?.width ?? undefined}
                   height={message.attachment?.height ?? undefined}
                   loading="lazy"
-                  className={`max-h-72 w-auto max-w-full rounded-xl object-cover ${
+                  // A local preview (still sending) never expires; only the signed url can.
+                  onError={() => { if (!message.previewUrl) setImageFailed(true); }}
+                  className={`h-auto max-h-72 w-auto max-w-full rounded-xl object-cover ${
                     message.pending ? 'opacity-60' : ''
                   }`}
                 />
@@ -611,7 +635,7 @@ function PartyMessage({ message, align, tone, senderName, senderType, pending, f
           <span
             className={`pointer-events-none absolute bottom-0.5 tabular-nums ${timeSize} ${
               compact ? 'right-2' : 'right-2.5'
-            } ${own ? 'text-white/75' : 'text-ink-400'}`}
+            } ${own ? 'text-white/75' : 'text-ink-500'}`}
           >
             <time dateTime={message.createdAt}>{timeText}</time>
           </span>

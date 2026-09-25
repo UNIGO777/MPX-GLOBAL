@@ -97,9 +97,11 @@ function TopRowBody({ t, compact = false }) {
   if (compact) {
     return (
       <>
-        <CategoryThumb name={t.name} image={t.image} sizeClasses="h-8 w-8" text="text-[11px]" rounded="rounded-lg" />
+        <span className={t.active ? 'contents' : 'contents [&>*]:grayscale'}>
+          <CategoryThumb name={t.name} image={t.image} sizeClasses="h-8 w-8" text="text-[11px]" rounded="rounded-lg" />
+        </span>
         <span className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="truncate text-[13.5px] font-medium text-ink-900">{t.name}</span>
+          <span className={`truncate text-[13.5px] font-medium ${t.active ? 'text-ink-900' : 'text-ink-500'}`}>{t.name}</span>
           {!t.active && <LiveChip on={false} small />}
         </span>
         <span
@@ -113,10 +115,12 @@ function TopRowBody({ t, compact = false }) {
   }
   return (
     <>
-      <CategoryThumb name={t.name} image={t.image} sizeClasses="h-9 w-9" text="text-[12px]" rounded="rounded-lg" />
+      <span className={t.active ? 'contents' : 'contents [&>*]:grayscale'}>
+        <CategoryThumb name={t.name} image={t.image} sizeClasses="h-9 w-9" text="text-[12px]" rounded="rounded-lg" />
+      </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium text-ink-900">{t.name}</span>
+          <span className={`truncate text-sm font-medium ${t.active ? 'text-ink-900' : 'text-ink-500'}`}>{t.name}</span>
           {!t.active && <LiveChip on={false} small />}
         </span>
         <span className="block text-xs text-muted">{t.subs?.length ?? 0} sub-categories</span>
@@ -169,7 +173,7 @@ function CategorySheetBody({ tops, selectedId, onPick, onClose }) {
           </button>
         </div>
         <div className="relative border-b border-ink-100 px-4 py-2.5">
-          <SearchIcon className="pointer-events-none absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+          <SearchIcon className="pointer-events-none absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" />
           <input
             ref={inputRef}
             type="search"
@@ -196,7 +200,7 @@ function CategorySheetBody({ tops, selectedId, onPick, onClose }) {
                   aria-current={on || undefined}
                   className={`flex w-full items-center gap-3 px-4 py-3 text-left ${
                     on ? 'bg-primary-50' : 'hover:bg-surface-subtle'
-                  } ${t.active ? '' : 'opacity-55'}`}
+                  }`}
                 >
                   <TopRowBody t={t} />
                   {on && <CheckIcon className="h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />}
@@ -481,7 +485,7 @@ export function CategoryManager() {
                 on names AND keywords, like the sheet. */}
             <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
               <div className="relative border-b border-surface-border p-2.5">
-                <SearchIcon className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
+                <SearchIcon className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" aria-hidden="true" />
                 <input
                   type="search"
                   aria-label="Filter categories"
@@ -509,7 +513,7 @@ export function CategoryManager() {
                           active
                             ? 'bg-primary-50/70 shadow-[inset_3px_0_0_theme(colors.primary.600)]'
                             : 'hover:bg-ink-50'
-                        } ${t.active ? '' : 'opacity-60'}`}
+                        }`}
                       >
                         <TopRowBody t={t} compact />
                       </button>
@@ -767,7 +771,7 @@ function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle, onSett
         <dl className="grid grid-cols-3 divide-x divide-surface-border">
           {stats.map((st) => (
             <div key={st.label} className="min-w-0 px-3.5 py-2 sm:px-5 sm:py-3">
-              <dd className={`text-base font-bold sm:text-xl tabular-nums leading-tight ${st.value ? 'text-ink-900' : 'text-ink-400'}`}>
+              <dd className={`text-base font-bold sm:text-xl tabular-nums leading-tight ${st.value ? 'text-ink-900' : 'text-ink-500'}`}>
                 {st.value}
               </dd>
               <dt className="truncate text-[11px] font-medium text-muted sm:text-[12px]">{st.label}</dt>
@@ -784,7 +788,7 @@ function TopHeader({ top, canManage, uploading, busy, onUpload, onToggle, onSett
               {top.active ? (
                 <EyeIcon className="mt-0.5 h-4 w-4 shrink-0 text-success-600" aria-hidden="true" />
               ) : (
-                <EyeOffIcon className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                <EyeOffIcon className="mt-0.5 h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
               )}
               <span>
                 <span className="block font-semibold text-ink-900">

@@ -142,6 +142,7 @@ export function ProductImageManager({ images = [], onChange, onUpload, disabled 
         type="file"
         accept={ACCEPT}
         multiple
+        aria-label="Choose product images"
         className="sr-only"
         onChange={(e) => { accept(e.target.files); e.target.value = ''; }}
       />

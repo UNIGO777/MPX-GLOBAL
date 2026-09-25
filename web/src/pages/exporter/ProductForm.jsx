@@ -158,7 +158,7 @@ function ChecklistRow({ done, quiet = false, children }) {
   return (
     <li className="flex items-start gap-2.5 text-[13px]">
       {done ? (
-        <CheckCircleIcon className="mt-px h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+        <CheckCircleIcon className="mt-px h-4 w-4 shrink-0 text-success-700" aria-hidden="true" />
       ) : (
         <span
           aria-hidden="true"
@@ -503,8 +503,8 @@ export function ProductForm() {
     return (
       <PortalLayout nav={EXPORTER_NAV} wide>
         <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1.5 text-sm text-muted">
-          <Link to="/exporter/products" className="hover:text-primary-700">Products</Link>
-          <ChevronRightIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+          <Link to="/exporter/products" className="-my-3 inline-block py-3 hover:text-primary-700">Products</Link>
+          <ChevronRightIcon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
           <span className="font-medium text-ink-800">Add product</span>
         </nav>
         <h1 className="text-2xl font-bold text-ink-900">What are you listing?</h1>
@@ -518,7 +518,7 @@ export function ProductForm() {
         ) : (
           <div className="mt-6 rounded-2xl border border-surface-border bg-white p-5 shadow-card sm:p-6">
             <div className="relative mb-5 max-w-md">
-              <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+              <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" />
               <input
                 type="search"
                 aria-label="Search categories"
@@ -532,7 +532,7 @@ export function ProductForm() {
                   type="button"
                   aria-label="Clear search"
                   onClick={() => setCatQuery('')}
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-500 hover:bg-ink-100 hover:text-ink-700"
                 >
                   <XIcon className="h-4 w-4" />
                 </button>
@@ -542,7 +542,7 @@ export function ProductForm() {
             {norm ? (
               results.length === 0 ? (
                 <div className="flex items-center gap-3 rounded-xl border border-dashed border-surface-border px-4 py-6 text-sm text-muted">
-                  <SearchOffIcon className="h-5 w-5 shrink-0 text-ink-400" aria-hidden="true" />
+                  <SearchOffIcon className="h-5 w-5 shrink-0 text-ink-500" aria-hidden="true" />
                   No category matches &ldquo;{catQuery.trim()}&rdquo; — try another word, or browse
                   below. &ldquo;Other&rdquo; is at the end of the list.
                 </div>
@@ -560,7 +560,7 @@ export function ProductForm() {
                         className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-surface-border bg-white px-4 text-sm font-medium text-ink-800 transition-all hover:border-primary-600 hover:bg-primary-50 hover:text-primary-700"
                       >
                         <span className="text-xs text-muted">{t.name}</span>
-                        <ChevronRightIcon className="h-3 w-3 text-ink-400" aria-hidden="true" />
+                        <ChevronRightIcon className="h-3 w-3 text-ink-500" aria-hidden="true" />
                         {s.name}
                         {s.type === 'service' && (
                           <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-600">
@@ -616,7 +616,7 @@ export function ProductForm() {
                       </span>
                     )}
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-ink-900">
+                      <span className="block break-words leading-snug text-sm font-semibold text-ink-900">
                         {t.name}
                       </span>
                       <span className="block text-xs text-muted">
@@ -707,8 +707,8 @@ export function ProductForm() {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-border bg-white/95 px-4 py-2.5 shadow-lift backdrop-blur">
           <div className="min-w-0">
             <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted">
-              <Link to="/exporter/products" className="hover:text-primary-700">Products</Link>
-              <ChevronRightIcon className="h-3 w-3 text-ink-400" aria-hidden="true" />
+              <Link to="/exporter/products" className="-my-3 inline-block py-3 hover:text-primary-700">Products</Link>
+              <ChevronRightIcon className="h-3 w-3 text-ink-500" aria-hidden="true" />
               <span>{isEdit ? 'Edit product' : 'Add product'}</span>
             </nav>
             <div className="mt-0.5 flex flex-wrap items-center gap-2">

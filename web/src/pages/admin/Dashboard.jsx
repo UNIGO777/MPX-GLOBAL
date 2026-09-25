@@ -208,7 +208,7 @@ function StatCell({ Icon, label, value, decimals = 0, unit, delta, hint, warn = 
   const body = (
     <>
       <span className="flex items-center gap-1.5">
-        <Icon className={`h-3.5 w-3.5 shrink-0 ${accent?.icon ?? 'text-ink-400'}`} aria-hidden="true" />
+        <Icon className={`h-3.5 w-3.5 shrink-0 ${accent?.icon ?? 'text-ink-500'}`} aria-hidden="true" />
         <span className={`truncate text-[10.5px] font-semibold uppercase tracking-wider ${accent?.label ?? 'text-ink-500'}`}>
           {label}
         </span>
@@ -325,7 +325,7 @@ function CountStrip({ items, last = false }) {
         const spanRow = odd && i === items.length - 1 ? 'col-span-2 sm:col-span-1' : '';
         return (
           <Link key={c.label} to={c.to} className={`group bg-white px-5 py-3 transition-colors hover:bg-ink-50 ${spanRow}`}>
-            <p className={`text-xl font-bold tabular-nums ${hot ? 'text-warning-800' : c.value ? 'text-ink-900' : 'text-ink-400'}`}>{c.value ?? 0}</p>
+            <p className={`text-xl font-bold tabular-nums ${hot ? 'text-warning-800' : c.value ? 'text-ink-900' : 'text-ink-500'}`}>{c.value ?? 0}</p>
             <p className="text-[12px] font-medium text-muted group-hover:text-primary-700">{c.label}</p>
           </Link>
         );
@@ -831,7 +831,7 @@ export function Dashboard() {
                 Icon={ChartIcon}
                 title="Platform activity"
                 accessory={
-                  <span className="hidden text-[11px] font-medium normal-case text-ink-400 sm:inline">
+                  <span className="hidden text-[11px] font-medium normal-case text-ink-500 sm:inline">
                     cumulative · last {rangeDays} days
                   </span>
                 }
@@ -1021,7 +1021,7 @@ export function Dashboard() {
                             <div className="min-w-0 flex-1">
                               <div className="flex items-baseline justify-between gap-2">
                                 <p className="truncate text-[13px] font-semibold text-ink-900">{actionLabel(row.action)}</p>
-                                <time dateTime={row.occurredAt ?? undefined} className="shrink-0 text-[11px] tabular-nums text-ink-400">
+                                <time dateTime={row.occurredAt ?? undefined} className="shrink-0 text-[11px] tabular-nums text-ink-500">
                                   {formatListTime(row.occurredAt)}
                                 </time>
                               </div>
@@ -1076,13 +1076,13 @@ export function Dashboard() {
                                 <CompanyAvatar name={c.exporterOrg?.name ?? ''} logo={c.exporterOrg?.logo} size="xs" className="outline outline-2 outline-white" />
                               </span>
                               <span className="min-w-0 truncate font-semibold text-ink-900">
-                                {c.buyerOrg?.name} <span className="font-normal text-ink-400">×</span> {c.exporterOrg?.name}
+                                {c.buyerOrg?.name} <span className="font-normal text-ink-500">×</span> {c.exporterOrg?.name}
                               </span>
                             </span>
                           </td>
                           <td className="hidden max-w-[16rem] px-4 py-2.5 md:table-cell">
                             <span className="flex min-w-0 items-center gap-1.5 text-ink-600">
-                              <BoxIcon className="h-3 w-3 shrink-0 text-ink-400" aria-hidden="true" />
+                              <BoxIcon className="h-3 w-3 shrink-0 text-ink-500" aria-hidden="true" />
                               <span className="truncate">{c.product?.name}</span>
                             </span>
                           </td>

@@ -124,7 +124,7 @@ function Fact({ label, children, span = 'auto' }) {
     <div className={width}>
       <dt className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">{label}</dt>
       <dd className="mt-1 flex min-h-[1.75rem] items-center text-sm text-ink-800">
-        {children ?? <span className="text-ink-400">—</span>}
+        {children ?? <span className="text-ink-500">—</span>}
       </dd>
     </div>
   );
@@ -136,7 +136,7 @@ function Row({ label, children }) {
       <dt className="w-32 shrink-0 text-xs font-semibold uppercase tracking-wider text-ink-500">
         {label}
       </dt>
-      <dd className="min-w-0 flex-1 text-sm text-ink-800">{children ?? <span className="text-ink-400">—</span>}</dd>
+      <dd className="min-w-0 flex-1 text-sm text-ink-800">{children ?? <span className="text-ink-500">—</span>}</dd>
     </div>
   );
 }
@@ -157,7 +157,7 @@ function Stat({ to, value, label, Icon, tone = 'default' }) {
     <>
       <span
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-          danger ? 'bg-danger-50 text-danger-600' : value ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-400'
+          danger ? 'bg-danger-50 text-danger-600' : value ? 'bg-primary-50 text-primary-700' : 'bg-ink-100 text-ink-500'
         }`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
@@ -165,7 +165,7 @@ function Stat({ to, value, label, Icon, tone = 'default' }) {
       <span className="min-w-0">
         <span
           className={`block text-lg font-bold leading-tight tabular-nums ${
-            danger ? 'text-danger-700' : value ? 'text-ink-900' : 'text-ink-400'
+            danger ? 'text-danger-700' : value ? 'text-ink-900' : 'text-ink-500'
           }`}
         >
           {value}
@@ -411,13 +411,13 @@ export function OrganisationDetail() {
         <div className="flex items-center gap-x-2.5 overflow-hidden whitespace-nowrap border-t border-surface-border px-4 py-3 text-[12px] text-ink-600 sm:flex-wrap sm:gap-x-5 sm:gap-y-2 sm:whitespace-normal sm:px-6 sm:text-[13px] [&>*]:shrink-0 [&>a:last-child]:min-w-[3.5rem] [&>a:last-child]:shrink [&>span:last-child]:min-w-[3.5rem] [&>span:last-child]:shrink">
           {company.country && (
             <span className="inline-flex items-center gap-1.5">
-              <GlobeIcon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+              <GlobeIcon className="h-4 w-4 text-ink-500" aria-hidden="true" />
               {countryName(company.country) ?? company.country}
             </span>
           )}
           {header.createdAt && (
             <span className="inline-flex items-center gap-1.5" title="Joined">
-              <CalendarIcon className="h-4 w-4 text-ink-400" aria-hidden="true" />
+              <CalendarIcon className="h-4 w-4 text-ink-500" aria-hidden="true" />
               <span className="sr-only sm:not-sr-only">Joined </span>{formatDate(header.createdAt)}
             </span>
           )}
@@ -441,7 +441,7 @@ export function OrganisationDetail() {
               </a>
             ) : (
               <span className="inline-flex min-w-0 items-center gap-1.5">
-                <TagIcon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+                <TagIcon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
                 <span className="truncate font-mono text-[12px]">{header.slug}</span>
               </span>
             )
@@ -563,7 +563,7 @@ export function OrganisationDetail() {
                     {verification.reviewedAt ? ` · ${formatDate(verification.reviewedAt)}` : ''}
                   </>
                 ) : (
-                  <span className="text-ink-400">Nobody has reviewed either side</span>
+                  <span className="text-ink-500">Nobody has reviewed either side</span>
                 )}
               </Fact>
               <Fact label="Submitted">{verification.submittedAt ? formatDate(verification.submittedAt) : null}</Fact>
@@ -704,14 +704,14 @@ export function OrganisationDetail() {
           <InternalNotes subjectType="organisation" subjectId={header.id} />
           <Section title="Sides" icon={TagIcon}>
             <dl>
-              <Row label="Buyer">{sides.buyer ? 'Enabled' : <span className="text-ink-400">Not enabled</span>}</Row>
-              <Row label="Exporter">{sides.exporter ? 'Enabled' : <span className="text-ink-400">Not enabled</span>}</Row>
+              <Row label="Buyer">{sides.buyer ? 'Enabled' : <span className="text-ink-500">Not enabled</span>}</Row>
+              <Row label="Exporter">{sides.exporter ? 'Enabled' : <span className="text-ink-500">Not enabled</span>}</Row>
               <Row label="Signed up">{sides.signupAt ? formatDate(sides.signupAt) : null}</Row>
               <Row label="Claims">
                 {/* D7 is built — each claim says who joined and HOW (2026-09-24;
                     the old copy said "claim is not built"). */}
                 {sides.claimHistoryAvailable === false ? (
-                  <span className="text-ink-400">Not recorded</span>
+                  <span className="text-ink-500">Not recorded</span>
                 ) : sides.claimHistory?.length > 0 ? (
                   sides.claimHistory.map((c, i) => (
                     <span key={i} className="block py-0.5">
@@ -725,7 +725,7 @@ export function OrganisationDetail() {
                     </span>
                   ))
                 ) : (
-                  <span className="text-ink-400">Nobody has joined by claim</span>
+                  <span className="text-ink-500">Nobody has joined by claim</span>
                 )}
               </Row>
             </dl>
@@ -777,7 +777,7 @@ export function OrganisationDetail() {
                     </span>
                     <time
                       dateTime={row.occurredAt ?? undefined}
-                      className="shrink-0 text-[11px] tabular-nums text-ink-400"
+                      className="shrink-0 text-[11px] tabular-nums text-ink-500"
                     >
                       {formatDate(row.occurredAt)}
                     </time>

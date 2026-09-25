@@ -161,7 +161,7 @@ export function SignupVerify() {
             // `success` is a FLAT token in tailwind.config, not a scale —
             // bg-success-100/text-success-800 compiled to nothing, so the
             // completed step rendered with no fill at all.
-            isEmail ? 'bg-primary-100 text-primary-700' : 'bg-emerald-50 text-success'
+            isEmail ? 'bg-primary-100 text-primary-700' : 'bg-emerald-50 text-success-700'
           }`}
         >
           {isEmail ? '1. Email' : '1. Email ✓'}

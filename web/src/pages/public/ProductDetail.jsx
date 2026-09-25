@@ -277,7 +277,7 @@ function Facts({ product, layout = 'list' }) {
         {rows.map(([key, label, value, Icon]) => (
           <li key={key} className="rounded-2xl border border-surface-border bg-white p-5">
             <p className="flex items-center gap-2 text-[13px] text-muted">
-              <Icon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+              <Icon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
               {label}
             </p>
             <p className="mt-1 text-[15px] font-semibold text-ink-900">{value}</p>
@@ -296,7 +296,7 @@ function Facts({ product, layout = 'list' }) {
         {rows.map(([key, label, value, Icon]) => (
           <div key={key} className="flex items-center justify-between gap-6 py-2.5">
             <dt className="flex items-center gap-2 text-sm text-muted">
-              <Icon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+              <Icon className="h-4 w-4 shrink-0 text-ink-500" aria-hidden="true" />
               {label}
             </dt>
             <dd className="text-right text-sm font-medium text-ink-900">{value}</dd>
@@ -446,14 +446,14 @@ export function ProductDetail() {
           {p && (
             <>
               <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-sm text-muted">
-                <Link to="/categories" className="hover:text-primary-700">Categories</Link>
-                <ChevronRightIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+                <Link to="/categories" className="-my-3 inline-block py-3 hover:text-primary-700">Categories</Link>
+                <ChevronRightIcon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
                 {p.category && (
                   <>
-                    <Link to={`/category/${p.category.slug}`} className="hover:text-primary-700">
+                    <Link to={`/category/${p.category.slug}`} className="-my-3 inline-block py-3 hover:text-primary-700">
                       {p.category.name}
                     </Link>
-                    <ChevronRightIcon className="h-3.5 w-3.5 text-ink-400" aria-hidden="true" />
+                    <ChevronRightIcon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
                   </>
                 )}
                 <span className="font-medium text-ink-800">{p.name}</span>
@@ -533,7 +533,7 @@ export function ProductDetail() {
                   {p.category && (
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-primary-700">
                       {p.category.name}
-                      {p.category.type && <span className="text-ink-400"> · {p.category.type}</span>}
+                      {p.category.type && <span className="text-ink-500"> · {p.category.type}</span>}
                     </p>
                   )}
                   <h1 className="mt-1.5 font-serif text-2xl leading-tight text-ink-900 sm:text-[1.9rem]">
@@ -566,7 +566,7 @@ export function ProductDetail() {
                           key={c}
                           className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-white px-2.5 py-1 text-xs font-medium text-ink-700"
                         >
-                          <TagIcon className="h-3 w-3 shrink-0 text-ink-400" aria-hidden="true" />
+                          <TagIcon className="h-3 w-3 shrink-0 text-ink-500" aria-hidden="true" />
                           {c}
                         </span>
                       ))}

@@ -14,7 +14,7 @@ export function passwordStrength(value = '') {
 }
 
 const BAR = { danger: 'bg-danger', warning: 'bg-warning', success: 'bg-success' };
-const TEXT = { danger: 'text-danger', warning: 'text-warning', success: 'text-success' };
+const TEXT = { danger: 'text-danger', warning: 'text-warning', success: 'text-success-700' };
 
 export function StrengthMeter({ value }) {
   if (!value) return null;

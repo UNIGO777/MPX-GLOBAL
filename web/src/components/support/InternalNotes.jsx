@@ -55,7 +55,12 @@ export function InternalNotes({ subjectType, subjectId, className = '', bare = f
         </div>
       ) : (
         // Newest first; scrolls inside once there are many.
-        <ol className={bare ? 'space-y-3 py-1' : 'max-h-96 space-y-3 overflow-y-auto px-3 py-3'}>
+        <ol
+          // Focusable when it scrolls, so a keyboard user can read older notes.
+          tabIndex={bare ? undefined : 0}
+          aria-label="Internal notes"
+          className={bare ? 'space-y-3 py-1' : 'max-h-96 space-y-3 overflow-y-auto px-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-600/40'}
+        >
           {list.map((n) => (
             <li key={n.id} className="flex gap-2.5">
               <span
