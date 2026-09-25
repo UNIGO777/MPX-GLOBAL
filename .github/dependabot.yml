@@ -1,0 +1,25 @@
+# Dependency update PRs (security tracker B9, 2026-09-25). Weekly, grouped so a
+# week's minor/patch bumps arrive as one PR per package instead of dozens.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /MPX-BACKEND-FULL-SAAS
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch: { update-types: [minor, patch] }
+  - package-ecosystem: npm
+    directory: /web
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch: { update-types: [minor, patch] }
+  # The Expo app pins SDK-matched versions; only security fixes, never
+  # routine bumps, so an update can't silently break the native build.
+  - package-ecosystem: npm
+    directory: /app
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 0
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

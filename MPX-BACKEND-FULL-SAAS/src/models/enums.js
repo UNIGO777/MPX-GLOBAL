@@ -164,6 +164,26 @@ export function kycDocsFor({ country, entityType }) {
 }
 
 /**
+ * Plain names for KYC document types — used in emails (the "More documents
+ * needed" list). Must match the web's `DOC_TYPE_LABELS`
+ * (web/src/lib/kycDocTypes.js); a web test compares the two.
+ */
+export const KYC_DOC_LABELS = Object.freeze({
+  registration: 'Company registration certificate',
+  tax: 'Tax registration certificate',
+  licence: 'Trade or business licence',
+  passport: 'Passport',
+  national_id: 'National ID card',
+  driving_licence: 'Driving licence',
+  gst: 'GST certificate',
+  iec: 'Import Export Code (IEC)',
+  pan: 'PAN',
+  aadhaar: 'Aadhaar (masked only)',
+  certificate: 'Certificate of incorporation',
+  other: 'Other',
+});
+
+/**
  * What STAFF may ask any company to send — the union of every set above, so it
  * tracks them automatically and can never drift above what upload accepts.
  *

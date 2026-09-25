@@ -5,6 +5,8 @@ about to; none of it is optional.
 
 Server: `https://api.mpx.nxtgendigitals.com` (VPS, nginx → Node, self-hosted MongoDB).
 
+> 🔴 **Node 22 or newer is required (2026-09-25).** `firebase-admin` 14 needs it, and `package.json` `engines` says `>=22`. Check with `node -v` on the VPS before deploying, and upgrade Node first if it's 20.
+
 Under agreement **§11.2.3** the hosting environment is the Client's to administer. These are the
 settings the delivered code needs in order to work there.
 

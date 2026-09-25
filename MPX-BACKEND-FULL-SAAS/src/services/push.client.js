@@ -26,14 +26,15 @@ async function getMessaging() {
 
   if (!isPushConfigured()) return null;
   try {
-    const admin = (await import('firebase-admin')).default;
+    // firebase-admin 14 (2026-09-25) dropped the old namespaced API
+    // (`admin.credential`, `admin.messaging`); these are the modular entry points.
+    const { cert, getApp, getApps, initializeApp } = await import('firebase-admin/app');
+    const { getMessaging: messagingFor } = await import('firebase-admin/messaging');
     const credentials = JSON.parse(
       Buffer.from(env.FIREBASE_SERVICE_ACCOUNT_JSON, 'base64').toString('utf8'),
     );
-    const app = admin.apps?.length
-      ? admin.app()
-      : admin.initializeApp({ credential: admin.credential.cert(credentials) });
-    messaging = admin.messaging(app);
+    const app = getApps().length ? getApp() : initializeApp({ credential: cert(credentials) });
+    messaging = messagingFor(app);
   } catch (err) {
     // Log the SHAPE only — never the credential, and never the parsed JSON.
     logger.error(

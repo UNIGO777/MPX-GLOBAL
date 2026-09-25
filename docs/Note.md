@@ -209,6 +209,7 @@ Do not start the screens without surfacing this alert.
 > `docs/History.md` 2026-08-04). Do not invent them.
 >
 > ✅ **2026-08-21 — owner approved a FIFTH email event: "request more information" → seller.**
+> ✅ **BUILT 2026-09-25** (`notifyDocumentsRequested`, staff note included, owner's choice) — goes to the company's account on the reviewed side (buyer or exporter).
 > Alert was raised (`emailNotifications.service.js` carries an explicit "do not add a fifth without
 > a new alert" guard) and the owner approved it. **Do not re-alert on this one.** Driver: agreement
 > §3.7 requires "the seller sees … what is needed if more information is requested", and email is
