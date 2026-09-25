@@ -8,6 +8,7 @@ import { scheduleTicketAutoCloseJob } from './jobs/ticketAutoClose.js';
 import { attachSocket, attachRedisAdapter } from './realtime/socket.js';
 import { isCloudinaryConfigured } from './config/cloudinary.js';
 import { describeOtpTransports } from './services/otp.sender.js';
+import { verifyEmailTransport } from './services/email.provider.js';
 
 // Connect to MongoDB before accepting traffic — a payments-adjacent service must
 // not serve requests without its database.
@@ -74,6 +75,23 @@ const server = app.listen(env.PORT, () => {
   // its SMS key or SMTP password is visible immediately, rather than at some
   // user's first failed login.
   logger.info(describeOtpTransports(), 'otp delivery transports');
+
+  /**
+   * 🔴 "Configured" is not "working". The line above only says a password is
+   * present; this one actually connects and authenticates. Until 2026-09-25
+   * nothing called `verifyEmailTransport` at all, so a server whose SMTP was
+   * broken booted quietly and the first person to learn about it was a user who
+   * could not log in.
+   *
+   * Fire-and-forget on purpose: a slow or unreachable mail host must not hold
+   * up the listener. It is a warning, not a gate — the app is still useful with
+   * SMS OTP while email is down.
+   */
+  verifyEmailTransport()
+    .then((ok) => {
+      if (ok) logger.info('smtp: transport verified');
+    })
+    .catch(() => {}); // it already logged; never let the check itself crash boot
 });
 
 // M4-G — live delivery rides on the same HTTP server. §7.1: only new messages

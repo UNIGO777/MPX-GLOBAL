@@ -26,9 +26,21 @@
  * stretch, and both dimensions are set on the element to reserve space before
  * the image loads (no layout shift — web-design.md).
  */
-// Measured from the trimmed artwork (1200×597), not guessed. The old blue mark
-// was 1.966; at 2.010 every rendered logo gets ~2% wider at the same height.
-const ASPECT = 1200 / 597;
+/**
+ * Measured from each file, not guessed — and PER VARIANT since 2026-09-25,
+ * because the two artworks stopped matching: the navy-and-red mark was replaced
+ * (998×407, ratio 2.452) while the white one is still the older 1200×597
+ * (2.010). One shared constant then reserved a box ~20% too wide for the red
+ * mark, and `object-contain` quietly letterboxed it — no distortion, just a
+ * gap that reads as bad spacing.
+ *
+ * 🔴 If either PNG is replaced, re-measure it here. `object-contain` hides a
+ * wrong number rather than breaking, which is exactly why it goes unnoticed.
+ */
+const ASPECT = {
+  blue: 998 / 407,
+  white: 1200 / 597,
+};
 
 const HEIGHTS = {
   // The quotation's paper preview in chat — a miniature page whose body text is
@@ -47,14 +59,15 @@ const SRC = {
 
 export function Logo({ size = 'md', variant = 'blue', className = '' }) {
   const height = HEIGHTS[size] ?? HEIGHTS.md;
+  const width = Math.round(height * (ASPECT[variant] ?? ASPECT.blue));
 
   return (
     <img
       src={SRC[variant] ?? SRC.blue}
       alt="MPX Global"
-      width={Math.round(height * ASPECT)}
+      width={width}
       height={height}
-      style={{ height, width: Math.round(height * ASPECT) }}
+      style={{ height, width }}
       className={`block max-w-full object-contain ${className}`}
     />
   );
