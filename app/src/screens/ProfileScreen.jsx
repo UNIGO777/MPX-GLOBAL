@@ -297,6 +297,19 @@ export function ProfileScreen({ navigation }) {
                   onPress={() => navigation.navigate('KycHub')}
                   right={verified ? <VerifiedBadge verified /> : chip ? <Badge tone={chip.tone} label={chip.label} /> : null}
                 />
+                {/* The details a QUOTATION prints. Sellers only — a buyer has
+                    no quotation to put them on, and the server refuses the
+                    endpoint for any other role anyway. */}
+                {role === 'exporter' ? (
+                  <>
+                    <Divider />
+                    <Row
+                      icon="card-outline"
+                      label="Bank details for quotations"
+                      onPress={() => navigation.navigate('BankAccounts')}
+                    />
+                  </>
+                ) : null}
               </View>
 
               <View style={styles.card}>

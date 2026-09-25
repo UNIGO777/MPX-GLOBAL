@@ -11,6 +11,7 @@ import { CaptureDocumentScreen } from '../screens/kyc/CaptureDocumentScreen.jsx'
 import { withUnverifiedGuard } from '../screens/kyc/RequireUnverified.jsx';
 import { CompanyProfileScreen } from '../screens/profile/CompanyProfileScreen.jsx';
 import { ChangePasswordScreen } from '../screens/profile/ChangePasswordScreen.jsx';
+import { BankAccountsScreen } from '../screens/profile/BankAccountsScreen.jsx';
 import { HelpSupportScreen } from '../screens/profile/HelpSupportScreen.jsx';
 import { NewTicketScreen } from '../screens/support/NewTicketScreen.jsx';
 import { SupportTicketScreen } from '../screens/support/SupportTicketScreen.jsx';
@@ -81,6 +82,9 @@ export function AppStack({ role }) {
 
       {/* Screen 16 sub-screen — pushed from Profile's Security section. */}
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      {/* Exporter-only in the UI; `/me/bank-accounts` refuses any other role
+          outright, so the row being hidden is convenience, not the control. */}
+      <Stack.Screen name="BankAccounts" component={BankAccountsScreen} />
 
       {/* Step 1a — Help & support, pushed from Profile. */}
       <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />

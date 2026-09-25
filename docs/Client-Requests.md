@@ -114,20 +114,19 @@ testing). Publishing to the stores needs things only you can provide.
   item 1.2 a store blocker too
 - A **support contact** for the listing — the same as 1.4
 
-### 2.3 Final app artwork 🔴
+### 2.3 Final app artwork ✅ *(done 2026-09-25)*
 
-**The app still carries the old blue logo, icon and splash screen.** The website was moved to
-the new red-and-navy brand; the app was not. Please send the final artwork — app icon and
-splash — and we will apply it before the first store submission. Changing an app icon after
-launch is possible but it is a worse moment to do it.
+The app carried the old blue logo, icon and splash. All of it has been regenerated from the
+red-and-navy brand artwork, so the app and the website now use the same mark. **Nothing needed
+from you** — unless you would prefer a different treatment for the home-screen icon, in which
+case send the artwork you want.
 
-### 2.4 App signing key
+### 2.4 App signing key ✅ *(done 2026-09-25)*
 
-A published app is signed with a key that can never be changed afterwards. **If that key is
-lost, the app can never be updated again** — not under any account, and Google cannot recover
-it for you. We will generate it and hand it to you to store safely, or you can have Google hold
-it (Play App Signing), which is the safer default for most businesses. **Please tell us which
-you prefer.**
+Set up with **Play App Signing**: Google holds the key that signs the published app, and we hold
+an "upload key" used to send releases to them. This is the safer arrangement — if our upload key
+is ever lost, Google resets it and your app keeps updating normally. **Nothing needed from you**
+beyond opening the Play Console account (2.1).
 
 ---
 
