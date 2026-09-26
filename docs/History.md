@@ -175,6 +175,26 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-26 — `npm run build:android`: the release build now PROVES what it shipped.** Owner asked
+  for the icon trap to be fixed properly rather than remembered. One command does prebuild → gradle →
+  and then verifies the ARTEFACT, not the log:
+  1. launcher icons are not older than `assets/icon.png` (the 2026-09-25 blue-icon bug — changing
+     `assets/` does nothing until `expo prebuild` regenerates `android/.../mipmap-*`, and the build
+     log looks perfectly healthy while shipping five-week-old artwork);
+  2. the APK is signed with the upload key, not `CN=Android Debug`;
+  3. the live API host is in the bundle;
+  4. the dev url from `.env` is not.
+  Each of those has failed silently on this project at least once.
+  - 🔴 **The dev-url check had to be rewritten after it cried wolf on its first real run.** It
+    matched PATTERNS (`10\.0\.2\.2`, `192\.168\.`) — and those strings are in every bundle by
+    construction, because `src/config/env.js` lists them as loopback/private constants **in the code
+    that REJECTS cleartext dev urls**. It now compares the exact url from `.env`. A check that fires
+    on a correct build is worse than no check: it gets switched off.
+  - The icon check was verified by DELIBERATELY BREAKING it (back-dating the native icons) to confirm
+    it fails, rather than trusting a green tick.
+  - `--verify-only` re-runs the checks against the APK already on disk, so fixing a check costs
+    seconds instead of a 16-minute rebuild — a check that is expensive to correct stops being
+    corrected.
 - **2026-09-25 — App: new brand artwork, a real upload key, and bank details on the phone.** Three
   things the owner asked for together.
   - **Artwork** — every icon regenerated from `web/public/brand-logo.png`, so the app and the web now
