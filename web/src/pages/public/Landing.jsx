@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useQuery } from '@tanstack/react-query';
@@ -9,18 +9,15 @@ import { BannerStrip, SupplierCard, useLandingFeatured } from '../../components/
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
 import { CircuitHero } from '../../components/landing/CircuitHero.jsx';
+import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
+import { PromoPanels } from '../../components/landing/PromoPanels.jsx';
 import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
 
 import {
   ArrowRightIcon,
-  BadgeCheckIcon,
   BoxIcon,
-  ChatIcon,
-  CreditCardIcon,
   GridIcon,
-  QuoteIcon,
   SearchIcon,
-  ShieldIcon,
   SparkleIcon,
 } from '../../components/ui/icons.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
@@ -184,6 +181,12 @@ export function Landing() {
      catalogue search, the hero asks the AI. */
   const [heroQuery, setHeroQuery] = useState('');
 
+  /* 🔴 The backdrop measures these two boxes at runtime and builds its geometry
+     from them, so the pulses converge on the field at EVERY viewport instead of
+     only at the one the numbers were once read off. See CircuitHero. */
+  const heroFieldRef = useRef(null);
+  const heroCopyRef = useRef(null);
+
   const askAi = (text) => {
     const q = text.trim();
     navigate(q ? `/ai-search?q=${encodeURIComponent(q)}` : '/ai-search');
@@ -243,10 +246,29 @@ export function Landing() {
 
       {/* Browse bar — the marketplace's own nav row, under the shared header.
           Scrolls horizontally rather than wrapping on a narrow phone.
+
+          🔴 HIDDEN BELOW `sm` (owner, 2026-09-27: "remove this header in mobile
+          version"). On a phone it was a scrolling strip with most of its items
+          off-screen, and it cost ~46px of the fold the hero had just been cut to
+          fit inside. Kept from `sm` up, where the row has room to be read.
+
+          ⚠️ What that costs on a phone, checked link by link before hiding it:
+            · "All categories" and "How it works" — still in the header's own
+              hamburger menu (`PublicHeader`'s `NAV`), so nothing is lost;
+            · "Goods" / "Services" — these point at `/categories?type=…`, and
+              `Categories.jsx` never reads that param, so they already landed on
+              the same page as "All categories". Nothing is lost here either, but
+              the dead param is a pre-existing bug worth fixing separately;
+            · "AI Search" — the hero's own field and its example chips go to
+              `/ai-search`, so it is still one tap away;
+            · 🔴 "Verified exporters" (`/search?type=supplier`) is the ONE real
+              loss. Supplier mode has no other entry point since the owner had
+              the Products|Suppliers toggle removed from `/search`, so on a phone
+              that mode is now unreachable from this page. Raised with the owner.
           🆕 2026-09-23 — rebuilt to the owner's hero mockup. "Services" and
           "Verified exporters" are back (they were pulled on 2026-08-23), and
           "How it works" joins them; every one is a real destination. */}
-      <div className="border-b border-surface-border bg-white">
+      <div className="hidden border-b border-surface-border bg-white sm:block">
         <nav
           aria-label="Browse"
           className="flex w-full items-center gap-1 overflow-x-auto px-4 py-2.5 text-sm sm:px-6 lg:px-10 xl:px-16"
@@ -302,44 +324,46 @@ export function Landing() {
           {/* Backdrop only — it draws the red pulses and nothing else, and it is
               `pointer-events-none`, so it can never intercept a click meant for
               the field sitting on top of it. */}
-          <CircuitHero />
+          <CircuitHero targetRef={heroFieldRef} copyRef={heroCopyRef} />
 
           {/* `max(560px, 76vh)` rather than a bare `vh`: on a short laptop 76vh
               is under 500px and the section stops feeling like a hero at all,
               which is the thing the owner asked to fix. The floor holds it. */}
-          <div className="relative flex min-h-[max(560px,76vh)] w-full flex-col items-center justify-center px-4 py-20 text-center sm:px-6 lg:px-10 xl:px-16">
-            <p className="inline-flex items-center gap-2 rounded-full border border-primary-600/25 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-700 backdrop-blur-sm">
-              <SparkleIcon className="h-3.5 w-3.5" aria-hidden="true" />
-              AI match-making
-            </p>
+          <div className="relative flex min-h-[56svh] w-full flex-col items-center justify-center px-4 py-8 text-center max-[359px]:py-5 sm:min-h-[min(820px,max(560px,74vh))] sm:px-6 sm:py-20 lg:px-10 xl:px-16">
+            <div ref={heroCopyRef} className="flex w-full flex-col items-center">
+              <p className="inline-flex items-center gap-2 rounded-full border border-primary-600/25 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-700 backdrop-blur-sm">
+                <SparkleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                AI match-making
+              </p>
 
-            <h1 className="mt-6 max-w-4xl text-balance text-3xl font-extrabold leading-[1.1] tracking-tight text-ink-900 sm:text-5xl lg:text-6xl">
-              Connecting India&apos;s Suppliers to the World
-            </h1>
+              <h1 className="mt-4 max-w-4xl text-balance text-[27px] font-extrabold leading-[1.08] max-[359px]:text-[24px] tracking-tight text-ink-900 sm:mt-6 sm:text-5xl lg:text-6xl">
+                Connecting India&apos;s Suppliers to the World
+              </h1>
 
-            {/* 🔴 Describes what the feature ACTUALLY does — it reads your
-                requirement and finds suppliers already on this platform. No
-                number of suppliers, no "instant", no accuracy claim: this is a
-                trust marketplace and the page may not promise what cannot be
-                shown (the same rule that kept invented testimonials off it). */}
-            <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-ink-600 sm:text-lg">
-              Describe what you need in your own words — material, quantity, specification,
-              destination. Our AI reads it and matches you with verified Indian exporters who
-              can supply it.
-            </p>
+              {/* 🔴 Describes what the feature ACTUALLY does — it reads your
+                  requirement and finds suppliers already on this platform. No
+                  number of suppliers, no "instant", no accuracy claim: this is a
+                  trust marketplace and the page may not promise what cannot be
+                  shown (the same rule that kept invented testimonials off it). */}
+              <p className="mt-3 max-w-2xl text-pretty text-[14.5px] leading-relaxed text-ink-600 max-[359px]:text-[13.5px] sm:mt-5 sm:text-lg">
+                Describe what you need — material, quantity, specification, destination. Our AI
+                matches you with verified Indian exporters who can supply it.
+              </p>
+            </div>
 
             {/* The field every trace on this page terminates on. Capped at
                 720px because that is the width where the backdrop's own bar zone
                 lines up with it (see CircuitHero). */}
             <form
+              ref={heroFieldRef}
               role="search"
               onSubmit={onAiSearch}
-              className="mt-9 flex w-full max-w-[720px] flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-0 sm:rounded-2xl sm:border-2 sm:border-primary-600 sm:bg-white sm:p-1.5 sm:shadow-lift sm:focus-within:ring-4 sm:focus-within:ring-primary-600/15"
+              className="mt-7 flex w-full max-w-[720px] flex-col gap-2 sm:mt-20 sm:flex-row sm:items-center sm:gap-0 sm:rounded-2xl sm:border-2 sm:border-primary-600 sm:bg-white sm:p-1.5 sm:shadow-lift sm:focus-within:ring-4 sm:focus-within:ring-primary-600/15"
             >
               <label className="sr-only" htmlFor="hero-ai-q">
                 Describe what you want to source
               </label>
-              <div className="flex min-w-0 flex-1 items-center rounded-2xl border-2 border-primary-600 bg-white px-4 py-3 sm:rounded-none sm:border-0 sm:py-0">
+              <div className="flex min-w-0 flex-1 items-center rounded-2xl border-2 border-primary-600 bg-white px-4 py-0 sm:rounded-none sm:border-0">
                 <SearchIcon className="mr-3 h-5 w-5 shrink-0 text-ink-400" aria-hidden="true" />
                 <input
                   id="hero-ai-q"
@@ -352,7 +376,7 @@ export function Landing() {
               </div>
               <button
                 type="submit"
-                className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary-600 px-7 text-sm font-extrabold text-white transition hover:bg-primary-700 sm:h-11 sm:rounded-xl"
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary-600 px-7 text-sm font-extrabold text-white transition hover:bg-primary-700 sm:h-11 sm:rounded-xl"
               >
                 Find suppliers
                 <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
@@ -362,14 +386,14 @@ export function Landing() {
             {/* Real controls: each one runs that search. They are examples of
                 the KIND of sentence the AI handles, which is the part a visitor
                 cannot guess from an empty box. */}
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-              <span className="text-[12.5px] text-ink-500">Try:</span>
+            <div className="scrollbar-none mt-4 flex w-full max-w-[720px] items-center gap-2 overflow-x-auto max-[359px]:hidden sm:mt-5 sm:w-auto sm:max-w-none sm:flex-wrap sm:justify-center sm:overflow-visible">
+              <span className="shrink-0 text-[12.5px] text-ink-500">Try:</span>
               {HERO_EXAMPLES.map((example) => (
                 <button
                   key={example}
                   type="button"
                   onClick={() => askAi(example)}
-                  className="rounded-full border border-surface-border bg-white/80 px-3.5 py-1.5 text-[12.5px] text-ink-700 backdrop-blur-sm transition hover:border-primary-600 hover:text-primary-700"
+                  className="shrink-0 whitespace-nowrap rounded-full border border-surface-border bg-white/80 px-3.5 py-1.5 text-[12.5px] text-ink-700 backdrop-blur-sm transition hover:border-primary-600 hover:text-primary-700"
                 >
                   {example}
                 </button>
@@ -377,6 +401,18 @@ export function Landing() {
             </div>
           </div>
         </section>
+
+        {/* ═════════ THREE PROMO PANELS ═════════
+            Directly under the hero (owner, 2026-09-27, to the store layout they
+            sent): one full-width panel over two halves. Fixed navigation into
+            the platform's three entry points, NOT the admin banner strip — that
+            still runs below this and holds up to 24 rotating banners.
+
+            🔴 This also restores the only way into SUPPLIER search on a phone.
+            `/search?type=supplier` lost its entry point when the browse bar was
+            hidden on mobile (2026-09-27), because the Products|Suppliers toggle
+            had already been removed from `/search`. The lead panel is that link. */}
+        <PromoPanels />
 
         {/* ═════════ FEATURED BANNERS — curated in /admin/featured ═════════
             Under the hero, never inside it (owner, 2026-09-25): the hero is the
@@ -398,63 +434,22 @@ export function Landing() {
             counts, no "trusted by", no promises about volume — this page has a
             standing rule against claims it cannot back (it is why the design's
             six invented testimonials were never built). If a row here stops
-            being true, delete the row. */}
+            being true, delete the row.
+
+            🆕 2026-09-27 — the six icon rows became picture cards
+            (`PlatformCards.jsx`, to the layout the owner sent). The sentences
+            moved across unchanged; the artwork is still to come. */}
         <section id="platform" className="border-y border-surface-border bg-white py-12 sm:py-16">
           <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16">
             <h2 className="text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
               What makes MPX Global different
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-ink-600 sm:text-base">
-              Six things that are true of this platform today — not a pitch about what it might
+              Eight things that are true of this platform today — not a pitch about what it might
               become.
             </p>
 
-            <ul className="mt-8 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  Icon: ShieldIcon,
-                  title: 'A person reads the documents',
-                  body: 'Verification is done by our team, not an automated stamp. The tick means someone checked that company\u2019s papers.',
-                },
-                {
-                  Icon: BadgeCheckIcon,
-                  title: 'Sellers are visible from day one',
-                  body: 'An exporter\u2019s public profile goes live the moment they register. Verification adds the tick \u2014 it is not a gate to being found.',
-                },
-                {
-                  Icon: SparkleIcon,
-                  title: 'Describe it, don\u2019t guess keywords',
-                  body: 'Write what you need in plain language and get matching suppliers back. No hunting for the exact term a seller happened to type.',
-                },
-                {
-                  Icon: ChatIcon,
-                  title: 'Talk to the supplier directly',
-                  body: 'A structured enquiry, then live chat with files. No email chains, and the whole conversation stays in one place.',
-                },
-                {
-                  Icon: QuoteIcon,
-                  title: 'Real quotations, not chat messages',
-                  body: 'Sellers send a priced PDF into the chat. Either side can counter-offer, and both confirm the final figure with a code sent to their email.',
-                },
-                {
-                  /* 🔴 True TODAY. Escrow is a Phase-2 idea; if it ever ships,
-                     this row has to change with it or it becomes a lie. */
-                  Icon: CreditCardIcon,
-                  title: 'You pay the supplier directly',
-                  body: 'MPX Global does not hold or move your money. The quotation carries the seller\u2019s own bank details for you to pay against.',
-                },
-              ].map(({ Icon, title, body }) => (
-                <li key={title} className="flex items-start gap-3.5">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[15px] font-bold text-ink-900">{title}</span>
-                    <span className="mt-1 block text-sm leading-relaxed text-ink-600">{body}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <PlatformCards />
           </div>
         </section>
 

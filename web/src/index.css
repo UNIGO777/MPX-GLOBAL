@@ -211,6 +211,53 @@
     }
   }
 
+  /* A light sweeping across a button, so one action on the bar reads as THE
+     action (owner, 2026-09-27: "highlights light swap effect").
+
+     ⚠️ It animates `transform`, not `left`/`background-position`: a transform is
+     composited, so the sweep costs no layout or paint on a bar that is fixed on
+     screen the whole time someone is reading.
+
+     The keyframes hold the highlight off-canvas for the first 55% of the cycle —
+     that pause is what makes it read as an occasional glint rather than a
+     barber's pole. The element needs `overflow-hidden` and a stacking context of
+     its own; both are on the button.
+
+     🔴 Removed entirely under `prefers-reduced-motion` (`web-design.md`). The
+     button keeps its fill and label, so nothing is lost but the glint. */
+  .mpx-shine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 45%;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      rgb(255 255 255 / 0) 0%,
+      rgb(255 255 255 / 0.5) 50%,
+      rgb(255 255 255 / 0) 100%
+    );
+    transform: translateX(-180%) skewX(-18deg);
+    animation: mpx-shine-sweep 3.8s ease-in-out infinite;
+  }
+  @keyframes mpx-shine-sweep {
+    0%,
+    55% {
+      transform: translateX(-180%) skewX(-18deg);
+    }
+    100% {
+      transform: translateX(320%) skewX(-18deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mpx-shine::after {
+      animation: none;
+      display: none;
+    }
+  }
+
   /* Scrolls, but draws no scrollbar — for swipeable strips (the console's
      mobile nav) where a bar on the brand colour read as a stray brown line. */
   .scrollbar-none {
