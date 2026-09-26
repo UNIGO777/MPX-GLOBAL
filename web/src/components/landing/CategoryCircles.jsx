@@ -111,8 +111,24 @@ export function CategoryCircles({ categories, loading = false, skeletonCount = 1
                   <div className="mx-auto mt-3 h-3 w-3/4 animate-pulse rounded bg-ink-100 motion-reduce:animate-none" />
                 </>
               ) : (
-                <Link to={`/category/${c.slug ?? c.id}`} className="group block text-center">
-                  <span className="block overflow-hidden rounded-full bg-ink-100 ring-1 ring-surface-border/70 transition duration-200 group-hover:ring-2 group-hover:ring-primary-500">
+                <Link
+                  to={`/category/${c.slug ?? c.id}`}
+                  className="group block rounded-2xl text-center focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                >
+                  {/* 🔴 Hover is a LIFT, not a coloured ring. It was
+                      `group-hover:ring-2 group-hover:ring-primary-500` — a 2px
+                      red circle drawn around a photograph, which read as
+                      "selected" or "error" rather than "hoverable", and matched
+                      nothing else on the page (every other card lifts and takes
+                      a shadow). Red is this product's ACTION colour; spending it
+                      on a hover state is the same kind of dilution as the green
+                      card that had to be removed from the goods/services pair.
+
+                      The hairline stays constant so a product shot on white
+                      still has an edge; what changes is elevation, a slight zoom
+                      on the image, and the label colour — three signals, none of
+                      them a new colour. */}
+                  <span className="block overflow-hidden rounded-full bg-ink-100 ring-1 ring-surface-border/70 transition duration-200 group-hover:shadow-lift">
                     {c.image ? (
                       <img
                         src={c.image}

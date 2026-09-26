@@ -175,6 +175,18 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-26 — Category circles: hover is a lift, not a red ring.** Owner: "doing a small issue in
+  hovering, looking unprofessional".
+  - It was `group-hover:ring-2 group-hover:ring-primary-500` — a 2px **red circle drawn around a
+    photograph**, which reads as "selected" or "error" rather than "hoverable", and matched nothing
+    else on the page: every other card lifts and takes a shadow.
+  - 🔴 Red is this product's ACTION colour. Spending it on a hover state is the same dilution as the
+    green card that had to be pulled from the goods/services pair — a colour that means something
+    everywhere stops meaning it once it is used for decoration.
+  - Now: the hairline ring stays constant (a product shot on white still needs an edge), and hover
+    changes **elevation + a slight image zoom + the label colour** — three signals, no new colour.
+  - Added a real `focus-visible` outline on the link while in there; the circles had none, and
+    `web-design.md` requires a visible focus state.
 - **2026-09-26 — Landing hero: new headline, one action instead of two.** Owner supplied the line.
   - `h1` is now **"Connecting India's Suppliers to the World"**, replacing "What are you sourcing
     from India today?" — a question the search box directly above already asks. The new line says
