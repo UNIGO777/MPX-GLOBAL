@@ -14,6 +14,7 @@ import { MySupport } from './pages/support/MySupport.jsx';
 import { MyTicket } from './pages/support/MyTicket.jsx';
 import { FindSupplier } from './pages/support/FindSupplier.jsx';
 import { LandingBlue } from './pages/public/LandingBlue.jsx';
+import { Landing2 } from './pages/public/Landing2.jsx';
 import { Categories } from './pages/public/Categories.jsx';
 import { CategoryListing } from './pages/public/CategoryListing.jsx';
 import { ProductDetail } from './pages/public/ProductDetail.jsx';
@@ -291,6 +292,13 @@ export function App() {
                 comparison (owner, 2026-08-23). Temporary — delete this route and
                 `LandingBlue.jsx` once the colour is decided. */}
             <Route path="/landing-blue" element={<LandingBlue />} />
+            {/* ⚠️ A frozen SNAPSHOT of the landing page as of 2026-09-26, kept
+                so the current design stays viewable while `/` is reworked
+                (owner). `noindex`, and it carries its own copies of the two
+                landing-only components — see the note at the top of the file.
+                Delete this route, `Landing2.jsx` and `components/landing2/`
+                together once the new landing is settled. */}
+            <Route path="/landing-2" element={<Landing2 />} />
 
             {/* --- Party auth (buyer + exporter share screens; portal = the field change) ---
                    All of these are for signed-OUT visitors: RedirectIfAuthed sends a live

@@ -176,6 +176,41 @@
 }
 
 @layer utilities {
+  /* The hero's circuit pulses: a short dash travelling the length of a trace.
+     `pathLength="100"` on each path normalises the scale, so one offset range
+     works for every trace regardless of its real length.
+
+     Offset runs 100 → -100 so the dash enters at the path's START and leaves at
+     its END. Every trace is authored frame-edge-first, so that is what makes the
+     pulses converge INWARD on the search bar rather than fly out of it. Reverse
+     the keyframes and the section stops meaning what it is there to mean.
+
+     🔴 Stopped under `prefers-reduced-motion` (`web-design.md`). It used to keep
+     the still traces visible so the band would not become a hole; the owner
+     removed those traces on 2026-09-26, so there is nothing left to fall back to
+     and the band simply reads as plain cream. Nothing is lost — every word in
+     the hero is real DOM above this layer. */
+  .mpx-circuit-pulse {
+    animation-name: mpx-circuit-run;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    stroke-dashoffset: 100;
+  }
+  @keyframes mpx-circuit-run {
+    from {
+      stroke-dashoffset: 100;
+    }
+    to {
+      stroke-dashoffset: -100;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mpx-circuit-pulse {
+      animation: none;
+      opacity: 0;
+    }
+  }
+
   /* Scrolls, but draws no scrollbar — for swipeable strips (the console's
      mobile nav) where a bar on the brand colour read as a stray brown line. */
   .scrollbar-none {

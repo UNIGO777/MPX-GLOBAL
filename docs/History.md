@@ -175,6 +175,107 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-26 — Landing hero rebuilt as the AI match-making section.** Owner: "make more big height…
+  make a search bar in center… we are making this section for reflacting our biggest fiture for ai match
+  making… remove that box… remove gray line only red running line". Band is now `min-h-[max(560px,76vh)]`
+  on cream, with a centred AI search field as the single focus.
+  - **The field is REAL**, not a placeholder: it submits to **`/ai-search?q=…`**, which `AiSearch.jsx`
+    reconstructs from the URL (`params.get('q')`). Three example prompts run the same search. Its state is
+    separate from the header search — both boxes are on screen at once and go to different places, so
+    mirroring what you type between them would read as a bug.
+  - **`CircuitHero` rewritten.** The chip, the solder vias and every still grey trace are gone on the
+    owner's instruction. 🔴 **The traces still exist as data but are NOT DRAWN** — they are rails for the
+    pulses, not artwork. All eighteen animate now, because with nothing drawn an un-animated path is simply
+    not on the page.
+  - 🔴 **Bar zone was MEASURED, not derived.** The first attempt centred it on the viewBox's middle
+    (y=360) and the pulses visibly converged on the PARAGRAPH, ~60 units above the field: the content block
+    is centred, but the copy above the field is taller than the chips below it. Re-measured off a real
+    1440×900 render → y 386–454. **If the hero's copy changes height, re-measure.**
+  - 🔴 **Red streaks were cutting through the `<h1>`** on the first real render. Fixed with a soft ellipse
+    of the page's own cream painted over the pulses and under the DOM — sized to clear the COPY, not the
+    field, so pulses still arrive at full strength. Deliberately not an SVG `<mask>` (luminance interpolates
+    differently across engines) and not a blur filter (a per-frame raster over eighteen running animations).
+  - **The gradient is gone.** Gradient units are the path's bounding box, so a pulse faded out as it
+    ARRIVED — backwards for a section about convergence, and unfixable for left- and right-entering traces
+    at once. Replaced by a `strokeDasharray` comet tail, which travels with the dash whichever way the path
+    runs. `prefers-reduced-motion` now hides the pulses outright; there is no still layer left to keep.
+  - **Verified by rendering, not by reading:** both defects above were found in a headless-Chrome
+    screenshot of the real page, not in the code. ⚠️ Mobile screenshots from that setup are NOT reliable —
+    the layout viewport comes out wider than `--window-size` and content is cropped, identically on the
+    untouched `/landing-2`. Mobile was checked by computing the SVG scale instead (390×641 → 0.890 → bar
+    zone at real y 343–404, which matches where the field renders).
+  - ⚠️ **Still missing** (UiWebNotes): the guest signup cards — the only above-the-fold registration CTA on
+    a phone — and the category rail.
+- **2026-09-26 — Landing hero ground is CREAM.** Owner: "make hero bg cream". The band moved from
+  `bg-ink-900` to **`surface-canvas` (#F5F2EF)** — the token that already existed for exactly this
+  purpose ("the landing hero's page ground", warm on purpose so it does not fight the red brand).
+  **No new cream token was added**; a second name for one colour always drifts (`web-design.md`).
+  - Traces: the caller now passes `text-ink-900/70` instead of `text-white/70`. Nothing inside
+    `CircuitHero.jsx` changed for this — the SVG draws in `currentColor`, and at 0.7 × 0.28 the ink
+    lands ~48/255 from cream, the same distance white sat from ink-900. Equal apparent weight.
+  - 🔴 **The pulse gradient's peak had to change**, and this is the part that was not cosmetic: it
+    was `#FA808D` (primary-300, a light pink), which is what a red GLOW needs on a near-black panel.
+    On cream that pink is nearly the background and the pulses all but vanished. The ramp is now
+    **one hue — primary-600 — with opacity alone**, which reads on cream and still reads on a dark
+    panel, so the component survives either ground.
+  - **Corrected a wrong comment:** it claimed the gradient fades "along its own length". It does
+    not — `gradientUnits` defaults to `objectBoundingBox` and the referencing element is the whole
+    trace, so a pulse is faintest at the frame edge and at the chip and strongest mid-run.
+    `strokeDasharray` does not move where it brightens.
+  - ⚠️ **Worth watching:** red is this product's ACTION colour, and at full opacity on cream the
+    pulses carry far more weight than they did on black. When the hero's real CTA lands, check the
+    two are not competing.
+- **2026-09-26 — Circuit-board hero backdrop (`web/src/components/landing/CircuitHero.jsx`).** Owner:
+  "can we create this type of lineing animation with running line in red color in hero section".
+  Inline SVG — 18 PCB traces, solder vias and a centred chip in `currentColor`, with **six** red
+  pulses running along their own traces (`stroke-dasharray` + animated `stroke-dashoffset`, keyframes
+  in `src/index.css`). Sits behind the still-blank hero band on `bg-ink-900`.
+  - 🔴 **No dependency added.** Lottie or a canvas library would each be a new package for one
+    decoration on one page; dash-offset gives the same effect and the browser composites it.
+  - 🔴 **`prefers-reduced-motion` stops only the pulses** — traces and chip still render, so the band
+    does not become an empty hole for anyone who asked motion to stop (`web-design.md`).
+  - ⚠️ **`pathLength="100"` on every runner.** Without it one dash pattern produces a different pulse
+    size on a short trace than on a long one; normalising the path length makes one rule fit all.
+  - ⚠️ Only six of eighteen animate — all eighteen read as a screensaver and cost far more paint.
+  - **Gotcha:** the preview render looked off-centre and half-empty. It was `qlmanage` fitting a
+    1200×600 SVG into a square thumbnail and cropping the sides, not a geometry bug — verified by
+    padding the viewBox to a square and re-rendering. Check the aspect before believing a thumbnail.
+  - The hero itself is **still blank** (UiWebNotes row stands): no `<h1>`, no guest signup cards, no
+    category rail. This is the backdrop only.
+- **2026-09-26 — Landing hero removed, blank band left in its place.** Owner is rebuilding it and
+  asked for the space cleared. Logged in `docs/UiWebNotes.md` — a public front page opening on an
+  empty band is a visible defect, and a deliberate hole with no ledger entry becomes an accidental
+  one within a week.
+  - 🔴 **An `sr-only` `<h1>` was left behind.** The hero held the page's ONLY h1; removing it outright
+    would have left the landing page with no heading at all for crawlers and screen readers, on a
+    route the quote explicitly sells as SEO-friendly. It is a stopgap and says so — the real h1
+    belongs in the new hero.
+  - ⚠️ **What left with the hero and must return:** the guest signup cards ("Start sourcing" / "For
+    exporters"), which were the only signup CTA above the fold on a phone — nothing now asks a new
+    buyer to register until well down the page — plus the always-open category rail and the six
+    category tiles.
+  - Six things went dead with it and were removed rather than left commented out: `AlertIcon`,
+    `RAIL_SKELETON_ROWS`, `HERO_TILES`, `isBuyer`, `isExporter` and the whole `useAuth` call. The
+    placeholder comment records that the new hero needs `user` and `restoring` back — `restoring`
+    specifically so the guest CTAs do not flash on reload for someone already signed in.
+  - The previous hero is intact at `/landing-2` and in git history; rebuild from one of those.
+- **2026-09-26 — `/landing-2`: a frozen snapshot of the landing page, so `/` can be reworked.**
+  Owner: keep the current design viewable while the first one is modified. Route follows the
+  existing `/landing-blue` convention.
+  - 🔴 **It carries its OWN copies of the two landing-only components** (`components/landing2/`),
+    not imports of the live ones. A snapshot that imports the components being edited is not a
+    snapshot — the first change to `CategoryCircles` would have moved both pages and the comparison
+    would have quietly become worthless.
+  - ⚠️ **What is still shared, and will move:** `PublicHeader`, `PublicFooter`, `ProductCard`,
+    `FeaturedStrips`, the icons and the Tailwind tokens. Copying those would mean forking half the
+    app. Said at the top of the file so a confusing comparison has an explanation.
+  - 🔴 **`noindex`, not `useCanonical('/')`.** Two public URLs with the same content compete in
+    search, and this one exists to be looked at, not found. (`/landing-blue` declares
+    `useCanonical('/')` instead — a weaker answer to the same problem; left alone rather than changed
+    in passing, but worth fixing when that variant is finally deleted.)
+  - 🔴 **Delete the route, `Landing2.jsx` and `components/landing2/` together** once the new landing
+    is settled. A stale copy of a marketing page is exactly what gets edited by mistake a month later
+    — `/landing-blue` is already that.
 - **2026-09-26 — Category circles: hover is a lift, not a red ring.** Owner: "doing a small issue in
   hovering, looking unprofessional".
   - It was `group-hover:ring-2 group-hover:ring-primary-500` — a 2px **red circle drawn around a

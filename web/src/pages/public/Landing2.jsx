@@ -4,15 +4,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { useCanonical } from '../../lib/seo.js';
+import { useNoIndex } from '../../lib/seo.js';
 import { BannerStrip, SupplierCard, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
-import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
-import { CircuitHero } from '../../components/landing/CircuitHero.jsx';
-import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
+import { CategoryCircles } from '../../components/landing2/CategoryCircles.jsx';
+import { TradeAgreements } from '../../components/landing2/TradeAgreements.jsx';
+import { useAuth } from '../../auth/AuthContext.jsx';
 
 import {
-  ArrowRightIcon,
+  AlertIcon,
   BadgeCheckIcon,
   BoxIcon,
   ChatIcon,
@@ -25,6 +25,28 @@ import {
 } from '../../components/ui/icons.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
+
+/**
+ * ⚠️ SNAPSHOT — a frozen copy of the landing page as it stood on 2026-09-26,
+ * served at `/landing-2` so the current design stays viewable while `/` is
+ * reworked (owner). It is NOT a second live page.
+ *
+ * 🔴 It is `noindex`. Two public URLs with the same content compete with each
+ * other in search, and this one exists to be compared against, not found. (The
+ * older `/landing-blue` variant instead declares `useCanonical('/')`, which is a
+ * different and weaker answer — left alone here rather than changed in passing.)
+ *
+ * 🔴 **What is frozen and what is not.** The page itself and the two
+ * landing-only components it uses were COPIED (`components/landing2/`), so
+ * editing the originals does not move this. Everything else is still SHARED —
+ * `PublicHeader`, `PublicFooter`, `ProductCard`, `FeaturedStrips`, the icons and
+ * the Tailwind tokens — so a change to any of those, or to the brand palette,
+ * shows up here too. If a comparison ever looks wrong, that is the reason.
+ *
+ * 🔴 **Delete this file, `components/landing2/` and the route together** once the
+ * new landing is settled. A stale copy of a marketing page is the kind of thing
+ * that gets edited by mistake a month later.
+ */
 
 /**
  * Public landing page (`/`) — SEO surface and the platform's front door.
@@ -113,23 +135,14 @@ const FAQS = [
   },
 ];
 
+/** Placeholder rows drawn while the rail loads — the rail itself shows ALL
+ *  top-level categories (owner, 2026-09-23) and scrolls inside the hero's
+ *  height, so this number only has to fill the visible area, not match 40. */
+const RAIL_SKELETON_ROWS = 9;
+/** Category tiles inside the hero panel — the mockup's 3×2 grid. */
+const HERO_TILES = 6;
 
 /* --------------------------------- pieces --------------------------------- */
-
-/**
- * Example prompts for the hero's AI field.
- *
- * 🔴 Each one is the SHAPE of a real sourcing request — a product, a quantity,
- * a specification, a destination — because the thing a visitor cannot guess from
- * an empty box is how much detail the AI will actually take. They are not claims
- * that these exact goods are listed; clicking one runs the search and the page
- * reports honestly what it finds, including nothing.
- */
-const HERO_EXAMPLES = [
-  '500 kg organic turmeric powder',
-  'cotton fabric, 120 GSM, shipped to Rotterdam',
-  'stainless steel fasteners, ISO 898',
-];
 
 /** Section heading + optional "see all" — the one definition, so headings can't drift. */
 function BlockHead({ title, sub, to, cta = 'See all' }) {
@@ -154,10 +167,12 @@ function BlockHead({ title, sub, to, cta = 'See all' }) {
 
 /* ---------------------------------- page ---------------------------------- */
 
-export function Landing() {
+export function Landing2() {
+  const { user, restoring } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  useCanonical('/');
+  // A snapshot must never be indexed or claim `/`'s canonical — see the note above.
+  useNoIndex();
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
@@ -178,21 +193,8 @@ export function Landing() {
     ...topCategories.filter((c) => !featuredCategoryIds.has(c.id)),
   ];
 
-  /* The hero's AI field. Its own state, NOT the header's `query`: the two boxes
-     are visible at the same time, and mirroring what you type from one into the
-     other reads as a bug. They also go to different places — the header does a
-     catalogue search, the hero asks the AI. */
-  const [heroQuery, setHeroQuery] = useState('');
-
-  const askAi = (text) => {
-    const q = text.trim();
-    navigate(q ? `/ai-search?q=${encodeURIComponent(q)}` : '/ai-search');
-  };
-
-  const onAiSearch = (e) => {
-    e.preventDefault();
-    askAi(heroQuery);
-  };
+  const isBuyer = user?.role === 'buyer';
+  const isExporter = user?.role === 'exporter';
 
   const onSearch = (e) => {
     e.preventDefault();
@@ -281,100 +283,289 @@ export function Landing() {
       </div>
 
       <main>
-        {/* ═════════ HERO — AI MATCH-MAKING ═════════
-            Rebuilt 2026-09-26 on the owner's brief: "we are making this section
-            for reflecting our biggest fiture for ai match making… make a search
-            bar and connect all line with that". The band's whole job is to put
-            ONE field in front of a visitor and have every moving thing on the
-            page point at it.
+        {/* ═════════ HERO — category rail · banner · contextual panel ═════════
+            🆕 2026-09-23 — rebuilt against the owner's mockup: a question as the
+            headline, a serif face for it, six category tiles inside the panel,
+            and the exporter pitch split into its own card.
 
-            Ground is `surface-canvas` — the token that already existed for this
-            band ("the landing hero's page ground"), warm on purpose so it does
-            not fight the red brand. Do not add a second cream.
+            🔴 TWO THINGS IN THE MOCKUP WERE NOT BUILT AS DRAWN, both because
+            they would have been false:
 
-            🔴 STILL MISSING from the pre-2026-09-26 hero, and still logged in
-            `docs/UiWebNotes.md`: the guest signup cards ("Start sourcing" / "For
-            exporters") and the always-open category rail. The signup cards were
-            the only registration CTA a visitor met above the fold on a phone —
-            nothing here replaces that yet. The old hero is intact at
-            `/landing-2` and in git history. */}
-        <section className="relative isolate overflow-hidden bg-surface-canvas text-ink-900">
-          {/* Backdrop only — it draws the red pulses and nothing else, and it is
-              `pointer-events-none`, so it can never intercept a click meant for
-              the field sitting on top of it. */}
-          <CircuitHero />
+            1. Each tile read "[000] suppliers". That count does not exist on
+               any public route, and the real numbers are worse than missing:
+               of the 40 top categories, exactly THREE contain a supplier
+               (Textiles 4, IT 2, Agriculture 1). Four of the six tiles drawn
+               would have read "0 suppliers" on the front page. The line now
+               carries the sub-category count, which is real, already in the
+               tree, and needs no API change.
+            2. The subhead read "Every supplier you contact is a real business,
+               reviewed by our team." Only 3 of 11 companies are verified, and
+               an UNVERIFIED seller is public and contactable by design (B7).
+               Rewritten so the claim attaches to the tick, which is true.
 
-          {/* `max(560px, 76vh)` rather than a bare `vh`: on a short laptop 76vh
-              is under 500px and the section stops feeling like a hero at all,
-              which is the thing the owner asked to fix. The floor holds it. */}
-          <div className="relative flex min-h-[max(560px,76vh)] w-full flex-col items-center justify-center px-4 py-20 text-center sm:px-6 lg:px-10 xl:px-16">
-            <p className="inline-flex items-center gap-2 rounded-full border border-primary-600/25 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-700 backdrop-blur-sm">
-              <SparkleIcon className="h-3.5 w-3.5" aria-hidden="true" />
-              AI match-making
-            </p>
-
-            <h1 className="mt-6 max-w-4xl text-balance text-3xl font-extrabold leading-[1.1] tracking-tight text-ink-900 sm:text-5xl lg:text-6xl">
-              Connecting India&apos;s Suppliers to the World
-            </h1>
-
-            {/* 🔴 Describes what the feature ACTUALLY does — it reads your
-                requirement and finds suppliers already on this platform. No
-                number of suppliers, no "instant", no accuracy claim: this is a
-                trust marketplace and the page may not promise what cannot be
-                shown (the same rule that kept invented testimonials off it). */}
-            <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-ink-600 sm:text-lg">
-              Describe what you need in your own words — material, quantity, specification,
-              destination. Our AI reads it and matches you with verified Indian exporters who
-              can supply it.
-            </p>
-
-            {/* The field every trace on this page terminates on. Capped at
-                720px because that is the width where the backdrop's own bar zone
-                lines up with it (see CircuitHero). */}
-            <form
-              role="search"
-              onSubmit={onAiSearch}
-              className="mt-9 flex w-full max-w-[720px] flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-0 sm:rounded-2xl sm:border-2 sm:border-primary-600 sm:bg-white sm:p-1.5 sm:shadow-lift sm:focus-within:ring-4 sm:focus-within:ring-primary-600/15"
-            >
-              <label className="sr-only" htmlFor="hero-ai-q">
-                Describe what you want to source
-              </label>
-              <div className="flex min-w-0 flex-1 items-center rounded-2xl border-2 border-primary-600 bg-white px-4 py-3 sm:rounded-none sm:border-0 sm:py-0">
-                <SearchIcon className="mr-3 h-5 w-5 shrink-0 text-ink-400" aria-hidden="true" />
-                <input
-                  id="hero-ai-q"
-                  type="search"
-                  value={heroQuery}
-                  onChange={(e) => setHeroQuery(e.target.value)}
-                  placeholder="500 kg organic turmeric powder, shipped to Dubai"
-                  className="h-11 min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-ink-400"
-                />
+            Tiles use the categories' REAL photographs rather than the mockup's
+            line icons: the icon set here has no category-specific glyphs, so
+            matching the drawing would have meant inventing forty of them. */}
+        <section className="bg-surface-canvas py-4 sm:py-6">
+          <div className="grid w-full grid-cols-1 gap-4 px-4 sm:gap-5 sm:px-6 lg:px-10 xl:px-16 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_320px]">
+            {/* Always-open rail. Hidden below lg, where the category grid below
+                and the browse bar above already serve the same purpose. */}
+            {/* 🔴 The rail is ABSOLUTELY POSITIONED inside its grid cell, and that
+                is the whole trick (owner, 2026-09-23: "only that much height we
+                need, other categories come in scroll").
+                A grid row is as tall as its TALLEST item, so while the rail was
+                in normal flow its forty entries set the row height and the hero
+                stretched to match — the opposite of what was wanted, and no
+                amount of `overflow-y-auto` fixes it, because nothing was
+                overflowing. Taking the panel out of flow means the rail
+                contributes ZERO height: the row is sized by the hero alone, the
+                stretched `aside` inherits exactly that height, and the list
+                finally has something to overflow against.
+                Only from `lg`, where the rail is visible at all. */}
+            <aside className="relative hidden lg:block">
+              <div className="absolute inset-0 flex flex-col rounded-2xl bg-white p-2 shadow-card">
+              {categories.isPending ? (
+                <div className="space-y-1 p-1">
+                  {Array.from({ length: RAIL_SKELETON_ROWS }).map((_, i) => (
+                    <div key={i} className="h-10 animate-pulse rounded-xl bg-ink-100" />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* 🔴 EVERY top-level category, scrolling inside the hero's
+                      own height (owner, 2026-09-23 — it used to show nine).
+                      `min-h-0` is load-bearing: a flex child defaults to
+                      min-height:auto, so without it the list refuses to shrink,
+                      overflow never fires, and the rail just grows taller than
+                      the hero instead of scrolling.
+                      The "All N categories" link stays OUTSIDE this list so it
+                      is reachable without scrolling to the bottom. */}
+                  <ul className="min-h-0 flex-1 overflow-y-auto text-sm">
+                    {topCategories.map((c) => (
+                      <li key={c.id}>
+                        <Link
+                          to={`/category/${c.slug ?? c.id}`}
+                          className="group flex items-center gap-2.5 rounded-xl px-2.5 py-2 font-medium text-ink-900 hover:bg-primary-50 hover:text-primary-700"
+                        >
+                          {c.image ? (
+                            <img
+                              src={c.image}
+                              alt=""
+                              loading="lazy"
+                              width={24}
+                              height={24}
+                              className="h-6 w-6 shrink-0 rounded-md object-cover"
+                            />
+                          ) : (
+                            <span className="h-6 w-6 shrink-0 rounded-md bg-ink-100" />
+                          )}
+                          <span className="truncate">{c.name}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-2 border-t border-surface-border pt-2">
+                    <Link
+                      to="/categories"
+                      className="block rounded-xl px-2.5 py-2 text-sm font-bold text-primary-700 hover:bg-primary-50"
+                    >
+                      All {topCategories.length} categories →
+                    </Link>
+                  </div>
+                </>
+              )}
               </div>
-              <button
-                type="submit"
-                className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary-600 px-7 text-sm font-extrabold text-white transition hover:bg-primary-700 sm:h-11 sm:rounded-xl"
-              >
-                Find suppliers
-                <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </form>
+            </aside>
 
-            {/* Real controls: each one runs that search. They are examples of
-                the KIND of sentence the AI handles, which is the part a visitor
-                cannot guess from an empty box. */}
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-              <span className="text-[12.5px] text-ink-500">Try:</span>
-              {HERO_EXAMPLES.map((example) => (
-                <button
-                  key={example}
-                  type="button"
-                  onClick={() => askAi(example)}
-                  className="rounded-full border border-surface-border bg-white/80 px-3.5 py-1.5 text-[12.5px] text-ink-700 backdrop-blur-sm transition hover:border-primary-600 hover:text-primary-700"
+            {/* The banner. One h1 on the page, and it lives here.
+                `ink-900` (#000517), never #000000 — pure black is off the token
+                scale, and this is the same fill the footer uses. */}
+            <div className="rounded-2xl bg-ink-900 px-6 py-8 sm:px-10 sm:py-10 lg:px-12">
+              <p className="mb-4 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-primary-300">
+                <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                Every tick checked by a person
+              </p>
+              {/* The headline is the owner's own line (2026-09-26), replacing
+                  "What are you sourcing from India today?" — a question the
+                  search box above already asks. This one says what the platform
+                  IS, which is what a first-time visitor needs from an h1. */}
+              <h1 className="max-w-2xl font-serif text-3xl leading-[1.15] text-white sm:text-4xl lg:text-[2.75rem]">
+                Connecting India&apos;s Suppliers to the World
+              </h1>
+              {/* 🔴 NOT the mockup's "every supplier … reviewed by our team" —
+                  see this section's note. The claim belongs to the tick.
+                  ⚠️ "Pick a category or" was dropped with the Browse button
+                  below: copy that names a control which is no longer there sends
+                  people hunting for it. */}
+              <p className="mt-4 max-w-xl text-sm text-ink-200 sm:text-base">
+                Describe what you need and we will find it. Where you see the tick, a person on
+                our team has checked that company&apos;s documents.
+              </p>
+
+              {/* 🔴 "Browse all categories" removed 2026-09-26 (owner). Browsing
+                  is not lost — the sub-nav's "All categories" chip sits directly
+                  above this banner and the category rail is one section below —
+                  so the hero keeps ONE action instead of two competing ones. */}
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  to="/ai-search"
+                  className="flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-3 text-sm font-bold text-white hover:bg-primary-700 sm:px-6"
                 >
-                  {example}
-                </button>
-              ))}
+                  <SparkleIcon className="h-4 w-4" aria-hidden="true" />
+                  Describe what you need
+                </Link>
+              </div>
+
+              {/* Six real categories, straight into the catalogue. Hidden until
+                  there are six to show, rather than rendering a grid with gaps.
+
+                  🔴 NOT ON A PHONE (owner, 2026-09-25). Below `sm` the grid is a
+                  single column, so six full-width tiles pushed the signup card
+                  and everything after it a screen and a half down — the hero
+                  became a category list. Nothing is lost: the page's own
+                  categories section is one scroll away and shows twelve, two
+                  across, and the browse bar sits above the hero. */}
+              {topCategories.length >= HERO_TILES && (
+                <ul className="mt-8 hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+                  {topCategories.slice(0, HERO_TILES).map((c) => {
+                    const subs = c.subs?.length ?? 0;
+                    return (
+                      <li key={c.id}>
+                        <Link
+                          to={`/category/${c.slug ?? c.id}`}
+                          className="flex h-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3.5 transition hover:border-primary-300/40 hover:bg-white/[0.08]"
+                        >
+                          {c.image ? (
+                            <img
+                              src={c.image}
+                              alt=""
+                              loading="lazy"
+                              width={40}
+                              height={40}
+                              className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <span className="h-10 w-10 shrink-0 rounded-lg bg-white/10" />
+                          )}
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-bold text-white">{c.name}</span>
+                            {subs > 0 && (
+                              <span className="block text-xs text-ink-400">
+                                {subs} {subs === 1 ? 'subcategory' : 'subcategories'}
+                              </span>
+                            )}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
+
+            {/* Contextual panel — the column that makes this a web layout rather
+                than a stack. Below xl it drops under the banner at full width
+                instead of being hidden: on a phone it carries the only signup
+                CTA a guest sees above the fold. */}
+            <aside className="space-y-4 xl:w-80">
+              {/* While the session restores, a neutral placeholder — not the
+                  guest signup cards, which a signed-in visitor must never see
+                  flash on reload (owner, 2026-09-25). */}
+              {restoring && (
+                <div aria-hidden="true" className="h-56 animate-pulse rounded-2xl bg-white shadow-card motion-reduce:animate-none" />
+              )}
+              {!restoring && !user && (
+                <>
+                  <div className="rounded-2xl bg-white p-6 shadow-card">
+                    <p className="text-base font-extrabold">Start sourcing</p>
+                    <p className="mt-1.5 text-sm text-ink-600">
+                      Free buyer account to save suppliers, send enquiries and chat.
+                    </p>
+                    <Link
+                      to="/signup/buyer"
+                      className="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700"
+                    >
+                      Create free account
+                    </Link>
+                    <Link
+                      to="/signin"
+                      className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-ink-900 hover:bg-surface-subtle"
+                    >
+                      Sign in
+                    </Link>
+                  </div>
+
+                  {/* Its own card now, as the mockup draws it — the exporter
+                      pitch was buried under a rule inside the buyer card. */}
+                  <div className="rounded-2xl bg-white p-6 shadow-card">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-ink-400">
+                      For exporters
+                    </p>
+                    <p className="mt-1 text-base font-extrabold">Sell to global buyers</p>
+                    <p className="mt-1.5 text-sm text-ink-600">
+                      Your public profile goes live the day you register. Get verified to lift
+                      the listing limit.
+                    </p>
+                    <Link
+                      to="/signup/exporter"
+                      className="mt-4 inline-block text-sm font-bold text-primary-700 hover:underline"
+                    >
+                      Register as an exporter →
+                    </Link>
+                  </div>
+                </>
+              )}
+
+              {isBuyer && (
+                <div className="rounded-2xl bg-white p-6 shadow-card">
+                  <p className="text-sm font-extrabold">Welcome back{user?.name ? `, ${user.name}` : ''}</p>
+                  {/* 🔴 Verification lives HERE, not above the catalogue: a buyer
+                      is fully active from signup and verification gates nothing
+                      for them (D3). Its own status detail stays on
+                      /buyer/verification — a self-scoped read, not a public one. */}
+                  <div className="mt-4 rounded-xl bg-warning-50 p-3">
+                    <p className="flex items-center gap-1.5 text-xs font-bold text-ink-900">
+                      <AlertIcon className="h-4 w-4 text-warning" aria-hidden="true" />
+                      Company verification
+                    </p>
+                    <p className="mt-1 text-xs text-ink-600">
+                      Nothing is on hold — you can browse, enquire and chat as normal.
+                    </p>
+                    <Link to="/buyer/verification" className="mt-2 inline-block text-xs font-bold text-primary-700 hover:underline">
+                      View status ›
+                    </Link>
+                  </div>
+                  <hr className="my-5 border-surface-border" />
+                  <Link to="/buyer/chat" className="block py-1.5 text-sm font-semibold hover:text-primary-700">
+                    Messages
+                  </Link>
+                  <Link to="/saved" className="block py-1.5 text-sm font-semibold hover:text-primary-700">
+                    Saved items
+                  </Link>
+                </div>
+              )}
+
+              {isExporter && (
+                <div className="rounded-2xl bg-white p-6 shadow-card">
+                  <p className="text-sm font-extrabold">Your listings</p>
+                  <p className="mt-1.5 text-sm text-ink-600">
+                    Manage your catalogue and reply to buyer enquiries.
+                  </p>
+                  <Link
+                    to="/exporter/products"
+                    className="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700"
+                  >
+                    Manage listings
+                  </Link>
+                  <Link
+                    to="/exporter/chat"
+                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-primary-700 hover:bg-primary-50"
+                  >
+                    Enquiries &amp; chat
+                  </Link>
+                </div>
+              )}
+            </aside>
           </div>
         </section>
 
