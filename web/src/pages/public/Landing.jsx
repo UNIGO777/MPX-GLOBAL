@@ -1,20 +1,24 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { useCanonical } from '../../lib/seo.js';
 import { BannerStrip, SupplierCard, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
-import { NoImagePanel } from '../../components/catalogue/NoImagePanel.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
+import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
+import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 
 import {
   AlertIcon,
+  BadgeCheckIcon,
   BoxIcon,
   ChatIcon,
+  CreditCardIcon,
   GridIcon,
+  QuoteIcon,
   SearchIcon,
   ShieldIcon,
   SparkleIcon,
@@ -109,14 +113,12 @@ const FAQS = [
   },
 ];
 
-const FEED_PAGE_SIZE = 10;
 /** Placeholder rows drawn while the rail loads — the rail itself shows ALL
  *  top-level categories (owner, 2026-09-23) and scrolls inside the hero's
  *  height, so this number only has to fill the visible area, not match 40. */
 const RAIL_SKELETON_ROWS = 9;
 /** Category tiles inside the hero panel — the mockup's 3×2 grid. */
 const HERO_TILES = 6;
-const GRID_COUNT = 12;
 
 /* --------------------------------- pieces --------------------------------- */
 
@@ -140,18 +142,6 @@ function BlockHead({ title, sub, to, cta = 'See all' }) {
   );
 }
 
-/** Fixed-ratio placeholder used while a grid loads — a skeleton, never a spinner. */
-function CardSkeleton({ ratio = 'aspect-square' }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-surface-border bg-white">
-      <div className={`${ratio} w-full animate-pulse bg-ink-100`} />
-      <div className="space-y-2 p-3.5">
-        <div className="h-3 w-4/5 animate-pulse rounded bg-ink-100" />
-        <div className="h-3 w-1/2 animate-pulse rounded bg-ink-100" />
-      </div>
-    </div>
-  );
-}
 
 /* ---------------------------------- page ---------------------------------- */
 
@@ -163,30 +153,22 @@ export function Landing() {
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
-  // "Load more" rather than infinite scroll — see the file note. `useInfiniteQuery`
-  // accumulates pages without the manual de-duplication the app screen needs.
-  const feed = useInfiniteQuery({
-    queryKey: catalogueKeys.search({ type: 'product', sort: 'newest', pageSize: FEED_PAGE_SIZE }),
-    queryFn: ({ pageParam }) =>
-      catalogueApi.search({ type: 'product', sort: 'newest', page: pageParam, pageSize: FEED_PAGE_SIZE }),
-    initialPageParam: 1,
-    getNextPageParam: (last, pages) => {
-      const loaded = pages.reduce((n, p) => n + (p.products?.length ?? 0), 0);
-      return loaded < (last?.total ?? 0) ? pages.length + 1 : undefined;
-    },
-  });
-
   const topCategories = categories.data ?? [];
   const featured = useLandingFeatured();
   // Curated categories lead the grid; the usual ones top it up to a full grid,
   // so nothing curated means exactly the default grid (owner, 2026-09-25).
   const featuredCategoryIds = new Set(featured.categories.map((c) => c.id));
-  const gridCategories = [
+  /**
+   * Curated categories lead, the rest follow — and NOTHING is sliced off.
+   * The old grid cut this to twelve because twelve was all it could show; a
+   * horizontal rail has no such limit, and a buyer looking for a trade we list
+   * should not have to click "See all" to discover we list it. Images are
+   * lazy-loaded, so the ones off-screen cost nothing until they scroll in.
+   */
+  const railCategories = [
     ...featured.categories,
     ...topCategories.filter((c) => !featuredCategoryIds.has(c.id)),
-  ].slice(0, GRID_COUNT);
-  const products = feed.data?.pages.flatMap((p) => p.products ?? []) ?? [];
-  const productTotal = feed.data?.pages[0]?.total ?? 0;
+  ];
 
   const isBuyer = user?.role === 'buyer';
   const isExporter = user?.role === 'exporter';
@@ -380,26 +362,31 @@ export function Landing() {
                 <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 Every tick checked by a person
               </p>
+              {/* The headline is the owner's own line (2026-09-26), replacing
+                  "What are you sourcing from India today?" — a question the
+                  search box above already asks. This one says what the platform
+                  IS, which is what a first-time visitor needs from an h1. */}
               <h1 className="max-w-2xl font-serif text-3xl leading-[1.15] text-white sm:text-4xl lg:text-[2.75rem]">
-                What are you sourcing from India today?
+                Connecting India&apos;s Suppliers to the World
               </h1>
               {/* 🔴 NOT the mockup's "every supplier … reviewed by our team" —
-                  see this section's note. The claim belongs to the tick. */}
+                  see this section's note. The claim belongs to the tick.
+                  ⚠️ "Pick a category or" was dropped with the Browse button
+                  below: copy that names a control which is no longer there sends
+                  people hunting for it. */}
               <p className="mt-4 max-w-xl text-sm text-ink-200 sm:text-base">
-                Pick a category or describe what you need. Where you see the tick, a person on
+                Describe what you need and we will find it. Where you see the tick, a person on
                 our team has checked that company&apos;s documents.
               </p>
 
+              {/* 🔴 "Browse all categories" removed 2026-09-26 (owner). Browsing
+                  is not lost — the sub-nav's "All categories" chip sits directly
+                  above this banner and the category rail is one section below —
+                  so the hero keeps ONE action instead of two competing ones. */}
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  to="/categories"
-                  className="rounded-xl bg-primary-600 px-5 py-3 text-sm font-bold text-white hover:bg-primary-700 sm:px-6"
-                >
-                  Browse all categories
-                </Link>
-                <Link
                   to="/ai-search"
-                  className="flex items-center gap-2 rounded-xl border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10 sm:px-6"
+                  className="flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-3 text-sm font-bold text-white hover:bg-primary-700 sm:px-6"
                 >
                   <SparkleIcon className="h-4 w-4" aria-hidden="true" />
                   Describe what you need
@@ -568,29 +555,75 @@ export function Landing() {
           </section>
         )}
 
-        {/* ═════════ VALUE STRIP — factual, no counts ═════════
-            Carries `id="platform"`: the shared header links there, and this strip
-            plus the AI band below are what replaced the old platform-tabs
-            section. An anchor with nothing to land on is a dead link
-            (`web-ui-notes.md`), so the id moves with the content. */}
-        <section id="platform" className="border-y border-surface-border bg-white">
-          <ul className="grid w-full grid-cols-1 gap-6 px-4 py-6 sm:grid-cols-3 sm:px-6 lg:px-10 xl:px-16">
-            {[
-              { Icon: ShieldIcon, title: 'Human-verified exporters', body: 'A person reads the documents. Never an automated stamp.' },
-              { Icon: SparkleIcon, title: "Describe it, don't guess keywords", body: 'Plain language in, matching suppliers out.' },
-              { Icon: ChatIcon, title: 'Talk to the supplier directly', body: 'Structured enquiry, then live chat. No email chains.' },
-            ].map(({ Icon, title, body }) => (
-              <li key={title} className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700">
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                </span>
-                <span>
-                  <span className="block text-sm font-bold">{title}</span>
-                  <span className="block text-sm text-ink-600">{body}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+        {/* ═════════ WHAT MAKES MPX GLOBAL DIFFERENT ═════════
+            Replaced the three-item value strip on 2026-09-26 (owner).
+
+            🔴 It KEEPS `id="platform"`. The shared header links here, and an
+            anchor with nothing to land on is a dead link (`web-ui-notes.md`) —
+            so the id moves with the content, never gets dropped with it.
+
+            🔴 Every line is something the platform ACTUALLY does today. No
+            counts, no "trusted by", no promises about volume — this page has a
+            standing rule against claims it cannot back (it is why the design's
+            six invented testimonials were never built). If a row here stops
+            being true, delete the row. */}
+        <section id="platform" className="border-y border-surface-border bg-white py-12 sm:py-16">
+          <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16">
+            <h2 className="text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
+              What makes MPX Global different
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-ink-600 sm:text-base">
+              Six things that are true of this platform today — not a pitch about what it might
+              become.
+            </p>
+
+            <ul className="mt-8 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                {
+                  Icon: ShieldIcon,
+                  title: 'A person reads the documents',
+                  body: 'Verification is done by our team, not an automated stamp. The tick means someone checked that company\u2019s papers.',
+                },
+                {
+                  Icon: BadgeCheckIcon,
+                  title: 'Sellers are visible from day one',
+                  body: 'An exporter\u2019s public profile goes live the moment they register. Verification adds the tick \u2014 it is not a gate to being found.',
+                },
+                {
+                  Icon: SparkleIcon,
+                  title: 'Describe it, don\u2019t guess keywords',
+                  body: 'Write what you need in plain language and get matching suppliers back. No hunting for the exact term a seller happened to type.',
+                },
+                {
+                  Icon: ChatIcon,
+                  title: 'Talk to the supplier directly',
+                  body: 'A structured enquiry, then live chat with files. No email chains, and the whole conversation stays in one place.',
+                },
+                {
+                  Icon: QuoteIcon,
+                  title: 'Real quotations, not chat messages',
+                  body: 'Sellers send a priced PDF into the chat. Either side can counter-offer, and both confirm the final figure with a code sent to their email.',
+                },
+                {
+                  /* 🔴 True TODAY. Escrow is a Phase-2 idea; if it ever ships,
+                     this row has to change with it or it becomes a lie. */
+                  Icon: CreditCardIcon,
+                  title: 'You pay the supplier directly',
+                  body: 'MPX Global does not hold or move your money. The quotation carries the seller\u2019s own bank details for you to pay against.',
+                },
+              ].map(({ Icon, title, body }) => (
+                <li key={title} className="flex items-start gap-3.5">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-bold text-ink-900">{title}</span>
+                    <span className="mt-1 block text-sm leading-relaxed text-ink-600">{body}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
 
         {/* `FeaturedStrips` was removed from here on 2026-08-23 (test curation
@@ -601,109 +634,115 @@ export function Landing() {
             Each falls back to the page's default when nothing is curated. */}
 
         {/* ═════════ CATEGORIES ═════════ */}
+        {/* Why India — the question a foreign buyer asks straight after "why
+            this platform". Every agreement named in it is real; see the
+            component, which also says plainly that there is no India–US FTA. */}
+        <TradeAgreements />
+
         <section id="categories" className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
           <BlockHead
             title="Browse by category"
             sub="Goods and services, across every trade we list."
             to="/categories"
           />
-          {/* The photo sits INSET inside the card with its own radius rather than
-              running to the card's edge. Two reasons: nested rounding reads as a
-              card rather than as a cropped photo with a caption stuck under it,
-              and the white margin stops twelve unrelated photographs from
-              butting into one another across the row.
-              The sub-count is REAL (`subs` from the live tree, 6–10 per top
-              category) — the card needed a second line, and an invented one is
-              exactly what this page refuses to carry. */}
-          {/* 🔴 Capped at SIX (owner, 2026-09-24). It ran to eight at 2xl, which
-              on a wide screen split 12 categories into 8 + an orphaned 4 and
-              shrank every tile to a thumbnail. Six gives two clean rows. */}
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
-            {categories.isPending
-              ? Array.from({ length: GRID_COUNT }).map((_, i) => <li key={i}><CardSkeleton ratio="aspect-[4/3]" /></li>)
-              : gridCategories.map((c) => {
-                  const subs = c.subs?.length ?? 0;
-                  return (
-                    <li key={c.id}>
-                      <Link
-                        to={`/category/${c.slug ?? c.id}`}
-                        className="group flex h-full flex-col rounded-2xl bg-white p-2.5 shadow-card ring-1 ring-surface-border/60 transition duration-200 hover:-translate-y-0.5 hover:shadow-lift hover:ring-primary-200"
-                      >
-                        <span className="block overflow-hidden rounded-xl bg-ink-100">
-                          {c.image ? (
-                            <img
-                              src={c.image}
-                              alt=""
-                              loading="lazy"
-                              width={400}
-                              height={300}
-                              className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105"
-                            />
-                          ) : (
-                            <NoImagePanel label={c.name} monogram ratio="aspect-[4/3]" />
-                          )}
-                        </span>
-                        <span className="flex flex-1 flex-col px-1.5 pb-1 pt-3">
-                          <span className="line-clamp-2 text-sm font-bold leading-snug text-ink-900 group-hover:text-primary-700">
-                            {c.name}
-                          </span>
-                          {subs > 0 && (
-                            <span className="mt-1 text-xs text-ink-600">
-                              {subs} {subs === 1 ? 'subcategory' : 'subcategories'}
-                            </span>
-                          )}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-          </ul>
+          {/* 🔴 CIRCLES IN A SCROLLING RAIL since 2026-09-26 (owner), replacing a
+              12-card grid. Two things the grid could not do: it showed twelve of
+              forty categories and stopped, and on a wide screen it spent a third
+              of the fold on photographs of things nobody had asked for. The rail
+              carries EVERY top-level category and takes one row.
+
+              The sub-count is REAL (`subs` from the live tree) — an invented
+              second line is exactly what this page refuses to carry. */}
+          <CategoryCircles categories={railCategories} loading={categories.isPending} />
         </section>
 
-        {/* ═════════ GOODS / SERVICES — equal weight ═════════
+        {/* ═════════ GOODS / SERVICES — the fork in the road ═════════
             50/50 on purpose: the live catalogue is currently MOSTLY services, so
             a goods-led layout would misrepresent the platform to its first buyers.
 
-            🔴 MATCHED PAIR, rebuilt 2026-09-24 (owner: "not matching and awkward").
-            They were a red-tinted card beside a GREEN one — two hues with no
-            system behind them, and the green was the bigger problem: `success` is
-            this product's verified/approved colour (see its token comment), so
-            spending it on decoration thins the one signal buyers are meant to
-            trust. Both cards are now the same white surface on the landing's warm
-            ground; they differ by ICON and COPY, which is what actually
-            distinguishes them. Brand colour survives on the icon and the link,
-            where it means "this is the action". */}
-        <section className="grid w-full grid-cols-1 gap-4 px-4 pb-10 sm:gap-5 sm:px-6 sm:pb-12 lg:px-10 xl:px-16 lg:grid-cols-2">
-          <Link
-            to="/categories?type=goods"
-            className="group flex items-center gap-6 rounded-2xl border border-surface-border bg-white p-6 transition hover:border-primary-600 hover:shadow-lift sm:p-8"
-          >
-            <span className="min-w-0 flex-1">
-              <span className="block text-lg font-extrabold tracking-tight text-ink-900 sm:text-xl">Physical goods</span>
-              <span className="mt-1.5 block text-sm text-ink-600">
-                Fabric, denim, leather, chemicals, machinery — with MOQ and per-unit pricing.
-              </span>
-              <span className="mt-4 inline-block text-sm font-bold text-primary-700 group-hover:underline">Browse goods ›</span>
-            </span>
-            <span className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700 sm:flex">
-              <BoxIcon className="h-9 w-9" aria-hidden="true" />
-            </span>
-          </Link>
-          <Link
-            to="/categories?type=service"
-            className="group flex items-center gap-6 rounded-2xl border border-surface-border bg-white p-6 transition hover:border-primary-600 hover:shadow-lift sm:p-8"
-          >
-            <span className="min-w-0 flex-1">
-              <span className="block text-lg font-extrabold tracking-tight text-ink-900 sm:text-xl">Business services</span>
-              <span className="mt-1.5 block text-sm text-ink-600">
-                Software, AI/ML, cloud, marketing, QC and inspection — scoped per engagement.
-              </span>
-              <span className="mt-4 inline-block text-sm font-bold text-primary-700 group-hover:underline">Browse services ›</span>
-            </span>
-            <span className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700 sm:flex">
-              <GridIcon className="h-9 w-9" aria-hidden="true" />
-            </span>
-          </Link>
+            🔴 MATCHED PAIR — do not give these two cards different colours.
+            Rebuilt 2026-09-24 (owner: "not matching and awkward") from a
+            red-tinted card beside a GREEN one: two hues with no system behind
+            them, and the green was the bigger problem, because `success` is this
+            product's verified/approved colour and spending it on decoration
+            thins the one signal buyers are meant to trust. They differ by ICON
+            and COPY, which is what actually distinguishes them.
+
+            🔴 MADE TO STAND OUT 2026-09-26 (owner: "its very very imp", then
+            "naya rang laga kar dekho jo match bhi kare or stand out bhi kare").
+            It was two flat white cards with a text link and NO HEADING, sitting
+            after the category rail — so the page's single most important choice,
+            goods or services, read as two leftover tiles.
+
+            🔴 BLACK cards with a RED call to action (owner, 2026-09-26). Navy
+            was tried first — it is the logo's own navy — but red on navy
+            measures **2.00:1**, a dark blob on dark, the same failure that
+            forced `danger` to move in September when it sat at 1.19:1 against
+            the brand. On `ink-900` the same red measures **3.54:1**, which
+            clears the 3:1 that a non-text component needs, and the button's own
+            white-on-red is 5.73:1. Measured, not eyeballed.
+
+            Black is already this page's second voice — the header's "Get
+            Started" is `ink-900` — so two black cards read as the same product,
+            not as a new idea. And it keeps RED where red belongs: the action.
+
+            🔴 Do NOT give the two cards different colours. The earlier attempt
+            at making this pair distinctive was a red card beside a GREEN one
+            (owner: "not matching and awkward"), and green is worse than merely
+            mismatched: `success` is this product's verified/approved colour, and
+            spending it on decoration thins the one signal buyers must trust. */}
+        <section className="w-full bg-surface-canvas px-4 py-12 sm:px-6 sm:py-14 lg:px-10 xl:px-16">
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
+            Goods or services — both are here
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-ink-600 sm:text-base">
+            Most sourcing platforms carry one or the other. Pick the side you are buying from.
+          </p>
+
+          <div className="mt-7 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
+            {[
+              {
+                to: '/categories?type=goods',
+                Icon: BoxIcon,
+                title: 'Physical goods',
+                body: 'Fabric, denim, leather, chemicals, machinery — with MOQ and per-unit pricing.',
+                cta: 'Browse goods',
+              },
+              {
+                to: '/categories?type=service',
+                Icon: GridIcon,
+                title: 'Business services',
+                body: 'Software, AI/ML, cloud, marketing, QC and inspection — scoped per engagement.',
+                cta: 'Browse services',
+              },
+            ].map(({ to, Icon, title, body, cta }) => (
+              <Link
+                key={to}
+                to={to}
+                className="group flex flex-col rounded-2xl bg-ink-900 p-6 shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-lift sm:p-8"
+              >
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15">
+                  <Icon className="h-7 w-7" aria-hidden="true" />
+                </span>
+                <span className="mt-5 block text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                  {title}
+                </span>
+                {/* `ink-300` on black is 11.95:1 — body copy on a dark card has
+                    to stay readable, not fade into it. */}
+                <span className="mt-2 block flex-1 text-sm leading-relaxed text-ink-300 sm:text-[15px]">
+                  {body}
+                </span>
+                {/* A button, not a text link: this is the action the section
+                    exists for. It is a <span> because the whole card is already
+                    the <Link> — a link inside a link is invalid and breaks
+                    keyboard order. */}
+                <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-primary-600/25 transition group-hover:bg-primary-700">
+                  {cta}
+                  <span aria-hidden="true">›</span>
+                </span>
+              </Link>
+            ))}
+          </div>
         </section>
 
         {/* ═════════ AI BAND — the page's one coloured band ═════════ */}
@@ -741,58 +780,25 @@ export function Landing() {
           </section>
         )}
 
-        {/* ═════════ RECENTLY LISTED ═════════ */}
-        <section className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
-          <BlockHead
-            title="Recently listed"
-            sub="The newest products and services on the platform."
-            to="/search"
-          />
+        {/* ═════════ RECENTLY LISTED — REMOVED 2026-09-26 (owner: "ye wala
+            section abhi ke liye hata do") ═════════
 
-          {feed.isError ? (
-            <p className="rounded-2xl border border-surface-border bg-white p-8 text-center text-sm text-ink-600">
-              Listings couldn&apos;t be loaded just now.{' '}
-              <button type="button" onClick={() => feed.refetch()} className="font-bold text-primary-700 hover:underline">
-                Try again
-              </button>
-            </p>
-          ) : (
-            <>
-              {/* Capped at FIVE (owner, 2026-09-24) — the product card now carries a
-                  trade strip and an enquiry button, so a sixth column squeezed
-                  both past legibility. */}
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-                {feed.isPending
-                  ? Array.from({ length: FEED_PAGE_SIZE }).map((_, i) => <li key={i}><CardSkeleton /></li>)
-                  : products.map((p) => (
-                      // ProductCard renders its own <li> — wrapping it nested one in another.
-                      <ProductCard key={p.id} product={p} to={`/product/${p.slug ?? p.id}`} />
-                    ))}
-              </ul>
+            🔴 TEMPORARY, and the reason matters: the catalogue is still test
+            data, so the newest-first feed was putting "Banna Chips — USD 2,000
+            /kg" and "Lamborghini Mirrors" filed under Office furniture at the
+            front of a public page. A feed of the newest listings is only as good
+            as the listings; with real sellers on it this section earns its place
+            back.
 
-              {/* Load more, not infinite scroll — see the file note. */}
-              {!feed.isPending && products.length > 0 && (
-                <div className="mt-8 flex flex-col items-center gap-2">
-                  {feed.hasNextPage && (
-                    <button
-                      type="button"
-                      onClick={() => feed.fetchNextPage()}
-                      disabled={feed.isFetchingNextPage}
-                      className="rounded-xl border border-surface-border bg-white px-8 py-3 text-sm font-bold text-primary-700 shadow-card hover:bg-primary-50 disabled:opacity-60"
-                    >
-                      {feed.isFetchingNextPage ? 'Loading…' : 'Load more'}
-                    </button>
-                  )}
-                  <p className="text-xs text-ink-400">
-                    {feed.hasNextPage
-                      ? `Showing ${products.length} of ${productTotal}`
-                      : "You've seen everything listed so far"}
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-        </section>
+            Removing the markup alone left the `useInfiniteQuery` still firing a
+            search request on every public landing load, feeding nothing — lint
+            caught it via the orphaned `products` / `productTotal`. The query,
+            `CardSkeleton` and `FEED_PAGE_SIZE` went with it. `ProductCard` stays:
+            the curated "Featured products" strip uses it.
+
+            To restore, bring the block back from git history — it had a working
+            error state, a five-across cap and "Load more" rather than infinite
+            scroll, none of which is worth rewriting from memory. */}
 
         {/* ═════════ HIGHLIGHTED SUPPLIERS — curated only ═════════
             There is deliberately NO default here: the default suppliers section

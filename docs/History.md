@@ -175,6 +175,120 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-26 — Landing hero: new headline, one action instead of two.** Owner supplied the line.
+  - `h1` is now **"Connecting India's Suppliers to the World"**, replacing "What are you sourcing
+    from India today?" — a question the search box directly above already asks. The new line says
+    what the platform IS, which is what a first-time visitor needs from an h1. (It also matches the
+    site's existing meta description, "B2B marketplace connecting Indian exporters with
+    international buyers", so the page and its search snippet now say the same thing.)
+  - **"Browse all categories" removed** (owner). Browsing is not lost: the sub-nav's "All
+    categories" chip sits directly above the banner and the category rail is one section below. The
+    hero now carries ONE action rather than two competing ones, and "Describe what you need" was
+    promoted from an outline button to the filled primary.
+  - ⚠️ The supporting line lost its "Pick a category or" opening in the same edit — copy that names
+    a control which is no longer on screen sends people hunting for it.
+- **2026-09-26 — Public header: the black pill is "Account login" now, and the two actions swapped
+  roles.** Owner: "make this button text Account login".
+  - 🔴 **Renaming the label alone would have been a trap.** That pill pointed at `/signup/buyer` — it
+    was the SIGNUP button, with a separate "Sign In" text link beside it. Relabelled in place, it
+    would have said "login" and opened a registration form. Worse on a phone: the text link is
+    `hidden sm:block`, so the pill is the only visible action there, and an existing buyer would have
+    had no way to reach sign-in from the header at all.
+  - So the two roles swapped, not just the word: pill → **Account login** (`/signin`), text link →
+    **Create account** (`/signup/buyer`), and the burger panel's mobile-only link swapped with them
+    so signup is still reachable on a phone. Every label now matches where it actually goes, at every
+    breakpoint.
+- **2026-09-26 — Goods/Services goes NAVY; "Recently listed" pulled for now.**
+  - **Landed on BLACK cards with a RED call to action** (owner). Navy (#1A2E8F, the logo's own) was
+    tried first and rejected by measurement: red on navy is **2.00:1**, a dark blob on dark — the
+    same failure that forced `danger` to move in September when it sat at 1.19:1 against the brand.
+    On `ink-900` the same red is **3.54:1**, clearing the 3:1 a non-text component needs, and the
+    button's white-on-red is 5.73:1. Body copy is `ink-300` at 11.95:1. All measured, not eyeballed.
+  - Black was already this page's second voice — the header's "Get Started" is `ink-900` — so two
+    black cards read as the same product rather than a new idea, and RED stays where red belongs:
+    the action. The matched-pair rule is restated in the section: the earlier attempt was a red card
+    beside a GREEN one, and green is worse than mismatched, because `success` is the verified colour.
+  - **"Recently listed" removed** (owner: "abhi ke liye hata do"). The catalogue is still test data,
+    so the newest-first feed was putting *"Banna Chips — USD 2,000/kg"* and *"Lamborghini Mirrors"*
+    filed under **Office furniture** at the front of a public page. Temporary: with real sellers the
+    section earns its place back, and git history has the working version.
+  - 🔴 **Removing the markup was not enough, and a comment I wrote saying so was wrong.** The
+    `useInfiniteQuery` kept firing a product search on every public landing load, feeding nothing.
+    Lint caught it through the orphaned `products` / `productTotal`. The query, `CardSkeleton` and
+    `FEED_PAGE_SIZE` went too; `ProductCard` stays because the curated Featured-products strip uses
+    it.
+- **2026-09-26 — Goods / Services made to stand out.** Owner: "make it stand out — its very very
+  imp". It was two flat white cards with a text link, sitting after the category rail with **no
+  heading at all**, so the page's single most important choice read as two leftover tiles.
+  - Now: its own warm band (`surface-canvas`) to lift it off the white section above, a heading that
+    names the decision ("Goods or services — both are here"), bigger cards with the icon leading,
+    and a **filled button** instead of a text link — this is the action the section exists for, and
+    red fill is this product's action token.
+  - 🔴 **No new colour, deliberately.** This pair was a red card beside a GREEN one until
+    2026-09-24, when the owner called it "not matching and awkward" — and the green was the worse
+    half, because `success` is the verified/approved colour and spending it on decoration thins the
+    one signal buyers are meant to trust. The two cards stay identical and differ by ICON and COPY.
+    The rule is restated at the top of the section so the next person does not re-run that mistake.
+  - The CTA is a `<span>`, not a `<Link>`: the whole card is already the link, and a link inside a
+    link is invalid and breaks keyboard order.
+- **2026-09-26 — "Browse by category" is now circles in a horizontal rail.** Owner asked for circle
+  designs with inline scrolling, replacing the twelve-card grid.
+  - **It carries EVERY top-level category, not twelve.** The grid sliced to `GRID_COUNT = 12` because
+    twelve was all it could show; a rail has no such limit, and a buyer looking for a trade we list
+    should not have to click "See all" to find out we list it. Images stay lazy-loaded, so the ones
+    off-screen cost nothing until they scroll in.
+  - 🔴 **The arrows report the REAL scroll position** — they disable at each end and are not rendered
+    at all when there is nothing to scroll, read from the element's own `scrollLeft` rather than a
+    guess about how many items fit. A live-looking arrow that cannot move is what `web-ui-notes.md`
+    forbids. A `ResizeObserver` re-measures, because a window resize and late-arriving images both
+    change the answer.
+  - The rail scrolls **inside its own container**, never the page (`web-design.md`: no horizontal
+    body scroll), and bleeds to the page gutters with negative margins so a circle can sit half-off
+    the edge — which is what tells a person there is more to the right — while the first still lines
+    up with the heading.
+  - Keyboard needs nothing extra: each circle is a link, so tabbing scrolls the rail natively. The
+    arrows exist for pointer users on desktop, who otherwise cannot scroll horizontally without a
+    trackpad; they are hidden below `lg`, where a swipe does the job.
+  - Removed with the grid: `GRID_COUNT` and the `NoImagePanel` import in `Landing.jsx`, both now dead.
+  - ⚠️ **The full-bleed version lasted one round.** Negative margins pulled the rail to the viewport
+    edge so a circle could sit half-cut as a "there is more" hint — but once scrolled, circles ran
+    flush into both screen edges and the row lost the page's gutter entirely. Reverted the same day
+    (owner: "make some space right and left"); the rail now sits inside the section's padding and the
+    arrows have somewhere to live. Items still clip at the container edge, which reads as
+    continuation without touching the screen.
+- **2026-09-26 — Landing: the three-item value strip became "What makes MPX Global different".**
+  Owner pointed at the strip and asked for the section in its place.
+  - 🔴 **It keeps `id="platform"`.** The shared header has a "Platform" link pointing at that
+    anchor; dropping the id with the old markup would have left a header link that scrolls nowhere
+    (`web-ui-notes.md`). The id moves with the content, never with the markup.
+  - Six rows, and **every one is something the platform does today**: a person reads the KYC
+    documents · a seller's profile is public from registration and the tick is not a gate · plain-
+    language search · structured enquiry then live chat · real PDF quotations with counter-offers
+    and two-sided code-confirmed acceptance · and you pay the supplier directly because MPX Global
+    does not hold money. No counts, no "trusted by", nothing about volume — the same rule that kept
+    the design's six invented testimonials off this page.
+  - ⚠️ Noted at the last row: "you pay the supplier directly" is true **today**. Escrow is a Phase-2
+    idea; if it ever ships, that row has to change with it or it becomes a lie.
+- **2026-09-26 — Landing: "India has trade agreements with much of the world", with the India–US
+  photograph.** Owner supplied the image and asked for India's FTAs with big countries.
+  - 🔴 **The list is real and the US is NOT on it.** India and the United States have **no free
+    trade agreement** — they have talks. The photograph is of an India–US meeting, so placing it
+    above a list headed "free trade agreements" would imply one exists. The section names the US
+    explicitly as a very large trading partner **with no FTA**, in its own line, rather than letting
+    the photo imply otherwise. A buyer who assumes a tariff preference finds out at customs; this is
+    the same reasoning that kept invented testimonials off this page, and it matters more here
+    because someone can act on it.
+  - Listed: UAE (CEPA), Australia (ECTA), UK (FTA, signed 2025), Japan, South Korea, ASEAN, EFTA
+    (TEPA — Switzerland, Norway, Iceland, Liechtenstein). The copy says duty relief depends on the
+    product and its certificate of origin, because it does.
+  - ⚠️ **Two things the owner needs to settle before this goes live:** (1) the photograph looks like
+    agency press work — using it commercially needs a licence; (2) in India, a public official's
+    image in commercial promotion carries personality-rights exposure. The caption carries an
+    explicit "not affiliated with, or endorsed by, any government or public official" line, which
+    reduces the implication but is not a licence.
+  - The file was renamed `Modi&trump.webp` → `india-trade-diplomacy.webp`: an `&` in a URL is a
+    query separator, so the original path would have 404'd in some browsers.
+  - ⚠️ These dates go stale by themselves. Noted at the top of the component.
 - **2026-09-26 — `npm run build:android`: the release build now PROVES what it shipped.** Owner asked
   for the icon trap to be fixed properly rather than remembered. One command does prebuild → gradle →
   and then verifies the ARTEFACT, not the log:
