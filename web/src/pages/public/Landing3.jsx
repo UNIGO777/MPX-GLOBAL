@@ -1,20 +1,20 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { useCanonical } from '../../lib/seo.js';
+import { useNoIndex } from '../../lib/seo.js';
 import { BannerStrip, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
-import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
-import { HeroBackdrop } from '../../components/landing/HeroBackdrop.jsx';
-import { FaqAccordion } from '../../components/landing/FaqAccordion.jsx';
-import { AiBandVideo } from '../../components/landing/AiBandVideo.jsx';
-import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
-import { PromoPanels } from '../../components/landing/PromoPanels.jsx';
-import { SuccessShowcase } from '../../components/landing/SuccessShowcase.jsx';
-import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
+import { CategoryCircles } from '../../components/landing3/CategoryCircles.jsx';
+import { CircuitHero } from '../../components/landing3/CircuitHero.jsx';
+import { FaqAccordion } from '../../components/landing3/FaqAccordion.jsx';
+import { AiBandVideo } from '../../components/landing3/AiBandVideo.jsx';
+import { PlatformCards } from '../../components/landing3/PlatformCards.jsx';
+import { PromoPanels } from '../../components/landing3/PromoPanels.jsx';
+import { SuccessShowcase } from '../../components/landing3/SuccessShowcase.jsx';
+import { TradeAgreements } from '../../components/landing3/TradeAgreements.jsx';
 
 import {
   ArrowRightIcon,
@@ -22,12 +22,43 @@ import {
   ChatIcon,
   EnquiryIcon,
   GridIcon,
-  QuoteIcon,
+  HandshakeIcon,
   SearchIcon,
   SparkleIcon,
 } from '../../components/ui/icons.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
+
+/**
+ * ⚠️ SNAPSHOT — a frozen copy of the landing page as it stood on 2026-09-28,
+ * RE-TAKEN at the owner's request after the supplier showcase changed. Served at
+ * `/landing-page-3`.
+ *
+ * 🔴 **It is `noindex`.** It is the same page as `/`; two indexable copies of one
+ * page is duplicate content. It deliberately does NOT call `useCanonical('/')` —
+ * pointing a copy's canonical at the original invites a crawler to treat them as
+ * one page, which is the opposite of freezing it.
+ *
+ * 🔴 **It carries its OWN copies of the landing-only components**, in
+ * `src/components/landing3/`. That is the point: editing `components/landing/`
+ * from here on changes `/` and leaves this alone. Editing anything in
+ * `landing3/` means it has stopped being a snapshot.
+ *
+ * ⚠️ **Re-taking it is a REGENERATION, not a merge.** Both this file and every
+ * file in `components/landing3/` are overwritten from the live ones — so any
+ * edit made directly to the snapshot is lost. That is intended; the snapshot has
+ * no changes of its own to keep.
+ *
+ * ⚠️ What it does NOT freeze, and cannot: the shared chrome (`PublicHeader`,
+ * `PublicFooter`), the shared catalogue cards, the global CSS in `index.css`
+ * (the circuit-pulse and shine keyframes live there), the Tailwind theme, and
+ * anything it fetches from the API. Those are app-wide; a change to them shows
+ * up here too.
+ *
+ * 🔴 **Temporary.** Delete this file, `components/landing3/` and the
+ * `/landing-page-3` route together once the new landing is settled — alongside
+ * `/landing-2`, the same arrangement from 2026-09-26.
+ */
 
 /**
  * Public landing page (`/`) — SEO surface and the platform's front door.
@@ -111,18 +142,6 @@ const FAQS = [
     a: 'You type what you need in plain language; the platform extracts what matters (category, specs, price range) and matches it against the catalogue. If the AI step is ever unavailable, you still get fast keyword results.',
   },
   {
-    /* True today: the quotation module is built (priced PDF into the chat,
-       counter-offers, both sides confirm with an emailed code). */
-    q: 'How do quotations work?',
-    a: 'A seller sends a priced quotation as a PDF inside the chat. Either side can counter-offer, and both confirm the final figure with a code sent to their email — so the agreed price is on record for both of you.',
-  },
-  {
-    /* 🔴 Must stay true: MPX Global holds no money (Phase 1). Do not turn this
-       into a payment-protection promise — see PlatformCards' Payments note. */
-    q: 'Does MPX Global handle payments?',
-    a: 'No. You pay the supplier directly, against the bank details on their quotation. MPX Global does not hold or move money between buyers and sellers.',
-  },
-  {
     q: 'Is there a mobile app?',
     a: 'A mobile app for both buyers and sellers is part of the platform, sharing the same backend as the web — catalogue, enquiries and chat stay in sync across devices.',
   },
@@ -140,12 +159,10 @@ const FAQS = [
  * that these exact goods are listed; clicking one runs the search and the page
  * reports honestly what it finds, including nothing.
  */
-// One realistic buyer request per industry (agri · textiles · industrial) —
-// sentence case, short enough to read at a glance (owner, 2026-09-27).
 const HERO_EXAMPLES = [
-  'Organic turmeric powder, 5 tonnes to Dubai',
-  '120 GSM cotton poplin for shirts',
-  'ISO-certified stainless steel fasteners',
+  '500 kg organic turmeric powder',
+  'cotton fabric, 120 GSM, shipped to Rotterdam',
+  'stainless steel fasteners, ISO 898',
 ];
 
 /** Section heading + optional "see all" — the one definition, so headings can't drift. */
@@ -171,9 +188,10 @@ function BlockHead({ title, sub, to, cta = 'See all' }) {
 
 /* ---------------------------------- page ---------------------------------- */
 
-export function Landing() {
+export function Landing3() {
   const navigate = useNavigate();
-  useCanonical('/');
+  const [query, setQuery] = useState('');
+  useNoIndex();
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
@@ -194,11 +212,17 @@ export function Landing() {
     ...topCategories.filter((c) => !featuredCategoryIds.has(c.id)),
   ];
 
-  /* The hero's AI field. Its own state, NOT the header search's: the two boxes
+  /* The hero's AI field. Its own state, NOT the header's `query`: the two boxes
      are visible at the same time, and mirroring what you type from one into the
      other reads as a bug. They also go to different places — the header does a
      catalogue search, the hero asks the AI. */
   const [heroQuery, setHeroQuery] = useState('');
+
+  /* 🔴 The backdrop measures these two boxes at runtime and builds its geometry
+     from them, so the pulses converge on the field at EVERY viewport instead of
+     only at the one the numbers were once read off. See CircuitHero. */
+  const heroFieldRef = useRef(null);
+  const heroCopyRef = useRef(null);
 
   const askAi = (text) => {
     const q = text.trim();
@@ -219,26 +243,122 @@ export function Landing() {
      cards nor the platform. */
   const supplierStrap = 'Companies whose documents a person on our team has checked.';
 
+  const onSearch = (e) => {
+    e.preventDefault();
+    const q = query.trim();
+    navigate(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
+  };
+
+  /* The masthead search, handed to the shared header's existing centre slot.
+     It is a real input: typing and submitting lands on /search?q=… (owner,
+     2026-08-16) — the same behaviour the previous hero search shipped with. */
+  const headerSearch = (
+    <form
+      role="search"
+      onSubmit={onSearch}
+      className="flex h-11 w-full min-w-0 items-center overflow-hidden rounded-xl border-2 border-primary-600 bg-white focus-within:ring-2 focus-within:ring-primary-600/20"
+    >
+      <label className="sr-only" htmlFor="landing-q">
+        Search products, services or suppliers
+      </label>
+      <SearchIcon className="ml-3 h-4 w-4 shrink-0 text-ink-400" aria-hidden="true" />
+      <input
+        id="landing-q"
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="cotton fabric, 120 GSM…"
+        className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-ink-400"
+      />
+      <Link
+        to="/ai-search"
+        className="mr-1 hidden shrink-0 items-center gap-1.5 rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-700 hover:bg-primary-100 xl:flex"
+      >
+        <SparkleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+        Ask AI instead
+      </Link>
+      <button
+        type="submit"
+        className="h-full shrink-0 bg-primary-600 px-5 text-sm font-bold text-white hover:bg-primary-700"
+      >
+        Search
+      </button>
+    </form>
+  );
+
   return (
     <div className="bg-white text-ink-900">
-      <PublicHeader />
+      <PublicHeader centerSlot={headerSearch} />
 
-      {/* The second "browse" row that sat here was folded into the shared
-          header on 2026-09-27 (owner: premium navbar redesign) — see
-          `PublicHeader`. The masthead search moved there too, as a compact
-          field; the hero keeps the big one. */}
+      {/* Browse bar — the marketplace's own nav row, under the shared header.
+          Scrolls horizontally rather than wrapping on a narrow phone.
+
+          🔴 HIDDEN BELOW `sm` (owner, 2026-09-27: "remove this header in mobile
+          version"). On a phone it was a scrolling strip with most of its items
+          off-screen, and it cost ~46px of the fold the hero had just been cut to
+          fit inside. Kept from `sm` up, where the row has room to be read.
+
+          ⚠️ What that costs on a phone, checked link by link before hiding it:
+            · "All categories" and "How it works" — still in the header's own
+              hamburger menu (`PublicHeader`'s `NAV`), so nothing is lost;
+            · "Goods" / "Services" — these point at `/categories?type=…`, and
+              `Categories.jsx` never reads that param, so they already landed on
+              the same page as "All categories". Nothing is lost here either, but
+              the dead param is a pre-existing bug worth fixing separately;
+            · "AI Search" — the hero's own field and its example chips go to
+              `/ai-search`, so it is still one tap away;
+            · 🔴 "Verified exporters" (`/search?type=supplier`) is the ONE real
+              loss. Supplier mode has no other entry point since the owner had
+              the Products|Suppliers toggle removed from `/search`, so on a phone
+              that mode is now unreachable from this page. Raised with the owner.
+          🆕 2026-09-23 — rebuilt to the owner's hero mockup. "Services" and
+          "Verified exporters" are back (they were pulled on 2026-08-23), and
+          "How it works" joins them; every one is a real destination. */}
+      <div className="hidden border-b border-surface-border bg-white sm:block">
+        <nav
+          aria-label="Browse"
+          className="flex w-full items-center gap-1 overflow-x-auto px-4 py-2.5 text-sm sm:px-6 lg:px-10 xl:px-16"
+        >
+          <Link
+            to="/categories"
+            className="flex shrink-0 items-center gap-2 rounded-xl bg-ink-900 px-4 py-2 font-bold text-white hover:bg-ink-800"
+          >
+            <GridIcon className="h-4 w-4" aria-hidden="true" />
+            All categories
+          </Link>
+          <Link to="/categories?type=goods" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
+            Goods
+          </Link>
+          <Link to="/categories?type=service" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
+            Services
+          </Link>
+          <Link to="/search?type=supplier" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
+            Verified exporters
+          </Link>
+          <a href="#how-it-works" className="shrink-0 whitespace-nowrap rounded-xl px-3 py-2 font-semibold text-ink-600 hover:bg-surface-subtle">
+            How it works
+          </a>
+          <Link
+            to="/ai-search"
+            className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 font-bold text-primary-700 hover:bg-primary-50 md:flex"
+          >
+            <SparkleIcon className="h-4 w-4" aria-hidden="true" />
+            AI Search
+          </Link>
+        </nav>
+      </div>
+
       <main>
         {/* ═════════ HERO — AI MATCH-MAKING ═════════
             Rebuilt 2026-09-26 on the owner's brief: "we are making this section
             for reflecting our biggest fiture for ai match making… make a search
             bar and connect all line with that". The band's whole job is to put
-            ONE field in front of a visitor.
+            ONE field in front of a visitor and have every moving thing on the
+            page point at it.
 
-            2026-09-27 (owner): restyled to the reference they sent, "exactly
-            same design" — white ground, faint grid, soft red glow, still blobs
-            and three small shapes drifting slowly (`HeroBackdrop`). The red
-            circuit lines that ran into the field were REMOVED on the owner's
-            instruction ("remove them") — do not bring moving lines back.
+            Ground is `surface-canvas` — the token that already existed for this
+            band ("the landing hero's page ground"), warm on purpose so it does
+            not fight the red brand. Do not add a second cream.
 
             🔴 STILL MISSING from the pre-2026-09-26 hero, and still logged in
             `docs/UiWebNotes.md`: the guest signup cards ("Start sourcing" / "For
@@ -246,48 +366,24 @@ export function Landing() {
             the only registration CTA a visitor met above the fold on a phone —
             nothing here replaces that yet. The old hero is intact at
             `/landing-2` and in git history. */}
-        <section className="relative isolate overflow-hidden bg-white text-ink-900">
-          {/* Grid, glow, blobs and floating shapes (owner, 2026-09-27: "background
-              is too plain", to their reference). */}
-          <HeroBackdrop />
+        <section className="relative isolate overflow-hidden bg-surface-canvas text-ink-900">
+          {/* Backdrop only — it draws the red pulses and nothing else, and it is
+              `pointer-events-none`, so it can never intercept a click meant for
+              the field sitting on top of it. */}
+          <CircuitHero targetRef={heroFieldRef} copyRef={heroCopyRef} />
 
           {/* `max(560px, 76vh)` rather than a bare `vh`: on a short laptop 76vh
               is under 500px and the section stops feeling like a hero at all,
               which is the thing the owner asked to fix. The floor holds it. */}
           <div className="relative flex min-h-[56svh] w-full flex-col items-center justify-center px-4 py-8 text-center max-[359px]:py-5 sm:min-h-[min(820px,max(560px,74vh))] sm:px-6 sm:py-20 lg:px-10 xl:px-16">
-            <div className="flex w-full flex-col items-center">
-              <p className="inline-flex items-center gap-2.5 rounded-full border border-surface-border bg-white px-4 py-1.5 text-[12.5px] font-semibold text-ink-700 shadow-sm sm:px-5 sm:py-2 sm:text-sm">
-                <span className="flex items-center gap-1.5">
-                  <span aria-hidden="true" className="h-2 w-2 animate-pulse-soft rounded-full bg-primary-600 motion-reduce:animate-none" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary-700">AI</span>
-                </span>
-                <span aria-hidden="true" className="h-4 w-px bg-surface-border" />
-                Match-making for global buyers
+            <div ref={heroCopyRef} className="flex w-full flex-col items-center">
+              <p className="inline-flex items-center gap-2 rounded-full border border-primary-600/25 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-700 backdrop-blur-sm">
+                <SparkleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                AI match-making
               </p>
 
-              <h1 className="mt-5 max-w-5xl text-balance text-[30px] font-extrabold leading-[1.06] max-[359px]:text-[26px] tracking-tight text-ink-900 sm:mt-8 sm:text-5xl lg:text-6xl xl:text-7xl">
-                Connecting India&apos;s Suppliers
-                <br />
-                <span className="relative inline-block pb-1">
-                  <span className="text-gradient-brand">to the World</span>
-                  {/* Hand-drawn underline that draws itself once on load. */}
-                  <svg
-                    aria-hidden="true"
-                    className="absolute -bottom-1 left-0 w-full sm:-bottom-2"
-                    viewBox="0 0 300 12"
-                    fill="none"
-                    preserveAspectRatio="none"
-                  >
-                    <path
-                      d="M2 8C50 2 100 4 150 6C200 8 250 4 298 7"
-                      pathLength="1"
-                      strokeDasharray="1"
-                      className="animate-draw-line stroke-primary-600 motion-reduce:animate-none"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
+              <h1 className="mt-4 max-w-4xl text-balance text-[27px] font-extrabold leading-[1.08] max-[359px]:text-[24px] tracking-tight text-ink-900 sm:mt-6 sm:text-5xl lg:text-6xl">
+                Connecting India&apos;s Suppliers to the World
               </h1>
 
               {/* 🔴 Describes what the feature ACTUALLY does — it reads your
@@ -297,123 +393,78 @@ export function Landing() {
                   shown (the same rule that kept invented testimonials off it). */}
               <p className="mt-3 max-w-2xl text-pretty text-[14.5px] leading-relaxed text-ink-600 max-[359px]:text-[13.5px] sm:mt-5 sm:text-lg">
                 Describe what you need — material, quantity, specification, destination. Our AI
-                matches you with{' '}
-                <span className="font-semibold text-ink-900">verified Indian exporters</span> who can
-                supply it.
+                matches you with verified Indian exporters who can supply it.
               </p>
             </div>
 
-            {/* The AI field — the one thing the hero asks a visitor to use.
-                Phones (owner, 2026-09-27: "think of better design for search and
-                button"): an AI prompt card — the field on top, a slim bottom row
-                with the hint and a compact pill — so it reads as ONE object, not
-                two stacked slabs. sm+: one row, grey field + big button. The
-                bottom row is `sm:contents`, which lifts the button into the row. */}
+            {/* The field every trace on this page terminates on. Capped at
+                720px because that is the width where the backdrop's own bar zone
+                lines up with it (see CircuitHero). */}
             <form
+              ref={heroFieldRef}
               role="search"
               onSubmit={onAiSearch}
-              className="mt-7 flex w-full max-w-[720px] flex-col rounded-3xl border border-surface-border bg-white p-2 shadow-lift transition-shadow focus-within:border-primary-600/40 focus-within:ring-4 focus-within:ring-primary-600/10 sm:mt-14 sm:flex-row sm:items-center sm:gap-2 sm:rounded-2xl sm:p-2.5"
+              className="mt-7 flex w-full max-w-[720px] flex-col gap-2 sm:mt-20 sm:flex-row sm:items-center sm:gap-0 sm:rounded-2xl sm:border-2 sm:border-primary-600 sm:bg-white sm:p-1.5 sm:shadow-lift sm:focus-within:ring-4 sm:focus-within:ring-primary-600/15"
             >
               <label className="sr-only" htmlFor="hero-ai-q">
                 Describe what you want to source
               </label>
-              <div className="flex min-w-0 flex-1 items-center px-3 sm:rounded-xl sm:bg-ink-50 sm:px-4">
-                <SearchIcon className="mr-3 hidden h-5 w-5 shrink-0 text-ink-500 sm:block" aria-hidden="true" />
+              <div className="flex min-w-0 flex-1 items-center rounded-2xl border-2 border-primary-600 bg-white px-4 py-0 sm:rounded-none sm:border-0">
+                <SearchIcon className="mr-3 h-5 w-5 shrink-0 text-ink-400" aria-hidden="true" />
                 <input
                   id="hero-ai-q"
                   type="search"
                   value={heroQuery}
                   onChange={(e) => setHeroQuery(e.target.value)}
-                  placeholder="Describe what you want to source…"
-                  className="h-12 min-w-0 flex-1 bg-transparent text-[16px] text-ink-900 outline-none placeholder:text-ink-500 sm:h-14 sm:text-[15px]"
+                  placeholder="500 kg organic turmeric powder, shipped to Dubai"
+                  className="h-11 min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-ink-400"
                 />
               </div>
-              <div className="flex items-center justify-between gap-3 border-t border-ink-100 pl-3 pt-2 max-[359px]:justify-end sm:contents">
-                <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] font-medium text-ink-500 max-[359px]:hidden sm:hidden">
-                  <SparkleIcon className="h-3.5 w-3.5 text-primary-600" aria-hidden="true" />
-                  AI match-making
-                </span>
-                {/* "Get matched" (owner, 2026-09-27: rename to something that
-                    hooks more) — says what the AI does for you, not what you do. */}
-                <button
-                  type="submit"
-                  className="group inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-b from-primary-500 to-primary-700 px-4 text-[14px] font-semibold tracking-tight text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_10px_24px_-10px_theme(colors.primary.600/70%)] transition hover:from-primary-600 hover:to-primary-800 hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_14px_28px_-10px_theme(colors.primary.600/80%)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/25 active:translate-y-px sm:h-14 sm:gap-2 sm:rounded-xl sm:px-8 sm:text-base"
-                >
-                  <SparkleIcon className="hidden h-4 w-4 sm:block" aria-hidden="true" />
-                  Get matched
-                  <ArrowRightIcon
-                    className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
-                    aria-hidden="true"
-                  />
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary-600 px-7 text-sm font-extrabold text-white transition hover:bg-primary-700 sm:h-11 sm:rounded-xl"
+              >
+                Find suppliers
+                <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+              </button>
             </form>
 
-            {/* Real controls: each one runs that search — examples of the KIND
-                of sentence the AI handles, the part a visitor cannot guess from
-                an empty box. (owner, 2026-09-27) sm+: "Try asking" + sparkle
-                pills in one row. Phones: the pills took three stacked rows and
-                looked cheap there, so a single quiet text line that scrolls
-                sideways under a fade. */}
-            {/* Phones: ONE line of small chips in the desktop pills' style,
-                scrolling sideways with snap, faded at the right edge. */}
-            <div className="relative -mx-4 mt-3 w-[calc(100%+2rem)] sm:hidden">
-              <div className="scrollbar-none flex snap-x snap-mandatory items-center gap-1.5 overflow-x-auto scroll-px-4 px-4 pr-10">
-                <span className="shrink-0 snap-start pr-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-500">Try</span>
-                {HERO_EXAMPLES.map((example) => (
-                  <button
-                    key={example}
-                    type="button"
-                    onClick={() => askAi(example)}
-                    className="flex h-7 shrink-0 snap-start items-center gap-1 whitespace-nowrap rounded-full border border-ink-200/70 bg-white/80 px-2.5 text-[11.5px] text-ink-600 transition active:border-primary-600/40 active:bg-primary-50/60"
-                  >
-                    <SparkleIcon className="h-2.5 w-2.5 shrink-0 text-primary-600" aria-hidden="true" />
-                    {example}
-                  </button>
-                ))}
-              </div>
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white via-white/70 to-transparent"
-              />
-            </div>
-
-            <div className="mt-6 hidden w-full max-w-5xl flex-col items-center sm:flex">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-500">Try asking</p>
-              <div className="mt-2.5 flex flex-wrap justify-center gap-2">
-                {HERO_EXAMPLES.map((example) => (
-                  <button
-                    key={example}
-                    type="button"
-                    onClick={() => askAi(example)}
-                    className="group flex min-h-[40px] items-center gap-2.5 rounded-full border border-ink-200/80 bg-white/80 px-3.5 text-[13px] text-ink-700 shadow-sm backdrop-blur-sm transition hover:border-primary-600/40 hover:bg-primary-50/60 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/15"
-                  >
-                    <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-primary-600" aria-hidden="true" />
-                    {example}
-                    <ArrowRightIcon
-                      className="-ml-1 h-3.5 w-0 shrink-0 text-primary-700 opacity-0 transition-all group-hover:ml-0 group-hover:w-3.5 group-hover:opacity-100 motion-reduce:transition-none"
-                      aria-hidden="true"
-                    />
-                  </button>
-                ))}
-              </div>
+            {/* Real controls: each one runs that search. They are examples of
+                the KIND of sentence the AI handles, which is the part a visitor
+                cannot guess from an empty box. */}
+            <div className="scrollbar-none mt-4 flex w-full max-w-[720px] items-center gap-2 overflow-x-auto max-[359px]:hidden sm:mt-5 sm:w-auto sm:max-w-none sm:flex-wrap sm:justify-center sm:overflow-visible">
+              <span className="shrink-0 text-[12.5px] text-ink-500">Try:</span>
+              {HERO_EXAMPLES.map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => askAi(example)}
+                  className="shrink-0 whitespace-nowrap rounded-full border border-surface-border bg-white/80 px-3.5 py-1.5 text-[12.5px] text-ink-700 backdrop-blur-sm transition hover:border-primary-600 hover:text-primary-700"
+                >
+                  {example}
+                </button>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* ═════════ BROWSE BY SECTOR ═════════
-            Directly under the hero: a bento grid of the three sector tiles
-            (redesigned 2026-09-27 — see PromoPanels). Fixed navigation, NOT the
-            admin banner strip, which still runs below and holds up to 24
-            rotating banners. Supplier search now lives in the header's
-            "Suppliers" link (phone menu too), not in this block. */}
+        {/* ═════════ THREE PROMO PANELS ═════════
+            Directly under the hero (owner, 2026-09-27, to the store layout they
+            sent): one full-width panel over two halves. Fixed navigation into
+            the platform's three entry points, NOT the admin banner strip — that
+            still runs below this and holds up to 24 rotating banners.
+
+            🔴 This also restores the only way into SUPPLIER search on a phone.
+            `/search?type=supplier` lost its entry point when the browse bar was
+            hidden on mobile (2026-09-27), because the Products|Suppliers toggle
+            had already been removed from `/search`. The lead panel is that link. */}
         <PromoPanels />
 
         {/* ═════════ FEATURED BANNERS — curated in /admin/featured ═════════
             Under the hero, never inside it (owner, 2026-09-25): the hero is the
             default and stays exactly as built. No live banner → no strip. */}
         {featured.banners.length > 0 && (
-          <section className="w-full bg-white px-4 pb-10 sm:px-6 sm:pb-14 lg:px-10 lg:pb-16 xl:px-16">
+          <section className="w-full bg-surface-canvas px-4 pb-4 sm:px-6 sm:pb-6 lg:px-10 xl:px-16">
             <BannerStrip banners={featured.banners} />
           </section>
         )}
@@ -431,17 +482,17 @@ export function Landing() {
             six invented testimonials were never built). If a row here stops
             being true, delete the row.
 
-            🆕 2026-09-27 — picture cards (`PlatformCards.jsx`); restyled the same
-            day as clean feature cards (words below the picture, a swipeable row
-            on phones). The sentences are unchanged. */}
-        <section id="platform" aria-labelledby="platform-heading" className="bg-white py-10 sm:py-14 lg:py-16">
+            🆕 2026-09-27 — the six icon rows became picture cards
+            (`PlatformCards.jsx`, to the layout the owner sent). The sentences
+            moved across unchanged; the artwork is still to come. */}
+        <section id="platform" className="border-y border-surface-border bg-white py-12 sm:py-16">
           <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Why MPX Global</p>
-            <h2 id="platform-heading" className="mt-1.5 text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
+            <h2 className="text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
               What makes MPX Global different
             </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-600 sm:text-base">
-              Eight things that are true of the platform today — not promises.
+            <p className="mt-2 max-w-2xl text-sm text-ink-600 sm:text-base">
+              Eight things that are true of this platform today — not a pitch about what it might
+              become.
             </p>
 
             <PlatformCards />
@@ -513,78 +564,54 @@ export function Landing() {
             (owner: "not matching and awkward"), and green is worse than merely
             mismatched: `success` is this product's verified/approved colour, and
             spending it on decoration thins the one signal buyers must trust. */}
-        {/* 2026-09-28 restyle (owner: premium, section by section): white
-            ground like the sections around it, eyebrow + heading, and the black
-            cards gain a soft red glow, a dot texture, example chips and the
-            round arrow the sector tiles use. Still a MATCHED PAIR — same
-            colour, told apart by icon and copy (see above). */}
-        <section aria-labelledby="fork-heading" className="w-full bg-white px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-16 xl:px-16">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Goods &amp; services</p>
-          <h2 id="fork-heading" className="mt-1.5 text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
-            Source products and services in one place
+        <section className="w-full bg-surface-canvas px-4 py-12 sm:px-6 sm:py-14 lg:px-10 xl:px-16">
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
+            Goods or services — both are here
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-600 sm:text-base">
-            Most platforms offer one or the other. Choose where you want to start.
+          <p className="mt-2 max-w-2xl text-sm text-ink-600 sm:text-base">
+            Most sourcing platforms carry one or the other. Pick the side you are buying from.
           </p>
 
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-2">
+          <div className="mt-7 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
             {[
               {
                 to: '/categories?type=goods',
                 Icon: BoxIcon,
-                eyebrow: 'Goods',
-                title: 'Physical products',
-                body: 'Listed with MOQ, per-unit pricing and lead times.',
-                chips: ['Fabric & yarn', 'Leather', 'Chemicals', 'Machinery'],
+                title: 'Physical goods',
+                body: 'Fabric, denim, leather, chemicals, machinery — with MOQ and per-unit pricing.',
+                cta: 'Browse goods',
               },
               {
                 to: '/categories?type=service',
                 Icon: GridIcon,
-                eyebrow: 'Services',
                 title: 'Business services',
-                body: 'Scoped per engagement, direct with the team that delivers.',
-                chips: ['Software', 'AI / ML', 'Cloud', 'QC & inspection'],
+                body: 'Software, AI/ML, cloud, marketing, QC and inspection — scoped per engagement.',
+                cta: 'Browse services',
               },
-            ].map(({ to, Icon, eyebrow, title, body, chips }) => (
+            ].map(({ to, Icon, title, body, cta }) => (
               <Link
                 key={to}
                 to={to}
-                className="group relative isolate flex flex-col overflow-hidden rounded-3xl bg-ink-900 p-5 shadow-card ring-1 ring-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/40 sm:p-8"
+                className="group flex flex-col rounded-2xl bg-ink-900 p-6 shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-lift sm:p-8"
               >
-                {/* Texture + glow: decoration only. */}
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-0 -z-10 bg-[radial-gradient(rgb(255_255_255/0.07)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:linear-gradient(to_left,black,transparent_70%)]"
-                />
-                <span
-                  aria-hidden="true"
-                  className="absolute -right-24 -top-24 -z-10 h-64 w-64 rounded-full bg-primary-600/25 blur-3xl transition-opacity duration-500 group-hover:opacity-100 sm:opacity-70"
-                />
-
-                <span className="flex items-start justify-between gap-4">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 sm:h-12 sm:w-12">
-                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-ink-900 transition-colors duration-300 group-hover:bg-primary-600 group-hover:text-white sm:h-11 sm:w-11"
-                  >
-                    <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-45 motion-reduce:transition-none" />
-                  </span>
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15">
+                  <Icon className="h-7 w-7" aria-hidden="true" />
                 </span>
-
-                <span className="mt-5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-300 sm:mt-8">
-                  {eyebrow}
+                <span className="mt-5 block text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                  {title}
                 </span>
-                <span className="mt-1 block text-xl font-bold tracking-tight text-white sm:text-[28px]">{title}</span>
-                {/* ink-300 on black is 11.95:1 — body stays readable. */}
-                <span className="mt-1.5 block text-sm leading-relaxed text-ink-300 sm:text-[15px]">{body}</span>
-                <span className="mt-4 flex flex-wrap gap-1.5 sm:mt-6 sm:gap-2">
-                  {chips.map((c) => (
-                    <span key={c} className="rounded-full bg-white/[0.08] px-2.5 py-1 text-[11.5px] font-medium text-white/85 ring-1 ring-white/10 sm:text-[12.5px]">
-                      {c}
-                    </span>
-                  ))}
+                {/* `ink-300` on black is 11.95:1 — body copy on a dark card has
+                    to stay readable, not fade into it. */}
+                <span className="mt-2 block flex-1 text-sm leading-relaxed text-ink-300 sm:text-[15px]">
+                  {body}
+                </span>
+                {/* A button, not a text link: this is the action the section
+                    exists for. It is a <span> because the whole card is already
+                    the <Link> — a link inside a link is invalid and breaks
+                    keyboard order. */}
+                <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-primary-600/25 transition group-hover:bg-primary-700">
+                  {cta}
+                  <span aria-hidden="true">›</span>
                 </span>
               </Link>
             ))}
@@ -592,13 +619,14 @@ export function Landing() {
         </section>
 
         {/* ═════════ AI BAND — the page's one coloured band ═════════
-            A muted looping clip sits behind it at every width — a light 0.3MB
-            copy below lg (2026-09-28), the full clip above. See `AiBandVideo.jsx`. */}
+            🆕 2026-09-27 — a muted looping clip sits behind it on `lg` and up.
+            See `AiBandVideo.jsx` for why it does not load on a phone. */}
         <section className="relative isolate overflow-hidden bg-primary-600">
           <AiBandVideo />
           {/* 🔴 The scrim that makes the copy readable lives INSIDE
-              `AiBandVideo`, so it always ships with the clip. The measurements
-              behind it are in that file. */}
+              `AiBandVideo`, not here, so it mounts and unmounts with the clip —
+              a phone loads no video and must not get a dark wash over a plain
+              red band. The measurements behind it are in that file. */}
           <div className="flex w-full flex-col items-start gap-6 px-4 py-10 sm:px-6 sm:py-12 lg:flex-row lg:items-center lg:px-10 xl:px-16">
             <div className="min-w-0 flex-1">
               <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl lg:text-3xl">
@@ -609,21 +637,12 @@ export function Landing() {
                 platform extracts the category, quantity and budget for you.
               </p>
             </div>
-            {/* Hover (owner, 2026-09-28): lifts with a red glow, the sparkle
-                turns and an arrow slides in. Stops under reduced motion. */}
             <Link
               to="/ai-search"
-              className="group relative flex shrink-0 items-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-3.5 text-sm font-extrabold text-primary-700 shadow-card ring-1 ring-white/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_-8px_rgb(206_6_26/0.55)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:px-7"
+              className="flex shrink-0 items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-extrabold text-primary-700 shadow-card hover:shadow-lift sm:px-7"
             >
-              <SparkleIcon
-                className="h-4 w-4 transition-transform duration-500 group-hover:rotate-[20deg] group-hover:scale-125 motion-reduce:transition-none"
-                aria-hidden="true"
-              />
+              <SparkleIcon className="h-4 w-4" aria-hidden="true" />
               Try AI Search
-              <ArrowRightIcon
-                className="-ml-1 h-4 w-0 opacity-0 transition-all duration-300 group-hover:ml-0 group-hover:w-4 group-hover:opacity-100 motion-reduce:transition-none"
-                aria-hidden="true"
-              />
             </Link>
           </div>
         </section>
@@ -705,49 +724,35 @@ export function Landing() {
             and a first-time international buyer who has never heard of MPX still
             needs the platform to explain itself. Moved BELOW the marketplace
             rather than deleted — the marketplace still leads. */}
-        {/* 2026-09-28 restyle (owner: premium, section by section): a step
-            flow — desktop, four steps joined by a line with round markers and
-            large numerals; phone, a vertical timeline. Still an `<ol>`: the
-            order is the meaning. Step 4 names the quotation flow (built:
-            priced PDF, counter-offers, both sides confirm with an emailed
-            code) instead of the vaguer "Deal with confidence". Nothing here
-            claims payment protection — MPX Global moves no money. */}
-        <section id="how-it-works" aria-labelledby="how-heading" className="bg-white">
-          <div className="w-full px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-16 xl:px-16">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">How it works</p>
-            <h2 id="how-heading" className="mt-1.5 text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
-              From first search to agreed quotation
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-600 sm:text-base">
-              Four steps, all on the platform, all free for buyers.
-            </p>
+        <section id="how-it-works" className="border-t border-surface-border bg-ink-50">
+          <div className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
+            <h2 className="text-2xl font-extrabold tracking-tight">How it works</h2>
+            {/* 🔴 The NUMBER stays alongside the icon (owner asked for icons,
+                2026-09-27). This is an `<ol>` — the order is the meaning, and an
+                icon alone does not say "second". The icon tells you what the
+                step is at a glance; the badge keeps the sequence.
 
-            <ol className="relative mt-8 grid gap-0 sm:mt-10 lg:grid-cols-4 lg:gap-8">
+                Contrast measured: the icon is primary-700 on primary-50 at
+                6.71:1 (a non-text UI element needs 3:1), and the badge is white
+                on primary-600 at 5.73:1, which small text needs 4.5:1 for. The
+                badge's `ring-white` is what separates it from the tile; the card
+                behind is white, so the ring reads as a gap rather than a ring. */}
+            <ol className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 [SearchIcon, 'Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
-                [EnquiryIcon, 'Send an enquiry', 'Tell the supplier exactly what you need, in a couple of clicks.'],
-                [ChatIcon, 'Chat in real time', 'Talk directly on the platform, with files and full history.'],
-                [QuoteIcon, 'Agree the quotation', 'Receive a priced quotation, counter-offer, and confirm it together.'],
+                [EnquiryIcon, 'Send an enquiry', 'Tell them exactly what you need, in a couple of clicks.'],
+                [ChatIcon, 'Chat in real time', 'Talk directly with the supplier on the platform.'],
+                [HandshakeIcon, 'Deal with confidence', 'The verified tick and a full conversation history keep both sides honest.'],
               ].map(([Icon, title, body], i) => (
-                <li key={title} className="relative flex gap-4 pb-7 last:pb-0 lg:flex-col lg:gap-0 lg:pb-0">
-                  {/* Connector to the NEXT step (none after the last): down on a
-                      phone, across to the next marker from lg. Decoration. */}
-                  {i < 3 && (
-                    <span
-                      aria-hidden="true"
-                      className="absolute bottom-0 left-[21px] top-11 w-px bg-ink-200 lg:bottom-auto lg:left-11 lg:right-[-2rem] lg:top-[22px] lg:h-px lg:w-auto"
-                    />
-                  )}
-                  <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-primary-700 shadow-card ring-1 ring-ink-200">
+                <li key={title} className="rounded-2xl bg-white p-5 shadow-card">
+                  <span className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
                     <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0 pt-1 lg:pt-0">
-                    <span className="block text-[12px] font-semibold tabular-nums tracking-[0.14em] text-ink-400 lg:mt-6 lg:text-[40px] lg:font-extrabold lg:leading-none lg:tracking-tight lg:text-ink-200">
-                      {String(i + 1).padStart(2, '0')}
+                    <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary-600 text-[10px] font-bold text-white ring-2 ring-white">
+                      {i + 1}
                     </span>
-                    <span className="mt-0.5 block text-[16px] font-semibold tracking-tight text-ink-900 lg:mt-3 lg:text-lg">{title}</span>
-                    <span className="mt-1 block text-sm leading-relaxed text-ink-600">{body}</span>
                   </span>
+                  <p className="mt-3 text-sm font-bold">{title}</p>
+                  <p className="mt-1 text-sm text-ink-600">{body}</p>
                 </li>
               ))}
             </ol>
@@ -763,44 +768,22 @@ export function Landing() {
             The rows live in `FaqAccordion.jsx`, which explains why they are no
             longer a native `<details>` (it cannot animate its height) and what
             the open/close transition is built from. */}
-        <section id="faq" aria-labelledby="faq-heading" className="w-full bg-white px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-16 xl:px-16">
-          {/* 2026-09-28 restyle (owner: premium, section by section): the same
-              eyebrow + heading as every other section (the all-caps two-colour
-              heading was the odd one out), a sticky intro column with a route
-              to the Help page, and quiet divider rows. `id="faq"` kept — the
-              footer links to it. */}
-          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-            <div className="min-w-0 lg:sticky lg:top-28 lg:self-start">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">FAQ</p>
-              <h2 id="faq-heading" className="mt-1.5 text-balance text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl lg:text-4xl">
-                Common questions
+        <section id="faq" className="w-full bg-white px-4 py-12 sm:px-6 sm:py-16 lg:px-10 xl:px-16">
+          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
+            <div className="min-w-0">
+              <h2 className="text-balance text-3xl font-extrabold uppercase leading-[1.1] tracking-tight text-ink-900 sm:text-4xl">
+                <span className="text-primary-600">Common</span> questions
               </h2>
-              <p className="mt-3 max-w-md text-pretty text-sm leading-relaxed text-ink-600 sm:text-base">
-                Verification, cost, AI search, quotations and payments — the short answers.
+              {/* Describes what is actually below it — verification, cost, the AI
+                  step, the app — rather than inviting a contact route the page
+                  does not offer a signed-out visitor. */}
+              <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-ink-600 sm:text-base">
+                Short answers on how seller verification works, what it costs to join, how the AI
+                search finds suppliers, and where the mobile app fits in.
               </p>
-              <Link
-                to="/help"
-                className="group mt-6 hidden items-center gap-2.5 rounded-full border border-ink-200 bg-white py-1.5 pl-5 pr-1.5 text-sm font-semibold text-ink-900 shadow-sm transition-colors hover:border-ink-900 lg:inline-flex"
-              >
-                Still have questions? Get help
-                <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-900 text-white transition-colors duration-300 group-hover:bg-primary-600">
-                  <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
-                </span>
-              </Link>
             </div>
 
-            <div className="min-w-0">
-              <FaqAccordion items={FAQS} />
-              <Link
-                to="/help"
-                className="mt-6 flex h-11 items-center justify-between rounded-full border border-ink-200 bg-white pl-5 pr-1.5 text-sm font-semibold text-ink-900 shadow-sm lg:hidden"
-              >
-                Still have questions? Get help
-                <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-900 text-white">
-                  <ArrowRightIcon className="h-4 w-4" />
-                </span>
-              </Link>
-            </div>
+            <FaqAccordion items={FAQS} />
           </div>
         </section>
 

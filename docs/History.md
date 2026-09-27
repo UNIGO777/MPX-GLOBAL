@@ -328,6 +328,109 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
     - vitest's `vi.fn` rejecting spies surface as unhandled, so throwing fakes are plain functions.
     - Web `testTimeout` is now 20 s (typing-heavy tests under full load).
   - Test data: one draft quotation (`MPX-Q-2026-000001`) was created in the LOCAL test DB to record the quotation pages.
+- **2026-09-28 — `/landing-page-3` snapshot RE-TAKEN from the current page** (owner). The first copy was
+  made before the supplier showcase was centred, resized and given its "100+ verified suppliers" line, so
+  it had gone stale within the day.
+  - ⚠️ **Re-taking is a REGENERATION, not a merge** — `Landing3.jsx` and all eight files in
+    `components/landing3/` are overwritten from the live ones, so any edit made directly to the snapshot
+    is lost. That is intended (a snapshot has no changes of its own to keep) and is now written at the
+    top of the file, because it is exactly the assumption that would cost someone work later.
+  - Verified after: all eight frozen components byte-identical to their live counterparts, the "100+"
+    line present, and `/landing-page-3` still emitting `noindex,follow` with no canonical while `/` keeps
+    the canonical.
+  - ⚠️ My first staleness check reported all eight as differing — that was an off-by-one in my own `tail`
+    skipping 4 lines of a 5-line header, not a real difference.
+- **2026-09-28 — "100+ verified suppliers" set as its own line under the fan** (owner), with the number
+  in brand red.
+  - **It appears ONCE.** The strapline above carried the same figure and now does not — a number stated
+    twice on one screen reads as a slogan rather than a fact, and the two copies would drift apart the
+    first time either was edited.
+  - 🔴 Still the hard-coded count the owner asked for and has reaffirmed; the concern is on record and the
+    note sits at the markup.
+- **2026-09-28 — Showcase fan matched to the reference by measuring both images**, after the owner put
+  mine and the target side by side.
+  - **What the measurement said**, rather than what it looked like: the target's step between card left
+    edges is **0.745 of a card width** (mine was 0.60), its vertical drop is **8.4% of card height** (mine
+    7%), and its centre card is **24.6% of the frame** — so spread and drop were the real gaps, not size.
+  - ⚠️ **I overshot first.** Reading "make it bigger" from the picture, I took the card to 440px — **30.6%
+    of the frame**, well past the target's 24.6%. Measuring the reference instead of eyeballing it put it
+    back at 360px. Worth remembering: on this one the difference was spacing, and size was a red herring.
+  - 🔴 **`overflow-hidden` on the stage is load-bearing.** At this spread the outer cards run past the
+    section — which IS the reference's look, they are meant to be cut off — and without the clip that
+    becomes horizontal scroll on the whole page, which `web-design.md` forbids outright.
+  - Arrows gained `bg-white/90` + `backdrop-blur-sm`, since the widened fan now runs underneath them.
+  - Centre verified after: fan centre **719px** against a page centre of **720px**.
+- **2026-09-28 — Showcase fan centred and given room.** Owner: "make it center driven and its not
+  looking good make it give some space".
+  - 🔴 **The off-centre look was a real bug, not taste.** Each card is `left-1/2` and relied on
+    `-translate-x-1/2` for the correction — but `transform` is a SINGLE property, so the inline
+    `style.transform` replaced Tailwind's outright and the correction was silently dropped. Every card's
+    LEFT EDGE sat on the centre line, putting the whole fan half a card to the right. The `-50%` now lives
+    inside the inline transform, where it cannot be overwritten. Measured after: fan centre **724px**
+    against a page centre of **720px**.
+  - **Room:** spread 58% → 64%, drop 26px → 22px, scale falloff 0.10 → 0.09, cards a touch smaller, and
+    the stage carries its own `px-10 sm:px-14` so the arrows sit clear of the artwork instead of on it.
+  - ⚠️ I thought there was dead space under the fan and measured before changing anything — there is
+    **1px**. What looked like a gap was the section's ordinary bottom padding. Nothing was changed for it.
+- **2026-09-28 — `/landing-page-3`: a second frozen snapshot of the landing page**, taken at the owner's
+  request before further changes to `/`. Same arrangement as `/landing-2` (2026-09-26).
+  - 🔴 **It carries its OWN copies of the eight landing-only components**, in `src/components/landing3/`.
+    That is the entire point — editing `components/landing/` from here on changes `/` and leaves the
+    snapshot alone. Each copy is headed with a note saying so, because a "frozen" file that someone edits
+    has quietly stopped being a snapshot.
+  - 🔴 **`noindex`, and deliberately NOT `useCanonical('/')`.** It is the same page as `/`, so two
+    indexable copies would be duplicate content — but pointing the copy's canonical at the original would
+    invite a crawler to treat them as one page, which is the opposite of freezing it. Verified in the
+    rendered DOM: `/` emits the canonical, `/landing-page-3` emits `noindex,follow` and no canonical.
+    (⚠️ `/landing-blue` still uses `useCanonical('/')` — flagged earlier, still not changed.)
+  - ⚠️ **What it does NOT freeze, and cannot:** the shared chrome (`PublicHeader`, `PublicFooter`), the
+    shared catalogue cards, the global CSS in `index.css` (the circuit-pulse and shine keyframes live
+    there), the Tailwind theme, and anything fetched from the API. Those are app-wide; a change to them
+    shows up in the snapshot too. Written into the file so it is not mistaken for a full freeze.
+  - 🔴 **Temporary.** `Landing3.jsx`, `components/landing3/` and the route are deleted together once the
+    new landing is settled — alongside `/landing-2`, which is the same debt from two days ago.
+- **2026-09-28 — Showcase rebuilt as an auto-advancing coverflow fan.** Owner: "make exect same and auto
+  running". The first pass was a flat scroll rail; the reference is a fan — centre card full size and in
+  front, neighbours stepping back, shrinking and dropping away on each side.
+  - **The three transforms move together** (translateX · translateY · scale), which is what reads as
+    depth. A card that only shrinks looks small; one that only drops looks misplaced.
+  - 🔴 **It pauses on hover and on focus, and never runs under `prefers-reduced-motion`.** Moving content
+    a reader cannot stop fails WCAG 2.2.2. The reduced-motion check is in JS, not CSS, because CSS cannot
+    stop a timer. Arrows are the manual control. This follows `BannerStrip`, which already carries the
+    same rule on this page — the pattern is settled here rather than re-decided per component.
+  - Only the five cards around the centre are drawn; the rest sit at `opacity: 0` with `aria-hidden` and
+    `pointer-events-none`, so a screen reader and the tab order only ever meet what is on screen.
+  - **Auto-advance verified**, not assumed: two renders 4.5s apart show the centre card moving on by one
+    (Chetankumar Patel → Darpan Patel).
+  - ⚠️ The arrows were drifting out to the section's gutters — they are positioned against their parent,
+    which was full-width while the stage was capped at 1100px. The parent now carries the cap.
+- **2026-09-28 — Verified-suppliers section rebuilt as the overlapping card fan** (`SuccessShowcase.jsx`)
+  using the 17 Phoenix Business Advisory cards the owner supplied. The card grid, `VerifiedSupplierCard`,
+  `lib/demoSuppliers.js`, the `VITE_DEMO_SUPPLIERS` flag and its ledger row were all removed with it —
+  the showcase supersedes them, and leaving them would have been dead code plus a launch-time debt for
+  something no longer on the page.
+  - 🔴 **Alerted first, then built.** The cards carry another company's branding, real named people with
+    photographs, and US L1 visa approvals. The owner confirmed **Phoenix Business Advisory is the same
+    brand's other website**, which settles the branding question, and asked to proceed.
+  - 🔴 **One thing the ownership answer does NOT settle, recorded at the call site:** each card records a
+    **US L1 visa approval for a named person**, not a supplier verification on this platform, while the
+    strapline says a person on our team checked their documents. That is not what happened to these
+    people. The heading and strapline are the owner's wording and their decision; "Success stories from
+    our group", with a strapline naming Phoenix, is the accurate version and is a two-line change.
+  - 🔴 **"100+" is hard-coded, on the owner's instruction**, reaffirmed twice. The real-total query was
+    removed rather than left beside it: with Phoenix visa cards in the section, a real supplier count
+    would have described neither the cards nor the platform.
+  - **Files renamed on the way in.** `Kalpesh-M-Patel (1).webp` was a duplicate with a space and
+    parentheses in the name — a URL hazard this page has already hit twice (`Modi&trump.webp`,
+    `chat & enquiry.jpg`). All 17 are now lowercase kebab-case under `public/success/`.
+  - Each image gets a real `alt` with the person's name, not `alt=""` — these are identifiable people and
+    a screen reader should hear who is on the card.
+  - `hover:!z-30` on each card: the resting order is `zIndex: i`, so without the override the card you
+    point at stays buried under its right-hand neighbour. The `!` is needed because an inline style
+    otherwise beats a class. Both it and `group-hover:scale-[1.04]` verified in the compiled CSS.
+  - ⚠️ **Every word on these cards is pixels** — names, cities and figures are all baked into the images,
+    so none of it is indexable, translatable or resizable. That is the cost of finished artwork over
+    markup, and the reason to rebuild them as components if this section ever has to do SEO work.
 - **2026-09-27 — "Verified suppliers" section rebuilt as large cards, plus PLACEHOLDER suppliers for a
   client demo.** Owner sent a card layout and asked for "100+ verified suppliers" and dummy suppliers.
   Red-alerted; owner reaffirmed — **"do it for now its client request"** — so it is built, behind a
