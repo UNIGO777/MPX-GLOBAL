@@ -5,18 +5,25 @@ import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { useCanonical } from '../../lib/seo.js';
-import { BannerStrip, SupplierCard, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
+import { BannerStrip, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
 import { CircuitHero } from '../../components/landing/CircuitHero.jsx';
+import { FaqAccordion } from '../../components/landing/FaqAccordion.jsx';
+import { AiBandVideo } from '../../components/landing/AiBandVideo.jsx';
 import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
 import { PromoPanels } from '../../components/landing/PromoPanels.jsx';
+import { VerifiedSupplierCard } from '../../components/landing/VerifiedSupplierCard.jsx';
+import { DEMO_SUPPLIERS_ON, demoSuppliers } from '../../lib/demoSuppliers.js';
 import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
 
 import {
   ArrowRightIcon,
   BoxIcon,
+  ChatIcon,
+  EnquiryIcon,
   GridIcon,
+  HandshakeIcon,
   SearchIcon,
   SparkleIcon,
 } from '../../components/ui/icons.jsx';
@@ -196,6 +203,31 @@ export function Landing() {
     e.preventDefault();
     askAi(heroQuery);
   };
+
+  /* The real verified-supplier total, so the heading's number is a fact rather
+     than a claim. `pageSize: 1` — only `total` is used. */
+  const verifiedSuppliers = useQuery({
+    queryKey: catalogueKeys.search({ type: 'supplier', verifiedOnly: true, pageSize: 1 }),
+    queryFn: () => catalogueApi.search({ type: 'supplier', verifiedOnly: true, pageSize: 1 }),
+    staleTime: 10 * 60 * 1000,
+  });
+  const verifiedSupplierCount = verifiedSuppliers.data?.total ?? 0;
+
+  /* 🔴 Real curated suppliers ALWAYS win. The demo list is only reached when
+     there are none AND the demo flag is explicitly on — see demoSuppliers.js. */
+  const supplierRows = featured.suppliers.length > 0 ? featured.suppliers : demoSuppliers();
+  const showingDemoSuppliers = featured.suppliers.length === 0 && supplierRows.length > 0;
+
+  /* 🔴 The strapline's number follows the CARDS, so the two can never disagree.
+     Real data → the real total, stated plainly. Demo → the "100+" the owner
+     asked for on 2026-09-27, which exists only while `VITE_DEMO_SUPPLIERS` is
+     on and therefore never in production. Mixing the two — a real "3+" over four
+     placeholder cards — was the first version, and it read as a lie about both. */
+  const supplierStrap = showingDemoSuppliers
+    ? '100+ verified companies whose documents a person on our team has checked.'
+    : verifiedSupplierCount
+      ? `${verifiedSupplierCount} ${verifiedSupplierCount === 1 ? 'company' : 'companies'} whose documents a person on our team has checked.`
+      : 'Companies whose documents a person on our team has checked.';
 
   const onSearch = (e) => {
     e.preventDefault();
@@ -572,14 +604,21 @@ export function Landing() {
           </div>
         </section>
 
-        {/* ═════════ AI BAND — the page's one coloured band ═════════ */}
-        <section className="bg-primary-600">
+        {/* ═════════ AI BAND — the page's one coloured band ═════════
+            🆕 2026-09-27 — a muted looping clip sits behind it on `lg` and up.
+            See `AiBandVideo.jsx` for why it does not load on a phone. */}
+        <section className="relative isolate overflow-hidden bg-primary-600">
+          <AiBandVideo />
+          {/* 🔴 The scrim that makes the copy readable lives INSIDE
+              `AiBandVideo`, not here, so it mounts and unmounts with the clip —
+              a phone loads no video and must not get a dark wash over a plain
+              red band. The measurements behind it are in that file. */}
           <div className="flex w-full flex-col items-start gap-6 px-4 py-10 sm:px-6 sm:py-12 lg:flex-row lg:items-center lg:px-10 xl:px-16">
             <div className="min-w-0 flex-1">
               <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl lg:text-3xl">
                 Describe what you need. We&apos;ll find it.
               </h2>
-              <p className="mt-2 max-w-2xl text-sm text-primary-100 sm:text-base">
+              <p className="mt-2 max-w-2xl text-sm text-white sm:text-base">
                 Skip the filters — write it the way you&apos;d say it to a colleague, and the
                 platform extracts the category, quantity and budget for you.
               </p>
@@ -627,16 +666,44 @@ export function Landing() {
             error state, a five-across cap and "Load more" rather than infinite
             scroll, none of which is worth rewriting from memory. */}
 
-        {/* ═════════ HIGHLIGHTED SUPPLIERS — curated only ═════════
-            There is deliberately NO default here: the default suppliers section
-            is the one removed below, and curation must not bring it back by the
-            side door when nothing is picked. */}
-        {featured.suppliers.length > 0 && (
-          <section className="w-full px-4 pb-10 sm:px-6 sm:pb-12 lg:px-10 xl:px-16">
-            <BlockHead title="Highlighted suppliers" sub="Companies picked by the MPX Global team." to="/search?type=supplier" />
-            <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-              {featured.suppliers.map((sup) => (
-                <li key={sup.id}><SupplierCard supplier={sup} /></li>
+        {/* ═════════ VERIFIED SUPPLIERS ═════════
+            Rebuilt 2026-09-27 to the card layout the owner sent. Feeds from the
+            curated list in `/admin/featured` — a real, public-projected supplier
+            each time.
+
+            🔴 **The count in the heading is the REAL number**, read from
+            `/public/search?type=supplier&verifiedOnly=true`. It is not written
+            into the page, so it cannot go stale or overstate. This page's rule
+            is that it states nothing it cannot back — it is why the design's six
+            invented testimonials were never built.
+
+            🔴 **`demoSuppliers()` is a CLIENT-DEMO fallback and must not reach
+            production.** Owner asked for placeholder suppliers on 2026-09-27
+            ("do it for now its client request") after a red alert. It renders
+            only when `VITE_DEMO_SUPPLIERS === 'true'` — unset everywhere by
+            default — AND the real list came back empty. Delete this fallback,
+            `lib/demoSuppliers.js` and the flag before launch; logged in
+            `docs/UiWebNotes.md`. */}
+        {supplierRows.length > 0 && (
+          <section className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
+            <BlockHead
+              title="Verified suppliers"
+              sub={supplierStrap}
+              to="/search?type=supplier"
+            />
+            {import.meta.env.DEV && DEMO_SUPPLIERS_ON && showingDemoSuppliers && (
+              /* Dev-only. A client-preview build is not DEV, so this never shows
+                 in the demo itself — it is here so nobody building the page
+                 mistakes the placeholders for real data. */
+              <p className="mb-3 rounded-lg bg-warning-50 px-3 py-2 text-xs font-semibold text-warning-800">
+                Placeholder suppliers (VITE_DEMO_SUPPLIERS). Not real companies — delete before launch.
+              </p>
+            )}
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {supplierRows.map((sup) => (
+                <li key={sup.id}>
+                  <VerifiedSupplierCard supplier={sup} />
+                </li>
               ))}
             </ul>
           </section>
@@ -658,16 +725,29 @@ export function Landing() {
         <section id="how-it-works" className="border-t border-surface-border bg-ink-50">
           <div className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
             <h2 className="text-2xl font-extrabold tracking-tight">How it works</h2>
+            {/* 🔴 The NUMBER stays alongside the icon (owner asked for icons,
+                2026-09-27). This is an `<ol>` — the order is the meaning, and an
+                icon alone does not say "second". The icon tells you what the
+                step is at a glance; the badge keeps the sequence.
+
+                Contrast measured: the icon is primary-700 on primary-50 at
+                6.71:1 (a non-text UI element needs 3:1), and the badge is white
+                on primary-600 at 5.73:1, which small text needs 4.5:1 for. The
+                badge's `ring-white` is what separates it from the tile; the card
+                behind is white, so the ring reads as a gap rather than a ring. */}
             <ol className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                ['Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
-                ['Send an enquiry', 'Tell them exactly what you need, in a couple of clicks.'],
-                ['Chat in real time', 'Talk directly with the supplier on the platform.'],
-                ['Deal with confidence', 'The verified tick and a full conversation history keep both sides honest.'],
-              ].map(([title, body], i) => (
+                [SearchIcon, 'Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
+                [EnquiryIcon, 'Send an enquiry', 'Tell them exactly what you need, in a couple of clicks.'],
+                [ChatIcon, 'Chat in real time', 'Talk directly with the supplier on the platform.'],
+                [HandshakeIcon, 'Deal with confidence', 'The verified tick and a full conversation history keep both sides honest.'],
+              ].map(([Icon, title, body], i) => (
                 <li key={title} className="rounded-2xl bg-white p-5 shadow-card">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white">
-                    {i + 1}
+                  <span className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                    <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary-600 text-[10px] font-bold text-white ring-2 ring-white">
+                      {i + 1}
+                    </span>
                   </span>
                   <p className="mt-3 text-sm font-bold">{title}</p>
                   <p className="mt-1 text-sm text-ink-600">{body}</p>
@@ -678,19 +758,31 @@ export function Landing() {
         </section>
 
         {/* ═════════ FAQ — same reason as How it works: the header links to it ═════════ */}
-        <section id="faq" className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
-          <h2 className="text-2xl font-extrabold tracking-tight">Common questions</h2>
-          {/* Two columns from lg. The page runs edge-to-edge, and a single
-              full-width answer would be a 200-character line — unreadable. The
-              column split keeps the measure sane without reintroducing a margin. */}
-          <dl className="mt-6 grid grid-cols-1 gap-x-12 border-t border-surface-border lg:grid-cols-2">
-            {FAQS.map(({ q, a }) => (
-              <div key={q} className="border-b border-surface-border py-4">
-                <dt className="text-sm font-bold text-ink-900">{q}</dt>
-                <dd className="mt-1.5 text-sm text-ink-600">{a}</dd>
-              </div>
-            ))}
-          </dl>
+        {/* ═════════ FAQ ═════════
+            🆕 2026-09-27 — rebuilt to the two-column accordion layout the owner
+            sent: a heading and a lead-in on the left, numbered expanding rows on
+            the right.
+
+            The rows live in `FaqAccordion.jsx`, which explains why they are no
+            longer a native `<details>` (it cannot animate its height) and what
+            the open/close transition is built from. */}
+        <section id="faq" className="w-full bg-white px-4 py-12 sm:px-6 sm:py-16 lg:px-10 xl:px-16">
+          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
+            <div className="min-w-0">
+              <h2 className="text-balance text-3xl font-extrabold uppercase leading-[1.1] tracking-tight text-ink-900 sm:text-4xl">
+                <span className="text-primary-600">Common</span> questions
+              </h2>
+              {/* Describes what is actually below it — verification, cost, the AI
+                  step, the app — rather than inviting a contact route the page
+                  does not offer a signed-out visitor. */}
+              <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-ink-600 sm:text-base">
+                Short answers on how seller verification works, what it costs to join, how the AI
+                search finds suppliers, and where the mobile app fits in.
+              </p>
+            </div>
+
+            <FaqAccordion items={FAQS} />
+          </div>
         </section>
 
         {/* 🔴 The "Want to sell on MPX Global?" band was REMOVED on the owner's

@@ -175,6 +175,136 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-27 — "Verified suppliers" section rebuilt as large cards, plus PLACEHOLDER suppliers for a
+  client demo.** Owner sent a card layout and asked for "100+ verified suppliers" and dummy suppliers.
+  Red-alerted; owner reaffirmed — **"do it for now its client request"** — so it is built, behind a
+  safeguard.
+  - 🔴 **Why it was alerted.** This page's standing rule is that it states nothing it cannot back, which
+    is why the design's six invented testimonials were never built (`Client-Requests.md` §4.2).
+    Fabricated COMPANIES are that problem one step further: a visitor would believe they are verified
+    businesses here. On a marketplace whose product is trust, shipping them to real buyers is the worst
+    thing this page could do.
+  - 🔴 **The safeguard — three conditions, all required.** Placeholders render only when
+    `VITE_DEMO_SUPPLIERS === 'true'` (unset everywhere by default, so a production build shows none of
+    it), AND the curated list from `/admin/featured` is empty, AND the caller asks for the fallback.
+    **Real suppliers always win.**
+  - 🔴 **The strapline follows the CARDS, so the two cannot disagree.** Real data → the real total from
+    `/public/search?type=supplier&verifiedOnly=true`, stated plainly. Demo → the "100+" the owner asked
+    for, which exists only under the flag. The first version mixed them — a real "3+" over four
+    placeholder cards — and read as a lie about both.
+  - A DEV-only warning strip sits above the cards. A client-preview build is not DEV, so the demo itself
+    stays clean while nobody building the page can mistake the placeholders for real data.
+  - **`VerifiedSupplierCard` takes only the public projection** — name, slug, country, description, logo,
+    entityType, establishedYear, `verified`, memberSince, productCount. Nothing is composed or inferred;
+    `m3-public-projection.md` guards that surface and a card is not a reason to widen it. `verified` is
+    the DERIVED boolean, never `kycStatus`.
+  - ⚠️ The reference card carries a person's photograph, an investment figure and two approval dates. We
+    hold none of those and they are not public, so the stat block shows what the platform actually knows:
+    listings published, and the year established.
+  - 🔴 **Before launch: delete `lib/demoSuppliers.js`, the `?? demoSuppliers()` fallback, the flag and its
+    `.env.example` entry.** Logged in `docs/UiWebNotes.md`.
+- **2026-09-27 — Footer turned LIGHT.** Owner: "in white color", overriding the dark ground kept a few
+  minutes earlier. The reason given for dark was real — the page above ends on a white FAQ, so a light
+  footer leaves it with no terminus — so the terminus is now **drawn** instead of implied: a `border-t`
+  hairline above, and the legal bar on `surface-subtle`, as in the reference.
+  - ⚠️ **The logo variant had to change with the ground.** `variant="white"` is the all-white mark for
+    dark surfaces; on white it would have been invisible. It is `variant="blue"` now — the navy-and-red
+    mark drawn for light surfaces. This is the kind of thing a colour swap silently breaks.
+  - **Text colours were measured, not inverted.** On white: ink-900 20.31:1, ink-600 5.42:1, ink-500
+    4.97:1. `ink-400` measures **2.58:1** and is used for no text here, however muted a link should look —
+    noted in the file so the next person does not reach for it.
+- **2026-09-27 — Footer restructured to the multi-column layout with a bottom legal bar** that the owner
+  sent (an Alibaba footer). Five columns — Marketplace · For buyers · For sellers · Support · Legal —
+  brand and address on the left, a hairline, then copyright and legal links along the bottom.
+  - 🔴 **The STRUCTURE was copied, not the contents.** The reference carries Careers, Blog, a Help Center,
+    "Report a violation", payment-network badges and two app-store badges. We have pages for none of them:
+    the missing pages are the ones deleted from this footer on 2026-08-23 and still an open question with
+    the client (`Client-Requests.md` §4.1); store badges wait on the apps being published (§4.4), so there
+    is nothing to point them at; and **payment-network logos would be an outright lie** — MPX Global holds
+    no money and moves none. Every link now in the footer goes somewhere that exists today.
+  - 🔴 **"Stay connected" is LinkedIn only, and only when a superadmin has set it.** There are no other
+    accounts, and a row of social icons pointing at nothing is the same defect in a smaller shape.
+  - ⚠️ **The reference is a LIGHT footer; this one stays dark** — the page above it ends on a white FAQ,
+    and a light footer would leave it with no terminus. Deliberate, and noted in the file.
+  - In-page anchors go through a `hash()` helper so "How it works" / "Common questions" / "Why MPX Global"
+    still work from `/privacy`, `/search` and every other route, not only from the landing page.
+- **2026-09-27 — FAQ open/close now animates** (`FaqAccordion.jsx`). Owner: "make it smooth".
+  - 🔴 **The native `<details>` had to go**, and the reason is narrow: it cannot animate its height — the
+    content just appears. `::details-content` with `interpolate-size` can, and only in very recent
+    Chromium, so Safari and Firefox would still snap. Half a feature is not the feature.
+  - ⚠️ **Correcting yesterday's note on this file:** it claimed `<details>` "works with JavaScript off".
+    That was wrong for THIS app — `index.html` is `<div id="root">` with no prerendering, so without
+    JavaScript nothing renders at all. The argument never applied, and nothing real was lost by moving to
+    a controlled component.
+  - 🔴 **Height animates with `grid-template-rows: 0fr → 1fr`, not a measured pixel height.** A measured
+    height breaks the moment the copy reflows — longer answer, narrower column, different font — and that
+    is the usual reason these snap shut at the wrong size. The grid unit resolves to whatever the content
+    actually is, at any width.
+  - 🔴 **A closed panel is `invisible`, not merely zero-height.** Zero height with `overflow: hidden`
+    leaves the text in the accessibility tree, so a screen reader would read every answer whether or not
+    it was open. `visibility` also transitions as a discrete step — visible immediately on opening, hidden
+    only after the collapse finishes — which is exactly the wanted behaviour.
+  - A11y kept: real `<h3>` around each control so the questions appear in a heading list, plus
+    `aria-expanded` / `aria-controls` and a visible focus ring. `motion-reduce:transition-none` throughout.
+  - More than one row may be open at once — an FAQ where opening the fourth answer closes the one you were
+    half-way through is worse to use.
+- **2026-09-27 — FAQ rebuilt as a two-column numbered accordion**, to the layout the owner sent: heading
+  and a lead-in on the left, expanding numbered rows on the right.
+  - 🔴 **Native `<details>`/`<summary>`, not a hand-rolled accordion.** That gives keyboard operation, the
+    right screen-reader announcements and correct state for free. A div with an `onClick` would need
+    `role`, `aria-expanded`, `aria-controls`, key handling and focus management to reach the same place,
+    and usually gets one of them wrong. It also works with JavaScript off.
+  - 🔴 **Collapsed answers stay in the DOM, so the section is still indexable.** `m3-seo.md` treats the
+    public pages as SEO surface; an accordion that mounts its content on click would hide every answer
+    from a crawler.
+  - The left-hand lead-in describes what is actually below it — verification, cost, the AI step, the app —
+    rather than inviting a contact route the page does not offer a signed-out visitor.
+  - Open state verified separately (a forced-`open` render against the built CSS): chevron rotates, the
+    ring turns `primary-600/30`, and the answer indents past the number so it lines up under the question.
+- **2026-09-27 — Icons added to "How it works".** Owner asked for icons; each step now has one in a
+  tinted tile with its step number as a badge on the corner.
+  - 🔴 **The number stayed.** It is an `<ol>` — the order is the meaning, and an icon alone does not say
+    "second". The icon says what the step is at a glance; the badge keeps the sequence.
+  - Icons are the ones the set already had for these exact ideas — `SearchIcon`, **`EnquiryIcon`**,
+    `ChatIcon`, **`HandshakeIcon`** — rather than approximations.
+  - Contrast measured: icon primary-700 on primary-50 **6.71:1** (a non-text UI element needs 3:1), badge
+    white on primary-600 **5.73:1** (10px text needs 4.5:1).
+- **2026-09-27 — Red wash off the AI band; a neutral scrim in its place.** Owner: "remove red overlay frm
+  there". The red flattened the clip's own purples and blues; ink now replaces it and the colours come
+  back.
+  - 🔴 **The scrim could not simply be deleted.** Measured against a PURE WHITE frame — which this clip
+    really does produce, and its brightest streaks sweep the LEFT of the frame, exactly where the copy
+    sits: no scrim **1.00:1**, /30 2.07:1, /50 3.83:1, **/55 4.56:1 ✓**, /60 5.47:1, /80 11.84:1. So the
+    gradient is `from-ink-900/80 via-ink-900/60 to-ink-900/30` — strong under the copy, nearly bare on the
+    right where only the white button sits.
+  - 🔴 **The scrim moved INTO `AiBandVideo`** so it mounts and unmounts with the clip. Left on the section
+    it would have put a dark wash over the plain red band on phones, which load no video at all.
+  - All three stops are multiples of five, checked in the compiled CSS — the fourth time today that rule
+    mattered.
+- **2026-09-27 — Looping muted clip behind the AI band** (`AiBandVideo.jsx`). Owner supplied the file;
+  renamed to `ai-band.mp4`, with `ai-band-poster.jpg` pulled from the clip itself so the band shows its
+  artwork instead of flashing empty.
+  - 🔴 **It does not load below `lg`, and that is a data decision.** The file is **7.7MB**. Shipping it to
+    every phone visitor to tint one strip is not worth it, so a narrow screen keeps the solid band and
+    downloads nothing. `display: none` would not do — a `<video autoplay>` still fetches — which is why it
+    is a mount check, not a CSS class. The same check covers `prefers-reduced-motion`: CSS cannot pause a
+    video, so under reduced motion it never mounts.
+  - 🔴 **`muted` + `playsInline` are required, not stylistic** — without `muted` every browser refuses to
+    autoplay, and without `playsInline` iOS takes it fullscreen.
+  - 🔴 **The overlay was measured against a WHITE frame, not the clip's average.** The clip is mostly very
+    dark (median luminance 0.005) but it is made of light streaks that reach pure white and they MOVE, so
+    a white streak can pass under a word at any moment. Worst case: primary-700/95 **7.02:1**,
+    primary-600/85 **4.96:1**, primary-600/50 2.5:1 ✗. Hence a gradient — strong where the copy sits,
+    weak on the right where only the white button is and the clip can be seen.
+  - The sub-line was `text-primary-100`, which measures **4.18:1** against that overlay and fails. Both
+    lines are solid white now.
+  - 🔴 **THIRD TIME TODAY: a Tailwind opacity that is not a multiple of five compiles to NOTHING.** This
+    was first written 94/84/48 — all three classes were dropped, the overlay was fully transparent, and
+    the band rendered as the bare clip. Nothing errored. Caught by grepping the compiled CSS, as with
+    `/92` in `PromoPanels.jsx` and the same trap noted in `PlatformCards.jsx`. **Tailwind's opacity scale
+    goes in fives.**
+  - ⚠️ **7.7MB is still large for a landing page** even on desktop. Worth re-encoding smaller (it is
+    540p already, so CRF/bitrate is where the saving is) — raised with the owner.
 - **2026-09-27 — Platform cards: four across, and smaller.** Owner: "make cards small and make 4 cards in
   one row". Four columns with eight cards is two per column — four across, as the reference is. Card is
   ~316px wide at 1440. The panel, its type and the chip each stepped down again so the panel does not
