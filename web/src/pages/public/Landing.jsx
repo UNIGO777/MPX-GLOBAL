@@ -11,9 +11,9 @@ import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
 import { HeroBackdrop } from '../../components/landing/HeroBackdrop.jsx';
 import { FaqAccordion } from '../../components/landing/FaqAccordion.jsx';
 import { AiBandVideo } from '../../components/landing/AiBandVideo.jsx';
+import { AudienceFork } from '../../components/landing/AudienceFork.jsx';
 import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
 import { PromoPanels } from '../../components/landing/PromoPanels.jsx';
-import { SuccessShowcase } from '../../components/landing/SuccessShowcase.jsx';
 import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
 
 import {
@@ -211,13 +211,6 @@ export function Landing() {
   };
 
 
-  /* 🔴 "100+" is the OWNER'S WORDING, asked for on 2026-09-27 and reaffirmed
-     twice. It is a hard-coded count on a public page, which this page otherwise
-     does not do — the concern was raised and it is their decision. The real
-     verified total is not used here: the cards in this section are Phoenix visa
-     approvals, so a real supplier count beside them would describe neither the
-     cards nor the platform. */
-  const supplierStrap = 'Companies whose documents a person on our team has checked.';
 
   return (
     <div className="bg-white text-ink-900">
@@ -400,6 +393,11 @@ export function Landing() {
             </div>
           </div>
         </section>
+
+        {/* ═════════ BUYER / SUPPLIER FORK ═════════
+            Straight after the hero (client brief, 2026-09-28): "Are you a
+            buyer? | Are you a supplier?" → /suppliers or exporter signup. */}
+        <AudienceFork />
 
         {/* ═════════ BROWSE BY SECTOR ═════════
             Directly under the hero: a bento grid of the three sector tiles
@@ -661,36 +659,10 @@ export function Landing() {
             error state, a five-across cap and "Load more" rather than infinite
             scroll, none of which is worth rewriting from memory. */}
 
-        {/* ═════════ VERIFIED SUPPLIERS ═════════
-            The overlapping card fan the owner sent (2026-09-28), built in
-            `SuccessShowcase.jsx`.
-
-            🔴 **A NOTE THE OWNER HAS BEEN GIVEN, kept here so it is not lost.**
-            The cards are Phoenix Business Advisory artwork — the same brand's
-            other site, which is what settled the branding question. But what
-            each card records is a **US L1 visa approval for a named person**,
-            not a supplier verification on this platform, while the strapline
-            says a person on our team checked their documents. That is not what
-            happened to these people. The heading and strapline are the owner's
-            wording and their call; if they want it accurate, "Success stories
-            from our group" with a strapline naming Phoenix is the honest version
-            and it is a two-line change. */}
-        <section className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
-          <BlockHead title="Verified suppliers" sub={supplierStrap} to="/search?type=supplier" />
-          <SuccessShowcase />
-          {/* 🔴 "100+" is the OWNER'S WORDING, asked for on 2026-09-27 and
-              reaffirmed since. It is a hard-coded count on a public page, which
-              this page otherwise does not do — the concern was raised and it is
-              their decision, recorded in `docs/History.md`.
-
-              It appears ONCE. The strapline above used to carry the same number
-              and now does not: a figure stated twice on one screen reads as a
-              slogan rather than a fact, and the two would drift apart the first
-              time one of them was edited. */}
-          <p className="mt-8 text-center text-2xl font-extrabold tracking-tight text-ink-900 sm:mt-10 sm:text-3xl">
-            <span className="text-primary-600">100+</span> verified suppliers
-          </p>
-        </section>
+        {/* ═════════ VERIFIED SUPPLIERS — MOVED 2026-09-28 ═════════
+            The "Verified suppliers" showcase now lives on `/suppliers`
+            (owner: "remove verified supplier from landing page"). The
+            landing reaches it through the buyer/supplier switch below the hero. */}
 
         {/* 🔴 The "Verified suppliers" section was REMOVED from this page on the
             owner's instruction (2026-09-23).

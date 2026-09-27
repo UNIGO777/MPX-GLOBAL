@@ -80,6 +80,17 @@ export const config = {
     pageSizes: list(env.VITE_TABLE_PAGE_SIZES, [20, 50, 100]),
   },
 
+  /**
+   * 🔴 Client-demo switch: `/suppliers` shows SAMPLE suppliers instead of real
+   * ones (owner, 2026-09-28, after a red alert: "Demo switch only"). Must stay
+   * OFF for the live site — fictional companies must never be presented to real
+   * buyers as verified. When on, the page also shows a "Preview data" label and
+   * is `noindex`. See `lib/demoSuppliers.js`.
+   */
+  demo: {
+    suppliers: env.VITE_DEMO_SUPPLIERS === 'true',
+  },
+
   /** Display formatting only — dates and thousands separators. */
   locale: {
     dates: env.VITE_LOCALE_DATES || 'en-GB',

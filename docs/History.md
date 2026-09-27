@@ -175,6 +175,40 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-28 — `/suppliers` featured card now shows a PERSON, as in the client's reference.**
+  - **Layout:** logo, location, the founder's NAME as the headline, role + company, the company line, then the red stat band with a cut-out portrait standing over its right end. The factory photo is dropped from the card (the portrait takes its place).
+  - **Data:** each of the 12 sample suppliers has an invented `person: { name, role, photo }`.
+  - **Portraits:** cut out from the Phoenix card artwork, which the owner confirmed is AI-GENERATED ("phoenix ones are also generated").
+    - Green panel keyed out, background flood-filled, stray bits removed. Saved as transparent `web/public/suppliers/<slug>.webp` (12 files, ~140KB total).
+    - Three sample founder names were changed to men's names to match the portraits.
+    - 🔴 If the portraits turn out to be real people, they must be replaced: a real face on a fictional "verified" company misrepresents that person.
+  - **Card redesign** (owner: "design not good"): a compact centred card in the reference's structure. Red brand bar, status rule, name on the left with the portrait standing over the red stat band, then a turnover box with a "Verified" seal, a dates box, and a company line with logo mark + website.
+- **2026-09-28 — `/suppliers` featured card: factory photo + company logo (owner: "change image and add logo there").**
+  - **Photo:** Veltora's picture is now an Indian garment-factory floor (Unsplash, free licence, `photo-1741176505800`), resized to `public/supplier-veltora-factory.webp` (146KB).
+  - **Logos:** new `SupplierLogo.jsx` draws each SAMPLE company's logo in SVG (a geometric emblem on the brand colour + wordmark). Every demo supplier got a `brand: { mark, color }`. The logo sits on a white plate over the photo. Fictional companies, fictional marks, nothing modelled on a real brand.
+- **2026-09-28 — `/suppliers` now HARDCODED to the sample suppliers; no fetch (owner: "put this dummy data in hardcoded format, don't fetch there for now").**
+  - This supersedes the demo switch: the 12 fictional companies in `lib/demoSuppliers.js` show on EVERY environment, production included. `VITE_DEMO_SUPPLIERS` / `config.demo` are no longer read by the page.
+  - The small "Preview data — sample suppliers" chip and `noindex` are kept.
+  - 🔴 **Before launch:** wire real suppliers back (`/public/search?type=supplier&verifiedOnly=true` → `fromReal`, still in `supplierModel.js`). Fictional companies shown to real buyers as verified would be a false trust claim.
+- **2026-09-28 — Landing: "Verified suppliers" showcase REMOVED (owner); it now lives only on `/suppliers`.**
+  - The unused `supplierStrap` was dropped too.
+  - The demo switch `VITE_DEMO_SUPPLIERS=true` was added to the owner's local, git-ignored `web/.env`, so their dev server shows the sample suppliers. Never set it in production.
+- **2026-09-28 — "Meet our verified suppliers": landing buyer/supplier switch + new `/suppliers` page (client brief via owner).**
+  - 🔴 **Red alert raised first; the owner decided:**
+    - "Order your sample today" becomes **"Request a sample"**. A real sample ORDER is Bucket B, and enquiries need a product (M4-4), so it opens the supplier's profile (demo: buyer signup).
+    - Dummy suppliers appear **only behind a demo switch** (`VITE_DEMO_SUPPLIERS`, `config.demo.suppliers`). It is on only in my git-ignored `.env.browsertest`; the page shows a "Preview data" chip and is `noindex` while on. It must stay OFF in production.
+    - Capacity, turnover, languages, presence and website exist **in demo data only** (no public-projection change; `website` stays internal).
+    - Hero video skipped for now.
+  - **Landing:** `AudienceFork` right after the hero, an "Are you a buyer? | Are you a supplier?" ARIA tablist. Buyer → "Meet our verified suppliers" → `/suppliers`; supplier → "Join our verified supplier network" → `/signup/exporter`.
+  - **`/suppliers` (`pages/public/Suppliers.jsx`):**
+    - A hero with three true trust points.
+    - `SupplierFeatureCard`: the client's reference card layout in MPX colours, as real markup.
+    - "Request your sample today" band.
+    - The landing's "Verified suppliers" `SuccessShowcase` section **copied exactly** (owner: "put this exact inside /suppliers replacing current carousel"). My supplier carousel (`SupplierFan`) was deleted.
+    - A "Join our verified supplier network" band.
+  - **Data:** the live site reads real verified suppliers (public projection only). `lib/demoSuppliers.js` has 12 fictional companies: no people, no photos of people, websites as plain text only.
+  - **Links:** the header "Suppliers" and the footer "Verified manufacturers" now go to `/suppliers`.
+  - ⚠️ **Still owner-flagged:** the Phoenix cards in the showcase are visa approvals, not supplier verifications (see the landing note).
 - **2026-09-28 — Platform cards turned LIGHT.** Owner: "card color is not looking good in black make it
   in professnol color". White cards, ink text, a primary-600 mark and a primary-50 tag.
   - 🔴 **The SECTION moved too, not just the cards.** A white card on a white section has no edge at all,

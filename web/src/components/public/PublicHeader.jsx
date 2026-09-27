@@ -19,7 +19,9 @@ import { Logo } from '../ui/Logo.jsx';
  *
  *   · "Categories" keeps the desktop mega-menu (`CategoryMegaMenu`); phones get
  *     the plain link, as before.
- *   · "Suppliers" → `/search?type=supplier`. 🔴 This is also the fix for the
+ *   · "Suppliers" → `/suppliers` (the verified-supplier page, 2026-09-28; it links
+ *     on to `/search?type=supplier` for the full list). Originally
+ *     `/search?type=supplier`. 🔴 This is also the fix for the
  *     one real loss logged when the browse row was hidden on phones: supplier
  *     search had no entry point there. It is in the phone menu too.
  *   · "Goods" / "Services" were dropped: both pointed at `/categories?type=…`,
@@ -37,7 +39,7 @@ import { Logo } from '../ui/Logo.jsx';
  */
 const NAV = [
   { to: '/categories', label: 'Categories', megaMenu: true },
-  { to: '/search?type=supplier', label: 'Suppliers' },
+  { to: '/suppliers', label: 'Suppliers' },
   { hash: '#how-it-works', label: 'How it works' },
   { to: '/ai-search', label: 'AI Search', ai: true },
 ];

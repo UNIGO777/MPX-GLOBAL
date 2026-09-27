@@ -94,7 +94,7 @@ const FOOTER_COLUMNS = (hash) => [
   {
     title: 'Source on MPX Global',
     links: [
-      { label: 'Verified manufacturers', to: '/search?type=supplier' },
+      { label: 'Verified manufacturers', to: '/suppliers' },
       { label: 'Categories', to: '/categories' },
       { label: 'AI search', to: '/ai-search' },
       { label: 'Request for Quotation', soon: true },

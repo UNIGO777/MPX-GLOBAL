@@ -21,6 +21,7 @@ import { CategoryListing } from './pages/public/CategoryListing.jsx';
 import { ProductDetail } from './pages/public/ProductDetail.jsx';
 import { SupplierProfile } from './pages/public/SupplierProfile.jsx';
 import { Search } from './pages/public/Search.jsx';
+import { Suppliers } from './pages/public/Suppliers.jsx';
 import { AiSearch } from './pages/public/AiSearch.jsx';
 import { NotFound } from './pages/public/NotFound.jsx';
 import { Styleguide } from './pages/Styleguide.jsx';
@@ -283,6 +284,8 @@ export function App() {
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/supplier/:slug" element={<SupplierProfile />} />
             <Route path="/search" element={<Search />} />
+            {/* "Meet our verified suppliers" (client brief, 2026-09-28). */}
+            <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/ai-search" element={<AiSearch />} />
             {/* Real destinations for the signup fine print and the footer — the
                 "you agree to our Terms" line had nothing behind it until 2026-08-23. */}
