@@ -234,9 +234,51 @@ export default {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
         },
+        // Landing hero backdrop (2026-09-27) — slow, small moves so the ground
+        // feels alive without pulling the eye off the search field. Every user
+        // pairs them with motion-reduce:animate-none.
+        // Timings copied from the owner's reference (framer-motion there).
+        'hero-float': {
+          '0%, 100%': { transform: 'translateY(-8px)' },
+          '50%': { transform: 'translateY(8px)' },
+        },
+        'hero-float-sm': {
+          '0%, 100%': { transform: 'translateY(6px)' },
+          '50%': { transform: 'translateY(-6px)' },
+        },
+        'hero-drift': {
+          '0%, 100%': { transform: 'translateY(-10px) rotate(45deg)' },
+          '50%': { transform: 'translateY(10px) rotate(90deg)' },
+        },
+        'pulse-soft': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.45' },
+        },
+        'draw-line': {
+          from: { strokeDashoffset: '1' },
+          to: { strokeDashoffset: '0' },
+        },
+        // Featured banner strip (2026-09-27): a soft crossfade on change, and
+        // the active progress bar filling over the 6 s each banner shows.
+        'fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'banner-progress': {
+          from: { transform: 'scaleX(0)' },
+          to: { transform: 'scaleX(1)' },
+        },
       },
       animation: {
         'ai-sheen': 'ai-sheen 5s ease-in-out infinite',
+        'hero-float': 'hero-float 5s ease-in-out infinite',
+        'hero-float-sm': 'hero-float-sm 4s ease-in-out 1s infinite',
+        'hero-drift': 'hero-drift 7s ease-in-out 0.5s infinite',
+        'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
+        'draw-line': 'draw-line 1s ease-out 0.8s both',
+        'fade-in': 'fade-in 600ms ease-out both',
+        // Must match the rotation interval in BannerStrip (6000 ms).
+        'banner-progress': 'banner-progress 6s linear both',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

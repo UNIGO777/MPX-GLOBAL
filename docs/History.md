@@ -175,6 +175,105 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-28 — Public footer rebuilt to the owner's Alibaba reference ("make exact"; `PublicFooter.jsx`).**
+  - **Columns:** five centred columns, About · Trade services · Source · Help Center · Sell. "Stay connected" icons sit under the last column, then a right-aligned app row with App Store / Google Play badges, then the grey legal bar with the copyright + address line. The brand column is gone.
+  - **Placeholders:** pages that do not exist are plain UNCLICKABLE text with no label (owner: "no coming soon, just unclickable"), and so are the store badges and the non-LinkedIn social icons. All are logged in `docs/UiWebNotes.md` as an owner override of the "visibly non-final" rule. Only "Trade Finance" carries "Coming soon" (Bucket B, announcement only).
+  - 🔴 **Left out on purpose:** Secure payments, Money-back guarantee, Guaranteed delivery, After-sales protections, Refunds, File a trade dispute, Check order status, and payment-network badges. Each would promise money/order handling MPX Global does not do (Phase 1 moves no money; the owner earlier agreed not to claim payment protection).
+- **2026-09-28 — Footer: "Coming soon · Trade Finance" label (client request via owner, who said "just write it").**
+  - A plain text pill under the footer tagline (`PublicFooter.jsx`): not a link, no page, no form.
+  - 🔴 Trade financing is **Bucket B / Phase 2** (`docs/month1-not-doing.md` line 147; scope-of-work "Deferred to Phase 2"). This is an announcement only. Building anything behind it (a page, a waitlist, a form) is a new scope decision and needs its own alert.
+- **2026-09-28 — Landing FAQ ("Common questions") restyled (`Landing.jsx`, `FaqAccordion.jsx`); `id="faq"` kept.**
+  - **Intro column:** the eyebrow and heading now match the other sections (replacing the all-caps two-colour heading). The intro column is sticky on lg+ and carries a "Still have questions? Get help" → `/help` pill (full width under the list on phones).
+  - **Rows:** hairline dividers instead of boxed cards, a 01–07 index, a larger question, and a round plus that rotates into × (dark when open). The first answer is open on load. Height animation and accessibility are unchanged.
+  - **Two TRUE questions added:** "How do quotations work?" (the built flow) and "Does MPX Global handle payments?" → "No — you pay the supplier directly; MPX Global does not hold or move money." Keep that answer true (Phase 1, no money moves).
+- **2026-09-28 — "Why source from India" responsive layout finalised after owner review (`TradeAgreements.jsx`).**
+  - **List position:** the agreements list ALWAYS sits in the text column and never moves below the photo (owner). Phones and tablets: text → list → photo. lg+: text + list beside the photo.
+  - **Entries:**
+    - Phones: two per row, stacked cells.
+    - Tablet and xl+: one line each.
+    - lg (1024–1279): the pill sits on the right and only the type drops under the name; three-line cells there left "too much empty space".
+  - **Photo:** 4:3 below lg, a square sticky frame at lg, and full column height from xl.
+- **2026-09-28 — Landing "How it works" restyled as a step flow (`Landing.jsx`; `id="how-it-works"` kept, since the header links to it).**
+  - **Heading:** white ground, the eyebrow "How it works", heading "From first search to agreed quotation", sub "Four steps, all on the platform, all free for buyers."
+  - **Desktop:** four steps joined by line segments between round icon markers, with large pale 01–04 numerals.
+  - **Phone:** a vertical timeline, ~700px (was ~820).
+  - **Step 4:** "Deal with confidence" → "Agree the quotation" (the quotation flow is built). No payment-protection claim. `HandshakeIcon` swapped for `QuoteIcon` in the imports.
+- **2026-09-28 — AI band video made light (owner asked about launch weight).**
+  - **Smaller file:** `public/ai-band.mp4` is re-encoded to the first 15 s, same 960×540, with the silent audio track removed: 7.7MB → 0.87MB. The phone file is 0.3MB. The 7.7MB original is NOT in the repo (a backup was kept only in the session scratchpad), so a future re-encode needs the owner's source file.
+  - **Lazy load:** `AiBandVideo` mounts the video only when the band is within 300px of the viewport (IntersectionObserver), and pauses it off-screen.
+  - **Verified at 1440 and 390:** zero .mp4 requests at the top of the page; the right file loads and plays in view, and pauses after scrolling away.
+- **2026-09-28 — AI band clip now plays on phones and tablets (`AiBandVideo.jsx`), plus a hover effect on "Try AI Search".**
+  - **Phone clip:** below lg the band used to show no animation (the clip is 7.7MB). It now plays a new `public/ai-band-mobile.mp4`: the first 15 s, 640px, 24fps, no audio, ~0.3MB (encoded with a scratch-only ffmpeg; no project dependency). lg+ keeps the full clip, and the source is chosen in JS so only one file downloads.
+  - **Reduced motion:** shows the poster still with the scrim, instead of a plain band.
+  - **Scrim below lg:** the lightest stop is /55 (≥4.5:1 on white frames) because the copy spans the full width there.
+  - **Button hover:** lift, red glow, sparkle turn and a sliding arrow; all of it off under reduced motion.
+- **2026-09-28 — Landing "Goods & services" restyled (`Landing.jsx`). The categories section was skipped at the owner's request.**
+  - **Ground and heading:** white (was `surface-canvas`), with a "Goods & services" eyebrow. Heading: "Source products and services in one place".
+  - **Cards:** still a matched black pair with RED as the action. They now have a soft red corner glow, a faint dot texture, a Goods/Services eyebrow, tighter copy and example chips. The round arrow (as on the sector tiles) turns red and rotates on hover; the red text button is removed. The whole card stays the link.
+  - ⚠️ **Known, not fixed:** `/categories?type=goods|service` — `Categories.jsx` ignores `type`, so both cards land on the same page (logged 2026-09-27).
+- **2026-09-28 — Landing "Why source from India" restyled, and its FACTS CORRECTED (`TradeAgreements.jsx`).**
+  - **Layout:** a hairline list (two columns from sm): country, agreement type, and a stage pill (green in force, amber signed, grey concluded/framework). Owner's order: USA, NZ, Australia, then the rest, the EU last. The photo caption is rewritten ("India's trade diplomacy is opening new markets for Indian exporters." + the independence line), with a red accent rule; the photo fills the text column's height from xl, 16:10 below.
+  - 🔴 **The page was stale — re-verified against government sources on 2026-09-28:**
+    - **India–NZ FTA:** signed 2026-04-27, in force 2026-10-20 (NZ MFAT).
+    - **India–US:** trade deal / framework for an INTERIM agreement, Feb 2026 (White House fact sheet, PIB). It is not an "FTA", so the owner's "India–US Free Trade Agreement" is shown as "Trade Agreement · Framework 2026".
+    - **India–EU FTA:** concluded 2026-01-27, not yet signed (India Ministry of Commerce).
+    - The old "US has no FTA / standard tariffs" line is replaced by the 2026 deal.
+    - Earlier notes in this log and the file saying NZ/US had no agreement are superseded.
+  - ⚠️ **Still open:**
+    - Re-check stages before launch: NZ goes in force on 20 Oct; the UK FTA may have entered into force since signing.
+    - Confirm the handshake photo's source and licence.
+- **2026-09-27 — Landing "What makes MPX Global different" restyled (`PlatformCards.jsx`); the eight sentences are unchanged, including the Payments line.**
+  - **Cards:** a sharp picture (one shared 16:10 shape) with a white chip, and the title and text BELOW on white. This replaces the staggered grid of 2px-blurred pictures with frosted text panels on top.
+  - **Hover:** a slow image zoom only; the cards are not links.
+  - **Layout:** below lg, one swipeable snap row with a "n / 8" counter; lg+, four across and two rows. Section height fell from ~2,600px (phone) and ~1,700px (tablet) to ~645px.
+  - **Heading:** a "Why MPX Global" eyebrow and the tighter subtitle "Eight things that are true of the platform today — not promises."
+  - **Other:** `id="platform"` is kept (the header links to it); the section border is removed.
+- **2026-09-27 — Landing featured-banner strip polished (`FeaturedStrips.jsx` `BannerStrip`; behaviour unchanged).**
+  - **Look:** the section is white (was `surface-canvas`) with the sector section's spacing. The banner has `rounded-3xl`, a ring and a bolder title.
+  - **Crossfade:** banners crossfade (`animate-fade-in`, landing only; the admin preview stays static).
+  - **Arrows:** frosted, and shown on hover or keyboard focus only.
+  - **Progress bars replace the dots:** the active bar fills over 6 s (`animate-banner-progress`, which must match the 6000 ms interval). While paused it holds full; `key` restarts it on resume. Reduced motion shows a full bar. Bars shrink when there are more than 6 banners.
+  - **Gotcha repeated:** new Tailwind keyframes need a Vite dev-server restart.
+- **2026-09-27 — Landing "Browse by sector" redesigned as a bento grid (`PromoPanels.jsx`; landing done section by section).**
+  - **Header:** "Browse by sector" / "Sourcing, organised by industry", with "All categories →".
+  - **Layout ("one and two", owner-chosen after two rejected variants):** Agriculture is a tall tile on the LEFT HALF (lg+), with Garments and Textiles stacked on the right half. A 60%-wide lead "took all the attention"; three equal tiles "lost its essence". Phones and tablets: lead full width, the other two side by side (title only on phones).
+  - **Tiles:**
+    - The whole tile is the link, to the real category slug.
+    - Photos in natural colour with a black bottom fade for the white copy. The flat red wash is removed.
+    - The round arrow turns red and rotates on hover; the photo zooms slowly (motion-reduce off).
+  - **Removed:** the in-panel "Verified exporters" / "Ask AI instead" links (a link inside a link is invalid). Both destinations live in the header (Suppliers, AI Search) and the hero.
+  - **Ground:** the section is white, continuing the hero, instead of `surface-canvas`.
+  - The lead image renders at half width, so the 740px source files upscale only slightly. A wider original would still help.
+- **2026-09-27 — Premium navbar and hero polish (owner: "super premium… liked by investors"; landing to be redone section by section, navbar first).**
+  - **`PublicHeader` (shared by every public page):**
+    - One slim frosted row: see-through at the top; blur, hairline and shadow once scrolled.
+    - **Links:** Categories (mega-menu, now with a chevron), Suppliers (`/search?type=supplier`, which also restores supplier search on phones), How it works, AI Search.
+    - **Actions:** a compact "/" search field (2xl+; an icon below that, in the menu on phones); "Create account" (lg+); "Log in"; "Start selling" as a dark pill with the sweep, so it doesn't compete with the hero's red button.
+    - Links move into the menu below 1280px (at 1024 they wrapped).
+    - 320px fits by trimming spacing only on the smallest phones.
+  - **Landing:** the second "browse" row and the big header search are removed. "Goods" / "Services" were dropped: `/categories?type=` is never read, so they duplicated "Categories".
+  - **Hero:**
+    - The heading steps down on tablets (sm 48, lg 60, xl 72).
+    - The CTA is renamed **"Get matched"**, with a gradient, a sparkle and an arrow nudge.
+    - Phones get an AI prompt card: the field on top; a bottom row with an "AI match-making" hint and a compact pill.
+    - Suggestions: "Try asking" pills on sm+. On phones, one quiet text line that scrolls sideways; the pills looked cheap there and took three rows.
+- **2026-09-27 — Landing hero restyled to the owner's reference: "exactly same design". Web only; no new dependency.**
+  - **Background (`components/landing/HeroBackdrop.jsx`):** copied from the owner's reference (`photographer-directory` Hero) at its OWN values, in brand red.
+    - White ground.
+    - Grid at 12.5% of `ink-200`; the owner said "the grid lines are visible" when it was 45%.
+    - Red glow from the top at 7%.
+    - Two STILL blurred blobs.
+    - Three small shapes drifting slowly (lg+): two dots float, a square floats and turns.
+    - Timings copied: 5 s; 4 s with a 1 s delay; 7 s with a 0.5 s delay. CSS keyframes `hero-float`, `hero-float-sm` and `hero-drift`, all `motion-reduce:animate-none`.
+  - 🔴 **Moving lines REMOVED:** the red circuit pulses (`CircuitHero.jsx`) and their CSS are deleted on the owner's instruction ("remove them"). Do not add moving lines, extra shapes or animated blobs.
+  - **Foreground, as in the reference:**
+    - A pill badge: pulsing dot, "AI", divider, "Match-making for global buyers".
+    - "to the World" in a red gradient with a self-drawing underline.
+    - A bold phrase in the subline.
+    - The search box is a white card with a grey field.
+    - The examples are shadowed pills.
+  - **Placeholders:** the owner rejected the example sentences, and empty boxes looked odd. They are now "Search products & suppliers" (header; fits a phone) and "Describe what you want to source…" (hero).
+  - **Gotcha:** the running Vite dev server did not pick up new Tailwind `keyframes`/`animation` entries, so the shapes were silently still. Restart the dev server after editing `tailwind.config.js`; a fresh build was fine.
 - **2026-09-25 — UI audit fixes (owner: "fix all of them"). Web only, plus one backend response change.**
   - **Contrast:**
     - `text-ink-400` → `ink-500` everywhere (placeholders untouched).

@@ -1,7 +1,13 @@
+import { useRef, useState } from 'react';
+
 /**
- * "What makes MPX Global different" as picture cards (owner, 2026-09-27, to the
- * BCG layout they sent): a staggered grid, a category chip on the artwork, and
- * a frosted panel carrying the words.
+ * "What makes MPX Global different" — eight feature cards.
+ *
+ * 2026-09-27 redesign (owner: "super premium"): each card is a sharp picture
+ * (one shared 16:10 shape) with the chip on it, and the words BELOW on white —
+ * replacing the staggered grid of blurred pictures with frosted text panels on
+ * top. Phones get one swipeable row with a counter (eight stacked cards were
+ * ~2,600px). sm: two columns; lg+: four across.
  *
  * 🔴 **Every line here is something the platform ACTUALLY does today.** The
  * first six are carried over unchanged from the icon list this replaced; the
@@ -29,18 +35,22 @@
  * screen (~424px wide) but upscale past 1.4× on a very wide monitor. Worth
  * replacing if higher-resolution versions exist.
  *
- * ⚠️ **The frosted panel is deliberately photo-independent.** `bg-white/85`
- * lands at 217/255 even over pure black, so ink-900 on it measures 14.3:1 and
- * ink-700 7.6:1 whatever the picture does. That is the point: swap any image and
- * nothing has to be re-measured — unlike the promo panels, where the copy sits
- * straight on the artwork and every new file needs checking.
+ * ✅ **The words never sit on a picture** (they are on the card's white), so
+ * swapping an image needs no contrast re-check. The chip is ink-900 on white/90.
  */
+/* IMAGE NOTE (owner, 2026-09-27): five of the supplied pictures clash with the
+   two office photographs — visibility (purple flat art), AI search (network
+   graphic), enquiry & chat (cartoon robot), payments (red mock-up) and sign-up
+   (neon blue render). They are being replaced with real business photographs
+   (free Unsplash licence) that the owner downloads from a shortlist, because
+   Unsplash blocks scripted downloads. No logos or third-party app screens in
+   any replacement: another company's brand on this page is a problem, and a
+   payment provider's screen would imply MPX moves money. */
 const CARDS = [
   {
     chip: 'Verification',
     title: 'A person reads the documents',
     body: 'Verification is done by our team, not an automated stamp. The tick means someone checked that company’s papers.',
-    ratio: 'aspect-[4/3]',
     tone: 'from-primary-800 via-primary-900 to-ink-900',
     image: '/card-verification.jpg',
   },
@@ -48,7 +58,6 @@ const CARDS = [
     chip: 'Visibility',
     title: 'Sellers are visible from day one',
     body: 'An exporter’s public profile goes live the moment they register. Verification adds the tick — it is not a gate to being found.',
-    ratio: 'aspect-[5/4]',
     tone: 'from-ink-800 via-ink-900 to-primary-900',
     image: '/card-visibility.jpg',
   },
@@ -56,7 +65,6 @@ const CARDS = [
     chip: 'AI search',
     title: 'Describe it, don’t guess keywords',
     body: 'Write what you need in plain language and get matching suppliers back. No hunting for the exact term a seller happened to type.',
-    ratio: 'aspect-[4/3]',
     tone: 'from-primary-700 via-primary-900 to-ink-900',
     image: '/card-ai-matchmaking.jpg',
   },
@@ -64,7 +72,6 @@ const CARDS = [
     chip: 'Enquiry & chat',
     title: 'Talk to the supplier directly',
     body: 'A structured enquiry, then live chat with files. No email chains, and the whole conversation stays in one place.',
-    ratio: 'aspect-[5/4]',
     tone: 'from-ink-900 via-primary-900 to-primary-800',
     image: '/card-chat-enquiry.jpg',
   },
@@ -72,7 +79,6 @@ const CARDS = [
     chip: 'Quotations',
     title: 'Real quotations, not chat messages',
     body: 'Sellers send a priced PDF into the chat. Either side can counter-offer, and both confirm the final figure with a code sent to their email.',
-    ratio: 'aspect-[4/3]',
     tone: 'from-primary-900 via-ink-900 to-ink-800',
     image: '/card-quotations.jpg',
   },
@@ -98,7 +104,6 @@ const CARDS = [
     chip: 'Payments',
     title: 'You pay the supplier directly',
     body: 'MPX Global does not hold or move your money. The quotation carries the seller’s own bank details for you to pay against.',
-    ratio: 'aspect-[5/4]',
     tone: 'from-ink-800 via-primary-900 to-ink-900',
     image: '/card-payments.webp',
   },
@@ -111,7 +116,6 @@ const CARDS = [
     chip: 'Sign-up',
     title: 'Email and phone are both proved',
     body: 'Each gets its own code, and no account exists until both are confirmed — so nobody can register on an address they do not own.',
-    ratio: 'aspect-[4/3]',
     tone: 'from-primary-900 via-ink-900 to-primary-800',
     image: '/card-signup.jpg',
   },
@@ -122,7 +126,6 @@ const CARDS = [
     chip: 'Organisations',
     title: 'One company, one profile',
     body: 'A colleague signing up joins the company that already exists instead of making a duplicate. One verification, one tick, one public page.',
-    ratio: 'aspect-[5/4]',
     tone: 'from-ink-900 via-ink-800 to-primary-900',
     image: '/card-organisations.jpg',
   },
@@ -130,82 +133,71 @@ const CARDS = [
 
 function Card({ card }) {
   return (
-    <li className="mb-4 break-inside-avoid">
-      <div className={`group relative isolate overflow-hidden rounded-2xl bg-gradient-to-br ${card.tone} ${card.ratio}`}>
+    /* Not a link — see the header note — so no lift and no pointer; the only
+       hover response is a slow zoom on the picture, which promises nothing. */
+    <div className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white p-2 shadow-card ring-1 ring-ink-200/70">
+      <div className={`relative isolate aspect-[16/10] overflow-hidden rounded-2xl bg-gradient-to-br ${card.tone}`}>
         {card.image && (
           <img
             src={card.image}
             alt=""
             loading="lazy"
             width={900}
-            height={1200}
-            /* Decorative: the title says what the card is about, so the picture
-               adds nothing a screen reader needs (`web-design.md`).
-
-               🔴 Softly blurred, sharpening on hover (owner, 2026-09-27: "make
-               image some blur not two much on hover make it clear"). 2px, not
-               Tailwind's `blur-sm` (4px) — at 4px the artwork stops being
-               readable, which defeats having chosen it.
-
-               🔴 The blur is behind `@media (hover: hover)`. A phone has no
-               hover, so an unguarded `blur` would leave every image permanently
-               soft for every touch visitor with no way to clear it. Touch gets
-               the sharp image from the start.
-
-               ⚠️ `scale-[1.03]` is not an effect — a blur samples past the
-               element's own edges, so at 1.0 the card's gradient bleeds in as a
-               pale rim. The scale pushes those edges outside the clip. It does
-               NOT change on hover; only the blur does, so nothing moves. */
-            className="absolute inset-0 -z-10 h-full w-full scale-[1.03] object-cover transition duration-300 motion-reduce:transition-none [@media(hover:hover)]:blur-[2px] [@media(hover:hover)]:group-hover:blur-0"
+            height={560}
+            /* Decorative: the title says what the card is about (`web-design.md`).
+               Sharp from the start — the old 2px blur read as low quality until
+               hovered (2026-09-27 redesign). */
+            /* Full colour, untreated (owner, 2026-09-27: a muted treatment was
+               "dull", a partial one "not looking good"). The fix for pictures
+               that clash is replacing them — see IMAGE NOTE above CARDS. */
+            className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none"
           />
         )}
-
-        <span className="absolute left-3 top-3 rounded-md bg-ink-900/80 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-900 shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
           {card.chip}
         </span>
-
-        {/* The frosted panel. It sits INSIDE the card and stops short of the
-            bottom, which is what gives the reference its layered look. */}
-        <div className="absolute inset-x-2 bottom-2 rounded-lg bg-white/85 p-2.5 ring-1 ring-ink-900/10 backdrop-blur-md">
-          <h3 className="text-[12.5px] font-extrabold leading-snug text-ink-900">
-            {card.title}
-          </h3>
-          <p className="mt-1 text-[10.5px] leading-snug text-ink-700">{card.body}</p>
-        </div>
       </div>
-    </li>
+      <div className="flex flex-1 flex-col px-3 pb-3 pt-4 sm:px-4 sm:pb-4">
+        <h3 className="text-[16px] font-semibold leading-snug tracking-tight text-ink-900">{card.title}</h3>
+        <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-600">{card.body}</p>
+      </div>
+    </div>
   );
 }
 
 export function PlatformCards() {
+  const railRef = useRef(null);
+  const [active, setActive] = useState(0);
+
+  // Phones: which card is in view, for the "1 / 8" counter.
+  const onScroll = () => {
+    const el = railRef.current;
+    if (!el || !el.firstElementChild) return;
+    const step = el.firstElementChild.getBoundingClientRect().width + 12;
+    setActive(Math.min(CARDS.length - 1, Math.round(el.scrollLeft / step)));
+  };
+
   return (
-    /* CSS columns rather than a grid: the cards are different heights on
-       purpose, and columns pack them without anyone having to hand-assign a row
-       span. `break-inside-avoid` on each card is what stops one splitting across
-       a column boundary.
-
-       🔴 FOUR columns (owner, 2026-09-27: "make 4 cards in one row"), which
-       with eight cards is two per column — four across, as the reference is.
-
-       ⚠️ The cards are LANDSCAPE because the artwork is: the owner's eight files
-       run 1.20:1 to 2.40:1, every one wider than tall, and this grid started
-       portrait to match the reference. A 2.40:1 image in a 4:5 card loses about
-       68% of its width to `object-cover`.
-
-       ⚠️ The ratios are now only 4/3 and 5/4 — NOT each file's own ratio, which
-       is what three columns allowed. At four columns a card is ~316px wide, so a
-       3/2 card would stand 211px tall and the panel would eat 45% of it. The
-       taller ratios buy the panel its room, and the cost is more side-cropping:
-       the AI graphic loses ~44% of its width, the rest much less. If an image is
-       replaced, check its ratio against the card's — that is the number that
-       decides how much survives.
-
-       ✅ EIGHT cards (owner, 2026-09-27). Adding cards is only ever allowed if
-       the new lines are TRUE; the last two were verified in the backend first. */
-    <ul className="mt-8 columns-1 gap-4 sm:columns-2 sm:gap-4 lg:columns-4">
-      {CARDS.map((c) => (
-        <Card key={c.title} card={c} />
-      ))}
-    </ul>
+    <>
+      {/* Below lg: ONE swipeable row (eight stacked cards were ~2,600px on a
+          phone, and two columns still ran ~1,700px on a tablet). lg+: four
+          across, two rows. All cards share one
+          image shape, so the grid is even — the old staggered columns fought
+          the premium feel. */}
+      <ul
+        ref={railRef}
+        onScroll={onScroll}
+        className="scrollbar-none -mx-4 mt-8 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-2 sm:-mx-6 sm:scroll-px-6 sm:gap-4 sm:px-6 lg:mx-0 lg:grid lg:snap-none lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0"
+      >
+        {CARDS.map((c) => (
+          <li key={c.title} className="w-[82%] shrink-0 snap-start sm:w-[46%] md:w-[38%] lg:w-auto">
+            <Card card={c} />
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-center text-[12px] font-medium tabular-nums text-ink-500 lg:hidden" aria-hidden="true">
+        {active + 1} / {CARDS.length}
+      </p>
+    </>
   );
 }

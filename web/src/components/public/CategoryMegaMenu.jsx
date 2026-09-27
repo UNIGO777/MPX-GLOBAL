@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
 import { CategoryThumb } from '../catalogue/CategoryThumb.jsx';
 import { Skeleton } from '../ui/Skeleton.jsx';
+import { ChevronDownIcon } from '../ui/icons.jsx';
 
 /**
  * Navbar "Categories" hover mega-menu (design prompt:
@@ -124,6 +125,11 @@ export function CategoryMegaMenu({ current, linkClasses }) {
         className={linkClasses(current === 'Categories')}
       >
         Categories
+        {/* Says "this opens a menu" before anyone hovers it. */}
+        <ChevronDownIcon
+          className={`h-3.5 w-3.5 text-ink-500 transition-transform motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        />
       </Link>
 
       {open && (

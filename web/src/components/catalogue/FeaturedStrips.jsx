@@ -70,9 +70,9 @@ function BannerShell({ linkUrl, className, children }) {
  */
 const SLIDE = {
   responsive: {
-    img: 'aspect-[16/7] w-full object-cover sm:aspect-auto sm:h-52 lg:h-56 2xl:h-64',
+    img: 'aspect-[16/7] w-full animate-fade-in object-cover motion-reduce:animate-none sm:aspect-auto sm:h-52 lg:h-56 2xl:h-64',
     band: 'p-4 pt-12 sm:p-7 sm:pt-16',
-    title: 'text-base sm:text-2xl',
+    title: 'text-base sm:text-2xl lg:text-[28px]',
     sub: 'text-[13px] sm:text-sm',
   },
   desktop: { img: 'h-full w-full object-cover', band: 'p-7 pt-16', title: 'text-2xl', sub: 'text-sm' },
@@ -101,7 +101,7 @@ export function BannerSlide({ banner, size = 'responsive', clearArrows = false }
           // headline; keep the text clear of them when they are shown.
           clearArrows ? 'sm:px-16' : ''
         }`}>
-          {banner.title && <span className={`block font-extrabold leading-tight text-white ${c.title}`}>{banner.title}</span>}
+          {banner.title && <span className={`block font-bold leading-tight tracking-tight text-white ${c.title}`}>{banner.title}</span>}
           {banner.subtitle && <span className={`mt-1 block max-w-2xl text-white/85 ${c.sub}`}>{banner.subtitle}</span>}
         </span>
       )}
@@ -131,9 +131,12 @@ export function BannerStrip({ banners }) {
   const banner = banners[current];
   const go = (step) => setIndex((current + step + banners.length) % banners.length);
 
+  // Many banners (up to 24) would make a row of 40px bars wider than a phone.
+  const barWidth = banners.length > 6 ? 'w-5' : 'w-9 sm:w-10';
+
   return (
     <div
-      className="relative"
+      className="group/strip relative"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -142,61 +145,73 @@ export function BannerStrip({ banners }) {
       aria-label="Featured"
     >
       {/* Its own positioned box, so the arrows centre on the IMAGE — not on
-          image + dots row, which pushed them down into the headline. */}
+          image + progress row, which pushed them down into the headline. */}
       <div className="relative">
-      <BannerShell
-        linkUrl={banner.linkUrl}
-        className="group relative block overflow-hidden rounded-2xl bg-ink-100 shadow-card"
-      >
-        <BannerSlide banner={banner} clearArrows={many} />
-      </BannerShell>
+        <BannerShell
+          linkUrl={banner.linkUrl}
+          className="group relative block overflow-hidden rounded-3xl bg-ink-100 shadow-card ring-1 ring-black/5"
+        >
+          <BannerSlide banner={banner} clearArrows={many} />
+        </BannerShell>
 
-      {many && (
-        <>
-          <button
-            type="button"
-            onClick={() => go(-1)}
-            aria-label="Previous banner"
-            className="absolute left-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink-900 shadow-card hover:bg-white sm:flex"
-          >
-            <ChevronLeftIcon className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => go(1)}
-            aria-label="Next banner"
-            className="absolute right-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink-900 shadow-card hover:bg-white sm:flex"
-          >
-            <ChevronRightIcon className="h-5 w-5" />
-          </button>
-        </>
-      )}
+        {many && (
+          <>
+            {/* Frosted, and only shown while the pointer is over the strip (or a
+                key has focused one) — they are for people already looking. */}
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              aria-label="Previous banner"
+              className="absolute left-4 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-ink-900 shadow-card ring-1 ring-black/5 backdrop-blur-md transition hover:bg-white focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/30 sm:flex sm:opacity-0 sm:group-hover/strip:opacity-100 motion-reduce:transition-none"
+            >
+              <ChevronLeftIcon className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              aria-label="Next banner"
+              className="absolute right-4 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-ink-900 shadow-card ring-1 ring-black/5 backdrop-blur-md transition hover:bg-white focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/30 sm:flex sm:opacity-0 sm:group-hover/strip:opacity-100 motion-reduce:transition-none"
+            >
+              <ChevronRightIcon className="h-5 w-5" />
+            </button>
+          </>
+        )}
       </div>
 
       {many && (
-        <>
-          {/* The dot is 8px; the button around it is the 40px tap target. */}
-          <div className="mt-1 flex justify-center" role="tablist" aria-label="Choose a banner">
-            {banners.map((b, i) => (
-              <button
-                key={b.id}
-                type="button"
-                role="tab"
-                aria-selected={i === current}
-                aria-label={`Banner ${i + 1} of ${banners.length}`}
-                onClick={() => setIndex(i)}
-                className="group flex h-10 min-w-[28px] items-center justify-center px-1"
+        /* Progress bars, not dots: the active one fills over the 6 s the banner
+           shows, so the rotation is visible and predictable. While paused
+           (hover/focus) it holds full — `key` restarts the fill on resume, in
+           step with the interval, which also restarts. Reduced motion: the
+           fill never animates, so the active bar is simply full. The bar is
+           4px; the button around it is the 40px tap target. */
+        <div className="mt-2 flex justify-center" role="tablist" aria-label="Choose a banner">
+          {banners.map((b, i) => (
+            <button
+              key={b.id}
+              type="button"
+              role="tab"
+              aria-selected={i === current}
+              aria-label={`Banner ${i + 1} of ${banners.length}`}
+              onClick={() => setIndex(i)}
+              className="group flex h-10 items-center justify-center px-1"
+            >
+              <span
+                aria-hidden="true"
+                className={`relative block h-1 overflow-hidden rounded-full bg-ink-200 transition-colors group-hover:bg-ink-300 ${barWidth}`}
               >
-                <span
-                  aria-hidden="true"
-                  className={`block h-2 rounded-full transition-all motion-reduce:transition-none ${
-                    i === current ? 'w-6 bg-primary-600' : 'w-2 bg-ink-200 group-hover:bg-ink-300'
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-        </>
+                {i === current && (
+                  <span
+                    key={`${current}-${paused}`}
+                    className={`absolute inset-0 origin-left rounded-full bg-ink-900 ${
+                      paused ? '' : 'animate-banner-progress motion-reduce:animate-none'
+                    }`}
+                  />
+                )}
+              </span>
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );

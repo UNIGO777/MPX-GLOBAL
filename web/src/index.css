@@ -176,39 +176,26 @@
 }
 
 @layer utilities {
-  /* The hero's circuit pulses: a short dash travelling the length of a trace.
-     `pathLength="100"` on each path normalises the scale, so one offset range
-     works for every trace regardless of its real length.
-
-     Offset runs 100 → -100 so the dash enters at the path's START and leaves at
-     its END. Every trace is authored frame-edge-first, so that is what makes the
-     pulses converge INWARD on the search bar rather than fly out of it. Reverse
-     the keyframes and the section stops meaning what it is there to mean.
-
-     🔴 Stopped under `prefers-reduced-motion` (`web-design.md`). It used to keep
-     the still traces visible so the band would not become a hole; the owner
-     removed those traces on 2026-09-26, so there is nothing left to fall back to
-     and the band simply reads as plain cream. Nothing is lost — every word in
-     the hero is real DOM above this layer. */
-  .mpx-circuit-pulse {
-    animation-name: mpx-circuit-run;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-    stroke-dashoffset: 100;
+  /* Landing hero ground (2026-09-27, owner: "background is too plain" — then
+     "exactly same design", "the grid lines are visible"). Copied from the
+     owner's reference at the reference's OWN strength: the grid is 12.5% of a
+     pale grey and should be barely there; the glow is 7% of the brand red. Do
+     not strengthen either — both were stronger once and the owner rejected it. */
+  .bg-hero-grid {
+    background-image:
+      linear-gradient(to right, theme('colors.ink.200 / 12.5%') 1px, transparent 1px),
+      linear-gradient(to bottom, theme('colors.ink.200 / 12.5%') 1px, transparent 1px);
+    background-size: 48px 48px;
   }
-  @keyframes mpx-circuit-run {
-    from {
-      stroke-dashoffset: 100;
-    }
-    to {
-      stroke-dashoffset: -100;
-    }
+  .bg-hero-glow {
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, theme('colors.primary.600 / 7%') 0%, transparent 70%);
   }
-  @media (prefers-reduced-motion: reduce) {
-    .mpx-circuit-pulse {
-      animation: none;
-      opacity: 0;
-    }
+  /* The headline's highlighted words — brand red to a lighter red and back. */
+  .text-gradient-brand {
+    background: linear-gradient(135deg, theme('colors.primary.700') 0%, theme('colors.primary.500') 50%, theme('colors.primary.700') 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   /* A light sweeping across a button, so one action on the bar reads as THE

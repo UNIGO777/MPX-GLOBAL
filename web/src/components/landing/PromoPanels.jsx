@@ -1,83 +1,42 @@
 import { Link } from 'react-router-dom';
 
+import { ArrowRightIcon } from '../ui/icons.jsx';
+
 /**
- * The three sector panels under the hero — one full-width, two halves
- * (owner, 2026-09-27, to the store layout they sent, with their three photos in
- * the order they gave: agriculture, garments, textiles).
+ * "Browse by sector" — the three sector tiles under the hero.
  *
- * 🔴 **EVERY LINK IS A REAL DESTINATION.** The reference art has "Buy Now" and
- * "Learn More"; this platform sells nothing and has no product pages, so each
- * panel leads to the CATEGORY it shows — the slugs below are what
- * `src/seed/catalogue.data.js` produces through `slugify()`, not guesses — plus
- * one real second link each where there is a second place worth sending someone
- * (`web-ui-notes.md`: nothing that looks live and does nothing).
+ * 2026-09-27 redesign (owner: "super premium… liked by investors", landing
+ * redone section by section). Desktop: "one and two" — agriculture tall on
+ * the left half, the other two stacked on the right (see the grid comment for
+ * the versions the owner rejected). Phone and tablet: agriculture full width,
+ * the other two side by side. It replaces the red-washed, hairline-
+ * joined panels.
  *
- * 🔴 **The lead panel's second link is supplier search on purpose.**
- * `/search?type=supplier` is the ONLY way into supplier mode since the
- * Products|Suppliers toggle was removed from `/search`, and it lost its last
- * mobile entry point when the browse bar was hidden. This keeps it reachable.
+ * 🔴 **EVERY TILE IS A REAL DESTINATION** — the category it shows. The slugs are
+ * what `src/seed/catalogue.data.js` produces through `slugify()`, not guesses.
+ * The whole tile is the link, so there are no second links inside it (a link in
+ * a link is invalid). The two that lived here before are elsewhere now:
+ * supplier search is "Suppliers" in the header (phone menu included), and AI
+ * search is the hero itself.
  *
- * 🔴 **The subtitles describe the REAL listing fields.** Grade, packaging and
- * shelf life; size, fabric and colour; material, GSM and width — each one is an
- * attribute that category actually defines in `catalogue.data.js`. No prices, no
- * offers, no counts: the reference's "From ₹4,499" is the kind of line a buyer
- * acts on, and nothing here states anything the platform cannot back.
+ * 🔴 **The subtitles describe the REAL listing fields** each category defines in
+ * `catalogue.data.js`. No prices, offers or counts — nothing the platform
+ * cannot back.
  *
- * 🔴 **RED OVERLAY** (owner, 2026-09-27: "image quality is not that much better
- * … make try red color overlay"). The source files are 740px wide against a
- * panel up to ~1310px, so they upscale and go soft; a brand wash hides that and
- * ties the block to the palette. The photograph still reads as texture and
- * shape underneath.
- *
- * 🔴 **The wash is /65, and EVERY WORD ON IT IS SOLID WHITE. Those two facts
- * are one decision.** The owner asked for a lighter wash; what bought the light
- * was not the alpha but the copy. With a dimmed subtitle (`white/80`) and
- * eyebrow (`white/70`), the dimmest word sets the floor and the wash could not
- * go below /80:
- *
- *   dimmed copy   /70 3.87 ✗   /75 4.36 ✗   /80 4.90 ✓   /85 5.46 ✓
- *   solid white   /60 4.44 ✗   /65 5.17 ✓   /70 6.04 ✓   /75 7.05 ✓
- *
- * Solid white let the wash drop twenty points — far more of the photograph — at
- * the SAME contrast. So if you ever dim the subtitle or the eyebrow again, the
- * wash has to go back up to /80 in the same edit.
- *
- * 🔴 **The shade itself is not a choice either.** `primary-800` fails at every
- * step up to /85 (4.48) and `primary-700` never passes 3.67, so a brighter brand
- * red is unavailable at any opacity. And with no overlay at all the copy
- * measures **1.00:1** — white text on a white sack, i.e. invisible.
- *
- * 🔴 **The veil went /65 → /40 by moving the darkening INTO the picture**
- * (owner, 2026-09-27: "more"). A flat veil could not go below /65 — /60 is
- * 4.44:1 — and the copy block is exactly as bright as the worst of the panel, so
- * there was no headroom to find there either. `brightness(.65) saturate(1.3)` on
- * the image supplies the same darkening while keeping the photograph's OWN
- * colours, which a red film flattens. Measured over all three files at 320–1920:
- * **5.06:1**, with ~9% more surviving texture than the flat /65 it replaced.
- *
- * ⚠️ Measured and REJECTED, so nobody re-tries them:
- *   · `mix-blend-multiply` — identical contrast at the same alpha but keeps LESS
- *     texture (0.016 vs 0.035), so it is strictly worse here;
- *   · a centred vignette — the copy fills ~55% of these short panels, leaving too
- *     little edge to lighten for the trade to pay;
- *   · lighter still (brightness .55 + /25) — 4.97:1 and more texture, but the
- *     veil is then too faint to read as brand red.
- *
- * The three numbers move together: brightness, saturate and the veil's alpha.
- * Change one and re-measure all of it. Re-measure if a photograph is replaced.
- *
- * ⚠️ **The source files are 740px wide.** That is fine for the two halves, but
- * the lead panel is up to ~1310px on a desktop, so it upscales about 1.8× and
- * goes soft. Raised with the owner — it wants a wider original.
+ * 🔴 **Legibility comes from the bottom fade, not a colour wash.** The copy sits
+ * in the lower part of each tile, over a black gradient that is at its darkest
+ * exactly there, so solid white text holds its contrast whatever the photo
+ * does. The old flat red wash is gone — it flattened the photographs' own
+ * colours. On desktop the lead tile is half the width, so the 740px-wide
+ * source files upscale only slightly.
  */
 const PROMOS = [
   {
     id: 'agriculture',
     eyebrow: 'Grains, pulses & spices',
     title: 'Agriculture',
-    subtitle: 'Listed by Indian exporters with grade, packaging size and shelf life on every product.',
-    cta: { label: 'Browse agriculture', to: '/category/agriculture' },
-    secondary: { label: 'Verified exporters', to: '/search?type=supplier' },
+    subtitle: 'Grade, packaging size and shelf life on every listing.',
+    to: '/category/agriculture',
     image: '/promo-agriculture.avif',
   },
   {
@@ -85,8 +44,7 @@ const PROMOS = [
     eyebrow: 'Ready-made lines',
     title: 'Apparel & Garments',
     subtitle: 'Size, fabric, colour and gender on every listing.',
-    cta: { label: 'Browse garments', to: '/category/apparel-garments' },
-    secondary: null,
+    to: '/category/apparel-garments',
     image: '/promo-garments.avif',
   },
   {
@@ -94,99 +52,114 @@ const PROMOS = [
     eyebrow: 'Fabric & yarn',
     title: 'Textiles',
     subtitle: 'Material, GSM and width, stated up front.',
-    cta: { label: 'Browse textiles', to: '/category/textiles-fabrics-yarn' },
-    secondary: { label: 'Ask AI instead', to: '/ai-search' },
+    to: '/category/textiles-fabrics-yarn',
     image: '/promo-textiles.avif',
   },
 ];
 
-/** A hash stays on this page; a path is a route. Never a bare `#`. */
-function PromoLink({ to, className, children }) {
-  if (to.startsWith('#')) return <a href={to} className={className}>{children}</a>;
-  return <Link to={to} className={className}>{children}</Link>;
+/** "All categories" — one button, the same on desktop and phone. */
+function AllCategoriesButton({ className = '' }) {
+  return (
+    <Link
+      to="/categories"
+      className={`group inline-flex h-11 items-center gap-2.5 rounded-full border border-ink-200 bg-white pl-5 pr-1.5 text-sm font-semibold text-ink-900 shadow-sm transition-colors hover:border-ink-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/20 ${className}`}
+    >
+      All categories
+      <span
+        aria-hidden="true"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-900 text-white transition-colors duration-300 group-hover:bg-primary-600"
+      >
+        <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 motion-reduce:transition-none" />
+      </span>
+    </Link>
+  );
 }
 
-function Panel({ promo, big = false }) {
+function Tile({ promo, lead = false }) {
   return (
-    <div
-      className={`relative isolate flex flex-col items-center justify-center overflow-hidden bg-primary-900 px-5 py-8 text-center sm:px-8 sm:py-10 ${
-        big ? 'min-h-[240px] sm:min-h-[280px] lg:min-h-[300px]' : 'min-h-[210px] sm:min-h-[240px]'
+    <Link
+      to={promo.to}
+      className={`group relative isolate flex flex-col overflow-hidden rounded-3xl bg-ink-900 shadow-card ring-1 ring-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/40 ${
+        lead
+          ? 'col-span-2 h-64 sm:h-80 lg:col-span-1 lg:row-span-2 lg:h-auto'
+          : 'col-span-1 h-48 sm:h-60 lg:h-auto'
       }`}
     >
+      {/* Decorative: the heading names the category (`web-design.md`). */}
       <img
         src={promo.image}
         alt=""
         loading="lazy"
-        /* Decorative: the heading names the category, so the picture adds
-           nothing a screen reader needs (`web-design.md`). */
-        className="absolute inset-0 -z-10 h-full w-full object-cover brightness-[.65] saturate-[1.3]"
+        className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 motion-reduce:transition-none"
       />
-      {/* The wash. Flat, not a gradient: a gradient's lightest stop is the one
-          that decides legibility, so the whole thing would have to sit at the
-          safe value anyway and the variation would buy nothing. `bg-primary-900`
-          also sits on the element itself, so a browser that cannot decode AVIF
-          still shows a red panel with readable copy rather than bare wash. */}
-      <span className="absolute inset-0 -z-10 bg-primary-900/40" />
+      <span
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 bg-gradient-to-t from-black/90 via-black/45 to-black/0"
+      />
 
-      <p className="text-[11px] font-bold uppercase tracking-wider text-white">{promo.eyebrow}</p>
-      <h3
-        className={`mt-1 text-balance font-extrabold leading-tight tracking-tight text-white ${
-          big ? 'text-2xl sm:text-3xl lg:text-4xl' : 'text-xl sm:text-2xl'
-        }`}
-      >
-        {promo.title}
-      </h3>
-      <p className="mt-2 max-w-xl text-pretty text-[13px] leading-relaxed text-white sm:text-sm">
-        {promo.subtitle}
-      </p>
-
-      {/* 44px tall — `web-design.md`'s touch-target floor — including the text
-          link, which is still something people tap. */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
-        <PromoLink
-          to={promo.cta.to}
-          className="inline-flex h-11 items-center justify-center rounded-full bg-white px-6 text-sm font-bold text-primary-800 transition hover:bg-primary-50"
-        >
-          {promo.cta.label}
-        </PromoLink>
-        {promo.secondary && (
-          <PromoLink
-            to={promo.secondary.to}
-            className="inline-flex h-11 items-center text-sm font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:decoration-white"
+      <div className="mt-auto flex items-end justify-between gap-3 p-4 sm:gap-4 sm:p-6 lg:p-7">
+        <div className="min-w-0">
+          {/* Small tiles on a phone are ~170px wide: the title alone fits there. */}
+          <p
+            className={`text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/85 sm:text-[11px] ${
+              lead ? '' : 'hidden sm:block'
+            }`}
           >
-            {promo.secondary.label}
-          </PromoLink>
-        )}
+            {promo.eyebrow}
+          </p>
+          <h3
+            className={`mt-1 text-balance font-bold leading-tight tracking-tight text-white ${
+              lead ? 'text-2xl sm:text-3xl xl:text-4xl' : 'text-[17px] sm:text-2xl xl:text-[26px]'
+            }`}
+          >
+            {promo.title}
+          </h3>
+          <p
+            className={`mt-1.5 max-w-md text-pretty text-[13px] leading-relaxed text-white sm:text-sm ${
+              lead ? '' : 'hidden sm:block'
+            }`}
+          >
+            {promo.subtitle}
+          </p>
+        </div>
+        <span
+          aria-hidden="true"
+          className={`${lead ? 'flex' : 'hidden sm:flex'} h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-ink-900 shadow-sm transition-colors duration-300 group-hover:bg-primary-600 group-hover:text-white sm:h-11 sm:w-11`}
+        >
+          <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-45 motion-reduce:transition-none" />
+        </span>
       </div>
-    </div>
+    </Link>
   );
 }
 
 export function PromoPanels() {
   const [lead, ...rest] = PROMOS;
   return (
-    <section
-      aria-label="Browse by sector"
-      /* Back inside the page's own gutters (owner, 2026-09-27: "make margis frm
-         left and right also"). The full-bleed version ran to both screen edges;
-         this now lines up with every other section on the page. */
-      className="w-full bg-surface-canvas px-4 py-4 sm:px-6 sm:py-6 lg:px-10 xl:px-16"
-    >
-      {/* The three panels still BUTT TOGETHER — a 4px hairline, no gaps — which
-          is what the owner asked for earlier. Rounding and clipping the wrapper
-          rather than each panel keeps that join sharp while the block as a whole
-          gets the same corner as the rest of the page. `bg-white` is what shows
-          through the hairlines. */}
-      <div className="grid gap-1 overflow-hidden rounded-2xl bg-white">
-        <Panel promo={lead} big />
-        {/* One column on a phone; the halves sit side by side only once there is
-            width for both headlines to breathe. */}
-        <div className="grid gap-1 sm:grid-cols-2">
-          {rest.map((p) => (
-            <Panel key={p.id} promo={p} />
-          ))}
+    <section aria-labelledby="sectors-heading" className="w-full bg-white px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-16 xl:px-16">
+      <div className="mb-5 flex items-end justify-between gap-4 sm:mb-7">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Browse by sector</p>
+          <h2 id="sectors-heading" className="mt-1.5 text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
+            Sourcing, organised by industry
+          </h2>
         </div>
+        <AllCategoriesButton className="hidden shrink-0 justify-center sm:inline-flex" />
       </div>
+
+      {/* Phone and tablet: agriculture full width, the other two side by side.
+          lg+: "one and two" (owner, 2026-09-27) — agriculture tall on the LEFT
+          HALF, the other two stacked on the right half. History of this grid:
+          a 60%-wide tall lead "took all the attention", three equal tiles "lost
+          its essence"; half width keeps the feature tile without the weight. */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:h-[500px] lg:grid-rows-2 xl:h-[540px]">
+        <Tile promo={lead} lead />
+        {rest.map((p) => (
+          <Tile key={p.id} promo={p} />
+        ))}
+      </div>
+
+      <AllCategoriesButton className="mt-4 flex w-full justify-between sm:hidden" />
     </section>
   );
 }
