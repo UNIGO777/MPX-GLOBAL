@@ -434,7 +434,7 @@ export function Landing() {
             🆕 2026-09-27 — picture cards (`PlatformCards.jsx`); restyled the same
             day as clean feature cards (words below the picture, a swipeable row
             on phones). The sentences are unchanged. */}
-        <section id="platform" aria-labelledby="platform-heading" className="bg-white py-10 sm:py-14 lg:py-16">
+        <section id="platform" aria-labelledby="platform-heading" className="bg-surface-subtle py-10 sm:py-14 lg:py-16">
           <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Why MPX Global</p>
             <h2 id="platform-heading" className="mt-1.5 text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">

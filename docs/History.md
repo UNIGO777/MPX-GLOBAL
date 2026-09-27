@@ -175,6 +175,39 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-28 — Platform cards turned LIGHT.** Owner: "card color is not looking good in black make it
+  in professnol color". White cards, ink text, a primary-600 mark and a primary-50 tag.
+  - 🔴 **The SECTION moved too, not just the cards.** A white card on a white section has no edge at all,
+    so the ground is now `surface-subtle` — the token that exists for exactly this ("the canvas behind
+    every card", the owner's own #F8F8F8 for the whole product) rather than a new grey invented here.
+  - ⚠️ **The card's edge is carried by `shadow-card`, not the hairline.** A `surface-border` ring on
+    `surface-subtle` measures **1.60:1** — under the 3:1 WCAG asks of a UI boundary. That rule does not
+    bind here (these cards are not operable controls), but it does mean the ring alone cannot separate
+    them, and the note says so. Same card pattern the catalogue already uses.
+  - Contrast measured before committing to the palette: title ink-900 **20.3:1**, body ink-600 **5.4:1**,
+    mark primary-600 **5.7:1**, tag primary-700 on primary-50 **6.7:1**. `ink-400` is 2.6:1 and is used
+    for no text here.
+- **2026-09-28 — "What makes MPX Global different" restyled to the framed card the owner sent.** A mark
+  and a tag across the top, a large light-weight title, the picture inset below it, the sentence
+  underneath — on a dark card.
+  - 🔴 **The reference's ARROW BUTTON and PILL CTA are deliberately absent.** These cards are not links —
+    there is no page behind "A person reads the documents" — and a control that looks live and does
+    nothing is what `web-ui-notes.md` forbids. I checked first: the section renders zero links today. The
+    tag top-right is styled to read as a label, not something to press. If these ever get destinations,
+    the arrow comes back with them.
+  - **The eight sentences carry over unchanged**, through a third restyle now. They are still the only
+    things on this page that say what the platform does, and the rule that keeps them honest is the same
+    one that kept the design's six invented testimonials off it.
+  - **Icons came back** for the top-left mark — Shield, BadgeCheck, Sparkle, Chat, Quote, CreditCard,
+    Lock, Building — the set that already existed for these exact ideas.
+  - **A plain grid replaced the masonry.** Every card now has the same parts in the same order, so
+    staggering buys nothing and costs the row alignment that makes eight of them scan as a set.
+  - Contrast measured on the dark card: title **20.3:1**, body `white/70` **9.7:1**, mark `white/55`
+    **6.0:1** (a non-text element needs 3:1), tag **8.6:1** on its own chip. `white/40` and below is not
+    usable for text here — noted in the file.
+  - ⚠️ **Asked before touching anything.** The owner's first instinct was the sector tiles; that section
+    is on a layout they chose on 2026-09-27 after rejecting two others, so it was worth the one question
+    rather than rebuilding it on a guess.
 - **2026-09-28 — Public footer rebuilt to the owner's Alibaba reference ("make exact"; `PublicFooter.jsx`).**
   - **Columns:** five centred columns, About · Trade services · Source · Help Center · Sell. "Stay connected" icons sit under the last column, then a right-aligned app row with App Store / Google Play badges, then the grey legal bar with the copyright + address line. The brand column is gone.
   - **Placeholders:** pages that do not exist are plain UNCLICKABLE text with no label (owner: "no coming soon, just unclickable"), and so are the store badges and the non-LinkedIn social icons. All are logged in `docs/UiWebNotes.md` as an owner override of the "visibly non-final" rule. Only "Trade Finance" carries "Coming soon" (Bucket B, announcement only).
