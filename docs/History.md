@@ -229,6 +229,760 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
     - vitest's `vi.fn` rejecting spies surface as unhandled, so throwing fakes are plain functions.
     - Web `testTimeout` is now 20 s (typing-heavy tests under full load).
   - Test data: one draft quotation (`MPX-Q-2026-000001`) was created in the LOCAL test DB to record the quotation pages.
+- **2026-09-27 — "Verified suppliers" section rebuilt as large cards, plus PLACEHOLDER suppliers for a
+  client demo.** Owner sent a card layout and asked for "100+ verified suppliers" and dummy suppliers.
+  Red-alerted; owner reaffirmed — **"do it for now its client request"** — so it is built, behind a
+  safeguard.
+  - 🔴 **Why it was alerted.** This page's standing rule is that it states nothing it cannot back, which
+    is why the design's six invented testimonials were never built (`Client-Requests.md` §4.2).
+    Fabricated COMPANIES are that problem one step further: a visitor would believe they are verified
+    businesses here. On a marketplace whose product is trust, shipping them to real buyers is the worst
+    thing this page could do.
+  - 🔴 **The safeguard — three conditions, all required.** Placeholders render only when
+    `VITE_DEMO_SUPPLIERS === 'true'` (unset everywhere by default, so a production build shows none of
+    it), AND the curated list from `/admin/featured` is empty, AND the caller asks for the fallback.
+    **Real suppliers always win.**
+  - 🔴 **The strapline follows the CARDS, so the two cannot disagree.** Real data → the real total from
+    `/public/search?type=supplier&verifiedOnly=true`, stated plainly. Demo → the "100+" the owner asked
+    for, which exists only under the flag. The first version mixed them — a real "3+" over four
+    placeholder cards — and read as a lie about both.
+  - A DEV-only warning strip sits above the cards. A client-preview build is not DEV, so the demo itself
+    stays clean while nobody building the page can mistake the placeholders for real data.
+  - **`VerifiedSupplierCard` takes only the public projection** — name, slug, country, description, logo,
+    entityType, establishedYear, `verified`, memberSince, productCount. Nothing is composed or inferred;
+    `m3-public-projection.md` guards that surface and a card is not a reason to widen it. `verified` is
+    the DERIVED boolean, never `kycStatus`.
+  - ⚠️ The reference card carries a person's photograph, an investment figure and two approval dates. We
+    hold none of those and they are not public, so the stat block shows what the platform actually knows:
+    listings published, and the year established.
+  - 🔴 **Before launch: delete `lib/demoSuppliers.js`, the `?? demoSuppliers()` fallback, the flag and its
+    `.env.example` entry.** Logged in `docs/UiWebNotes.md`.
+- **2026-09-27 — Footer turned LIGHT.** Owner: "in white color", overriding the dark ground kept a few
+  minutes earlier. The reason given for dark was real — the page above ends on a white FAQ, so a light
+  footer leaves it with no terminus — so the terminus is now **drawn** instead of implied: a `border-t`
+  hairline above, and the legal bar on `surface-subtle`, as in the reference.
+  - ⚠️ **The logo variant had to change with the ground.** `variant="white"` is the all-white mark for
+    dark surfaces; on white it would have been invisible. It is `variant="blue"` now — the navy-and-red
+    mark drawn for light surfaces. This is the kind of thing a colour swap silently breaks.
+  - **Text colours were measured, not inverted.** On white: ink-900 20.31:1, ink-600 5.42:1, ink-500
+    4.97:1. `ink-400` measures **2.58:1** and is used for no text here, however muted a link should look —
+    noted in the file so the next person does not reach for it.
+- **2026-09-27 — Footer restructured to the multi-column layout with a bottom legal bar** that the owner
+  sent (an Alibaba footer). Five columns — Marketplace · For buyers · For sellers · Support · Legal —
+  brand and address on the left, a hairline, then copyright and legal links along the bottom.
+  - 🔴 **The STRUCTURE was copied, not the contents.** The reference carries Careers, Blog, a Help Center,
+    "Report a violation", payment-network badges and two app-store badges. We have pages for none of them:
+    the missing pages are the ones deleted from this footer on 2026-08-23 and still an open question with
+    the client (`Client-Requests.md` §4.1); store badges wait on the apps being published (§4.4), so there
+    is nothing to point them at; and **payment-network logos would be an outright lie** — MPX Global holds
+    no money and moves none. Every link now in the footer goes somewhere that exists today.
+  - 🔴 **"Stay connected" is LinkedIn only, and only when a superadmin has set it.** There are no other
+    accounts, and a row of social icons pointing at nothing is the same defect in a smaller shape.
+  - ⚠️ **The reference is a LIGHT footer; this one stays dark** — the page above it ends on a white FAQ,
+    and a light footer would leave it with no terminus. Deliberate, and noted in the file.
+  - In-page anchors go through a `hash()` helper so "How it works" / "Common questions" / "Why MPX Global"
+    still work from `/privacy`, `/search` and every other route, not only from the landing page.
+- **2026-09-27 — FAQ open/close now animates** (`FaqAccordion.jsx`). Owner: "make it smooth".
+  - 🔴 **The native `<details>` had to go**, and the reason is narrow: it cannot animate its height — the
+    content just appears. `::details-content` with `interpolate-size` can, and only in very recent
+    Chromium, so Safari and Firefox would still snap. Half a feature is not the feature.
+  - ⚠️ **Correcting yesterday's note on this file:** it claimed `<details>` "works with JavaScript off".
+    That was wrong for THIS app — `index.html` is `<div id="root">` with no prerendering, so without
+    JavaScript nothing renders at all. The argument never applied, and nothing real was lost by moving to
+    a controlled component.
+  - 🔴 **Height animates with `grid-template-rows: 0fr → 1fr`, not a measured pixel height.** A measured
+    height breaks the moment the copy reflows — longer answer, narrower column, different font — and that
+    is the usual reason these snap shut at the wrong size. The grid unit resolves to whatever the content
+    actually is, at any width.
+  - 🔴 **A closed panel is `invisible`, not merely zero-height.** Zero height with `overflow: hidden`
+    leaves the text in the accessibility tree, so a screen reader would read every answer whether or not
+    it was open. `visibility` also transitions as a discrete step — visible immediately on opening, hidden
+    only after the collapse finishes — which is exactly the wanted behaviour.
+  - A11y kept: real `<h3>` around each control so the questions appear in a heading list, plus
+    `aria-expanded` / `aria-controls` and a visible focus ring. `motion-reduce:transition-none` throughout.
+  - More than one row may be open at once — an FAQ where opening the fourth answer closes the one you were
+    half-way through is worse to use.
+- **2026-09-27 — FAQ rebuilt as a two-column numbered accordion**, to the layout the owner sent: heading
+  and a lead-in on the left, expanding numbered rows on the right.
+  - 🔴 **Native `<details>`/`<summary>`, not a hand-rolled accordion.** That gives keyboard operation, the
+    right screen-reader announcements and correct state for free. A div with an `onClick` would need
+    `role`, `aria-expanded`, `aria-controls`, key handling and focus management to reach the same place,
+    and usually gets one of them wrong. It also works with JavaScript off.
+  - 🔴 **Collapsed answers stay in the DOM, so the section is still indexable.** `m3-seo.md` treats the
+    public pages as SEO surface; an accordion that mounts its content on click would hide every answer
+    from a crawler.
+  - The left-hand lead-in describes what is actually below it — verification, cost, the AI step, the app —
+    rather than inviting a contact route the page does not offer a signed-out visitor.
+  - Open state verified separately (a forced-`open` render against the built CSS): chevron rotates, the
+    ring turns `primary-600/30`, and the answer indents past the number so it lines up under the question.
+- **2026-09-27 — Icons added to "How it works".** Owner asked for icons; each step now has one in a
+  tinted tile with its step number as a badge on the corner.
+  - 🔴 **The number stayed.** It is an `<ol>` — the order is the meaning, and an icon alone does not say
+    "second". The icon says what the step is at a glance; the badge keeps the sequence.
+  - Icons are the ones the set already had for these exact ideas — `SearchIcon`, **`EnquiryIcon`**,
+    `ChatIcon`, **`HandshakeIcon`** — rather than approximations.
+  - Contrast measured: icon primary-700 on primary-50 **6.71:1** (a non-text UI element needs 3:1), badge
+    white on primary-600 **5.73:1** (10px text needs 4.5:1).
+- **2026-09-27 — Red wash off the AI band; a neutral scrim in its place.** Owner: "remove red overlay frm
+  there". The red flattened the clip's own purples and blues; ink now replaces it and the colours come
+  back.
+  - 🔴 **The scrim could not simply be deleted.** Measured against a PURE WHITE frame — which this clip
+    really does produce, and its brightest streaks sweep the LEFT of the frame, exactly where the copy
+    sits: no scrim **1.00:1**, /30 2.07:1, /50 3.83:1, **/55 4.56:1 ✓**, /60 5.47:1, /80 11.84:1. So the
+    gradient is `from-ink-900/80 via-ink-900/60 to-ink-900/30` — strong under the copy, nearly bare on the
+    right where only the white button sits.
+  - 🔴 **The scrim moved INTO `AiBandVideo`** so it mounts and unmounts with the clip. Left on the section
+    it would have put a dark wash over the plain red band on phones, which load no video at all.
+  - All three stops are multiples of five, checked in the compiled CSS — the fourth time today that rule
+    mattered.
+- **2026-09-27 — Looping muted clip behind the AI band** (`AiBandVideo.jsx`). Owner supplied the file;
+  renamed to `ai-band.mp4`, with `ai-band-poster.jpg` pulled from the clip itself so the band shows its
+  artwork instead of flashing empty.
+  - 🔴 **It does not load below `lg`, and that is a data decision.** The file is **7.7MB**. Shipping it to
+    every phone visitor to tint one strip is not worth it, so a narrow screen keeps the solid band and
+    downloads nothing. `display: none` would not do — a `<video autoplay>` still fetches — which is why it
+    is a mount check, not a CSS class. The same check covers `prefers-reduced-motion`: CSS cannot pause a
+    video, so under reduced motion it never mounts.
+  - 🔴 **`muted` + `playsInline` are required, not stylistic** — without `muted` every browser refuses to
+    autoplay, and without `playsInline` iOS takes it fullscreen.
+  - 🔴 **The overlay was measured against a WHITE frame, not the clip's average.** The clip is mostly very
+    dark (median luminance 0.005) but it is made of light streaks that reach pure white and they MOVE, so
+    a white streak can pass under a word at any moment. Worst case: primary-700/95 **7.02:1**,
+    primary-600/85 **4.96:1**, primary-600/50 2.5:1 ✗. Hence a gradient — strong where the copy sits,
+    weak on the right where only the white button is and the clip can be seen.
+  - The sub-line was `text-primary-100`, which measures **4.18:1** against that overlay and fails. Both
+    lines are solid white now.
+  - 🔴 **THIRD TIME TODAY: a Tailwind opacity that is not a multiple of five compiles to NOTHING.** This
+    was first written 94/84/48 — all three classes were dropped, the overlay was fully transparent, and
+    the band rendered as the bare clip. Nothing errored. Caught by grepping the compiled CSS, as with
+    `/92` in `PromoPanels.jsx` and the same trap noted in `PlatformCards.jsx`. **Tailwind's opacity scale
+    goes in fives.**
+  - ⚠️ **7.7MB is still large for a landing page** even on desktop. Worth re-encoding smaller (it is
+    540p already, so CRF/bitrate is where the saving is) — raised with the owner.
+- **2026-09-27 — Platform cards: four across, and smaller.** Owner: "make cards small and make 4 cards in
+  one row". Four columns with eight cards is two per column — four across, as the reference is. Card is
+  ~316px wide at 1440. The panel, its type and the chip each stepped down again so the panel does not
+  crowd a shorter card.
+  - ⚠️ **The ratios are no longer each file's own**, which is what three columns allowed. At four columns
+    a 3/2 card stands 211px tall and the panel would take 45% of it, so everything is now 4/3 or 5/4. The
+    cost is more side-cropping — the AI network graphic loses ~44% of its width (its centre survives), the
+    rest much less. Written on the grid so the trade is not re-discovered later.
+- **2026-09-27 — Card artwork sits softly blurred and sharpens on hover.** Owner: "make image some blur
+  not two much on hover make it clear". 2px, not Tailwind's `blur-sm` (4px) — at 4px the artwork stops
+  being readable, which defeats having chosen it.
+  - 🔴 **The blur is behind `@media (hover: hover)`.** A phone has no hover, so an unguarded `blur` would
+    leave every image permanently soft for every touch visitor with no way to clear it. Touch gets the
+    sharp image from the start. Both rules verified inside the media query in the compiled CSS.
+  - ⚠️ **`scale-[1.03]` on the image is not an effect.** A blur samples past the element's own edges, so
+    at scale 1.0 the card's gradient bleeds in as a pale rim. The scale pushes those edges outside the
+    clip, and it does NOT change on hover — only the blur does, so nothing moves.
+  - The chip and the frosted panel are siblings of the `<img>`, not children, so neither blurs. Confirmed
+    on the render: the panel text is crisp in both states.
+  - ⚠️ **The hover state itself was NOT screenshot-verified** — headless Chrome cannot hover. It rests on
+    the compiled selector (`.group:hover .…:group-hover:blur-0 → blur(0)`), which is Tailwind's standard
+    group-hover mechanism, plus visual proof that the base blur applies. Worth a glance in a real browser.
+- **2026-09-27 — The eight platform-card images went in, and the cards turned LANDSCAPE to fit them.**
+  Owner supplied all eight.
+  - 🔴 **The grid had to change, not the pictures.** Every file the owner sent is wider than tall —
+    1.20:1 to 2.40:1 — while the cards were portrait to match the BCG reference. A 2.40:1 image in a 4:5
+    card loses about **68% of its width** to `object-cover`; for the AI network graphic that is the whole
+    picture. Each card now carries a ratio close to its own file (3/2, 4/3, 16/10, 5/4) and the column
+    count went back to **three**, because a landscape card at four columns is too short to hold the panel.
+    **If an image is replaced, check its ratio against the card's** — that is the number that decides how
+    much survives.
+  - 🔴 **One filename would have broken outright:** `chat & enquiry.jpg` — a space and an `&`, which is a
+    query separator in a URL. Renamed. This is the second time on this page (the Modi/Trump photo was
+    `Modi&trump.webp`). All eight are now `card-*` in lowercase kebab-case.
+  - The gradient behind each image is kept as the fallback ground, so a file that fails to load leaves a
+    brand-coloured card rather than a hole. The frosted panel gained a `ring-1 ring-ink-900/10` hairline,
+    since several of the images are near-white and the panel needed an edge to read against them.
+  - ⚠️ **Two files are small:** `card-payments.webp` 400×300 and `card-quotations.jpg` 516×387. Fine at
+    three columns on a 1440px screen (~424px wide), but they upscale past 1.4× on a very wide monitor.
+    **Raised with the owner** — worth replacing if higher-resolution versions exist.
+- **2026-09-27 — 🔴 Red alert raised on "payment secured via MPX Global"; owner agreed NOT to claim it.**
+  Asked to replace the "You pay the supplier directly" card with a secured-payments claim. Alerted, and
+  the owner's decision was **"okk then dont claim it now"**. **Nothing was changed** — the honest card
+  stands.
+  - **Two reasons, both recorded on the card itself** so the next session editing it sees them before it
+    starts: escrow is **Bucket B / Phase 2** (`month1-not-doing.md:138`, `scope-of-work.md:27`; CLAUDE.md:
+    "Phase 1 is discovery and trust: no money moves"), and separately, the sentence could not ship before
+    the system even if escrow were approved — today the buyer pays the SELLER'S own account off the
+    quotation, so a protection promise would be false at the moment a defrauded buyer needed it.
+  - It would also contradict what is already in writing to the client — `Client-Requests.md:60`, "MPX
+    Global never holds or moves anyone's money" — which the interim Terms and Privacy Policy were written
+    to match.
+  - ⚠️ **If escrow is ever built, this card is on the list of things that must change with it**, or it
+    becomes a lie in the other direction.
+- **2026-09-27 — Two more platform cards: "Email and phone are both proved" and "One company, one
+  profile".** Owner: "make two more cards". Eight cards now pack 2 per column at `xl`, closing the two
+  short columns the six-card version left.
+  - 🔴 **Both lines were checked against the BACKEND before being written**, not recalled. Signup: step 1
+    holds details in a short-lived `PendingSignup`, each channel gets its own code, and no `users` /
+    `organisations` row is written until both are proved (`signup.service.js`, and the note in
+    `auth.service.js` explaining the hole this closed). Organisations: the D7 claim is built —
+    `CLAIM_SEAT_TAKEN` in `signup.service.js`, and `verification.service.js` states "one company = one
+    Organisation, no second KYC, one tick".
+  - 🔴 **Filling a layout gap is not a reason to add a card.** The note on the grid now says so: cards may
+    only be added to even the columns if the new lines are true. Two were available; that is why there are
+    eight and not, say, twelve.
+  - The section's own intro updated from "Six things" to "Eight things".
+- **2026-09-27 — Platform cards made smaller.** Owner: "make small cards". Four columns at `xl` instead
+  of three, so a card is ~310px wide rather than ~420px and 500+ tall. Aspect ratios came down with it —
+  nothing is taller than 4:5 now — and the chip, the panel and its type each stepped down a size so the
+  panel does not swallow a short card.
+  - ⚠️ Six cards in four columns pack **2·2·1·1**, so two columns end shorter. That is the look rather
+    than a bug — the reference's columns are uneven too — and it evens out to 2·2·2 at three columns below
+    `xl`.
+- **2026-09-27 — "What makes MPX Global different" rebuilt as picture cards** (`PlatformCards.jsx`),
+  to the BCG layout the owner sent: a staggered CSS-columns grid, a category chip on the artwork, and a
+  frosted panel carrying the words. The six icon rows are gone; **their sentences moved across unchanged.**
+  - 🔴 **The cards are NOT links.** The reference's are — they lead to articles and carry a date and a
+    REPORT/ARTICLE label. Nothing sits behind ours, so there is no date, no document type and no hover
+    lift: a card that looks clickable and does nothing is what `web-ui-notes.md` forbids. The chip is a
+    label, not a filter.
+  - 🔴 **The frosted panel is deliberately photo-independent.** `bg-white/85` lands at 217/255 even over
+    pure black, so ink-900 on it is 14.3:1 and ink-700 7.6:1 whatever the picture does. Swap any image and
+    nothing needs re-measuring — unlike the promo panels, where the copy sits straight on the artwork and
+    every new file has to be checked.
+  - **CSS columns, not a grid:** the cards are different heights on purpose, and columns pack them without
+    anyone hand-assigning row spans. `break-inside-avoid` stops a card splitting across a boundary.
+  - ⏳ **The six photographs are still needed.** A card with no `image` renders on a brand gradient and
+    reads as finished, exactly as the promo panels did before their artwork arrived. **Portrait, about
+    3:4, at least 1200px on the long edge** — the promo images came in at 740px and go visibly soft on the
+    wide panel, which is worth not repeating.
+  - Five icon imports in `Landing.jsx` became unused and were removed with the rows they served.
+- **2026-09-27 — Header: "Start selling" added as the highlighted action, with a light sweep; login kept
+  plainly visible.** Owner: "Replace Account login with Start selling button which highlights light swap
+  effect… And account login is also visible clearly". Guest bar is now **Create account** (text, `md`+) ·
+  **Account login** (bordered button) · **Start selling** (filled red, sweeping).
+  - 🔴 **"Start selling" points at `/signup/exporter`, not the buyer form.** A seller CTA landing on buyer
+    signup is the exact defect fixed here on 2026-09-26, when the button read "login" while still going to
+    `/signup/buyer`.
+  - **The sweep animates `transform`**, so it composites — no layout or paint on a bar that is on screen
+    the whole time someone reads. Keyframes hold it off-canvas for the first 55% of a 3.8s cycle; that
+    pause is what makes it a glint rather than a barber's pole. Gone entirely under reduced motion.
+  - ⚠️ **Below `sm` the login label shortens to "Log in"** — logo + two full labels + the burger measure
+    373px against a 320px bar. The destination never changes.
+  - 🔴 **Its border is `ink-500`, not the `ink-300` hairline used on cards.** A button's outline IS its
+    affordance, and ink-300 on white is **1.70:1**, under the 3:1 WCAG asks of a non-text UI boundary;
+    ink-500 is 4.97:1. White on primary-600 measures 5.73:1.
+  - **"Create account" now drops at `md` rather than `sm`**, and the burger's copy of it follows, so buyer
+    signup is still reachable from the header at every width.
+  - ⚠️ **Headless screenshots cannot see this effect.** Virtual time renders the animation during its hold
+    phase every time, so the pill looks flat in a capture. Verified instead by reading the computed
+    `::after` (55.6×44px, gradient present, transform off-canvas as designed) and by rendering the sweep
+    at three fixed positions — it draws correctly. Don't conclude from a screenshot that it is missing.
+- **2026-09-27 — Bold agreement run added under the Modi/Trump photograph — with two of the three names
+  the owner gave CORRECTED.** Owner asked for "India – US Free Trade Agreement, India NZ free trade
+  agreement, India – AU Free trade agreement… and so on" in bold below the image.
+  - 🔴 **There is no India–US free trade agreement, and no India–NZ one either** — both are talks. India–
+    Australia is real (ECTA, in force 2022) and was already listed. Printing "India–US Free Trade
+    Agreement" in bold directly under a photograph of an India–US meeting is the single most misleading
+    line this page could carry, and it is exactly what this file's own header rule forbids: every name
+    must be in force or signed, because a buyer can act on a tariff claim and be wrong at customs.
+  - **Both countries are still named**, in ordinary weight, as talks — so the owner's intent is served
+    without the false claim. They live in their own `IN_TALKS` const with a note on what it takes to
+    promote one into `AGREEMENTS`: a government source saying signed or in force, not a good headline.
+  - **The seven-card grid was removed** in the same change — it listed the same seven agreements the bold
+    run now prints, and shipping the same list twice on one screen reads as a mistake. The bold run is
+    generated FROM the `AGREEMENTS` array (single source of truth) and each name carries its date as a
+    `title`, so the claim keeps its evidence. The dates also appear in the line beneath.
+  - ⚠️ **Told the owner plainly.** If they want the cards back it is a small change; if they want the US
+    line anyway, that is a decision only they can take and it should be theirs on the record.
+- **2026-09-27 — Red veil /65 → /40, by moving the darkening into the picture.** Owner: "more" (lighter
+  again). The image now carries `brightness(.65) saturate(1.3)` and the veil over it is **/40**.
+  - 🔴 **A flat veil had nothing left to give.** /60 measures 4.44:1, and the copy block turned out to be
+    exactly as bright as the worst of the whole panel — so restricting the check to where the text sits
+    found no headroom either. The darkening has to come from somewhere; taking it from the image keeps the
+    photograph's OWN colours, which a red film flattens. **5.06:1** across 320–1920px, with ~9% more
+    surviving texture than the flat /65 it replaced.
+  - ⚠️ **Measured and rejected, recorded in the file so nobody re-tries them:** `mix-blend-multiply` (same
+    contrast at the same alpha but keeps LESS texture — 0.016 vs 0.035); a centred vignette (the copy fills
+    ~55% of these short panels, too little edge left to lighten); and brightness .55 + veil /25 (4.97:1 and
+    more texture, but the veil is then too faint to read as brand red).
+  - 🔴 **Brightness, saturate and the veil's alpha are now one setting.** Change one and all of it needs
+    re-measuring. Same for replacing a photograph.
+- **2026-09-27 — Red wash lightened from /85 to /65, by making the copy solid white.** Owner: "make
+  overlay shade more light".
+  - 🔴 **The alpha was not what was holding it up — the dimmest word was.** With a `white/80` subtitle and
+    a `white/70` eyebrow, the wash could not go below /80 without failing 4.5:1. Making every word solid
+    white let it drop **twenty points** at the same contrast:
+    `dimmed` /70 3.87✗ /75 4.36✗ /80 4.90✓ /85 5.46✓ · `solid white` /60 4.44✗ **/65 5.17✓** /70 6.04✓
+  - **/65 is the lightest that passes** — /60 measures 4.44:1. Far more of the photograph shows now.
+  - ⚠️ **These two are one decision, and the file says so:** if anyone dims the subtitle or the eyebrow
+    again, the wash has to go back to /80 in the same edit.
+- **2026-09-27 — Promo panels: shorter, back inside the page gutters, and a RED wash over the photos.**
+  Owner: "make this section small make margis frm left and right also and image quality is not that much
+  better do one thing more make try red color overlay".
+  - **Smaller:** lead 460→300px, halves 360→240px, with the copy and padding stepped down to match.
+  - **Margins back:** the full-bleed version ran to both screen edges; the section now sits in the page's
+    own gutters like every other one. The three panels still BUTT TOGETHER on a 4px hairline — rounding
+    and clipping the wrapper instead of each panel keeps that join sharp while the block gets the page's
+    corner radius.
+  - 🔴 **`primary-900/85` is the only red that works, and it was measured, not chosen.** White copy needs
+    4.5:1 (`web-design.md`); against these three photographs:
+    `primary-900` /70 3.87✗ /75 4.36✗ /80 4.90✓ /85 5.46✓ · `primary-800` fails at every step up to /85
+    (4.48) · `primary-700` never gets past 3.67. **A brighter brand red is not available at any opacity.**
+    Final worst case across 320–1920px is **5.46:1**.
+  - The wash is flat rather than a gradient on purpose: a gradient's lightest stop is the one that decides
+    legibility, so it would have to be /85 anyway and the variation would buy nothing.
+  - ✅ **It also answers the real complaint.** The sources are 740px against a panel up to ~1310px, so they
+    upscale and go soft; the wash hides that and the photograph still reads as texture and shape. A wider
+    original is still worth having if one exists.
+- **2026-09-27 — The full-panel wash is off the photographs; the copy sits on a plaque instead.** Owner:
+  "remove color shade what you aded in images". The gradient that covered each whole picture is gone —
+  the photographs now render untouched everywhere except directly behind the words.
+  - 🔴 **Measured before changing anything, because "no treatment at all" is not available here.** White
+    copy laid straight on these three files comes out at **1.00:1** — white text on a white sack is not
+    faint, it is invisible. A `bg-ink-900/75` plaque behind the copy puts the worst pixel at **5.77:1**
+    against the 4.5:1 `web-design.md` requires; **/70 is the floor (4.93:1) and /65 fails (4.21:1)**, so
+    the value is a constraint, not a preference. Noted in the file.
+  - If the plaque is ever unwanted too, the copy has to leave the picture — the white-card version (copy
+    above, photograph below) was built earlier today and reverted, and is described in the file for
+    whoever needs it next.
+  - ⚠️ **Nearly reported this as broken on a bad grep.** `bg-ink-900/75` looked absent from the compiled
+    CSS because of shell escaping in the check, not because it was missing; it compiles to `#000517bf`.
+    Second time today a grep, not the code, was the thing that was wrong.
+- **2026-09-27 — Promo panels joined up, edge to edge.** Owner: "connect all three boxes exect same like
+  this". Page gutters and rounded corners dropped, `gap-4` down to a 4px hairline, section ground `white`
+  so the gaps read as crisp separators rather than a slightly different cream. The block is now one
+  continuous run of picture, as in the reference.
+  - ⚠️ **This is the only section on the landing page that ignores the page gutters**, and the note is in
+    the file. `web-design.md` wants a side gutter so text never touches the screen edge — the panels honour
+    that INSIDE themselves (`px-5 sm:px-8`); it is the artwork that bleeds, not the copy. Do not copy the
+    pattern to a section whose text sits directly on the section ground: the category rail already had its
+    full-bleed reverted for exactly that.
+  - **Contrast re-measured, because the panels got wider and `object-cover` crops differently.** Lead panel
+    1312→1440px, halves 648→718px. Worst case across 1440, 1920 and 390 widths is now **5.41:1** (it was
+    5.41 before, and improves to 6.15 on desktop) — the wider crop happens to sit on darker parts of each
+    photograph.
+- **2026-09-27 — The "remove black shade" change was REVERTED by the owner.** For a few minutes the
+  panels were white cards with the copy above an untouched photograph; the owner asked for it back, so
+  the photo-background + centred-copy + scrim version stands. The scrim is unchanged at 60/90/60.
+  - ⚠️ **Why the revert is a trade, not a free undo:** white copy laid straight on these images measures
+    **1.2–3.6:1** in places, against the 4.5:1 `web-design.md` requires. Copy can stay ON the picture only
+    while the scrim stays under it — the two are one decision, not two. That is now noted in the file so
+    nobody deletes the scrim on its own later.
+- **2026-09-27 — Promo panel copy centred vertically, and the scrim moved with it.** Owner: "make all
+  text center" — it was already centred horizontally, so this is the vertical axis: `justify-center` and
+  symmetric padding instead of the copy pinned to the top.
+  - 🔴 **The scrim had to move too, and that is not cosmetic.** It ran dark→light (90/70/20) because the
+    copy sat at the top. With the copy in the middle, that gradient put its weakest point exactly where
+    the text now is. It is now **60/90/60** — darkest through the middle, leaving the photograph brighter
+    at both edges than before.
+  - **Measured, not eyeballed:** every pixel under the centred text block, composited through the
+    gradient, on all three panels at desktop and phone widths. Worst case **5.41:1** against the 4.5:1
+    `web-design.md` requires. 55/85/55 was tried first and returned **4.65:1** on a phone — passing, but
+    too thin a margin to leave for whatever photograph replaces one of these later.
+  - ✅ All three stops verified present in the compiled CSS, after the `/92` lesson earlier today.
+- **2026-09-27 — Promo panels filled with the owner's three photos: agriculture, garments, textiles.**
+  Owner supplied the files and the order. Panels are now the three SECTORS rather than generic entry
+  points, each linking to its real category.
+  - **The slugs were derived, not guessed:** `slugify()` from `src/utils/slug.js` run over the names in
+    `src/seed/catalogue.data.js` gives `/category/agriculture`, `/category/apparel-garments`,
+    `/category/textiles-fabrics-yarn`. All three categories exist in the seed.
+  - **Subtitles name the category's REAL listing fields** — grade/packaging/shelf life, size/fabric/
+    colour/gender, material/GSM/width — each one an attribute that category actually defines. No prices,
+    no offers, no counts.
+  - **Files renamed** to `promo-agriculture.avif` / `promo-garments.avif` / `promo-textiles.avif`. The
+    originals carried stock-library ids, and these paths are public URLs.
+  - **Treatment changed from the reference.** These are full-bleed photographs, not cut-outs, so they are
+    the panel's background under a scrim instead of artwork floating on a gradient. `bg-ink-900` sits
+    under each image, so a browser that cannot decode AVIF still shows a dark card with readable text.
+  - 🔴 **The scrim is a MEASURED contrast requirement.** Compositing each photo through the gradient and
+    testing every pixel under the copy, the first version (90/55/15) bottomed out at **3.58:1** on the
+    garments panel — under the 4.5:1 `web-design.md` requires, because the scrim had thinned to ~0.5 by
+    the subtitle. At **90/70/20** the worst pixel across all three is **5.39:1** desktop, **5.01:1** phone.
+  - 🔴 **`from-ink-900/92` COMPILED TO NOTHING.** 92 is not a step on Tailwind's opacity scale (…80, 90,
+    95, 100), so the gradient lost its top colour entirely: the panel came out LIGHTER than the version it
+    was meant to fix, and the copy was harder to read. Nothing errored — the same trap `tailwind.config.js`
+    already records for invented shades. **Caught by grepping the compiled CSS for the class, not by
+    reading the JSX.** Use a real step or `/[0.92]`.
+  - ⚠️ **The sources are 740px wide.** Fine for the two halves (~648px), but the lead panel is ~1312px on
+    a desktop, so it upscales ~1.8× and goes soft. **Raised with the owner — a wider original is wanted
+    for the agriculture image.**
+- **2026-09-27 — Three promo panels under the hero** (`web/src/components/landing/PromoPanels.jsx`).
+  Owner sent the OnePlus store layout and asked for the same section: one full-width panel over two
+  halves. Built to that structure; images to follow.
+  - 🔴 **Every CTA is a real destination.** The reference art has "Buy Now" / "Learn More" on each panel.
+    This platform sells nothing and has no product pages, so each panel says where it actually leads and
+    each link points at a route that exists — `/search?type=supplier`, `/categories`, `/ai-search`, and
+    the in-page `#platform` / `#how-it-works` anchors. `secondary` is optional precisely so a panel only
+    gets a second link where there is a second real place to send someone; the categories panel has one CTA.
+  - 🔴 **No prices, offers or claims.** The reference carries "From ₹4,499" and "No Cost EMI" — lines a
+    buyer acts on. Nothing here states anything the platform cannot back (same rule that kept invented
+    testimonials off this page).
+  - ✅ **This restores supplier search on phones.** `/search?type=supplier` lost its only mobile entry
+    point when the browse bar was hidden earlier today, since the Products|Suppliers toggle had already
+    been removed from `/search`. The lead panel is that link, so the gap raised in the previous entry is
+    closed.
+  - ⚠️ **NOT the admin banner strip.** `BannerStrip` (`/admin/featured`, up to 24 rotating banners) still
+    runs below this, untouched. These three are fixed navigation into the platform's own entry points,
+    which is why they live in code rather than in the banner table. `FeaturedItem` was considered as the
+    source — it has `image`/`title`/`subtitle`/`linkUrl` — but driving both from one table would show the
+    same banners twice, and the grid would silently drop banners 4–24.
+  - ⏳ **The artwork is not in yet.** A panel with no `image` renders as its text block on the gradient and
+    sets **no minimum height**, so it reads as finished rather than as a tall empty box; with an image it
+    takes the designed height. Adding one is a single field in `PROMOS` — the layout is already sized.
+- **2026-09-27 — Hero search field slimmed on mobile.** Owner: "make searh bar more small in height".
+  The box was **64px** — a 44px input plus 16px of its own padding plus the 2px border on each side. The
+  padding was pure height, so it went: **48px** now, and the whole stacked control (field + gap + button)
+  is **100px instead of 118px**. Desktop is byte-identical (measured before and after: 60px both times) —
+  the rule it replaced was `sm:py-0`, which was already doing this above `sm`.
+  - 🔴 **The tap targets did not shrink.** `web-design.md` puts the floor at 44px, and both the input and
+    the "Find suppliers" button are still exactly 44px. Only the box's own padding was removed.
+  - ⚠️ **100px is the floor for this layout**: two stacked 44px targets plus a border and an 8px gap. Going
+    shorter means putting the button INSIDE the field on one row — the pattern the page's own header search
+    already uses at these widths, which would bring the control to about 52px, at the cost of a much
+    smaller primary CTA on a phone. Owner's call; not done.
+  - At 390 and 430 the hero band did not shrink with it — `min-h-[56svh]` is what sets the height there, so
+    the saving shows as breathing room rather than a shorter band. At 320 and 360 the band is content-driven
+    and did drop 18px.
+- **2026-09-27 — Landing browse bar hidden below `sm`.** Owner: "remove this header in mobile version".
+  On a phone it was a scrolling strip with most of its items off-screen, and it cost 56px of the fold the
+  hero had just been cut to fit inside. Header on a phone is now **121px instead of 177px**, and every
+  phone size gains room: 320×568 goes from 7px spare to **64px**, 390×844 from 194px to **251px**. Kept
+  from `sm` up (verified still rendering at 640, 1024 and 1440).
+  - **Each link was checked before hiding the row, not after:** "All categories" and "How it works" are
+    both in the header's own hamburger (`PublicHeader`'s `NAV`), and "AI Search" is where the hero's field
+    and chips already go — nothing lost.
+  - ⚠️ **"Goods" and "Services" were already broken.** They point at `/categories?type=goods|service` and
+    `Categories.jsx` never reads that param — no `useSearchParams` in the file — so both already landed on
+    the same page as "All categories". Hiding them loses nothing, but the dead param is a **pre-existing
+    bug** and should be fixed separately; the API's own filter is `goodsOrService` on `/public/search`.
+  - 🔴 **"Verified exporters" is a real loss on phones.** `/search?type=supplier` is the only way into
+    supplier mode since the owner had the Products|Suppliers toggle removed from `/search`, so that mode is
+    now unreachable from the landing page on a phone. **Raised with the owner** — it needs either an entry
+    in the hamburger `NAV` or its own affordance in the hero.
+- **2026-09-26 — Hero now fits ONE screen on a phone.** Owner: "i need full hero section in one screen
+  its taking two screens of height". Measured first: header 177px + hero 667px+ against an 844px phone, so
+  it ran past the fold. Now, measured again in fixed-width iframes:
+
+  | viewport | header | hero | total | result |
+  |---|---|---|---|---|
+  | 320×568 | 177 | 384 | 561 | fits, 7px spare |
+  | 360×740 | 177 | 470 | 647 | fits, 93px spare |
+  | 390×844 | 177 | 473 | 650 | fits, 194px spare |
+  | 430×932 | 177 | 522 | 699 | fits, 233px spare |
+
+  - 🔴 **The band uses `svh`, not `vh`, below `sm`.** On a phone `vh` means the LARGE viewport — the one
+    with the browser toolbars hidden — so a `70vh` band is taller than the screen actually is for as long
+    as the URL bar is showing. `min-h-[56svh]` is the honest number.
+  - **What was cut (mobile only; `sm:` and up are unchanged):** padding `py-14`→`py-8`, h1 to a 27px size
+    of its own with tighter leading, supporting line to 14.5px, gap above the field `mt-12`→`mt-7`, field
+    padding and button height down a step.
+  - **The examples row was THREE wrapped rows on a phone** — about 120px for an affordance. It is now one
+    horizontally-scrolling row (`sm:` restores the wrapped, centred version, with `sm:max-w-none` so it
+    stays on a single line on desktop).
+  - **The supporting line was shortened for everyone.** It ran to five lines on a phone; it now says the
+    same thing in two.
+  - **≤359px** (an old SE) is the only size that needed its own handling: `max-[359px]:` drops the padding
+    again, shrinks the type a step, and hides the examples row. The placeholder already shows an example,
+    so nothing a visitor needs is lost.
+  - ⚠️ Desktop was re-checked after the change — the chips had started wrapping to two rows because the
+    mobile scroll row's `max-w-[720px]` was still applying above `sm`.
+- **2026-09-26 — Hero backdrop made responsive: the geometry is now MEASURED AT RUNTIME.** Owner: "make
+  it responsible for all kind of devices". `CircuitHero` no longer holds a hand-written path list inside a
+  fixed `0 0 1200 720` viewBox drawn with `slice`. The viewBox is now the host's own width and height — one
+  SVG unit = one CSS pixel, no `preserveAspectRatio` scaling — and the traces are built from the search
+  field's ACTUAL `getBoundingClientRect`, watched by a `ResizeObserver` (plus `document.fonts.ready`,
+  because fonts land after first paint and move the copy).
+  - 🔴 **This kills a whole class of bug, not one instance.** The old numbers had to be converted back
+    through the `slice` transform by hand; that was wrong twice, and even once right it was right *only at
+    1440×900* — every other viewport scaled the viewBox differently and the convergence drifted off the
+    field again. A fixed viewBox cannot be responsive here.
+  - **The veil is computed too**, from the copy block's measured rect, with its bottom edge **clamped**
+    above the field. The failure where the veil covered the arrival is now impossible at any size.
+  - **45° elbows are budgeted on BOTH axes.** A 45° elbow spends equal distance horizontally and
+    vertically, so it is limited by the tighter one. The first pass only checked the axis of travel; on a
+    phone, where the field is nearly full width, almost every elbow overshot the frame and fell back to a
+    straight line — a screen of parallel verticals that read as rain, not a circuit. Traces with no room at
+    all still fall back to a straight line, which is what keeps narrow screens safe.
+  - **Trace count and stroke adapt:** 8 on a 320px phone up to 16 on a desktop; side entries are dropped
+    when the flanks are too narrow and reallocated to the top and bottom edges; hairline drops to 1.7px
+    under 560px.
+  - Hero band: `min-h-[70vh]` below `sm` (no px floor, so a landscape phone is not forced into a 560px
+    band) and `sm:min-h-[min(820px,max(560px,74vh))]` above it — a floor for short laptops and a cap so a
+    4K screen does not get a 1000px hero.
+  - **Verified two ways.** (1) The real generator source was extracted and run in Node over 16 viewports
+    from 320×568 to 2560×1440, asserting every diagonal is exactly 45°, every path starts on a frame edge,
+    every path ends ON the field's perimeter, nothing leaves the canvas, and the veil never reaches the
+    field: 16/16, 212 traces, all with an elbow. (2) Pixel checks on live renders at five animation times —
+    pulses within 1px of the field above and below.
+  - ⚠️ **Headless Chrome ignores `--window-size` for layout below ~600px here** (360/390/430 all produced
+    an identical DOM). Small viewports were tested by loading the page in fixed-width iframes instead. If
+    you screenshot a phone width directly, check the numbers before believing them.
+- **2026-09-26 — Hero: the pulses now actually reach the search field (measured, not estimated).**
+  Owner had to say it twice — "upper lines are not comming to serch box". The cause was **my arithmetic,
+  not the veil**: I had converted the field's screen position into viewBox units with a vertical crop term
+  of 29.5px when the real crop is **90px**, so the traces were terminating at SVG y=386 while the field's
+  box is at **y 462–512**. Top-entering pulses stopped ~70px short in open space; bottom-entering ones ran
+  ~47px UP INSIDE the field, which is why only those ever looked connected.
+  - 🔴 **The box is now MEASURED from a render.** A script finds the field's own red border in the pixels
+    of a real 1440×900 screenshot and converts back through the `slice` transform
+    (`scale = max(w/1200, h/720)`, `crop = (720·scale − h)/2`). SVG 462 now maps to real y 585.4 against a
+    measured border at 586 — **0.6px out**. The copy block was measured the same way (y 216–388,
+    x 322–878) instead of being eyeballed. **Re-measure if the hero's copy or spacing changes**; the note
+    is on `TRACES`.
+  - **The copy/field gap was widened** (`mt-9` → `mt-20`). With only 37 units between the copy's bottom and
+    the field, the veil and the arrival were fighting for the same space — there was no setting where the
+    h1 stayed clean AND the lines had a visible run in. There are now 74.
+  - Veil re-sized to `cy=295 ry=105` (ends at y=400), leaving 62 units — ~74 real px — of full-strength
+    line into the box. 🔴 `cy + ry` must finish well above the field's top edge; an earlier version ended
+    *below* it and covered the arrival itself.
+  - **Verified across the animation, not from one frame.** A single screenshot proves nothing here: an
+    earlier one showed no arrivals purely because no top pulse was in the zone at that instant. Sampling
+    six virtual times, five show a pulse within **1px** of the box above and below; the sixth is a genuine
+    quiet moment.
+  - ⚠️ **A scripted edit mangled the component** mid-way (an `index()` lookup returned an empty slice, so
+    `str.replace('', …)` prepended the text to line 1). Caught by lint, restored from git, rewritten whole.
+- **2026-09-26 — Landing hero rebuilt as the AI match-making section.** Owner: "make more big height…
+  make a search bar in center… we are making this section for reflacting our biggest fiture for ai match
+  making… remove that box… remove gray line only red running line". Band is now `min-h-[max(560px,76vh)]`
+  on cream, with a centred AI search field as the single focus.
+  - **The field is REAL**, not a placeholder: it submits to **`/ai-search?q=…`**, which `AiSearch.jsx`
+    reconstructs from the URL (`params.get('q')`). Three example prompts run the same search. Its state is
+    separate from the header search — both boxes are on screen at once and go to different places, so
+    mirroring what you type between them would read as a bug.
+  - **`CircuitHero` rewritten.** The chip, the solder vias and every still grey trace are gone on the
+    owner's instruction. 🔴 **The traces still exist as data but are NOT DRAWN** — they are rails for the
+    pulses, not artwork. All eighteen animate now, because with nothing drawn an un-animated path is simply
+    not on the page.
+  - 🔴 **Bar zone was MEASURED, not derived.** The first attempt centred it on the viewBox's middle
+    (y=360) and the pulses visibly converged on the PARAGRAPH, ~60 units above the field: the content block
+    is centred, but the copy above the field is taller than the chips below it. Re-measured off a real
+    1440×900 render → y 386–454. **If the hero's copy changes height, re-measure.**
+  - 🔴 **Red streaks were cutting through the `<h1>`** on the first real render. Fixed with a soft ellipse
+    of the page's own cream painted over the pulses and under the DOM — sized to clear the COPY, not the
+    field, so pulses still arrive at full strength. Deliberately not an SVG `<mask>` (luminance interpolates
+    differently across engines) and not a blur filter (a per-frame raster over eighteen running animations).
+  - **The gradient is gone.** Gradient units are the path's bounding box, so a pulse faded out as it
+    ARRIVED — backwards for a section about convergence, and unfixable for left- and right-entering traces
+    at once. Replaced by a `strokeDasharray` comet tail, which travels with the dash whichever way the path
+    runs. `prefers-reduced-motion` now hides the pulses outright; there is no still layer left to keep.
+  - **Verified by rendering, not by reading:** both defects above were found in a headless-Chrome
+    screenshot of the real page, not in the code. ⚠️ Mobile screenshots from that setup are NOT reliable —
+    the layout viewport comes out wider than `--window-size` and content is cropped, identically on the
+    untouched `/landing-2`. Mobile was checked by computing the SVG scale instead (390×641 → 0.890 → bar
+    zone at real y 343–404, which matches where the field renders).
+  - ⚠️ **Still missing** (UiWebNotes): the guest signup cards — the only above-the-fold registration CTA on
+    a phone — and the category rail.
+- **2026-09-26 — Landing hero ground is CREAM.** Owner: "make hero bg cream". The band moved from
+  `bg-ink-900` to **`surface-canvas` (#F5F2EF)** — the token that already existed for exactly this
+  purpose ("the landing hero's page ground", warm on purpose so it does not fight the red brand).
+  **No new cream token was added**; a second name for one colour always drifts (`web-design.md`).
+  - Traces: the caller now passes `text-ink-900/70` instead of `text-white/70`. Nothing inside
+    `CircuitHero.jsx` changed for this — the SVG draws in `currentColor`, and at 0.7 × 0.28 the ink
+    lands ~48/255 from cream, the same distance white sat from ink-900. Equal apparent weight.
+  - 🔴 **The pulse gradient's peak had to change**, and this is the part that was not cosmetic: it
+    was `#FA808D` (primary-300, a light pink), which is what a red GLOW needs on a near-black panel.
+    On cream that pink is nearly the background and the pulses all but vanished. The ramp is now
+    **one hue — primary-600 — with opacity alone**, which reads on cream and still reads on a dark
+    panel, so the component survives either ground.
+  - **Corrected a wrong comment:** it claimed the gradient fades "along its own length". It does
+    not — `gradientUnits` defaults to `objectBoundingBox` and the referencing element is the whole
+    trace, so a pulse is faintest at the frame edge and at the chip and strongest mid-run.
+    `strokeDasharray` does not move where it brightens.
+  - ⚠️ **Worth watching:** red is this product's ACTION colour, and at full opacity on cream the
+    pulses carry far more weight than they did on black. When the hero's real CTA lands, check the
+    two are not competing.
+- **2026-09-26 — Circuit-board hero backdrop (`web/src/components/landing/CircuitHero.jsx`).** Owner:
+  "can we create this type of lineing animation with running line in red color in hero section".
+  Inline SVG — 18 PCB traces, solder vias and a centred chip in `currentColor`, with **six** red
+  pulses running along their own traces (`stroke-dasharray` + animated `stroke-dashoffset`, keyframes
+  in `src/index.css`). Sits behind the still-blank hero band on `bg-ink-900`.
+  - 🔴 **No dependency added.** Lottie or a canvas library would each be a new package for one
+    decoration on one page; dash-offset gives the same effect and the browser composites it.
+  - 🔴 **`prefers-reduced-motion` stops only the pulses** — traces and chip still render, so the band
+    does not become an empty hole for anyone who asked motion to stop (`web-design.md`).
+  - ⚠️ **`pathLength="100"` on every runner.** Without it one dash pattern produces a different pulse
+    size on a short trace than on a long one; normalising the path length makes one rule fit all.
+  - ⚠️ Only six of eighteen animate — all eighteen read as a screensaver and cost far more paint.
+  - **Gotcha:** the preview render looked off-centre and half-empty. It was `qlmanage` fitting a
+    1200×600 SVG into a square thumbnail and cropping the sides, not a geometry bug — verified by
+    padding the viewBox to a square and re-rendering. Check the aspect before believing a thumbnail.
+  - The hero itself is **still blank** (UiWebNotes row stands): no `<h1>`, no guest signup cards, no
+    category rail. This is the backdrop only.
+- **2026-09-26 — Landing hero removed, blank band left in its place.** Owner is rebuilding it and
+  asked for the space cleared. Logged in `docs/UiWebNotes.md` — a public front page opening on an
+  empty band is a visible defect, and a deliberate hole with no ledger entry becomes an accidental
+  one within a week.
+  - 🔴 **An `sr-only` `<h1>` was left behind.** The hero held the page's ONLY h1; removing it outright
+    would have left the landing page with no heading at all for crawlers and screen readers, on a
+    route the quote explicitly sells as SEO-friendly. It is a stopgap and says so — the real h1
+    belongs in the new hero.
+  - ⚠️ **What left with the hero and must return:** the guest signup cards ("Start sourcing" / "For
+    exporters"), which were the only signup CTA above the fold on a phone — nothing now asks a new
+    buyer to register until well down the page — plus the always-open category rail and the six
+    category tiles.
+  - Six things went dead with it and were removed rather than left commented out: `AlertIcon`,
+    `RAIL_SKELETON_ROWS`, `HERO_TILES`, `isBuyer`, `isExporter` and the whole `useAuth` call. The
+    placeholder comment records that the new hero needs `user` and `restoring` back — `restoring`
+    specifically so the guest CTAs do not flash on reload for someone already signed in.
+  - The previous hero is intact at `/landing-2` and in git history; rebuild from one of those.
+- **2026-09-26 — `/landing-2`: a frozen snapshot of the landing page, so `/` can be reworked.**
+  Owner: keep the current design viewable while the first one is modified. Route follows the
+  existing `/landing-blue` convention.
+  - 🔴 **It carries its OWN copies of the two landing-only components** (`components/landing2/`),
+    not imports of the live ones. A snapshot that imports the components being edited is not a
+    snapshot — the first change to `CategoryCircles` would have moved both pages and the comparison
+    would have quietly become worthless.
+  - ⚠️ **What is still shared, and will move:** `PublicHeader`, `PublicFooter`, `ProductCard`,
+    `FeaturedStrips`, the icons and the Tailwind tokens. Copying those would mean forking half the
+    app. Said at the top of the file so a confusing comparison has an explanation.
+  - 🔴 **`noindex`, not `useCanonical('/')`.** Two public URLs with the same content compete in
+    search, and this one exists to be looked at, not found. (`/landing-blue` declares
+    `useCanonical('/')` instead — a weaker answer to the same problem; left alone rather than changed
+    in passing, but worth fixing when that variant is finally deleted.)
+  - 🔴 **Delete the route, `Landing2.jsx` and `components/landing2/` together** once the new landing
+    is settled. A stale copy of a marketing page is exactly what gets edited by mistake a month later
+    — `/landing-blue` is already that.
+- **2026-09-26 — Category circles: hover is a lift, not a red ring.** Owner: "doing a small issue in
+  hovering, looking unprofessional".
+  - It was `group-hover:ring-2 group-hover:ring-primary-500` — a 2px **red circle drawn around a
+    photograph**, which reads as "selected" or "error" rather than "hoverable", and matched nothing
+    else on the page: every other card lifts and takes a shadow.
+  - 🔴 Red is this product's ACTION colour. Spending it on a hover state is the same dilution as the
+    green card that had to be pulled from the goods/services pair — a colour that means something
+    everywhere stops meaning it once it is used for decoration.
+  - Now: the hairline ring stays constant (a product shot on white still needs an edge), and hover
+    changes **elevation + a slight image zoom + the label colour** — three signals, no new colour.
+  - Added a real `focus-visible` outline on the link while in there; the circles had none, and
+    `web-design.md` requires a visible focus state.
+- **2026-09-26 — Landing hero: new headline, one action instead of two.** Owner supplied the line.
+  - `h1` is now **"Connecting India's Suppliers to the World"**, replacing "What are you sourcing
+    from India today?" — a question the search box directly above already asks. The new line says
+    what the platform IS, which is what a first-time visitor needs from an h1. (It also matches the
+    site's existing meta description, "B2B marketplace connecting Indian exporters with
+    international buyers", so the page and its search snippet now say the same thing.)
+  - **"Browse all categories" removed** (owner). Browsing is not lost: the sub-nav's "All
+    categories" chip sits directly above the banner and the category rail is one section below. The
+    hero now carries ONE action rather than two competing ones, and "Describe what you need" was
+    promoted from an outline button to the filled primary.
+  - ⚠️ The supporting line lost its "Pick a category or" opening in the same edit — copy that names
+    a control which is no longer on screen sends people hunting for it.
+- **2026-09-26 — Public header: the black pill is "Account login" now, and the two actions swapped
+  roles.** Owner: "make this button text Account login".
+  - 🔴 **Renaming the label alone would have been a trap.** That pill pointed at `/signup/buyer` — it
+    was the SIGNUP button, with a separate "Sign In" text link beside it. Relabelled in place, it
+    would have said "login" and opened a registration form. Worse on a phone: the text link is
+    `hidden sm:block`, so the pill is the only visible action there, and an existing buyer would have
+    had no way to reach sign-in from the header at all.
+  - So the two roles swapped, not just the word: pill → **Account login** (`/signin`), text link →
+    **Create account** (`/signup/buyer`), and the burger panel's mobile-only link swapped with them
+    so signup is still reachable on a phone. Every label now matches where it actually goes, at every
+    breakpoint.
+- **2026-09-26 — Goods/Services goes NAVY; "Recently listed" pulled for now.**
+  - **Landed on BLACK cards with a RED call to action** (owner). Navy (#1A2E8F, the logo's own) was
+    tried first and rejected by measurement: red on navy is **2.00:1**, a dark blob on dark — the
+    same failure that forced `danger` to move in September when it sat at 1.19:1 against the brand.
+    On `ink-900` the same red is **3.54:1**, clearing the 3:1 a non-text component needs, and the
+    button's white-on-red is 5.73:1. Body copy is `ink-300` at 11.95:1. All measured, not eyeballed.
+  - Black was already this page's second voice — the header's "Get Started" is `ink-900` — so two
+    black cards read as the same product rather than a new idea, and RED stays where red belongs:
+    the action. The matched-pair rule is restated in the section: the earlier attempt was a red card
+    beside a GREEN one, and green is worse than mismatched, because `success` is the verified colour.
+  - **"Recently listed" removed** (owner: "abhi ke liye hata do"). The catalogue is still test data,
+    so the newest-first feed was putting *"Banna Chips — USD 2,000/kg"* and *"Lamborghini Mirrors"*
+    filed under **Office furniture** at the front of a public page. Temporary: with real sellers the
+    section earns its place back, and git history has the working version.
+  - 🔴 **Removing the markup was not enough, and a comment I wrote saying so was wrong.** The
+    `useInfiniteQuery` kept firing a product search on every public landing load, feeding nothing.
+    Lint caught it through the orphaned `products` / `productTotal`. The query, `CardSkeleton` and
+    `FEED_PAGE_SIZE` went too; `ProductCard` stays because the curated Featured-products strip uses
+    it.
+- **2026-09-26 — Goods / Services made to stand out.** Owner: "make it stand out — its very very
+  imp". It was two flat white cards with a text link, sitting after the category rail with **no
+  heading at all**, so the page's single most important choice read as two leftover tiles.
+  - Now: its own warm band (`surface-canvas`) to lift it off the white section above, a heading that
+    names the decision ("Goods or services — both are here"), bigger cards with the icon leading,
+    and a **filled button** instead of a text link — this is the action the section exists for, and
+    red fill is this product's action token.
+  - 🔴 **No new colour, deliberately.** This pair was a red card beside a GREEN one until
+    2026-09-24, when the owner called it "not matching and awkward" — and the green was the worse
+    half, because `success` is the verified/approved colour and spending it on decoration thins the
+    one signal buyers are meant to trust. The two cards stay identical and differ by ICON and COPY.
+    The rule is restated at the top of the section so the next person does not re-run that mistake.
+  - The CTA is a `<span>`, not a `<Link>`: the whole card is already the link, and a link inside a
+    link is invalid and breaks keyboard order.
+- **2026-09-26 — "Browse by category" is now circles in a horizontal rail.** Owner asked for circle
+  designs with inline scrolling, replacing the twelve-card grid.
+  - **It carries EVERY top-level category, not twelve.** The grid sliced to `GRID_COUNT = 12` because
+    twelve was all it could show; a rail has no such limit, and a buyer looking for a trade we list
+    should not have to click "See all" to find out we list it. Images stay lazy-loaded, so the ones
+    off-screen cost nothing until they scroll in.
+  - 🔴 **The arrows report the REAL scroll position** — they disable at each end and are not rendered
+    at all when there is nothing to scroll, read from the element's own `scrollLeft` rather than a
+    guess about how many items fit. A live-looking arrow that cannot move is what `web-ui-notes.md`
+    forbids. A `ResizeObserver` re-measures, because a window resize and late-arriving images both
+    change the answer.
+  - The rail scrolls **inside its own container**, never the page (`web-design.md`: no horizontal
+    body scroll), and bleeds to the page gutters with negative margins so a circle can sit half-off
+    the edge — which is what tells a person there is more to the right — while the first still lines
+    up with the heading.
+  - Keyboard needs nothing extra: each circle is a link, so tabbing scrolls the rail natively. The
+    arrows exist for pointer users on desktop, who otherwise cannot scroll horizontally without a
+    trackpad; they are hidden below `lg`, where a swipe does the job.
+  - Removed with the grid: `GRID_COUNT` and the `NoImagePanel` import in `Landing.jsx`, both now dead.
+  - ⚠️ **The full-bleed version lasted one round.** Negative margins pulled the rail to the viewport
+    edge so a circle could sit half-cut as a "there is more" hint — but once scrolled, circles ran
+    flush into both screen edges and the row lost the page's gutter entirely. Reverted the same day
+    (owner: "make some space right and left"); the rail now sits inside the section's padding and the
+    arrows have somewhere to live. Items still clip at the container edge, which reads as
+    continuation without touching the screen.
+- **2026-09-26 — Landing: the three-item value strip became "What makes MPX Global different".**
+  Owner pointed at the strip and asked for the section in its place.
+  - 🔴 **It keeps `id="platform"`.** The shared header has a "Platform" link pointing at that
+    anchor; dropping the id with the old markup would have left a header link that scrolls nowhere
+    (`web-ui-notes.md`). The id moves with the content, never with the markup.
+  - Six rows, and **every one is something the platform does today**: a person reads the KYC
+    documents · a seller's profile is public from registration and the tick is not a gate · plain-
+    language search · structured enquiry then live chat · real PDF quotations with counter-offers
+    and two-sided code-confirmed acceptance · and you pay the supplier directly because MPX Global
+    does not hold money. No counts, no "trusted by", nothing about volume — the same rule that kept
+    the design's six invented testimonials off this page.
+  - ⚠️ Noted at the last row: "you pay the supplier directly" is true **today**. Escrow is a Phase-2
+    idea; if it ever ships, that row has to change with it or it becomes a lie.
+- **2026-09-26 — Landing: "India has trade agreements with much of the world", with the India–US
+  photograph.** Owner supplied the image and asked for India's FTAs with big countries.
+  - 🔴 **The list is real and the US is NOT on it.** India and the United States have **no free
+    trade agreement** — they have talks. The photograph is of an India–US meeting, so placing it
+    above a list headed "free trade agreements" would imply one exists. The section names the US
+    explicitly as a very large trading partner **with no FTA**, in its own line, rather than letting
+    the photo imply otherwise. A buyer who assumes a tariff preference finds out at customs; this is
+    the same reasoning that kept invented testimonials off this page, and it matters more here
+    because someone can act on it.
+  - Listed: UAE (CEPA), Australia (ECTA), UK (FTA, signed 2025), Japan, South Korea, ASEAN, EFTA
+    (TEPA — Switzerland, Norway, Iceland, Liechtenstein). The copy says duty relief depends on the
+    product and its certificate of origin, because it does.
+  - ⚠️ **Two things the owner needs to settle before this goes live:** (1) the photograph looks like
+    agency press work — using it commercially needs a licence; (2) in India, a public official's
+    image in commercial promotion carries personality-rights exposure. The caption carries an
+    explicit "not affiliated with, or endorsed by, any government or public official" line, which
+    reduces the implication but is not a licence.
+  - The file was renamed `Modi&trump.webp` → `india-trade-diplomacy.webp`: an `&` in a URL is a
+    query separator, so the original path would have 404'd in some browsers.
+  - ⚠️ These dates go stale by themselves. Noted at the top of the component.
+- **2026-09-26 — `npm run build:android`: the release build now PROVES what it shipped.** Owner asked
+  for the icon trap to be fixed properly rather than remembered. One command does prebuild → gradle →
+  and then verifies the ARTEFACT, not the log:
+  1. launcher icons are not older than `assets/icon.png` (the 2026-09-25 blue-icon bug — changing
+     `assets/` does nothing until `expo prebuild` regenerates `android/.../mipmap-*`, and the build
+     log looks perfectly healthy while shipping five-week-old artwork);
+  2. the APK is signed with the upload key, not `CN=Android Debug`;
+  3. the live API host is in the bundle;
+  4. the dev url from `.env` is not.
+  Each of those has failed silently on this project at least once.
+  - 🔴 **The dev-url check had to be rewritten after it cried wolf on its first real run.** It
+    matched PATTERNS (`10\.0\.2\.2`, `192\.168\.`) — and those strings are in every bundle by
+    construction, because `src/config/env.js` lists them as loopback/private constants **in the code
+    that REJECTS cleartext dev urls**. It now compares the exact url from `.env`. A check that fires
+    on a correct build is worse than no check: it gets switched off.
+  - The icon check was verified by DELIBERATELY BREAKING it (back-dating the native icons) to confirm
+    it fails, rather than trusting a green tick.
+  - `--verify-only` re-runs the checks against the APK already on disk, so fixing a check costs
+    seconds instead of a 16-minute rebuild — a check that is expensive to correct stops being
+    corrected.
 - **2026-09-25 — App: new brand artwork, a real upload key, and bank details on the phone.** Three
   things the owner asked for together.
   - **Artwork** — every icon regenerated from `web/public/brand-logo.png`, so the app and the web now

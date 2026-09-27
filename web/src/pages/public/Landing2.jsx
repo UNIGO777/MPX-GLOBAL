@@ -1,34 +1,52 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { useCanonical } from '../../lib/seo.js';
-import { BannerStrip, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
+import { useNoIndex } from '../../lib/seo.js';
+import { BannerStrip, SupplierCard, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
-import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
-import { CircuitHero } from '../../components/landing/CircuitHero.jsx';
-import { FaqAccordion } from '../../components/landing/FaqAccordion.jsx';
-import { AiBandVideo } from '../../components/landing/AiBandVideo.jsx';
-import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
-import { PromoPanels } from '../../components/landing/PromoPanels.jsx';
-import { VerifiedSupplierCard } from '../../components/landing/VerifiedSupplierCard.jsx';
-import { DEMO_SUPPLIERS_ON, demoSuppliers } from '../../lib/demoSuppliers.js';
-import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
+import { CategoryCircles } from '../../components/landing2/CategoryCircles.jsx';
+import { TradeAgreements } from '../../components/landing2/TradeAgreements.jsx';
+import { useAuth } from '../../auth/AuthContext.jsx';
 
 import {
-  ArrowRightIcon,
+  AlertIcon,
+  BadgeCheckIcon,
   BoxIcon,
   ChatIcon,
-  EnquiryIcon,
+  CreditCardIcon,
   GridIcon,
-  HandshakeIcon,
+  QuoteIcon,
   SearchIcon,
+  ShieldIcon,
   SparkleIcon,
 } from '../../components/ui/icons.jsx';
 import { PublicFooter } from '../../components/public/PublicFooter.jsx';
 import { PublicHeader } from '../../components/public/PublicHeader.jsx';
+
+/**
+ * ⚠️ SNAPSHOT — a frozen copy of the landing page as it stood on 2026-09-26,
+ * served at `/landing-2` so the current design stays viewable while `/` is
+ * reworked (owner). It is NOT a second live page.
+ *
+ * 🔴 It is `noindex`. Two public URLs with the same content compete with each
+ * other in search, and this one exists to be compared against, not found. (The
+ * older `/landing-blue` variant instead declares `useCanonical('/')`, which is a
+ * different and weaker answer — left alone here rather than changed in passing.)
+ *
+ * 🔴 **What is frozen and what is not.** The page itself and the two
+ * landing-only components it uses were COPIED (`components/landing2/`), so
+ * editing the originals does not move this. Everything else is still SHARED —
+ * `PublicHeader`, `PublicFooter`, `ProductCard`, `FeaturedStrips`, the icons and
+ * the Tailwind tokens — so a change to any of those, or to the brand palette,
+ * shows up here too. If a comparison ever looks wrong, that is the reason.
+ *
+ * 🔴 **Delete this file, `components/landing2/` and the route together** once the
+ * new landing is settled. A stale copy of a marketing page is the kind of thing
+ * that gets edited by mistake a month later.
+ */
 
 /**
  * Public landing page (`/`) — SEO surface and the platform's front door.
@@ -117,23 +135,14 @@ const FAQS = [
   },
 ];
 
+/** Placeholder rows drawn while the rail loads — the rail itself shows ALL
+ *  top-level categories (owner, 2026-09-23) and scrolls inside the hero's
+ *  height, so this number only has to fill the visible area, not match 40. */
+const RAIL_SKELETON_ROWS = 9;
+/** Category tiles inside the hero panel — the mockup's 3×2 grid. */
+const HERO_TILES = 6;
 
 /* --------------------------------- pieces --------------------------------- */
-
-/**
- * Example prompts for the hero's AI field.
- *
- * 🔴 Each one is the SHAPE of a real sourcing request — a product, a quantity,
- * a specification, a destination — because the thing a visitor cannot guess from
- * an empty box is how much detail the AI will actually take. They are not claims
- * that these exact goods are listed; clicking one runs the search and the page
- * reports honestly what it finds, including nothing.
- */
-const HERO_EXAMPLES = [
-  '500 kg organic turmeric powder',
-  'cotton fabric, 120 GSM, shipped to Rotterdam',
-  'stainless steel fasteners, ISO 898',
-];
 
 /** Section heading + optional "see all" — the one definition, so headings can't drift. */
 function BlockHead({ title, sub, to, cta = 'See all' }) {
@@ -158,10 +167,12 @@ function BlockHead({ title, sub, to, cta = 'See all' }) {
 
 /* ---------------------------------- page ---------------------------------- */
 
-export function Landing() {
+export function Landing2() {
+  const { user, restoring } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  useCanonical('/');
+  // A snapshot must never be indexed or claim `/`'s canonical — see the note above.
+  useNoIndex();
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
@@ -182,52 +193,8 @@ export function Landing() {
     ...topCategories.filter((c) => !featuredCategoryIds.has(c.id)),
   ];
 
-  /* The hero's AI field. Its own state, NOT the header's `query`: the two boxes
-     are visible at the same time, and mirroring what you type from one into the
-     other reads as a bug. They also go to different places — the header does a
-     catalogue search, the hero asks the AI. */
-  const [heroQuery, setHeroQuery] = useState('');
-
-  /* 🔴 The backdrop measures these two boxes at runtime and builds its geometry
-     from them, so the pulses converge on the field at EVERY viewport instead of
-     only at the one the numbers were once read off. See CircuitHero. */
-  const heroFieldRef = useRef(null);
-  const heroCopyRef = useRef(null);
-
-  const askAi = (text) => {
-    const q = text.trim();
-    navigate(q ? `/ai-search?q=${encodeURIComponent(q)}` : '/ai-search');
-  };
-
-  const onAiSearch = (e) => {
-    e.preventDefault();
-    askAi(heroQuery);
-  };
-
-  /* The real verified-supplier total, so the heading's number is a fact rather
-     than a claim. `pageSize: 1` — only `total` is used. */
-  const verifiedSuppliers = useQuery({
-    queryKey: catalogueKeys.search({ type: 'supplier', verifiedOnly: true, pageSize: 1 }),
-    queryFn: () => catalogueApi.search({ type: 'supplier', verifiedOnly: true, pageSize: 1 }),
-    staleTime: 10 * 60 * 1000,
-  });
-  const verifiedSupplierCount = verifiedSuppliers.data?.total ?? 0;
-
-  /* 🔴 Real curated suppliers ALWAYS win. The demo list is only reached when
-     there are none AND the demo flag is explicitly on — see demoSuppliers.js. */
-  const supplierRows = featured.suppliers.length > 0 ? featured.suppliers : demoSuppliers();
-  const showingDemoSuppliers = featured.suppliers.length === 0 && supplierRows.length > 0;
-
-  /* 🔴 The strapline's number follows the CARDS, so the two can never disagree.
-     Real data → the real total, stated plainly. Demo → the "100+" the owner
-     asked for on 2026-09-27, which exists only while `VITE_DEMO_SUPPLIERS` is
-     on and therefore never in production. Mixing the two — a real "3+" over four
-     placeholder cards — was the first version, and it read as a lie about both. */
-  const supplierStrap = showingDemoSuppliers
-    ? '100+ verified companies whose documents a person on our team has checked.'
-    : verifiedSupplierCount
-      ? `${verifiedSupplierCount} ${verifiedSupplierCount === 1 ? 'company' : 'companies'} whose documents a person on our team has checked.`
-      : 'Companies whose documents a person on our team has checked.';
+  const isBuyer = user?.role === 'buyer';
+  const isExporter = user?.role === 'exporter';
 
   const onSearch = (e) => {
     e.preventDefault();
@@ -278,29 +245,10 @@ export function Landing() {
 
       {/* Browse bar — the marketplace's own nav row, under the shared header.
           Scrolls horizontally rather than wrapping on a narrow phone.
-
-          🔴 HIDDEN BELOW `sm` (owner, 2026-09-27: "remove this header in mobile
-          version"). On a phone it was a scrolling strip with most of its items
-          off-screen, and it cost ~46px of the fold the hero had just been cut to
-          fit inside. Kept from `sm` up, where the row has room to be read.
-
-          ⚠️ What that costs on a phone, checked link by link before hiding it:
-            · "All categories" and "How it works" — still in the header's own
-              hamburger menu (`PublicHeader`'s `NAV`), so nothing is lost;
-            · "Goods" / "Services" — these point at `/categories?type=…`, and
-              `Categories.jsx` never reads that param, so they already landed on
-              the same page as "All categories". Nothing is lost here either, but
-              the dead param is a pre-existing bug worth fixing separately;
-            · "AI Search" — the hero's own field and its example chips go to
-              `/ai-search`, so it is still one tap away;
-            · 🔴 "Verified exporters" (`/search?type=supplier`) is the ONE real
-              loss. Supplier mode has no other entry point since the owner had
-              the Products|Suppliers toggle removed from `/search`, so on a phone
-              that mode is now unreachable from this page. Raised with the owner.
           🆕 2026-09-23 — rebuilt to the owner's hero mockup. "Services" and
           "Verified exporters" are back (they were pulled on 2026-08-23), and
           "How it works" joins them; every one is a real destination. */}
-      <div className="hidden border-b border-surface-border bg-white sm:block">
+      <div className="border-b border-surface-border bg-white">
         <nav
           aria-label="Browse"
           className="flex w-full items-center gap-1 overflow-x-auto px-4 py-2.5 text-sm sm:px-6 lg:px-10 xl:px-16"
@@ -335,116 +283,291 @@ export function Landing() {
       </div>
 
       <main>
-        {/* ═════════ HERO — AI MATCH-MAKING ═════════
-            Rebuilt 2026-09-26 on the owner's brief: "we are making this section
-            for reflecting our biggest fiture for ai match making… make a search
-            bar and connect all line with that". The band's whole job is to put
-            ONE field in front of a visitor and have every moving thing on the
-            page point at it.
+        {/* ═════════ HERO — category rail · banner · contextual panel ═════════
+            🆕 2026-09-23 — rebuilt against the owner's mockup: a question as the
+            headline, a serif face for it, six category tiles inside the panel,
+            and the exporter pitch split into its own card.
 
-            Ground is `surface-canvas` — the token that already existed for this
-            band ("the landing hero's page ground"), warm on purpose so it does
-            not fight the red brand. Do not add a second cream.
+            🔴 TWO THINGS IN THE MOCKUP WERE NOT BUILT AS DRAWN, both because
+            they would have been false:
 
-            🔴 STILL MISSING from the pre-2026-09-26 hero, and still logged in
-            `docs/UiWebNotes.md`: the guest signup cards ("Start sourcing" / "For
-            exporters") and the always-open category rail. The signup cards were
-            the only registration CTA a visitor met above the fold on a phone —
-            nothing here replaces that yet. The old hero is intact at
-            `/landing-2` and in git history. */}
-        <section className="relative isolate overflow-hidden bg-surface-canvas text-ink-900">
-          {/* Backdrop only — it draws the red pulses and nothing else, and it is
-              `pointer-events-none`, so it can never intercept a click meant for
-              the field sitting on top of it. */}
-          <CircuitHero targetRef={heroFieldRef} copyRef={heroCopyRef} />
+            1. Each tile read "[000] suppliers". That count does not exist on
+               any public route, and the real numbers are worse than missing:
+               of the 40 top categories, exactly THREE contain a supplier
+               (Textiles 4, IT 2, Agriculture 1). Four of the six tiles drawn
+               would have read "0 suppliers" on the front page. The line now
+               carries the sub-category count, which is real, already in the
+               tree, and needs no API change.
+            2. The subhead read "Every supplier you contact is a real business,
+               reviewed by our team." Only 3 of 11 companies are verified, and
+               an UNVERIFIED seller is public and contactable by design (B7).
+               Rewritten so the claim attaches to the tick, which is true.
 
-          {/* `max(560px, 76vh)` rather than a bare `vh`: on a short laptop 76vh
-              is under 500px and the section stops feeling like a hero at all,
-              which is the thing the owner asked to fix. The floor holds it. */}
-          <div className="relative flex min-h-[56svh] w-full flex-col items-center justify-center px-4 py-8 text-center max-[359px]:py-5 sm:min-h-[min(820px,max(560px,74vh))] sm:px-6 sm:py-20 lg:px-10 xl:px-16">
-            <div ref={heroCopyRef} className="flex w-full flex-col items-center">
-              <p className="inline-flex items-center gap-2 rounded-full border border-primary-600/25 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-700 backdrop-blur-sm">
-                <SparkleIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                AI match-making
+            Tiles use the categories' REAL photographs rather than the mockup's
+            line icons: the icon set here has no category-specific glyphs, so
+            matching the drawing would have meant inventing forty of them. */}
+        <section className="bg-surface-canvas py-4 sm:py-6">
+          <div className="grid w-full grid-cols-1 gap-4 px-4 sm:gap-5 sm:px-6 lg:px-10 xl:px-16 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_320px]">
+            {/* Always-open rail. Hidden below lg, where the category grid below
+                and the browse bar above already serve the same purpose. */}
+            {/* 🔴 The rail is ABSOLUTELY POSITIONED inside its grid cell, and that
+                is the whole trick (owner, 2026-09-23: "only that much height we
+                need, other categories come in scroll").
+                A grid row is as tall as its TALLEST item, so while the rail was
+                in normal flow its forty entries set the row height and the hero
+                stretched to match — the opposite of what was wanted, and no
+                amount of `overflow-y-auto` fixes it, because nothing was
+                overflowing. Taking the panel out of flow means the rail
+                contributes ZERO height: the row is sized by the hero alone, the
+                stretched `aside` inherits exactly that height, and the list
+                finally has something to overflow against.
+                Only from `lg`, where the rail is visible at all. */}
+            <aside className="relative hidden lg:block">
+              <div className="absolute inset-0 flex flex-col rounded-2xl bg-white p-2 shadow-card">
+              {categories.isPending ? (
+                <div className="space-y-1 p-1">
+                  {Array.from({ length: RAIL_SKELETON_ROWS }).map((_, i) => (
+                    <div key={i} className="h-10 animate-pulse rounded-xl bg-ink-100" />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* 🔴 EVERY top-level category, scrolling inside the hero's
+                      own height (owner, 2026-09-23 — it used to show nine).
+                      `min-h-0` is load-bearing: a flex child defaults to
+                      min-height:auto, so without it the list refuses to shrink,
+                      overflow never fires, and the rail just grows taller than
+                      the hero instead of scrolling.
+                      The "All N categories" link stays OUTSIDE this list so it
+                      is reachable without scrolling to the bottom. */}
+                  <ul className="min-h-0 flex-1 overflow-y-auto text-sm">
+                    {topCategories.map((c) => (
+                      <li key={c.id}>
+                        <Link
+                          to={`/category/${c.slug ?? c.id}`}
+                          className="group flex items-center gap-2.5 rounded-xl px-2.5 py-2 font-medium text-ink-900 hover:bg-primary-50 hover:text-primary-700"
+                        >
+                          {c.image ? (
+                            <img
+                              src={c.image}
+                              alt=""
+                              loading="lazy"
+                              width={24}
+                              height={24}
+                              className="h-6 w-6 shrink-0 rounded-md object-cover"
+                            />
+                          ) : (
+                            <span className="h-6 w-6 shrink-0 rounded-md bg-ink-100" />
+                          )}
+                          <span className="truncate">{c.name}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-2 border-t border-surface-border pt-2">
+                    <Link
+                      to="/categories"
+                      className="block rounded-xl px-2.5 py-2 text-sm font-bold text-primary-700 hover:bg-primary-50"
+                    >
+                      All {topCategories.length} categories →
+                    </Link>
+                  </div>
+                </>
+              )}
+              </div>
+            </aside>
+
+            {/* The banner. One h1 on the page, and it lives here.
+                `ink-900` (#000517), never #000000 — pure black is off the token
+                scale, and this is the same fill the footer uses. */}
+            <div className="rounded-2xl bg-ink-900 px-6 py-8 sm:px-10 sm:py-10 lg:px-12">
+              <p className="mb-4 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-primary-300">
+                <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                Every tick checked by a person
               </p>
-
-              <h1 className="mt-4 max-w-4xl text-balance text-[27px] font-extrabold leading-[1.08] max-[359px]:text-[24px] tracking-tight text-ink-900 sm:mt-6 sm:text-5xl lg:text-6xl">
+              {/* The headline is the owner's own line (2026-09-26), replacing
+                  "What are you sourcing from India today?" — a question the
+                  search box above already asks. This one says what the platform
+                  IS, which is what a first-time visitor needs from an h1. */}
+              <h1 className="max-w-2xl font-serif text-3xl leading-[1.15] text-white sm:text-4xl lg:text-[2.75rem]">
                 Connecting India&apos;s Suppliers to the World
               </h1>
-
-              {/* 🔴 Describes what the feature ACTUALLY does — it reads your
-                  requirement and finds suppliers already on this platform. No
-                  number of suppliers, no "instant", no accuracy claim: this is a
-                  trust marketplace and the page may not promise what cannot be
-                  shown (the same rule that kept invented testimonials off it). */}
-              <p className="mt-3 max-w-2xl text-pretty text-[14.5px] leading-relaxed text-ink-600 max-[359px]:text-[13.5px] sm:mt-5 sm:text-lg">
-                Describe what you need — material, quantity, specification, destination. Our AI
-                matches you with verified Indian exporters who can supply it.
+              {/* 🔴 NOT the mockup's "every supplier … reviewed by our team" —
+                  see this section's note. The claim belongs to the tick.
+                  ⚠️ "Pick a category or" was dropped with the Browse button
+                  below: copy that names a control which is no longer there sends
+                  people hunting for it. */}
+              <p className="mt-4 max-w-xl text-sm text-ink-200 sm:text-base">
+                Describe what you need and we will find it. Where you see the tick, a person on
+                our team has checked that company&apos;s documents.
               </p>
-            </div>
 
-            {/* The field every trace on this page terminates on. Capped at
-                720px because that is the width where the backdrop's own bar zone
-                lines up with it (see CircuitHero). */}
-            <form
-              ref={heroFieldRef}
-              role="search"
-              onSubmit={onAiSearch}
-              className="mt-7 flex w-full max-w-[720px] flex-col gap-2 sm:mt-20 sm:flex-row sm:items-center sm:gap-0 sm:rounded-2xl sm:border-2 sm:border-primary-600 sm:bg-white sm:p-1.5 sm:shadow-lift sm:focus-within:ring-4 sm:focus-within:ring-primary-600/15"
-            >
-              <label className="sr-only" htmlFor="hero-ai-q">
-                Describe what you want to source
-              </label>
-              <div className="flex min-w-0 flex-1 items-center rounded-2xl border-2 border-primary-600 bg-white px-4 py-0 sm:rounded-none sm:border-0">
-                <SearchIcon className="mr-3 h-5 w-5 shrink-0 text-ink-400" aria-hidden="true" />
-                <input
-                  id="hero-ai-q"
-                  type="search"
-                  value={heroQuery}
-                  onChange={(e) => setHeroQuery(e.target.value)}
-                  placeholder="500 kg organic turmeric powder, shipped to Dubai"
-                  className="h-11 min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-ink-400"
-                />
-              </div>
-              <button
-                type="submit"
-                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary-600 px-7 text-sm font-extrabold text-white transition hover:bg-primary-700 sm:h-11 sm:rounded-xl"
-              >
-                Find suppliers
-                <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </form>
-
-            {/* Real controls: each one runs that search. They are examples of
-                the KIND of sentence the AI handles, which is the part a visitor
-                cannot guess from an empty box. */}
-            <div className="scrollbar-none mt-4 flex w-full max-w-[720px] items-center gap-2 overflow-x-auto max-[359px]:hidden sm:mt-5 sm:w-auto sm:max-w-none sm:flex-wrap sm:justify-center sm:overflow-visible">
-              <span className="shrink-0 text-[12.5px] text-ink-500">Try:</span>
-              {HERO_EXAMPLES.map((example) => (
-                <button
-                  key={example}
-                  type="button"
-                  onClick={() => askAi(example)}
-                  className="shrink-0 whitespace-nowrap rounded-full border border-surface-border bg-white/80 px-3.5 py-1.5 text-[12.5px] text-ink-700 backdrop-blur-sm transition hover:border-primary-600 hover:text-primary-700"
+              {/* 🔴 "Browse all categories" removed 2026-09-26 (owner). Browsing
+                  is not lost — the sub-nav's "All categories" chip sits directly
+                  above this banner and the category rail is one section below —
+                  so the hero keeps ONE action instead of two competing ones. */}
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  to="/ai-search"
+                  className="flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-3 text-sm font-bold text-white hover:bg-primary-700 sm:px-6"
                 >
-                  {example}
-                </button>
-              ))}
+                  <SparkleIcon className="h-4 w-4" aria-hidden="true" />
+                  Describe what you need
+                </Link>
+              </div>
+
+              {/* Six real categories, straight into the catalogue. Hidden until
+                  there are six to show, rather than rendering a grid with gaps.
+
+                  🔴 NOT ON A PHONE (owner, 2026-09-25). Below `sm` the grid is a
+                  single column, so six full-width tiles pushed the signup card
+                  and everything after it a screen and a half down — the hero
+                  became a category list. Nothing is lost: the page's own
+                  categories section is one scroll away and shows twelve, two
+                  across, and the browse bar sits above the hero. */}
+              {topCategories.length >= HERO_TILES && (
+                <ul className="mt-8 hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+                  {topCategories.slice(0, HERO_TILES).map((c) => {
+                    const subs = c.subs?.length ?? 0;
+                    return (
+                      <li key={c.id}>
+                        <Link
+                          to={`/category/${c.slug ?? c.id}`}
+                          className="flex h-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3.5 transition hover:border-primary-300/40 hover:bg-white/[0.08]"
+                        >
+                          {c.image ? (
+                            <img
+                              src={c.image}
+                              alt=""
+                              loading="lazy"
+                              width={40}
+                              height={40}
+                              className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <span className="h-10 w-10 shrink-0 rounded-lg bg-white/10" />
+                          )}
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-bold text-white">{c.name}</span>
+                            {subs > 0 && (
+                              <span className="block text-xs text-ink-400">
+                                {subs} {subs === 1 ? 'subcategory' : 'subcategories'}
+                              </span>
+                            )}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
+
+            {/* Contextual panel — the column that makes this a web layout rather
+                than a stack. Below xl it drops under the banner at full width
+                instead of being hidden: on a phone it carries the only signup
+                CTA a guest sees above the fold. */}
+            <aside className="space-y-4 xl:w-80">
+              {/* While the session restores, a neutral placeholder — not the
+                  guest signup cards, which a signed-in visitor must never see
+                  flash on reload (owner, 2026-09-25). */}
+              {restoring && (
+                <div aria-hidden="true" className="h-56 animate-pulse rounded-2xl bg-white shadow-card motion-reduce:animate-none" />
+              )}
+              {!restoring && !user && (
+                <>
+                  <div className="rounded-2xl bg-white p-6 shadow-card">
+                    <p className="text-base font-extrabold">Start sourcing</p>
+                    <p className="mt-1.5 text-sm text-ink-600">
+                      Free buyer account to save suppliers, send enquiries and chat.
+                    </p>
+                    <Link
+                      to="/signup/buyer"
+                      className="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700"
+                    >
+                      Create free account
+                    </Link>
+                    <Link
+                      to="/signin"
+                      className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-ink-900 hover:bg-surface-subtle"
+                    >
+                      Sign in
+                    </Link>
+                  </div>
+
+                  {/* Its own card now, as the mockup draws it — the exporter
+                      pitch was buried under a rule inside the buyer card. */}
+                  <div className="rounded-2xl bg-white p-6 shadow-card">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-ink-400">
+                      For exporters
+                    </p>
+                    <p className="mt-1 text-base font-extrabold">Sell to global buyers</p>
+                    <p className="mt-1.5 text-sm text-ink-600">
+                      Your public profile goes live the day you register. Get verified to lift
+                      the listing limit.
+                    </p>
+                    <Link
+                      to="/signup/exporter"
+                      className="mt-4 inline-block text-sm font-bold text-primary-700 hover:underline"
+                    >
+                      Register as an exporter →
+                    </Link>
+                  </div>
+                </>
+              )}
+
+              {isBuyer && (
+                <div className="rounded-2xl bg-white p-6 shadow-card">
+                  <p className="text-sm font-extrabold">Welcome back{user?.name ? `, ${user.name}` : ''}</p>
+                  {/* 🔴 Verification lives HERE, not above the catalogue: a buyer
+                      is fully active from signup and verification gates nothing
+                      for them (D3). Its own status detail stays on
+                      /buyer/verification — a self-scoped read, not a public one. */}
+                  <div className="mt-4 rounded-xl bg-warning-50 p-3">
+                    <p className="flex items-center gap-1.5 text-xs font-bold text-ink-900">
+                      <AlertIcon className="h-4 w-4 text-warning" aria-hidden="true" />
+                      Company verification
+                    </p>
+                    <p className="mt-1 text-xs text-ink-600">
+                      Nothing is on hold — you can browse, enquire and chat as normal.
+                    </p>
+                    <Link to="/buyer/verification" className="mt-2 inline-block text-xs font-bold text-primary-700 hover:underline">
+                      View status ›
+                    </Link>
+                  </div>
+                  <hr className="my-5 border-surface-border" />
+                  <Link to="/buyer/chat" className="block py-1.5 text-sm font-semibold hover:text-primary-700">
+                    Messages
+                  </Link>
+                  <Link to="/saved" className="block py-1.5 text-sm font-semibold hover:text-primary-700">
+                    Saved items
+                  </Link>
+                </div>
+              )}
+
+              {isExporter && (
+                <div className="rounded-2xl bg-white p-6 shadow-card">
+                  <p className="text-sm font-extrabold">Your listings</p>
+                  <p className="mt-1.5 text-sm text-ink-600">
+                    Manage your catalogue and reply to buyer enquiries.
+                  </p>
+                  <Link
+                    to="/exporter/products"
+                    className="mt-4 block rounded-xl bg-primary-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-primary-700"
+                  >
+                    Manage listings
+                  </Link>
+                  <Link
+                    to="/exporter/chat"
+                    className="mt-2 block rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-bold text-primary-700 hover:bg-primary-50"
+                  >
+                    Enquiries &amp; chat
+                  </Link>
+                </div>
+              )}
+            </aside>
           </div>
         </section>
-
-        {/* ═════════ THREE PROMO PANELS ═════════
-            Directly under the hero (owner, 2026-09-27, to the store layout they
-            sent): one full-width panel over two halves. Fixed navigation into
-            the platform's three entry points, NOT the admin banner strip — that
-            still runs below this and holds up to 24 rotating banners.
-
-            🔴 This also restores the only way into SUPPLIER search on a phone.
-            `/search?type=supplier` lost its entry point when the browse bar was
-            hidden on mobile (2026-09-27), because the Products|Suppliers toggle
-            had already been removed from `/search`. The lead panel is that link. */}
-        <PromoPanels />
 
         {/* ═════════ FEATURED BANNERS — curated in /admin/featured ═════════
             Under the hero, never inside it (owner, 2026-09-25): the hero is the
@@ -466,22 +589,63 @@ export function Landing() {
             counts, no "trusted by", no promises about volume — this page has a
             standing rule against claims it cannot back (it is why the design's
             six invented testimonials were never built). If a row here stops
-            being true, delete the row.
-
-            🆕 2026-09-27 — the six icon rows became picture cards
-            (`PlatformCards.jsx`, to the layout the owner sent). The sentences
-            moved across unchanged; the artwork is still to come. */}
+            being true, delete the row. */}
         <section id="platform" className="border-y border-surface-border bg-white py-12 sm:py-16">
           <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16">
             <h2 className="text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
               What makes MPX Global different
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-ink-600 sm:text-base">
-              Eight things that are true of this platform today — not a pitch about what it might
+              Six things that are true of this platform today — not a pitch about what it might
               become.
             </p>
 
-            <PlatformCards />
+            <ul className="mt-8 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                {
+                  Icon: ShieldIcon,
+                  title: 'A person reads the documents',
+                  body: 'Verification is done by our team, not an automated stamp. The tick means someone checked that company\u2019s papers.',
+                },
+                {
+                  Icon: BadgeCheckIcon,
+                  title: 'Sellers are visible from day one',
+                  body: 'An exporter\u2019s public profile goes live the moment they register. Verification adds the tick \u2014 it is not a gate to being found.',
+                },
+                {
+                  Icon: SparkleIcon,
+                  title: 'Describe it, don\u2019t guess keywords',
+                  body: 'Write what you need in plain language and get matching suppliers back. No hunting for the exact term a seller happened to type.',
+                },
+                {
+                  Icon: ChatIcon,
+                  title: 'Talk to the supplier directly',
+                  body: 'A structured enquiry, then live chat with files. No email chains, and the whole conversation stays in one place.',
+                },
+                {
+                  Icon: QuoteIcon,
+                  title: 'Real quotations, not chat messages',
+                  body: 'Sellers send a priced PDF into the chat. Either side can counter-offer, and both confirm the final figure with a code sent to their email.',
+                },
+                {
+                  /* 🔴 True TODAY. Escrow is a Phase-2 idea; if it ever ships,
+                     this row has to change with it or it becomes a lie. */
+                  Icon: CreditCardIcon,
+                  title: 'You pay the supplier directly',
+                  body: 'MPX Global does not hold or move your money. The quotation carries the seller\u2019s own bank details for you to pay against.',
+                },
+              ].map(({ Icon, title, body }) => (
+                <li key={title} className="flex items-start gap-3.5">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-bold text-ink-900">{title}</span>
+                    <span className="mt-1 block text-sm leading-relaxed text-ink-600">{body}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
@@ -604,21 +768,14 @@ export function Landing() {
           </div>
         </section>
 
-        {/* ═════════ AI BAND — the page's one coloured band ═════════
-            🆕 2026-09-27 — a muted looping clip sits behind it on `lg` and up.
-            See `AiBandVideo.jsx` for why it does not load on a phone. */}
-        <section className="relative isolate overflow-hidden bg-primary-600">
-          <AiBandVideo />
-          {/* 🔴 The scrim that makes the copy readable lives INSIDE
-              `AiBandVideo`, not here, so it mounts and unmounts with the clip —
-              a phone loads no video and must not get a dark wash over a plain
-              red band. The measurements behind it are in that file. */}
+        {/* ═════════ AI BAND — the page's one coloured band ═════════ */}
+        <section className="bg-primary-600">
           <div className="flex w-full flex-col items-start gap-6 px-4 py-10 sm:px-6 sm:py-12 lg:flex-row lg:items-center lg:px-10 xl:px-16">
             <div className="min-w-0 flex-1">
               <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl lg:text-3xl">
                 Describe what you need. We&apos;ll find it.
               </h2>
-              <p className="mt-2 max-w-2xl text-sm text-white sm:text-base">
+              <p className="mt-2 max-w-2xl text-sm text-primary-100 sm:text-base">
                 Skip the filters — write it the way you&apos;d say it to a colleague, and the
                 platform extracts the category, quantity and budget for you.
               </p>
@@ -666,44 +823,16 @@ export function Landing() {
             error state, a five-across cap and "Load more" rather than infinite
             scroll, none of which is worth rewriting from memory. */}
 
-        {/* ═════════ VERIFIED SUPPLIERS ═════════
-            Rebuilt 2026-09-27 to the card layout the owner sent. Feeds from the
-            curated list in `/admin/featured` — a real, public-projected supplier
-            each time.
-
-            🔴 **The count in the heading is the REAL number**, read from
-            `/public/search?type=supplier&verifiedOnly=true`. It is not written
-            into the page, so it cannot go stale or overstate. This page's rule
-            is that it states nothing it cannot back — it is why the design's six
-            invented testimonials were never built.
-
-            🔴 **`demoSuppliers()` is a CLIENT-DEMO fallback and must not reach
-            production.** Owner asked for placeholder suppliers on 2026-09-27
-            ("do it for now its client request") after a red alert. It renders
-            only when `VITE_DEMO_SUPPLIERS === 'true'` — unset everywhere by
-            default — AND the real list came back empty. Delete this fallback,
-            `lib/demoSuppliers.js` and the flag before launch; logged in
-            `docs/UiWebNotes.md`. */}
-        {supplierRows.length > 0 && (
-          <section className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
-            <BlockHead
-              title="Verified suppliers"
-              sub={supplierStrap}
-              to="/search?type=supplier"
-            />
-            {import.meta.env.DEV && DEMO_SUPPLIERS_ON && showingDemoSuppliers && (
-              /* Dev-only. A client-preview build is not DEV, so this never shows
-                 in the demo itself — it is here so nobody building the page
-                 mistakes the placeholders for real data. */
-              <p className="mb-3 rounded-lg bg-warning-50 px-3 py-2 text-xs font-semibold text-warning-800">
-                Placeholder suppliers (VITE_DEMO_SUPPLIERS). Not real companies — delete before launch.
-              </p>
-            )}
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {supplierRows.map((sup) => (
-                <li key={sup.id}>
-                  <VerifiedSupplierCard supplier={sup} />
-                </li>
+        {/* ═════════ HIGHLIGHTED SUPPLIERS — curated only ═════════
+            There is deliberately NO default here: the default suppliers section
+            is the one removed below, and curation must not bring it back by the
+            side door when nothing is picked. */}
+        {featured.suppliers.length > 0 && (
+          <section className="w-full px-4 pb-10 sm:px-6 sm:pb-12 lg:px-10 xl:px-16">
+            <BlockHead title="Highlighted suppliers" sub="Companies picked by the MPX Global team." to="/search?type=supplier" />
+            <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+              {featured.suppliers.map((sup) => (
+                <li key={sup.id}><SupplierCard supplier={sup} /></li>
               ))}
             </ul>
           </section>
@@ -725,29 +854,16 @@ export function Landing() {
         <section id="how-it-works" className="border-t border-surface-border bg-ink-50">
           <div className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
             <h2 className="text-2xl font-extrabold tracking-tight">How it works</h2>
-            {/* 🔴 The NUMBER stays alongside the icon (owner asked for icons,
-                2026-09-27). This is an `<ol>` — the order is the meaning, and an
-                icon alone does not say "second". The icon tells you what the
-                step is at a glance; the badge keeps the sequence.
-
-                Contrast measured: the icon is primary-700 on primary-50 at
-                6.71:1 (a non-text UI element needs 3:1), and the badge is white
-                on primary-600 at 5.73:1, which small text needs 4.5:1 for. The
-                badge's `ring-white` is what separates it from the tile; the card
-                behind is white, so the ring reads as a gap rather than a ring. */}
             <ol className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                [SearchIcon, 'Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
-                [EnquiryIcon, 'Send an enquiry', 'Tell them exactly what you need, in a couple of clicks.'],
-                [ChatIcon, 'Chat in real time', 'Talk directly with the supplier on the platform.'],
-                [HandshakeIcon, 'Deal with confidence', 'The verified tick and a full conversation history keep both sides honest.'],
-              ].map(([Icon, title, body], i) => (
+                ['Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
+                ['Send an enquiry', 'Tell them exactly what you need, in a couple of clicks.'],
+                ['Chat in real time', 'Talk directly with the supplier on the platform.'],
+                ['Deal with confidence', 'The verified tick and a full conversation history keep both sides honest.'],
+              ].map(([title, body], i) => (
                 <li key={title} className="rounded-2xl bg-white p-5 shadow-card">
-                  <span className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                    <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary-600 text-[10px] font-bold text-white ring-2 ring-white">
-                      {i + 1}
-                    </span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white">
+                    {i + 1}
                   </span>
                   <p className="mt-3 text-sm font-bold">{title}</p>
                   <p className="mt-1 text-sm text-ink-600">{body}</p>
@@ -758,31 +874,19 @@ export function Landing() {
         </section>
 
         {/* ═════════ FAQ — same reason as How it works: the header links to it ═════════ */}
-        {/* ═════════ FAQ ═════════
-            🆕 2026-09-27 — rebuilt to the two-column accordion layout the owner
-            sent: a heading and a lead-in on the left, numbered expanding rows on
-            the right.
-
-            The rows live in `FaqAccordion.jsx`, which explains why they are no
-            longer a native `<details>` (it cannot animate its height) and what
-            the open/close transition is built from. */}
-        <section id="faq" className="w-full bg-white px-4 py-12 sm:px-6 sm:py-16 lg:px-10 xl:px-16">
-          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
-            <div className="min-w-0">
-              <h2 className="text-balance text-3xl font-extrabold uppercase leading-[1.1] tracking-tight text-ink-900 sm:text-4xl">
-                <span className="text-primary-600">Common</span> questions
-              </h2>
-              {/* Describes what is actually below it — verification, cost, the AI
-                  step, the app — rather than inviting a contact route the page
-                  does not offer a signed-out visitor. */}
-              <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-ink-600 sm:text-base">
-                Short answers on how seller verification works, what it costs to join, how the AI
-                search finds suppliers, and where the mobile app fits in.
-              </p>
-            </div>
-
-            <FaqAccordion items={FAQS} />
-          </div>
+        <section id="faq" className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
+          <h2 className="text-2xl font-extrabold tracking-tight">Common questions</h2>
+          {/* Two columns from lg. The page runs edge-to-edge, and a single
+              full-width answer would be a 200-character line — unreadable. The
+              column split keeps the measure sane without reintroducing a margin. */}
+          <dl className="mt-6 grid grid-cols-1 gap-x-12 border-t border-surface-border lg:grid-cols-2">
+            {FAQS.map(({ q, a }) => (
+              <div key={q} className="border-b border-surface-border py-4">
+                <dt className="text-sm font-bold text-ink-900">{q}</dt>
+                <dd className="mt-1.5 text-sm text-ink-600">{a}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         {/* 🔴 The "Want to sell on MPX Global?" band was REMOVED on the owner's

@@ -104,7 +104,7 @@ export function PublicHeader({ centerSlot = null, current }) {
           {restoring ? (
             // Session still being restored: hold the space, show neither the
             // guest CTAs nor the dashboard link (no flash either way on reload).
-            <span aria-hidden="true" className={`${pill} invisible px-4 py-2 sm:px-5`}>Get Started</span>
+            <span aria-hidden="true" className={`${pill} invisible px-4 py-2 sm:px-5`}>Account login Start selling</span>
           ) : home ? (
             <Link to={home} className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-700 sm:px-5`}>
               <span className="sm:hidden">Dashboard</span>
@@ -112,14 +112,49 @@ export function PublicHeader({ centerSlot = null, current }) {
             </Link>
           ) : (
             <>
+              {/* 🔴 THREE guest actions, and each label matches where it goes.
+                  "Start selling" is the highlighted one (owner, 2026-09-27) and
+                  it points at the EXPORTER signup — a seller CTA that landed on
+                  the buyer form would be the same defect that had to be fixed
+                  here on 2026-09-26, when the button said "login" while still
+                  pointing at `/signup/buyer`.
+
+                  🔴 **Login stays plainly visible** — the owner asked for both.
+                  It is a bordered button rather than a bare text link, so it
+                  reads as an action next to the filled one, and it is the only
+                  guest action besides "Start selling" that survives down to
+                  320px. Its label shortens to "Log in" there — logo + two full
+                  labels + the burger come to 373px against a 320px bar — and the
+                  destination never changes.
+
+                  ⚠️ The border is `ink-500`, not the `ink-300` hairline used on
+                  cards. A button's outline IS its affordance, and ink-300 on
+                  white measures 1.70:1, under the 3:1 WCAG asks of a non-text UI
+                  boundary. ink-500 is 4.97:1.
+
+                  "Create account" (the BUYER path) drops below `md` and lives in
+                  the burger, which is the only reason a phone visitor can still
+                  reach buyer signup from the header. */}
+              <Link
+                to="/signup/buyer"
+                className="hidden text-sm font-semibold text-ink-600 hover:text-primary-700 md:block"
+              >
+                Create account
+              </Link>
               <Link
                 to="/signin"
-                className="hidden text-sm font-semibold text-ink-600 hover:text-primary-700 sm:block"
+                className="inline-flex h-10 shrink-0 items-center justify-center rounded-full border border-ink-500 bg-white px-4 text-sm font-semibold text-ink-900 transition hover:border-ink-900 hover:bg-surface-subtle sm:h-11 sm:px-5"
               >
-                Sign In
+                <span className="sm:hidden">Log in</span>
+                <span className="hidden sm:inline">Account login</span>
               </Link>
-              <Link to="/signup/buyer" className={`${pill} bg-ink-900 px-4 py-2 text-white hover:bg-primary-700 sm:px-5`}>
-                Get Started
+              {/* `relative` + `overflow-hidden` are what the sweep needs — see
+                  `.mpx-shine` in index.css. */}
+              <Link
+                to="/signup/exporter"
+                className="mpx-shine relative inline-flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-600 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-primary-700 sm:h-11 sm:px-5"
+              >
+                Start selling
               </Link>
             </>
           )}
@@ -171,14 +206,17 @@ export function PublicHeader({ centerSlot = null, current }) {
               </a>
             ),
           )}
-          {/* Only below sm, where the header drops "Sign In". */}
+          {/* Only below sm, where the header drops the signup link. It used to
+              carry "Sign In"; login is the visible pill now, so this is the
+              other half — without it a phone visitor could not reach signup from
+              the header at all. */}
           {!home && !restoring && (
             <Link
-              to="/signin"
+              to="/signup/buyer"
               onClick={() => setMenuOpen(false)}
-              className="mt-3 flex min-h-[44px] items-center justify-center rounded-full border border-ink-900 text-sm font-semibold text-ink-900 sm:hidden"
+              className="mt-3 flex min-h-[44px] items-center justify-center rounded-full border border-ink-900 text-sm font-semibold text-ink-900 md:hidden"
             >
-              Sign In
+              Create account
             </Link>
           )}
         </nav>
