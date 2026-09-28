@@ -16,6 +16,8 @@ import { FindSupplier } from './pages/support/FindSupplier.jsx';
 import { LandingBlue } from './pages/public/LandingBlue.jsx';
 import { Landing2 } from './pages/public/Landing2.jsx';
 import { Landing3 } from './pages/public/Landing3.jsx';
+import { Landing4 } from './pages/public/Landing4.jsx';
+import { Landing5 } from './pages/public/Landing5.jsx';
 import { Categories } from './pages/public/Categories.jsx';
 import { CategoryListing } from './pages/public/CategoryListing.jsx';
 import { ProductDetail } from './pages/public/ProductDetail.jsx';
@@ -309,6 +311,20 @@ export function App() {
                 `components/landing3/`. Delete this route, `Landing3.jsx` and
                 that folder together once the new landing is settled. */}
             <Route path="/landing-page-3" element={<Landing3 />} />
+            {/* ⚠️ A third frozen SNAPSHOT, of the landing page as it stood on
+                2026-09-29 (owner) — the five-scene supply-chain hero, light
+                theme. Same arrangement as the two above: `noindex`, and its own
+                copies of the landing-only components in `components/landing4/`.
+                Delete this route, `Landing4.jsx` and that folder together once
+                the new landing is settled. */}
+            <Route path="/landing-page-4" element={<Landing4 />} />
+            {/* 🚧 NOT a snapshot — the WORKING COPY the next landing version is
+                being built on (owner, 2026-09-29). `noindex`, its own components
+                in `components/landing5/`, and its own namespaced hero CSS
+                (`story5-*`) so edits here cannot reach `/`. Promote it over
+                `Landing.jsx` when it is approved; do not let it rot beside the
+                three archived snapshots. */}
+            <Route path="/landing-page-5" element={<Landing5 />} />
 
             {/* --- Party auth (buyer + exporter share screens; portal = the field change) ---
                    All of these are for signed-OUT visitors: RedirectIfAuthed sends a live

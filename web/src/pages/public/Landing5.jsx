@@ -4,21 +4,20 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { useCanonical } from '../../lib/seo.js';
+import { useNoIndex } from '../../lib/seo.js';
 import { BannerStrip, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
-import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
-import { FaqAccordion } from '../../components/landing/FaqAccordion.jsx';
-import { FaqExplorer } from '../../components/landing/FaqExplorer.jsx';
-import { AiBandVideo } from '../../components/landing/AiBandVideo.jsx';
-import { AudienceFork } from '../../components/landing/AudienceFork.jsx';
-import { GlobeBand } from '../../components/landing/GlobeBand.jsx';
-import { MpxFilm } from '../../components/landing/MpxFilm.jsx';
-import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
-import { PromoPanels } from '../../components/landing/PromoPanels.jsx';
-import { SourceTypeCards } from '../../components/landing/SourceTypeCards.jsx';
-import { HEADING, SectionHeader, SectionLink } from '../../components/landing/SectionHeader.jsx';
-import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
+import { CategoryCircles } from '../../components/landing5/CategoryCircles.jsx';
+import { HeroStory } from '../../components/landing5/HeroStory.jsx';
+import { FaqAccordion } from '../../components/landing5/FaqAccordion.jsx';
+import { AiBandVideo } from '../../components/landing5/AiBandVideo.jsx';
+import { AudienceFork } from '../../components/landing5/AudienceFork.jsx';
+import { MpxFilm } from '../../components/landing5/MpxFilm.jsx';
+import { PlatformCards } from '../../components/landing5/PlatformCards.jsx';
+import { PromoPanels } from '../../components/landing5/PromoPanels.jsx';
+import { SourceTypeCards } from '../../components/landing5/SourceTypeCards.jsx';
+import { HEADING, SectionHeader, SectionLink } from '../../components/landing5/SectionHeader.jsx';
+import { TradeAgreements } from '../../components/landing5/TradeAgreements.jsx';
 
 import {
   ArrowRightIcon,
@@ -165,76 +164,35 @@ function BlockHead({ eyebrow, title, sub, to, cta = 'See all' }) {
 }
 
 
-/**
- * The hero's stat row.
- *
- * 🔴 **Every figure here is a COUNT THE SERVER ACTUALLY RETURNS** — the live
- * supplier total, the live product total, the category total. The owner's
- * mockup carried "2,400+ OEM Suppliers · 85+ Trade Corridors · 99.8% Customs
- * SLA"; none of those exist, and a "99.8% Customs SLA" is an operational
- * guarantee a client can be held to, not decoration. Owner chose real counts
- * (2026-09-29). **Never hard-code a number into this row.**
- *
- * A stat that comes back as 0 is dropped rather than shown: "0 Suppliers" is a
- * worse first impression than one fewer figure, and omitting is not claiming.
- * While the counts are loading the row reserves its height, so the buttons
- * above it do not jump when they land.
- */
-function HeroStats() {
-  // 🔴 `verifiedOnly` is REQUIRED for the label to be true: without it
-  // `searchSuppliers` returns every active exporter-side org, verified or not
-  // (backend `search.service.js` — verification is a query condition only on an
-  // explicit opt-in, B7). Dropping this param silently turns the row into a
-  // false claim, which is why the parameter and the word "Verified" belong in
-  // the same edit.
-  const suppliers = useQuery({
-    queryKey: catalogueKeys.search({ type: 'supplier', verifiedOnly: true, limit: 1 }),
-    queryFn: () => catalogueApi.search({ type: 'supplier', verifiedOnly: true, limit: 1 }),
-    staleTime: 5 * 60 * 1000,
-  });
-  const products = useQuery({
-    queryKey: catalogueKeys.products({ limit: 1 }),
-    queryFn: () => catalogueApi.products({ limit: 1 }),
-    staleTime: 5 * 60 * 1000,
-  });
-  const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
-
-  const stats = [
-    { value: suppliers.data?.total, label: 'Verified suppliers', dot: true },
-    { value: products.data?.total, label: 'Products listed' },
-    { value: categories.data?.length, label: 'Categories' },
-  ].filter((stat) => Number.isFinite(stat.value) && stat.value > 0);
-
-  if (!stats.length) {
-    // Loading, empty or failed — hold the space, claim nothing.
-    return <div aria-hidden="true" className="mt-4 h-5" />;
-  }
-
-  return (
-    // A <ul>, not a <dl>: a <div> inside a <dl> may contain only <dt>/<dd>, and
-    // the separator and status dot are neither. The label reads as part of the
-    // item, so the number and its word stay in one <li>.
-    <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:mt-4 sm:gap-x-8">
-      {stats.map((stat, i) => (
-        <li key={stat.label} className="flex items-center gap-2">
-          {i > 0 && <span aria-hidden="true" className="mr-3 h-1 w-1 rounded-full bg-ink-300 sm:mr-5" />}
-          {stat.dot && <span aria-hidden="true" className="h-2 w-2 rounded-full bg-success" />}
-          <span className="text-[15px] font-bold tracking-tight text-ink-900">
-            {stat.value.toLocaleString()}
-          </span>
-          <span className="text-[13.5px] text-ink-600">{stat.label}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-
 /* ---------------------------------- page ---------------------------------- */
 
-export function Landing() {
+/**
+ * 🚧 v5 WORKING COPY — the landing page the NEXT version is being built on
+ * (owner, 2026-09-29: "we will gonna build another version frm this only").
+ * Served at `/landing-page-5`. It starts as a byte-copy of `/` as of today.
+ *
+ * 🔴 **This is the one you EDIT.** It is not an archive. `/landing-page-4` is the
+ * frozen record of what the page looked like today; this is the drawing board.
+ * `/` stays live and untouched until v5 is approved and promoted.
+ *
+ * 🔴 **It owns everything it can**: its components live in `components/landing5/`,
+ * and the hero animation has its OWN namespaced CSS (`story5-*`, `--story5-*`) in
+ * `index.css`. That duplication is deliberate — those keyframes are global, so
+ * without it the first hero tweak made for v5 would silently restyle the live
+ * page and both snapshots too.
+ *
+ * Still SHARED, so a change here does reach every landing: the header, the
+ * footer, `components/catalogue/*` and the shared icons. Touch those knowingly.
+ *
+ * 🔴 **`noindex`** — a draft must never be indexed, and it must NOT canonicalise
+ * to `/`; that would ask a crawler to treat the draft as the live page.
+ *
+ * When v5 is approved: promote this over `Landing.jsx` + `components/landing/`,
+ * fold `story5-*` back to `story-*`, and delete this route.
+ */
+export function Landing5() {
   const navigate = useNavigate();
-  useCanonical('/');
+  useNoIndex();
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
@@ -313,23 +271,8 @@ export function Landing() {
             of a visitor ("make a search bar"). The field, its phone-specific
             prompt-card layout and the example chips all carry over untouched —
             only their colours move to the dark ground. */}
-        {/* 🔴 The hero runs UP BEHIND the sticky header, which is what makes the
-              navbar transparent (owner, 2026-09-29). The header already paints
-              `bg-white/0` until you scroll — the white strip people saw was the
-              PAGE behind it, because a sticky element still takes its space in
-              flow and the hero began underneath. The negative margin is exactly
-              the header's height and the padding gives it straight back, so the
-              copy sits where it did and only the cream and its grid move up. */}
-        <section className="relative isolate -mt-16 overflow-hidden bg-surface-canvas pt-16 text-ink-900 lg:-mt-[72px] lg:pt-[72px]">
-          {/* The mockup's faint engineering grid. Two hairline gradients rather
-              than an image: it has to tile at any width, and it must not cost a
-              request for something this quiet. It fades out at the bottom so it
-              never fights the story band under it. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgb(0_5_23/0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgb(0_5_23/0.045)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:linear-gradient(to_bottom,#000_0%,#000_55%,transparent_92%)]"
-          />
-          <div className="relative flex min-h-[46svh] w-full flex-col items-center justify-center px-4 pb-5 pt-5 sm:px-6 sm:pb-4 sm:pt-5 lg:px-10 lg:pb-4 lg:pt-5 xl:px-16">
+        <section className="relative isolate overflow-hidden bg-surface-canvas text-ink-900">
+          <div className="relative grid w-full items-center gap-4 px-4 py-7 max-[359px]:py-5 sm:gap-10 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)] lg:gap-8 lg:px-10 lg:py-20 xl:px-16">
             {/* Centred on a phone, left-aligned once the story sits beside it —
                 a centred column next to an illustration reads as two unrelated
                 blocks. */}
@@ -337,28 +280,17 @@ export function Landing() {
                 (`-mx-4 w-[calc(100%+2rem)]`), and without this the grid item's
                 automatic minimum size grew to fit it, widening the single
                 mobile track to ~700px and pushing the whole hero off-screen. */}
-            <div className="flex w-full min-w-0 max-w-4xl flex-col items-center text-center">
-              {/* The mockup's announcement pill: a solid tag, the line, an arrow.
-                  🔴 It is a real Link, not a decorated <p>. The mockup's arrow
-                  reads as "this goes somewhere", and a live-looking control that
-                  does nothing is exactly what `web-ui-notes.md` forbids — so it
-                  goes to the AI search it is describing. */}
-              <Link
-                to="/ai-search"
-                className="group inline-flex items-center gap-2 rounded-full border border-ink-900/10 bg-white py-1 pl-1 pr-3 text-[12.5px] font-semibold text-ink-700 shadow-sm transition hover:border-ink-900/20 hover:shadow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/20 sm:gap-2.5 sm:pr-4 sm:text-sm"
-              >
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary-600 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.1em] text-white">
-                  <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-white motion-reduce:animate-none" />
-                  AI
+            <div className="flex w-full min-w-0 flex-col items-center text-center lg:items-start lg:text-left">
+              <p className="inline-flex items-center gap-2.5 rounded-full border border-ink-900/10 bg-white px-4 py-1.5 text-[12.5px] font-semibold text-ink-700 shadow-sm sm:px-5 sm:py-2 sm:text-sm">
+                <span className="flex items-center gap-1.5">
+                  <span aria-hidden="true" className="h-2 w-2 animate-pulse-soft rounded-full bg-primary-400 motion-reduce:animate-none" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary-600">AI</span>
                 </span>
+                <span aria-hidden="true" className="h-4 w-px bg-ink-900/15" />
                 Match-making for global buyers
-                <ArrowRightIcon
-                  className="h-3.5 w-3.5 text-primary-600 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
-                  aria-hidden="true"
-                />
-              </Link>
+              </p>
 
-              <h1 className="mt-3.5 max-w-3xl text-balance text-[24px] font-extrabold leading-[1.05] max-[359px]:text-[23px] tracking-tight text-ink-900 sm:mt-5 sm:text-[32px] lg:text-[35px] xl:text-[38px]">
+              <h1 className="mt-5 max-w-2xl text-balance text-[30px] font-extrabold leading-[1.06] max-[359px]:text-[26px] tracking-tight text-ink-900 sm:mt-7 sm:text-5xl lg:text-[52px] xl:text-6xl">
                 Connecting India&apos;s Suppliers
                 <br />
                 <span className="relative inline-block pb-1">
@@ -381,17 +313,6 @@ export function Landing() {
                     />
                   </svg>
                 </span>
-                {/* The mockup's four-point star beside the emphasised word. It is
-                    punctuation, not information — hence `aria-hidden` and the
-                    inline-block so it rides the line rather than wrapping alone. */}
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="ml-2 inline-block h-[0.42em] w-[0.42em] align-baseline text-primary-500 sm:ml-3"
-                  fill="currentColor"
-                >
-                  <path d="M12 0c.7 6.1 5.2 10.6 11.3 11.3v1.4C17.2 13.4 12.7 17.9 12 24c-.7-6.1-5.2-10.6-11.3-11.3v-1.4C6.8 10.6 11.3 6.1 12 0z" />
-                </svg>
               </h1>
 
               {/* 🔴 Describes what the feature ACTUALLY does — it reads your
@@ -399,7 +320,7 @@ export function Landing() {
                   number of suppliers, no "instant", no accuracy claim: this is a
                   trust marketplace and the page may not promise what cannot be
                   shown (the same rule that kept invented testimonials off it). */}
-              <p className="mt-2.5 max-w-lg text-pretty text-[13px] leading-relaxed text-ink-700 sm:mt-3 sm:text-[14px]">
+              <p className="mt-3 max-w-xl text-pretty text-[14.5px] leading-relaxed text-ink-700 max-[359px]:text-[13.5px] sm:mt-5 sm:text-lg">
                 Describe what you need — material, quantity, specification, destination. Our AI
                 matches you with{' '}
                 <span className="font-semibold text-ink-900">verified Indian exporters</span> who can
@@ -415,12 +336,12 @@ export function Landing() {
             <form
               role="search"
               onSubmit={onAiSearch}
-              className="mx-auto mt-4 flex w-full max-w-[600px] flex-col rounded-3xl border border-surface-border bg-white p-1.5 shadow-[0_12px_34px_-18px_rgb(0_5_23/0.35)] transition-shadow focus-within:border-primary-600/40 focus-within:ring-4 focus-within:ring-primary-600/10 sm:mt-7 sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:p-1.5"
+              className="mt-5 flex w-full max-w-[720px] flex-col rounded-3xl border border-surface-border bg-white p-2 shadow-lift transition-shadow focus-within:border-primary-600/40 focus-within:ring-4 focus-within:ring-primary-600/10 sm:mt-14 sm:flex-row sm:items-center sm:gap-2 sm:rounded-2xl sm:p-2.5"
             >
               <label className="sr-only" htmlFor="hero-ai-q">
                 Describe what you want to source
               </label>
-              <div className="flex min-w-0 flex-1 items-center px-3 sm:rounded-full sm:bg-ink-50 sm:px-4">
+              <div className="flex min-w-0 flex-1 items-center px-3 sm:rounded-xl sm:bg-ink-50 sm:px-4">
                 <SearchIcon className="mr-3 hidden h-5 w-5 shrink-0 text-ink-500 sm:block" aria-hidden="true" />
                 <input
                   id="hero-ai-q"
@@ -428,7 +349,7 @@ export function Landing() {
                   value={heroQuery}
                   onChange={(e) => setHeroQuery(e.target.value)}
                   placeholder="Describe what you want to source…"
-                  className="h-11 min-w-0 flex-1 bg-transparent text-[16px] text-ink-900 outline-none placeholder:text-ink-500 sm:h-11 sm:text-[14.5px]"
+                  className="h-12 min-w-0 flex-1 bg-transparent text-[16px] text-ink-900 outline-none placeholder:text-ink-500 sm:h-14 sm:text-[15px]"
                 />
               </div>
               <div className="flex items-center justify-between gap-3 border-t border-ink-100 pl-3 pt-2 max-[359px]:justify-end sm:contents">
@@ -440,7 +361,7 @@ export function Landing() {
                     hooks more) — says what the AI does for you, not what you do. */}
                 <button
                   type="submit"
-                  className="group inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-b from-primary-500 to-primary-700 px-4 text-[14px] font-semibold tracking-tight text-white transition hover:from-primary-600 hover:to-primary-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/25 active:translate-y-px sm:h-11 sm:gap-2 sm:rounded-full sm:px-6 sm:text-[14px]"
+                  className="group inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-b from-primary-500 to-primary-700 px-4 text-[14px] font-semibold tracking-tight text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_10px_24px_-10px_theme(colors.primary.600/70%)] transition hover:from-primary-600 hover:to-primary-800 hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_14px_28px_-10px_theme(colors.primary.600/80%)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/25 active:translate-y-px sm:h-14 sm:gap-2 sm:rounded-xl sm:px-8 sm:text-base"
                 >
                   <SparkleIcon className="hidden h-4 w-4 sm:block" aria-hidden="true" />
                   Get matched
@@ -481,15 +402,15 @@ export function Landing() {
               />
             </div>
 
-            <div className="mt-3 hidden w-full flex-row flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:flex">
-              <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-600">Try asking</p>
-              <div className="flex flex-wrap justify-center gap-2">
+            <div className="mt-6 hidden w-full flex-col items-center sm:flex lg:items-start">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-600">Try asking</p>
+              <div className="mt-2.5 flex flex-wrap justify-center gap-2 lg:justify-start">
                 {HERO_EXAMPLES.map((example) => (
                   <button
                     key={example}
                     type="button"
                     onClick={() => askAi(example)}
-                    className="group flex min-h-[34px] items-center gap-2 rounded-full border border-ink-900/10 bg-white px-3 text-[12.5px] text-ink-700 transition hover:border-primary-600/40 hover:bg-primary-50 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-400/25"
+                    className="group flex min-h-[40px] items-center gap-2.5 rounded-full border border-ink-900/10 bg-white px-3.5 text-[13px] text-ink-700 shadow-sm transition hover:border-primary-600/40 hover:bg-primary-50 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-400/25"
                   >
                     <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-primary-600" aria-hidden="true" />
                     {example}
@@ -501,36 +422,11 @@ export function Landing() {
                 ))}
               </div>
             </div>
-
-              {/* The mockup's pair of buttons. They sit UNDER the AI field, not
-                  instead of it (owner, 2026-09-29): the field is what the hero
-                  exists for, and these are the two plain doors for anyone who
-                  would rather browse than describe. Both are real destinations. */}
-              <div className="mt-4 flex w-full flex-col items-center justify-center gap-2.5 sm:mt-4 sm:w-auto sm:flex-row">
-                <Link
-                  to="/categories"
-                  className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-primary-500 to-primary-700 px-6 text-[12px] font-bold uppercase tracking-[0.08em] text-white transition hover:from-primary-600 hover:to-primary-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/25 active:translate-y-px sm:w-auto"
-                >
-                  Explore marketplace
-                  <ArrowRightIcon
-                    className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
-                    aria-hidden="true"
-                  />
-                </Link>
-                <Link
-                  to="/signup/exporter"
-                  className="inline-flex h-11 w-full items-center justify-center rounded-full border border-ink-900/12 bg-white px-6 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-900 transition hover:border-ink-900/25 hover:bg-ink-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ink-900/10 sm:w-auto"
-                >
-                  Join as supplier
-                </Link>
-              </div>
-
-              <HeroStats />
             </div>
+
+            <HeroStory />
           </div>
         </section>
-
-        <GlobeBand />
 
         {/* ═════════ BUYER / SUPPLIER FORK ═════════
             Straight after the hero (client brief, 2026-09-28): "Are you a
@@ -822,40 +718,33 @@ export function Landing() {
               sub="Four steps, all on the platform, all free for buyers."
             />
 
-            {/* The numbered LINE structure (owner-kept), redesigned 2026-09-28
-                ("fix how it works design"): no boxed panel — the steps sit on
-                the section ground; from lg each step is CENTRED on its column;
-                the connector runs only marker-to-marker and fades from soft red
-                to grey (it shows direction); white number markers; icons in
-                soft round badges. Phones: a vertical timeline. */}
-            <ol className="relative mt-10 grid gap-0 sm:mt-12 lg:grid-cols-4 lg:gap-8">
+            {/* The steps sit on one white panel — the same card finish as the
+                sections above (consistency pass, 2026-09-28). */}
+            <ol className="relative mt-8 grid gap-0 rounded-3xl bg-white p-6 shadow-card ring-1 ring-ink-200/60 sm:mt-10 sm:p-8 lg:grid-cols-4 lg:gap-8 lg:p-10">
               {[
                 [SearchIcon, 'Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
                 [EnquiryIcon, 'Send an enquiry', 'Tell the supplier exactly what you need, in a couple of clicks.'],
                 [ChatIcon, 'Chat in real time', 'Talk directly on the platform, with files and full history.'],
                 [QuoteIcon, 'Agree the quotation', 'Receive a priced quotation, counter-offer, and confirm it together.'],
               ].map(([Icon, title, body], i) => (
-                <li key={title} className="relative flex gap-5 pb-9 last:pb-0 lg:flex-col lg:items-center lg:gap-0 lg:pb-0 lg:text-center">
-                  {/* Connector to the NEXT marker — down on a phone; from lg it
-                      starts just right of this marker and ends just left of the
-                      next (column width + 2rem gap − both marker radii). */}
+                <li key={title} className="relative flex gap-4 pb-7 last:pb-0 lg:flex-col lg:gap-0 lg:pb-0">
+                  {/* Connector to the NEXT step (none after the last): down on a
+                      phone, across to the next marker from lg. Decoration. */}
                   {i < 3 && (
                     <span
                       aria-hidden="true"
-                      className={`absolute left-[21px] top-12 bottom-1 w-0.5 rounded-full lg:bottom-auto lg:left-[calc(50%+30px)] lg:top-[21px] lg:h-0.5 lg:w-[calc(100%+2rem-60px)] ${
-                        ['bg-gradient-to-b from-primary-300 to-primary-200 lg:bg-gradient-to-r', 'bg-gradient-to-b from-primary-200 to-ink-200 lg:bg-gradient-to-r', 'bg-gradient-to-b from-ink-200 to-ink-100 lg:bg-gradient-to-r'][i]
-                      }`}
+                      className="absolute bottom-0 left-[21px] top-11 w-px bg-ink-200 lg:bottom-auto lg:left-11 lg:right-[-2rem] lg:top-[22px] lg:h-px lg:w-auto"
                     />
                   )}
-                  <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[14px] font-bold tabular-nums text-ink-900 shadow-card ring-1 ring-ink-200/80">
-                    {String(i + 1).padStart(2, '0')}
+                  <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-primary-700 shadow-card ring-1 ring-ink-200">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
-                  <span className="flex min-w-0 flex-col lg:items-center">
-                    {/* Plain dark line icon — no badge, no pink (owner: the
-                        gradient-badge icons looked "too artificial"). */}
-                    <Icon className="h-8 w-8 text-primary-600 lg:mt-8 lg:h-9 lg:w-9" strokeWidth={1.4} aria-hidden="true" />
-                    <span className="mt-4 block text-[17px] font-semibold tracking-tight text-ink-900 lg:mt-5 lg:text-[18px]">{title}</span>
-                    <span className="mt-1.5 block max-w-[16rem] text-[14px] leading-relaxed text-ink-500">{body}</span>
+                  <span className="min-w-0 pt-1 lg:pt-0">
+                    <span className="block text-[12px] font-semibold tabular-nums tracking-[0.14em] text-ink-400 lg:mt-6 lg:text-[40px] lg:font-extrabold lg:leading-none lg:tracking-tight lg:text-ink-200">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span className="mt-0.5 block text-[16px] font-semibold tracking-tight text-ink-900 lg:mt-3 lg:text-lg">{title}</span>
+                    <span className="mt-1 block text-sm leading-relaxed text-ink-600">{body}</span>
                   </span>
                 </li>
               ))}
@@ -878,36 +767,38 @@ export function Landing() {
               heading was the odd one out), a sticky intro column with a route
               to the Help page, and quiet divider rows. `id="faq"` kept — the
               footer links to it. */}
-          {/* 2026-09-28 (owner: "left side too much empty space"; no card to
-              fill it; a full-width stacked list was "bad design"): the heading
-              runs full width with "Get help" on its right; below it, on
-              desktop, questions and answer sit SIDE BY SIDE (FaqExplorer) —
-              both columns one height, nothing empty. Phones keep the
-              accordion. */}
-          <SectionHeader
-            id="faq-heading"
-            eyebrow="FAQ"
-            title="Common questions"
-            sub="Verification, cost, AI search, quotations and payments — the short answers."
-            action={<SectionLink to="/help">Get help</SectionLink>}
-          />
-          <div className="mt-6 sm:mt-8">
-            {/* Desktop: questions and answer side by side. Below lg: the accordion. */}
-            <div className="hidden lg:block">
-              <FaqExplorer items={FAQS} />
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+            <div className="min-w-0 lg:sticky lg:top-28 lg:self-start">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">FAQ</p>
+              <h2 id="faq-heading" className={`mt-1.5 ${HEADING}`}>
+                Common questions
+              </h2>
+              <p className="mt-3 max-w-md text-pretty text-sm leading-relaxed text-ink-600 sm:text-base">
+                Verification, cost, AI search, quotations and payments — the short answers.
+              </p>
+              <Link
+                to="/help"
+                className="group mt-6 hidden items-center gap-2.5 rounded-full border border-ink-200 bg-white py-1.5 pl-5 pr-1.5 text-sm font-semibold text-ink-900 shadow-sm transition-colors hover:border-ink-900 lg:inline-flex"
+              >
+                Still have questions? Get help
+                <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-900 text-white transition-colors duration-300 group-hover:bg-primary-600">
+                  <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
+                </span>
+              </Link>
             </div>
-            <div className="lg:hidden">
+
+            <div className="min-w-0">
               <FaqAccordion items={FAQS} />
+              <Link
+                to="/help"
+                className="mt-6 flex h-11 items-center justify-between rounded-full border border-ink-200 bg-white pl-5 pr-1.5 text-sm font-semibold text-ink-900 shadow-sm lg:hidden"
+              >
+                Still have questions? Get help
+                <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-900 text-white">
+                  <ArrowRightIcon className="h-4 w-4" />
+                </span>
+              </Link>
             </div>
-            <Link
-              to="/help"
-              className="mt-6 flex h-11 items-center justify-between rounded-full border border-ink-200 bg-white pl-5 pr-1.5 text-sm font-semibold text-ink-900 shadow-sm sm:hidden"
-            >
-              Still have questions? Get help
-              <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-900 text-white">
-                <ArrowRightIcon className="h-4 w-4" />
-              </span>
-            </Link>
           </div>
         </section>
 

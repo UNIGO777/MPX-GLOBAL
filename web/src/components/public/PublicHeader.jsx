@@ -109,7 +109,7 @@ export function PublicHeader({ centerSlot = null, current }) {
   };
 
   const linkClasses = (active) =>
-    `${linkBase} ${active ? 'bg-ink-100/80 text-ink-900' : 'text-ink-600 hover:bg-ink-100/70 hover:text-ink-900'}`;
+    `${linkBase} ${active ? 'bg-ink-900 text-white shadow-[0_2px_8px_-2px_rgb(0_5_23/0.4)]' : 'text-ink-700 hover:bg-ink-900/[0.06] hover:text-ink-900'}`;
 
   const glass = scrolled || menuOpen;
 
@@ -123,15 +123,24 @@ export function PublicHeader({ centerSlot = null, current }) {
       }`}
     >
       <div className="flex h-16 w-full items-center gap-4 px-4 max-[359px]:gap-2 sm:px-6 lg:h-[72px] lg:px-10 xl:px-16">
-        <Link to="/" aria-label="MPX Global — home" className="shrink-0">
-          <Logo size="md" />
-        </Link>
+        <div className="flex flex-1 items-center">
+          <Link to="/" aria-label="MPX Global — home" className="shrink-0">
+            <Logo size="md" />
+          </Link>
+        </div>
 
         {centerSlot ? (
           // A page's own bar (the /search results page) replaces the centre on lg+.
           <div className="hidden min-w-0 flex-1 items-center justify-center px-6 lg:flex">{centerSlot}</div>
         ) : (
-          <nav aria-label="Main" className="ml-6 hidden flex-1 items-center gap-1 xl:flex 2xl:ml-8">
+          /* The links sit in ONE floating pill, centred between the logo and the
+             actions (owner's mockup, 2026-09-29). 🔴 The pill must NOT be
+             `relative`: the category mega-menu panel is `absolute inset-x-0
+             top-full` and resolves against the sticky header, so giving it a
+             nearer positioned ancestor would shrink the panel to the pill's
+             width — see the note at the top of `CategoryMegaMenu`. */
+          <nav aria-label="Main" className="hidden shrink-0 items-center justify-center px-4 xl:flex">
+            <div className="flex items-center gap-1 rounded-full border border-ink-900/[0.06] bg-white/90 p-1.5 shadow-[0_8px_24px_-14px_rgb(0_5_23/0.35)] backdrop-blur-sm">
             {NAV.map((item) =>
               item.megaMenu ? (
                 <CategoryMegaMenu key={item.label} current={current} linkClasses={linkClasses} />
@@ -151,10 +160,11 @@ export function PublicHeader({ centerSlot = null, current }) {
                 </a>
               ),
             )}
+            </div>
           </nav>
         )}
 
-        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+        <div className="ml-auto flex flex-1 items-center justify-end gap-1.5 sm:gap-2">
           {!centerSlot && (
             <>
               {/* Compact search (2xl+ — at 1280px it squeezed the actions). A real form: it submits to /search. */}

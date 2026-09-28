@@ -59,7 +59,19 @@ export default {
         // landing category arches (owner chose it 2026-09-28 from six warm
         // shades, after grey, pinks, reds, coral and white were rejected).
         // Decorative fills only — never text, never a status colour.
-        sand: '#F7E4D8',
+        //
+        // 🔴 DEEPENED 2026-09-28, same hue (23°), from #F7E4D8. At the old value
+        // the arch measured **1.16:1** against the section's own #F8F8F8 ground
+        // — the shape was there but effectively invisible, which is what the
+        // owner was seeing when they asked for the reference's arch background.
+        // The hue did NOT change: every red on the ramp had already been shown
+        // and rejected (primary-50 "pink", 200–300 "coral", 400–800 "too dark"),
+        // and `primary-50` would have measured 1.04:1 — worse than what was
+        // already invisible. Contrast, not hue, was the problem.
+        //
+        // Now **1.51:1**. Neighbours on the same hue if it needs a nudge:
+        // #EFCAB3 (1.44), #F1D0BB (1.37), #ECBEA2 (1.59).
+        sand: '#EEC4AA',
         /**
          * 🔴 The QUOTATION DOCUMENT's palette — not the app's UI palette.
          *

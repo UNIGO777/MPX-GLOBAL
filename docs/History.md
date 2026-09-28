@@ -175,6 +175,267 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-29 — Navbar transparent over the landing hero.** Owner: "make navbar transparent".
+  - 🔴 **The header was ALREADY transparent** — it paints `bg-white/0` until you scroll. The white
+    strip was the PAGE showing behind it: `position: sticky` still takes its space in normal flow, so
+    the hero began *underneath* the header rather than behind it. Restyling the header would have
+    fixed nothing; the fix is on the hero.
+  - The hero now carries `-mt-16 pt-16` (`lg:-mt-[72px] lg:pt-[72px]`) — exactly the header's height
+    out and straight back in — so the cream and its grid run up behind the bar while the copy stays
+    where it was. Confirmed: the navbar row now samples cream (245,242,239), not white.
+  - Landing only. `PublicHeader` itself is untouched, so every other public page keeps its normal
+    background behind the bar (`/categories` still samples 248,248,248), and the scroll-to-glass
+    behaviour is the same code as before.
+  - ⚠️ Not verified in-browser: the scrolled glass state. Headless would not follow the `#faq` hash on
+    this SPA, so that path was not exercised — the logic is untouched, but it was not re-tested.
+- **2026-09-29 — Hero buttons flattened.** Owner: "remove shadows behind the buttons". The drop
+  shadows are off "Get matched", "Explore marketplace", "Join as supplier" and the example chips (all
+  four are `<button>`s). The inset top highlight went with them on the two gradient buttons — it was
+  part of the same `shadow` declaration, and a 1px inner highlight with no lift under it reads as a
+  seam rather than a bevel.
+  - Left alone, and worth knowing: the AI field's own container shadow (it is a field, not a button),
+    the announcement pill's `shadow-sm` (a Link), and the header's "Start selling" — that one is in
+    `PublicHeader`, so removing it would change every public page, not just the landing.
+- **2026-09-29 — Globe recoloured RED.** Owner: "make globe in red color not in black". The sphere is
+  a pale rose body deepening toward the limb, the land is `primary-600`, and the graticule, limb and
+  corridors are all brand red. Nothing black remains on it.
+  - 🔴 **India still has to separate from the rest of the world.** With one red for everything it
+    disappeared into the map, so the world takes `primary-600` and India the deepest `primary-900`.
+    The markers follow the same rule. That distinction is the point of `INDIA_LONLAT` existing as its
+    own dataset — do not collapse the two to a single colour.
+  - **Gotcha:** the first pass barely changed anything visible because the body gradient's EARLY stops
+    were deepened. The sphere is far wider than the band, so what a visitor sees is the region near
+    the limb — distance ≈ R from the centre — which reads the gradient's LAST stops. Tune from the
+    outside in for this globe, not the inside out.
+  - ⚠️ Not red, on purpose: the glow is still gone (removed earlier at the owner's request) — this is
+    pigment on the sphere, not a light source.
+  - Contrast re-checked over the new ground: heading 15.38:1, body 8.54:1. Static under
+    `prefers-reduced-motion`; mobile checked.
+- **2026-09-29 — Red glow removed from the globe; globe raised and widened.** Owner: "remove red light
+  on the globe we can see and make globe more up".
+  - The red rim bloom, the bright rim stroke and the pink transition strip under the hero are all
+    gone. 🔴 The edge could not simply be deleted — without it the pale sphere dissolves into the
+    cream page — so it keeps a NEUTRAL hairline plus a faint shade just inside the limb. That reads
+    as the body's own terminator rather than a light source.
+  - Still red on the globe, deliberately: the corridor arcs and India's dots (26 px of it). Those are
+    information — the trade routes and where the suppliers are — not the glow that was asked about.
+  - **Globe raised:** `HORIZON_INSET` 0.1 → 0.015 and the canvas now fills the band (`inset-0`)
+    instead of starting 4rem down; the band's top padding and the floating cards moved up with it.
+  - 🔴 **`RADIUS_OF_WIDTH` 0.78 → 1.35, which is the change that actually mattered.** At 0.78 the
+    entire polar cap fitted on screen and the globe read as a DOME sitting on the page. Past 1.0 the
+    limb runs off both sides and what is left is a planet's horizon — the thing the mockup draws.
+    Tilt went 16° → 26° to keep mid-latitudes facing the viewer at the larger radius.
+  - Verified: no red left but the arcs, the globe still renders static under `prefers-reduced-motion`,
+    and mobile is unaffected. Globe horizon now reaches ~63% of a 900px screen (was ~64% but as a
+    narrow dome — the visible globe area is much larger now).
+- **2026-09-29 — Hero compacted, globe flipped to LIGHT.** Owner: "change search bar and globe come
+  in half of the page of the hero section make text size small also make globe in light theme".
+  - Search bar is now a compact pill (h-11, `max-w-[600px]`, fully rounded) instead of the tall
+    rounded-2xl slab. It was CHANGED, not removed — the owner wrote "remove" when they meant remove
+    (the scenes, earlier the same day), and they had explicitly chosen to keep this field.
+  - Headline down from 72px to 38px at xl, with everything else re-sized and the vertical rhythm
+    tightened; "Try asking" moved inline with its chips, which cost a whole row stacked.
+  - 🔴 **Globe is light now.** The canvas palette had to invert as a PAIR: a pale sphere with the old
+    light dots would have been a blank ball. Body is a lit off-white gradient, land is `#5f656e`,
+    graticule and rim went dark-on-light. Section, cards, copy and ticker follow.
+  - 🔴 **The scrim's job reversed with the theme and this is easy to get wrong.** On the dark globe it
+    darkened the ground so LIGHT text cleared the light dots; on the light globe it has to LIGHTEN
+    the ground so DARK text clears the dark dots. Same failure, opposite direction. Measured after:
+    heading 15.44:1, body 7.94:1.
+  - ⚠️ **"Half the page" is not fully met: the globe starts at 64% on desktop, 72% on a phone.** The
+    mockup's hero reaches ~42% because it has NO search field and NO example chips — the two things
+    the owner asked to keep. Everything else has been compacted as far as it goes without deleting
+    them. Dropping the chips row would buy roughly another 8-10%; dropping the stat row a further 5%.
+    Flagged to the owner rather than silently removing owner-requested content to hit a number.
+  - **Measuring gotcha:** the tall-iframe technique used for full-page mobile shots **breaks `svh`** —
+    the iframe became the viewport, so `min-h-[46svh]` resolved against 2400px and the hero measured
+    384px too tall. Any `svh`/`vh` layout must be measured in an iframe of the REAL viewport height.
+- **2026-09-29 — Scene hero REMOVED; globe band finished to the mockup.** Owner: "remove sceans and
+  make exect same section like image".
+  - `HeroStory` is out of the live landing and `components/landing/HeroStory.jsx` is deleted. ⚠️ The
+    `.story*` block in `index.css` **stays**: the `/landing-page-4` snapshot renders its own copy of
+    that component, so removing the CSS would silently break that page. A note now sits on the block;
+    delete it together with that snapshot, not before. (`/landing-page-5` is unaffected — it has its
+    own `story5-*` namespace.)
+  - `GlobeBand` gained the mockup's remaining furniture: great-circle corridor arcs from India,
+    two floating labels, and the bottom marquee. 🔴 The arcs are slerped between endpoints in 3D, not
+    bent by eye — interpolating the SCREEN positions would lift the arc off the sphere. The labels
+    carry no handler and no hover state, so nothing looks clickable that is not (`web-ui-notes.md`).
+  - 🔴 **Content again diverges from the mockup on purpose.** Its cards read "Verified Tier-1 OEM Hub ·
+    ISO 9001:2015 PROTOCOL", "$4.2B Cleared · SMART ESCROW LIVE", "+14% SLA · Transit Optimization",
+    and its ticker claimed escrow contracts live in 140+ jurisdictions. We hold no ISO register, move
+    no money and measure no SLA. The shapes are the mockup's; the words are things the platform does.
+  - **Contrast gotcha worth keeping.** Light copy over the globe failed badly — 1.9:1 where a letter
+    crossed a land dot (#c2c8d0) and 2.4:1 where the lit rim stroke passed through the heading. The
+    first scrim was a radial, which looks better but **fades exactly at the horizontal edges, which
+    is where the last word of each line sits**, so it barely helped. A full-width linear scrim at
+    ~0.88 black fixed it: 6.99:1 body, 13.05:1 heading. ⚠️ Measuring this needs the TEXT HIDDEN —
+    sampling the rendered page picks up the glyphs themselves and reports nonsense.
+  - Another silent-compile catch: `h-4.5 w-4.5` is not on Tailwind's default scale and produced NO
+    rule at all. That is the fourth time this session; always grep the built CSS for a new utility.
+- **2026-09-29 — Hero matched to the mockup, and a REAL globe band built under it (`GlobeBand`).**
+  Owner: "make hero section exect same and in the bottom there is a globe need to make it like real
+  globe".
+  - Hero now carries the mockup's faint engineering grid (two hairline gradients, masked out at the
+    bottom so it does not fight the story band) and its announcement pill — a solid red tag, the
+    line, an arrow. 🔴 The pill is a real `Link` to `/ai-search`, not a decorated `<p>`: the arrow
+    reads as "this goes somewhere", and a live-looking control that does nothing is what
+    `web-ui-notes.md` forbids.
+  - 🔴 **The globe is an actual sphere, not a picture of one.** `worldDots.js` holds every Natural
+    Earth landmass point as lon/lat, derived from `public/world-dots.svg` — the SAME file the trade
+    map draws, so there is one dataset, not two (regenerate them together). It is packed as one
+    16-bit index per point, base64'd (~10 KB instead of ~30 KB of array literal). `GlobeBand` rotates
+    those 3,773 points in 3D and projects them orthographically every frame on a **canvas** (3,700
+    live DOM nodes is not an option), so continents foreshorten toward the limb and vanish round the
+    back. A graticule and a thin lit horizon do the rest. Verified rotating, and verified static
+    under `prefers-reduced-motion`.
+  - **Gotcha worth keeping:** the first version faded dots by depth, which is the normal way to sell
+    curvature — and it was WRONG here. The band shows the top of a very large sphere, so nearly
+    everything on screen sits near the limb where depth → 0; the fade dimmed exactly the land the
+    visitor can see. It needs a brightness FLOOR plus a gentle slope.
+  - 🔴 **None of the mockup's band copy was used.** It advertised "smart-cleared escrow protocol",
+    "$4.2B Cleared — SMART ESCROW LIVE", "+14% SLA", "Vetted ISO-9001/14001 protocol" and a ticker
+    claiming "escrow contracts live across 140+ jurisdictions". Escrow is Bucket B / Phase 2 and the
+    owner ruled on that claim the same day. The band says what the platform actually does — AI
+    match-making, human-checked verification, direct enquiry and chat — and nothing else.
+- **2026-09-29 — Navbar + hero rebuilt to the owner's mockup (main landing, `/`).** Owner supplied a
+  reference image: floating pill navbar, one centred hero column, big headline with the emphasised
+  word in red, badge, two CTAs, stat row.
+  - **Navbar:** the links moved into ONE floating white pill and the active item is now a dark pill.
+    🔴 The pill is centred with equal `flex-1` flanks, NOT `absolute left-1/2`: absolute centring
+    needs `relative` on the header row, which would re-parent the category mega-menu panel
+    (`absolute inset-x-0 top-full`) and shrink it to the pill's width — the exact trap
+    `CategoryMegaMenu`'s own header note warns about. The `/search` page's `centerSlot` still
+    replaces the centre correctly (checked).
+    ⚠️ `PublicHeader` is SHARED — this changes every public page, not only the landing.
+  - **"Start selling" stayed DARK, against the mockup's red button.** There is a recorded decision
+    (owner, 2026-09-27) that it is dark so it never competes with the hero's red CTA — and the hero
+    now has TWO red CTAs, so the reason is stronger, not weaker.
+  - **Hero:** two-column → one centred column; the headline grew to 72px at xl; the four-point star
+    was added; `HeroStory` became a full-width band UNDER the copy, which is where the mockup puts
+    its globe. The AI field was KEPT and the two buttons sit below it (owner's call) — the field is
+    what the section exists for.
+  - 🔴 **The mockup's escrow claims were NOT built** — "automated smart clearing", "smart-cleared
+    escrow protocol", "$4.2B Cleared · SMART ESCROW LIVE", "escrow contracts live across 140+
+    jurisdictions". Escrow is Bucket B / Phase 2 and the owner already ruled on exactly this earlier
+    the same day ("okk then dont claim it now"). The "Logistics" and "Pricing" nav items were not
+    added either: both are Phase-2 areas with no page behind them, so they would be dead links.
+  - 🔴 **Stat row shows only counts the server returns** (owner chose real data over the mockup's
+    invented "2,400+ / 85+ / 99.8% Customs SLA"). **Gotcha:** the first version labelled it "Verified
+    suppliers" while querying `search?type=supplier` — which returns EVERY active exporter-side org.
+    `verifiedOnly` is what filters (backend `search.service.js`: verification is a query condition
+    only on an explicit opt-in, B7). Dev totals went 11 → 3 once it was passed. **The parameter and
+    the word "Verified" have to be changed together, or the row is a false claim.** A stat that comes
+    back as 0 is dropped rather than shown; nothing is ever hard-coded into that row.
+  - Markup fix: the row was written as a `<dl>` with a separator `<span>` inside the `<div>` — a
+    `<div>` in a `<dl>` may contain only `<dt>`/`<dd>`. It is a `<ul>` now.
+  - Contrast re-checked after the restyle: all six new text pairs pass 4.5:1 (lowest 4.86).
+  - ⚠️ **Mobile:** the hero copy block ends ~730px, so it still fits the first screen, and the story
+    band peeks below the fold as a scroll cue — the same structure as the mockup. The cream SECTION
+    is now 978px though, so "the whole hero in one screen" is true of the copy, not of the section.
+- **2026-09-29 — `/landing-page-5` opened as the v5 WORKING COPY (not a snapshot).** Owner: "we are
+  going to build one more version… we will gonna build another version frm this only". So this one is
+  the drawing board, not an archive: `/` stays live, `/landing-page-4` stays the frozen record of
+  today, and v5 gets built here and promoted when approved. Starts byte-identical to `/` (verified: 0
+  differing pixels against the archived copy). `noindex`, no canonical.
+  - 🔴 **Its hero CSS is a NAMESPACED DUPLICATE (`story5-*`, `--story5-*`), and that is the point.**
+    The `.story*` keyframes are global, so on the earlier snapshots a hero restyle would have
+    silently moved every landing at once. A copy meant to be EDITED cannot carry that: the first v5
+    hero tweak would have restyled the live page. Proved it is isolated by tinting
+    `--story5-deep/night` green — only `/landing-page-5` changed; `/` and `/landing-page-4` were
+    untouched. `components/landing5/` holds its own components for the same reason.
+  - ⚠️ **Still shared, so changes there DO reach every landing:** the header, the footer,
+    `components/catalogue/*` and the shared icons. Recorded in `Landing5.jsx`'s header.
+  - **On promotion:** move this over `Landing.jsx` + `components/landing/`, fold `story5-*` back to
+    `story-*`, delete the route. Landing routes are now SIX (`/`, `/landing-blue`, `/landing-2`,
+    `/landing-page-3`, `/landing-page-4`, `/landing-page-5`) — that is too many to keep past launch.
+- **2026-09-29 — Landing frozen at `/landing-page-4`.** Owner: "now save this lending page in another
+  url". Third snapshot, built exactly like `/landing-2` and `/landing-page-3`: `Landing4.jsx` plus its
+  own copies of the eleven landing-only components in `components/landing4/`, so editing the live
+  landing cannot move it. `useCanonical('/')` is swapped for `useNoIndex()` — verified in the served
+  DOM: `/` emits the canonical and no robots tag, `/landing-page-4` emits `noindex,follow` and no
+  canonical. Pointing a copy's canonical at the original would invite a crawler to treat them as one
+  page, which is the opposite of freezing it.
+  - ⚠️ **What the snapshot does NOT freeze:** the header, the footer, `components/catalogue/*`, the
+    shared icons — and **the `.story*` keyframes in `index.css`**, which are global. A later restyle
+    of the hero animation WILL change this snapshot too. The earlier snapshots have the same hole;
+    it is recorded in each file's header now rather than being discovered later.
+  - Landing snapshot URLs now: `/` (live) · `/landing-blue` · `/landing-2` · `/landing-page-3` ·
+    `/landing-page-4`. They are cheap to keep but they are dead weight — delete each route, its page
+    file and its `components/landing<N>/` folder together once the landing is settled.
+- **2026-09-29 — Scene 2's skyline joins the light theme (`--story-far`).** Owner: "second seen we
+  also need to make light theme buildings are in black color". The road scene's backdrop was still
+  the reference's near-black `#1b1c21`, which was the one obviously-dark block left after the hero
+  went cream. It is now a pale warm silhouette, held in its own token because it is the only thing
+  at that depth and — unlike every other scene colour — it is tuned against the PAGE ground, not
+  against the tinted band (it sits above the ground line). Side effect worth keeping: the scene now
+  has real atmospheric perspective — far buildings pale, near truck dark — which it did not have
+  when both were black.
+  - ⚠️ **Scene 5's buildings are deliberately still dark.** They are FOREGROUND (the destination
+    city, drawn large on the right), not a distant backdrop, and their blinking lit windows are
+    white `--story-mist` squares that only exist against a dark fill. Making them pale too would
+    delete the windows, so that is a separate decision rather than the same fix applied twice.
+- **2026-09-29 — Hero turned LIGHT, and the phone now leaves after step 1.** Owner: "mobile will
+  disapare after first step and make hero section in light color".
+  - **The phone hands over.** `.story-phone` runs on the same 20s clock as scene 1, so the device
+    fades and lifts away as "list your goods" ends and returns when the loop does. The class sits on
+    the phone's WRAPPER, not on `story-sway`, so the drop shadow leaves with it instead of hanging
+    under nothing. Verified by forcing the phase: present at 1s and 19s, gone at 9s and 17s.
+  - **Ground: `bg-ink-900` → `bg-surface-canvas` (#F5F2EF).** That token already existed and is
+    documented as "the landing hero's page ground… a WARM off-white" — the same cream the owner asked
+    for earlier — so no new colour was invented (`web-design.md`).
+  - 🔴 **The illustration had to be re-toned, not just re-backgrounded.** The reference's world was a
+    near-black ground lit by pale props and glows; dropped onto cream it became a hard black slab
+    with invisible detail. The `--story-*` variables exist for exactly this, so: the ground/sea
+    (`--story-deep`/`--story-night`) became a warm tint just below the page, `--story-stone` and
+    `--story-slate` went dark so the props carry the drawing as silhouettes, and the glow/beam/wake
+    gradients — which only made sense as light on black — became soft shade. **`--story-mist` stayed
+    light on purpose: it is the phone's screen and the lit windows, not scene paint.**
+  - Individually fixed because they were white-on-dark: the scene-1 supplier pills (a 7% fill + a
+    white hairline → a white pill with a slate hairline and slate labels), the crate's white
+    outline, the "delivered" tick (was invisible inside its own badge — now brand red, matching the
+    label it lands with), the crane light (now red), and the step rail.
+  - **Both stage edges now fade.** The mask was left-only, which was right when the stage ran to the
+    page edge; on the light ground the panning scenery ended in a hard vertical cut on the right.
+  - **Contrast re-measured after the flip.** Two labels ("Try asking" and the rail's idle steps) came
+    out at 4.46:1 and 3.19:1 against cream — under the 4.5:1 `web-design.md` requires — so they moved
+    to `ink-600` and the rail's dimmed keyframe went from 45% to 62% alpha (now 4.86:1 and 5.70:1).
+    ⚠️ The rail labels are deliberately NOT `aria-hidden` — they are the only plain statement of what
+    the platform does end to end — so the dimmed state has to pass, not just the active one.
+  - Mobile re-checked: 769px, still inside one 390x844 screen, no horizontal overflow.
+- **2026-09-29 — Hero replaced with the 5-scene supply-chain story (`HeroStory.jsx`).** Owner supplied a
+  standalone `MPX_Global_Hero.html` ("use this hero section with doing some our creativity make it").
+  Ported into the app: one 20s clock (`--story-loop`) drives five scenes — list goods → by road → at
+  port → at sea → delivered — behind a 3D phone mock, with a step rail underneath naming each stage.
+  The reference's `#ec4747` and loose greys were dropped for the brand's `primary-400` and `--story-*`
+  tokens (`web-design.md`: the Tailwind config is the single source of truth). All SVG ids are
+  `hs-` prefixed so they cannot collide with anything else on the page. **The AI search field was
+  KEPT** — the reference hero only has a button, and the field is the one thing the hero asks a
+  visitor to use. `HeroBackdrop.jsx` deleted (it drew a white ground, unusable on the dark section).
+  - 🔴 **Gotcha that cost most of the session — CSS animations do NOT advance with Chrome's
+    `--virtual-time-budget`.** They follow the real clock, so every headless screenshot is
+    effectively t≈0 no matter what budget you pass. Scene 1's props start faded out, so the stage
+    looked permanently broken and one lucky slow run (which showed the road scene) made it look
+    intermittent instead. **To screenshot a specific frame, force the phase** with a temporary
+    `.story, .story * { animation-delay: -Ns !important }` — that is how all five scenes were verified.
+    Do not "fix" this component from a single headless frame.
+  - 🔴 **`prefers-reduced-motion` was NOT actually handled**, despite a comment in `index.css`
+    claiming the block at the end of the file covered it — no such universal rule exists. Added one.
+    Killing the animations is only half the job: the chips, the crate, the phone's progress bar and
+    the phone's own 3D angle all live *only* inside keyframes, so `animation: none` alone left a
+    blank stage (measured: 88 ink vs 425 after the fix). The block now pins scene 1's arrived state
+    and lights step one. `web-design.md` — "respect `prefers-reduced-motion`".
+  - 🔴 **Mobile hero overflowed the viewport (~700px track on a 390px screen).** Cause: the full-bleed
+    chips strip (`-mx-4 w-[calc(100%+2rem)]`) drove the grid item's *automatic minimum size*, widening
+    the single mobile track and pushing the whole hero off-screen right. Fix: `min-w-0` on both grid
+    items. Worth remembering — a deliberately-overflowing child will silently resize a grid/flex track
+    unless the track is told it may shrink.
+  - **One-screen rule re-honoured on phones** (owner's standing instruction: "i need full hero section
+    in one screen"). It measured 911px against 779px of usable height on a 390x844 phone; now 774px —
+    headline, field, chips, stage and the full step rail all fit. Achieved with tighter phone spacing
+    (`py-7`, `gap-4`, form `mt-5`) and a smaller stage/rail (`max-w-[272px]`, stepping up to 520 then
+    640) — the stage and rail share one max-width on purpose, or the rail stops lining up under it.
+    ⚠️ It fits an 844px-tall phone with 5px to spare; a shorter phone (e.g. 667px) will still scroll.
 - **2026-09-29 — Browse by sector: new photographs, and Garments → Gems & Jewellery (owner: "images are not good at all… any sector works, just a good, professional, attractive image").**
   - **Agriculture:** a spice seller in Delhi (Unsplash 8iU3wtMJEcI).
   - **Gems & Jewellery (new tile, `/category/gems-jewellery`):** ornate gold bangles on black (wreS7kv_tLE), with the subtitle "Jewellery and gemstones, direct from Indian makers."
@@ -224,6 +485,28 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
     - The header has a `SectionLink` "Start sourcing →" to `/signup/buyer` — the route exists in App.jsx.
     - The connector is a fine DASHED path (vertical on phones, horizontal from lg), gapped away from the icons.
     - On mouse devices only (`[@media(hover:hover)]`), hovering a step fills its icon tile red.
+- **2026-09-28 — AudienceFork goes full-bleed and square.** Owner: "full section dont take margin and
+  remove border rounding". The `rounded-[32px]`, the `ring` and the `shadow-card` are gone, and the
+  section's outer gutters with them — the panel used to be an inset card, and it IS the section now.
+  - ⚠️ **The gutters moved INWARD rather than disappearing.** `web-design.md` requires a side gutter so
+    text never touches the screen edge on a phone, so the panel carries the page's own
+    `px-4 sm:px-6 lg:px-10 xl:px-16` itself. What runs edge to edge is the background, not the copy.
+  - Verified on the render: the tint reaches both screen edges, and "FOR BUYERS" lines up at **x = 65px**
+    with the next section's "CATEGORIES" — the same gutter, so the two sections read as one column.
+- **2026-09-28 — AudienceFork CTA: fully rounded, and the shadow removed** (owner, two steps).
+  `rounded-2xl` → `rounded-full`, and the whole `shadow-[…]` utility dropped — it held both the red glow
+  under the button and an inset top sheen; the glow was the visible part.
+  - 🔴 **`focus-visible:ring-4` was NOT touched.** It sits in the same class string and looks like more of
+    the same, but it is the keyboard focus indicator, not decoration — removing it would leave anyone
+    tabbing through the page with no idea where they are (`web-design.md`: never `outline: none` without a
+    visible replacement). Checked after the edit.
+  - ⚠️ One button serves both tabs, so this lands on "Meet our verified suppliers" as well as "Join our
+    verified supplier network".
+- **2026-09-28 — AudienceFork CTA is fully rounded** (`rounded-2xl` → `rounded-full`), owner.
+  - ⚠️ **It is one button serving both tabs** — "Meet our verified suppliers" for buyers and "Join our
+    verified supplier network" for suppliers both render from the same `a.cta`. The owner named the
+    supplier one; the change lands on both, which is right — two CTAs in one control with different
+    corner radii would be a bug, not a distinction.
 - **2026-09-28 — India map: CHILE added as the 14th partner (owner wanted an even number, and chose Chile over Sri Lanka / Oman).**
   - Owner asked for "any African nation". Declined truthfully: Mauritius is India's only African trade agreement as far as known, and SACU is still under negotiation, so it cannot be shown. Brazil is already inside MERCOSUR.
   - Chile: PTA 2007, expanded 2017. It is flagged VERIFY-before-launch with the other three additions. The pin is near Santiago with its label below, and the arc bows south.
