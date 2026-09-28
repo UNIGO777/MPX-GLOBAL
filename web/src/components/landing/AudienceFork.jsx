@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { demoSuppliers } from '../../lib/demoSuppliers.js';
 import { SupplierMark } from '../suppliers/SupplierLogo.jsx';
+import { HEADING } from './SectionHeader.jsx';
 import {
   ArrowRightIcon,
   BadgeCheckIcon,
@@ -19,8 +20,9 @@ import {
  * brief via owner, 2026-09-28; redesigned the same day: "the section design
  * in home page is not good").
  *
- * A dark spotlight band matching `/suppliers`: one toggle, then the pitch + CTA
- * on the left and a preview on the right —
+ * A LIGHT panel since 2026-09-28 (owner, consistency pass: the dark band was
+ * one of several visual languages on the page). One toggle, then the pitch +
+ * CTA on the left and a preview on the right —
  *   buyer    → faces + three sample suppliers → "Meet our verified suppliers" (/suppliers)
  *   supplier → the four steps to the verified tick → "Join our verified supplier network"
  *
@@ -76,7 +78,7 @@ function Face({ photo }) {
 function BuyerPreview() {
   const people = demoSuppliers();
   return (
-    <div className="rounded-3xl bg-white p-5 text-ink-900 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)] sm:p-6">
+    <div className="rounded-3xl bg-white p-5 text-ink-900 shadow-[0_24px_60px_-30px_rgb(0_5_23/0.35)] ring-1 ring-ink-200/60 sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex -space-x-3">
           {people.slice(0, 5).map((p) => (
@@ -119,7 +121,7 @@ const STEPS = [
 
 function SupplierPreview() {
   return (
-    <div className="rounded-3xl bg-white p-5 text-ink-900 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)] sm:p-6">
+    <div className="rounded-3xl bg-white p-5 text-ink-900 shadow-[0_24px_60px_-30px_rgb(0_5_23/0.35)] ring-1 ring-ink-200/60 sm:p-6">
       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-500">Your path to verified</p>
       <ol className="relative mt-4 space-y-4">
         <span aria-hidden="true" className="absolute bottom-4 left-[17px] top-4 w-px bg-ink-200" />
@@ -159,17 +161,16 @@ export function AudienceFork() {
 
   return (
     <section aria-labelledby="fork-audience-heading" className="w-full bg-white px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-16 xl:px-16">
-      <div className="relative isolate overflow-hidden rounded-[32px] bg-ink-900 px-5 py-8 text-white sm:px-10 sm:py-12 lg:px-14 lg:py-14">
-        <span aria-hidden="true" className="absolute -right-24 -top-24 -z-10 h-80 w-80 rounded-full bg-primary-600/35 blur-3xl" />
-        <span aria-hidden="true" className="absolute -bottom-32 -left-24 -z-10 h-80 w-80 rounded-full bg-primary-600/20 blur-3xl" />
+      <div className="relative isolate overflow-hidden rounded-[32px] bg-gradient-to-br from-ink-50 via-white to-primary-50/50 px-5 py-8 text-ink-900 shadow-card ring-1 ring-ink-200/60 sm:px-10 sm:py-12 lg:px-14 lg:py-14">
+        <span aria-hidden="true" className="absolute -right-24 -top-24 -z-10 h-80 w-80 rounded-full bg-primary-100/60 blur-3xl" />
         <span
           aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-[radial-gradient(rgb(255_255_255/0.06)_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
+          className="absolute inset-0 -z-10 bg-[radial-gradient(rgb(0_5_23/0.05)_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
         />
 
         <div className="flex flex-col items-center text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-300">Get started</p>
-          <h2 id="fork-audience-heading" className="mt-1.5 text-balance text-2xl font-extrabold tracking-tight sm:text-4xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Get started</p>
+          <h2 id="fork-audience-heading" className={`mt-1.5 ${HEADING}`}>
             Are you a buyer or a supplier?
           </h2>
 
@@ -177,7 +178,7 @@ export function AudienceFork() {
             role="tablist"
             aria-label="Choose your side"
             onKeyDown={onKeyDown}
-            className="mt-6 inline-flex w-full max-w-sm rounded-full bg-white/10 p-1 ring-1 ring-white/15 backdrop-blur-sm sm:w-auto sm:max-w-none"
+            className="mt-6 inline-flex w-full max-w-sm rounded-full bg-white p-1 shadow-sm ring-1 ring-ink-200/80 sm:w-auto sm:max-w-none"
           >
             {AUDIENCES.map((x, i) => {
               const on = i === active;
@@ -194,11 +195,11 @@ export function AudienceFork() {
                   aria-controls={`fork-panel-${x.id}`}
                   tabIndex={on ? 0 : -1}
                   onClick={() => setActive(i)}
-                  className={`flex h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-[14px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:flex-none sm:px-7 sm:text-[15px] ${
-                    on ? 'bg-white text-ink-900 shadow-card' : 'text-white/75 hover:text-white'
+                  className={`flex h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-[14px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600/40 sm:flex-none sm:px-7 sm:text-[15px] ${
+                    on ? 'bg-ink-900 text-white shadow-card' : 'text-ink-600 hover:text-ink-900'
                   }`}
                 >
-                  <x.Icon className={`h-4 w-4 shrink-0 ${on ? 'text-primary-600' : ''}`} aria-hidden="true" />
+                  <x.Icon className={`h-4 w-4 shrink-0 ${on ? 'text-primary-300' : ''}`} aria-hidden="true" />
                   {x.tab}
                 </button>
               );
@@ -214,11 +215,11 @@ export function AudienceFork() {
           className="mt-8 grid animate-fade-in grid-cols-1 items-center gap-8 motion-reduce:animate-none sm:mt-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14"
         >
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-300">{a.eyebrow}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">{a.eyebrow}</p>
             <h3 className="mt-1.5 text-balance text-[26px] font-bold leading-tight tracking-tight sm:text-[34px]">{a.title}</h3>
             <ul className="mt-6 space-y-3.5">
               {a.points.map((p) => (
-                <li key={p} className="flex items-start gap-3 text-[15px] leading-snug text-white/85">
+                <li key={p} className="flex items-start gap-3 text-[15px] leading-snug text-ink-700">
                   <span aria-hidden="true" className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white">
                     <CheckIcon className="h-3 w-3" />
                   </span>
@@ -229,12 +230,12 @@ export function AudienceFork() {
             <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
               <Link
                 to={a.cta.to}
-                className="group inline-flex min-h-[52px] items-center gap-3 rounded-2xl bg-gradient-to-b from-primary-500 to-primary-700 px-6 text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_14px_30px_-12px_theme(colors.primary.600/80%)] transition hover:from-primary-600 hover:to-primary-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+                className="group inline-flex min-h-[52px] items-center gap-3 rounded-2xl bg-gradient-to-b from-primary-500 to-primary-700 px-6 text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_14px_30px_-12px_theme(colors.primary.600/80%)] transition hover:from-primary-600 hover:to-primary-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/30"
               >
                 {a.cta.label}
                 <ArrowRightIcon className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
               </Link>
-              <span className="text-[13px] text-white/70">{a.note}</span>
+              <span className="text-[13px] text-ink-500">{a.note}</span>
             </div>
           </div>
 

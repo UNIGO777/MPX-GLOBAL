@@ -163,13 +163,14 @@ export function CategoryCircles({ categories, loading = false, skeletonCount = 1
                       goes out of it"). On hover the picture lifts while the arch
                       stays put, which is what sells the depth. */}
                   <span className="relative block aspect-[20/21] w-full">
-                    {/* Arch colour (owner, 2026-09-28): a LIGHT CORAL red —
-                        primary-200 → primary-300 — after grey ("not fitting the
-                        theme"), primary-50 ("looking pink"), 600 → 800 and
-                        400 → 500 (both "too dark") were rejected.
+                    {/* Arch colour (owner, 2026-09-28): `sand` (#F7E4D8, "peach
+                        sand"), chosen from six warm shades shown side by side.
+                        Rejected before: grey ("not fitting the theme"),
+                        primary-50 ("pink"), 600 → 800 and 400 → 500 ("too
+                        dark"), 200 → 300 coral ("not fitting"), and white.
                         It does NOT change on hover; depth comes from the
                         picture lifting. Cut-outs stand out strongly on it. */}
-                    <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[72%] rounded-t-full rounded-b-2xl bg-gradient-to-b from-primary-200 to-primary-300 shadow-[inset_0_1px_0_rgb(255_255_255/0.35)]" />
+                    <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[72%] rounded-t-full rounded-b-2xl bg-sand" />
                     {c.image ? (
                       <img
                         src={archUrl(c.image)}
@@ -182,7 +183,7 @@ export function CategoryCircles({ categories, loading = false, skeletonCount = 1
                       />
                     ) : (
                       /* No photograph is normal: the initials sit on the arch. */
-                      <span aria-hidden="true" className="absolute inset-x-0 bottom-0 flex h-[72%] items-center justify-center text-[24px] font-extrabold tracking-tight text-primary-800/70">
+                      <span aria-hidden="true" className="absolute inset-x-0 bottom-0 flex h-[72%] items-center justify-center text-[24px] font-extrabold tracking-tight text-primary-700/70">
                         {initialsOf(c.name)}
                       </span>
                     )}

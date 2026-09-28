@@ -55,6 +55,11 @@ export default {
           900: '#66020C',
           DEFAULT: '#CE061A',
         },
+        // Peach sand — a warm neutral with a faint trace of the brand red. The
+        // landing category arches (owner chose it 2026-09-28 from six warm
+        // shades, after grey, pinks, reds, coral and white were rejected).
+        // Decorative fills only — never text, never a status colour.
+        sand: '#F7E4D8',
         /**
          * 🔴 The QUOTATION DOCUMENT's palette — not the app's UI palette.
          *

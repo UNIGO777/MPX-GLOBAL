@@ -155,9 +155,15 @@ const TILE = 'relative isolate flex h-full min-h-[172px] flex-col overflow-hidde
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** True once `ref` scrolls into view (at once under reduced motion). */
+/* Crawlers, link-preview bots and automated browsers render the page without
+   scrolling it; they must get the tiles at once, never an empty board. People
+   keep the rise-in on scroll. */
+const isAutomated = () =>
+  navigator.webdriver === true || /bot|crawl|spider|slurp|preview|lighthouse|headless/i.test(navigator.userAgent);
+
+/** True once `ref` scrolls into view (at once under reduced motion, and for automated visitors). */
 function useSeen(ref) {
-  const [seen, setSeen] = useState(() => typeof IntersectionObserver === 'undefined' || reducedMotion());
+  const [seen, setSeen] = useState(() => typeof IntersectionObserver === 'undefined' || reducedMotion() || isAutomated());
   useEffect(() => {
     const el = ref.current;
     if (!el || seen) return undefined;
@@ -395,7 +401,7 @@ export function PlatformCards() {
   return (
     <ul
       ref={listRef}
-      className="scrollbar-none -mx-4 mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:mt-8 sm:grid sm:grid-cols-2 sm:gap-3.5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 lg:auto-rows-[minmax(172px,auto)]"
+      className="scrollbar-none -mx-4 mt-6 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:mt-8 sm:grid sm:grid-cols-2 sm:gap-3.5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 lg:auto-rows-[minmax(172px,auto)]"
     >
       {TILES.map((card, i) => (
         <li

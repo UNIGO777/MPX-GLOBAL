@@ -175,6 +175,79 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-28 — India map: CHILE added as the 14th partner (owner wanted an even number, and chose Chile over Sri Lanka / Oman).**
+  - Owner asked for "any African nation". Declined truthfully: Mauritius is India's only African trade agreement as far as known, and SACU is still under negotiation, so it cannot be shown. Brazil is already inside MERCOSUR.
+  - Chile: PTA 2007, expanded 2017. It is flagged VERIFY-before-launch with the other three additions. The pin is near Santiago with its label below, and the arc bows south.
+  - The "Plus further agreements…" line now names SAFTA, APTA and Sri Lanka (Chile moved onto the map). The phone list fills 7 even rows.
+  - **Label range fix (a pre-existing bug, exposed by testing 1024px):** from 1024–1279 the map shares its row with the photo and 14 labels collided (US×UK, KR×EU; Japan off the edge). Labels now show at md (full-width map) and xl+ only; below md and at lg the collapsible list shows instead.
+  - Verified at 390 / 768 / 1024 / 1180 / 1280 / 1471: no overlaps, nothing outside the panel, no overflow.
+- **2026-09-28 — India map: tablet + phone fixes (owner: "on medium screens fix the table, on phones collapse the list"; "Mauritius hiding when the screen reduces"; "the all-partners button not looking good, keep the two-row style on small screens").**
+  - **Tablet (md, 768–1023):** the map now shows its labels (was lg only), and the two-column table under it is gone. Labels check clean — 13 shown, no overlaps, none outside the panel — at 768 / 820 / 1000 / 1280px, all tested in an iframe (the owner's window was not resized).
+  - **Mauritius:** at 768px its label hit MERCOSUR's. The MERCOSUR label moved to the LEFT of its pin.
+  - **Phones (< md):** `PartnerListCollapsible` — the list is TWO columns (each cell stacks name over type) and collapsed to four partners (two even rows), with a quiet centred red "View all partners ⌄" / "Show fewer" text toggle (`aria-expanded`). This replaced a pill button. At 390px there is no overflow and nothing truncates.
+- **2026-09-28 — India map: three more partners and an "and more" line (owner: "add the small line under the map and those 3 extra pins", "change that 10 partners text").**
+  - Added **Singapore (CECA, 2005), Mauritius (CECPA, 2021) and MERCOSUR (PTA, 2009)**. 🔴 These came from general knowledge, not a checked source, and are flagged in `ENTRIES` as VERIFY-before-launch against the Department of Commerce FTA list. The owner was told.
+  - Pins: ASEAN moved to mainland SE Asia (101, 16) so Singapore has its own. MERCOSUR's arc bows SOUTH (`bow: -0.22`) so it does not cross the Europe/Middle East labels. The bounding-box check shows 13 labels, no overlaps, none outside the map.
+  - The line under the map reads "Plus further agreements across South Asia and beyond — among them SAFTA, APTA and Chile."
+  - The panel's top-right label reads just "Key partners" — no number (owner: "don't write number there"). It was briefly "13 key partners".
+  - Other agreements India has (for the client to verify if wanted): Sri Lanka FTA, SAFTA, APTA, Chile PTA, Nepal/Bhutan treaties, the Thailand early harvest, Oman CEPA (reportedly signed late 2025).
+- **2026-09-28 — "Why source from India" REDESIGNED AROUND A MAP (owner: "still the design is not hitting right").**
+  - Diagnosis: a wall of stacked text with nothing leading the eye, and the core message (agreements with major markets) told as a list when it is geographic.
+  - **Header row:** eyebrow + heading left, the duty paragraph right (the "Why MPX" pattern).
+  - **Map panel (white card, left):** `public/world-dots.svg`, a dotted world generated once from Natural Earth 110m (public domain), equirectangular lon −180…180 / lat 78…−56. It has 3,705 grey land dots with India's 68 dots in red, 51 KB (≈12 KB gzipped); the generator script lives in the session scratchpad, not the repo.
+    - Arcs, endpoints and labels are drawn live in `TradeMap` on the same grid: the arcs draw in (stroke-dashoffset) on scroll into view, staggered, and India pulses.
+    - Labels are placed per partner (`PINS` side) to keep the Europe and East-Asia clusters apart. Blocs point at a representative spot (ASEAN = maritime SE Asia, EFTA = Switzerland, EU = central Europe).
+    - Labels show from `lg` only; below lg the quiet two-column `PartnerList` replaces them. There is a legend + "Duty relief applies product by product."
+  - **Photo card (right, same height):** the handshake photo with the February 2026 US-deal line and the independence line over a dark fade.
+  - The Australia label moved to the left of its pin (it collided with New Zealand's). The EU label moved to the right of its pin (it collided with the UK's). A bounding-box check now finds no overlapping labels at 1471px.
+  - **Words under their pictures (owner: "put this below map … and this below … image"):** the duty paragraph moved from the header into the map panel, under the map and legend behind a hairline. The February 2026 US-deal line and the independence line moved from over the photo into a white strip beneath it (the photo card is now picture on top, caption below, with no dark fade). The header is eyebrow + heading only. Both panels are 497px; the section is 755px.
+  - **(Superseded by the next line) Aligned (owner: "align the heading, image and map to fit in the new design"):** the header row uses the same `lg:grid-cols-[1.55fr_1fr]` grid as the panels. The heading's left edge = the map panel's (64px); the paragraph's = the photo's (888px). Section 713px at a 893px-tall viewport, so it fits one screen.
+  - Everything is static under reduced motion, and for bots/automated browsers.
+- **2026-09-28 — "Why source from India": agreements as a QUIET HAIRLINE LIST (owner: pills "not looking good" → a tile grid "not giving that simple, elegant, premium feeling").**
+  - `PartnerList`: two columns (one on phones), each row = partner (14.5px) left and agreement type in small grey caps right, on `ink-200` hairlines, under a dark rule with "Agreements with · 10 partners". There are no boxes or badges; US/NZ/AU carry only a small red dot. Ten partners fill five even rows.
+  - The February 2026 callout lost its card and is now a red-rule note, matching the photo caption.
+  - The photo's offset block is now `sand` (was pink), tying in with the category arches.
+  - Tried and dropped the same hour: a 3-column tile grid with code badges (an orphaned last row, then "not premium").
+- **2026-09-28 — Goods/services cards redesigned as two halves, with PHOTOS (owner: "too much empty space, add some vectors, redesign the two cards" → vectors "not good" → "images may be good, continue").**
+  - The pair moved out of `Landing.jsx` into `components/landing/SourceTypeCards.jsx`.
+  - **Left:** icon + label, title, one line, example chips, and a "Browse goods / Browse services →" link pinned to the bottom, so both cards align.
+  - **Right:** a photo with two white example tags ("MOQ 500 pcs · 14-day lead time" / "Scoped per project · Direct with the team"), plus a slow hover zoom on mouse devices only.
+  - **Photos:** goods = `supplier-veltora-factory.webp` (an Indian textile floor, previously unused). Services = new `public/services-team.webp`, an Unsplash team-at-laptops photo (free licence), 960px, 45 KB.
+  - Hand-drawn SVG cartons / dashboard art were tried and rejected ("side figures are not good at all"). The watermark version is superseded.
+- **2026-09-28 — Category arches: PEACH SAND (`sand` #F7E4D8), chosen by the owner ("b4").**
+  - Picked from six warm shades rendered side by side on the live page (a temporary DOM strip, never committed): sand #F2E8DD, linen, champagne, peach sand, clay and stone. That followed an A–D round (lavender / sand / slate / blush fade) where the owner liked "warm sand".
+  - **New Tailwind token `sand`** in `tailwind.config.js`: decorative fills only, never text or status. The arch is `bg-sand` with no hover colour change.
+  - Also rejected on the way today: white (owner: "not the white colour").
+  - ⚠️ A config change needs a Vite restart: 5273 was restarted; the owner's 5173 must be restarted too, or the arches render transparent.
+- **2026-09-28 — Goods/services cards: small UI defects fixed (owner: "fix small UI defects in this section, see it in detail").**
+  - **Watermarks:** now a 0.45 line — the 0.8 line rendered as ~6px chunky strokes at 176–192px (the services grid read as rounded blocks). Smaller (h-44), set in from the corner, masked softer, and tinted `primary-900` at 8%.
+  - **Top row:** icon tile and round arrow are centre-aligned (`items-center`; their centres were 2px apart).
+  - **Touch:** the card lift, arrow red fill, arrow rotation and watermark turn now apply only under `[@media(hover:hover)]`. On phones a tap left the arrow stuck dark red. The arrow also turns red on keyboard focus (`group-focus-visible`).
+  - Verified: lint passes, and the tile and arrow centres match (953px / 953px). The watermark renders as a fine outline at device scale.
+- **2026-09-28 — The last two dark blocks moved into the light system (owner: "fix the black goods/services cards and the dark buyer/supplier panel").**
+  - **AudienceFork:** the dark ink panel became a LIGHT panel (ink-50 → white → primary-50/50 gradient, ring, `shadow-card`, a soft red glow and faint dots).
+    - The heading now uses the shared `HEADING` size.
+    - The tab switcher is white, with the active tab in ink-900.
+    - Text is ink; eyebrows are `primary-700`. The preview cards got a ring and a lighter shadow. The red CTA is unchanged.
+  - **Goods/services:** the black cards became light cards, supersedeing the 2026-09-26 "black with red CTA" decision at the owner's request.
+    - White → ink-50 cards with a soft red glow, dots and a 0.8px line-art watermark of the icon — the "Why MPX" card language.
+    - The icon tile is primary-50, the chips are white, and the round arrow is ink-900, turning red on hover.
+    - They remain a matched pair. The old notes in `Landing.jsx` are marked superseded.
+- **2026-09-28 — Follow-ups after the consistency pass (owner: "do it").**
+  - **"Why MPX" tiles no longer blank for crawlers:** `useSeen` starts visible for automated visitors (`navigator.webdriver`, or a UA matching bot/crawl/spider/slurp/preview/lighthouse/headless). People keep the rise-in on scroll.
+    - A 2.5s timed fallback was tried and dropped: real visitors reach the section later than that, so it would have killed the animation.
+    - ⚠️ The Playwright MCP browser hides `webdriver`, so the check could not be exercised here.
+  - **Phone check** (a 390px iframe on 5273, so the owner's visible window was not resized): India and the film are fine, with no sideways scroll. The "Why MPX" rail snapped its first tile flush to the screen edge — fixed with `scroll-px-4`, and the first tile now sits at 16px.
+  - **Web tests: 35 files / 258 tests all pass.** The 2 failures seen earlier today did not reproduce (likely timing in that slow run).
+- **2026-09-28 — Landing CONSISTENCY PASS (owner: "commit the current design, then fix all these issues"). Committed first as `6fa2256`; this pass is uncommitted.**
+  - **One heading pattern:** new `components/landing/SectionHeader.jsx`.
+    - `SectionHeader` = eyebrow + h2 + optional sub + optional right-side action, with one size scale (`HEADING`: 26 → 30 → 34px).
+    - `SectionLink` = the ONE "see more" style (white pill + dark round arrow), which replaced the outlined "See all ›" and the PromoPanels-only `AllCategoriesButton`.
+    - Used by categories (via `BlockHead`, now with an eyebrow), sectors, film (centred — the one deliberate exception), goods/services, featured products and How it works; the India, Why-MPX and FAQ h2s use `HEADING`.
+  - **Background rhythm:** white ↔ `surface-subtle` alternate — categories, India and How it works moved to grey. The India callout became white so it reads on grey.
+  - **Red rule:** the red headline words "preferential terms" and "without the guesswork" were removed. Red stays for actions and the one accent per section. The hero was left untouched (owner: "leaving the hero apart"); the arches stay coral (owner-chosen).
+  - **How it works:** the steps now sit on one white `rounded-3xl` panel with `shadow-card`, the same finish as the sections above.
+  - **NOT changed, deliberately:** the black goods/services cards (an owner decision of 2026-09-26, "very very imp") and the buyer/supplier dark panel. The AI band keeps its own 30px white heading.
 - **2026-09-28 — Category arches → LIGHT CORAL `primary-200 → primary-300`, initials `primary-800/70` (owner: mid red was "too dark").**
 - **2026-09-28 — (superseded) Category arches were a MID red gradient (`primary-400 → primary-500`), with white initials (owner's sequence).**
   - Rejected on the way: primary-50 ("looking pink"), a warm light red token `primary.soft` #F6E1DC (added, then REMOVED from `tailwind.config.js` unused), and deep 600 → 800 ("too dark").

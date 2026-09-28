@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import { ArrowRightIcon } from '../ui/icons.jsx';
+import { SectionHeader, SectionLink } from './SectionHeader.jsx';
 
 /**
  * "Browse by sector" — the three sector tiles under the hero.
@@ -57,23 +58,6 @@ const PROMOS = [
   },
 ];
 
-/** "All categories" — one button, the same on desktop and phone. */
-function AllCategoriesButton({ className = '' }) {
-  return (
-    <Link
-      to="/categories"
-      className={`group inline-flex h-11 items-center gap-2.5 rounded-full border border-ink-200 bg-white pl-5 pr-1.5 text-sm font-semibold text-ink-900 shadow-sm transition-colors hover:border-ink-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/20 ${className}`}
-    >
-      All categories
-      <span
-        aria-hidden="true"
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-900 text-white transition-colors duration-300 group-hover:bg-primary-600"
-      >
-        <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 motion-reduce:transition-none" />
-      </span>
-    </Link>
-  );
-}
 
 function Tile({ promo, lead = false }) {
   return (
@@ -137,15 +121,13 @@ export function PromoPanels() {
   const [lead, ...rest] = PROMOS;
   return (
     <section aria-labelledby="sectors-heading" className="w-full bg-white px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-16 xl:px-16">
-      <div className="mb-5 flex items-end justify-between gap-4 sm:mb-7">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Browse by sector</p>
-          <h2 id="sectors-heading" className="mt-1.5 text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
-            Sourcing, organised by industry
-          </h2>
-        </div>
-        <AllCategoriesButton className="hidden shrink-0 justify-center sm:inline-flex" />
-      </div>
+      <SectionHeader
+        id="sectors-heading"
+        eyebrow="Browse by sector"
+        title="Sourcing, organised by industry"
+        action={<SectionLink to="/categories">All categories</SectionLink>}
+        className="mb-6 sm:mb-8"
+      />
 
       {/* Phone and tablet: agriculture full width, the other two side by side.
           lg+: "one and two" (owner, 2026-09-27) — agriculture tall on the LEFT
@@ -159,7 +141,9 @@ export function PromoPanels() {
         ))}
       </div>
 
-      <AllCategoriesButton className="mt-4 flex w-full justify-between sm:hidden" />
+      <SectionLink to="/categories" className="mt-4 flex w-full justify-between sm:hidden">
+        All categories
+      </SectionLink>
     </section>
   );
 }

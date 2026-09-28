@@ -15,14 +15,14 @@ import { AudienceFork } from '../../components/landing/AudienceFork.jsx';
 import { MpxFilm } from '../../components/landing/MpxFilm.jsx';
 import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
 import { PromoPanels } from '../../components/landing/PromoPanels.jsx';
+import { SourceTypeCards } from '../../components/landing/SourceTypeCards.jsx';
+import { HEADING, SectionHeader, SectionLink } from '../../components/landing/SectionHeader.jsx';
 import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
 
 import {
   ArrowRightIcon,
-  BoxIcon,
   ChatIcon,
   EnquiryIcon,
-  GridIcon,
   QuoteIcon,
   SearchIcon,
   SparkleIcon,
@@ -150,22 +150,16 @@ const HERO_EXAMPLES = [
 ];
 
 /** Section heading + optional "see all" — the one definition, so headings can't drift. */
-function BlockHead({ title, sub, to, cta = 'See all' }) {
+/** Landing blocks share ONE heading pattern — see `SectionHeader`. */
+function BlockHead({ eyebrow, title, sub, to, cta = 'See all' }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-4">
-      <div className="min-w-0">
-        <h2 className="text-2xl font-extrabold tracking-tight text-ink-900">{title}</h2>
-        {sub && <p className="mt-1 text-sm text-ink-600">{sub}</p>}
-      </div>
-      {to && (
-        <Link
-          to={to}
-          className="hidden shrink-0 rounded-xl border border-surface-border px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 sm:inline-block"
-        >
-          {cta} ›
-        </Link>
-      )}
-    </div>
+    <SectionHeader
+      eyebrow={eyebrow}
+      title={title}
+      sub={sub}
+      action={to ? <SectionLink to={to}>{cta}</SectionLink> : null}
+      className="mb-6 sm:mb-8"
+    />
   );
 }
 
@@ -402,8 +396,9 @@ export function Landing() {
 
         {/* ═════════ CATEGORIES ═════════
             Above the sector panels (owner, 2026-09-28). */}
-        <section id="categories" className="w-full px-4 pb-2 pt-10 sm:px-6 sm:pb-2 sm:pt-14 lg:px-10 lg:pt-16 xl:px-16">
+        <section id="categories" className="w-full bg-surface-subtle px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-16 xl:px-16">
           <BlockHead
+            eyebrow="Categories"
             title="Browse by category"
             sub="Goods and services, across every trade we list."
             to="/categories"
@@ -463,15 +458,13 @@ export function Landing() {
               ~1100px on large screens inside a thin gradient frame with a deeper
               shadow. Phones are unchanged — the owner called them perfect. */}
           <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:max-w-5xl xl:max-w-[1148px]">
-            <div className="text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">The MPX Global film</p>
-              <h2 id="film-heading" className="mt-1.5 text-balance text-[24px] font-extrabold leading-tight tracking-tight text-ink-900 sm:text-[30px] lg:text-[36px]">
-                Ready to trade. Built to connect.
-              </h2>
-              <p className="mx-auto mt-2 max-w-xl text-[14.5px] leading-relaxed text-ink-600">
-                Two minutes on how MPX Global brings India&apos;s manufacturers and the world&apos;s buyers to one platform.
-              </p>
-            </div>
+            <SectionHeader
+              id="film-heading"
+              align="center"
+              eyebrow="The MPX Global film"
+              title="Ready to trade. Built to connect."
+              sub="Two minutes on how MPX Global brings India’s manufacturers and the world’s buyers to one platform."
+            />
             {/* Width is also capped by the screen's HEIGHT (owner: "not fitting
                 inside my screen"): a 16:9 film is at most (100vh − ~400px of
                 heading, spacing and the sticky header) tall, so the whole
@@ -515,8 +508,8 @@ export function Landing() {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Why MPX Global</p>
-                <h2 id="platform-heading" className="mt-1.5 text-balance text-[24px] font-extrabold leading-[1.1] tracking-tight text-ink-900 sm:text-[28px] lg:text-[32px]">
-                  Sourcing from India, <span className="text-primary-600">without the guesswork</span>
+                <h2 id="platform-heading" className={`mt-1.5 ${HEADING}`}>
+                  Sourcing from India, without the guesswork
                 </h2>
               </div>
               <p className="max-w-md text-pretty text-[14.5px] leading-relaxed text-ink-600 lg:pb-1 lg:text-right">
@@ -564,82 +557,22 @@ export function Landing() {
             (owner: "not matching and awkward"), and green is worse than merely
             mismatched: `success` is this product's verified/approved colour, and
             spending it on decoration thins the one signal buyers must trust. */}
-        {/* 2026-09-28 restyle (owner: premium, section by section): white
-            ground like the sections around it, eyebrow + heading, and the black
-            cards gain a soft red glow, a dot texture, example chips and the
-            round arrow the sector tiles use. Still a MATCHED PAIR — same
-            colour, told apart by icon and copy (see above). */}
+        {/* ⚠️ SUPERSEDED 2026-09-28 (owner, consistency pass: "fix the black
+            goods/services cards"): the pair are now LIGHT cards — white with a
+            soft red glow, dot texture and a line-art watermark, the same card
+            language as "Why MPX Global". Red stays on the action (the round
+            arrow turns red on hover). Still a MATCHED PAIR — same colour, told
+            apart by icon and copy; the notes above about never giving them
+            different colours still hold. */}
         <section aria-labelledby="fork-heading" className="w-full bg-white px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-16 xl:px-16">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Goods &amp; services</p>
-          <h2 id="fork-heading" className="mt-1.5 text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
-            Source products and services in one place
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-600 sm:text-base">
-            Most platforms offer one or the other. Choose where you want to start.
-          </p>
+          <SectionHeader
+            id="fork-heading"
+            eyebrow="Goods & services"
+            title="Source products and services in one place"
+            sub="Most platforms offer one or the other. Choose where you want to start."
+          />
 
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-2">
-            {[
-              {
-                to: '/categories?type=goods',
-                Icon: BoxIcon,
-                eyebrow: 'Goods',
-                title: 'Physical products',
-                body: 'Listed with MOQ, per-unit pricing and lead times.',
-                chips: ['Fabric & yarn', 'Leather', 'Chemicals', 'Machinery'],
-              },
-              {
-                to: '/categories?type=service',
-                Icon: GridIcon,
-                eyebrow: 'Services',
-                title: 'Business services',
-                body: 'Scoped per engagement, direct with the team that delivers.',
-                chips: ['Software', 'AI / ML', 'Cloud', 'QC & inspection'],
-              },
-            ].map(({ to, Icon, eyebrow, title, body, chips }) => (
-              <Link
-                key={to}
-                to={to}
-                className="group relative isolate flex flex-col overflow-hidden rounded-3xl bg-ink-900 p-5 shadow-card ring-1 ring-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/40 sm:p-8"
-              >
-                {/* Texture + glow: decoration only. */}
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-0 -z-10 bg-[radial-gradient(rgb(255_255_255/0.07)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:linear-gradient(to_left,black,transparent_70%)]"
-                />
-                <span
-                  aria-hidden="true"
-                  className="absolute -right-24 -top-24 -z-10 h-64 w-64 rounded-full bg-primary-600/25 blur-3xl transition-opacity duration-500 group-hover:opacity-100 sm:opacity-70"
-                />
-
-                <span className="flex items-start justify-between gap-4">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 sm:h-12 sm:w-12">
-                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-ink-900 transition-colors duration-300 group-hover:bg-primary-600 group-hover:text-white sm:h-11 sm:w-11"
-                  >
-                    <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-45 motion-reduce:transition-none" />
-                  </span>
-                </span>
-
-                <span className="mt-5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-300 sm:mt-8">
-                  {eyebrow}
-                </span>
-                <span className="mt-1 block text-xl font-bold tracking-tight text-white sm:text-[28px]">{title}</span>
-                {/* ink-300 on black is 11.95:1 — body stays readable. */}
-                <span className="mt-1.5 block text-sm leading-relaxed text-ink-300 sm:text-[15px]">{body}</span>
-                <span className="mt-4 flex flex-wrap gap-1.5 sm:mt-6 sm:gap-2">
-                  {chips.map((c) => (
-                    <span key={c} className="rounded-full bg-white/[0.08] px-2.5 py-1 text-[11.5px] font-medium text-white/85 ring-1 ring-white/10 sm:text-[12.5px]">
-                      {c}
-                    </span>
-                  ))}
-                </span>
-              </Link>
-            ))}
-          </div>
+          <SourceTypeCards />
         </section>
 
         {/* ═════════ AI BAND — the page's one coloured band ═════════
@@ -682,7 +615,7 @@ export function Landing() {
         {/* ═════════ FEATURED PRODUCTS — curated; none → section absent ═════════ */}
         {featured.products.length > 0 && (
           <section className="w-full px-4 pt-10 sm:px-6 sm:pt-12 lg:px-10 xl:px-16">
-            <BlockHead title="Featured products" sub="Picked by the MPX Global team." to="/search" />
+            <BlockHead eyebrow="Featured" title="Featured products" sub="Picked by the MPX Global team." to="/search" />
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
               {/* ProductCard renders its own <li>. */}
               {featured.products.map((p) => (
@@ -737,17 +670,18 @@ export function Landing() {
             priced PDF, counter-offers, both sides confirm with an emailed
             code) instead of the vaguer "Deal with confidence". Nothing here
             claims payment protection — MPX Global moves no money. */}
-        <section id="how-it-works" aria-labelledby="how-heading" className="bg-white">
+        <section id="how-it-works" aria-labelledby="how-heading" className="bg-surface-subtle">
           <div className="w-full px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-16 xl:px-16">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">How it works</p>
-            <h2 id="how-heading" className="mt-1.5 text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
-              From first search to agreed quotation
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-600 sm:text-base">
-              Four steps, all on the platform, all free for buyers.
-            </p>
+            <SectionHeader
+              id="how-heading"
+              eyebrow="How it works"
+              title="From first search to agreed quotation"
+              sub="Four steps, all on the platform, all free for buyers."
+            />
 
-            <ol className="relative mt-8 grid gap-0 sm:mt-10 lg:grid-cols-4 lg:gap-8">
+            {/* The steps sit on one white panel — the same card finish as the
+                sections above (consistency pass, 2026-09-28). */}
+            <ol className="relative mt-8 grid gap-0 rounded-3xl bg-white p-6 shadow-card ring-1 ring-ink-200/60 sm:mt-10 sm:p-8 lg:grid-cols-4 lg:gap-8 lg:p-10">
               {[
                 [SearchIcon, 'Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
                 [EnquiryIcon, 'Send an enquiry', 'Tell the supplier exactly what you need, in a couple of clicks.'],
@@ -797,7 +731,7 @@ export function Landing() {
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
             <div className="min-w-0 lg:sticky lg:top-28 lg:self-start">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">FAQ</p>
-              <h2 id="faq-heading" className="mt-1.5 text-balance text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl lg:text-4xl">
+              <h2 id="faq-heading" className={`mt-1.5 ${HEADING}`}>
                 Common questions
               </h2>
               <p className="mt-3 max-w-md text-pretty text-sm leading-relaxed text-ink-600 sm:text-base">
