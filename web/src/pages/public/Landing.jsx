@@ -678,11 +678,11 @@ export function Landing() {
               eyebrow="How it works"
               title="From first search to agreed quotation"
               sub="Four steps, all on the platform, all free for buyers."
-              action={<SectionLink to="/signup/buyer">Start sourcing</SectionLink>}
             />
 
             {/* The steps sit on one white panel — the same card finish as the
-                sections above (consistency pass, 2026-09-28). */}
+                sections above (consistency pass, 2026-09-28). Line structure
+                kept by the owner (a step-card version was tried and dropped). */}
             <ol className="relative mt-8 grid gap-0 rounded-3xl bg-white p-6 shadow-card ring-1 ring-ink-200/60 sm:mt-10 sm:p-8 lg:grid-cols-4 lg:gap-8 lg:p-10">
               {[
                 [SearchIcon, 'Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
@@ -690,26 +690,28 @@ export function Landing() {
                 [ChatIcon, 'Chat in real time', 'Talk directly on the platform, with files and full history.'],
                 [QuoteIcon, 'Agree the quotation', 'Receive a priced quotation, counter-offer, and confirm it together.'],
               ].map(([Icon, title, body], i) => (
-                <li key={title} className="group relative flex gap-4 pb-7 last:pb-0 lg:flex-col lg:gap-0 lg:pb-0">
+                <li key={title} className="relative flex gap-4 pb-7 last:pb-0 lg:flex-col lg:gap-0 lg:pb-0">
                   {/* Connector to the NEXT step (none after the last): down on a
                       phone, across to the next marker from lg. Decoration. */}
                   {i < 3 && (
                     <span
                       aria-hidden="true"
-                      className="absolute bottom-0 left-[27px] top-14 w-px bg-[linear-gradient(to_bottom,theme(colors.ink.300)_50%,transparent_50%)] bg-[length:1px_7px] lg:bottom-auto lg:left-[4.5rem] lg:right-[-1.5rem] lg:top-[28px] lg:h-px lg:w-auto lg:bg-[linear-gradient(to_right,theme(colors.ink.300)_50%,transparent_50%)] lg:bg-[length:7px_1px]"
+                      className="absolute bottom-0 left-[17px] top-9 w-px bg-gradient-to-b from-ink-200 to-ink-100 lg:bottom-auto lg:left-9 lg:right-[-2rem] lg:top-[18px] lg:h-px lg:w-auto lg:bg-gradient-to-r"
                     />
                   )}
-                  {/* Icon leads, number follows (owner, 2026-09-28: the numbers
-                      were big and the icons too small). */}
-                  <span className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-50 to-white text-primary-600 shadow-card ring-1 ring-primary-100 transition-colors duration-300 motion-reduce:transition-none [@media(hover:hover)]:group-hover:bg-primary-600 [@media(hover:hover)]:group-hover:bg-none [@media(hover:hover)]:group-hover:text-white">
-                    <Icon className="h-6 w-6" aria-hidden="true" />
+                  {/* The owner's reference layout with the two SWAPPED
+                      (2026-09-28): the NUMBER sits in the marker on the line,
+                      the ICON goes below it, large, where the big faint
+                      numeral used to be. */}
+                  <span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink-50 text-[12px] font-semibold tabular-nums text-ink-500 ring-1 ring-ink-200">
+                    {String(i + 1).padStart(2, '0')}
                   </span>
-                  <span className="min-w-0 pt-1.5 lg:pt-0">
-                    <span className="block text-[11px] font-semibold uppercase tabular-nums tracking-[0.14em] text-primary-700 lg:mt-5">
-                      Step {String(i + 1).padStart(2, '0')}
+                  <span className="min-w-0 lg:pt-0">
+                    <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100/40 text-primary-600 ring-1 ring-primary-100 lg:mt-6 lg:h-16 lg:w-16">
+                      <Icon className="h-7 w-7 lg:h-8 lg:w-8" strokeWidth={1.6} />
                     </span>
-                    <span className="mt-1 block text-[16px] font-semibold tracking-tight text-ink-900 lg:text-lg">{title}</span>
-                    <span className="mt-1 block text-sm leading-relaxed text-ink-600">{body}</span>
+                    <span className="mt-4 block text-[16.5px] font-semibold tracking-tight text-ink-900 lg:mt-5 lg:text-[18px]">{title}</span>
+                    <span className="mt-1.5 block max-w-[17rem] text-[14px] leading-relaxed text-ink-500">{body}</span>
                   </span>
                 </li>
               ))}

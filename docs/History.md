@@ -175,6 +175,26 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-28 — India map SHAPE fixed (owner: "the India map shape is wrong").** 🔴 This is a compliance issue, not only design.
+  - Natural Earth 110m draws India's de facto line, so `world-dots.svg` left out Pakistan-administered Kashmir, Gilgit-Baltistan and Aksai Chin.
+  - The generator now treats every point inside India's OFFICIAL northern boundary — all of Jammu & Kashmir and Ladakh — as India. An approximate outline (`INDIA_NORTH`, lon/lat) is kept with the generator script in the session scratchpad; the SVG is the committed artifact.
+  - India is also drawn at a FINER resolution — 0.8° dots (457), not the world's 2° grid (72 before) — so its outline, northern crown and the northeast are recognisable. The world keeps 2° dots (3,701). File 56 KB.
+  - ⚠️ If the map is ever regenerated from Natural Earth (or any source), India's official boundary MUST be applied again.
+  - **Refined (owner: "the top section shape can be improved"):**
+    - `INDIA_NORTH` now has 27 points tracing the official J&K / Ladakh outline — the Pakistan-administered west, Gilgit-Baltistan up to the Khunjerab area, the Karakoram, and the Aksai Chin bulge to ~80.3°E.
+    - India dots are finer: 0.65° grid, 688 dots, stroke 1.45. File 60 KB.
+    - Checked with a zoomed render of India alone (a temporary overlay, removed afterwards).
+  - **Refined again to the owner's reference (a dotted "India map" stock image):**
+    - India's outline now comes from Natural Earth **50m** (India + the Siachen Glacier feature) instead of 110m: a truer coast and north-east, and the Andaman & Nicobar Islands appear. The world stays 110m.
+    - The crown was reshaped to rise to its northern peak (~74.9°E 37.15°N) and step down the Karakoram to the Aksai Chin shoulder (~80.3°E).
+    - The India grid is 0.6° (817 dots, stroke 1.35). File 62 KB.
+    - The generator reads `ne_countries.geojson` (110m) and `ne50_countries.geojson` (50m) from the session scratchpad; neither is committed.
+- **2026-09-28 — How it works: back to the owner's reference layout, with the number and icon SWAPPED (owner sent a screenshot of the earlier design: "use this design, just swap icon and number so the icons go down and big").**
+  - The 44px white circle on the solid `ink-200` connector now holds the step NUMBER (01–04, red, bold). The icon sits below it, LARGE (40px desktop / 32px phone, `primary-600`, 1.5 stroke), where the big faint numeral used to be; then the title and line.
+  - The numbers in the circles are grey (`ink-500`, owner: "turn numbers to grey"), so the red icons carry the colour.
+  - Styling refined within the same structure: smaller quiet number markers (36px, ink-50), the icons in 64px soft-red tiles, the connector fading out, titles 18px, and body text in ink-500 capped at 17rem.
+  - A full "four step cards with mini product previews" redesign was tried and REVERTED at once (owner: "no, the previous line structure, not cards structure"). `HowItWorksSteps.jsx` was deleted, and the line version above is current.
+  - Removed to match the reference: the "Start sourcing" header link, the dashed connector, the 56px gradient icon tiles, the "Step 0N" caps labels and the red hover fill.
 - **2026-09-28 — FAQ rethought: questions and answer SIDE BY SIDE on desktop (owner: "left side too much empty space" → a support card + quick facts, rejected: "not a good thing to add this type of card here" → a full-width stacked list, rejected: "bad design, rethink").**
   - The header is the shared `SectionHeader` (FAQ / Common questions / sub) with a "Get help →" `SectionLink` to `/help`.
   - **Desktop (lg+): new `components/landing/FaqExplorer.jsx`.**
