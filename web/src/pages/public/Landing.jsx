@@ -399,6 +399,25 @@ export function Landing() {
             buyer? | Are you a supplier?" → /suppliers or exporter signup. */}
         <AudienceFork />
 
+        {/* ═════════ CATEGORIES ═════════
+            Above the sector panels (owner, 2026-09-28). */}
+        <section id="categories" className="w-full px-4 pb-2 pt-10 sm:px-6 sm:pb-2 sm:pt-14 lg:px-10 lg:pt-16 xl:px-16">
+          <BlockHead
+            title="Browse by category"
+            sub="Goods and services, across every trade we list."
+            to="/categories"
+          />
+          {/* 🔴 CIRCLES IN A SCROLLING RAIL since 2026-09-26 (owner), replacing a
+              12-card grid. Two things the grid could not do: it showed twelve of
+              forty categories and stopped, and on a wide screen it spent a third
+              of the fold on photographs of things nobody had asked for. The rail
+              carries EVERY top-level category and takes one row.
+
+              The sub-count is REAL (`subs` from the live tree) — an invented
+              second line is exactly what this page refuses to carry. */}
+          <CategoryCircles categories={railCategories} loading={categories.isPending} />
+        </section>
+
         {/* ═════════ BROWSE BY SECTOR ═════════
             Directly under the hero: a bento grid of the three sector tiles
             (redesigned 2026-09-27 — see PromoPanels). Fixed navigation, NOT the
@@ -453,28 +472,11 @@ export function Landing() {
             products above "Recently listed", highlighted suppliers below it.
             Each falls back to the page's default when nothing is curated. */}
 
-        {/* ═════════ CATEGORIES ═════════ */}
         {/* Why India — the question a foreign buyer asks straight after "why
             this platform". Every agreement named in it is real; see the
             component, which also says plainly that there is no India–US FTA. */}
         <TradeAgreements />
 
-        <section id="categories" className="w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-10 xl:px-16">
-          <BlockHead
-            title="Browse by category"
-            sub="Goods and services, across every trade we list."
-            to="/categories"
-          />
-          {/* 🔴 CIRCLES IN A SCROLLING RAIL since 2026-09-26 (owner), replacing a
-              12-card grid. Two things the grid could not do: it showed twelve of
-              forty categories and stopped, and on a wide screen it spent a third
-              of the fold on photographs of things nobody had asked for. The rail
-              carries EVERY top-level category and takes one row.
-
-              The sub-count is REAL (`subs` from the live tree) — an invented
-              second line is exactly what this page refuses to carry. */}
-          <CategoryCircles categories={railCategories} loading={categories.isPending} />
-        </section>
 
         {/* ═════════ GOODS / SERVICES — the fork in the road ═════════
             50/50 on purpose: the live catalogue is currently MOSTLY services, so

@@ -175,6 +175,56 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-28 — Landing: "Browse by category" moved above "Browse by sector" (owner).** It's now 3rd, after the buyer/supplier section. Its bottom padding was trimmed (`pb-2`) so the two white sections don't stack a double gap. The stale "CATEGORIES" comment above Why India was removed. Everything else keeps the order the owner confirmed.
+- **2026-09-28 — Landing sections reordered into four chapters (owner: "sections are randomly placed… not woven").**
+  - **A · Welcome:** hero → buyer/supplier fork (the client brief keeps it right after the hero).
+  - **B · Browse:** categories (arches) → sectors → admin banners → goods/services → featured products. Banners follow sectors because the strip is pb-only by design.
+  - **C · Can't find it?:** the AI band.
+  - **D · Trust, then act:** what makes MPX different → why India → how it works → FAQ.
+  - **Backgrounds:** they alternate white and surface-subtle. Categories, goods/services and how-it-works moved to subtle; featured products gained bottom padding, since the AI band now follows it.
+  - Moves only: no section's design changed. A backup of the old file is in the session scratchpad.
+  - **Same day, revised (owner: "the client wants to highlight the Indian trade relationship… bottom doesn't work"):** "Why source from India" moved from chapter D to straight after the buyer/supplier fork — third on the page, before browsing.
+  - **REVERTED the same day (owner: "keep this layout", pasting the original list).** The page is back to: hero → buyer/supplier → sectors → banners → what makes MPX different → why India → categories → goods/services → AI band → featured products → how it works → FAQ. Its backgrounds are back as before too. The four-chapter order is NOT live.
+- **2026-09-28 — Landing "Browse by category": circles → pop-out ARCH tiles (client reference via owner).**
+  - A low tinted arch (the bottom 72% of the tile). The picture is full tile height and anchored to the bottom, so the product rises out of the arch's top.
+  - On hover the picture lifts while the arch stays put. The name sits below in plain medium weight; the subcategory count was dropped to match the reference.
+  - Cloudinary transform changed to `c_fit,w_248,h_260`: no crop, so a cut-out keeps its outline and transparency.
+  - With no image, the initials sit on the arch's tint (the grey `NoImagePanel` clashed).
+  - ⚠️ The 3D effect needs TRANSPARENT cut-out category images. An ordinary photo shows as a rectangle standing on the arch. The test DB has no category images; it was previewed with the supplier cut-outs injected in the browser only.
+- **2026-09-28 — Landing: images no longer arrive late while scrolling (owner: "opening in pieces… loads in front of me").**
+  - `india-trade-diplomacy.webp`: 1.6 MB → 57 KB. It was 1244×822 saved LOSSLESS with an alpha channel, which was fully opaque. Re-encoded as lossy RGB q80; the `width`/`height` attributes now match (they said 2754×1804).
+  - `card-ai-matchmaking.jpg`: 2600 px wide / 250 KB → 1560×650 / ~98 KB. Resized by height, since the card crops it to 4:3.
+  - `CategoryCircles`: Cloudinary images now request `c_fill,g_auto,w_248,h_248,q_auto,f_auto` instead of the full upload. ⚠️ Not exercised: the test DB's categories have no Cloudinary images.
+  - Gotcha: check a public image's real bytes before shipping it — a lossless WebP is not "a webp, so small".
+- **2026-09-28 — Public footer: a brand row (owner: "fix the footer design").**
+  - The footer had no logo and no line saying what MPX is. A top row now carries the logo (links home) and one line: "The B2B marketplace for Indian exporters and the buyers who source from them."
+  - "Stay connected" moved into that row on the right (tablet and up), instead of hanging under the last column. On phones it keeps its own row below the columns.
+  - Columns, the app band and the legal bar are unchanged; placeholders stay unclickable as before.
+- **2026-09-28 — `/suppliers` rebuilt as a DIRECTORY page (owner: "you made it like a home page"; the new version: "this design is better").**
+  - **Order:**
+    1. A white page header: breadcrumb, "Verified suppliers" with a 100+ pill, a Preview label, search (company / person / city / product) and industry chips.
+    2. The featured supplier: the full-width two-half `SupplierFeatureCard`, with an 01 / 12 counter and previous/next. It moves every 6 s, pauses on hover or focus, and stays still under reduced motion.
+    3. A slim "Request your sample today" bar with a progress line (links to buyer signup; the sample request goes through an enquiry, not an order).
+    4. The "100+ verified suppliers" card fan, filtered by the search and chips, with an empty state and Clear filters. Picking a card features that supplier and scrolls up to it.
+    5. One dark "Are you a supplier?" line → `/signup/exporter`.
+  - Removed the landing-style sections ("How we verify", "Ready when you are"), `SpotlightHero.jsx` and `Reveal.jsx`.
+  - Data is still the 12 hardcoded sample suppliers, with noindex.
+  - Checked at 393 px: no sideways scroll; clicking a card changes the featured supplier.
+  - **Phone pass (owner: "clustered", "alien object"):**
+    - Featured card: a shorter stage with the portrait on the right, clear of the stat chip; details as a label/value list instead of tiles.
+    - On phones the sample request closes the featured card (a tinted footer). The separate bar shows from `sm` up only.
+    - The network section is a white full-width band with a "Browse the network" eyebrow, so sections separate clearly.
+    - "Are you a supplier?" is now an icon + heading + line + full-width button block.
+    - A one-card-at-a-time fan on phones was tried and reverted (owner: "the fan was good").
+- **2026-09-28 — `/suppliers` featured card redesigned as a SUPPLIER SPOTLIGHT (owner: "not engaging… redesign").**
+  - **`SupplierFeatureCard`, two halves:**
+    - Left, a dark stage: the portrait in a red spotlight inside two rings, with floating glass chips for the logo, Verified, the headline stat, and "Ships to N markets" as code discs.
+    - Right: category chip + location, the person's name (large), role · company, one line, specialities, the details as icon tiles (two per row on phones), and the verified / member / est. dates.
+  - **New `SupplierSpotlight`:** a header ("Supplier spotlight", 01 / 12 counter), the card, and a strip of all suppliers (face crop + name + company) to switch between them.
+    - Auto-advances every 6 s, with a progress bar on the active chip.
+    - Pauses on hover/focus; no auto-advance under reduced motion.
+    - The strip scrolls itself; the page never scrolls.
+  - **Other:** `Suppliers.jsx` owns the index, so the "Request a sample" band follows the featured supplier.
 - **2026-09-28 — `/suppliers` featured card now shows a PERSON, as in the client's reference.**
   - **Layout:** logo, location, the founder's NAME as the headline, role + company, the company line, then the red stat band with a cut-out portrait standing over its right end. The factory photo is dropped from the card (the portrait takes its place).
   - **Data:** each of the 12 sample suppliers has an invented `person: { name, role, photo }`.

@@ -140,8 +140,8 @@ export function TradeAgreements() {
           <img
             src="/india-trade-diplomacy.webp"
             alt="India's Prime Minister and the President of the United States shaking hands in front of Indian and American flags"
-            width={2754}
-            height={1804}
+            width={1244}
+            height={822}
             loading="lazy"
             /* Width and height stop the row jumping as it loads (web-design.md).
                xl+: it fills the text column's height so both sides end together.

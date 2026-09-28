@@ -24,7 +24,7 @@ const SAMPLE = [
   {
     id: 'demo-veltora',
     person: { name: 'Arjun Mehra', role: 'Founder & Managing Director', photo: '/suppliers/veltora.webp' },
-    brand: { mark: 'weave', color: '#0E5E6F' },
+    brand: { mark: 'weaveV', color: '#0E5E6F', shape: 'tile', type: 'serif' },
     name: 'Veltora Textiles',
     city: 'Tiruppur',
     region: 'Tamil Nadu',
@@ -46,7 +46,7 @@ const SAMPLE = [
   {
     id: 'demo-kesarvan',
     person: { name: 'Hitesh Rathod', role: 'Director, Exports', photo: '/suppliers/kesarvan.webp' },
-    brand: { mark: 'leaf', color: '#8A5A12' },
+    brand: { mark: 'saffron', color: '#B5541B', shape: 'free', type: 'caps' },
     name: 'Kesarvan Agro Foods',
     city: 'Unjha',
     region: 'Gujarat',
@@ -67,7 +67,7 @@ const SAMPLE = [
   {
     id: 'demo-rangreza',
     person: { name: 'Vikas Shekhawat', role: 'Founder & Creative Head', photo: '/suppliers/rangreza.webp' },
-    brand: { mark: 'weave', color: '#9B2C5B' },
+    brand: { mark: 'paisley', color: '#9B2C5B', shape: 'free', type: 'italic' },
     name: 'Rangreza Apparel House',
     city: 'Jaipur',
     region: 'Rajasthan',
@@ -88,7 +88,7 @@ const SAMPLE = [
   {
     id: 'demo-aranya',
     person: { name: 'Imran Qureshi', role: 'Managing Partner', photo: '/suppliers/aranya.webp' },
-    brand: { mark: 'diamond', color: '#6B3A22' },
+    brand: { mark: 'shield', color: '#6B3A22', shape: 'free', type: 'wide' },
     name: 'Aranya Leather Works',
     city: 'Kanpur',
     region: 'Uttar Pradesh',
@@ -109,7 +109,7 @@ const SAMPLE = [
   {
     id: 'demo-tirthank',
     person: { name: 'Kunal Vora', role: 'Managing Director', photo: '/suppliers/tirthank.webp' },
-    brand: { mark: 'hex', color: '#1F4E8C' },
+    brand: { mark: 'pipe', color: '#1F4E8C', shape: 'free', type: 'caps' },
     name: 'Tirthank Polymers',
     city: 'Rajkot',
     region: 'Gujarat',
@@ -130,7 +130,7 @@ const SAMPLE = [
   {
     id: 'demo-nilvara',
     person: { name: 'Arun Menon', role: 'Founder & CEO', photo: '/suppliers/nilvara.webp' },
-    brand: { mark: 'leaf', color: '#2F6B3A' },
+    brand: { mark: 'pepper', color: '#2F6B3A', shape: 'circle', type: 'serif' },
     name: 'Nilvara Spice Estates',
     city: 'Kochi',
     region: 'Kerala',
@@ -151,7 +151,7 @@ const SAMPLE = [
   {
     id: 'demo-surajmukhi',
     person: { name: 'Rohan Deshpande', role: 'Co-founder & CEO', photo: '/suppliers/surajmukhi.webp' },
-    brand: { mark: 'sun', color: '#C27A00' },
+    brand: { mark: 'sun', color: '#D08A00', shape: 'free', type: 'wide' },
     name: 'Surajmukhi Solar Systems',
     city: 'Pune',
     region: 'Maharashtra',
@@ -172,7 +172,7 @@ const SAMPLE = [
   {
     id: 'demo-devika',
     person: { name: 'Suresh Maurya', role: 'Secretary, Weavers’ Co-op', photo: '/suppliers/devika.webp' },
-    brand: { mark: 'weave', color: '#7A1F3D' },
+    brand: { mark: 'loom', color: '#7A1F3D', shape: 'free', type: 'italic' },
     name: 'Devika Handloom Co-op',
     city: 'Varanasi',
     region: 'Uttar Pradesh',
@@ -193,7 +193,7 @@ const SAMPLE = [
   {
     id: 'demo-marutam',
     person: { name: 'Gurpreet Sandhu', role: 'Managing Director', photo: '/suppliers/marutam.webp' },
-    brand: { mark: 'gear', color: '#3B4A5A' },
+    brand: { mark: 'nut', color: '#34414F', shape: 'free', type: 'caps' },
     name: 'Marutam Precision Tools',
     city: 'Ludhiana',
     region: 'Punjab',
@@ -214,7 +214,7 @@ const SAMPLE = [
   {
     id: 'demo-ojasvi',
     person: { name: 'Vikram Negi', role: 'Founder & Director', photo: '/suppliers/ojasvi.webp' },
-    brand: { mark: 'drop', color: '#3E7A4F' },
+    brand: { mark: 'drop', color: '#3E7A4F', shape: 'free', type: 'lower' },
     name: 'Ojasvi Herbals',
     city: 'Haridwar',
     region: 'Uttarakhand',
@@ -235,7 +235,7 @@ const SAMPLE = [
   {
     id: 'demo-sagarika',
     person: { name: 'Rajat Malhotra', role: 'Director, Sales', photo: '/suppliers/sagarika.webp' },
-    brand: { mark: 'weave', color: '#2B5C8A' },
+    brand: { mark: 'waves', color: '#2B5C8A', shape: 'free', type: 'serif' },
     name: 'Sagarika Home Textiles',
     city: 'Panipat',
     region: 'Haryana',
@@ -256,7 +256,7 @@ const SAMPLE = [
   {
     id: 'demo-vistaar',
     person: { name: 'Nirav Desai', role: 'Managing Director', photo: '/suppliers/vistaar.webp' },
-    brand: { mark: 'hex', color: '#8C5A1F' },
+    brand: { mark: 'box', color: '#8C5A1F', shape: 'free', type: 'wide' },
     name: 'Vistaar Packaging',
     city: 'Vapi',
     region: 'Gujarat',

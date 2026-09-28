@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { useSupportContact } from '../../hooks/useSupportContact.js';
 import { PlusIcon } from '../ui/icons.jsx';
+import { Logo } from '../ui/Logo.jsx';
 
 /**
  * The public chrome's footer. Shared by every guest-visible page.
@@ -264,13 +265,31 @@ export function PublicFooter() {
   return (
     <footer className="border-t border-surface-border bg-white text-ink-900">
       {/* Laid out as the owner's Alibaba reference (2026-09-28, "make exact"):
-          five centred columns, "Stay connected" under the last one, an app row,
-          then the grey legal bar. */}
-      <div className="mx-auto w-full max-w-6xl px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-14 lg:px-8">
+          five columns, an app row, then the grey legal bar. 2026-09-28: a brand
+          row (logo, one line, "Stay connected") now sits above the columns. */}
+      <div className="mx-auto w-full max-w-6xl px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-12 lg:px-8">
+        {/* Brand row (owner, 2026-09-28: "fix the footer design") — the footer
+            had no mark or line saying what MPX is; the socials move up here
+            from under the last column. */}
+        <div className="flex flex-col gap-5 pb-6 sm:flex-row sm:items-center sm:justify-between sm:border-b sm:border-ink-100 sm:pb-8">
+          <div className="min-w-0">
+            <Link to="/" aria-label="MPX Global home" className="inline-block">
+              <Logo size="md" />
+            </Link>
+            <p className="mt-3 max-w-sm text-[13.5px] leading-relaxed text-ink-600">
+              The B2B marketplace for Indian exporters and the buyers who source from them.
+            </p>
+          </div>
+          <div className="hidden shrink-0 sm:block">
+            <p className="mb-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-500">Stay connected</p>
+            {social}
+          </div>
+        </div>
+
         {/* Phones (owner, 2026-09-28: "fix footer for phone"): each column is
             a collapsible row — tap the heading to open its links. sm+: the
             reference's columns, always open. */}
-        <div className="border-t border-ink-100 sm:grid sm:grid-cols-3 sm:gap-x-6 sm:gap-y-9 sm:border-t-0 lg:grid-cols-5 lg:gap-x-8">
+        <div className="border-t border-ink-100 sm:mt-9 sm:grid sm:grid-cols-3 sm:gap-x-6 sm:gap-y-9 sm:border-t-0 lg:grid-cols-5 lg:gap-x-8">
           {columns.map((col, ci) => {
             const isOpen = openCols.has(col.title);
             const listId = `footer-col-${ci}`;
@@ -313,12 +332,6 @@ export function PublicFooter() {
                     </li>
                   )}
                 </ul>
-                {ci === columns.length - 1 && (
-                  <div className="mt-5 hidden sm:block">
-                    <h4 className="mb-2.5 text-[15px] font-bold tracking-tight">Stay connected</h4>
-                    {social}
-                  </div>
-                )}
               </div>
             );
           })}

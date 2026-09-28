@@ -1,12 +1,41 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { NoImagePanel } from '../catalogue/NoImagePanel.jsx';
 import { ChevronLeftIcon, ChevronRightIcon } from '../ui/icons.jsx';
 
+const UPLOAD = '/image/upload/';
+
+const initialsOf = (name = '') =>
+  name
+    .split(/\s+/)
+    .filter((w) => /^[A-Za-z]/.test(w))
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('');
 /**
- * Categories as circles in a horizontal rail (owner, 2026-09-26 — replaced the
- * twelve-card grid).
+ * The tile is 124 CSS px wide at most, so ask Cloudinary for a picture that
+ * FITS 248×260 (2× for retina; `c_fit`, not a crop, so a cut-out keeps its
+ * whole outline and its transparency) instead of the full upload — full-size originals were
+ * arriving visibly late as the page scrolled (owner, 2026-09-28). Non-
+ * Cloudinary URLs pass through untouched.
+ */
+function archUrl(url) {
+  const cut = url.indexOf(UPLOAD);
+  if (cut === -1) return url;
+  const at = cut + UPLOAD.length;
+  return `${url.slice(0, at)}c_fit,w_248,h_260,q_auto,f_auto/${url.slice(at)}`;
+}
+
+/**
+ * Categories as ARCH tiles in a horizontal rail (client reference via owner,
+ * 2026-09-28 — a soft tinted arch holding the picture, the name under it; was
+ * circles, which replaced the twelve-card grid on 2026-09-26).
+ *
+ * The picture stands OUT of a low arch (owner: "the arch is low and image goes
+ * out of it, giving a 3D kind of effect"). ⚠️ That only works with TRANSPARENT
+ * cut-out images (PNG/WebP with alpha): an ordinary photo keeps its background
+ * and shows as a rectangle standing on the arch. Category images uploaded for
+ * this rail need to be cut-outs.
  *
  * 🔴 **The arrows report the real scroll position.** They disable at each end
  * and appear only when there is actually something to scroll — a dead-looking
@@ -99,15 +128,14 @@ export function CategoryCircles({ categories, loading = false, skeletonCount = 1
           edge, which reads as continuation without touching the screen. */}
       <ul
         ref={railRef}
-        className="scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1 sm:gap-5"
+        className="scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 pt-1.5 sm:gap-5"
       >
         {rows.map((c) => {
-          const subs = c.subs?.length ?? 0;
           return (
             <li key={c.id} className="w-[104px] shrink-0 snap-start sm:w-[124px]">
               {loading ? (
                 <>
-                  <div className="aspect-square w-full animate-pulse rounded-full bg-ink-100 motion-reduce:animate-none" />
+                  <div className="mt-[28%] aspect-[20/15] w-full animate-pulse rounded-t-full rounded-b-2xl bg-ink-100 motion-reduce:animate-none" />
                   <div className="mx-auto mt-3 h-3 w-3/4 animate-pulse rounded bg-ink-100 motion-reduce:animate-none" />
                 </>
               ) : (
@@ -128,32 +156,33 @@ export function CategoryCircles({ categories, loading = false, skeletonCount = 1
                       still has an edge; what changes is elevation, a slight zoom
                       on the image, and the label colour — three signals, none of
                       them a new colour. */}
-                  <span className="block overflow-hidden rounded-full bg-ink-100 ring-1 ring-surface-border/70 transition duration-200 group-hover:shadow-lift">
+                  {/* The arch is LOW (the bottom ~72% of the tile) and the
+                      picture is the full tile height, anchored to the bottom —
+                      so the product rises out of the arch's top (client
+                      reference, owner 2026-09-28: "the arch is low and image
+                      goes out of it"). On hover the picture lifts while the arch
+                      stays put, which is what sells the depth. */}
+                  <span className="relative block aspect-[20/21] w-full">
+                    <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[72%] rounded-t-full rounded-b-2xl bg-primary-100/60 transition-colors duration-300 group-hover:bg-primary-100" />
                     {c.image ? (
                       <img
-                        src={c.image}
+                        src={archUrl(c.image)}
                         alt=""
                         loading="lazy"
+                        decoding="async"
                         width={248}
-                        height={248}
-                        className="aspect-square w-full object-cover transition duration-300 group-hover:scale-105"
+                        height={260}
+                        className="absolute inset-0 h-full w-full object-contain object-bottom drop-shadow-[0_8px_10px_rgb(0_5_23/0.12)] transition duration-300 group-hover:-translate-y-1.5 group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 motion-reduce:group-hover:scale-100"
                       />
                     ) : (
-                      /* Falls back to the shared monogram panel rather than a
-                         blank circle — a category with no photograph is normal
-                         and should still read as a category. */
-                      <NoImagePanel label={c.name} monogram ratio="aspect-square" />
-                    )}
-                  </span>
-                  <span className="mt-2.5 block px-0.5">
-                    <span className="line-clamp-2 text-[13px] font-bold leading-snug text-ink-900 group-hover:text-primary-700">
-                      {c.name}
-                    </span>
-                    {subs > 0 && (
-                      <span className="mt-0.5 block text-[11.5px] text-ink-500">
-                        {subs} {subs === 1 ? 'subcategory' : 'subcategories'}
+                      /* No photograph is normal: the initials sit on the arch. */
+                      <span aria-hidden="true" className="absolute inset-x-0 bottom-0 flex h-[72%] items-center justify-center text-[24px] font-extrabold tracking-tight text-primary-700/60">
+                        {initialsOf(c.name)}
                       </span>
                     )}
+                  </span>
+                  <span className="mt-2.5 line-clamp-2 block px-0.5 text-[13px] font-medium leading-snug text-ink-800 group-hover:text-primary-700">
+                    {c.name}
                   </span>
                 </Link>
               )}
