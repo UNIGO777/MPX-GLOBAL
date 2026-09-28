@@ -4,7 +4,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { Logo } from '../ui/Logo.jsx';
 import { useSupportContact } from '../../hooks/useSupportContact.js';
 import { PlusIcon } from '../ui/icons.jsx';
-import { Logo } from '../ui/Logo.jsx';
 
 /**
  * The public chrome's footer. Shared by every guest-visible page.
