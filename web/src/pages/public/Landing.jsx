@@ -10,6 +10,7 @@ import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
 import { HeroBackdrop } from '../../components/landing/HeroBackdrop.jsx';
 import { FaqAccordion } from '../../components/landing/FaqAccordion.jsx';
+import { FaqExplorer } from '../../components/landing/FaqExplorer.jsx';
 import { AiBandVideo } from '../../components/landing/AiBandVideo.jsx';
 import { AudienceFork } from '../../components/landing/AudienceFork.jsx';
 import { MpxFilm } from '../../components/landing/MpxFilm.jsx';
@@ -677,6 +678,7 @@ export function Landing() {
               eyebrow="How it works"
               title="From first search to agreed quotation"
               sub="Four steps, all on the platform, all free for buyers."
+              action={<SectionLink to="/signup/buyer">Start sourcing</SectionLink>}
             />
 
             {/* The steps sit on one white panel — the same card finish as the
@@ -688,23 +690,25 @@ export function Landing() {
                 [ChatIcon, 'Chat in real time', 'Talk directly on the platform, with files and full history.'],
                 [QuoteIcon, 'Agree the quotation', 'Receive a priced quotation, counter-offer, and confirm it together.'],
               ].map(([Icon, title, body], i) => (
-                <li key={title} className="relative flex gap-4 pb-7 last:pb-0 lg:flex-col lg:gap-0 lg:pb-0">
+                <li key={title} className="group relative flex gap-4 pb-7 last:pb-0 lg:flex-col lg:gap-0 lg:pb-0">
                   {/* Connector to the NEXT step (none after the last): down on a
                       phone, across to the next marker from lg. Decoration. */}
                   {i < 3 && (
                     <span
                       aria-hidden="true"
-                      className="absolute bottom-0 left-[21px] top-11 w-px bg-ink-200 lg:bottom-auto lg:left-11 lg:right-[-2rem] lg:top-[22px] lg:h-px lg:w-auto"
+                      className="absolute bottom-0 left-[27px] top-14 w-px bg-[linear-gradient(to_bottom,theme(colors.ink.300)_50%,transparent_50%)] bg-[length:1px_7px] lg:bottom-auto lg:left-[4.5rem] lg:right-[-1.5rem] lg:top-[28px] lg:h-px lg:w-auto lg:bg-[linear-gradient(to_right,theme(colors.ink.300)_50%,transparent_50%)] lg:bg-[length:7px_1px]"
                     />
                   )}
-                  <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-primary-700 shadow-card ring-1 ring-ink-200">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  {/* Icon leads, number follows (owner, 2026-09-28: the numbers
+                      were big and the icons too small). */}
+                  <span className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-50 to-white text-primary-600 shadow-card ring-1 ring-primary-100 transition-colors duration-300 motion-reduce:transition-none [@media(hover:hover)]:group-hover:bg-primary-600 [@media(hover:hover)]:group-hover:bg-none [@media(hover:hover)]:group-hover:text-white">
+                    <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
-                  <span className="min-w-0 pt-1 lg:pt-0">
-                    <span className="block text-[12px] font-semibold tabular-nums tracking-[0.14em] text-ink-400 lg:mt-6 lg:text-[40px] lg:font-extrabold lg:leading-none lg:tracking-tight lg:text-ink-200">
-                      {String(i + 1).padStart(2, '0')}
+                  <span className="min-w-0 pt-1.5 lg:pt-0">
+                    <span className="block text-[11px] font-semibold uppercase tabular-nums tracking-[0.14em] text-primary-700 lg:mt-5">
+                      Step {String(i + 1).padStart(2, '0')}
                     </span>
-                    <span className="mt-0.5 block text-[16px] font-semibold tracking-tight text-ink-900 lg:mt-3 lg:text-lg">{title}</span>
+                    <span className="mt-1 block text-[16px] font-semibold tracking-tight text-ink-900 lg:text-lg">{title}</span>
                     <span className="mt-1 block text-sm leading-relaxed text-ink-600">{body}</span>
                   </span>
                 </li>
@@ -728,38 +732,36 @@ export function Landing() {
               heading was the odd one out), a sticky intro column with a route
               to the Help page, and quiet divider rows. `id="faq"` kept — the
               footer links to it. */}
-          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-            <div className="min-w-0 lg:sticky lg:top-28 lg:self-start">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">FAQ</p>
-              <h2 id="faq-heading" className={`mt-1.5 ${HEADING}`}>
-                Common questions
-              </h2>
-              <p className="mt-3 max-w-md text-pretty text-sm leading-relaxed text-ink-600 sm:text-base">
-                Verification, cost, AI search, quotations and payments — the short answers.
-              </p>
-              <Link
-                to="/help"
-                className="group mt-6 hidden items-center gap-2.5 rounded-full border border-ink-200 bg-white py-1.5 pl-5 pr-1.5 text-sm font-semibold text-ink-900 shadow-sm transition-colors hover:border-ink-900 lg:inline-flex"
-              >
-                Still have questions? Get help
-                <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-900 text-white transition-colors duration-300 group-hover:bg-primary-600">
-                  <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
-                </span>
-              </Link>
+          {/* 2026-09-28 (owner: "left side too much empty space"; no card to
+              fill it; a full-width stacked list was "bad design"): the heading
+              runs full width with "Get help" on its right; below it, on
+              desktop, questions and answer sit SIDE BY SIDE (FaqExplorer) —
+              both columns one height, nothing empty. Phones keep the
+              accordion. */}
+          <SectionHeader
+            id="faq-heading"
+            eyebrow="FAQ"
+            title="Common questions"
+            sub="Verification, cost, AI search, quotations and payments — the short answers."
+            action={<SectionLink to="/help">Get help</SectionLink>}
+          />
+          <div className="mt-6 sm:mt-8">
+            {/* Desktop: questions and answer side by side. Below lg: the accordion. */}
+            <div className="hidden lg:block">
+              <FaqExplorer items={FAQS} />
             </div>
-
-            <div className="min-w-0">
+            <div className="lg:hidden">
               <FaqAccordion items={FAQS} />
-              <Link
-                to="/help"
-                className="mt-6 flex h-11 items-center justify-between rounded-full border border-ink-200 bg-white pl-5 pr-1.5 text-sm font-semibold text-ink-900 shadow-sm lg:hidden"
-              >
-                Still have questions? Get help
-                <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-900 text-white">
-                  <ArrowRightIcon className="h-4 w-4" />
-                </span>
-              </Link>
             </div>
+            <Link
+              to="/help"
+              className="mt-6 flex h-11 items-center justify-between rounded-full border border-ink-200 bg-white pl-5 pr-1.5 text-sm font-semibold text-ink-900 shadow-sm sm:hidden"
+            >
+              Still have questions? Get help
+              <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-900 text-white">
+                <ArrowRightIcon className="h-4 w-4" />
+              </span>
+            </Link>
           </div>
         </section>
 

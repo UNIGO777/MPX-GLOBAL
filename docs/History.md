@@ -175,6 +175,21 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-28 — FAQ rethought: questions and answer SIDE BY SIDE on desktop (owner: "left side too much empty space" → a support card + quick facts, rejected: "not a good thing to add this type of card here" → a full-width stacked list, rejected: "bad design, rethink").**
+  - The header is the shared `SectionHeader` (FAQ / Common questions / sub) with a "Get help →" `SectionLink` to `/help`.
+  - **Desktop (lg+): new `components/landing/FaqExplorer.jsx`.**
+    - Left: the seven questions as a vertical ARIA tablist (↑/↓/Home/End, roving tabindex). The selected question is a white row with a red side bar, red number and arrow.
+    - Right: the answer panel (`surface-subtle`, rounded-3xl) — "Question 0N of 07", the question large, the answer at 16px, a faint giant number behind, and "Next question →" (wraps to the first). Both columns are one height (387px); the section went ~800 → 638px.
+  - **Below lg:** the existing `FaqAccordion` and the full-width "Still have questions? Get help" link.
+  - The rejected `FaqHelpCard.jsx` was deleted, and the old sticky intro column is gone.
+- **2026-09-28 — How it works: icons lead, numbers shrink (owner: "the 1 2 3 4 numbers are big and the icons too small").**
+  - The icon marker went from a 44px white circle (20px icon) to a 56px `primary-50 → white` rounded-2xl tile (24px icon, primary-100 ring) — the page's card-icon language.
+  - The giant 40px `ink-200` numerals became a small red "STEP 01…04" caps label above each title.
+  - The connector line was re-anchored to the 56px markers (desktop `top-[28px] left-14`, phone `left-[27px] top-14`).
+  - **Refined further (owner: "improve the overall design, keeping it simple and elegant"):**
+    - The header has a `SectionLink` "Start sourcing →" to `/signup/buyer` — the route exists in App.jsx.
+    - The connector is a fine DASHED path (vertical on phones, horizontal from lg), gapped away from the icons.
+    - On mouse devices only (`[@media(hover:hover)]`), hovering a step fills its icon tile red.
 - **2026-09-28 — India map: CHILE added as the 14th partner (owner wanted an even number, and chose Chile over Sri Lanka / Oman).**
   - Owner asked for "any African nation". Declined truthfully: Mauritius is India's only African trade agreement as far as known, and SACU is still under negotiation, so it cannot be shown. Brazil is already inside MERCOSUR.
   - Chile: PTA 2007, expanded 2017. It is flagged VERIFY-before-launch with the other three additions. The pin is near Santiago with its label below, and the arc bows south.
