@@ -32,21 +32,30 @@ import { SectionHeader, SectionLink } from './SectionHeader.jsx';
  * source files upscale only slightly.
  */
 const PROMOS = [
+  /* Photos replaced 2026-09-29 (owner: "images are not good at all… any
+     sector works, just a good, professional image"). All three are free
+     Unsplash-licence photos, stored locally as WebP. Garments gave way to
+     Gems & Jewellery — one of India's largest exports and a live category.
+     `focus` is the object-position that keeps each subject in the crop. */
   {
     id: 'agriculture',
     eyebrow: 'Grains, pulses & spices',
     title: 'Agriculture',
     subtitle: 'Grade, packaging size and shelf life on every listing.',
     to: '/category/agriculture',
-    image: '/promo-agriculture.avif',
+    // A spice seller in Delhi (Unsplash 8iU3wtMJEcI).
+    image: '/sector-agriculture.webp',
+    focus: 'object-[40%_60%]',
   },
   {
-    id: 'garments',
-    eyebrow: 'Ready-made lines',
-    title: 'Apparel & Garments',
-    subtitle: 'Size, fabric, colour and gender on every listing.',
-    to: '/category/apparel-garments',
-    image: '/promo-garments.avif',
+    id: 'jewellery',
+    eyebrow: 'Gold, gems & fine craft',
+    title: 'Gems & Jewellery',
+    subtitle: 'Jewellery and gemstones, direct from Indian makers.',
+    to: '/category/gems-jewellery',
+    // Ornate gold bangles on black (Unsplash wreS7kv_tLE).
+    image: '/sector-jewellery.webp',
+    focus: 'object-[40%_45%]',
   },
   {
     id: 'textiles',
@@ -54,7 +63,9 @@ const PROMOS = [
     title: 'Textiles',
     subtitle: 'Material, GSM and width, stated up front.',
     to: '/category/textiles-fabrics-yarn',
-    image: '/promo-textiles.avif',
+    // Rolled fabrics in saffron, maroon and plum (Unsplash stb9o3RE5lI).
+    image: '/sector-textiles.webp',
+    focus: 'object-center',
   },
 ];
 
@@ -74,7 +85,7 @@ function Tile({ promo, lead = false }) {
         src={promo.image}
         alt=""
         loading="lazy"
-        className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 motion-reduce:transition-none"
+        className={`absolute inset-0 -z-10 h-full w-full object-cover ${promo.focus ?? 'object-center'} transition-transform duration-700 ease-out group-hover:scale-105 motion-reduce:transition-none`}
       />
       <span
         aria-hidden="true"

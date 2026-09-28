@@ -175,6 +175,20 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-29 — Browse by sector: new photographs, and Garments → Gems & Jewellery (owner: "images are not good at all… any sector works, just a good, professional, attractive image").**
+  - **Agriculture:** a spice seller in Delhi (Unsplash 8iU3wtMJEcI).
+  - **Gems & Jewellery (new tile, `/category/gems-jewellery`):** ornate gold bangles on black (wreS7kv_tLE), with the subtitle "Jewellery and gemstones, direct from Indian makers."
+  - **Textiles:** rolled fabrics in saffron / maroon / plum (stb9o3RE5lI).
+  - The files are `public/sector-*.webp` (1200–1400px, 134–251 KB), all free-licence Unsplash photos stored locally. `Tile` gained a per-tile `focus` (object-position).
+  - First picks for the two wide tiles (a portrait necklace, and portrait stacked rolls) cropped to slivers in the wide tiles ("still not appealing"), so they were replaced with LANDSCAPE photos. Lesson: pick the photo by the tile's shape (the right-hand tiles are ~2.7:1).
+  - `public/promo-*.avif` are no longer used by the landing tiles, but are still referenced by `components/landing3/PromoPanels.jsx` and `lib/demoSuppliers.js`, so they stay.
+- **2026-09-28 — How it works: OPEN, CENTRED timeline (owner: "fix how it works design"; the numbered-line structure was kept, as the owner insisted).**
+  - The white boxed panel was removed; the steps sit on the section's `surface-subtle` ground.
+  - From lg, each step is centred in its column: a white number marker (44px, ink-900 bold), a round soft-red icon badge (64px), the title (18px), and a line (ink-500, max 16rem).
+  - The connector runs marker-to-marker only: 2px, gapped 8px from each marker, and fading soft red → grey across the three segments to show direction.
+  - Phones: a vertical timeline with the same pieces, left-aligned.
+  - **Icons de-badged (owner: "icons looking too artificial"):** the pink gradient round badges were removed. Each step shows its plain line icon (36px desktop / 32px phone, 1.4 stroke), in brand red `primary-600` since 2026-09-29 (owner: "change the colour to red, just colour"; it was `ink-800`).
+    - Round Unsplash photos per step were considered and dropped before being wired in: two of the candidates were unusable (a Scrabble "contact us" tile, and a phone showing third-party app logos), and the owner restated the request as being about the icons.
 - **2026-09-28 — India map SHAPE fixed (owner: "the India map shape is wrong").** 🔴 This is a compliance issue, not only design.
   - Natural Earth 110m draws India's de facto line, so `world-dots.svg` left out Pakistan-administered Kashmir, Gilgit-Baltistan and Aksai Chin.
   - The generator now treats every point inside India's OFFICIAL northern boundary — all of Jammu & Kashmir and Ladakh — as India. An approximate outline (`INDIA_NORTH`, lon/lat) is kept with the generator script in the session scratchpad; the SVG is the committed artifact.

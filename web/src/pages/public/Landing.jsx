@@ -680,38 +680,40 @@ export function Landing() {
               sub="Four steps, all on the platform, all free for buyers."
             />
 
-            {/* The steps sit on one white panel — the same card finish as the
-                sections above (consistency pass, 2026-09-28). Line structure
-                kept by the owner (a step-card version was tried and dropped). */}
-            <ol className="relative mt-8 grid gap-0 rounded-3xl bg-white p-6 shadow-card ring-1 ring-ink-200/60 sm:mt-10 sm:p-8 lg:grid-cols-4 lg:gap-8 lg:p-10">
+            {/* The numbered LINE structure (owner-kept), redesigned 2026-09-28
+                ("fix how it works design"): no boxed panel — the steps sit on
+                the section ground; from lg each step is CENTRED on its column;
+                the connector runs only marker-to-marker and fades from soft red
+                to grey (it shows direction); white number markers; icons in
+                soft round badges. Phones: a vertical timeline. */}
+            <ol className="relative mt-10 grid gap-0 sm:mt-12 lg:grid-cols-4 lg:gap-8">
               {[
                 [SearchIcon, 'Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
                 [EnquiryIcon, 'Send an enquiry', 'Tell the supplier exactly what you need, in a couple of clicks.'],
                 [ChatIcon, 'Chat in real time', 'Talk directly on the platform, with files and full history.'],
                 [QuoteIcon, 'Agree the quotation', 'Receive a priced quotation, counter-offer, and confirm it together.'],
               ].map(([Icon, title, body], i) => (
-                <li key={title} className="relative flex gap-4 pb-7 last:pb-0 lg:flex-col lg:gap-0 lg:pb-0">
-                  {/* Connector to the NEXT step (none after the last): down on a
-                      phone, across to the next marker from lg. Decoration. */}
+                <li key={title} className="relative flex gap-5 pb-9 last:pb-0 lg:flex-col lg:items-center lg:gap-0 lg:pb-0 lg:text-center">
+                  {/* Connector to the NEXT marker — down on a phone; from lg it
+                      starts just right of this marker and ends just left of the
+                      next (column width + 2rem gap − both marker radii). */}
                   {i < 3 && (
                     <span
                       aria-hidden="true"
-                      className="absolute bottom-0 left-[17px] top-9 w-px bg-gradient-to-b from-ink-200 to-ink-100 lg:bottom-auto lg:left-9 lg:right-[-2rem] lg:top-[18px] lg:h-px lg:w-auto lg:bg-gradient-to-r"
+                      className={`absolute left-[21px] top-12 bottom-1 w-0.5 rounded-full lg:bottom-auto lg:left-[calc(50%+30px)] lg:top-[21px] lg:h-0.5 lg:w-[calc(100%+2rem-60px)] ${
+                        ['bg-gradient-to-b from-primary-300 to-primary-200 lg:bg-gradient-to-r', 'bg-gradient-to-b from-primary-200 to-ink-200 lg:bg-gradient-to-r', 'bg-gradient-to-b from-ink-200 to-ink-100 lg:bg-gradient-to-r'][i]
+                      }`}
                     />
                   )}
-                  {/* The owner's reference layout with the two SWAPPED
-                      (2026-09-28): the NUMBER sits in the marker on the line,
-                      the ICON goes below it, large, where the big faint
-                      numeral used to be. */}
-                  <span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink-50 text-[12px] font-semibold tabular-nums text-ink-500 ring-1 ring-ink-200">
+                  <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[14px] font-bold tabular-nums text-ink-900 shadow-card ring-1 ring-ink-200/80">
                     {String(i + 1).padStart(2, '0')}
                   </span>
-                  <span className="min-w-0 lg:pt-0">
-                    <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100/40 text-primary-600 ring-1 ring-primary-100 lg:mt-6 lg:h-16 lg:w-16">
-                      <Icon className="h-7 w-7 lg:h-8 lg:w-8" strokeWidth={1.6} />
-                    </span>
-                    <span className="mt-4 block text-[16.5px] font-semibold tracking-tight text-ink-900 lg:mt-5 lg:text-[18px]">{title}</span>
-                    <span className="mt-1.5 block max-w-[17rem] text-[14px] leading-relaxed text-ink-500">{body}</span>
+                  <span className="flex min-w-0 flex-col lg:items-center">
+                    {/* Plain dark line icon — no badge, no pink (owner: the
+                        gradient-badge icons looked "too artificial"). */}
+                    <Icon className="h-8 w-8 text-primary-600 lg:mt-8 lg:h-9 lg:w-9" strokeWidth={1.4} aria-hidden="true" />
+                    <span className="mt-4 block text-[17px] font-semibold tracking-tight text-ink-900 lg:mt-5 lg:text-[18px]">{title}</span>
+                    <span className="mt-1.5 block max-w-[16rem] text-[14px] leading-relaxed text-ink-500">{body}</span>
                   </span>
                 </li>
               ))}
