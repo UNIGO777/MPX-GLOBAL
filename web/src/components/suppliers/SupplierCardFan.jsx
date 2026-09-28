@@ -20,7 +20,7 @@ import { SupplierMark } from './SupplierLogo.jsx';
  * without the clip that would be page-level sideways scroll.
  */
 const VISIBLE = 2;
-const STEP_MS = 3800;
+const STEP_MS = 2500; // owner, 2026-09-28: "decrease the time" (was 3.8 s)
 
 const place = (offset) => {
   const d = Math.abs(offset);
@@ -120,9 +120,12 @@ export function SupplierCardFan({ suppliers, onSelect }) {
   return (
     <div
       className="relative mx-auto w-full"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
+      // Pause for a real MOUSE hover and for KEYBOARD focus only. A tap fires
+      // mouseenter with no mouseleave, and a clicked card keeps focus — either
+      // used to leave the fan paused for good (owner: "enable auto scroll").
+      onPointerEnter={(e) => e.pointerType === 'mouse' && setPaused(true)}
+      onPointerLeave={(e) => e.pointerType === 'mouse' && setPaused(false)}
+      onFocus={(e) => e.target.matches(':focus-visible') && setPaused(true)}
       onBlur={() => setPaused(false)}
       aria-roledescription="carousel"
       aria-label="Verified suppliers"

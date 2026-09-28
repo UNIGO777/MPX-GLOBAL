@@ -245,6 +245,49 @@
     }
   }
 
+  /* Landing "Why MPX Global" board (2026-09-28): a light band sweeping down
+     the Verification photo, and a dot travelling buyer → seller on the
+     Payments tile. Both stop under reduced motion. */
+  .mpx-scan {
+    animation: mpx-scan 4.2s ease-in-out infinite;
+  }
+  @keyframes mpx-scan {
+    0% {
+      transform: translateY(-120%);
+    }
+    70%,
+    100% {
+      transform: translateY(420%);
+    }
+  }
+  .mpx-travel {
+    animation: mpx-travel 2.6s ease-in-out infinite;
+  }
+  @keyframes mpx-travel {
+    0% {
+      left: 0;
+      opacity: 0;
+    }
+    15%,
+    85% {
+      opacity: 1;
+    }
+    100% {
+      left: calc(100% - 8px);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mpx-scan {
+      animation: none;
+      display: none;
+    }
+    .mpx-travel {
+      animation: none;
+      left: calc(50% - 4px);
+    }
+  }
+
   /* Scrolls, but draws no scrollbar — for swipeable strips (the console's
      mobile nav) where a bar on the brand colour read as a stray brown line. */
   .scrollbar-none {

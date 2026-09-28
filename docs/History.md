@@ -175,6 +175,105 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-28 — Category arches → LIGHT CORAL `primary-200 → primary-300`, initials `primary-800/70` (owner: mid red was "too dark").**
+- **2026-09-28 — (superseded) Category arches were a MID red gradient (`primary-400 → primary-500`), with white initials (owner's sequence).**
+  - Rejected on the way: primary-50 ("looking pink"), a warm light red token `primary.soft` #F6E1DC (added, then REMOVED from `tailwind.config.js` unused), and deep 600 → 800 ("too dark").
+  - There is still no hover colour change.
+  - ⚠️ `tailwind.config.js` was edited twice (token added, then removed) — the net diff is zero, but a running Vite server needs a restart after config edits (5273 was restarted; 5173 is the owner's).
+- **2026-09-28 — Category arches: one light shade of red, no hover colour change (owner: "change arc colour" → a grey gradient tried → "not good, no hover change colour, just use a light shade of red, it's not fitting the theme").** The arch is solid `primary-50` (was `primary-100/60`, which hovered to `primary-100`). Hover depth comes only from the picture lifting.
+- **2026-09-28 — "Why source from India" back to the LIGHT layout (owner: "the background and its colours are not good — make it as previous, image on right and the description on left, old design, and keep a separate section for the video").**
+  - White section. Left: eyebrow, heading, duty paragraph, US note, "Agreements with" + light pills (no code badges). Right: the handshake photo, large (4:3), with the red-rule caption and the independence line.
+  - The dark-chapter version (below) is superseded. The MPX film KEEPS its own section after this one.
+  - **Enhanced (owner: "now enhance this design"):**
+    - "preferential terms" in `primary-600`.
+    - The US note is a callout: ink-50 panel, a red dot and a "February 2026" label.
+    - US / NZ / AU pills carry a soft `primary-50` tint, and every pill lifts on hover.
+    - The photo sits on an offset `primary-100 → primary-50` block for depth, with a deeper shadow and a slow hover drift. The caption is unchanged.
+  - **Wide screens (owner screenshot at ~1628px: a big gap, huge photo):**
+    - From `2xl` the grid is `minmax(0,1fr) 700px` with `gap-20`. The photo is capped at 700px and aligned right from lg.
+    - The heading goes up to `text-5xl`; the paragraph and callout widen to `max-w-2xl` (paragraph 17px). Not verified at 1628px here — the visible browser is 1471px.
+  - Film-section chapter thumbnails were proposed and dropped (owner: "don't add timestamp thumbnails").
+  - **Film section → CINEMA style from `sm` (owner agreed with the recommendation: centred breaks the text-left/photo-right rhythm of the India section above and matches the phone layout they called perfect).**
+    - The container widens to `lg:max-w-5xl` / `xl:max-w-[1148px]` (~1100px film).
+    - The film sits in a thin gradient frame (white → ink-100, `p-2`, ring) with a deeper shadow.
+    - Phones are unchanged: the frame classes are all `sm:`-prefixed, and the film keeps its own white ring on phones.
+    - **Fit to one screen (owner: "height too big, not fitting inside my screen"):** the framed film's width is `min(100%, (100vh − 400px) × 16/9)`, floored at 560px, so a 16:9 film never outgrows the viewport height left after the heading, spacing and sticky header. The section padding was trimmed to `lg:py-14`. At 1471×893 the section is 803px (fits under the 72px header).
+- **2026-09-28 — "Why source from India" redesigned as the page's DARK chapter; the MPX film moved to its OWN section (owner: "more clear and stand out, not premium", "the image is also a highlight", "film not fitting in, make it a separate section", "improve the design more").**
+  - **India (`TradeAgreements.jsx`):** an ink-900 ground with red glows and a faint dot texture.
+    - Header: eyebrow + heading left; the duty paragraph right, behind a hairline divider.
+    - Below: the handshake photo as a LARGE card (≥440px on lg) carrying the "February 2026" US-deal line and the independence line, beside a glass "Agreements with · 10 partners" panel.
+    - In the panel: US / NZ / AU (the owner's order) as larger cards with code badges and a hover lift; the other seven as pills with code badges; a faint 0.6px globe watermark in the corner; the duty-relief note at the foot.
+    - `ENTRIES` gained display `code`s; stages/years and sources are unchanged.
+  - **Film section (new, in `Landing.jsx`, right after India):** white with a soft red glow and dot texture, a centred eyebrow + "Ready to trade. Built to connect." + lead-in, then the film (`MpxFilm`, max-w-4xl, white `ring-[6px]` frame) and a "Manufacturers · Exporters · Buyers" line.
+  - The film was tried INSIDE the India section in three layouts before this; all rejected.
+- **2026-09-28 — Landing: "Why source from India" restructured with the MPX brand film inside it; "What makes MPX Global different" → small masonry cards (owner).**
+  - **Why India:** two columns from lg.
+    - Left is the story: eyebrow, heading, duty paragraph, US note, and the agreements as **pills** ("United States · Trade Agreement"…). The stage/year "timeline" is gone from the page, but `ENTRIES` keeps both, with sources.
+    - Right is ONE collage: the handshake photo top-left, with the film window overlapping its lower corner (white `ring-8` frame, in front, so the film's controls are never covered). The independence caption sits beside the photo from `sm` and under it on phones. A soft `primary-50` wash sits behind.
+  - **Film (`MpxFilm.jsx`, new):** the source was 232 MB / 1080p / 2 min with audio, re-encoded with the scratchpad's imageio-ffmpeg.
+    - `mpx-film.mp4`: 720p, CRF 27, AAC 96k, 16.5 MB. Mounted only on play.
+    - `mpx-film-preview.mp4`: 24 s from 0:36, muted loop, 960px, 1.1 MB. Mounted near the viewport.
+    - `mpx-film-poster.jpg`: the "Ready to trade" frame, 65 KB.
+    - The whole window is the play button; after play, the same window shows the native controls and takes focus. Reduced motion: poster only, film on request. ⚠️ No captions exist for the film.
+  - Rejected on the way: a full-width film panel and a separate dark film band ("don't make this a separate one").
+  - **PlatformCards:** CSS-columns masonry (2 / 3 / 4 columns). Copy unchanged. The picture-panel + list version was rejected.
+    - Then (owner: "again taking too much space, put texts inside the image") the text moved INTO the picture: a bottom fade (ink-900 95% → 70% by mid-card) carrying the label chip, title and sentence. Shapes are square or taller, so the text always fits.
+    - Phones show label + title only; the sentence shows from `sm`. Desktop height went 1,166 → 999px.
+    - **CURRENT — craft + motion, and smaller (owner: "better animation and effects, tiles not beautiful/premium", "reduce the size of the whole section").**
+      - **Vignettes:** each white tile has a small illustrative one (`aria-hidden`, plainly examples): chat bubbles, a quotation card (struck price → counter, "Confirmed by both"), "Profile live · Day 1" with a pinging dot, Email/Phone check rows, and Buyer → Seller with a travelling dot.
+      - **Tile finish:** gradient hairline frames (1px padding over a gradient), an inner top highlight, and a cursor-follow red glow (CSS vars `--mx/--my`).
+      - **Motion:** tiles rise in, staggered 70ms, when the board enters view. A light scan band sweeps the Verification photo (`.mpx-scan`); the AI example query types itself (`Typed`). The dot uses `.mpx-travel`; both keyframes are in `index.css`.
+      - **Tile backgrounds (owner: "some good background in these", then "keep the watermarks, just improve"):**
+        - A soft two-glow wash and a dot grid fading from the top.
+        - The tile's own icon as a WATERMARK: drawn at a 1px line (the 1.8 UI weight turns heavy at 144px), tucked into the bottom-right corner, masked to fade toward the middle, tinted `primary-900` at 7% (12% red on the blush tile), turning slightly on hover.
+        - A rings + fine-grid variant was tried and dropped at once in favour of the watermarks.
+      - ⚠️ **REVERTED the same day (owner: "that separation is not looking good, the design became cheap"):** the white tiles are back to the single panel. The redone Confirmed-contacts vignette below was KEPT.
+      - (Reverted) **White tiles split in two (owner: "upper section a better design, lower indicating the text explanation"):** Chat, Quotations, Visibility and Sign-up.
+        - A tinted STAGE on top (dot grid, soft glow, vignette centred, cursor glow) over a white CAPTION band under a hairline, with a small red marker before the title. Captions have `min-h-[84px]`, so the stages align across a row.
+        - Payments keeps its single blush panel (owner excluded it).
+        - Confirmed-contacts vignette redone: Email and Phone rows with icons, masked sample values ("a••••@yourco.com", "+91 ••••• ••421") and green "Code ✓" chips.
+      - "Live from day one" vignette (owner: "make tile design better"): a mini public-profile card — "YC" company mark, "Your company · Public profile", a pinging green "Live" badge, and a "Sign up —— Live · Day 1" line.
+      - AI tile copy (owner: "AI one's description is not good"): now "Search the way you talk" / "Describe what you need — our AI matches you with suppliers."
+      - Everything is static under reduced motion. ⚠️ The Playwright browser here has reduced motion ON, so the motion itself was not seen in testing.
+      - **Size:** rows ~172px (were 200+), tighter section padding, smaller headings. Desktop section ~790px (was ~940).
+    - **Superseded — refined for restraint (owner: "not elegant and premium", then "reduce the text and re-formulate the content").**
+      - A 4-column bento: Verification 2×2 photo, AI search 2-wide photo, Chat + Quotations, then Visibility · Sign-up · Organisations (photo) · Payments. No repeated labels, quiet outlined icons, and Payments as a soft blush tile instead of solid red. Hover is a slow picture drift.
+      - **Copy rewritten short:** Verified by people · Live from day one · Just describe it · Talk direct · Real quotations · Pay suppliers directly · Confirmed contacts · One company, one profile, each with a line of 8 words or fewer.
+      - Deliberate wording: "Confirmed contacts" (we prove the email and phone, not a person's identity), and Payments says the money goes to the seller, never that it is protected.
+      - Lead-in: "From who you're dealing with to how you pay — built in, today." Desktop section height is ~940px.
+    - **Superseded — rethought from scratch (owner: "you removed the images and made it worse… completely rethink this whole section, heading to presentation").**
+      - New heading: "Sourcing from India, *without the guesswork*" (red second half), with a right-aligned lead-in: "Eight things the platform does today — from who you're dealing with to how you pay."
+      - A **bento board** (lg: 6 columns × 2 rows):
+        - Verification is a 2×2 photo tile with a "Checked by our team" badge.
+        - AI search is a wide photo tile with an example plain-language query (illustrative, `aria-hidden`).
+        - Chat, Quotations, Visibility and Sign-up are white icon tiles.
+        - Organisations is a photo tile; Payments is the single red accent tile.
+      - Every sentence is shown; the copy is unchanged. Phones: one swipe rail (80%-wide tiles); sm: 2 columns. Tile order is set by `ORDER` in the component; `image`/`layout` were added back to `CARDS`.
+    - **Superseded (owner: "does not give a premium feeling — its work is just presenting some points beautifully"):** photographs dropped. One white FEATURE PANEL: hairline grid (`gap-px` over `ink-100`), 4 × 2 on lg and 2 across on phones.
+      - Each cell: a gradient icon tile, a faint 01–08 index, the title and the sentence. The sentence is `sr-only` on phones and shown from `sm`.
+      - Hover warms the cell (clipped glow) and fills the icon red.
+      - The `image` fields were removed from `CARDS`. ⚠️ `public/card-*.jpg|webp` are now unused by this section — not deleted, the owner to decide. The Gemini-image plan for three of these cards is moot unless photos come back.
+    - **Before that (owner: "the section is bigger than its relevance"):** eight 16:10 tiles in a plain grid (2 across on phones, 4 × 2 from lg), label + title on the picture. The sentences are `sr-only`: kept for screen readers and search, not shown. Desktop section height is 621px, down from ~1,850 for the original cards.
+  - Gotcha: the Playwright browser here runs with `prefers-reduced-motion: reduce`, so auto-moving things (fans, previews) never move in it — test motion in a normal browser.
+- **2026-09-28 — Landing: "What makes MPX Global different" moved BELOW "Why source from India" (owner).** New order: hero → buyer/supplier → categories → sectors → banners → why India → what makes MPX different → goods/services → AI band → featured products → how it works → FAQ.
+  - The section's redesign is still open. The owner rejected the picture-panel + list version ("not good"), and it is live in the code until a direction is chosen. The old eight-card version is in git (HEAD).
+- **2026-09-28 — `/suppliers` featured card on PHONES = a profile banner (owner: "image too much on the right… still not good, make a better thing").**
+  - **The top of the card:** Verified, category, name, role and company, plus the headline stat along the bottom, sit on the left over the light tint. The person stands on the right inside the rings. Nothing floats over them.
+  - The stage chips (Verified, stat, markets) and the logo show from `sm` up only. The body's category/name/role block is `sr-only` on phones, so the card keeps its single `h2`; the banner copy is `aria-hidden`. The location moved under the banner.
+  - Tablet and up are unchanged: the centred stage with chips.
+- **2026-09-28 — `/suppliers` fan auto-scroll fixed and sped up (owner).**
+  - Why it looked stuck: the fan paused on `mouseenter`/`focus`. A tap on a phone fires mouseenter with no mouseleave, and a clicked card keeps focus, so either left it paused for good.
+  - Now it pauses only for a real mouse hover (`pointerType === 'mouse'`) and for keyboard focus (`:focus-visible`). The featured-supplier rotation got the same fix.
+  - Step time 3.8 s → 2.5 s. It still never moves under reduced motion (WCAG 2.2.2).
+- **2026-09-28 — `/suppliers` UI polish (owner: "improve the UI of this page").**
+  - **Header:** a soft white → `primary-50` ground with a faint glow, and the 100+ pill is now white. A row of three true points sits under the subtitle: "Documents checked by our team" · "Enquire and chat directly" · "Free for buyers".
+  - **Industry chips:** white with a ring, and the active one is black. On phones a right-edge fade hints that the row scrolls.
+  - 🔴 **Copy fix:** "for a sample in your enquiry — free for buyers" read as a FREE SAMPLE, which no supplier has promised. It now says enquiring is free.
+  - Less empty space under the card fan.
+- **2026-09-28 — `/suppliers` featured card: LIGHT stage, logo toned down (owner).**
+  - The cut-out portraits have a pale edge fringe. On the dark red stage it drew a visible outline round each person. The stage is now white → `primary-50` with a soft `primary-100` glow, `primary-200` rings and faint ink dots, which swallows the fringe.
+  - The chips turned white: Verified (ink text, `success-700` tick), the headline stat (value in `primary-700`) and "Ships to" (dark discs).
+  - Logo: the white plate and shadow were removed (owner: "don't highlight the logo"). The mark/wordmark now sits bare at the top-left.
 - **2026-09-28 — Landing: "Browse by category" moved above "Browse by sector" (owner).** It's now 3rd, after the buyer/supplier section. Its bottom padding was trimmed (`pb-2`) so the two white sections don't stack a double gap. The stale "CATEGORIES" comment above Why India was removed. Everything else keeps the order the owner confirmed.
 - **2026-09-28 — Landing sections reordered into four chapters (owner: "sections are randomly placed… not woven").**
   - **A · Welcome:** hero → buyer/supplier fork (the client brief keeps it right after the hero).

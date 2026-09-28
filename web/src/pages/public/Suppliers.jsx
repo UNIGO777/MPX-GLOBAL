@@ -8,7 +8,16 @@ import { PublicHeader } from '../../components/public/PublicHeader.jsx';
 import { SupplierCardFan } from '../../components/suppliers/SupplierCardFan.jsx';
 import { SupplierFeatureCard } from '../../components/suppliers/SupplierFeatureCard.jsx';
 import { fromDemo } from '../../components/suppliers/supplierModel.js';
-import { ArrowRightIcon, BuildingIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon } from '../../components/ui/icons.jsx';
+import {
+  ArrowRightIcon,
+  BadgeCheckIcon,
+  BuildingIcon,
+  ChatIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SearchIcon,
+  TagIcon,
+} from '../../components/ui/icons.jsx';
 
 /**
  * `/suppliers` — "Meet our verified suppliers" (client brief via owner,
@@ -106,7 +115,8 @@ export function Suppliers() {
 
       <main>
         {/* ═════════ 1 · PAGE HEADER ═════════ */}
-        <header className={`border-b border-ink-100 bg-white pb-6 pt-6 sm:pt-8 ${gutter}`}>
+        <header className={`relative isolate overflow-hidden border-b border-ink-100 bg-gradient-to-b from-white to-primary-50/50 pb-6 pt-6 sm:pb-8 sm:pt-8 ${gutter}`}>
+          <span aria-hidden="true" className="absolute -right-24 -top-32 -z-10 h-72 w-72 rounded-full bg-primary-100/50 blur-3xl" />
           <nav aria-label="Breadcrumb" className="text-[13px] text-ink-500">
             <Link to="/" className="-my-3 inline-block py-3 hover:text-primary-700">Home</Link>
             <span aria-hidden="true" className="mx-2">/</span>
@@ -116,12 +126,26 @@ export function Suppliers() {
             <div className="min-w-0">
               <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[28px] font-extrabold tracking-tight sm:text-[34px]">
                 Verified suppliers
-                <span className="rounded-full bg-primary-50 px-3 py-1 text-[13px] font-bold text-primary-700">100+</span>
+                <span className="rounded-full bg-white px-3 py-1 text-[13px] font-bold text-primary-700 shadow-sm ring-1 ring-primary-100">100+</span>
               </h1>
               <p className="mt-1 text-[14.5px] text-ink-600">
                 Indian exporters whose documents a person on our team has checked.
-                {demo && <span className="ml-2 rounded-full bg-ink-100 px-2 py-0.5 text-[11px] text-ink-500">Preview · sample suppliers</span>}
+                {demo && <span className="ml-2 whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[11px] text-ink-500 ring-1 ring-ink-200/70">Preview · sample suppliers</span>}
               </p>
+              {/* Three things that are true of every listing today — no counts,
+                  no guarantees (this site's standing rule against claims). */}
+              <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[13px] font-medium text-ink-700">
+                {[
+                  [BadgeCheckIcon, 'Documents checked by our team'],
+                  [ChatIcon, 'Enquire and chat directly'],
+                  [TagIcon, 'Free for buyers'],
+                ].map(([Icon, label]) => (
+                  <li key={label} className="inline-flex items-center gap-1.5">
+                    <Icon className="h-4 w-4 text-primary-600" aria-hidden="true" />
+                    {label}
+                  </li>
+                ))}
+              </ul>
             </div>
             <label className="relative block w-full lg:w-80">
               <span className="sr-only">Search suppliers</span>
@@ -135,7 +159,7 @@ export function Suppliers() {
               />
             </label>
           </div>
-          <div role="group" aria-label="Filter by industry" className="scrollbar-none -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+          <div role="group" aria-label="Filter by industry" className="scrollbar-none -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 [mask-image:linear-gradient(to_right,black_85%,transparent)] sm:mx-0 sm:flex-wrap sm:px-0 sm:[mask-image:none]">
             {categories.map((c) => {
               const on = c === category;
               return (
@@ -145,7 +169,7 @@ export function Suppliers() {
                   aria-pressed={on}
                   onClick={() => setCategory(c)}
                   className={`h-9 shrink-0 whitespace-nowrap rounded-full px-3.5 text-[13px] font-semibold transition-colors ${
-                    on ? 'bg-ink-900 text-white' : 'bg-ink-50 text-ink-700 ring-1 ring-ink-200/70 hover:bg-white hover:ring-ink-300'
+                    on ? 'bg-ink-900 text-white shadow-sm' : 'bg-white text-ink-700 ring-1 ring-ink-200 hover:ring-ink-400'
                   }`}
                 >
                   {c}
@@ -160,9 +184,10 @@ export function Suppliers() {
           id="featured"
           aria-label="Featured supplier"
           className={`scroll-mt-20 pb-12 pt-8 sm:pb-16 sm:pt-10 ${gutter}`}
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          onFocus={() => setPaused(true)}
+          // Mouse hover and keyboard focus only — see SupplierCardFan.
+          onPointerEnter={(e) => e.pointerType === 'mouse' && setPaused(true)}
+          onPointerLeave={(e) => e.pointerType === 'mouse' && setPaused(false)}
+          onFocus={(e) => e.target.matches(':focus-visible') && setPaused(true)}
           onBlur={() => setPaused(false)}
         >
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -186,7 +211,7 @@ export function Suppliers() {
               // Phones: the sample ask closes the card itself — a separate box there read as a stray block.
               <div className="-mx-5 -mb-5 mt-5 bg-primary-50/60 px-5 pb-5 pt-4 sm:hidden">
                 <p className="text-[15px] font-bold tracking-tight">Request your sample today</p>
-                <p className="mt-0.5 text-[12.5px] text-ink-600">Ask {featured.name} for a sample in your enquiry — free for buyers.</p>
+                <p className="mt-0.5 text-[12.5px] text-ink-600">Ask {featured.name} for a sample in your enquiry. Enquiring is free.</p>
                 <SampleLink to={featured.sampleTo} className="mt-3 w-full" />
               </div>
             }
@@ -202,7 +227,7 @@ export function Suppliers() {
             <div className="min-w-0">
               <p className="text-[16px] font-bold tracking-tight">Request your sample today</p>
               <p className="mt-0.5 text-[13px] text-ink-600">
-                Ask {featured.person?.name ?? featured.name} at {featured.name} for a sample in your enquiry — free for buyers.
+                Ask {featured.person?.name ?? featured.name} at {featured.name} for a sample in your enquiry. Enquiring is free for buyers.
               </p>
             </div>
             <SampleLink to={featured.sampleTo} />
@@ -210,7 +235,7 @@ export function Suppliers() {
         </section>
 
         {/* ═════════ 4 · THE NETWORK ═════════ */}
-        <section aria-labelledby="network-heading" className={`border-y border-ink-100 bg-white py-12 sm:py-16 ${gutter}`}>
+        <section aria-labelledby="network-heading" className={`border-y border-ink-100 bg-white pb-6 pt-12 sm:pb-10 sm:pt-16 ${gutter}`}>
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Browse the network</p>

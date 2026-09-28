@@ -11,15 +11,15 @@ import {
   MapPinIcon,
   TagIcon,
 } from '../ui/icons.jsx';
-import { SupplierLogo, SupplierMark } from './SupplierLogo.jsx';
+import { SupplierLogo } from './SupplierLogo.jsx';
 import { initialsOf } from './supplierModel.js';
 
 /**
  * The featured supplier profile card on `/suppliers`. Two halves:
  *
- *   left  — a dark stage: the person stands in a red spotlight inside two
- *           rings, with glass chips around them (logo, verified, the headline
- *           stat, the markets they ship to);
+ *   left  — a light stage: the person stands in a soft red glow inside two
+ *           rings, with white chips around them (verified, the headline stat,
+ *           the markets they ship to) and the company mark, unboxed;
  *   right — who they are: location, name, role at the company, one line,
  *           specialities, the details as icon tiles, and the verified dates.
  *
@@ -67,61 +67,85 @@ export function SupplierFeatureCard({ supplier: s, footer = null }) {
       className="grid overflow-hidden rounded-[28px] bg-white shadow-[0_30px_80px_-40px_rgb(0_5_23/0.45)] ring-1 ring-ink-200/70 lg:grid-cols-[0.92fr_1.08fr]"
     >
       {/* ── The stage ─────────────────────────────────────────────── */}
-      <div className="relative isolate h-[270px] overflow-hidden bg-ink-900 sm:h-[420px] lg:h-auto lg:min-h-[450px]">
-        <span aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_88%,theme(colors.primary.600/60%),transparent_62%)]" />
+      {/* 🔴 LIGHT stage (owner, 2026-09-28). The sample portraits are cut-outs
+          with a pale fringe along the edge; on the old dark red stage that
+          fringe drew a visible outline round every person. A near-white ground
+          swallows it. */}
+      <div className="relative isolate h-[260px] overflow-hidden bg-gradient-to-b from-white to-primary-50 sm:h-[420px] lg:h-auto lg:min-h-[450px]">
+        <span aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_92%,theme(colors.primary.100),transparent_60%)]" />
         <span
           aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-[radial-gradient(rgb(255_255_255/0.08)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:radial-gradient(ellipse_at_center,black_25%,transparent_72%)]"
+          className="absolute inset-0 -z-10 bg-[radial-gradient(rgb(0_5_23/0.07)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:radial-gradient(ellipse_at_center,black_25%,transparent_72%)]"
         />
-        <span aria-hidden="true" className="absolute left-[68%] top-[60%] -z-10 h-[250px] w-[250px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 sm:left-1/2 sm:top-[58%] sm:h-[380px] sm:w-[380px]" />
-        <span aria-hidden="true" className="absolute left-[68%] top-[60%] -z-10 h-[160px] w-[160px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/15 bg-white/[0.04] sm:left-1/2 sm:top-[58%] sm:h-[250px] sm:w-[250px]" />
+        <span aria-hidden="true" className="absolute left-[74%] top-[62%] -z-10 h-[230px] w-[230px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary-200/60 sm:left-1/2 sm:top-[58%] sm:h-[380px] sm:w-[380px]" />
+        <span aria-hidden="true" className="absolute left-[74%] top-[62%] -z-10 h-[150px] w-[150px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary-200 bg-white/60 sm:left-1/2 sm:top-[58%] sm:h-[250px] sm:w-[250px]" />
 
-        <div key={s.key} className="absolute inset-x-0 bottom-0 flex h-[86%] animate-fade-in justify-end pr-2 motion-reduce:animate-none sm:h-[88%] sm:justify-center sm:pr-0 lg:h-[82%]">
+        {/* PHONES are a profile banner (owner, 2026-09-28: "still not good for
+            phone, make a better thing"): who they are on the left, the person
+            on the right — nothing floats over them. Tablet and up keep the
+            centred stage with chips around the person. */}
+        <div key={s.key} className="absolute bottom-0 right-0 flex h-[92%] w-[48%] animate-fade-in justify-center motion-reduce:animate-none sm:inset-x-0 sm:h-[88%] sm:w-auto lg:h-[82%]">
           {person?.photo && (
             <img
               src={person.photo}
               alt={`${person.name}, ${person.role} at ${s.name}`}
-              className="h-full max-h-[390px] w-auto object-contain object-bottom drop-shadow-[0_20px_30px_rgb(0_0_0/0.45)]"
+              className="h-full max-h-[390px] w-auto object-contain object-bottom drop-shadow-[0_16px_24px_rgb(0_5_23/0.16)]"
             />
           )}
         </div>
 
-        <span className="absolute left-4 top-4 rounded-2xl bg-white/95 p-2 shadow-card ring-1 ring-black/5 sm:left-5 sm:top-5 sm:px-3 sm:py-2.5">
+        <div aria-hidden="true" className="absolute inset-y-0 left-0 flex w-[56%] flex-col py-4 pl-4 sm:hidden">
+          {s.verified && (
+            <span className="inline-flex items-center gap-1 self-start rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-ink-800 shadow-sm ring-1 ring-ink-200/70">
+              <BadgeCheckIcon className="h-3.5 w-3.5 text-success-700" />
+              Verified
+            </span>
+          )}
+          <span className="mt-3 text-[10px] font-bold uppercase tracking-[0.12em] text-primary-700">{s.category}</span>
+          <span className="mt-1 text-[22px] font-extrabold leading-[1.05] tracking-tight text-ink-900">{person ? person.name : s.name}</span>
+          {person && <span className="mt-1 text-[12px] leading-snug text-ink-600">{person.role}</span>}
+          <span className="text-[12.5px] font-semibold leading-snug text-primary-700">{s.name}</span>
+          <span className="mt-auto flex items-end gap-2">
+            <span className="font-serif text-[28px] italic leading-none text-primary-700">{s.highlight.value}</span>
+            <span className="pb-0.5 text-[9.5px] font-semibold uppercase leading-tight tracking-[0.1em] text-ink-600">{s.highlight.label}</span>
+          </span>
+        </div>
+
+        {/* The company mark, quietly — no plate, no shadow (owner: "don't
+            highlight the logo"). The company name is in the text beside. */}
+        {/* Tablet and up only: on a phone its corner goes to the headline stat,
+            which would otherwise sit on the centred person. */}
+        <span className="absolute left-5 top-5 hidden sm:block">
           {s.brand ? (
-            <>
-              <span className="sm:hidden">
-                <SupplierMark brand={s.brand} className="h-10 w-10" />
-              </span>
-              <span className="hidden sm:block">
-                <SupplierLogo name={s.name} brand={s.brand} />
-              </span>
-            </>
+            <span className="block opacity-90">
+              <SupplierLogo name={s.name} brand={s.brand} />
+            </span>
           ) : (
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-sm font-extrabold text-primary-700">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/70 text-xs font-extrabold text-primary-700">
               {initialsOf(s.name)}
             </span>
           )}
         </span>
 
         {s.verified && (
-          <span className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white ring-1 ring-white/25 backdrop-blur-md sm:right-5 sm:top-5">
-            <BadgeCheckIcon className="h-4 w-4 text-success-400" aria-hidden="true" />
+          <span className="absolute right-5 top-5 hidden items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-ink-800 shadow-sm ring-1 ring-ink-200/70 sm:inline-flex">
+            <BadgeCheckIcon className="h-4 w-4 text-success-700" aria-hidden="true" />
             Verified
           </span>
         )}
 
-        <span className="absolute bottom-4 left-4 animate-hero-float-sm rounded-2xl bg-white/10 px-3 py-2.5 text-white sm:px-4 sm:py-3 ring-1 ring-white/20 backdrop-blur-md motion-reduce:animate-none sm:bottom-8 sm:left-5">
-          <span className="block font-serif text-[28px] italic leading-none sm:text-[40px]">{s.highlight.value}</span>
-          <span className="mt-1 block max-w-[8.5rem] text-[9.5px] font-semibold uppercase leading-snug tracking-[0.12em] text-white/80 sm:max-w-none sm:text-[10px] sm:tracking-[0.14em]">{s.highlight.label}</span>
+        <span className="absolute bottom-8 left-5 hidden animate-hero-float-sm rounded-2xl bg-white/85 px-4 py-3 text-ink-900 shadow-card ring-1 ring-ink-200/70 backdrop-blur-md motion-reduce:animate-none sm:block">
+          <span className="block font-serif text-[40px] italic leading-none text-primary-700">{s.highlight.value}</span>
+          <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-600">{s.highlight.label}</span>
         </span>
 
         {markets.length > 0 && (
           <span
-            className="absolute bottom-20 right-5 hidden animate-hero-float rounded-2xl bg-white/10 px-3.5 py-2.5 text-white ring-1 ring-white/20 backdrop-blur-md motion-reduce:animate-none sm:block"
+            className="absolute bottom-20 right-5 hidden animate-hero-float rounded-2xl bg-white/85 px-3.5 py-2.5 text-ink-900 shadow-card ring-1 ring-ink-200/70 backdrop-blur-md motion-reduce:animate-none sm:block"
             style={{ animationDelay: '-2s' }}
           >
-            <MarketDiscs codes={markets} />
-            <span className="mt-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white/80">
+            <MarketDiscs codes={markets} tone="light" />
+            <span className="mt-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-600">
               Ships to {markets.length} markets
             </span>
           </span>
@@ -130,6 +154,9 @@ export function SupplierFeatureCard({ supplier: s, footer = null }) {
 
       {/* ── Who they are ──────────────────────────────────────────── */}
       <div className="flex flex-col p-5 sm:p-8 lg:p-10">
+        {/* On phones the banner above shows these visually; kept here (sr-only)
+            so the card still has its one real heading. */}
+        <div className="sr-only sm:not-sr-only">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           {s.category && <span className="rounded-full bg-primary-50 px-3 py-1 text-[12px] font-semibold text-primary-700">{s.category}</span>}
           <span className="inline-flex items-center gap-1 text-[13px] text-ink-500">
@@ -146,7 +173,12 @@ export function SupplierFeatureCard({ supplier: s, footer = null }) {
             {person.role} · <span className="font-semibold text-primary-700">{s.name}</span>
           </p>
         )}
-        <p className="mt-3 max-w-xl text-pretty text-[14.5px] sm:mt-4 sm:text-[15px] leading-relaxed text-ink-600">{s.tagline}</p>
+        </div>
+        <p className="inline-flex items-center gap-1 text-[12.5px] text-ink-500 sm:hidden">
+          <MapPinIcon className="h-3.5 w-3.5" aria-hidden="true" />
+          {s.location}
+        </p>
+        <p className="mt-2 max-w-xl text-pretty text-[14.5px] leading-relaxed text-ink-600 sm:mt-4 sm:text-[15px]">{s.tagline}</p>
 
         {s.specialities.length > 0 && (
           <ul className="mt-4 flex flex-wrap gap-2">

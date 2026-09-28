@@ -12,6 +12,7 @@ import { HeroBackdrop } from '../../components/landing/HeroBackdrop.jsx';
 import { FaqAccordion } from '../../components/landing/FaqAccordion.jsx';
 import { AiBandVideo } from '../../components/landing/AiBandVideo.jsx';
 import { AudienceFork } from '../../components/landing/AudienceFork.jsx';
+import { MpxFilm } from '../../components/landing/MpxFilm.jsx';
 import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
 import { PromoPanels } from '../../components/landing/PromoPanels.jsx';
 import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
@@ -435,8 +436,62 @@ export function Landing() {
           </section>
         )}
 
+
+        {/* `FeaturedStrips` was removed from here on 2026-08-23 (test curation
+            reached the banner rotation) and RESTORED on 2026-09-25 (owner) as
+            pieces placed into this page's own sections — banners under the
+            hero, featured categories leading the category grid, featured
+            products above "Recently listed", highlighted suppliers below it.
+            Each falls back to the page's default when nothing is curated. */}
+
+        {/* Why India — the question a foreign buyer asks straight after "why
+            this platform". Every agreement named in it is real; see the
+            component, which also says plainly that there is no India–US FTA. */}
+        <TradeAgreements />
+
+        {/* ═════════ THE MPX GLOBAL FILM ═════════
+            Its own section (owner, 2026-09-28: "film not fitting in, make it a
+            separate section") — after being tried inside "Why source from
+            India" in three layouts. White, centred, the film large. */}
+        <section aria-labelledby="film-heading" className="relative isolate overflow-hidden bg-white py-12 sm:py-12 lg:py-14">
+          <span aria-hidden="true" className="absolute left-1/2 top-1/2 -z-10 h-[520px] w-[900px] -translate-x-1/2 -translate-y-1/3 rounded-full bg-primary-100/60 blur-3xl" />
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 -z-10 bg-[radial-gradient(rgb(0_5_23/0.07)_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]"
+          />
+          {/* Cinema style from sm (owner, 2026-09-28): the film widens to
+              ~1100px on large screens inside a thin gradient frame with a deeper
+              shadow. Phones are unchanged — the owner called them perfect. */}
+          <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:max-w-5xl xl:max-w-[1148px]">
+            <div className="text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">The MPX Global film</p>
+              <h2 id="film-heading" className="mt-1.5 text-balance text-[24px] font-extrabold leading-tight tracking-tight text-ink-900 sm:text-[30px] lg:text-[36px]">
+                Ready to trade. Built to connect.
+              </h2>
+              <p className="mx-auto mt-2 max-w-xl text-[14.5px] leading-relaxed text-ink-600">
+                Two minutes on how MPX Global brings India&apos;s manufacturers and the world&apos;s buyers to one platform.
+              </p>
+            </div>
+            {/* Width is also capped by the screen's HEIGHT (owner: "not fitting
+                inside my screen"): a 16:9 film is at most (100vh − ~400px of
+                heading, spacing and the sticky header) tall, so the whole
+                section fits in one screen below the header. */}
+            <div className="mt-8 sm:mx-auto sm:mt-8 sm:w-[min(100%,calc((100vh-400px)*16/9))] sm:min-w-[min(100%,560px)] sm:rounded-[30px] sm:bg-gradient-to-b sm:from-white sm:to-ink-100/80 sm:p-2 sm:shadow-[0_50px_100px_-45px_rgb(0_5_23/0.6)] sm:ring-1 sm:ring-ink-200/70">
+              <MpxFilm className="shadow-[0_40px_90px_-40px_rgb(0_5_23/0.55)] ring-[6px] ring-white sm:shadow-none sm:ring-0" />
+            </div>
+            <p aria-hidden="true" className="mt-6 flex items-center justify-center gap-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-500 sm:mt-5">
+              <span>Manufacturers</span>
+              <span className="h-1 w-1 rounded-full bg-primary-500" />
+              <span>Exporters</span>
+              <span className="h-1 w-1 rounded-full bg-primary-500" />
+              <span>Buyers</span>
+            </p>
+          </div>
+        </section>
+
         {/* ═════════ WHAT MAKES MPX GLOBAL DIFFERENT ═════════
-            Replaced the three-item value strip on 2026-09-26 (owner).
+            Replaced the three-item value strip on 2026-09-26 (owner). Sits BELOW
+            "Why source from India" since 2026-09-28 (owner).
 
             🔴 It KEEPS `id="platform"`. The shared header links here, and an
             anchor with nothing to land on is a dead link (`web-ui-notes.md`) —
@@ -451,31 +506,27 @@ export function Landing() {
             🆕 2026-09-27 — picture cards (`PlatformCards.jsx`); restyled the same
             day as clean feature cards (words below the picture, a swipeable row
             on phones). The sentences are unchanged. */}
-        <section id="platform" aria-labelledby="platform-heading" className="bg-surface-subtle py-10 sm:py-14 lg:py-16">
+        {/* 2026-09-28 — rethought from scratch (owner: "completely rethink this
+            whole section, the heading to presentation"). The heading now says
+            what the buyer is spared — guesswork — and the eight points sit in a
+            bento board (see PlatformCards). */}
+        <section id="platform" aria-labelledby="platform-heading" className="bg-surface-subtle py-10 sm:py-12 lg:py-14">
           <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Why MPX Global</p>
-            <h2 id="platform-heading" className="mt-1.5 text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
-              What makes MPX Global different
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-600 sm:text-base">
-              Eight things that are true of the platform today — not promises.
-            </p>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Why MPX Global</p>
+                <h2 id="platform-heading" className="mt-1.5 text-balance text-[24px] font-extrabold leading-[1.1] tracking-tight text-ink-900 sm:text-[28px] lg:text-[32px]">
+                  Sourcing from India, <span className="text-primary-600">without the guesswork</span>
+                </h2>
+              </div>
+              <p className="max-w-md text-pretty text-[14.5px] leading-relaxed text-ink-600 lg:pb-1 lg:text-right">
+                From who you&apos;re dealing with to how you pay — built in, today.
+              </p>
+            </div>
 
             <PlatformCards />
           </div>
         </section>
-
-        {/* `FeaturedStrips` was removed from here on 2026-08-23 (test curation
-            reached the banner rotation) and RESTORED on 2026-09-25 (owner) as
-            pieces placed into this page's own sections — banners under the
-            hero, featured categories leading the category grid, featured
-            products above "Recently listed", highlighted suppliers below it.
-            Each falls back to the page's default when nothing is curated. */}
-
-        {/* Why India — the question a foreign buyer asks straight after "why
-            this platform". Every agreement named in it is real; see the
-            component, which also says plainly that there is no India–US FTA. */}
-        <TradeAgreements />
 
 
         {/* ═════════ GOODS / SERVICES — the fork in the road ═════════
