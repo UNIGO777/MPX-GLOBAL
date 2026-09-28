@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { Logo } from '../ui/Logo.jsx';
 import { useSupportContact } from '../../hooks/useSupportContact.js';
 import { PlusIcon } from '../ui/icons.jsx';
 import { Logo } from '../ui/Logo.jsx';
@@ -173,7 +174,13 @@ function SocialGlyph({ name }) {
 function FooterLink({ link, small = false }) {
   if (link.soon) {
     return (
-      <span aria-disabled="true" className={`inline-block cursor-default ${small ? '' : 'py-1.5'}`}>
+      /* 🔴 A PLACEHOLDER IS VISIBLY QUIETER THAN A LINK. Both used to inherit
+         the same `ink-600`, so "Careers" and "Categories" were indistinguishable
+         until you tried to click one. `ink-500` (4.97:1) against links at
+         `ink-700` (10.46:1) is a real two-tone and both still pass 4.5:1 —
+         `ink-400` would read better as "disabled" but measures 2.58:1 and cannot
+         carry text. */
+      <span aria-disabled="true" className={`inline-block cursor-default text-ink-500 ${small ? '' : 'py-1.5'}`}>
         {link.label}
         {link.comingSoon && (
           <span className="ml-1.5 inline-block rounded-full bg-ink-900 px-1.5 py-px align-[1px] text-[9px] font-semibold uppercase leading-normal tracking-wider text-white">
@@ -183,7 +190,7 @@ function FooterLink({ link, small = false }) {
       </span>
     );
   }
-  const cls = `inline-block ${small ? '' : 'py-1.5'} hover:text-primary-700 ${link.breakAll ? 'break-all' : ''}`;
+  const cls = `inline-block text-ink-700 ${small ? '' : 'py-1.5'} hover:text-primary-700 ${link.breakAll ? 'break-all' : ''}`;
   return link.external || link.to.startsWith('#') || link.to.startsWith('/#') ? (
     <a href={link.to} className={cls}>{link.label}</a>
   ) : (
@@ -267,7 +274,13 @@ export function PublicFooter() {
       {/* Laid out as the owner's Alibaba reference (2026-09-28, "make exact"):
           five columns, an app row, then the grey legal bar. 2026-09-28: a brand
           row (logo, one line, "Stay connected") now sits above the columns. */}
-      <div className="mx-auto w-full max-w-6xl px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-12 lg:px-8">
+      {/* 🔴 FULL WIDTH on the page's own gutters — `px-4 sm:px-6 lg:px-10
+          xl:px-16` — not a centred `max-w` cap (owner, 2026-09-28). The header
+          and every landing section already run on exactly these, and a band that
+          steps inward for one region reads as a mistake rather than emphasis.
+          The trade-agreements section needed the same correction when it had its
+          own `max-w-7xl`. */}
+      <div className="w-full px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-12 lg:px-10 xl:px-16">
         {/* Brand row (owner, 2026-09-28: "fix the footer design") — the footer
             had no mark or line saying what MPX is; the socials move up here
             from under the last column. */}
@@ -369,7 +382,10 @@ export function PublicFooter() {
 
       {/* The legal bar: policy links, then the company line. */}
       <div className="bg-surface-subtle">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-2 px-4 py-5 text-center text-[12.5px] text-ink-500 sm:px-6 lg:px-8">
+        {/* Left and right, not two centred rows — everything above it is
+            left-aligned, and a centred bar under a left-aligned footer reads as
+            a different page. */}
+        <div className="flex w-full flex-col items-center gap-2 px-4 py-5 text-center text-[12.5px] text-ink-500 sm:flex-row-reverse sm:justify-between sm:gap-6 sm:px-6 sm:text-left lg:px-10 xl:px-16">
           <p className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-0.5">
             {LEGAL_LINKS.map((l, i) => (
               <span key={l.label} className="inline-flex items-center gap-2.5">

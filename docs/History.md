@@ -431,6 +431,43 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
   - **Data:** the live site reads real verified suppliers (public projection only). `lib/demoSuppliers.js` has 12 fictional companies: no people, no photos of people, websites as plain text only.
   - **Links:** the header "Suppliers" and the footer "Verified manufacturers" now go to `/suppliers`.
   - ⚠️ **Still owner-flagged:** the Phoenix cards in the showcase are visa approvals, not supplier verifications (see the landing note).
+- **2026-09-28 — Footer runs full width.** Owner. The `max-w-6xl` centred cap is gone from both the main
+  block and the legal bar; both now use the page's own gutters, `px-4 sm:px-6 lg:px-10 xl:px-16`.
+  - **Those are the gutters the header and every landing section already use**, rather than a set picked
+    for the footer. A band that steps inward for one region reads as a mistake, not as emphasis — the same
+    correction the trade-agreements section needed when it had its own `max-w-7xl`.
+  - Verified by measuring the render rather than trusting the classes: the footer's leftmost ink and the
+    "What makes MPX Global different" heading both land at **x = 64px** at a 1440 viewport, which is
+    `xl:px-16`.
+- **2026-09-28 — Footer craft pass.** Owner: "make footer more good its not looking good". Three changes,
+  no content added or removed — the placeholder labels the owner asked for are all still there.
+  - 🔴 **A BRAND ROW, because there wasn't one.** The footer opened straight into five columns with
+    nothing to anchor it, and "Stay connected" was wedged under the last column, which is what left the
+    bottom edge ragged. Logo and tagline now sit on the left of a row above the columns, the social links
+    on the right.
+  - 🔴 **A placeholder no longer looks like a link.** Both inherited the same `ink-600`, so "Careers"
+    (unclickable) and "Categories" (live) were indistinguishable until you tried to click one.
+    Placeholders are `ink-500` (**4.97:1**), links `ink-700` (**10.46:1**) — a real two-tone with both
+    still over 4.5:1. `ink-400` would read better as "disabled" but measures **2.58:1** and cannot carry
+    text; noted at the code.
+  - The legal bar splits left/right instead of stacking two centred rows — everything above it is
+    left-aligned, and a centred bar under a left-aligned footer reads as a different page.
+  - ✅ **Checked before touching anything:** every placeholder is already inert (`soon: true` renders
+    plain text, store badges are unclickable spans, and a social glyph is only a link when a superadmin
+    has set that URL). Nothing in this footer promises a page that does not exist — it just needed to
+    *look* like it knows which is which.
+- **2026-09-28 — Platform cards reframed again, to the "myne" card the owner sent.** Everything
+  left-aligned now: a small bold label, a bold headline, the supporting line, then the picture — where
+  before the copy was centred, the title light-weight uppercase, and the body sat under the photo.
+  - 🔴 **The reference's floating badges are deliberately absent.** In that card "VIP" and "At Risk" are
+    the product's OWN data — real customer segments it computes. Ours would have to be invented, and
+    invented labels sitting on a photograph are decoration dressed as information. That is the rule this
+    page has held since the design's six fabricated testimonials were dropped. **If each card should carry
+    a badge, it has to say something the platform actually knows** — raised with the owner.
+  - `mt-auto` on the picture, so cards whose copy runs to different lengths still line their photographs
+    up across a row. With the body above the image that alignment is no longer automatic.
+  - Contrast re-checked where it changed: the label is primary-700 on the card's own white now rather than
+    on a primary-50 chip — **7.42:1**, up from 6.71:1.
 - **2026-09-28 — Platform cards turned LIGHT.** Owner: "card color is not looking good in black make it
   in professnol color". White cards, ink text, a primary-600 mark and a primary-50 tag.
   - 🔴 **The SECTION moved too, not just the cards.** A white card on a white section has no edge at all,
