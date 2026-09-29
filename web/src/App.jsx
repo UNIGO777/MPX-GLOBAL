@@ -18,6 +18,7 @@ import { Landing2 } from './pages/public/Landing2.jsx';
 import { Landing3 } from './pages/public/Landing3.jsx';
 import { Landing4 } from './pages/public/Landing4.jsx';
 import { Landing5 } from './pages/public/Landing5.jsx';
+import { Landing6 } from './pages/public/Landing6.jsx';
 import { Categories } from './pages/public/Categories.jsx';
 import { CategoryListing } from './pages/public/CategoryListing.jsx';
 import { ProductDetail } from './pages/public/ProductDetail.jsx';
@@ -325,6 +326,12 @@ export function App() {
                 `Landing.jsx` when it is approved; do not let it rot beside the
                 three archived snapshots. */}
             <Route path="/landing-page-5" element={<Landing5 />} />
+            {/* ⚠️ A fourth frozen SNAPSHOT (owner, 2026-09-29): the CENTRED-hero
+                landing exactly as committed in 8d913fc, kept after the split
+                hero took over `/`. `noindex`, own components in
+                `components/landing6/`. Delete this route, `Landing6.jsx` and
+                that folder together once the landing is settled. */}
+            <Route path="/landing-page-6" element={<Landing6 />} />
 
             {/* --- Party auth (buyer + exporter share screens; portal = the field change) ---
                    All of these are for signed-OUT visitors: RedirectIfAuthed sends a live

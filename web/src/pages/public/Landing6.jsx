@@ -4,22 +4,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { useCanonical } from '../../lib/seo.js';
+import { useNoIndex } from '../../lib/seo.js';
 import { BannerStrip, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
-import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
-import { FaqAccordion } from '../../components/landing/FaqAccordion.jsx';
-import { FaqExplorer } from '../../components/landing/FaqExplorer.jsx';
-import { AiBandVideo } from '../../components/landing/AiBandVideo.jsx';
-import { AudienceFork } from '../../components/landing/AudienceFork.jsx';
-import { GlobeBand } from '../../components/landing/GlobeBand.jsx';
-import { HeroMatchPreview } from '../../components/landing/HeroMatchPreview.jsx';
-import { MpxFilm } from '../../components/landing/MpxFilm.jsx';
-import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
-import { PromoPanels } from '../../components/landing/PromoPanels.jsx';
-import { SourceTypeCards } from '../../components/landing/SourceTypeCards.jsx';
-import { HEADING, SectionHeader, SectionLink } from '../../components/landing/SectionHeader.jsx';
-import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
+import { CategoryCircles } from '../../components/landing6/CategoryCircles.jsx';
+import { FaqAccordion } from '../../components/landing6/FaqAccordion.jsx';
+import { FaqExplorer } from '../../components/landing6/FaqExplorer.jsx';
+import { AiBandVideo } from '../../components/landing6/AiBandVideo.jsx';
+import { AudienceFork } from '../../components/landing6/AudienceFork.jsx';
+import { GlobeBand } from '../../components/landing6/GlobeBand.jsx';
+import { MpxFilm } from '../../components/landing6/MpxFilm.jsx';
+import { PlatformCards } from '../../components/landing6/PlatformCards.jsx';
+import { PromoPanels } from '../../components/landing6/PromoPanels.jsx';
+import { SourceTypeCards } from '../../components/landing6/SourceTypeCards.jsx';
+import { HEADING, SectionHeader, SectionLink } from '../../components/landing6/SectionHeader.jsx';
+import { TradeAgreements } from '../../components/landing6/TradeAgreements.jsx';
 
 import {
   ArrowRightIcon,
@@ -182,8 +181,6 @@ function BlockHead({ eyebrow, title, sub, to, cta = 'See all' }) {
  * above it do not jump when they land.
  */
 function HeroStats() {
-  // Lives in the GlobeBand since 2026-09-29 (split-hero redesign): the dome
-  // closes on these figures, shown large on a white panel over the globe.
   // 🔴 `verifiedOnly` is REQUIRED for the label to be true: without it
   // `searchSuppliers` returns every active exporter-side org, verified or not
   // (backend `search.service.js` — verification is a query condition only on an
@@ -218,31 +215,23 @@ function HeroStats() {
 
   if (!stats.length) {
     // Loading, empty or failed — hold the space, claim nothing.
-    return <div aria-hidden="true" className="h-[104px]" />;
+    return <div aria-hidden="true" className="mt-4 h-5" />;
   }
 
   return (
     // A <ul>, not a <dl>: a <div> inside a <dl> may contain only <dt>/<dd>, and
     // the separator and status dot are neither. The label reads as part of the
     // item, so the number and its word stay in one <li>.
-    // No panel (owner: "that white band is not looking good at all") — the
-    // figures sit on the globe itself, split by hairlines, each with a soft
-    // halo in the page's canvas colour so the land dots never cut the digits.
-    <ul
-      className={`mx-auto grid max-w-3xl divide-x divide-ink-900/15 ${
-        stats.length === 3 ? 'grid-cols-3' : stats.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
-      }`}
-    >
-      {stats.map((stat) => (
-        <li key={stat.label} className="flex flex-col items-center px-3 py-2 sm:px-6">
-          <span className="text-[30px] font-extrabold tabular-nums leading-none tracking-tight text-ink-900 [text-shadow:0_0_18px_rgb(252_250_248),0_0_6px_rgb(252_250_248)] sm:text-[46px]">
+    <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:mt-4 sm:gap-x-8">
+      {stats.map((stat, i) => (
+        <li key={stat.label} className="flex items-center gap-2">
+          {i > 0 && <span aria-hidden="true" className="mr-3 h-1 w-1 rounded-full bg-ink-300 sm:mr-5" />}
+          {stat.dot && <span aria-hidden="true" className="h-2 w-2 rounded-full bg-success" />}
+          <span className="text-[15px] font-bold tracking-tight text-ink-900">
             {stat.value.toLocaleString()}
-            <span className="text-primary-600">{stat.plus ? '+' : ''}</span>
+            {stat.plus && '+'}
           </span>
-          <span className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-700 [text-shadow:0_0_10px_rgb(252_250_248)] sm:text-[11.5px]">
-            {stat.dot && <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-success" />}
-            {stat.label}
-          </span>
+          <span className="text-[13.5px] text-ink-600">{stat.label}</span>
         </li>
       ))}
     </ul>
@@ -252,9 +241,18 @@ function HeroStats() {
 
 /* ---------------------------------- page ---------------------------------- */
 
-export function Landing() {
+/**
+ * ⚠️ A FROZEN SNAPSHOT (owner, 2026-09-29): the landing page with the CENTRED
+ * hero, exactly as committed in `8d913fc` ("categories dropdown"), before the
+ * split hero replaced it on `/`. Served at `/landing-page-6`, `noindex`, with
+ * its own copies of the landing-only components (taken from the same commit)
+ * in `components/landing6/`, so later edits to `/` cannot reach it. Delete
+ * this file, its route and that folder together once the landing is settled.
+ */
+export function Landing6() {
   const navigate = useNavigate();
-  useCanonical('/');
+  // A frozen snapshot — never indexed.
+  useNoIndex(true);
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
@@ -349,7 +347,7 @@ export function Landing() {
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgb(0_5_23/0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgb(0_5_23/0.045)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:linear-gradient(to_bottom,#000_0%,#000_55%,transparent_92%)]"
           />
-          <div className="relative flex min-h-[46svh] w-full flex-col items-center justify-center px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-10 lg:px-10 lg:pb-16 lg:pt-12 xl:px-16">
+          <div className="relative flex min-h-[46svh] w-full flex-col items-center justify-center px-4 pb-5 pt-5 sm:px-6 sm:pb-4 sm:pt-5 lg:px-10 lg:pb-4 lg:pt-5 xl:px-16">
             {/* Centred on a phone, left-aligned once the story sits beside it —
                 a centred column next to an illustration reads as two unrelated
                 blocks. */}
@@ -357,12 +355,7 @@ export function Landing() {
                 (`-mx-4 w-[calc(100%+2rem)]`), and without this the grid item's
                 automatic minimum size grew to fit it, widening the single
                 mobile track to ~700px and pushing the whole hero off-screen. */}
-            {/* SPLIT HERO (2026-09-29 design review: the single centred column
-                felt "too centralised, unsettling"). Left: the story + the AI
-                field, left-aligned. Right (sm+): an illustrative match preview.
-                Phones stack, text first. */}
-            <div className="grid w-full max-w-7xl items-center gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
-            <div className="flex w-full min-w-0 flex-col items-start text-left">
+            <div className="flex w-full min-w-0 max-w-4xl flex-col items-center text-center">
               {/* The mockup's announcement pill: a solid tag, the line, an arrow.
                   🔴 It is a real Link, not a decorated <p>. The mockup's arrow
                   reads as "this goes somewhere", and a live-looking control that
@@ -383,11 +376,11 @@ export function Landing() {
                 />
               </Link>
 
-              <h1 className="mt-4 max-w-2xl text-balance text-[28px] font-extrabold leading-[1.06] max-[359px]:text-[25px] tracking-tight text-ink-900 sm:mt-5 sm:text-[38px] lg:text-[42px] xl:text-[48px]">
+              <h1 className="mt-3.5 max-w-3xl text-balance text-[24px] font-extrabold leading-[1.05] max-[359px]:text-[23px] tracking-tight text-ink-900 sm:mt-5 sm:text-[32px] lg:text-[35px] xl:text-[38px]">
                 Connecting India&apos;s Suppliers
                 <br />
                 <span className="relative inline-block pb-1">
-                  <span className="text-primary-600">to the World</span>
+                  <span className="text-primary-400">to the World</span>
                   {/* Hand-drawn underline that draws itself once on load. */}
                   <svg
                     aria-hidden="true"
@@ -400,12 +393,23 @@ export function Landing() {
                       d="M2 8C50 2 100 4 150 6C200 8 250 4 298 7"
                       pathLength="1"
                       strokeDasharray="1"
-                      className="animate-draw-line stroke-primary-600/60 motion-reduce:animate-none"
+                      className="animate-draw-line stroke-primary-400 motion-reduce:animate-none"
                       strokeWidth="3"
                       strokeLinecap="round"
                     />
                   </svg>
                 </span>
+                {/* The mockup's four-point star beside the emphasised word. It is
+                    punctuation, not information — hence `aria-hidden` and the
+                    inline-block so it rides the line rather than wrapping alone. */}
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="ml-2 inline-block h-[0.42em] w-[0.42em] align-baseline text-primary-500 sm:ml-3"
+                  fill="currentColor"
+                >
+                  <path d="M12 0c.7 6.1 5.2 10.6 11.3 11.3v1.4C17.2 13.4 12.7 17.9 12 24c-.7-6.1-5.2-10.6-11.3-11.3v-1.4C6.8 10.6 11.3 6.1 12 0z" />
+                </svg>
               </h1>
 
               {/* 🔴 Describes what the feature ACTUALLY does — it reads your
@@ -413,7 +417,7 @@ export function Landing() {
                   number of suppliers, no "instant", no accuracy claim: this is a
                   trust marketplace and the page may not promise what cannot be
                   shown (the same rule that kept invented testimonials off it). */}
-              <p className="mt-3 max-w-xl text-pretty text-[14px] leading-relaxed text-ink-700 sm:mt-4 sm:text-[16px]">
+              <p className="mt-2.5 max-w-lg text-pretty text-[13px] leading-relaxed text-ink-700 sm:mt-3 sm:text-[14px]">
                 Describe what you need — material, quantity, specification, destination. Our AI
                 matches you with{' '}
                 <span className="font-semibold text-ink-900">verified Indian exporters</span> who can
@@ -429,7 +433,7 @@ export function Landing() {
             <form
               role="search"
               onSubmit={onAiSearch}
-              className="mt-6 flex w-full max-w-[600px] flex-col rounded-3xl border border-surface-border bg-white p-1.5 shadow-[0_12px_34px_-18px_rgb(0_5_23/0.35)] transition-shadow focus-within:border-primary-600/40 focus-within:ring-4 focus-within:ring-primary-600/10 sm:mt-7 sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:p-1.5"
+              className="mx-auto mt-4 flex w-full max-w-[600px] flex-col rounded-3xl border border-surface-border bg-white p-1.5 shadow-[0_12px_34px_-18px_rgb(0_5_23/0.35)] transition-shadow focus-within:border-primary-600/40 focus-within:ring-4 focus-within:ring-primary-600/10 sm:mt-7 sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:p-1.5"
             >
               <label className="sr-only" htmlFor="hero-ai-q">
                 Describe what you want to source
@@ -495,9 +499,9 @@ export function Landing() {
               />
             </div>
 
-            <div className="mt-4 hidden w-full flex-row flex-wrap items-center justify-start gap-x-3 gap-y-2 sm:flex">
-              <p className="text-[12.5px] font-medium text-ink-500">Try asking:</p>
-              <div className="flex flex-wrap justify-start gap-2">
+            <div className="mt-3 hidden w-full flex-row flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:flex">
+              <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-600">Try asking</p>
+              <div className="flex flex-wrap justify-center gap-2">
                 {HERO_EXAMPLES.map((example) => (
                   <button
                     key={example}
@@ -516,33 +520,35 @@ export function Landing() {
               </div>
             </div>
 
-              {/* ONE primary action — the AI field (2026-09-29 design review: two
-                  solid red buttons competed with "Get matched"). Browsing and
-                  supplier signup stay, as quiet secondary links in sentence
-                  case — both real destinations. */}
-              <p className="mt-6 flex flex-wrap items-center justify-start gap-x-3 gap-y-1 text-[13.5px] text-ink-600">
-                <Link to="/categories" className="group inline-flex items-center gap-1 font-semibold text-ink-900 underline-offset-4 hover:underline">
-                  Browse the marketplace
-                  <ArrowRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
+              {/* The mockup's pair of buttons. They sit UNDER the AI field, not
+                  instead of it (owner, 2026-09-29): the field is what the hero
+                  exists for, and these are the two plain doors for anyone who
+                  would rather browse than describe. Both are real destinations. */}
+              <div className="mt-4 flex w-full flex-col items-center justify-center gap-2.5 sm:mt-4 sm:w-auto sm:flex-row">
+                <Link
+                  to="/categories"
+                  className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-primary-500 to-primary-700 px-6 text-[12px] font-bold uppercase tracking-[0.08em] text-white transition hover:from-primary-600 hover:to-primary-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/25 active:translate-y-px sm:w-auto"
+                >
+                  Explore marketplace
+                  <ArrowRightIcon
+                    className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
+                    aria-hidden="true"
+                  />
                 </Link>
-                <span aria-hidden="true" className="h-1 w-1 rounded-full bg-ink-300" />
-                <span>
-                  Selling?{' '}
-                  <Link to="/signup/exporter" className="font-semibold text-primary-700 underline-offset-4 hover:underline">
-                    Join as a supplier
-                  </Link>
-                </span>
-              </p>
-            </div>
+                <Link
+                  to="/signup/exporter"
+                  className="inline-flex h-11 w-full items-center justify-center rounded-full border border-ink-900/12 bg-white px-6 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-900 transition hover:border-ink-900/25 hover:bg-ink-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ink-900/10 sm:w-auto"
+                >
+                  Join as supplier
+                </Link>
+              </div>
 
-            <HeroMatchPreview className="mx-auto hidden w-full max-w-md sm:block lg:mx-0 lg:ml-auto" />
+              <HeroStats />
             </div>
           </div>
         </section>
 
-        <GlobeBand>
-          <HeroStats />
-        </GlobeBand>
+        <GlobeBand />
 
         {/* ═════════ BUYER / SUPPLIER FORK ═════════
             Straight after the hero (client brief, 2026-09-28): "Are you a

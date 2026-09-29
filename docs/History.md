@@ -175,6 +175,32 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-29 — The CENTRED-hero landing kept as a snapshot at `/landing-page-6` (owner: "put the previous centralised design in a separate landing page, this one in main").**
+  - `/` keeps the split hero.
+  - `pages/public/Landing6.jsx` + `components/landing6/` are taken VERBATIM from git `8d913fc` (the owner: "refer to git for the previous design") — imports repointed to `landing6/`, `useNoIndex(true)` instead of the canonical, component renamed `Landing6`. The route was added in App.jsx next to the other snapshots.
+  - A first attempt reconstructed the page from the working tree; it was discarded in favour of the committed version.
+  - Shared chrome (PublicHeader / PublicFooter) is NOT snapshotted, same as `/landing-page-3/4/5`.
+- **2026-09-29 — SPLIT HERO + the globe closes on the numbers (owner: the hero "too centralised, unsettling", the globe band "feels not complete" → "do it all").**
+  - **Hero:** a two-column grid from lg (`1.08fr / 0.92fr`).
+    - Left, LEFT-ALIGNED: the AI badge, a larger headline (up to 48px), the subtitle, the AI field, "Try asking" and the quiet browse/join links.
+    - Right (sm+): new `components/landing/HeroMatchPreview.jsx` — an ILLUSTRATIVE AI match card. It carries the request "Organic turmeric powder, 5 tonnes to Dubai" and three matched SAMPLE suppliers from `demoSuppliers` (Kesarvan, Nilvara, Ojasvi), labelled "Example", with no scores, counts or prices. It links to /ai-search ("Try it with your own request") and has a static floating "Chat directly" note.
+    - Phones: the text column only, left-aligned. More vertical padding.
+  - **GlobeBand:** the floating side cards, the ticker and the "Explore categories" arrow were removed. It now takes `children`: the stat row moved OUT of the hero into the dome as three big figures on a white panel (26 → 40px numbers, a red "+", divided cells). A bottom fade into the next (white) section replaces the hard edge. The scrim was shortened to fit the heading and text only.
+  - ⚠️ The 100+ / 1,200+ stats are still the TEMPORARY fixed figures (see below), now far more prominent — replace them with live counts before investors see them.
+  - **Revised (owner: "too plain / invisible globe, too many UI inconsistencies, that white band not looking good at all"):**
+    - ⚠️ REVERTED at once (owner: "revert globe colour change"): the scrim went back to the full-width cream linear gradient (h-[24rem]), the fade back to h-28, and the dots back to 1.7 / 2.1px with alpha floor 0.72. (Tried: a radial glow behind the copy only, h-14 fade, and 2 / 2.5px dots at alpha 0.85.)
+    - The white stats PANEL was removed: the figures sit on the globe, split by hairlines, 30 → 46px, with a canvas-colour text-shadow halo for legibility.
+    - The floating "Chat directly — No brokers in between" note on the preview card was removed (owner: "not looking good").
+    - Consistency: the globe heading got the red eyebrow "Our network" like every section; the preview card is `rounded-3xl` like the other cards.
+- **2026-09-29 — Hero fixes from Claude's design review (owner: "fix all the hero issues").**
+  - **One primary action:** the two uppercase buttons (a solid-red "EXPLORE MARKETPLACE" competing with "Get matched", and "JOIN AS SUPPLIER") became one quiet sentence-case line: "Browse the marketplace → · Selling? Join as a supplier". Both are the same destinations.
+  - **One accent:** "to the World" is `primary-600` (was the lighter primary-400) with a softer underline. The four-point star was removed.
+  - **Try asking:** more space from the field, and a quiet sentence-case "Try asking:" label instead of small caps.
+  - **Stats:** a hairline above and larger numbers (17/19px).
+  - **No duplicate search on the landing page:** `PublicHeader` hides its compact search field when `pathname === '/'` and keeps the icon — the hero's field is the search there.
+  - **Globe text revised again (owner: "the text on the globe is not looking right"):** the interim copy repeated the two side cards and the ticker (trust + direct chat, three times). The globe now carries its own message: "One platform between India and the world" / "Search, enquire, chat and agree quotations with Indian exporters — all in one place, wherever you buy from." The heading is at the shared 34px scale (was 38px) within max-w-xl, and the paragraph is narrower and ink-600.
+  - **(Superseded) The GlobeBand no longer repeats the hero:** the heading is now "Trusted suppliers, direct conversations" (was "How MPX Global connects Indian suppliers to the world"), and the paragraph keeps only the trust + direct-chat lines (the AI sentence duplicated the hero).
+  - Not done from the review: the GlobeBand side cards' position and the dotted arcs' opacity, and navbar right-side balance.
 - **2026-09-29 — Categories mega-menu fixed (owner: "hovering Categories, the dropdown is broken").** The panel (`absolute inset-x-0 top-full`) was squeezed to the nav pill's ~465px and the sub-category column was cut off. Cause: the pill's `backdrop-blur-sm` — any `backdrop-filter` (like `transform`, `filter` or `relative`) makes the element the containing block of absolutely positioned descendants. The blur was removed (bg 90% → 95% white), so the panel spans the header's full width again (verified 1471/1471px). The warning comment in PublicHeader now names backdrop-filter too.
 - **2026-09-29 — Hero stat row: TEMPORARY fixed figures (owner: "100+ verified suppliers, a convincing number for products, a + on categories", then "for now add these numbers").**
   - It shows "100+ Verified suppliers · 1,000+ Products listed · <live count>+ Categories".

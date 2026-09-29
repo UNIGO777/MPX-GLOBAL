@@ -171,8 +171,11 @@ export function PublicHeader({ centerSlot = null, current }) {
         <div className="ml-auto flex flex-1 items-center justify-end gap-1.5 sm:gap-2">
           {!centerSlot && (
             <>
-              {/* Compact search (2xl+ — at 1280px it squeezed the actions). A real form: it submits to /search. */}
-              <form role="search" onSubmit={onSearch} className="relative hidden 2xl:block">
+              {/* Compact search (2xl+ — at 1280px it squeezed the actions). A real form: it submits to /search.
+                  Not on the landing page (2026-09-29 design review): the hero's AI
+                  field is the search there, and two search boxes on one screen
+                  split the visitor's attention. The landing keeps the icon. */}
+              <form role="search" onSubmit={onSearch} className={`relative hidden ${onLanding ? '' : '2xl:block'}`}>
                 <label className="sr-only" htmlFor="header-q">
                   Search products and suppliers
                 </label>
@@ -199,7 +202,7 @@ export function PublicHeader({ centerSlot = null, current }) {
               <Link
                 to="/search"
                 aria-label="Search"
-                className="hidden h-10 w-10 items-center justify-center rounded-full text-ink-700 transition-colors hover:bg-ink-100 sm:flex 2xl:hidden"
+                className={`hidden h-10 w-10 items-center justify-center rounded-full text-ink-700 transition-colors hover:bg-ink-100 sm:flex ${onLanding ? '' : '2xl:hidden'}`}
               >
                 <SearchIcon className="h-5 w-5" aria-hidden="true" />
               </Link>

@@ -1,4 +1,7 @@
 import { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+
+import { ArrowRightIcon, BadgeCheckIcon, ChatIcon, SparkleIcon } from '../ui/icons.jsx';
 import { INDIA_LONLAT, WORLD_LONLAT } from './worldDots.js';
 
 /**
@@ -53,6 +56,37 @@ const ROUTES = [
   [[79, 22], [-2, 54]], // UK
 ];
 
+/**
+ * The cards that float over the globe, and the strip along the bottom.
+ *
+ * 🔴 Every line is something the platform DOES. The mockup put "Verified Tier-1
+ * OEM Hub · ISO 9001:2015 PROTOCOL", "$4.2B Cleared · SMART ESCROW LIVE" and
+ * "+14% SLA · Transit Optimization" in these slots, plus a ticker claiming
+ * escrow contracts live in 140+ jurisdictions. We hold no ISO register, move no
+ * money and measure no SLA, so those are the shapes, not the words.
+ */
+const CARDS = [
+  {
+    icon: BadgeCheckIcon,
+    title: 'Verified companies',
+    note: 'Documents checked by our team',
+    place: 'left-4 top-36 sm:left-8 lg:left-16 lg:top-44',
+  },
+  {
+    icon: ChatIcon,
+    title: 'Enquiry & chat',
+    note: 'Direct with the supplier',
+    place: 'right-4 top-36 sm:right-8 lg:right-16 lg:top-44',
+  },
+];
+
+const TICKER = [
+  "Every verified company's documents were checked by a person on our team",
+  'Describe what you need and our AI matches you with exporters who can supply it',
+  'Enquire and chat with suppliers directly — no brokers in between',
+  'Public supplier profiles, with the verified tick earned by review',
+];
+
 /** Pulsing destinations. Real places this marketplace actually points at. */
 const MARKERS = [
   { lon: 79, lat: 22, india: true }, // India — where the suppliers are
@@ -63,15 +97,7 @@ const MARKERS = [
   { lon: 134, lat: -25 }, // Australia
 ];
 
-/**
- * 2026-09-29 (design review: "the section feels incomplete"): the floating
- * side cards, the ticker and the "Explore categories" arrow were removed —
- * they repeated the trust points three times and left the dome's lower half
- * empty. The dome now closes on the page's key figures, passed in as
- * `children` (the hero's stat row, moved here), and fades into the next
- * section instead of ending on a hard edge.
- */
-export function GlobeBand({ children = null }) {
+export function GlobeBand() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -327,26 +353,74 @@ export function GlobeBand({ children = null }) {
         className="pointer-events-none absolute inset-x-0 top-4 h-[24rem] bg-[linear-gradient(to_bottom,transparent_0%,rgba(252,250,248,0.74)_16%,rgba(252,250,248,0.78)_62%,rgba(252,250,248,0.42)_84%,transparent_100%)]"
       />
 
-      <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-4 pb-24 pt-20 text-center sm:px-6 sm:pb-28 sm:pt-20 lg:pb-32 lg:pt-24">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700">Our network</p>
+      {/* Static labels, not controls: they carry no handler and no hover state,
+          so nothing here looks clickable when it is not (`web-ui-notes.md`).
+          Hidden below sm — at phone width they would land on the headline. */}
+      {CARDS.map(({ icon: Icon, title, note, place }) => (
+        <div
+          key={title}
+          className={`absolute z-10 hidden items-center gap-3 rounded-2xl border border-ink-900/10 bg-white/80 px-4 py-3 shadow-[0_10px_30px_-18px_rgb(0_5_23/0.4)] backdrop-blur-md sm:flex ${place}`}
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-600/10 text-primary-600">
+            <Icon className="h-4 w-4" aria-hidden="true" />
+          </span>
+          <span className="text-left">
+            <span className="block text-[13px] font-semibold leading-tight text-ink-900">{title}</span>
+            <span className="mt-0.5 block text-[10.5px] uppercase tracking-[0.1em] text-ink-500">
+              {note}
+            </span>
+          </span>
+        </div>
+      ))}
+
+      <div className="relative mx-auto flex max-w-3xl flex-col items-center px-4 pb-20 pt-20 text-center sm:px-6 sm:pb-24 sm:pt-20 lg:pb-28 lg:pt-24">
         <h2
           id="globe-heading"
-          className="mt-1.5 max-w-xl text-balance text-[22px] font-extrabold leading-[1.12] tracking-tight text-ink-900 sm:text-3xl lg:text-[34px]"
+          className="text-balance text-[22px] font-extrabold leading-[1.1] tracking-tight text-ink-900 sm:text-3xl lg:text-[38px]"
         >
-          One platform between India and the world
+          How MPX Global connects Indian suppliers to the world
         </h2>
         {/* 🔴 Three things the platform actually does. No escrow, no clearing,
             no volume figure — see the note at the top of this file. */}
-        <p className="mt-3 max-w-md text-pretty text-[13.5px] leading-relaxed text-ink-600 sm:text-[15px]">
-          Search, enquire, chat and agree quotations with Indian exporters — all in one place,
-          wherever you buy from.
+        <p className="mt-3.5 max-w-xl text-pretty text-[13.5px] leading-relaxed text-ink-700 sm:mt-4 sm:text-[15px]">
+          Describe what you need and our AI matches you with exporters who can supply it. Every
+          verified company&apos;s documents were checked by a person on our team, and you enquire and
+          chat with them directly — no brokers in between.
         </p>
 
-        {children && <div className="mt-9 w-full sm:mt-11">{children}</div>}
+        <Link
+          to="/categories"
+          className="group mt-7 inline-flex flex-col items-center gap-2.5 rounded-2xl px-4 py-2 text-ink-600 transition-colors hover:text-ink-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ink-900/10 sm:mt-9"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-ink-900/15 bg-white/70 backdrop-blur-sm transition-colors group-hover:border-ink-900/30 group-hover:bg-white">
+            <ArrowRightIcon className="h-4 w-4 rotate-90" aria-hidden="true" />
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em]">Explore categories</span>
+        </Link>
       </div>
 
-      {/* Fades the dome into the next (white) section — no hard edge. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white" />
+      {/* The mockup's marquee. It scrolls with CSS on a duplicated list, so the
+          loop has no seam; `aria-hidden` on the second copy keeps a screen
+          reader from hearing everything twice, and the whole strip stops under
+          `prefers-reduced-motion` (`.globe-ticker` in index.css). */}
+      <div className="relative border-t border-ink-900/10 bg-white/70 py-2.5 backdrop-blur-sm">
+        <div className="flex overflow-hidden">
+          {[false, true].map((clone) => (
+            <ul
+              key={String(clone)}
+              aria-hidden={clone || undefined}
+              className="globe-ticker flex shrink-0 items-center gap-10 pr-10"
+            >
+              {TICKER.map((line) => (
+                <li key={line} className="flex shrink-0 items-center gap-3 whitespace-nowrap">
+                  <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-primary-500" aria-hidden="true" />
+                  <span className="text-[12px] text-ink-600">{line}</span>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
