@@ -175,6 +175,233 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-29 — MERGE: two parallel hero designs reconciled.** `6d71968` ("hero design", a parallel
+  session) and this session's copy pass both changed `Landing.jsx`, `GlobeBand.jsx` and
+  `PublicHeader.jsx`. Both were owner-directed, so neither side was simply discarded:
+  - **Layout: THEIRS.** The split hero (copy left, `HeroMatchPreview` right) stands — the owner had
+    told that session the centred hero was "too centralised", which is a later call than the centring.
+  - **Copy and content: OURS.** The badge line, the deleted sub-line, and the removal of the example
+    chips, the two CTAs and the stat row are all the owner's most recent instructions.
+  - **`GlobeBand`: OURS.** They had stripped the cards, ticker and CTA and passed the stat row in as
+    `children`; the owner then deleted that stat row, so the prop had nothing left to receive. The
+    cards and the EXPLORE SUPPLIERS CTA they dictated stay.
+  - **`PublicHeader`: THEIRS** — hiding the header's compact search on the landing (the hero's AI
+    field is the search there) is independent of anything here and is a good change.
+  - **`landing6`: THEIRS.** Both sessions created a `Landing6.jsx` + `components/landing6/` +
+    `/landing-page-6` under the same names. Theirs is deployed; ours was superseded by `-7` and `-8`,
+    so ours was deleted before the merge rather than fought over.
+  - 🔴 **The auto-merge produced code that did not compile, and would not have been caught by looking
+    at the page.** `GlobeBand` kept their import line (which had dropped `Link`, `ArrowRightIcon`,
+    `BadgeCheckIcon`, `ChatIcon`) while keeping our markup that uses them; its docblock claimed the
+    cards were removed while the code rendered them; `TICKER` survived without its markup; and
+    `Landing.jsx` lost a `</div>` and `HeroMatchPreview` because both sat in the same block as the
+    chips the owner had asked to delete. All fixed by hand. **Lint caught every one — a merge of two
+    designs is not done when it renders.**
+- **2026-09-29 — Landing frozen at `/landing-page-8`.** Owner: "make one more copy of current landing
+  page". Same recipe as `-7`: `Landing8.jsx` + `components/landing8/` (13 files), `useNoIndex()` in
+  place of `useCanonical('/')`, own `globe8-ticker` keyframes. Verified **0 differing pixels** against
+  `/` with motion frozen; robots/canonical checked in the served DOM.
+  - 🔴 **`/landing-page-6` is a NAME COLLISION and is still unresolved.** `6d71968` on origin
+    ("hero design", Abhishekgautam2468) added its own `Landing6.jsx`, `components/landing6/` and
+    `/landing-page-6` route, and the deployed `/landing-page-6` is THEIRS, not the snapshot in this
+    working tree. That commit also rewrites `GlobeBand.jsx`, `Landing.jsx` and `PublicHeader.jsx` —
+    the files this session has been editing, all still uncommitted. **Do not merge without deciding
+    whose landing6 survives**, or one of the two is silently lost.
+  - ⚠️ Nine landing routes locally now. This is well past the point where they should be pruned.
+- **2026-09-29 — Two leftover DIAGNOSTIC rules removed from `index.css`.** Owner spotted a green sea in
+  the `/landing-page-5` and `-7` hero. Both rules were mine, left behind by a failed cleanup:
+  - `.story5 { --story5-deep: #00b050; --story5-night: #00b050; }` — the green. It was added to prove
+    the v5 CSS namespace was isolated from the live page.
+  - `.story, .story *, .story5, .story5 * { animation-delay: -9s !important; }` — worse, and nobody
+    reported it: it **froze the supply-chain story at its 9-second frame** on `/landing-page-4`, `-5`
+    and `-7`. Those pages have been showing a still image of the sea scene, not an animation.
+  - 🔴 **Why the cleanup missed them.** The regex removed the `/* TEMP-DIAG */` marker and stopped;
+    the rules sat below it, OUTSIDE the `@layer`, so they also outranked the real values. The check
+    afterwards asserted `'TEMP-DIAG' not in s` — **it verified the marker, not the effect**. A
+    diagnostic is not gone because its comment is gone; grep the built CSS for the VALUE
+    (`00b050`, `animation-delay:-9s`) and re-render the page. Both now return 0 in the bundle and
+    the story runs from scene 1 again.
+- **2026-09-29 — `/landing-page-7` now carries `/landing-page-5`'s hero.** Owner: "in landing 7 use
+  landing page 5 hero section". The two-column hero with the five-scene supply-chain story replaced
+  landing-7's centred one; everything below it is still landing-7's own. Verified: **0 differing
+  pixels** against `/landing-page-5` through the whole hero band, and the only difference on the
+  first screen is the section under it (globe band vs "Browse by sector").
+  - Brought across with it: `components/landing7/HeroStory.jsx` and `HERO_EXAMPLES` (the chips the
+    live landing dropped on 2026-09-29).
+  - ⚠️ **That hero has no transparent-navbar treatment**, so `/landing-page-7`'s header is now a
+    white bar again, like landing-5's. It came with the section; the live `/` is unaffected.
+  - 🔴 **`landing7/HeroStory.jsx` shares landing-5's `story5-*` CSS on purpose** — it is NOT given a
+    `story7-*` namespace. That block is ~240 hand-written lines Tailwind cannot purge, and a third
+    copy would ship to every visitor of the LIVE site for the sake of a comparison page. Both users
+    of it are frozen snapshots and the live landing uses no `story*` CSS at all. If anyone ever edits
+    `story5-*`, give this file its own namespace then rather than editing the shared block.
+  - ⚠️ The page now shows BOTH the story hero and the globe band, which were alternatives to each
+    other. That is what was asked for; flagging it in case only one was meant.
+- **2026-09-29 — Film section: eyebrow dropped, heading in brand red, audience strip removed.** Owner.
+  "The MPX Global film" eyebrow is gone, "Introducing MPX Global" is now `text-primary-600`, and the
+  MANUFACTURERS · EXPORTERS · BUYERS line under the video is deleted.
+  - 🔴 `primary-600` (5.73:1 on white), NOT the hero's `primary-400`. 400 measures **3.72:1** — fine
+    for display type under the large-text rule, but this heading drops to 26px on a phone, where the
+    4.5:1 rule applies and it would fail. Checked both before choosing.
+
+- **2026-09-29 — Landing frozen at `/landing-page-7`.** Owner: "make copy of current that landing
+  page". Same recipe as `-6`: `Landing7.jsx` + `components/landing7/` (13 files, now including
+  `tradeMapDots.js` as well as `worldDots.js`), `useNoIndex()` in place of `useCanonical('/')`, and
+  its own `globe7-ticker` keyframes so edits to `/` cannot reach it. Verified **0 differing pixels**
+  against `/` with motion frozen; robots/canonical checked in the served DOM.
+  - ⚠️ **One thing this snapshot canNOT freeze: `public/world-dots.svg`.** The trade map loads it as
+    an image, so it is shared by every landing. Today's India fix already changed all of them, and
+    any future edit will too. The components are frozen; that asset is not.
+  - ⚠️ **Eight landing routes now** (`/`, `/landing-blue`, `/landing-2`, `/landing-page-3` … `-7`).
+- **2026-09-29 — Supplier fact tiles: a lone last tile now centres.** Owner: "make language box center
+  align cause we removed website box". `SupplierFeatureCard`'s `dl` is `sm:grid-cols-2`, so dropping
+  the website tile left three — and the third ("Languages spoken") sat alone, hard against the left
+  edge. An odd last tile now takes `sm:col-span-2 sm:justify-self-center`.
+  - `justify-self-center` is doing two jobs: it centres the tile AND stops it stretching across the
+    span, so it keeps a tile's proportions instead of becoming a wide bar. `col-span-2` alone would
+    have looked worse than the original.
+  - Written against `tiles.length % 2`, not hard-coded to three, so it holds for the real-supplier
+    path too (`fromReal` yields a variable number of details).
+- **2026-09-29 — India map: the hourglass pinch under the crown fixed.** Owner: "in the head of our
+  map there is some issue", with a reference. 🔴 Not only cosmetic — it was cutting off territory.
+  - Diagnosis: at 32.60N the shape spans 74.41–79.20E and at 30.80N it spans 74.70–79.49E, but the
+    two rows BETWEEN them sat at 75.31–78.30 and 74.99–78.59 — inset on both sides, so J&K read as
+    nearly detached. The western edge at ~32N belongs near **74.5E** (the Punjab border; Amritsar is
+    74.87E and sits right on it), so 75.31E was dropping Indian Punjab, not just thinning the neck.
+  - Fixed by interpolating those two rows' envelope between their neighbours and adding 3 dots.
+    817 → 820. Verified against the owner's reference with a zoomed before/after render.
+  - 🔴 **Gotcha: the rows alternate PHASE.** The first attempt borrowed lon positions from the rows
+    above and below, which are offset by half a step — that produced two visibly over-dense rows.
+    Each row has to be extended on its OWN spacing (median gap, ~0.61°).
+  - ⚠️ **The generator script is not in the repo** (it was temporary, per the 2026-09-28 entry), so
+    `public/world-dots.svg` is now the only artefact and this was a direct edit of it. Anyone
+    regenerating from Natural Earth must re-apply India's official boundary AND re-check this seam.
+  - ⚠️ **`components/landing/worldDots.js` is STALE** and was already stale before this: it was
+    derived from the SVG when India had 68 dots, and the SVG has since been regenerated twice (now
+    820). The globe still renders, but its India highlight is far coarser than the map's. Its own
+    header says to regenerate the two together — not done here, flagged to the owner.
+  - ⚠️ `world-dots.svg` is a shared public asset, so every landing snapshot's map changes with it.
+
+- **2026-09-29 — Platform cards: photos removed, one uniform board.** Owner: "remove images frm all
+  the boxes and make design like other boxes", plus new copy for the last tile.
+  - All eight tiles are now the same quiet white tile. `PhotoTile`, the `feature`/`wide`/`photo`
+    layouts and the `SPAN` map are gone, so the bento's 2×2 and 2-wide spans go with them — the board
+    is a plain 4×2 grid. Three new vignettes replace the photographs: Verification (a document row
+    with the verified tick), AI search (the typed example, kept from the old photo caption) and
+    Organisations (one company profile with colleagues joining).
+  - `VIGNETTES` entries may now be a FUNCTION of `{ seen }`, which is how the AI example still types
+    itself; `QuietTile` takes `seen` and calls it when it is one.
+  - Last tile: "Pay suppliers directly / Your money goes straight to the seller." →
+    **"Connect. Trade. Grow."** with the owner's line. The `chip` key changed `Payments` → `Connect`
+    (internal only — it is never rendered) and the icon to a handshake, because a tile keyed
+    "Payments" that says nothing about payment is a trap for the next reader.
+  - ⚠️ **A guard was removed by that copy change.** The old line existed BECAUSE MPX Global holds no
+    money, and its comment said never to turn it into a payment-protection claim. The new copy says
+    "secure, confident deals" — vaguer, and it no longer states the money goes straight to the
+    seller. Flagged to the owner; `docs/Client-Requests.md` line 60 still tells the client in writing
+    that MPX Global never holds or moves anyone's money.
+  - `card-verification.jpg`, `card-ai-matchmaking.jpg` and `card-organisations.jpg` are now used only
+    by the landing snapshots' own copies. They go when those go.
+- **2026-09-29 — Trade-assurance rows added to the footer, badged "Under progress" (OWNER OVERRIDE).**
+  The owner asked for seven footer items. Two ("Production monitoring & inspection services",
+  "Policies and rules") were already there. 🔴 The other five — **Order protection · Secure payments ·
+  Money-back guarantee · Guaranteed delivery · After-sales protections** — had been **deliberately
+  excluded on 2026-09-28**, recorded in `PublicFooter.jsx` itself, as promises about money and orders
+  that MPX Global does not make. A red alert was raised with that history; the owner replied **"we
+  need to show it"** and then asked for an **under-progress tag**.
+  - 🔴 **Then the owner narrowed the tag to "Secure payments" only** (same day). The other four —
+    Order protection, Money-back guarantee, Guaranteed delivery, After-sales protections — are plain
+    untagged placeholders, so the footer now names capabilities that do not exist. That was raised
+    again before the change and is the owner's decision on record; it is flagged in the component and
+    in `UiWebNotes.md` as the first line to revisit if the footer is ever reviewed for overpromising.
+    Phase 1 moves no money; escrow, orders and shipments are Bucket B.
+  - The file's own header note said these were excluded. That note is now **wrong and outranks any
+    doc a fresh session would read**, so it was rewritten in the same edit (CLAUDE.md, "When a
+    decision changes"). Refunds · file a trade dispute · check order status · payment-network badges
+    are STILL out, for the original reason.
+  - `comingSoon: true` became `badge: '<text>'` — one mechanism instead of a boolean per label. Trade
+    Finance keeps "Coming soon"; the five new rows read "Under progress".
+  - ⚠️ The two pre-existing rows stay **untagged**, because the owner asked for no labels on
+    placeholders on 2026-09-28. Same column, two conventions — flagged for the owner to settle.
+- **2026-09-29 — Film section retitled.** Owner: heading "Ready to trade. Built to connect." →
+  **"Introducing MPX Global"**, description → **"India's Supply. The World's Demand."**, and the
+  video's own badge "The MPX Global film · 2 min" → **"Introducing MPX Global"** as well.
+  - Both are stored in sentence case and uppercased in CSS, same reason as the globe heading: a run
+    of capitals can be read letter by letter by some screen readers.
+  - ⚠️ The visible **"· 2 min" runtime is gone** — a viewer can no longer see how long the film is
+    before committing to it. The play button's `aria-label` still says "Play the MPX Global film, 2
+    minutes", so the information survives for assistive tech but not on screen.
+  - ⚠️ "Introducing MPX Global" now appears **twice** in the section, about 150px apart: as the h2 and
+    again on the poster. That is what was asked for; the eyebrow above it still reads "The MPX Global
+    film". Raised with the owner rather than quietly dropping one of them.
+  - **JSX gotcha, second time this session:** `{/* … */}` is not valid BETWEEN attributes of an
+    element — it only works where a child would go. Use a plain `/* … */` there instead.
+- **2026-09-29 — "Browse by sector" removed from the live landing.** Owner: "remove this section
+  entirly". `<PromoPanels />` and its import are out of `Landing.jsx`, and
+  `components/landing/PromoPanels.jsx` was deleted with it rather than left orphaned. The page now
+  runs hero → globe band → AudienceFork.
+  - ⚠️ **This again deletes work pushed earlier today**: the section had just been reworked with new
+    photographs and Garments renamed to Gems & Jewellery, at the owner's request. The owner has now
+    removed the section itself.
+  - 🔴 **The snapshots are unaffected and must stay that way** — `/landing-page-3` … `-6` each render
+    their own copy from `components/landing<N>/PromoPanels.jsx`. Do not "clean up" those as dead code;
+    they are what makes the archives frozen.
+  - `sector-agriculture/-jewellery/-textiles.webp` are now referenced ONLY by the `landing6` copy.
+    They go when that snapshot goes, not before.
+- **2026-09-29 — Hero sub-line removed.** Owner: remove "Describe what you need. Our intelligent
+  matching connects you with relevant Indian suppliers ready to supply." — desktop and mobile. The
+  hero is now badge → headline → search field, and nothing else. Its explanatory comment (the note on
+  why the line avoided supplier counts, "instant" and accuracy claims) went with it; that rule still
+  applies to whatever copy lands there next, and lives in this log rather than the file now.
+- **2026-09-29 — Globe band copy rewritten, and its scroll cue became a real CTA.** Owner, five edits:
+  heading → **"How MPX Global Works"**, sub → **"Indian Suppliers. Global Buyers."**, left card →
+  **Verified Suppliers / Business details checked.**, right card → **Direct Enquiries / Connect
+  directly with suppliers.**, plus a bottom **EXPLORE SUPPLIERS →**.
+  - The heading is stored in sentence case and uppercased in CSS. Some screen readers spell a run of
+    capitals out letter by letter, so `uppercase` is the accessible way to render a shouty heading.
+  - The card note lost its `uppercase tracking-[0.1em]`: the new notes are sentences ending in a full
+    stop, and small caps with a period reads as a typo rather than a label.
+  - The CTA **replaces** the old "Explore categories" scroll cue — one clear action beats an arrow
+    that only pointed further down the page. It goes to `/suppliers`, which I checked is a real route
+    (`App.jsx:291`) and the same page the header's "Suppliers" link opens, so it is not a dead
+    control.
+  - Contrast re-measured after the block moved: heading 15.57:1, sub 8.48:1. Mobile checked.
+- **2026-09-29 — Hero copy rewritten and the lower hero blocks removed.** Owner, with a screenshot.
+  - Badge: "AI · Match-making for global buyers" → **"AI-Powered Global Sourcing"**. The separate red
+    "AI" tag went with it — the new line says "AI-Powered" itself, so the tag repeated the word — and
+    the pill's lopsided `pl-1 pr-3` padding (shaped for that inset tag) is now balanced `px-4`.
+  - Sub: → **"Describe what you need. Our intelligent matching connects you with relevant Indian
+    suppliers ready to supply."**
+  - **Removed, per the screenshot:** the "Try asking" example chips (both the phone scroller and the
+    sm+ row), the EXPLORE MARKETPLACE / JOIN AS SUPPLIER pair, and the stat row. `HERO_EXAMPLES` and
+    the whole `HeroStats` component went with them rather than being left as dead code — lint caught
+    both. `askAi` stays: the search form still uses it.
+  - ⚠️ **This deleted another developer's work from earlier today.** `8d913fc` had just replaced the
+    stat row's live counts with fixed display figures (100+ / 1,200+) at the owner's request, carrying
+    a note to swap them back to live totals before launch. The owner has now removed the row itself,
+    so that pre-launch item is moot — but if the row ever returns, the live `suppliers` / `products`
+    queries and the `verifiedOnly` lesson are in this file's history, not in the code any more.
+  - Side effect worth having: with those blocks gone the globe reaches **56%** of a 900px screen (was
+    64%), which is much closer to the "half the page" asked for earlier.
+  - **Tooling note:** the `file://` iframe harness used all session for mobile shots now renders
+    blank — Chrome will not let a `file://` page frame `http://localhost`. Serve the harness over
+    http instead (`python3 -m http.server` in the scratchpad). A direct `--window-size=390` capture is
+    NOT a substitute: below ~600px Chrome lays out wider and merely crops, which looks like a broken
+    page and is not one.
+- **2026-09-29 — Landing frozen at `/landing-page-6` before the next round of edits.** Owner: "make
+  current landing page as copy and in current landing page we need to change things". Same recipe as
+  the earlier snapshots: `Landing6.jsx` + `components/landing6/` (13 files, including `GlobeBand` and
+  `worldDots`), `useNoIndex()` in place of `useCanonical('/')`.
+  - 🔴 **This one also owns its global CSS**: the globe band's marquee runs as `globe6-ticker`, with
+    its own keyframes. `/` is about to be edited and a shared keyframe would carry those edits
+    straight into the archive — the exact hole `/landing-2` and `/landing-page-3` still have with the
+    `.story*` block. Delete the route, the page, the folder and those rules together.
+  - Verified identical: `/` and `/landing-page-6` render **0 differing pixels** with motion frozen.
+    ⚠️ A plain screenshot comparison showed ~4,700 differences and that was a FALSE alarm — the globe
+    rotates, the badge dot pulses and the headline underline draws itself, so two captures are never
+    the same frame. Freeze motion before diffing this page.
+  - ⚠️ **Seven landing routes now** (`/`, `/landing-blue`, `/landing-2`, `/landing-page-3` … `-6`).
+    Still shared by all of them: the header, footer, `components/catalogue/*` and the icons.
 - **2026-09-29 — The CENTRED-hero landing kept as a snapshot at `/landing-page-6` (owner: "put the previous centralised design in a separate landing page, this one in main").**
   - `/` keeps the split hero.
   - `pages/public/Landing6.jsx` + `components/landing6/` are taken VERBATIM from git `8d913fc` (the owner: "refer to git for the previous design") — imports repointed to `landing6/`, `useNoIndex(true)` instead of the canonical, component renamed `Landing6`. The route was added in App.jsx next to the other snapshots.

@@ -19,6 +19,8 @@ import { Landing3 } from './pages/public/Landing3.jsx';
 import { Landing4 } from './pages/public/Landing4.jsx';
 import { Landing5 } from './pages/public/Landing5.jsx';
 import { Landing6 } from './pages/public/Landing6.jsx';
+import { Landing7 } from './pages/public/Landing7.jsx';
+import { Landing8 } from './pages/public/Landing8.jsx';
 import { Categories } from './pages/public/Categories.jsx';
 import { CategoryListing } from './pages/public/CategoryListing.jsx';
 import { ProductDetail } from './pages/public/ProductDetail.jsx';
@@ -332,6 +334,14 @@ export function App() {
                 `components/landing6/`. Delete this route, `Landing6.jsx` and
                 that folder together once the landing is settled. */}
             <Route path="/landing-page-6" element={<Landing6 />} />
+            {/* ⚠️ A frozen SNAPSHOT of the landing as it stood on 2026-09-29,
+                after the copy pass (owner). `noindex`, own components in
+                `components/landing7/`, own `globe7-ticker` keyframes. */}
+            <Route path="/landing-page-7" element={<Landing7 />} />
+            {/* ⚠️ A frozen SNAPSHOT of the landing as it stood on 2026-09-29,
+                after the film-heading pass (owner). `noindex`, own components in
+                `components/landing8/`, own `globe8-ticker` keyframes. */}
+            <Route path="/landing-page-8" element={<Landing8 />} />
 
             {/* --- Party auth (buyer + exporter share screens; portal = the field change) ---
                    All of these are for signed-OUT visitors: RedirectIfAuthed sends a live

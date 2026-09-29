@@ -4,21 +4,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { useCanonical } from '../../lib/seo.js';
+import { useNoIndex } from '../../lib/seo.js';
 import { BannerStrip, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
-import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
-import { FaqAccordion } from '../../components/landing/FaqAccordion.jsx';
-import { FaqExplorer } from '../../components/landing/FaqExplorer.jsx';
-import { AiBandVideo } from '../../components/landing/AiBandVideo.jsx';
-import { AudienceFork } from '../../components/landing/AudienceFork.jsx';
-import { GlobeBand } from '../../components/landing/GlobeBand.jsx';
-import { HeroMatchPreview } from '../../components/landing/HeroMatchPreview.jsx';
-import { MpxFilm } from '../../components/landing/MpxFilm.jsx';
-import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
-import { SourceTypeCards } from '../../components/landing/SourceTypeCards.jsx';
-import { HEADING, SectionHeader, SectionLink } from '../../components/landing/SectionHeader.jsx';
-import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
+import { CategoryCircles } from '../../components/landing7/CategoryCircles.jsx';
+import { FaqAccordion } from '../../components/landing7/FaqAccordion.jsx';
+import { FaqExplorer } from '../../components/landing7/FaqExplorer.jsx';
+import { AiBandVideo } from '../../components/landing7/AiBandVideo.jsx';
+import { AudienceFork } from '../../components/landing7/AudienceFork.jsx';
+import { GlobeBand } from '../../components/landing7/GlobeBand.jsx';
+import { HeroStory } from '../../components/landing7/HeroStory.jsx';
+import { MpxFilm } from '../../components/landing7/MpxFilm.jsx';
+import { PlatformCards } from '../../components/landing7/PlatformCards.jsx';
+import { SourceTypeCards } from '../../components/landing7/SourceTypeCards.jsx';
+import { HEADING, SectionHeader, SectionLink } from '../../components/landing7/SectionHeader.jsx';
+import { TradeAgreements } from '../../components/landing7/TradeAgreements.jsx';
 
 import {
   ArrowRightIcon,
@@ -159,11 +159,44 @@ function BlockHead({ eyebrow, title, sub, to, cta = 'See all' }) {
 }
 
 
+/* The three examples the landing-5 hero's chips run. Kept here because that
+   hero renders them; the live landing dropped both on 2026-09-29. */
+const HERO_EXAMPLES = [
+  'Organic turmeric powder, 5 tonnes to Dubai',
+  '120 GSM cotton poplin for shirts',
+  'ISO-certified stainless steel fasteners',
+];
+
+
 /* ---------------------------------- page ---------------------------------- */
 
-export function Landing() {
+/**
+ * ⚠️ SNAPSHOT — a frozen copy of the landing page as it stood on 2026-09-29,
+ * taken at the owner's request after the copy pass (hero trimmed to badge +
+ * headline + field, "Browse by sector" removed, the platform board flattened to
+ * eight photo-free tiles, the film heading in brand red). Served at
+ * `/landing-page-7`.
+ *
+ * 🔴 **It is `noindex`.** It is the same page as `/`; two indexable copies of one
+ * page is duplicate content. It deliberately does NOT call `useCanonical('/')` —
+ * pointing a copy's canonical at the original invites a crawler to treat them as
+ * one page, which is the opposite of freezing it.
+ *
+ * 🔴 **It owns its components** (`components/landing7/`, including `worldDots`
+ * and `tradeMapDots`) AND its one piece of global CSS: the globe band's marquee
+ * runs as `globe7-ticker`.
+ *
+ * ⚠️ Still SHARED, so a change there DOES reach this page: the header, the
+ * footer, `components/catalogue/*`, the shared icons — and
+ * **`public/world-dots.svg`**, which the trade map loads as an image. Editing
+ * India's dots again will change this snapshot's map too.
+ *
+ * Delete this route, this file, `components/landing7/` and the `globe7-ticker`
+ * rules together once the landing is settled.
+ */
+export function Landing7() {
   const navigate = useNavigate();
-  useCanonical('/');
+  useNoIndex();
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
@@ -211,6 +244,11 @@ export function Landing() {
           `PublicHeader`. The masthead search moved there too, as a compact
           field; the hero keeps the big one. */}
       <main>
+        {/* 🔴 THIS HERO IS `/landing-page-5`'s, lifted wholesale at the owner's
+            request (2026-09-29) so the two can be compared side by side: the
+            two-column layout with the five-scene supply-chain story, not the
+            centred hero the live page now carries. Everything BELOW it is
+            landing-page-7's own. */}
         {/* ═════════ HERO — AI MATCH-MAKING ═════════
             Rebuilt 2026-09-26 on the owner's brief: "we are making this section
             for reflecting our biggest fiture for ai match making… make a search
@@ -242,23 +280,8 @@ export function Landing() {
             of a visitor ("make a search bar"). The field, its phone-specific
             prompt-card layout and the example chips all carry over untouched —
             only their colours move to the dark ground. */}
-        {/* 🔴 The hero runs UP BEHIND the sticky header, which is what makes the
-              navbar transparent (owner, 2026-09-29). The header already paints
-              `bg-white/0` until you scroll — the white strip people saw was the
-              PAGE behind it, because a sticky element still takes its space in
-              flow and the hero began underneath. The negative margin is exactly
-              the header's height and the padding gives it straight back, so the
-              copy sits where it did and only the cream and its grid move up. */}
-        <section className="relative isolate -mt-16 overflow-hidden bg-surface-canvas pt-16 text-ink-900 lg:-mt-[72px] lg:pt-[72px]">
-          {/* The mockup's faint engineering grid. Two hairline gradients rather
-              than an image: it has to tile at any width, and it must not cost a
-              request for something this quiet. It fades out at the bottom so it
-              never fights the story band under it. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgb(0_5_23/0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgb(0_5_23/0.045)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:linear-gradient(to_bottom,#000_0%,#000_55%,transparent_92%)]"
-          />
-          <div className="relative flex min-h-[46svh] w-full flex-col items-center justify-center px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-10 lg:px-10 lg:pb-16 lg:pt-12 xl:px-16">
+        <section className="relative isolate overflow-hidden bg-surface-canvas text-ink-900">
+          <div className="relative grid w-full items-center gap-4 px-4 py-7 max-[359px]:py-5 sm:gap-10 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)] lg:gap-8 lg:px-10 lg:py-20 xl:px-16">
             {/* Centred on a phone, left-aligned once the story sits beside it —
                 a centred column next to an illustration reads as two unrelated
                 blocks. */}
@@ -266,34 +289,21 @@ export function Landing() {
                 (`-mx-4 w-[calc(100%+2rem)]`), and without this the grid item's
                 automatic minimum size grew to fit it, widening the single
                 mobile track to ~700px and pushing the whole hero off-screen. */}
-            {/* SPLIT HERO (2026-09-29 design review: the single centred column
-                felt "too centralised, unsettling"). Left: the story + the AI
-                field, left-aligned. Right (sm+): an illustrative match preview.
-                Phones stack, text first. */}
-            <div className="grid w-full max-w-7xl items-center gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
-            <div className="flex w-full min-w-0 flex-col items-start text-left">
-              {/* The mockup's announcement pill: a solid tag, the line, an arrow.
-                  🔴 It is a real Link, not a decorated <p>. The mockup's arrow
-                  reads as "this goes somewhere", and a live-looking control that
-                  does nothing is exactly what `web-ui-notes.md` forbids — so it
-                  goes to the AI search it is describing. */}
-              <Link
-                to="/ai-search"
-                className="group inline-flex items-center gap-2 rounded-full border border-ink-900/10 bg-white px-4 py-1.5 text-[12.5px] font-semibold text-ink-700 shadow-sm transition hover:border-ink-900/20 hover:shadow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/20 sm:gap-2.5 sm:px-5 sm:text-sm"
-              >
-                <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-primary-600 motion-reduce:animate-none" />
-                AI-Powered Global Sourcing
-                <ArrowRightIcon
-                  className="h-3.5 w-3.5 text-primary-600 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
-                  aria-hidden="true"
-                />
-              </Link>
+            <div className="flex w-full min-w-0 flex-col items-center text-center lg:items-start lg:text-left">
+              <p className="inline-flex items-center gap-2.5 rounded-full border border-ink-900/10 bg-white px-4 py-1.5 text-[12.5px] font-semibold text-ink-700 shadow-sm sm:px-5 sm:py-2 sm:text-sm">
+                <span className="flex items-center gap-1.5">
+                  <span aria-hidden="true" className="h-2 w-2 animate-pulse-soft rounded-full bg-primary-400 motion-reduce:animate-none" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary-600">AI</span>
+                </span>
+                <span aria-hidden="true" className="h-4 w-px bg-ink-900/15" />
+                Match-making for global buyers
+              </p>
 
-              <h1 className="mt-4 max-w-2xl text-balance text-[28px] font-extrabold leading-[1.06] max-[359px]:text-[25px] tracking-tight text-ink-900 sm:mt-5 sm:text-[38px] lg:text-[42px] xl:text-[48px]">
+              <h1 className="mt-5 max-w-2xl text-balance text-[30px] font-extrabold leading-[1.06] max-[359px]:text-[26px] tracking-tight text-ink-900 sm:mt-7 sm:text-5xl lg:text-[52px] xl:text-6xl">
                 Connecting India&apos;s Suppliers
                 <br />
                 <span className="relative inline-block pb-1">
-                  <span className="text-primary-600">to the World</span>
+                  <span className="text-primary-400">to the World</span>
                   {/* Hand-drawn underline that draws itself once on load. */}
                   <svg
                     aria-hidden="true"
@@ -306,13 +316,25 @@ export function Landing() {
                       d="M2 8C50 2 100 4 150 6C200 8 250 4 298 7"
                       pathLength="1"
                       strokeDasharray="1"
-                      className="animate-draw-line stroke-primary-600/60 motion-reduce:animate-none"
+                      className="animate-draw-line stroke-primary-400 motion-reduce:animate-none"
                       strokeWidth="3"
                       strokeLinecap="round"
                     />
                   </svg>
                 </span>
               </h1>
+
+              {/* 🔴 Describes what the feature ACTUALLY does — it reads your
+                  requirement and finds suppliers already on this platform. No
+                  number of suppliers, no "instant", no accuracy claim: this is a
+                  trust marketplace and the page may not promise what cannot be
+                  shown (the same rule that kept invented testimonials off it). */}
+              <p className="mt-3 max-w-xl text-pretty text-[14.5px] leading-relaxed text-ink-700 max-[359px]:text-[13.5px] sm:mt-5 sm:text-lg">
+                Describe what you need — material, quantity, specification, destination. Our AI
+                matches you with{' '}
+                <span className="font-semibold text-ink-900">verified Indian exporters</span> who can
+                supply it.
+              </p>
 
             {/* The AI field — the one thing the hero asks a visitor to use.
                 Phones (owner, 2026-09-27: "think of better design for search and
@@ -323,12 +345,12 @@ export function Landing() {
             <form
               role="search"
               onSubmit={onAiSearch}
-              className="mt-6 flex w-full max-w-[600px] flex-col rounded-3xl border border-surface-border bg-white p-1.5 shadow-[0_12px_34px_-18px_rgb(0_5_23/0.35)] transition-shadow focus-within:border-primary-600/40 focus-within:ring-4 focus-within:ring-primary-600/10 sm:mt-7 sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:p-1.5"
+              className="mt-5 flex w-full max-w-[720px] flex-col rounded-3xl border border-surface-border bg-white p-2 shadow-lift transition-shadow focus-within:border-primary-600/40 focus-within:ring-4 focus-within:ring-primary-600/10 sm:mt-14 sm:flex-row sm:items-center sm:gap-2 sm:rounded-2xl sm:p-2.5"
             >
               <label className="sr-only" htmlFor="hero-ai-q">
                 Describe what you want to source
               </label>
-              <div className="flex min-w-0 flex-1 items-center px-3 sm:rounded-full sm:bg-ink-50 sm:px-4">
+              <div className="flex min-w-0 flex-1 items-center px-3 sm:rounded-xl sm:bg-ink-50 sm:px-4">
                 <SearchIcon className="mr-3 hidden h-5 w-5 shrink-0 text-ink-500 sm:block" aria-hidden="true" />
                 <input
                   id="hero-ai-q"
@@ -336,7 +358,7 @@ export function Landing() {
                   value={heroQuery}
                   onChange={(e) => setHeroQuery(e.target.value)}
                   placeholder="Describe what you want to source…"
-                  className="h-11 min-w-0 flex-1 bg-transparent text-[16px] text-ink-900 outline-none placeholder:text-ink-500 sm:h-11 sm:text-[14.5px]"
+                  className="h-12 min-w-0 flex-1 bg-transparent text-[16px] text-ink-900 outline-none placeholder:text-ink-500 sm:h-14 sm:text-[15px]"
                 />
               </div>
               <div className="flex items-center justify-between gap-3 border-t border-ink-100 pl-3 pt-2 max-[359px]:justify-end sm:contents">
@@ -348,7 +370,7 @@ export function Landing() {
                     hooks more) — says what the AI does for you, not what you do. */}
                 <button
                   type="submit"
-                  className="group inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-b from-primary-500 to-primary-700 px-4 text-[14px] font-semibold tracking-tight text-white transition hover:from-primary-600 hover:to-primary-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/25 active:translate-y-px sm:h-11 sm:gap-2 sm:rounded-full sm:px-6 sm:text-[14px]"
+                  className="group inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-b from-primary-500 to-primary-700 px-4 text-[14px] font-semibold tracking-tight text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_10px_24px_-10px_theme(colors.primary.600/70%)] transition hover:from-primary-600 hover:to-primary-800 hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_14px_28px_-10px_theme(colors.primary.600/80%)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/25 active:translate-y-px sm:h-14 sm:gap-2 sm:rounded-xl sm:px-8 sm:text-base"
                 >
                   <SparkleIcon className="hidden h-4 w-4 sm:block" aria-hidden="true" />
                   Get matched
@@ -359,15 +381,59 @@ export function Landing() {
                 </button>
               </div>
             </form>
+
+            {/* Real controls: each one runs that search — examples of the KIND
+                of sentence the AI handles, the part a visitor cannot guess from
+                an empty box. (owner, 2026-09-27) sm+: "Try asking" + sparkle
+                pills in one row. Phones: the pills took three stacked rows and
+                looked cheap there, so a single quiet text line that scrolls
+                sideways under a fade. */}
+            {/* Phones: ONE line of small chips in the desktop pills' style,
+                scrolling sideways with snap, faded at the right edge. */}
+            <div className="relative -mx-4 mt-3 w-[calc(100%+2rem)] sm:hidden">
+              <div className="scrollbar-none flex snap-x snap-mandatory items-center gap-1.5 overflow-x-auto scroll-px-4 px-4 pr-10">
+                <span className="shrink-0 snap-start pr-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-600">Try</span>
+                {HERO_EXAMPLES.map((example) => (
+                  <button
+                    key={example}
+                    type="button"
+                    onClick={() => askAi(example)}
+                    className="flex h-7 shrink-0 snap-start items-center gap-1 whitespace-nowrap rounded-full border border-ink-900/10 bg-white px-2.5 text-[11.5px] text-ink-700 transition active:border-primary-600/40 active:bg-primary-50"
+                  >
+                    <SparkleIcon className="h-2.5 w-2.5 shrink-0 text-primary-600" aria-hidden="true" />
+                    {example}
+                  </button>
+                ))}
+              </div>
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-surface-canvas via-surface-canvas/80 to-transparent"
+              />
             </div>
 
-            {/* The split hero's right-hand column. It was lost in the 2026-09-29
-                merge — it sat in the same block as the example chips, and those
-                the owner had asked to delete. The chips stay gone; this comes
-                back, or the two-column grid above has nothing in its second
-                column. */}
-            <HeroMatchPreview className="mx-auto hidden w-full max-w-md sm:block lg:mx-0 lg:ml-auto" />
-          </div>
+            <div className="mt-6 hidden w-full flex-col items-center sm:flex lg:items-start">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-600">Try asking</p>
+              <div className="mt-2.5 flex flex-wrap justify-center gap-2 lg:justify-start">
+                {HERO_EXAMPLES.map((example) => (
+                  <button
+                    key={example}
+                    type="button"
+                    onClick={() => askAi(example)}
+                    className="group flex min-h-[40px] items-center gap-2.5 rounded-full border border-ink-900/10 bg-white px-3.5 text-[13px] text-ink-700 shadow-sm transition hover:border-primary-600/40 hover:bg-primary-50 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-400/25"
+                  >
+                    <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-primary-600" aria-hidden="true" />
+                    {example}
+                    <ArrowRightIcon
+                      className="-ml-1 h-3.5 w-0 shrink-0 text-primary-300 opacity-0 transition-all group-hover:ml-0 group-hover:w-3.5 group-hover:opacity-100 motion-reduce:transition-none"
+                      aria-hidden="true"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            </div>
+
+            <HeroStory />
           </div>
         </section>
 

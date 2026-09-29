@@ -64,13 +64,18 @@ import { PlusIcon } from '../ui/icons.jsx';
  * and are not links. Every one is logged in `docs/UiWebNotes.md`; when its page
  * ships, give it a `to` and drop `soon`.
  *
- * 🔴 DELIBERATELY LEFT OUT from the reference, even as placeholders — each would
- * be a promise about money or orders that MPX Global does not make (Phase 1 moves
- * no money; escrow/orders are Phase 2, and the owner already agreed not to claim
- * payment protection — see PlatformCards' Payments note):
- *   Secure payments · Money-back guarantee · Guaranteed delivery · After-sales
- *   protections · Refunds · File a trade dispute · Check order status ·
- *   payment-network badges (Visa, Mastercard, T/T…).
+ * 🔴 SUPERSEDED 2026-09-29 — the owner was shown the exclusion below and replied
+ * "we need to show it", then asked for an UNDER PROGRESS tag. Order protection,
+ * Secure payments, Money-back guarantee, Guaranteed delivery and After-sales
+ * protections are now in "Trade services". Only **Secure payments** carries the
+ * UNDER PROGRESS badge (owner, same day); the other four are plain placeholders,
+ * so the footer does name capabilities that do not exist. Phase 1 still moves no
+ * money and escrow/orders remain Bucket B.
+ *
+ * 🔴 STILL LEFT OUT, and still for the original reason — each would be a promise
+ * about money or orders that MPX Global does not make:
+ *   Refunds · File a trade dispute · Check order status · payment-network badges
+ *   (Visa, Mastercard, T/T…).
  * Also not applicable: Alibaba Lens, their sister-site row, Chinese licence
  * numbers, "Co-Create Pitch" (an Alibaba event).
  */
@@ -86,10 +91,25 @@ const FOOTER_COLUMNS = (hash) => [
   {
     title: 'Trade services',
     links: [
+      /* 🔴 OWNER OVERRIDE, 2026-09-29 ("we need to show it"), after being shown
+         that these five were excluded on 2026-09-28 as promises about money and
+         orders that MPX Global does not make.
+         🔴 Phase 1 moves no money — escrow, orders and shipments are Bucket B, so
+         NONE of these five is backed by anything that exists today.
+         The owner then asked for the UNDER PROGRESS badge on **Secure payments
+         only** (2026-09-29). The other four therefore read as plain capabilities.
+         That is the owner's decision on record, not an oversight — but it is the
+         line to revisit first if anyone asks whether the footer overpromises,
+         "Money-back guarantee" and "Guaranteed delivery" most of all. */
+      { label: 'Order protection', soon: true },
+      { label: 'Secure payments', soon: true, badge: 'Under progress' },
+      { label: 'Money-back guarantee', soon: true },
+      { label: 'Guaranteed delivery', soon: true },
+      { label: 'After-sales protections', soon: true },
       { label: 'Production monitoring & inspection services', soon: true },
       { label: 'Policies and rules', soon: true },
       // Client request 2026-09-28. 🔴 Bucket B / Phase 2 — announcement only.
-      { label: 'Trade Finance', soon: true, comingSoon: true },
+      { label: 'Trade Finance', soon: true, badge: 'Coming soon' },
     ],
   },
   {
@@ -181,9 +201,9 @@ function FooterLink({ link, small = false }) {
          carry text. */
       <span aria-disabled="true" className={`inline-block cursor-default text-ink-500 ${small ? '' : 'py-1.5'}`}>
         {link.label}
-        {link.comingSoon && (
+        {link.badge && (
           <span className="ml-1.5 inline-block rounded-full bg-ink-900 px-1.5 py-px align-[1px] text-[9px] font-semibold uppercase leading-normal tracking-wider text-white">
-            Coming soon
+            {link.badge}
           </span>
         )}
       </span>
@@ -366,7 +386,12 @@ export function PublicFooter() {
               </svg>
             </span>
             <div className="min-w-0">
-              <p className="text-[15px] font-bold tracking-tight text-ink-900">Trade on the go</p>
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-bold tracking-tight text-ink-900">
+                Trade on the go
+                <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-semibold tracking-normal text-primary-700 ring-1 ring-primary-100">
+                  Launching soon
+                </span>
+              </p>
               <p className="mt-0.5 text-[13px] leading-snug text-ink-600">
                 Search, enquire, chat and agree quotations from your phone — one app for buyers and suppliers.
               </p>

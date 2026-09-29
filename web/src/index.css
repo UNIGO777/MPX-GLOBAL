@@ -829,6 +829,20 @@
     .globe-ticker { animation: none; }
   }
 
+  /* Same marquee again for the `/landing-page-7` snapshot. 🔴 A frozen copy
+     cannot share the live keyframe — `/` keeps being edited. Delete this with
+     that snapshot. */
+  .globe7-ticker { animation: globe-ticker 48s linear infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .globe7-ticker { animation: none; }
+  }
+
+  /* Same marquee for the `/landing-page-8` snapshot. Delete with it. */
+  .globe8-ticker { animation: globe-ticker 48s linear infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .globe8-ticker { animation: none; }
+  }
+
   /* Scrolls, but draws no scrollbar — for swipeable strips (the console's
      mobile nav) where a bar on the brand colour read as a stray brown line. */
   .scrollbar-none {
@@ -849,5 +863,3 @@
   appearance: none;
   display: none;
 }
-.story, .story *, .story5, .story5 * { animation-delay: -9s !important; }
-.story5 { --story5-deep: #00b050; --story5-night: #00b050; }

@@ -128,15 +128,17 @@ export function Suppliers() {
                 Verified suppliers
                 <span className="rounded-full bg-white px-3 py-1 text-[13px] font-bold text-primary-700 shadow-sm ring-1 ring-primary-100">100+</span>
               </h1>
-              <p className="mt-1 text-[14.5px] text-ink-600">
-                Indian exporters whose documents a person on our team has checked.
-                {demo && <span className="ml-2 whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[11px] text-ink-500 ring-1 ring-ink-200/70">Preview · sample suppliers</span>}
-              </p>
-              {/* Three things that are true of every listing today — no counts,
+              {demo && (
+                <p className="mt-1 text-[14.5px] text-ink-600">
+                  <span className="whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[11px] text-ink-500 ring-1 ring-ink-200/70">Preview · sample suppliers</span>
+                </p>
+              )}
+              {/* Four things that are true of every listing today — no counts,
                   no guarantees (this site's standing rule against claims). */}
               <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[13px] font-medium text-ink-700">
                 {[
                   [BadgeCheckIcon, 'Documents checked by our team'],
+                  [BuildingIcon, 'In-Person Verification'],
                   [ChatIcon, 'Enquire and chat directly'],
                   [TagIcon, 'Free for buyers'],
                 ].map(([Icon, label]) => (

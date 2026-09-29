@@ -4,21 +4,20 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { useCanonical } from '../../lib/seo.js';
+import { useNoIndex } from '../../lib/seo.js';
 import { BannerStrip, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
-import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
-import { FaqAccordion } from '../../components/landing/FaqAccordion.jsx';
-import { FaqExplorer } from '../../components/landing/FaqExplorer.jsx';
-import { AiBandVideo } from '../../components/landing/AiBandVideo.jsx';
-import { AudienceFork } from '../../components/landing/AudienceFork.jsx';
-import { GlobeBand } from '../../components/landing/GlobeBand.jsx';
-import { HeroMatchPreview } from '../../components/landing/HeroMatchPreview.jsx';
-import { MpxFilm } from '../../components/landing/MpxFilm.jsx';
-import { PlatformCards } from '../../components/landing/PlatformCards.jsx';
-import { SourceTypeCards } from '../../components/landing/SourceTypeCards.jsx';
-import { HEADING, SectionHeader, SectionLink } from '../../components/landing/SectionHeader.jsx';
-import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
+import { CategoryCircles } from '../../components/landing8/CategoryCircles.jsx';
+import { FaqAccordion } from '../../components/landing8/FaqAccordion.jsx';
+import { FaqExplorer } from '../../components/landing8/FaqExplorer.jsx';
+import { AiBandVideo } from '../../components/landing8/AiBandVideo.jsx';
+import { AudienceFork } from '../../components/landing8/AudienceFork.jsx';
+import { GlobeBand } from '../../components/landing8/GlobeBand.jsx';
+import { MpxFilm } from '../../components/landing8/MpxFilm.jsx';
+import { PlatformCards } from '../../components/landing8/PlatformCards.jsx';
+import { SourceTypeCards } from '../../components/landing8/SourceTypeCards.jsx';
+import { HEADING, SectionHeader, SectionLink } from '../../components/landing8/SectionHeader.jsx';
+import { TradeAgreements } from '../../components/landing8/TradeAgreements.jsx';
 
 import {
   ArrowRightIcon,
@@ -161,9 +160,27 @@ function BlockHead({ eyebrow, title, sub, to, cta = 'See all' }) {
 
 /* ---------------------------------- page ---------------------------------- */
 
-export function Landing() {
+/**
+ * ⚠️ SNAPSHOT — a frozen copy of the landing page as it stood on 2026-09-29,
+ * taken after the film-heading pass. Served at `/landing-page-8`.
+ *
+ * 🔴 **It is `noindex`** and deliberately does NOT call `useCanonical('/')` —
+ * pointing a copy's canonical at the original asks a crawler to treat them as
+ * one page, which is the opposite of freezing it.
+ *
+ * 🔴 **It owns its components** (`components/landing8/`, `worldDots` and
+ * `tradeMapDots` included) and its own `globe8-ticker` keyframes.
+ *
+ * ⚠️ Still SHARED, so a change there DOES reach this page: the header, the
+ * footer, `components/catalogue/*`, the shared icons, and
+ * **`public/world-dots.svg`**, which the trade map loads as an image.
+ *
+ * Delete this route, this file, `components/landing8/` and the `globe8-ticker`
+ * rules together once the landing is settled.
+ */
+export function Landing8() {
   const navigate = useNavigate();
-  useCanonical('/');
+  useNoIndex();
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
@@ -258,7 +275,7 @@ export function Landing() {
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgb(0_5_23/0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgb(0_5_23/0.045)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:linear-gradient(to_bottom,#000_0%,#000_55%,transparent_92%)]"
           />
-          <div className="relative flex min-h-[46svh] w-full flex-col items-center justify-center px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-10 lg:px-10 lg:pb-16 lg:pt-12 xl:px-16">
+          <div className="relative flex min-h-[46svh] w-full flex-col items-center justify-center px-4 pb-5 pt-5 sm:px-6 sm:pb-4 sm:pt-5 lg:px-10 lg:pb-4 lg:pt-5 xl:px-16">
             {/* Centred on a phone, left-aligned once the story sits beside it —
                 a centred column next to an illustration reads as two unrelated
                 blocks. */}
@@ -266,12 +283,7 @@ export function Landing() {
                 (`-mx-4 w-[calc(100%+2rem)]`), and without this the grid item's
                 automatic minimum size grew to fit it, widening the single
                 mobile track to ~700px and pushing the whole hero off-screen. */}
-            {/* SPLIT HERO (2026-09-29 design review: the single centred column
-                felt "too centralised, unsettling"). Left: the story + the AI
-                field, left-aligned. Right (sm+): an illustrative match preview.
-                Phones stack, text first. */}
-            <div className="grid w-full max-w-7xl items-center gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
-            <div className="flex w-full min-w-0 flex-col items-start text-left">
+            <div className="flex w-full min-w-0 max-w-4xl flex-col items-center text-center">
               {/* The mockup's announcement pill: a solid tag, the line, an arrow.
                   🔴 It is a real Link, not a decorated <p>. The mockup's arrow
                   reads as "this goes somewhere", and a live-looking control that
@@ -289,11 +301,11 @@ export function Landing() {
                 />
               </Link>
 
-              <h1 className="mt-4 max-w-2xl text-balance text-[28px] font-extrabold leading-[1.06] max-[359px]:text-[25px] tracking-tight text-ink-900 sm:mt-5 sm:text-[38px] lg:text-[42px] xl:text-[48px]">
+              <h1 className="mt-3.5 max-w-3xl text-balance text-[24px] font-extrabold leading-[1.05] max-[359px]:text-[23px] tracking-tight text-ink-900 sm:mt-5 sm:text-[32px] lg:text-[35px] xl:text-[38px]">
                 Connecting India&apos;s Suppliers
                 <br />
                 <span className="relative inline-block pb-1">
-                  <span className="text-primary-600">to the World</span>
+                  <span className="text-primary-400">to the World</span>
                   {/* Hand-drawn underline that draws itself once on load. */}
                   <svg
                     aria-hidden="true"
@@ -306,12 +318,23 @@ export function Landing() {
                       d="M2 8C50 2 100 4 150 6C200 8 250 4 298 7"
                       pathLength="1"
                       strokeDasharray="1"
-                      className="animate-draw-line stroke-primary-600/60 motion-reduce:animate-none"
+                      className="animate-draw-line stroke-primary-400 motion-reduce:animate-none"
                       strokeWidth="3"
                       strokeLinecap="round"
                     />
                   </svg>
                 </span>
+                {/* The mockup's four-point star beside the emphasised word. It is
+                    punctuation, not information — hence `aria-hidden` and the
+                    inline-block so it rides the line rather than wrapping alone. */}
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="ml-2 inline-block h-[0.42em] w-[0.42em] align-baseline text-primary-500 sm:ml-3"
+                  fill="currentColor"
+                >
+                  <path d="M12 0c.7 6.1 5.2 10.6 11.3 11.3v1.4C17.2 13.4 12.7 17.9 12 24c-.7-6.1-5.2-10.6-11.3-11.3v-1.4C6.8 10.6 11.3 6.1 12 0z" />
+                </svg>
               </h1>
 
             {/* The AI field — the one thing the hero asks a visitor to use.
@@ -323,7 +346,7 @@ export function Landing() {
             <form
               role="search"
               onSubmit={onAiSearch}
-              className="mt-6 flex w-full max-w-[600px] flex-col rounded-3xl border border-surface-border bg-white p-1.5 shadow-[0_12px_34px_-18px_rgb(0_5_23/0.35)] transition-shadow focus-within:border-primary-600/40 focus-within:ring-4 focus-within:ring-primary-600/10 sm:mt-7 sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:p-1.5"
+              className="mx-auto mt-4 flex w-full max-w-[600px] flex-col rounded-3xl border border-surface-border bg-white p-1.5 shadow-[0_12px_34px_-18px_rgb(0_5_23/0.35)] transition-shadow focus-within:border-primary-600/40 focus-within:ring-4 focus-within:ring-primary-600/10 sm:mt-7 sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:p-1.5"
             >
               <label className="sr-only" htmlFor="hero-ai-q">
                 Describe what you want to source
@@ -359,15 +382,8 @@ export function Landing() {
                 </button>
               </div>
             </form>
-            </div>
 
-            {/* The split hero's right-hand column. It was lost in the 2026-09-29
-                merge — it sat in the same block as the example chips, and those
-                the owner had asked to delete. The chips stay gone; this comes
-                back, or the two-column grid above has nothing in its second
-                column. */}
-            <HeroMatchPreview className="mx-auto hidden w-full max-w-md sm:block lg:mx-0 lg:ml-auto" />
-          </div>
+            </div>
           </div>
         </section>
 

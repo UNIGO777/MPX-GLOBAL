@@ -33,7 +33,6 @@ export function fromDemo(d) {
       { label: 'Production capacity', value: d.capacity },
       { label: 'Annual turnover', value: d.turnover },
       { label: 'Languages spoken', value: d.languages.join(', ') },
-      { label: 'Website', value: d.website },
     ],
     presence: d.presence,
     verified: true,

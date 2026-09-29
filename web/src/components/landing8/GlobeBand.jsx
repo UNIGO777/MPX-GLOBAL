@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-import { ArrowRightIcon, BadgeCheckIcon, ChatIcon } from '../ui/icons.jsx';
+import { ArrowRightIcon, BadgeCheckIcon, ChatIcon, SparkleIcon } from '../ui/icons.jsx';
 import { INDIA_LONLAT, WORLD_LONLAT } from './worldDots.js';
 
 /**
@@ -80,6 +80,12 @@ const CARDS = [
   },
 ];
 
+const TICKER = [
+  "Every verified company's documents were checked by a person on our team",
+  'Describe what you need and our AI matches you with exporters who can supply it',
+  'Enquire and chat with suppliers directly — no brokers in between',
+  'Public supplier profiles, with the verified tick earned by review',
+];
 
 /** Pulsing destinations. Real places this marketplace actually points at. */
 const MARKERS = [
@@ -91,14 +97,6 @@ const MARKERS = [
   { lon: 134, lat: -25 }, // Australia
 ];
 
-/**
- * ⚠️ Two designs met here in the 2026-09-29 merge, and THIS is the one that won
- * because it is the owner's later instruction: the floating side cards, the
- * ticker and a real "Explore suppliers" CTA, with the copy they dictated. A
- * parallel session had stripped all three and instead passed the hero's stat row
- * in as `children` — but the owner then removed that stat row from the page
- * entirely, so there is nothing left to pass and the prop is gone with it.
- */
 export function GlobeBand() {
   const canvasRef = useRef(null);
 
@@ -405,8 +403,28 @@ export function GlobeBand() {
         </Link>
       </div>
 
-      {/* Fades the dome into the next (white) section — no hard edge. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white" />
+      {/* The mockup's marquee. It scrolls with CSS on a duplicated list, so the
+          loop has no seam; `aria-hidden` on the second copy keeps a screen
+          reader from hearing everything twice, and the whole strip stops under
+          `prefers-reduced-motion` (`.globe8-ticker` in index.css). */}
+      <div className="relative border-t border-ink-900/10 bg-white/70 py-2.5 backdrop-blur-sm">
+        <div className="flex overflow-hidden">
+          {[false, true].map((clone) => (
+            <ul
+              key={String(clone)}
+              aria-hidden={clone || undefined}
+              className="globe8-ticker flex shrink-0 items-center gap-10 pr-10"
+            >
+              {TICKER.map((line) => (
+                <li key={line} className="flex shrink-0 items-center gap-3 whitespace-nowrap">
+                  <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-primary-500" aria-hidden="true" />
+                  <span className="text-[12px] text-ink-600">{line}</span>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

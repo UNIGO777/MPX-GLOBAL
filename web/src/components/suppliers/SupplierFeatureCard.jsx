@@ -7,7 +7,6 @@ import {
   CalendarIcon,
   ChartIcon,
   ChatIcon,
-  GlobeIcon,
   MapPinIcon,
   TagIcon,
 } from '../ui/icons.jsx';
@@ -31,7 +30,6 @@ const DETAIL_ICONS = {
   'Production capacity': BoxIcon,
   'Annual turnover': ChartIcon,
   'Languages spoken': ChatIcon,
-  Website: GlobeIcon,
   'Entity type': BuildingIcon,
   Established: CalendarIcon,
   'Member since': BadgeCheckIcon,
@@ -191,16 +189,27 @@ export function SupplierFeatureCard({ supplier: s, footer = null }) {
         )}
 
         <dl className="mt-5 divide-y divide-ink-100 rounded-2xl ring-1 ring-ink-200/70 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-2.5 sm:divide-y-0 sm:rounded-none sm:ring-0">
-          {tiles.map((d) => {
+          {tiles.map((d, i) => {
             const Icon = DETAIL_ICONS[d.label] ?? TagIcon;
+            /* An ODD number of tiles leaves the last one alone on its row, hard
+               against the left edge — which is what "Languages spoken" looked
+               like once the website tile was dropped. It spans both columns and
+               centres itself instead; `justify-self-center` also stops it
+               stretching to the full span, so it keeps a tile's proportions
+               rather than becoming a wide bar. */
+            const lonely = tiles.length % 2 === 1 && i === tiles.length - 1;
             return (
-              <div key={d.label} className="flex items-start gap-3 px-3.5 py-2.5 sm:rounded-2xl sm:bg-ink-50/80 sm:p-3.5 sm:ring-1 sm:ring-ink-200/60">
+              <div
+                key={d.label}
+                className={`flex items-start gap-3 px-3.5 py-2.5 sm:rounded-2xl sm:bg-ink-50/80 sm:p-3.5 sm:ring-1 sm:ring-ink-200/60 ${
+                  lonely ? 'sm:col-span-2 sm:justify-self-center' : ''
+                }`}
+              >
                 <span aria-hidden="true" className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-primary-700 shadow-sm ring-1 ring-ink-200/70 sm:flex">
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="flex min-w-0 flex-1 items-baseline justify-between gap-3 sm:block">
                   <dt className="shrink-0 text-[12.5px] text-ink-500 sm:text-[10.5px] sm:font-semibold sm:uppercase sm:tracking-[0.12em]">{d.label}</dt>
-                  {/* Website is plain text on purpose — sample domains must never be live links. */}
                   <dd className="min-w-0 break-words text-right text-[13px] font-semibold leading-snug text-ink-900 sm:mt-0.5 sm:text-left sm:text-[14px]">{d.value}</dd>
                 </span>
               </div>
