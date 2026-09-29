@@ -199,10 +199,18 @@ function HeroStats() {
   });
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 
+  /* ⚠️ TEMPORARY FIXED FIGURES (owner, 2026-09-29: "for now add these
+     numbers" — after being told the row was live counts and that fixed
+     figures are claims investors may check). Supplier and product figures are
+     the owner's chosen display values, NOT platform counts. Replace them with
+     the live `suppliers` / `products` totals below (rounded down, with "+")
+     before launch — the queries are kept for exactly that. */
+  const FIXED = { suppliers: 100, products: 1200 };
   const stats = [
-    { value: suppliers.data?.total, label: 'Verified suppliers', dot: true },
-    { value: products.data?.total, label: 'Products listed' },
-    { value: categories.data?.length, label: 'Categories' },
+    { value: FIXED.suppliers ?? suppliers.data?.total, label: 'Verified suppliers', dot: true, plus: true },
+    { value: FIXED.products ?? products.data?.total, label: 'Products listed', plus: true },
+    // "+" (owner, 2026-09-29): the live count, with sub-categories beyond it.
+    { value: categories.data?.length, label: 'Categories', plus: true },
   ].filter((stat) => Number.isFinite(stat.value) && stat.value > 0);
 
   if (!stats.length) {
@@ -221,6 +229,7 @@ function HeroStats() {
           {stat.dot && <span aria-hidden="true" className="h-2 w-2 rounded-full bg-success" />}
           <span className="text-[15px] font-bold tracking-tight text-ink-900">
             {stat.value.toLocaleString()}
+            {stat.plus && '+'}
           </span>
           <span className="text-[13.5px] text-ink-600">{stat.label}</span>
         </li>

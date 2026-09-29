@@ -138,9 +138,13 @@ export function PublicHeader({ centerSlot = null, current }) {
              `relative`: the category mega-menu panel is `absolute inset-x-0
              top-full` and resolves against the sticky header, so giving it a
              nearer positioned ancestor would shrink the panel to the pill's
-             width — see the note at the top of `CategoryMegaMenu`. */
+             width — see the note at the top of `CategoryMegaMenu`. 🔴 The same
+             goes for `backdrop-blur` / any `backdrop-filter`, `transform` or
+             `filter`: each makes the pill the panel's containing block too
+             (2026-09-29 — a `backdrop-blur-sm` here squeezed the menu to the
+             pill's ~465px and cut off the sub-category column). */
           <nav aria-label="Main" className="hidden shrink-0 items-center justify-center px-4 xl:flex">
-            <div className="flex items-center gap-1 rounded-full border border-ink-900/[0.06] bg-white/90 p-1.5 shadow-[0_8px_24px_-14px_rgb(0_5_23/0.35)] backdrop-blur-sm">
+            <div className="flex items-center gap-1 rounded-full border border-ink-900/[0.06] bg-white/95 p-1.5 shadow-[0_8px_24px_-14px_rgb(0_5_23/0.35)]">
             {NAV.map((item) =>
               item.megaMenu ? (
                 <CategoryMegaMenu key={item.label} current={current} linkClasses={linkClasses} />

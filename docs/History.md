@@ -175,6 +175,11 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-29 — Categories mega-menu fixed (owner: "hovering Categories, the dropdown is broken").** The panel (`absolute inset-x-0 top-full`) was squeezed to the nav pill's ~465px and the sub-category column was cut off. Cause: the pill's `backdrop-blur-sm` — any `backdrop-filter` (like `transform`, `filter` or `relative`) makes the element the containing block of absolutely positioned descendants. The blur was removed (bg 90% → 95% white), so the panel spans the header's full width again (verified 1471/1471px). The warning comment in PublicHeader now names backdrop-filter too.
+- **2026-09-29 — Hero stat row: TEMPORARY fixed figures (owner: "100+ verified suppliers, a convincing number for products, a + on categories", then "for now add these numbers").**
+  - It shows "100+ Verified suppliers · 1,000+ Products listed · <live count>+ Categories".
+  - 🔴 The supplier and product figures are owner-chosen display values, NOT platform counts (`FIXED` in `HeroStats`). The owner was told the row had been live counts and that fixed figures are claims investors may check; they chose fixed figures "for now". Products was first 1,000+ (Claude's pick), then set to **1,200+** by the owner.
+  - The live queries are kept. Before launch, replace `FIXED` with the live totals, rounded down with "+". Categories remain the live count with "+".
 - **2026-09-29 — Navbar transparent over the landing hero.** Owner: "make navbar transparent".
   - 🔴 **The header was ALREADY transparent** — it paints `bg-white/0` until you scroll. The white
     strip was the PAGE showing behind it: `position: sticky` still takes its space in normal flow, so
