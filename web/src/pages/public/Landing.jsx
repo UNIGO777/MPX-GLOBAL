@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { useCanonical } from '../../lib/seo.js';
+import { useNoIndex } from '../../lib/seo.js';
 import { BannerStrip, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { CategoryCircles } from '../../components/landing/CategoryCircles.jsx';
@@ -163,7 +163,9 @@ function BlockHead({ eyebrow, title, sub, to, cta = 'See all' }) {
 
 export function Landing() {
   const navigate = useNavigate();
-  useCanonical('/');
+  // 2026-09-29 (owner: "swap the routes"): this split-hero page now lives at
+  // `/landing-page-7`, and `Landing7` is served at `/` — so it is noindex.
+  useNoIndex();
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 

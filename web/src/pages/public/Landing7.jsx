@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { catalogueApi, catalogueKeys } from '../../api/catalogue.js';
-import { useNoIndex } from '../../lib/seo.js';
+import { useCanonical } from '../../lib/seo.js';
 import { BannerStrip, useLandingFeatured } from '../../components/catalogue/FeaturedStrips.jsx';
 import { ProductCard } from '../../components/catalogue/ProductCard.jsx';
 import { CategoryCircles } from '../../components/landing7/CategoryCircles.jsx';
@@ -196,7 +196,10 @@ const HERO_EXAMPLES = [
  */
 export function Landing7() {
   const navigate = useNavigate();
-  useNoIndex();
+  // 2026-09-29 (owner: "swap the routes"): this page is now served at `/`,
+  // so it is the indexable, canonical home — the snapshot notes above describe
+  // how it was made, not where it lives now.
+  useCanonical('/');
 
   const categories = useQuery({ queryKey: catalogueKeys.tree, queryFn: catalogueApi.tree });
 

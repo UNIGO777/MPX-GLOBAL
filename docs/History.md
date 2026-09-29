@@ -175,6 +175,11 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-09-29 — Routes SWAPPED: `/` ↔ `/landing-page-7` (owner: "save the current home page as landing page 7 and landing page 7 as the current landing page").**
+  - `/` now serves `Landing7`; `/landing-page-7` serves `Landing` (the split hero with the "Example" AI match card).
+  - SEO swapped with the routes: `Landing7` now calls `useCanonical('/')`, and `Landing` calls `useNoIndex()`. Verified: `/` has canonical `/` and no robots meta; `/landing-page-7` is `noindex,follow`.
+  - No files were renamed — undo by swapping the two `<Route>` elements and the two hooks back.
+  - ⚠️ The Landing7 file header still calls it a "snapshot"; a comment at its hook notes it is now the home page.
 - **2026-09-29 — MERGE: two parallel hero designs reconciled.** `6d71968` ("hero design", a parallel
   session) and this session's copy pass both changed `Landing.jsx`, `GlobeBand.jsx` and
   `PublicHeader.jsx`. Both were owner-directed, so neither side was simply discarded:

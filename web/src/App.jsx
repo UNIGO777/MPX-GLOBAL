@@ -283,7 +283,11 @@ export function App() {
           <ChatDockProvider>
           <Routes>
             {/* --- Public (guest-visible; no auth guard by design — B7) --- */}
-            <Route path="/" element={<Landing />} />
+            {/* 2026-09-29 (owner: "swap the routes"): `/` serves Landing7 and the
+                split-hero `Landing` moved to `/landing-page-7`. Swap these two
+                lines back to undo; each page's canonical / noindex was swapped
+                with it. */}
+            <Route path="/" element={<Landing7 />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/category/:slug" element={<CategoryListing />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
@@ -337,7 +341,7 @@ export function App() {
             {/* ⚠️ A frozen SNAPSHOT of the landing as it stood on 2026-09-29,
                 after the copy pass (owner). `noindex`, own components in
                 `components/landing7/`, own `globe7-ticker` keyframes. */}
-            <Route path="/landing-page-7" element={<Landing7 />} />
+            <Route path="/landing-page-7" element={<Landing />} />
             {/* ⚠️ A frozen SNAPSHOT of the landing as it stood on 2026-09-29,
                 after the film-heading pass (owner). `noindex`, own components in
                 `components/landing8/`, own `globe8-ticker` keyframes. */}
