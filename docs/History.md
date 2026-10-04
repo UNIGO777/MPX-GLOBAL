@@ -175,6 +175,24 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-10-05 — "How it works" grew to six steps: Quality check and Ship, both OFF-PLATFORM.**
+  Owner asked for the two extra steps. 🔴 **Red-alerted first**, because neither is something MPX
+  Global does: shipping is Bucket B / Phase 2 (`scope-guard.md`, orders/shipments) and inspection is
+  not in the scope of work at all — "Production monitoring & inspection services" is an unbuilt
+  footer placeholder. The section's own sub-line made the claim explicit ("Four steps, **all on the
+  platform**"). The owner chose the off-platform wording.
+  - Step 5 reads "Arrange inspection with your supplier directly — not through MPX Global" and step 6
+    "You and the supplier agree freight, terms and delivery between yourselves". The sub-line is now
+    "Four steps on the platform, free for buyers — then you and the supplier take it from there."
+  - 🔴 **Do not reword these to "we inspect" / "track your shipment" without a scope decision.** The
+    wording is the entire reason they are allowed on the page; a note to that effect sits in the code.
+  - Layout: `lg:grid-cols-4` → `6` with a tighter gap, the connector's `i < 3` guard → `i < 5`, and
+    its width recomputed for the new 1.25rem gap (it was hard-coded against the old 2rem one). The
+    gradient now has five hops and greys out across the last two, so the hand-off is visible without
+    a label. Checked on desktop and on a phone.
+  - ⚠️ The heading still reads "From first search to agreed quotation", which describes the four
+    PLATFORM steps rather than all six. Left as-is — it is accurate about what the platform covers —
+    but worth a second look if the owner wants the title to span the whole journey.
 - **2026-09-29 — Routes SWAPPED: `/` ↔ `/landing-page-7` (owner: "save the current home page as landing page 7 and landing page 7 as the current landing page").**
   - `/` now serves `Landing7`; `/landing-page-7` serves `Landing` (the split hero with the "Example" AI match card).
   - SEO swapped with the routes: `Landing7` now calls `useCanonical('/')`, and `Landing` calls `useNoIndex()`. Verified: `/` has canonical `/` and no robots meta; `/landing-page-7` is `noindex,follow`.

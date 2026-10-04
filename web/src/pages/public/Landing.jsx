@@ -22,6 +22,8 @@ import { TradeAgreements } from '../../components/landing/TradeAgreements.jsx';
 
 import {
   ArrowRightIcon,
+  BadgeCheckIcon,
+  BoxIcon,
   ChatIcon,
   EnquiryIcon,
   QuoteIcon,
@@ -652,7 +654,7 @@ export function Landing() {
               id="how-heading"
               eyebrow="How it works"
               title="From first search to agreed quotation"
-              sub="Four steps, all on the platform, all free for buyers."
+              sub="Four steps on the platform, free for buyers — then you and the supplier take it from there."
             />
 
             {/* The numbered LINE structure (owner-kept), redesigned 2026-09-28
@@ -661,22 +663,31 @@ export function Landing() {
                 the connector runs only marker-to-marker and fades from soft red
                 to grey (it shows direction); white number markers; icons in
                 soft round badges. Phones: a vertical timeline. */}
-            <ol className="relative mt-10 grid gap-0 sm:mt-12 lg:grid-cols-4 lg:gap-8">
+            <ol className="relative mt-10 grid gap-0 sm:mt-12 lg:grid-cols-6 lg:gap-5">
               {[
                 [SearchIcon, 'Find a supplier', 'Search or browse the catalogue — free, no account needed.'],
                 [EnquiryIcon, 'Send an enquiry', 'Tell the supplier exactly what you need, in a couple of clicks.'],
                 [ChatIcon, 'Chat in real time', 'Talk directly on the platform, with files and full history.'],
                 [QuoteIcon, 'Agree the quotation', 'Receive a priced quotation, counter-offer, and confirm it together.'],
+                /* 🔴 Steps 5 and 6 happen OFF the platform and say so. MPX Global
+                   runs no inspection service and moves no goods — shipping is
+                   Phase 2 (`scope-guard.md`, orders/shipments) and inspection is
+                   not in the scope of work at all. The wording is the whole point:
+                   it completes the journey a buyer actually makes without
+                   claiming MPX performs either step. Do NOT reword these to
+                   "we inspect" / "track your shipment" without a scope decision. */
+                [BadgeCheckIcon, 'Quality check', 'Arrange inspection with your supplier directly — not through MPX Global.'],
+                [BoxIcon, 'Ship', 'You and the supplier agree freight, terms and delivery between yourselves.'],
               ].map(([Icon, title, body], i) => (
                 <li key={title} className="relative flex gap-5 pb-9 last:pb-0 lg:flex-col lg:items-center lg:gap-0 lg:pb-0 lg:text-center">
                   {/* Connector to the NEXT marker — down on a phone; from lg it
                       starts just right of this marker and ends just left of the
                       next (column width + 2rem gap − both marker radii). */}
-                  {i < 3 && (
+                  {i < 5 && (
                     <span
                       aria-hidden="true"
-                      className={`absolute left-[21px] top-12 bottom-1 w-0.5 rounded-full lg:bottom-auto lg:left-[calc(50%+30px)] lg:top-[21px] lg:h-0.5 lg:w-[calc(100%+2rem-60px)] ${
-                        ['bg-gradient-to-b from-primary-300 to-primary-200 lg:bg-gradient-to-r', 'bg-gradient-to-b from-primary-200 to-ink-200 lg:bg-gradient-to-r', 'bg-gradient-to-b from-ink-200 to-ink-100 lg:bg-gradient-to-r'][i]
+                      className={`absolute left-[21px] top-12 bottom-1 w-0.5 rounded-full lg:bottom-auto lg:left-[calc(50%+30px)] lg:top-[21px] lg:h-0.5 lg:w-[calc(100%+1.25rem-60px)] ${
+                        ['bg-gradient-to-b from-primary-300 to-primary-200 lg:bg-gradient-to-r', 'bg-gradient-to-b from-primary-200 to-primary-100 lg:bg-gradient-to-r', 'bg-gradient-to-b from-primary-100 to-ink-200 lg:bg-gradient-to-r', 'bg-gradient-to-b from-ink-200 to-ink-200 lg:bg-gradient-to-r', 'bg-gradient-to-b from-ink-200 to-ink-100 lg:bg-gradient-to-r'][i]
                       }`}
                     />
                   )}
