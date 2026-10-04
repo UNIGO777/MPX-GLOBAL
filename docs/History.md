@@ -175,6 +175,16 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-10-05 — The six-step "How it works" ported into `Landing7.jsx`, which now serves `/`.**
+  🔴 **Gotcha worth remembering:** `16a3d43` swapped the routes — `Landing7.jsx` serves `/` and
+  `Landing.jsx` moved to `/landing-page-7`. The six-step change had been made in `Landing.jsx`, so
+  after that swap the owner's new steps were sitting on a snapshot URL and `/` still showed four.
+  The rebase merged cleanly and nothing looked wrong; only checking WHICH FILE the `/` route points
+  at caught it. **After any route swap, verify the change is in the file the route renders, not the
+  file you edited.** Verified in the served DOM of `/`: "Quality check" and "Ship" present, the old
+  "all on the platform" sub-line gone.
+  - ⚠️ `Landing.jsx` keeps its own copy of the six steps, since it is a live page too
+    (`/landing-page-7`). The two will drift — they are separate files by design.
 - **2026-10-05 — "How it works" grew to six steps: Quality check and Ship, both OFF-PLATFORM.**
   Owner asked for the two extra steps. 🔴 **Red-alerted first**, because neither is something MPX
   Global does: shipping is Bucket B / Phase 2 (`scope-guard.md`, orders/shipments) and inspection is
