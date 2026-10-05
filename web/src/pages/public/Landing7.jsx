@@ -163,13 +163,6 @@ function BlockHead({ eyebrow, title, sub, to, cta = 'See all' }) {
 
 /* The three examples the landing-5 hero's chips run. Kept here because that
    hero renders them; the live landing dropped both on 2026-09-29. */
-const HERO_EXAMPLES = [
-  'Organic turmeric powder, 5 tonnes to Dubai',
-  '120 GSM cotton poplin for shirts',
-  'ISO-certified stainless steel fasteners',
-];
-
-
 /* ---------------------------------- page ---------------------------------- */
 
 /**
@@ -295,20 +288,11 @@ export function Landing7() {
                 automatic minimum size grew to fit it, widening the single
                 mobile track to ~700px and pushing the whole hero off-screen. */}
             <div className="flex w-full min-w-0 flex-col items-center text-center lg:items-start lg:text-left">
-              <p className="inline-flex items-center gap-2.5 rounded-full border border-ink-900/10 bg-white px-4 py-1.5 text-[12.5px] font-semibold text-ink-700 shadow-sm sm:px-5 sm:py-2 sm:text-sm">
-                <span className="flex items-center gap-1.5">
-                  <span aria-hidden="true" className="h-2 w-2 animate-pulse-soft rounded-full bg-primary-400 motion-reduce:animate-none" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary-600">AI</span>
-                </span>
-                <span aria-hidden="true" className="h-4 w-px bg-ink-900/15" />
-                Match-making for global buyers
-              </p>
-
               <h1 className="mt-5 max-w-2xl text-balance text-[30px] font-extrabold leading-[1.06] max-[359px]:text-[26px] tracking-tight text-ink-900 sm:mt-7 sm:text-5xl lg:text-[52px] xl:text-6xl">
-                Connecting India&apos;s Suppliers
+                Connecting India&apos;s Verified Suppliers
                 <br />
                 <span className="relative inline-block pb-1">
-                  <span className="text-primary-400">to the World</span>
+                  <span className="text-primary-400">To The World</span>
                   {/* Hand-drawn underline that draws itself once on load. */}
                   <svg
                     aria-hidden="true"
@@ -326,20 +310,12 @@ export function Landing7() {
                       strokeLinecap="round"
                     />
                   </svg>
-                </span>
+                </span>{' '}
+                {/* Decorative: the line already says "to the world". `aria-hidden`
+                    keeps a screen reader from announcing "globe showing
+                    Europe-Africa" in the middle of the headline. */}
+                <span aria-hidden="true">🌍</span>
               </h1>
-
-              {/* 🔴 Describes what the feature ACTUALLY does — it reads your
-                  requirement and finds suppliers already on this platform. No
-                  number of suppliers, no "instant", no accuracy claim: this is a
-                  trust marketplace and the page may not promise what cannot be
-                  shown (the same rule that kept invented testimonials off it). */}
-              <p className="mt-3 max-w-xl text-pretty text-[14.5px] leading-relaxed text-ink-700 max-[359px]:text-[13.5px] sm:mt-5 sm:text-lg">
-                Describe what you need — material, quantity, specification, destination. Our AI
-                matches you with{' '}
-                <span className="font-semibold text-ink-900">verified Indian exporters</span> who can
-                supply it.
-              </p>
 
             {/* The AI field — the one thing the hero asks a visitor to use.
                 Phones (owner, 2026-09-27: "think of better design for search and
@@ -387,55 +363,6 @@ export function Landing7() {
               </div>
             </form>
 
-            {/* Real controls: each one runs that search — examples of the KIND
-                of sentence the AI handles, the part a visitor cannot guess from
-                an empty box. (owner, 2026-09-27) sm+: "Try asking" + sparkle
-                pills in one row. Phones: the pills took three stacked rows and
-                looked cheap there, so a single quiet text line that scrolls
-                sideways under a fade. */}
-            {/* Phones: ONE line of small chips in the desktop pills' style,
-                scrolling sideways with snap, faded at the right edge. */}
-            <div className="relative -mx-4 mt-3 w-[calc(100%+2rem)] sm:hidden">
-              <div className="scrollbar-none flex snap-x snap-mandatory items-center gap-1.5 overflow-x-auto scroll-px-4 px-4 pr-10">
-                <span className="shrink-0 snap-start pr-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-600">Try</span>
-                {HERO_EXAMPLES.map((example) => (
-                  <button
-                    key={example}
-                    type="button"
-                    onClick={() => askAi(example)}
-                    className="flex h-7 shrink-0 snap-start items-center gap-1 whitespace-nowrap rounded-full border border-ink-900/10 bg-white px-2.5 text-[11.5px] text-ink-700 transition active:border-primary-600/40 active:bg-primary-50"
-                  >
-                    <SparkleIcon className="h-2.5 w-2.5 shrink-0 text-primary-600" aria-hidden="true" />
-                    {example}
-                  </button>
-                ))}
-              </div>
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-surface-canvas via-surface-canvas/80 to-transparent"
-              />
-            </div>
-
-            <div className="mt-6 hidden w-full flex-col items-center sm:flex lg:items-start">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-600">Try asking</p>
-              <div className="mt-2.5 flex flex-wrap justify-center gap-2 lg:justify-start">
-                {HERO_EXAMPLES.map((example) => (
-                  <button
-                    key={example}
-                    type="button"
-                    onClick={() => askAi(example)}
-                    className="group flex min-h-[40px] items-center gap-2.5 rounded-full border border-ink-900/10 bg-white px-3.5 text-[13px] text-ink-700 shadow-sm transition hover:border-primary-600/40 hover:bg-primary-50 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-400/25"
-                  >
-                    <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-primary-600" aria-hidden="true" />
-                    {example}
-                    <ArrowRightIcon
-                      className="-ml-1 h-3.5 w-0 shrink-0 text-primary-300 opacity-0 transition-all group-hover:ml-0 group-hover:w-3.5 group-hover:opacity-100 motion-reduce:transition-none"
-                      aria-hidden="true"
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
             </div>
 
             <HeroStory />

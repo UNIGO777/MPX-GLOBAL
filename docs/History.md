@@ -175,6 +175,12 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-10-05 — The "AI · Match-making for global buyers" badge removed from the hero on `/`.**
+  Owner. Edited `Landing7.jsx`, which is the file the `/` route renders since `16a3d43` — not
+  `Landing.jsx`, which the name suggests. The hero now opens on the headline.
+  - ⚠️ `Landing.jsx` (`/landing-page-7`) still carries ITS badge, which reads "AI-Powered Global
+    Sourcing" — different wording, because the two files diverged when the routes were swapped. Left
+    alone: the owner pointed at the one on `/`. Raised rather than assumed.
 - **2026-10-05 — The six-step "How it works" ported into `Landing7.jsx`, which now serves `/`.**
   🔴 **Gotcha worth remembering:** `16a3d43` swapped the routes — `Landing7.jsx` serves `/` and
   `Landing.jsx` moved to `/landing-page-7`. The six-step change had been made in `Landing.jsx`, so
