@@ -175,6 +175,35 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-10-06 — Demo catalogue seeded: 10 products in every sub-category (`seed:demo-products`).**
+  Owner asked for 10 per sub-category on the demo seller, with Unsplash imagery. 261 sub-categories →
+  **2,610 products** on `demo-exporter@mpx.test`, all active, goods or service fields by category
+  type. New script `src/seed/demo-products.js` + `npm run seed:demo-products`, guarded to
+  `NODE_ENV=development` only, the same lock `test-accounts.js` uses.
+  - 🔴 **D1 was NOT bypassed.** An unverified seller may hold 3 active products (agreement §3.2);
+    `assertActiveCap` skips the check for a VERIFIED org, which is the designed way to hold a full
+    catalogue. The script verifies the org rather than touching the cap — and in the end did not even
+    need to, as "Demo Exports" was already verified. Writing 2,600 rows past a cap the account still
+    failed would have left the database in a state the API itself refuses to create.
+  - ⚠️ **Images are external Unsplash URLs, so these rows are demo-only in one respect:** they render
+    (the projection emits `images[].url` verbatim), but opening one in the product editor and saving
+    will fail `isOwnCloudinaryUrl`. That check is right; the alternative was relaxing upload
+    provenance for seed data.
+  - 🔴 **Three image lessons, each one caught only by actually looking:**
+    1. `source.unsplash.com/featured/?terms` is **retired — 503**. Written against it, every one of
+       2,610 images would have been broken. Use `images.unsplash.com/<photo-id>`.
+    2. **A 200 is not proof the photo is right.** The first pass verified status codes only and
+       shipped a CAT on a fence for Leather, a row of cars for Metals, headphones for Plastics, a
+       "SALE 50%" sign for Packaging and a man with a blowtorch for Textiles. Every id is now
+       downloaded and eyeballed on a contact sheet before use.
+    3. **The category names were invented.** `TOP_PHOTOS` was first keyed on plausible-sounding names
+       ("Industrial Machinery", "Packaging & Printing"); only **8 of 40 matched** and the other 32
+       silently fell through to a warehouse photo, which looked deliberate. Keys now come from the
+       database, and `assertEveryTopMapped` fails the run rather than letting it happen quietly.
+  - Re-running refreshes images on existing rows instead of skipping them, which is what made the
+    photo corrections possible without dropping 2,600 products.
+  - Verified: 261/261 sub-categories at 10+, 2,622 active, 2,624 with an image, 49 distinct photos,
+    and the only 20 products left on the fallback shot are the two "Other" sub-categories.
 - **2026-10-05 — The "AI · Match-making for global buyers" badge removed from the hero on `/`.**
   Owner. Edited `Landing7.jsx`, which is the file the `/` route renders since `16a3d43` — not
   `Landing.jsx`, which the name suggests. The hero now opens on the headline.
