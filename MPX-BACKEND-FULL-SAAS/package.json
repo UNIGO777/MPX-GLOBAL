@@ -18,7 +18,8 @@
     "backfill:search": "node scripts/backfill-m3-search-fields.mjs",
     "indexes:check": "node scripts/sync-indexes.mjs --dry-run",
     "indexes:sync": "node scripts/sync-indexes.mjs",
-    "seed:demo-products": "node src/seed/demo-products.js"
+    "seed:demo-products": "node src/seed/demo-products.js",
+    "seed:demo-products:purge": "node src/seed/demo-products.js --purge"
   },
   "private": true,
   "dependencies": {

@@ -175,6 +175,17 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-10-23 — The 2,610 seeded demo products removed (`npm run seed:demo-products:purge`).** Owner.
+  2,610 deleted, 21 kept, nothing left carrying the marker.
+  - 🔴 **The purge matches on the SAME constant the writer stamps** (`DEMO_PUBLIC_ID_PREFIX`,
+    `images.publicId` beginning `demo/`), defined once and used by both paths. A purge that
+    re-derives its own rule deletes the wrong thing the first time the seed changes.
+  - 🔴 **Deliberately NOT "everything belonging to Demo Exports".** That account also holds two
+    hand-made products — "Silk saree" and "Banna Chips veg" — which a delete-by-org would have taken
+    with it. Checked what would survive BEFORE running: 21 products across 10 sellers, all
+    hand-created, all still there.
+  - Same `NODE_ENV=development` guard as the seed; the flag shares one `run()` so the guard cannot be
+    skipped on the destructive path.
 - **2026-10-06 — Demo catalogue seeded: 10 products in every sub-category (`seed:demo-products`).**
   Owner asked for 10 per sub-category on the demo seller, with Unsplash imagery. 261 sub-categories →
   **2,610 products** on `demo-exporter@mpx.test`, all active, goods or service fields by category

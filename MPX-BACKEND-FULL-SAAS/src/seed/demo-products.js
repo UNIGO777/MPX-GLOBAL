@@ -43,6 +43,18 @@ const DEMO_EXPORTER_EMAIL = 'demo-exporter@mpx.test';
 const PER_CATEGORY = 10;
 
 /**
+ * 🔴 The ONE definition of "this script made it", used to write the rows AND to
+ * find them again for `--purge`. It must stay a single constant: a purge that
+ * re-derives the rule (by org, by slug shape, by date) is a purge that deletes
+ * the wrong thing the moment the seed changes.
+ *
+ * Deliberately NOT "everything belonging to Demo Exports" — that account also
+ * holds products a person created by hand, and they must survive a purge.
+ */
+const DEMO_PUBLIC_ID_PREFIX = 'demo/';
+const DEMO_MARKER = { 'images.publicId': { $regex: `^${DEMO_PUBLIC_ID_PREFIX}` } };
+
+/**
  * Where the demo photography comes from.
  *
  * 🔴 **Unsplash's keyword endpoint does NOT work** — `source.unsplash.com/featured/?terms`
@@ -201,7 +213,7 @@ function goodsDoc(sub, orgId, v, topName, index) {
       `${sub.name} offered as a ${v.label.toLowerCase()}. Specifications, packaging and lead ` +
       `time are confirmed against your enquiry before a quotation is issued.`,
     status: 'active',
-    images: [{ url: productImage(topName, index), publicId: `demo/${sub.slug}/${slugify(v.label)}` }],
+    images: [{ url: productImage(topName, index), publicId: `${DEMO_PUBLIC_ID_PREFIX}${sub.slug}/${slugify(v.label)}` }],
     price:
       priceMode === 'on_request'
         ? { mode: 'on_request' }
@@ -226,7 +238,7 @@ function serviceDoc(sub, orgId, v, topName, index) {
       `${sub.name} delivered as a ${v.label.toLowerCase()}. Scope, team and timeline are ` +
       `agreed per engagement before a quotation is issued.`,
     status: 'active',
-    images: [{ url: productImage(topName, index), publicId: `demo/${sub.slug}/${slugify(v.label)}` }],
+    images: [{ url: productImage(topName, index), publicId: `${DEMO_PUBLIC_ID_PREFIX}${sub.slug}/${slugify(v.label)}` }],
     price: { mode: 'on_request' },
     countryOfOrigin: 'IN',
     engagementType: v.engagementType,
@@ -237,12 +249,30 @@ function serviceDoc(sub, orgId, v, topName, index) {
   };
 }
 
+async function purge() {
+  const matched = await Product.countDocuments(DEMO_MARKER);
+  const survivors = await Product.countDocuments({
+    'images.publicId': { $not: { $regex: `^${DEMO_PUBLIC_ID_PREFIX}` } },
+  });
+  const res = await Product.deleteMany(DEMO_MARKER);
+  logger.info(
+    { matched, deleted: res.deletedCount, keptNotSeededByThisScript: survivors, totalNow: await Product.countDocuments({}) },
+    'demo products purged',
+  );
+}
+
 async function run() {
   if (env.NODE_ENV !== 'development') {
-    throw new Error(`refusing to seed demo products with NODE_ENV=${env.NODE_ENV} — development only`);
+    throw new Error(`refusing to touch demo products with NODE_ENV=${env.NODE_ENV} — development only`);
   }
 
   await mongoose.connect(env.MONGODB_URI);
+
+  if (process.argv.includes('--purge')) {
+    await purge();
+    await mongoose.disconnect();
+    return;
+  }
   await Product.syncIndexes();
 
   const user = await User.findOne({ email: DEMO_EXPORTER_EMAIL, role: 'exporter' });
