@@ -43,3 +43,13 @@ dist/
 # permission prompts, meaningless to anyone else and noisy in review.
 # The shared config (.claude/settings.json, .claude/rules/) stays tracked.
 .claude/settings.local.json
+
+# Generated sign-in credentials for seeded accounts — secret, never committed
+seed-credentials.local.md
+**/seed-credentials.local.md
+user-list.local.md
+**/user-list.local.md
+all-accounts.local.md
+**/all-accounts.local.md
+supplier-products.local.md
+**/supplier-products.local.md

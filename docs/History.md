@@ -175,6 +175,213 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-10-24 — Product photos moved from one-per-INDUSTRY to per-SUB-CATEGORY pools (176 curated ids).**
+  Owner: *"use different images for every product — you are using same images for one type of
+  product."* Before, all 17 steel suppliers showed the same welding shot on all six of their cards.
+  Now: **0 of 98 suppliers repeat a photo among their six**, and a sub-category listing shows 3–9
+  distinct images (median 5) instead of 1. 153 distinct photos in use across the 588 rows.
+  - **Unsplash's search API and site now answer 401 without a key**, and `source.unsplash.com` is
+    retired, so pools cannot be harvested by keyword any more — they are curated by hand. Openverse
+    is the keyless alternative and was rejected: its CC0/PDM filter returns **0** results for
+    "cotton fabric" and "industrial chemicals", it rate-limits, and its CC-BY/BY-SA majority would
+    put an attribution obligation on a commercial marketplace that Unsplash's licence does not.
+  - 🔴 **Every id was checked BY EYE on a contact sheet.** A 200 only proves the id resolves. Two
+    traps caught this way: `photo-1529720317453` and `photo-1620799140408` were the old "textiles"
+    pool but are **garments** (clothes on hangers, a sweatshirt flat-lay), so "Cotton fabric" and
+    "Yarn & thread" had been showing finished apparel; and `photo-1565043666747`, the row of cars,
+    is permanently rejected for Metals.
+  - **Selection**: each sub-category owns a list whose FIRST id is a primary unique within its
+    industry, then the industry's other photos as a tail. A supplier starts at
+    `fnv1a(slug) % (own + min(tail, own))` and steps forward past anything it has already shown.
+    Three simpler rules were built and **measured on the rendered catalogue** before this one:
+    indexing the whole industry uniformly gave variety but turned "Rubber components" into lab
+    benches and "Spices & herbs" into potatoes; confining the start to a three-photo `own` list
+    restored relevance but left ten suppliers sharing two images; and a greedy "skip what this
+    supplier used" over short pools collapsed every late slot onto the one leftover photo.
+  - **Gotcha worth keeping:** a sum of char codes is a bad offset — company names inside one
+    industry share too many letters and cluster onto the same starting photo. FNV-1a fixed it.
+  - **Guards added** so this cannot regress silently: a sub-category with no pool fails the run,
+    and an industry pool smaller than `PER_SUPPLIER` fails it too (that is what guarantees six
+    distinct cards per supplier).
+  - **Known limits, not fixed:** 176 photos for 57 sub-categories is the ceiling, so the tail
+    still surfaces odd neighbours — potatoes under "Spices & herbs", a sofa under "Mattresses",
+    cleaning bottles under "Rubber components". There is no true yarn, tile-stack or plastic-granule
+    photo in the set. Images remain external Unsplash URLs, so these rows still fail
+    `isOwnCloudinaryUrl` if opened in the product editor and saved.
+  - Full list (now with the photo id per row): `MPX-BACKEND-FULL-SAAS/supplier-products.local.md`
+    (gitignored).
+- **2026-10-23 — Every sheet supplier given a catalogue: 588 products (`seed:supplier-products`).**
+  98 suppliers × 6, each in its OWN industry's sub-categories, all `active`, **all priced
+  `on_request`** as the owner asked.
+  - 🔴 `on_request` is also the only honest setting here: nobody has quoted these goods, and putting
+    invented per-kilo figures on real companies' public profiles would be numbers they never gave us.
+  - 🔴 **Industry comes from the SHEET ID prefix** (S01 = steel, S02 = ceramics …), joined to the
+    account by email through `seed-credentials.local.md` — the sheet id is not stored on the
+    Organisation. That file is now load-bearing for more than passwords. A sub-category name that no
+    longer resolves **fails the run**, rather than filing a steel supplier's goods under whatever
+    category happened to be first.
+  - 🔴 **I shipped wrong photos again and only caught them by LOOKING at the rendered page.** The
+    metals pool had picked up `photo-1565043666747` — a row of CARS, a photo I had already rejected
+    for Metals days earlier — by copying a pool across; and ceramics was pointed at the PACKAGING
+    pool, so tile suppliers displayed cardboard boxes. Both corrected against a fresh contact sheet.
+    **Reusing a pool is not the same as checking it.**
+  - The script now refreshes images on re-run instead of skipping, which is what let 588 rows be
+    corrected without dropping the catalogue.
+  - ⚠️ Images are external Unsplash URLs: they render, but saving one of these in the product editor
+    fails `isOwnCloudinaryUrl`. Same trade as `demo-products.js`.
+  - ⚠️ Port note: the web dev server is on **5174** now — something else took 5173.
+- **2026-10-23 — Supplier + verify seed scripts removed; one combined account list produced.** Owner,
+  after the verification run. `src/seed/suppliers.js` and `src/seed/verify-all.js` deleted and their
+  npm scripts dropped. `catalogue`, `superadmin`, `test-accounts` and `demo-products` remain.
+  - 🔴 **The 13 open client questions were moved INTO `all-accounts.local.md` first.** They lived
+    only in comments inside `suppliers.js` — the malformed S10-02 phone, S07-09's city cell holding a
+    state, the rows with two or three company names, S10-07 being a UAE company, S01-03 having no
+    email at all. Deleting the file without that step would have destroyed the only record of what
+    was guessed and what still needs confirming.
+  - ⚠️ **The verification undo is gone with the script.** `--undo` was the one-command way to put
+    110 exporters back to `pending`. Reverting now means a manual `updateMany`. Worth knowing before
+    this data goes anywhere near production, since none of those ticks was earned.
+  - ⚠️ Re-seeding a supplier batch is no longer possible from the repo either; the accounts live only
+    in the database and the credentials only in `seed-credentials.local.md` / `all-accounts.local.md`.
+    **Back those two files up** — argon2 hashes cannot be reversed.
+- **2026-10-23 — All exporters marked verified; full user list generated.** Owner. 105 organisations
+  flipped to `verified` (110 total now, 0 unverified) and 14 users had email/mobile proved.
+  `npm run seed:verify-all`, dev-only guard, **`--undo` reverts every one to `pending`**.
+  - 🔴 **This is the one seed here that would do real harm elsewhere.** The verified tick is the
+    platform's claim TO BUYERS that a person on the team read that company's documents. These are
+    real third-party companies and nobody has read anything. Acceptable on a dev database for a
+    demo; it must never run against production, and the data must not be promoted as-is.
+  - 🔴 **`verifiedBy` is deliberately left EMPTY.** It sets the same fields the reviewer path sets
+    (`kycStatus`, `verifiedAt`, clearing `kycRejectionReason`/`kycRevocation`) but writing a staff id
+    there would fabricate an audit trail for a review that never happened.
+  - User list at `user-list.local.md` (130 users: 110 exporter · 10 buyer · 9 employee · 1
+    superadmin), mode 0600 and gitignored — it carries real names, inboxes and phone numbers.
+- **2026-10-23 — Tenth supplier batch: S10 Furniture, Decor & Wood, all 10.** 98 exporter accounts
+  seeded from the sheets.
+  - 🔴 **S10-07 Al Saad Furniture is NOT Indian** — "Kangror/Sharjah" with a `+971` number. The seed
+    had `country: 'IN'` and `+91` hard-coded; both are per-supplier now. Stamping this one IN would
+    have put a UAE company in India's supplier list with a phone number it does not have. Verified
+    after the run: `country: AE`, `+971553065613`. Exporter orgs are now IN 108 · AE 1.
+  - 🔴 **S10-02's phone is malformed.** The sheet reads "0897172121" — ten characters starting with
+    0, and an Indian mobile is ten digits starting 6–9. Strip the zero and only nine remain. Stored
+    VERBATIM rather than repaired by guesswork: sign-in is by email, and a plausible-looking wrong
+    number is worse than an obviously odd one. Needs the client.
+  - ⚠️ S10-10 is another two-names row ("1. PEHR DESIGNS 2. JYSP Buying consultants"); the inbox is
+    `@jyspbuyingconsultants.com`, so that is the entity, with PEHR Designs kept in the description.
+  - "Baroda" → Vadodara; states from city: Roorkee → Uttarakhand, Ernakulam → Kerala.
+- **2026-10-23 — Ninth supplier batch: S09 Electronics & Electricals, all 10.** 88 exporter accounts
+  now; S01-03 Delta Steel remains the only sheet row that cannot be seeded.
+  - ⚠️ **S09-08's contact is Kamal Kumar but the inbox is `sachin@nepl.com.co`.** Left as the sheet
+    has it — the email is the username, so changing it would lock the account to an address that
+    does not exist. Worth confirming whose account it should be.
+  - ⚠️ **S09-09 is named "Delhi Electronics" but sits in Sirsa, Haryana** — the sheet states the
+    state explicitly, so the name is a trading name, not a location. Recorded as Haryana.
+  - States filled from the city: Gurgaon/Sonipat/Panchkula/Sirsa → Haryana, Mathura → Uttar Pradesh,
+    Amritsar → Punjab, Anand/Ahmedabad → Gujarat; "gujarat" → Gujarat (S09-05).
+- **2026-10-23 — Eighth supplier batch: S08 Packaging, Paper & Printing, all 10.** 78 exporter
+  accounts now (S01 9 · S02-04 30 · S05 9 · S06-08 30).
+  - ⚠️ **S08-05's contact cell names two people** ("Harsh/Ritu Puri"). The inbox is `harshpuri61@`,
+    so the account is Harsh Puri's; Ritu is recorded in the description rather than dropped.
+  - Five rows had no overview on the sheet. They carry the industry line from the sheet, not invented
+    marketing copy — a public supplier profile should not display words nobody wrote.
+  - States filled from the city: Amritsar → Punjab, Gurgaon → Haryana, New Delhi/Delhi → Delhi,
+    Rajkot/Vadodara/Ahmedabad → Gujarat.
+- **2026-10-23 — Seventh supplier batch: S07 Agri, Food & Beverages, all 10.** 68 exporter accounts
+  now (S01 9 · S02 10 · S03 10 · S04 10 · S05 9 · S06 10 · S07 10).
+  - 🔴 **S07-03 does NOT use the sheet's first email.** The row lists `darshanpatel@nkproteins.com`
+    first, but the named contact is Kamlesh L. Patel and `kamleshpatel@nkproteins.com` is his own
+    address — that one is the username, because the account belongs to the person who signs in with
+    it. Earlier batches took "first listed" only because the first WAS the contact's.
+  - ⚠️ **S07-09's city cell holds "Haryana" — a state, not a city.** Stored as
+    `{state: 'Haryana', country: 'IN'}` with no city rather than inventing a town. The org builder
+    now omits empty address parts instead of writing nulls.
+  - ⚠️ S07-02 Fatehabad: state blank and the name exists in BOTH Haryana and Uttar Pradesh. Haryana
+    assumed — flagged for the client rather than presented as known.
+  - Typos corrected: "Mehasana" → Mehsana (S07-05), "Guajarat" → Gujarat (S07-06). States from city:
+    Hyderabad → Telangana, Karnal → Haryana, Rajkot/Ahmedabad → Gujarat.
+  - ⚠️ S07-01 is another two-names-in-one-cell row ("Fishfa Agri World Ltd & Elkins Tradelink
+    Limited") — fifth sheet running.
+- **2026-10-23 — Sixth supplier batch: S06 Jewellery & Gems, all 10.** 58 exporter accounts now
+  (S01 9 · S02 10 · S03 10 · S04 10 · S05 9 · S06 10).
+  - ⚠️ Three rows again carried MULTIPLE company names in one cell — seeded under the
+    registered-looking one with the others kept in the description, never dropped: **S06-04** "Janvi
+    Gems Orva Jewels [in USA]", **S06-05** "L.H. Exports & L.H. Exports Private Limited, LH
+    Industries Private Limited", **S06-10** "Pure Solitaire Pvt Ltd // Phonex Enterprize Pvt Ltd".
+    This is now the fourth sheet with the pattern — worth asking the client to split that column.
+  - States filled from the city: Mumbai → Maharashtra, Chennai → Tamil Nadu, Bangalore → Karnataka,
+    Hisar → Haryana, Rajkot/Surat/Ahmedabad → Gujarat.
+  - ⚠️ S06-05's contact is spelled "karmavat" on the sheet and "karmawat" in the inbox; the inbox
+    spelling is used for the name since that is what they sign in with.
+- **2026-10-23 — Fifth supplier batch: S05 Industrial Machinery, 9 of 10 seeded.** 48 exporter
+  accounts now (S01 9 · S02 10 · S03 10 · S04 10 · S05 9).
+  - ⚠️ **S05-05 Shree Umiya F-Tech Machines was SKIPPED — it already exists.** `info@shreeumiya.com`
+    was registered on 2026-10-09 as "Shree Umiya F-Tech Machines (Umaboy)", is already **verified**
+    and already holds **4 products**. Re-seeding would have failed the unique index anyway; the
+    idempotency check caught it. 🔴 **Do not "fix" this by creating a second account** — one company
+    is one Organisation (D7), and that one is further along than a fresh seed would be.
+  - ⚠️ **S05-04's inbox (`nidhey4100@`) is also the second address listed on S04-01 Vini
+    Industries.** No clash, because S04-01 signs in with its first address — but the same person
+    appears to hold two supplier accounts. Worth confirming that is intended.
+  - ⚠️ S05-04's company cell ran two trading names together ("New Fab Engineering System Pvt Ltd
+    Yogi World Wide"); seeded under the first, the other kept in the description.
+  - S01-03 Delta Steel is still the only sheet row that cannot be seeded, still waiting on an email.
+- **2026-10-23 — Fourth supplier batch seeded: S04 Chemicals, Plastics & Rubber, all 10.** 39
+  exporter accounts now (S01 9 · S02 10 · S03 10 · S04 10).
+  - ⚠️ Flagged in the data file rather than resolved silently: **S04-03** holds two company names
+    ("Siddhi Plastic Industries / Ragukul Industries") and its inbox (`udayraghukul@`) matches the
+    SECOND — seeded under the first with the other kept in the description, but worth confirming
+    which entity signs up. **S04-04**'s contact is Gurpreet Singh while the inbox is `triloksingh@`;
+    left as the sheet has it, since the email is the username. **S04-01** lists two inboxes; the
+    first is the username.
+  - States filled from the city where the sheet left them blank: Godhra/Surat/Kadi/Ahmedabad →
+    Gujarat, Delhi → Delhi.
+  - S01-03 Delta Steel is still the only unseeded row, still waiting on an email.
+- **2026-10-23 — Third supplier batch seeded: S03 Textiles & Apparel, all 10.** 29 exporter accounts
+  now (S01 9, S02 10, S03 10). Credentials appended, earlier rows untouched.
+  - ⚠️ Sheet corrections, written as comments beside each row rather than applied silently:
+    "Gandinagar" → Gandhinagar (S03-03) · "Kadi Mesana" → Kadi, Mehsana district (S03-08) ·
+    "Uttrakhand" → Uttarakhand (S03-10) · blank states filled from the city where they are NOT
+    Gujarat: Ludhiana → Punjab (S03-06), Sirohi → Rajasthan (S03-07), Delhi (S03-09).
+  - ⚠️ **S03-04 and S03-05 share a contact name** ("Nikunj Patel") but are different companies with
+    different phones and inboxes — seeded as two suppliers, not deduplicated.
+  - ⚠️ S03-10 Gurlz Shuz is footwear; the sheet files it under Textiles & Apparel and it was left
+    that way rather than re-categorised.
+  - S01-03 Delta Steel remains the only unseeded row, still waiting on an email address.
+- **2026-10-23 — Second supplier batch seeded: S02 Ceramics, Tiles & Stone, all 10.** 19 exporter
+  accounts now (9 from S01, 10 from S02). Same dev-only guard; the run skips anything already
+  present, so it is safe to re-run per batch.
+  - 🔴 **Fixed a destructive bug BEFORE running it.** The credentials file was written with
+    `writeFileSync`, so seeding a second batch would have overwritten it with only the new rows —
+    and the first batch's passwords exist nowhere else, because the database stores argon2 hashes.
+    Losing that file means resetting nine real suppliers by hand. It APPENDS now, and the existing
+    file was migrated to the new column layout with every password verified byte-for-byte first.
+  - ⚠️ Judgement calls on this sheet, recorded in the data file rather than silently applied:
+    · **S02-04** — the company cell held THREE names ("1: Handmada International 2. Tradex solutions
+      3. TIEIC LLP"). Seeded as **TIEIC LLP** because both addresses on the row are `@tieic.com`; the
+      other two names are kept in the description. Worth confirming which entity actually signs up.
+    · **S02-07 Jalpaiguri is West Bengal** and **S02-08 Kaithal is Haryana** — the sheet left state
+      blank and every other row is Gujarat. Filled from the city rather than inheriting Gujarat.
+  - S01-03 Delta Steel is still the only outstanding row, still waiting on an email address.
+- **2026-10-23 — Client supplier list seeded (`npm run seed:suppliers`), 9 of 10.** The S01-xx sheet:
+  one exporter User + Organisation each, Gujarat addresses, `+91` mobiles, websites and overviews
+  from the sheet. Dev-only guard, idempotent on `(email, role)`.
+  - ⚠️ **S01-03 Delta Steel Re Rolling Mills was SKIPPED** — the sheet's email cell holds a NAME
+    ("Mr. Mehulkumar C Patel"), not an address. Left `email: null` rather than inventing one for a
+    real company; it is a one-line edit once the owner supplies it.
+  - 🔴 **Seeded UNVERIFIED** (`kycStatus` at its default). Nobody has reviewed these companies'
+    documents and the tick is a public trust signal. An exporter is publicly visible from signup
+    regardless — the tick is the part that must be earned.
+  - 🔴 **Seeding a real email BURNS it.** `(email, role)` is unique, so these nine people can no
+    longer self-register with those addresses; they can only be handed credentials. That is the exact
+    hazard CLAUDE.md describes for pre-created accounts — fine for a client-run onboarding, not
+    something to repeat speculatively.
+  - 🔴 **Passwords are generated per supplier and written to `seed-credentials.local.md`** (mode
+    0600, newly gitignored) — never logged, never printed into chat. `secrets-and-hygiene.md`:
+    anything reaching a log or transcript is compromised and must be rotated. The seed's own log
+    prints IDs and company names only.
+  - `mustChangePassword: false`, matching `test-accounts.js`'s deliberate choice — `authorize.js`
+    blocks every RBAC route while it is true, so handed-out accounts would 403 on everything until
+    the exporter UI routes them to the change-password screen. Flip it once that exists.
 - **2026-10-23 — The 2,610 seeded demo products removed (`npm run seed:demo-products:purge`).** Owner.
   2,610 deleted, 21 kept, nothing left carrying the marker.
   - 🔴 **The purge matches on the SAME constant the writer stamps** (`DEMO_PUBLIC_ID_PREFIX`,
