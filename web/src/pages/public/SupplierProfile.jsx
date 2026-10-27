@@ -12,9 +12,9 @@ import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
 import { VerifiedTick } from '../../components/ui/VerifiedTick.jsx';
-import { BoxIcon, BuildingIcon, CalendarIcon, ChatIcon, MapPinIcon, TagIcon } from '../../components/ui/icons.jsx';
+import { BoxIcon, BuildingIcon, CalendarIcon, ChatIcon, GridIcon, MapPinIcon, TagIcon } from '../../components/ui/icons.jsx';
 import { countryName } from '../../lib/countries.js';
-import { useCanonical } from '../../lib/seo.js';
+import { useCanonical, useNoIndex } from '../../lib/seo.js';
 import { NotFound } from './NotFound.jsx';
 
 /**
@@ -72,6 +72,15 @@ import { NotFound } from './NotFound.jsx';
  * visible cards always agree.
  */
 const PAGE_SIZE = 12;
+
+/* Keyed by how many stats survived the `.filter(Boolean)` below, so the strip
+   never leaves a dangling empty column on desktop. */
+const STAT_COLUMNS = {
+  3: 'lg:grid-cols-3',
+  4: 'lg:grid-cols-4',
+  5: 'lg:grid-cols-5',
+  6: 'lg:grid-cols-6',
+};
 const GRID = 'grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4';
 
 /**
@@ -149,6 +158,18 @@ export function SupplierProfile() {
   const { slug } = useParams();
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Number(params.get('page')) || 1);
+  // Which catalogue section is open. In the URL so a tab is shareable and Back
+  // works; `cat` rather than `category` to keep it distinct from the global
+  // search page's own parameter.
+  const cat = params.get('cat') || '';
+
+  /* Moving between tabs/pages must not drop the other parameter, and changing
+     the tab must reset to page 1 — a visitor on page 3 of a 40-product section
+     would otherwise land on an empty page 3 of a 6-product one. */
+  const setView = (next) => {
+    const merged = { ...(cat ? { cat } : {}), ...(page > 1 ? { page: String(page) } : {}), ...next };
+    setParams(Object.fromEntries(Object.entries(merged).filter(([, v]) => v)));
+  };
 
   const seller = useQuery({
     queryKey: catalogueKeys.exporter(slug),
@@ -160,6 +181,10 @@ export function SupplierProfile() {
   // This already pointed at the SERVER's slug rather than the typed one, so a
   // retired slug emitted the right canonical even before redirects existed.
   useCanonical(seller.data?.slug ? `/supplier/${seller.data.slug}` : null);
+  // m3-seo §4 — a category-filtered view of the catalogue is `noindex,follow`
+  // and canonicals to the clean supplier URL above. The unfiltered page stays
+  // indexable exactly as before.
+  useNoIndex(Boolean(cat));
 
   /**
    * 🔴 Renaming a company moves its public URL (2026-09-22), and the old URL
@@ -180,15 +205,29 @@ export function SupplierProfile() {
     navigate(`/supplier/${seller.data.slug}${search ? `?${search}` : ''}`, { replace: true });
   }, [seller.data?.slug, slug, params, navigate]);
 
+  const listQuery = { seller: canonicalSlug, page, pageSize: PAGE_SIZE, ...(cat ? { category: cat } : {}) };
   const products = useQuery({
     // Keyed on the CANONICAL slug, not the typed one: a retired slug would
     // otherwise fetch a catalogue the API cannot resolve, flash an error, and
     // then refetch after the redirect. This way the list loads once, correctly.
-    queryKey: catalogueKeys.products({ seller: canonicalSlug, page, pageSize: PAGE_SIZE }),
-    queryFn: () => catalogueApi.products({ seller: canonicalSlug, page, pageSize: PAGE_SIZE }),
+    queryKey: catalogueKeys.products(listQuery),
+    queryFn: () => catalogueApi.products(listQuery),
     enabled: seller.isSuccess,
     placeholderData: (prev) => prev,
   });
+
+  /* The category strip comes from the FACETS endpoint, not from counting the
+     products on screen: the catalogue is paginated, so a page of twelve can
+     only ever reveal twelve products' worth of categories. Facets are computed
+     over the seller's whole live catalogue server-side and already carry the
+     per-category counts. */
+  const facets = useQuery({
+    queryKey: catalogueKeys.facets({ seller: canonicalSlug, type: 'product' }),
+    queryFn: () => catalogueApi.facets({ seller: canonicalSlug, type: 'product' }),
+    enabled: seller.isSuccess,
+    staleTime: 5 * 60 * 1000,
+  });
+  const sections = facets.data?.facets?.subCategory ?? [];
 
   const s = seller.data;
   useEffect(() => {
@@ -204,12 +243,33 @@ export function SupplierProfile() {
 
   const total = products.data?.total ?? 0;
 
-  const factPills = s
+  /* The stat strip, in the reference's "15 YEARS / 300+ EMPLOYEES" spirit but
+     built ONLY from fields that are already in the public whitelist. The
+     reference's factory area, production lines, headcount, capacity and
+     turnover have no field on `Organisation` and are deliberately absent —
+     inventing them would put numbers on a real company's page that it never
+     gave us. "Years in business" is arithmetic on `establishedYear`, not a
+     new claim. */
+  const stats = s
     ? [
-        s.country && { icon: MapPinIcon, label: countryName(s.country) ?? s.country },
-        { icon: BuildingIcon, label: s.entityType === 'individual' ? 'Individual' : 'Business' },
-        s.establishedYear && { icon: CalendarIcon, label: `Est. ${s.establishedYear}` },
-        s.memberSince && { icon: TagIcon, label: `Member since ${s.memberSince}` },
+        s.establishedYear && {
+          icon: CalendarIcon,
+          value: `${Math.max(0, new Date().getFullYear() - s.establishedYear)} yrs`,
+          label: `In business · est. ${s.establishedYear}`,
+        },
+        { icon: BoxIcon, value: String(s.productCount ?? 0), label: 'Products listed' },
+        sections.length > 0 && {
+          icon: GridIcon,
+          value: String(sections.length),
+          label: sections.length === 1 ? 'Product category' : 'Product categories',
+        },
+        s.country && { icon: MapPinIcon, value: countryName(s.country) ?? s.country, label: 'Based in' },
+        {
+          icon: BuildingIcon,
+          value: s.entityType === 'individual' ? 'Individual' : 'Business',
+          label: 'Entity type',
+        },
+        s.memberSince && { icon: TagIcon, value: String(s.memberSince), label: 'Member since' },
       ].filter(Boolean)
     : [];
 
@@ -218,68 +278,73 @@ export function SupplierProfile() {
       <PublicHeader />
 
       <main className="flex-1">
-        <div className="w-full px-4 py-8 sm:px-6 md:py-12">
-          {/* --- Company header: cover banner + overlapping logo + identity. ---
-              The tick's ABSENCE stays the entire "not verified" signal. */}
+        <div className="w-full px-4 py-8 sm:px-6 md:py-12 lg:px-10 xl:px-16">
+          {/* --- Company header. Reworked 2026-10-28 against an owner-supplied
+              Alibaba storefront reference: the cover becomes a full banner with
+              the identity sitting ON it, and a stat strip runs underneath.
+              🔴 ONLY whitelisted fields are shown. The reference's factory
+              area / production lines / employee count / capacity / turnover /
+              certifications / exhibition and team photos are NOT here — no
+              field on `Organisation` holds them, and the owner's instruction
+              was profile + products only for now.
+              The tick's ABSENCE stays the entire "not verified" signal. --- */}
           <section className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
             {seller.isPending ? (
-              <Skeleton className="aspect-[4/1] max-h-[280px] min-h-[110px] w-full rounded-none sm:min-h-[140px]" />
+              <Skeleton className="h-64 w-full rounded-none sm:h-72" />
             ) : (
-              <div className="aspect-[4/1] max-h-[280px] min-h-[110px] w-full sm:min-h-[140px]">
+              <div className="relative h-64 w-full sm:h-72">
                 {s.coverImage ? (
                   <img src={s.coverImage} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  // No upload path exists yet for this field (see file header) —
-                  // every real seller renders this today. A designed brand
-                  // fill, not a placeholder: the same gradient this section
-                  // used as its whole header before this redesign.
+                  // A designed brand fill, not a placeholder — a company that
+                  // has not set a cover still gets a finished-looking header.
                   <div
                     aria-hidden="true"
                     className="h-full w-full bg-gradient-to-r from-primary-800 via-primary-700 to-primary-500"
                   />
                 )}
-              </div>
-            )}
+                {/* The scrim is what makes white text legible over arbitrary
+                    photography — without it the name disappears on a bright
+                    cover. Opaque at the bottom where the text sits. */}
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/5"
+                />
 
-            {seller.isPending ? (
-              <div className="px-5 pb-6 sm:px-8">
-                <Skeleton className="-mt-10 h-20 w-20 rounded-2xl" />
-                <Skeleton className="mt-4 h-8 w-64" />
-                <Skeleton className="mt-3 h-6 w-96 rounded-full" />
-              </div>
-            ) : (
-              <div className="px-5 pb-6 sm:px-8">
-                {/* Seated deeper into the banner and larger (2026-08-17 UI
-                    pass): at h-20 it read as a stray thumbnail against a 4:1
-                    cover. The shadow separates it from busy photography. */}
-                <div className="-mt-14 sm:-mt-16">
+                <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end gap-4 p-5 sm:p-7">
                   {s.logo ? (
                     <img
                       src={s.logo}
                       alt=""
-                      className="h-24 w-24 rounded-2xl object-cover shadow-lift ring-4 ring-white sm:h-28 sm:w-28"
+                      className="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-lift ring-4 ring-white/90 sm:h-24 sm:w-24"
                     />
                   ) : (
                     <NoImagePanel
                       label={s.name}
                       monogram
-                      ratio="h-24 w-24 sm:h-28 sm:w-28"
-                      className="rounded-2xl shadow-lift ring-4 ring-white"
+                      ratio="h-20 w-20 sm:h-24 sm:w-24"
+                      className="shrink-0 rounded-2xl shadow-lift ring-4 ring-white/90"
                     />
                   )}
-                </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="text-2xl font-bold text-ink-900 sm:text-3xl">{s.name}</h1>
-                    {/* Pill wrap around the shared `VerifiedTick` — never fork
-                        its own logic/copy, only the container is new. */}
-                    {s.verified && (
-                      <VerifiedTick
-                        verified
-                        verifiedAt={s.verifiedAt}
-                        className="rounded-full bg-success-50 px-2.5 py-1"
-                      />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h1 className="text-2xl font-bold text-white drop-shadow-sm sm:text-3xl">{s.name}</h1>
+                      {/* Pill wrap around the shared `VerifiedTick` — never fork
+                          its own logic/copy, only the container is new. */}
+                      {s.verified && (
+                        <VerifiedTick
+                          verified
+                          verifiedAt={s.verifiedAt}
+                          className="rounded-full bg-white/95 px-2.5 py-1"
+                        />
+                      )}
+                    </div>
+                    {s.country && (
+                      <p className="mt-1.5 flex items-center gap-1.5 text-sm font-medium text-white/90">
+                        <MapPinIcon className="h-4 w-4" aria-hidden="true" />
+                        {countryName(s.country) ?? s.country}
+                      </p>
                     )}
                   </div>
 
@@ -293,27 +358,33 @@ export function SupplierProfile() {
                       without inventing a product-less thread. */}
                   <a
                     href="#products"
-                    className="flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-full bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
+                    className="flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2 rounded-full bg-primary-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:w-auto"
                   >
                     <ChatIcon className="h-4 w-4" aria-hidden="true" />
                     Start Conversation
                   </a>
                 </div>
-
-                {factPills.length > 0 && (
-                  <p className="mt-3 flex flex-wrap items-center gap-2">
-                    {factPills.map(({ icon: Icon, label }) => (
-                      <span
-                        key={label}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-white px-3 py-1 text-xs font-medium text-ink-700"
-                      >
-                        <Icon className="h-3.5 w-3.5 text-ink-500" aria-hidden="true" />
-                        {label}
-                      </span>
-                    ))}
-                  </p>
-                )}
               </div>
+            )}
+
+            {stats.length > 0 && (
+              <dl
+                className={`grid grid-cols-2 divide-x divide-y divide-surface-border border-t border-surface-border sm:grid-cols-3 lg:divide-y-0 ${
+                  // Full class strings, never an interpolated `lg:grid-cols-${n}`:
+                  // Tailwind scans source text, so a built-up class name is not
+                  // emitted and the row would silently fall back to 3 columns.
+                  // `establishedYear` is optional, so the count really does vary.
+                  STAT_COLUMNS[stats.length] ?? 'lg:grid-cols-6'
+                }`}
+              >
+                {stats.map(({ icon: Icon, value, label }) => (
+                  <div key={label} className="px-4 py-4 text-center">
+                    <Icon className="mx-auto h-4 w-4 text-ink-400" aria-hidden="true" />
+                    <dd className="mt-1.5 text-lg font-bold leading-tight text-ink-900">{value}</dd>
+                    <dt className="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">{label}</dt>
+                  </div>
+                ))}
+              </dl>
             )}
           </section>
 
@@ -325,11 +396,9 @@ export function SupplierProfile() {
                   h2 over a card holding two lines of prose left a sparse,
                   unanchored block. Same header-on-a-divider anatomy the filter
                   and category cards use. */}
-              <div className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
-                <h2 className="border-b border-surface-border px-6 py-4 text-[15px] font-bold text-ink-900">
-                  About the Company
-                </h2>
-                <div className="px-6 py-5">
+              <div className="rounded-2xl border border-surface-border bg-white px-6 py-5 shadow-card sm:flex sm:gap-10 sm:px-8 sm:py-6">
+                <h2 className="shrink-0 text-[15px] font-bold text-ink-900 sm:w-48">About the Company</h2>
+                <div className="mt-3 sm:mt-0">
                   {s.description ? (
                     <p className="max-w-prose text-sm leading-relaxed text-ink-700">{s.description}</p>
                   ) : (
@@ -355,6 +424,40 @@ export function SupplierProfile() {
                 </span>
               )}
             </div>
+
+            {/* Product navigation — the reference's category strip. Real
+                filtering, not decoration: each tab re-queries `/public/products`
+                with `category` + `seller`, so paging inside a section works and
+                the URL is shareable. Counts come from the facets call, which
+                sees the whole catalogue rather than the current page. */}
+            {sections.length > 1 && (
+              <nav aria-label="Product categories" className="mb-5 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+                <ul className="flex w-max gap-2 sm:w-auto sm:flex-wrap">
+                  {[{ slug: '', name: 'All products', count: s.productCount }, ...sections].map((c) => {
+                    const active = cat === c.slug;
+                    return (
+                      <li key={c.slug || 'all'}>
+                        <button
+                          type="button"
+                          aria-current={active ? 'true' : undefined}
+                          onClick={() => setView({ cat: c.slug, page: '' })}
+                          className={`flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded-full border px-4 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 ${
+                            active
+                              ? 'border-primary-600 bg-primary-600 text-white'
+                              : 'border-surface-border bg-white text-ink-700 hover:border-primary-300 hover:text-primary-700'
+                          }`}
+                        >
+                          {c.name}
+                          {c.count != null && (
+                            <span className={active ? 'text-white/80' : 'text-muted'}>{c.count}</span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </nav>
+            )}
 
             {(seller.isPending || products.isPending) && (
               <ul className={GRID} aria-busy="true" aria-label="Loading products">
@@ -387,9 +490,17 @@ export function SupplierProfile() {
                 only this area is empty. Never an error, never "inactive". */}
             {products.isSuccess && total === 0 && (
               <div className="rounded-2xl border border-surface-border bg-white shadow-card">
-                <EmptyState icon={BoxIcon} title="No products listed yet">
-                  This supplier hasn&apos;t published any listings.
-                </EmptyState>
+                {cat ? (
+                  // A section can be empty while the company is not — never
+                  // report an empty filter as an empty catalogue.
+                  <EmptyState icon={BoxIcon} title="Nothing in this category">
+                    This supplier has no live listings here right now.
+                  </EmptyState>
+                ) : (
+                  <EmptyState icon={BoxIcon} title="No products listed yet">
+                    This supplier hasn&apos;t published any listings.
+                  </EmptyState>
+                )}
               </div>
             )}
 
@@ -409,7 +520,7 @@ export function SupplierProfile() {
                   page={page}
                   pageSize={PAGE_SIZE}
                   total={total}
-                  onPage={(n) => setParams(n > 1 ? { page: String(n) } : {})}
+                  onPage={(n) => setView({ page: n > 1 ? String(n) : '' })}
                 />
               </>
             )}

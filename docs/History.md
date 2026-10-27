@@ -175,6 +175,53 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-10-28 — Supplier page reworked toward an Alibaba-style storefront, and every sheet
+  supplier given a profile picture + cover banner.**
+  Owner sent an Alibaba Gold-Supplier mini-site as the reference. 🔴 **A red alert was raised
+  first** — most of that page (factory area, production lines, headcount, monthly capacity,
+  turnover, certifications, exhibition and team photos, multi-language, FOB price bands) has **no
+  field on `Organisation`** and would widen the public projection, which `m3-public-projection.md`
+  guards. Owner's answer: *"sirf product and profile is type se dikha do abhi ke liye"* — so only
+  the profile + catalogue half was built.
+  - **Branding data** (`seed:supplier-products`): all 98 sheet suppliers now carry `logo` and
+    `coverImage`, drawn from the same eye-checked industry pools as their products — a works or
+    product shot as the company thumbnail, which is how this market's directories actually look,
+    rather than a fabricated logotype. Logo and cover are always different photos (71 distinct
+    covers, 70 distinct logos). 🔴 **Real uploads are never clobbered**: `isSeedOwned()` writes
+    only into an empty field or a URL this seed itself wrote, so the four organisations holding a
+    genuine Cloudinary logo were left untouched.
+  - **Page** (`web/src/pages/public/SupplierProfile.jsx`): cover is now a full banner with the
+    identity sitting on it behind a legibility scrim; a stat strip runs underneath; and a
+    **product-navigation strip** lets a visitor filter the catalogue by the supplier's own
+    sub-categories.
+  - 🔴 **No new public field was added** — the page uses only what the whitelist already carries
+    (name, logo, coverImage, description, verified/verifiedAt, country, entityType,
+    establishedYear, memberSince, productCount). `m3-public-projection.md` therefore needed no
+    change, which is the point: the storefront look was reached without widening the surface.
+  - **Category counts come from `GET /public/facets?seller=…`, not from the products on screen** —
+    the catalogue is paginated, so counting the current page would under-report any supplier with
+    more than twelve listings. The "All products" count uses `productCount` (the server's live
+    count) rather than the current query's `total`, which is filtered once a tab is active.
+  - m3-seo §4 honoured: a `?cat=` view is `noindex,follow` and still canonicals to the clean
+    `/supplier/:slug`. Paging preserves the active tab; changing tab resets to page 1.
+  - **Gotcha — a headless screenshot at `--window-size=390` is NOT a mobile render.** It cropped a
+    desktop-width layout to 390px, which looked exactly like horizontal overflow and nearly caused
+    a fix for a bug that did not exist. Measuring through CDP
+    (`Emulation.setDeviceMetricsOverride` + `document.documentElement.scrollWidth`) showed
+    `scrollWidth === clientWidth === 390`: no page overflow, only the tab strip scrolling inside
+    its own `overflow-x-auto`. Use CDP device metrics for any mobile check on this project.
+  - Tailwind note, same trap as before: the stat strip's column count varies with how many stats
+    survive, so the classes are a **lookup of full strings** (`STAT_COLUMNS`) — an interpolated
+    `lg:grid-cols-${n}` is not scanned by Tailwind and silently emits nothing. Verified present in
+    the built CSS.
+  - Follow-up the same day: the page was missing the site's own `lg:px-10 xl:px-16` side-padding
+    steps (`/search` and `/product` both have them), so it ran edge-to-edge on a wide monitor; and
+    "About the Company" became a label-left / prose-right row, because most companies write one
+    sentence and a full-width card under a full-width header bar read as a layout bug.
+  - **Still true and still a launch blocker:** `/suppliers` continues to list the 12 **fictional**
+    companies in `web/src/lib/demoSuppliers.js` (owner, 2026-09-28: hardcoded, don't fetch), so
+    these 98 real suppliers do not appear there yet. That file's own header calls presenting
+    fictional companies as "verified" a false trust claim. Raised with the owner again this session.
 - **2026-10-24 — Product photos moved from one-per-INDUSTRY to per-SUB-CATEGORY pools (176 curated ids).**
   Owner: *"use different images for every product — you are using same images for one type of
   product."* Before, all 17 steel suppliers showed the same welding shot on all six of their cards.

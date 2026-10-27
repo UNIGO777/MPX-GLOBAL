@@ -495,6 +495,18 @@ const INDUSTRY_PHOTOS = Object.fromEntries(
   Object.entries(INDUSTRY).map(([k, v]) => [k, [...new Set(v.subs.flatMap((n) => SUB_PHOTOS[n] ?? []))]]),
 );
 
+const IMAGE_PARAMS = 'auto=format&fit=crop&q=70';
+
+function unsplash(photo, size) {
+  return `https://images.unsplash.com/${photo}?${IMAGE_PARAMS}&${size}`;
+}
+
+/* Empty, or a URL this seed wrote. Anything else — a Cloudinary asset above
+   all — is somebody's real upload and is left exactly as it is. */
+function isSeedOwned(url) {
+  return !url || url.startsWith('https://images.unsplash.com/');
+}
+
 const poolCache = new Map();
 function poolFor(sheet, subName) {
   const key = `${sheet}|${subName}`;
@@ -555,12 +567,16 @@ async function run() {
   if (thin.length) throw new Error(`industry photo pools smaller than PER_SUPPLIER (${PER_SUPPLIER}) — ${thin.join(' | ')}`);
 
   const users = await User.find({ role: 'exporter' }).select('email orgId').lean();
-  const orgs = new Map((await Organisation.find({ exporterSide: true }).select('name').lean()).map((o) => [String(o._id), o]));
+  const orgs = new Map(
+    (await Organisation.find({ exporterSide: true }).select('name logo coverImage').lean()).map((o) => [String(o._id), o]),
+  );
 
   const existing = new Set((await Product.find({}).select('slug').lean()).map((p) => p.slug));
   const docs = [];
   const refresh = [];
+  const branding = [];
   let suppliers = 0;
+  let brandingSkipped = 0;
 
   for (const u of users) {
     const sheet = sheetOf.get(u.email);
@@ -581,6 +597,26 @@ async function run() {
       offset = Math.imul(offset ^ c.charCodeAt(0), 0x01000193) >>> 0;
     }
     const usedPhotos = new Set();
+
+    // --- Company branding: profile picture + cover banner (owner, 2026-10-24).
+    // Both fields are plain URL strings on Organisation and have NO upload
+    // endpoint yet, so every sheet supplier renders the designed fallbacks (a
+    // brand gradient, a monogram tile). These fill them with the same
+    // eye-checked industry photography the catalogue uses — a works/product
+    // shot as the company thumbnail, which is how this market's directories
+    // actually look, not a fabricated logotype.
+    //
+    // 🔴 Never clobber a REAL upload. One organisation already carries a
+    // Cloudinary logo somebody chose; only an empty field, or a URL this seed
+    // itself wrote, may be overwritten.
+    const brandPool = INDUSTRY_PHOTOS[sheet];
+    const coverPhoto = brandPool[offset % brandPool.length];
+    const logoPhoto = brandPool[(offset + 1 + (offset % (brandPool.length - 1))) % brandPool.length];
+    const set = {};
+    if (isSeedOwned(org.coverImage)) set.coverImage = unsplash(coverPhoto, 'w=1600&h=400');
+    if (isSeedOwned(org.logo)) set.logo = unsplash(logoPhoto, 'w=400&h=400');
+    if (Object.keys(set).length) branding.push({ updateOne: { filter: { _id: u.orgId }, update: { $set: set } } });
+    if (Object.keys(set).length < 2) brandingSkipped += 1;
 
     for (let i = 0; i < PER_SUPPLIER; i += 1) {
       const sub = subByName.get(industry.subs[i % industry.subs.length]);
@@ -667,6 +703,12 @@ async function run() {
     imagesRefreshed += res.modifiedCount ?? 0;
   }
 
+  let brandedOrgs = 0;
+  for (let i = 0; i < branding.length; i += 500) {
+    const res = await Organisation.bulkWrite(branding.slice(i, i + 500), { ordered: false });
+    brandedOrgs += res.modifiedCount ?? 0;
+  }
+
   logger.info(
     {
       suppliers,
@@ -676,6 +718,9 @@ async function run() {
       distinctPhotos: new Set(Object.values(SUB_PHOTOS).flat()).size,
       skippedExisting: suppliers * PER_SUPPLIER - docs.length,
       totalProducts: await Product.countDocuments({}),
+      brandedOrgs,
+      // Fields left alone because they already held a real (non-seed) upload.
+      brandingSkipped,
     },
     'supplier products seeded',
   );
