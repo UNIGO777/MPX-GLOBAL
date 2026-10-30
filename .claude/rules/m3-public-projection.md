@@ -34,7 +34,13 @@ whitelisted public fields below**. Everything else stays private.
 ## Public whitelist (the ONLY fields a buyer/guest may receive)
 
 **Seller / Supplier** — company/business name · **`slug`** (`/supplier/:slug` link — §A6) · logo ·
-**`coverImage`** (2026-08-13 — supplier-profile banner, same public-asset reasoning as `logo`;
+**`officePhotos`**
+(2026-10-30, owner — premises/production photography for the supplier page's company gallery;
+each entry is `{ url, publicId }` on our own Cloudinary. 🔴 **These are NOT `kycDocuments` and
+nothing from the KYC store may be copied into them.** The GST / Udyam certificates the client
+supplied stay PRIVATE: they carry the owner's mobile, email, PAN, full street address and social
+category, none of which this whitelist permits — a certificate's *existence* can be surfaced as a
+badge, the scan never) · **`coverImage`** (2026-08-13 — supplier-profile banner, same public-asset reasoning as `logo`;
 ✅ **the exporter can now SET it** — `POST/DELETE /me/organisation/cover`, built 2026-08-17,
 mirroring the logo's guards exactly: exporter-side only, magic-byte verified, 8 MB cap,
 storefront content so it never touches `kycStatus`) · description ·

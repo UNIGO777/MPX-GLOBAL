@@ -72,6 +72,24 @@ const organisationSchema = new Schema(
     // file's own header comment for what's built vs still missing.
     coverImage: { type: String, trim: true },
 
+    /**
+     * Company / factory photographs for the public supplier page (owner,
+     * 2026-10-30, after an Alibaba storefront reference).
+     *
+     * 🔴 PUBLIC by design — these are premises and production shots the company
+     * supplied to be shown. They are NOT `kycDocuments`: nothing here is a
+     * certificate, a registration or an identity document, and nothing from
+     * the KYC store may ever be copied in. Keep that separation — the KYC
+     * uploads live in a PRIVATE Cloudinary store for a reason.
+     */
+    officePhotos: [
+      {
+        _id: false,
+        url: { type: String, trim: true, required: true },
+        publicId: { type: String, trim: true, required: true },
+      },
+    ],
+
     businessProfile: {
       registrationNumber: { type: String, trim: true },
       taxId: { type: String, trim: true },
@@ -360,6 +378,7 @@ export const PUBLIC_FIELDS = [
   'description',
   'logo',
   'coverImage', // 2026-08-13 — same public-asset reasoning as `logo` above.
+
   // 'business' | 'individual'. A trust signal that sits next to the verified tick,
   // and the field that closes the cancelled "business type" (A22.5): without it the
   // public page said nothing about whether a seller is a registered business.
@@ -377,6 +396,35 @@ export const PUBLIC_DERIVED = {
   // public response — publishing it would leak the `rejected` state, and the
   // product rule is "verified tick or nothing" (there is no not-verified badge).
   verified: (org) => org.kycStatus === 'verified',
+
+  // 2026-10-30 — the company gallery. DERIVED rather than copied so only the
+  // URL crosses: `publicId` is an internal handle the page has no use for, and
+  // the smallest public surface that does the job is the rule here.
+  officePhotos: (org) => (org.officePhotos ?? []).map((p) => p.url).filter(Boolean),
+
+  /**
+   * 2026-10-30 — the registrations a buyer can check, NOT the certificates.
+   *
+   * 🔴 The documents themselves stay private. A Udyam certificate carries the
+   * owner's mobile, email, PAN, full street address and social category; this
+   * whitelist permits none of it. What a buyer wants from a certificate is the
+   * claim it proves and a number they can verify, and that is all this emits.
+   *
+   * A GSTIN is required by law to be displayed at the registered place of
+   * business and printed on every invoice, and anyone can check it on the GST
+   * portal — publishing it discloses nothing the company does not already
+   * show. The PAN sitting beside it on the same page is deliberately NOT
+   * extracted anywhere, so it cannot appear here.
+   */
+  certifications: (org) =>
+    [
+      org.businessProfile?.taxId && { type: 'gst', label: 'GST Registered', number: org.businessProfile.taxId },
+      org.businessProfile?.registrationNumber && {
+        type: 'udyam',
+        label: 'Udyam Registered',
+        number: org.businessProfile.registrationNumber,
+      },
+    ].filter(Boolean),
 
   // Nulled unless verified, so an unverified org cannot expose a stale
   // review timestamp.

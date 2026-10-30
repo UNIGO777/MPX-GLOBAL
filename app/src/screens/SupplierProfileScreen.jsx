@@ -6,6 +6,7 @@ import {
   Image,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -238,6 +239,46 @@ export function SupplierProfileScreen({ navigation, route }) {
         {supplier.description ? <Text style={styles.description}>{supplier.description}</Text> : null}
       </View>
 
+      {/* Registrations (owner, 2026-10-30) — the claim a certificate proves
+          plus the number a buyer can verify, never the document. The PAN,
+          address, mobile and social category printed on the same certificate
+          are not extracted anywhere, so they cannot reach this screen. */}
+      {supplier.certifications?.length ? (
+        <View style={styles.certBlock}>
+          <Text style={styles.sectionHeading}>Registrations</Text>
+          {supplier.certifications.map((c) => (
+            <View key={c.type} style={styles.certRow}>
+              <Ionicons name="shield-checkmark" size={18} color={colors.success} accessible={false} />
+              <View style={styles.certText}>
+                <Text style={styles.certLabel}>{c.label}</Text>
+                <Text style={styles.certNumber}>{c.number}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {/* Company photos (owner, 2026-10-30) — premises and production shots the
+          company supplied, from our own Cloudinary, matching web's gallery.
+          🔴 NOT certificates: the GST / Udyam documents these companies filed
+          stay in the private KYC store. They carry the owner's mobile, email,
+          PAN, full street address and social category, none of which the
+          public projection permits. */}
+      {supplier.officePhotos?.length ? (
+        <View style={styles.photosBlock}>
+          <Text style={styles.sectionHeading}>Company Photos</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.photosRow}
+          >
+            {supplier.officePhotos.map((uri) => (
+              <Image key={uri} source={{ uri }} style={styles.officePhoto} resizeMode="cover" />
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <View style={styles.catalogueHeadRow}>
         <Text style={styles.catalogueHeading}>Products</Text>
         <Text style={styles.catalogueCount}>
@@ -354,6 +395,28 @@ const styles = StyleSheet.create({
   catalogueHeading: { ...typography.h3, color: colors.ink[900] },
   catalogueCount: { ...typography.label, color: colors.primary[600] },
   emptyCatalogue: { ...typography.body, color: colors.muted, paddingVertical: spacing[4] },
+  certBlock: { marginTop: spacing[5], paddingHorizontal: spacing[4] },
+  certRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.surface.border,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    marginBottom: spacing[2],
+  },
+  certText: { flex: 1 },
+  certLabel: { ...typography.bodyStrong, color: colors.ink[900] },
+  certNumber: { ...typography.caption, color: colors.muted },
+  photosBlock: { marginTop: spacing[5] },
+  sectionHeading: { ...typography.h3, color: colors.ink[900], paddingHorizontal: spacing[4], marginBottom: spacing[3] },
+  // Horizontal strip rather than a grid: the catalogue below is already a
+  // two-column FlatList, and nesting a vertical grid inside its header makes
+  // the whole list measure badly on Android.
+  photosRow: { paddingHorizontal: spacing[4], gap: spacing[3] },
+  officePhoto: { width: 220, height: 150, borderRadius: radii.lg, backgroundColor: colors.surface.subtle },
 
   listContent: { paddingHorizontal: spacing[5], flexGrow: 1 },
   columnWrap: { gap: spacing[4] },

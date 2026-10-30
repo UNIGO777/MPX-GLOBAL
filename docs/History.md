@@ -175,6 +175,104 @@ modules (Modules 2–8) beyond what's above. *(Removed from this list 2026-07-30
 ---
 
 ## Change log (append newest at the top — one entry per meaningful step)
+- **2026-10-30 — Data seed scripts removed from the backend (owner).**
+  Deleted: `supplier-products.js`, `upload-seed-photos.js`, `supplier-photos.data.js`,
+  `supplier-photos.manifest.json`, `office-photos.js`, `registration-numbers.js`,
+  `demo-products.js`, `test-accounts.js`, and their npm scripts.
+  - 🔴 **`catalogue.js`, `catalogue.data.js` and `superadmin.js` were deliberately KEPT.** They are
+    not demo data — they build the category tree and bootstrap the super admin, and a fresh
+    database (the production VPS, when it is stood up) cannot be brought up without them.
+  - What the deleted scripts produced is unaffected: the 98 suppliers, 609 products, 174 office
+    photos, logos, covers and 55 registrations live in MongoDB, and the images live in Cloudinary.
+    **What is gone is the ability to re-run or repair them** — if a wrong photo or category turns
+    up later, it is now a manual database fix.
+  - Five of the deleted files were never committed, so git cannot restore them.
+  - Two comments in `src/config/env.js` still point at `src/seed/test-accounts.js`, and
+    `SEED_DEMO_PASSWORD` / the fixed-OTP note now describe a script that no longer exists. Left
+    alone rather than silently changing auth config — flagged to the owner.
+- **2026-10-30 — Client premises photographs published to supplier pages; KYC certificates
+  deliberately NOT published.**
+  Owner asked for the `~/Documents/Client Folders` drop — office photos **and** the GST / Udyam
+  certificates — to go on the public supplier page. The photos were built. **The certificates were
+  not, and that is a decision worth keeping written down.**
+  - 🔴 **Why the certificates stayed private.** They are not trade audit certificates (BSCI / SGS
+    / OEKO-TEX) like the Alibaba reference shows — they are the **same documents the platform uses
+    for KYC**. Field inspection of the real files (labels only, values never printed) found the
+    Udyam certificate carries the owner's **mobile (8 of 9 populated), email (8 of 9), PAN, full
+    street address and Social Category (caste)**; the GST certificate carries GSTIN, legal name,
+    PAN and address. Publishing the scans would have put that on a public page for 85 real
+    companies. CLAUDE.md #4 forbids returning KYC data, and the public whitelist allows
+    "country / city, **not** street address". The trust signal can be carried by a *badge* and the
+    registration number; the scan adds nothing a buyer needs.
+  - ⚠️ **A claim I nearly made and had to retract:** I was about to report that the Udyam
+    certificates expose **bank account numbers and IFSC**. The labels are on the template, but a
+    check of all nine files found **0 populated**. Checked before telling the owner, not after.
+  - **New `Organisation.officePhotos`** (`[{ url, publicId }]`), published through
+    `PUBLIC_DERIVED` as **URLs only** — `publicId` is an internal handle a page has no use for.
+    `m3-public-projection.md` updated in the same pass, as that rule requires, including the
+    explicit note that nothing from the KYC store may be copied in.
+  - **New `npm run seed:office-photos`.** It reads only `Photos/` and only image extensions, so a
+    certificate cannot reach a public field by accident. It **refuses to publish without
+    `--approved`**, and `--review` writes the candidate list first.
+  - 🔴 **All 193 candidates were looked at.** Rejections, with reasons recorded in the script:
+    **9 photos carry a "GPS Map Camera" watermark burning exact latitude, longitude and street
+    address into the frame** (a photo is not a loophole around the address rule); **1 shows a
+    mobile number on a signboard** ("never contact details" applies to what is legible in an
+    image, not only to fields); **9 are award-ceremony or posed group portraits**, not premises.
+  - 🔴 **Rejected photos are NOT backfilled.** Only the first 8 per folder were reviewed, so
+    pulling a replacement from further down would publish an unreviewed picture — the exact
+    failure the gate exists to prevent. One organisation (83 photos, all of its candidates
+    GPS-stamped) therefore gets no gallery at all; stripping those watermarks is a separate job.
+  - Supplier page gained a **Company Photos** gallery below About, on **web and the app**
+    (a horizontal strip there: the catalogue is already a two-column FlatList and a nested
+    vertical grid in its header measures badly on Android).
+  - **Registrations, not certificates.** The owner reaffirmed wanting certificates shown, so the
+    *claim* each one proves is now published and the document is not: a new `certifications`
+    derived field emits `{type, label, number}` for GST and Udyam. A GSTIN must by law be
+    displayed at the registered premises and on every invoice and is checkable on the GST portal,
+    so it discloses nothing the company does not already show. **PAN is never extracted anywhere**
+    — a field that does not exist cannot leak. `npm run seed:registrations` filled 55
+    organisations (51 GSTIN, 30 Udyam); 20 folders hold scanned PDFs with no embedded text and
+    would need OCR.
+  - The PDF parse runs in **Python**, not Node: a Node PDF library would have been a new
+    dependency, and the owner has not agreed to one. Its output is
+    `registration-numbers.local.json` (gitignored — 85 real GSTINs).
+  - ⚠️ `npm test` in `app/` does not run: **vitest is not installed there**. Pre-existing, found
+    while checking this change.
+  - 15 client folders have no account to attach to, including **Mehulkumar C Patel = Delta Steel
+    Re Rolling Mills**, still unseeded because its sheet row carries a name where the email should be.
+- **2026-10-30 — Seed images rehosted on Cloudinary; the deployed site's images were CSP-blocked.**
+  Owner: *"images are not showing on other devices."* 🔴 **Not an image problem — a
+  Content-Security-Policy one.** `web/vercel.json` sets
+  `img-src 'self' data: blob: https://res.cloudinary.com https://api.cloudinary.com`, and every
+  seeded row pointed at `images.unsplash.com`, so the browser refused all of them on the real
+  site. It looked fine locally only because **the Vite dev server sends no CSP at all** — the
+  textbook "works on my machine". The policy is a deliberate control and was NOT widened.
+  - **New `npm run seed:photos`** (`src/seed/upload-seed-photos.js`) downloads the curated photos
+    and uploads them to our own cloud under `mpx/seed/supplier-photos/<unsplash-id>`, writing
+    `supplier-photos.manifest.json` (committed — the seed refuses to run without it). Hosting a
+    copy is what the Unsplash licence allows; hot-linking was the shortcut, not the entitlement.
+  - **One asset per photo, not per row:** 177 assets back 588 product images, 98 logos and 98
+    covers, with the three crops (`c_fill` 1200×900 / 1600×400 / 400×400) applied at delivery. A
+    transformation URL still carries the publicId in its path, so `isOwnCloudinaryUrl()` accepts
+    them — **588/588 products now pass it**, which the Unsplash URLs never could.
+  - 🔴 **Bug found and fixed on the way in.** These products were being written with a `demo/`
+    image publicId, and `demo-products.js --purge` deletes *every* product whose publicId starts
+    with `demo/`. Running that purge would have destroyed all 588 catalogues of the 98 real sheet
+    suppliers. The Cloudinary publicIds live under `mpx/seed/`, so the collision is gone.
+  - 🔴 **`isSeedOwned()` could no longer ask "is it Cloudinary?"** — the seed now writes Cloudinary
+    URLs too, and a real uploaded logo sits on the same host. It matches on the seed's own folder
+    instead, so genuine uploads are still never overwritten.
+  - A sweep migrates stray Unsplash URLs on organisations **outside** the sheet set (two test orgs
+    an earlier seed had touched); a photo missing from the manifest is **reported, never silently
+    skipped**. Verified after: a scan of every collection finds **0** documents holding an unsplash
+    URL and **1204** image references, all on `res.cloudinary.com`. Rendered page: 10 images, 0
+    broken.
+  - Photo pools moved to `src/seed/supplier-photos.data.js` so the uploader and the seed share one
+    list without importing each other's run side-effects.
+  - **Gotcha for next time:** a local dev server proves nothing about CSP. Anything that references
+    an external host has to be checked against `web/vercel.json`'s policy, or against the deployed
+    headers directly (`curl -sI https://mpx-global.vercel.app/`).
 - **2026-10-28 — Supplier page reworked toward an Alibaba-style storefront, and every sheet
   supplier given a profile picture + cover banner.**
   Owner sent an Alibaba Gold-Supplier mini-site as the reference. 🔴 **A red alert was raised

@@ -14,13 +14,9 @@
     "lint": "eslint src tests",
     "seed": "node src/seed/superadmin.js",
     "seed:catalogue": "node src/seed/catalogue.js",
-    "seed:test-accounts": "node src/seed/test-accounts.js",
     "backfill:search": "node scripts/backfill-m3-search-fields.mjs",
     "indexes:check": "node scripts/sync-indexes.mjs --dry-run",
-    "indexes:sync": "node scripts/sync-indexes.mjs",
-    "seed:demo-products": "node src/seed/demo-products.js",
-    "seed:demo-products:purge": "node src/seed/demo-products.js --purge",
-    "seed:supplier-products": "node src/seed/supplier-products.js"
+    "indexes:sync": "node scripts/sync-indexes.mjs"
   },
   "private": true,
   "dependencies": {

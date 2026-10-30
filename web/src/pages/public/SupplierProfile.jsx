@@ -12,7 +12,7 @@ import { ErrorState } from '../../components/ui/ErrorState.jsx';
 import { Pagination } from '../../components/ui/Pagination.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
 import { VerifiedTick } from '../../components/ui/VerifiedTick.jsx';
-import { BoxIcon, BuildingIcon, CalendarIcon, ChatIcon, GridIcon, MapPinIcon, TagIcon } from '../../components/ui/icons.jsx';
+import { BoxIcon, BuildingIcon, CalendarIcon, ChatIcon, GridIcon, MapPinIcon, ShieldIcon, TagIcon } from '../../components/ui/icons.jsx';
 import { countryName } from '../../lib/countries.js';
 import { useCanonical, useNoIndex } from '../../lib/seo.js';
 import { NotFound } from './NotFound.jsx';
@@ -408,6 +408,62 @@ export function SupplierProfile() {
                   )}
                 </div>
               </div>
+            </section>
+          )}
+
+          {/* --- Registrations (owner, 2026-10-30). The CLAIM a certificate
+              proves plus the number a buyer can verify — never the document.
+              A GSTIN must by law be displayed at the registered premises and
+              on every invoice and is checkable on the GST portal, so this
+              discloses nothing the company does not already show. The PAN,
+              address, mobile, email and social category that sit on the same
+              certificate are not extracted anywhere. --- */}
+          {!seller.isPending && s.certifications?.length > 0 && (
+            <section className="mt-8">
+              <h2 className="mb-4 text-xl font-bold text-ink-900 sm:text-2xl">Registrations</h2>
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {s.certifications.map((c) => (
+                  <li
+                    key={c.type}
+                    className="flex items-center gap-3 rounded-2xl border border-surface-border bg-white px-5 py-4 shadow-card"
+                  >
+                    <ShieldIcon className="h-5 w-5 shrink-0 text-success-600" aria-hidden="true" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-ink-900">{c.label}</p>
+                      <p className="truncate font-mono text-xs text-muted">{c.number}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* --- Company photos (owner, 2026-10-30). Premises and production
+              shots the company supplied, served from our own Cloudinary.
+              🔴 NOT certificates: the GST / Udyam documents these companies
+              filed stay in the private KYC store — they carry the owner's
+              mobile, email, PAN, full address and social category, none of
+              which belongs on a public page. --- */}
+          {!seller.isPending && s.officePhotos?.length > 0 && (
+            <section className="mt-8">
+              <h2 className="mb-4 text-xl font-bold text-ink-900 sm:text-2xl">Company Photos</h2>
+              <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {s.officePhotos.map((photo) => (
+                  <li key={photo} className="overflow-hidden rounded-2xl border border-surface-border bg-white shadow-card">
+                    <img
+                      src={photo}
+                      // Decorative in the accessibility sense: the heading above
+                      // already says whose premises these are, and an invented
+                      // per-photo description would be a guess.
+                      alt=""
+                      loading="lazy"
+                      width={640}
+                      height={480}
+                      className="aspect-[4/3] w-full object-cover"
+                    />
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
 
